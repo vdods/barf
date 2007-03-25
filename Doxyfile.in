@@ -75,18 +75,17 @@ WARN_LOGFILE           =
 # configuration options related to the input files
 #---------------------------------------------------------------------------
 INPUT                  = @top_srcdir@/doc/doxygen_pages \
-                         @top_srcdir@/data #\
-                         @top_srcdir@/lib \
-                         @top_srcdir@/app
+                         @top_srcdir@/data \
+                         # @top_srcdir@/lib \
+                         # @top_srcdir@/app
 FILE_PATTERNS          = *.cpp \
                          *.hpp \
-                         *.h \
                          *.tcpp \
                          *.dox \
                          *.reflex \
                          *.trison \
                          *.langspec \
-                         *.codespec
+                         # *.codespec
 RECURSIVE              = yes
 EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO
@@ -119,7 +118,7 @@ GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
 HTML_HEADER            =
-HTML_FOOTER            = # doc/doxygen_pages/footer.html # to add the required SourceForge link
+HTML_FOOTER            = @top_srcdir@/doc/doxygen_pages/footer.html # to add the required SourceForge link
 HTML_STYLESHEET        =
 HTML_ALIGN_MEMBERS     = YES
 GENERATE_HTMLHELP      = NO

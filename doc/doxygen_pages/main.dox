@@ -9,9 +9,8 @@ The primary tools, <tt>reflex</tt> and <tt>trison</tt> aren't "yet another" inca
 Currently included tools are:
 <ul>
 <li><tt>reflex</tt> -- A lexical scanner generator.  Its scanner rule file format is similar in format to <tt>flex</tt> (states and regexes), so porting a <tt>flex</tt> scanner file to <tt>reflex</tt> should be relatively easy.
-<li><tt>trison</tt> -- An LALR(1) parser generator.  Like <tt>reflex</tt>, its grammar file format is similar to <tt>bison</tt> (Backus-Naur form), so porting a <tt>bison</tt> grammar file to <tt>trison</tt> should be relatively easy.  This branch of <tt>trison</tt> does not use the langspec/codespec paradigm, as it was written before BARF was designed, but was the catalyst for BARF.  The current, generating-only-C++ version will not be documented, and it will be assumed in the documentation that the full nice-ified langspec/codespec version of <tt>trison</tt> is complete.
+<li><tt>trison</tt> -- An LALR(1) parser generator.  Like <tt>reflex</tt>, its grammar file format is similar to <tt>bison</tt> (Backus-Naur form), so porting a <tt>bison</tt> grammar file to <tt>trison</tt> should be relatively easy.  This original version of <tt>trison</tt> does not use the langspec/codespec paradigm, as it was written before BARF was designed, but was the catalyst for BARF.  The current, generating-only-C++ version will not be documented, and it will be assumed in the documentation that the full nice-ified langspec/codespec version of <tt>trison</tt> is complete.
 <li><tt>bpp</tt> -- A simple text preprocessor whose guts are used by both <tt>reflex</tt> and <tt>trison</tt>
-<li><tt>grope</tt> -- Doesn't yet exist, but is intended to supplant the infamous <tt>grep</tt> with extra features such as newline and ungreedy matching.
 </ul>
 
 @section section_table_of_contents Table Of Contents
