@@ -1,0 +1,264 @@
+// this type of comment is valid
+/*
+this type of comment is also valid
+*/
+
+// NOTE: the preamble (everything before the %%) is sensitive to newlines
+
+// OPTIONAL: a place to specify code to add to the top of the
+// generated parser class's header file (e.g. include files and such).
+%parser_header_file_top%{
+#include <cmath>
+#include <string>
+
+using namespace std;
+
+#include "object.h"
+#include "thingy.h"
+
+namespace Buh
+
+class Scanner;
+%}
+
+// OPTIONAL: a place to specify code to add to the bottom of the
+// generated parser class's header file (e.g. global functions that
+// require the parser class to be declared).
+%parser_header_file_bottom%{
+void SomeDumbGlobalFunction ();
+
+} // end of namespace Buh
+%}
+
+// REQUIRED: gives the class name of the generated parser.
+%parser_class_name "AwesomeParser"
+
+// OPTIONAL: gives the superclass(es) of the generated parser class
+%parser_class_inheritance{
+    public Object, public Thingy
+}
+
+// OPTIONAL: the place to specify how superclasses and members should be
+// constructed (in the generated parser class's constructor)
+%parser_superclass_and_member_constructors{
+    Object(), Thingy(), m_dumb_counter(0)
+}
+
+// OPTIONAL: forces the generated parser class' destructor to be virtual
+%parser_force_virtual_destructor
+
+// OPTIONAL: code to insert in the generated parser class's constructor
+%parser_constructor_actions{
+    m_scanner = NULL;
+}
+
+// OPTIONAL: code to insert in the generated parser class's destructor
+%parser_destructor_actions{
+    delete m_scanner;
+}
+
+// OPTIONAL: specify the access control type for the Parse() method.
+// the default access control type is "public:"
+%parser_parse_method_access "protected:"
+
+// OPTIONAL: place to specify additional methods and members for use
+// elsewhere in the parser (e.g. an instance of a scanner object).
+// the default access qualifier is "public".
+%parser_class_methods_and_members{
+    inline Scanner *GetScanner () const { return m_scanner; }
+
+    inline void SetScanner (Scanner *scanner)
+    {
+        delete m_scanner;
+        m_scanner = scanner;
+    }
+
+    // NOTE: this method MUST be implemented by the user!
+    // it is left up to the user to declare and define it, so that
+    // the most flexibility can be achieved (e.g. declaring it inline
+    // for speed, or pure virtual so that this parser class must
+    // be subclassed to use, etc).
+    Token::Type Scan ();
+
+protected:
+
+    Scanner *m_scanner;
+    unsigned int m_dumb_counter;
+}
+
+// OPTIONAL: this code will be put at the beginning of the Parse() method
+%parser_start_of_parse_method_actions%{
+    m_dumb_counter = 0;
+
+    try
+    {
+%}
+
+// OPTIONAL: this code will be put at the end of the Parse() method
+%parser_end_of_parse_method_actions%{
+    }
+    catch (string const &exception)
+    {
+        cerr << exception << endl;
+    }
+    cout << "m_dumb_counter = " << m_dumb_counter << endl;
+%}
+
+// OPTIONAL: this code will be executed whenever a token is thrown away
+// due to error recovery.  if tokens are pointers to heap objects, this
+// would be the appropriate place to delete them, so that when error
+// recovery happens,  The token-to-throw-away is declared as "token"
+// and is of the base_assigned_type.
+%parser_throw_away_token_actions{
+    // don't need anything here, because the base_assigned_type is double
+}
+
+// OPTIONAL: a place to specify code to add to the top of the generated
+// parser class's implementation file (but just below the include of
+// the generated parser class's header file).
+%parser_implementation_file_top%{
+#include "scanner.h"
+
+namespace Buh
+{
+%}
+
+// SORT OF OPTIONAL: a place to specify code to add to the bottom of the
+// generated parser class's implementation file.  the Scan() method must
+// be defined, and unless it was defined inline in the header, or was
+// for some reason defined in a different file, it should probably be
+// defined here.
+// TODO: think of a better way to assign the lookahead token type and data.
+%parser_implementation_file_bottom%{
+Token::Type AwesomeParser::Scan ()
+{
+    assert(m_scanner != NULL);
+    return m_scanner->Scan(&m_lookahead_token_data);
+}
+
+void SomeDumbGlobalFunction ()
+{
+    cerr << "hee hee }hee" << endl;
+}
+
+} // end of namespace Buh
+%}
+
+// OPTIONAL: for specifying the "base" token data type for all reduction rules.
+// the "return" type for non-%root rules can be specified, but must be
+// static_cast-able to/from the base token data type.  if this option is not
+// specified, it is understood to be "int"
+%parser_base_assigned_type "double"
+
+// OPTIONAL: for initializing token values, which is used for safety.  i.e.
+// so that garbage pointer values from previous code execution don't hang
+// around.  if this option isn't specified, then it takes a value of
+// "static_cast<base-assigned-type>(0)", where base-assigned-type is
+// the value specified in %parser_base_assigned_type (or "int" if it wasn't).
+// it is an error if %parser_base_assigned_type is not specified and
+// this one is.
+%parser_base_assigned_type_sentinel "0.0"
+
+// OPTIONAL: the above property described how rule return types must
+// be static_cast-able to/from the base token data type.  if this option
+// is specified, the specified cast will be used instead.  For example,
+// if the base token data type is involved in multiple virtual inheritance,
+// "dynamic_cast" would be required.  You could also specify your own
+// cast function, as long as it is syntactically identical to static_cast.
+%parser_custom_cast "dynamic_cast"
+
+// NOTE: these directive DO NOT assign precedence.  that must be done
+// on a per-rule basis in the grammar itself.
+%token NEWLINE
+%token NUMBER %type "double" // you can assign types to terminals as well
+%token '(' ')'
+%token '+' '-'
+%token '*' '/'
+%token '^'
+
+%prec ADDITION
+%prec MULTIPLICATION
+%prec UNARY
+%prec EXPONENTIATION
+
+// REQUIRED: indicates the start nonterminal
+%start root
+
+%%
+
+root
+:
+    expression:exp NEWLINE
+    {
+        return exp;
+    }
+;
+
+// the type of a nonterminal can optionally be specified.  it must be
+// static_cast-able (or dynamic_cast-able, see %parser_use_dynamic_cast)
+// to/from the type given by %parser_base_token_data_type.  if no type is
+// given for the nonterminal, then it defaults to %parser_base_token_data_type.
+expression %type "double"
+:
+    // each token in a rule can optionally be assigned a C++ variable name.
+    // the syntax is
+    // tokentypename:variablename
+    // if no variable name is given, then there will be no way to access
+    // the token data type for that token.
+    expression:term1 '+' expression:term2 %left %prec ADDITION
+    {
+        return term1 + term2;
+    }
+|
+    expression:term1 '-' expression:term2 %left %prec ADDITION
+    {
+        return term1 - term2
+    }
+|
+    expression:factor1 '*' expression:factor2 %left %prec MULTIPLICATION
+    {
+        return factor1 * factor2;
+    }
+/*  comments can be anywhere */
+|
+    expression:numerator '/' expression:denominator %left %prec MULTIPLICATION
+    {
+        if (denominator == 0.0)
+            throw string("attempting to divide by zero");
+        return numerator / denominator;
+    }
+|
+    // the %prec option can be used to qualify a rule with a certain
+    // precedence.  the argument to %prec must be defined as either a
+    // %right or %left token.
+    '+' expression:exp %right %prec UNARY
+    {
+        return exp;
+    }
+|
+    // you can put everything on a single line if you like
+    '-' expression:exp %right %prec UNARY { return -exp; } |
+    expression:base '^' expression:power %right %prec EXPONENTIATION
+    {
+        if (base < 0.0 && power != round(power))
+            throw string("attempting to take a non-integer power of a negative number");
+        return pow(base, power);
+    }
+|
+    '(' expression:exp ')'
+    {
+        return exp;
+    }
+|
+    NUMBER:value // this comment will be ignored
+    {
+        if (m_dumb_counter++ == 40)
+        {
+            cerr << "stuff" << endl;
+            cout << "stuff" << endl;
+        }
+        return value;
+    }
+;
+
+/* blah

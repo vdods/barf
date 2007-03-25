@@ -1,0 +1,11 @@
+/** @page acknowledgements Acknowledgements
+
+BARF would not be possible were it not for certain people, as well as formal language theory and prior work done applying said theory into tangible applications.
+
+@section acknowledgements_thanks_to Thanks To
+Dan Palm for suggesting BARF (as Bison's Awesome Replacement Framework) as a name, and for being the first other person to attempt to develop anything using it.
+
+@section acknowledgements_prior_art Prior Art
+TODO: lex, flex, yacc, bison, etc.
+
+*/

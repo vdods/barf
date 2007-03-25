@@ -1,0 +1,502 @@
+// ///////////////////////////////////////////////////////////////////////////
+// trison_parser.trison by Victor Dods, created 2006/02/19
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%parser_class_name "Parser"
+
+%parser_header_file_top%{
+#if !defined(_TRISON_PARSER_HPP_)
+#define _TRISON_PARSER_HPP_
+
+#include "trison.hpp"
+
+#include "trison_message.hpp"
+
+namespace Barf {
+namespace AstCommon {
+
+class Ast;
+
+} // end of namespace AstCommon
+} // end of namespace Barf
+
+namespace Trison {
+
+class Scanner;
+%}
+
+%parser_class_methods_and_members{
+    bool SetInputFilename (string const &input_filename);
+
+private:
+
+    Token::Type Scan ();
+
+    Scanner *m_scanner;
+}
+
+%parser_header_file_bottom%{
+} // end of namespace Trison
+
+#endif // !defined(_TRISON_PARSER_HPP_)
+%}
+
+%parser_implementation_file_top%{
+#include <sstream>
+
+#include "trison_ast.hpp"
+#include "trison_scanner.hpp"
+
+namespace Trison {
+
+#undef FL
+#define FL FileLocation(m_scanner->GetInputFilename(), m_scanner->GetLineNumber())
+%}
+
+%parser_constructor_actions{
+    m_scanner = new Scanner();
+}
+
+%parser_destructor_actions{
+    delete m_scanner;
+}
+
+%parser_throw_away_token_actions{
+    delete token;
+}
+
+%parser_implementation_file_bottom%{
+bool Parser::SetInputFilename (string const &input_filename)
+{
+    assert(m_scanner != NULL);
+    m_scanner->Close();
+    return m_scanner->Open(input_filename);
+}
+
+Parser::Token::Type Parser::Scan ()
+{
+    assert(m_scanner != NULL);
+    return m_scanner->Scan(&m_lookahead_token);
+}
+
+} // end of namespace Trison
+%}
+
+%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type_sentinel "NULL"
+%parser_custom_cast "DStaticCast"
+
+%token ':' ';' '|'
+%token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
+%token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
+%token IDENTIFIER %type "AstCommon::Identifier *"
+%token DIRECTIVE_PARSER_WITH_PARAMETER %type "ParserDirective *"
+%token DIRECTIVE_PARSER_WITHOUT_PARAMETER %type "ParserDirective *"
+%token STRING %type "AstCommon::String *"
+%token DIRECTIVE_ERROR %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_TOKEN %type "AstCommon::ThrowAway *"
+%token END_PREAMBLE %type "AstCommon::ThrowAway *"
+%token LEFT %type "AstCommon::ThrowAway *"
+%token NONASSOC %type "AstCommon::ThrowAway *"
+%token PREC %type "AstCommon::ThrowAway *"
+%token RIGHT %type "AstCommon::ThrowAway *"
+%token START %type "AstCommon::ThrowAway *"
+%token TYPE %type "AstCommon::ThrowAway *"
+%token TOKEN_IDENTIFIER_CHARACTER %type "TokenIdentifierCharacter *"
+%token BAD_TOKEN
+%token NEWLINE
+
+%start root
+
+%%
+
+root %type "Grammar *"
+:
+    directive_list:directive_list END_PREAMBLE:end_preamble nonterminal_list:nonterminal_list
+    {
+        Grammar *grammar =
+            new Grammar(
+                directive_list,
+                end_preamble->GetFileLocation(),
+                nonterminal_list);
+        delete end_preamble;
+        return grammar;
+    }
+;
+
+directive_list %type "AstCommon::DirectiveList *"
+:
+    directive_list:directive_list directive:directive
+    {
+        if (directive != NULL)
+            directive_list->Append(directive);
+        return directive_list;
+    }
+|
+    at_least_zero_newlines
+    {
+        return new AstCommon::DirectiveList();
+    }
+;
+
+directive %type "AstCommon::Directive *"
+:
+    DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRICT_CODE_BLOCK:value at_least_one_newline
+    {
+        parser_directive->SetValue(value);
+        return parser_directive;
+    }
+|
+    DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive DUMB_CODE_BLOCK:value at_least_one_newline
+    {
+        if (!ParserDirective::GetDoesParserDirectiveAcceptDumbCodeBlock(
+                parser_directive->GetParserDirectiveType()))
+        {
+            ostringstream out;
+            out << ParserDirective::GetString(parser_directive->GetParserDirectiveType())
+                << " does not accept %{ %} code blocks -- use { }";
+            EmitError(parser_directive->GetFileLocation(), out.str());
+            return NULL;
+        }
+
+        parser_directive->SetValue(value);
+        return parser_directive;
+    }
+|
+    DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRING:value at_least_one_newline
+    {
+        parser_directive->SetValue(value);
+        return parser_directive;
+    }
+|
+    DIRECTIVE_PARSER_WITHOUT_PARAMETER:parser_directive at_least_one_newline
+    {
+        return parser_directive;
+    }
+|
+    DIRECTIVE_TOKEN:throwaway token_identifier_list:token_identifier_list at_least_one_newline
+    {
+        delete throwaway;
+        return new TokenDirective(token_identifier_list, NULL);
+    }
+|
+    DIRECTIVE_TOKEN:throwaway1 token_identifier_list:token_identifier_list TYPE:throwaway2 STRING:assigned_type at_least_one_newline
+    {
+        delete throwaway1;
+        delete throwaway2;
+        return new TokenDirective(token_identifier_list, assigned_type);
+    }
+|
+    DIRECTIVE_TOKEN:throwaway %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "syntax error in %token directive");
+
+        delete throwaway;
+        return new TokenDirective(new TokenIdentifierList(), NULL);
+    }
+|
+    DIRECTIVE_TOKEN:throwaway1 token_identifier_list:token_identifier_list TYPE:throwaway2 %error at_least_one_newline
+    {
+        EmitError(throwaway2->GetFileLocation(), "syntax error in %type directive");
+
+        AstCommon::String *dummy_string = new AstCommon::String(throwaway2->GetFileLocation());
+        delete throwaway1;
+        delete throwaway2;
+        return new TokenDirective(token_identifier_list, dummy_string);
+    }
+|
+    PREC:throwaway IDENTIFIER:identifier at_least_one_newline
+    {
+        delete throwaway;
+        return new PrecedenceDirective(identifier);
+    }
+|
+    PREC:throwaway %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "syntax error in %prec directive");
+
+        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFileLocation());
+        delete throwaway;
+        return new PrecedenceDirective(dummy_identifier);
+    }
+|
+    START:throwaway IDENTIFIER:identifier at_least_one_newline
+    {
+        delete throwaway;
+        return new StartDirective(identifier);
+    }
+|
+    START:throwaway %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "syntax error in %start directive");
+
+        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFileLocation());
+        delete throwaway;
+        return new StartDirective(dummy_identifier);
+    }
+|
+    %error STRICT_CODE_BLOCK:value at_least_one_newline
+    {
+        EmitError(value->GetFileLocation(), "syntax error in directive");
+
+        return NULL;
+    }
+|
+    %error DUMB_CODE_BLOCK:value at_least_one_newline
+    {
+        EmitError(value->GetFileLocation(), "syntax error in directive");
+
+        return NULL;
+    }
+|
+    %error STRING:value at_least_one_newline
+    {
+        EmitError(value->GetFileLocation(), "syntax error in directive");
+
+        return NULL;
+    }
+|
+    %error at_least_one_newline
+    {
+        EmitError(FL, "syntax error in directive");
+
+        return NULL;
+    }
+;
+
+token_identifier_list %type "TokenIdentifierList *"
+:
+    token_identifier_list:token_identifier_list token_identifier:token_identifier
+    {
+        token_identifier_list->Append(token_identifier);
+        return token_identifier_list;
+    }
+|
+    token_identifier:token_identifier
+    {
+        TokenIdentifierList *token_identifier_list = new TokenIdentifierList();
+        token_identifier_list->Append(token_identifier);
+        return token_identifier_list;
+    }
+;
+
+token_identifier %type "TokenIdentifier *"
+:
+    IDENTIFIER:identifier
+    {
+        TokenIdentifierIdentifier *token_identifier_identifier =
+            new TokenIdentifierIdentifier(identifier->GetText(), identifier->GetFileLocation());
+        delete identifier;
+        return token_identifier_identifier;
+    }
+|
+    TOKEN_IDENTIFIER_CHARACTER:token_identifier_character
+    {
+        return token_identifier_character;
+    }
+;
+
+at_least_zero_newlines
+:
+    at_least_zero_newlines NEWLINE
+|
+    // empty reduction rule
+;
+
+at_least_one_newline
+:
+    at_least_one_newline NEWLINE
+|
+    NEWLINE
+;
+
+nonterminal_list %type "NonterminalList *"
+:
+    nonterminal_list:nonterminal_list nonterminal:nonterminal
+    {
+        // the nonterminal could be null if an error was recovered from
+        if (nonterminal != NULL)
+            nonterminal_list->Append(nonterminal);
+        return nonterminal_list;
+    }
+|
+    // empty reduction rule
+    {
+        return new NonterminalList();
+    }
+;
+
+nonterminal %type "Nonterminal *"
+:
+    nonterminal_specification:nonterminal_specification ':' rule_list:rule_list ';'
+    {
+        nonterminal_specification->SetRuleList(rule_list);
+        return nonterminal_specification;
+    }
+|
+    %error ';'
+    {
+        EmitError(FL, "syntax error in nonterminal definition");
+
+        return NULL;
+    }
+;
+
+nonterminal_specification %type "Nonterminal *"
+:
+    IDENTIFIER:identifier TYPE:throwaway STRING:assigned_type
+    {
+        delete throwaway;
+        return new Nonterminal(identifier, assigned_type);
+    }
+|
+    IDENTIFIER:identifier
+    {
+        return new Nonterminal(identifier, NULL);
+    }
+|
+    %error
+    {
+        EmitError(FL, "syntax error while parsing nonterminal specification");
+
+        return NULL;
+    }
+|
+    IDENTIFIER:identifier %error
+    {
+        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal directive");
+
+        return new Nonterminal(identifier, NULL);
+    }
+|
+    IDENTIFIER:identifier TYPE:throwaway %error
+    {
+        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal %type directive; was expecting a string");
+
+        delete throwaway;
+        return new Nonterminal(identifier, NULL);
+    }
+;
+
+rule_list %type "RuleList *"
+:
+    rule_list:rule_list '|' rule:rule
+    {
+        rule_list->Append(rule);
+        return rule_list;
+    }
+|
+    rule:rule
+    {
+        RuleList *rule_list = new RuleList();
+        rule_list->Append(rule);
+        return rule_list;
+    }
+;
+
+rule %type "Rule *"
+:
+    rule_specification:rule_specification STRICT_CODE_BLOCK:code_block
+    {
+        rule_specification->SetCodeBlock(code_block);
+        return rule_specification;
+    }
+|
+    rule_specification:rule_specification
+    {
+        return rule_specification;
+    }
+|
+    rule_specification:rule_specification DUMB_CODE_BLOCK:code_block
+    {
+        EmitError(
+            code_block->GetFileLocation(),
+            "rules do not accept %{ %} code blocks -- use { } instead");
+
+        rule_specification->SetCodeBlock(code_block);
+        return rule_specification;
+    }
+;
+
+rule_specification %type "Rule *"
+:
+    rule_token_list:rule_token_list LEFT:throwaway rule_precedence_directive:rule_precedence_directive
+    {
+        delete throwaway;
+        return new Rule(rule_token_list, A_LEFT, rule_precedence_directive);
+    }
+|
+    rule_token_list:rule_token_list RIGHT:throwaway rule_precedence_directive:rule_precedence_directive
+    {
+        delete throwaway;
+        return new Rule(rule_token_list, A_RIGHT, rule_precedence_directive);
+    }
+|
+    rule_token_list:rule_token_list NONASSOC:throwaway rule_precedence_directive:rule_precedence_directive
+    {
+        delete throwaway;
+        return new Rule(rule_token_list, A_NONASSOC, rule_precedence_directive);
+    }
+|
+    rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive
+    {
+        // the default associativity when none is specified is LEFT
+        return new Rule(rule_token_list, A_LEFT, rule_precedence_directive);
+    }
+;
+
+rule_token_list %type "RuleTokenList *"
+:
+    rule_token_list:rule_token_list rule_token:rule_token
+    {
+        rule_token_list->Append(rule_token);
+        return rule_token_list;
+    }
+|
+    // empty reduction rule
+    {
+        // it is necessary to explicitly assign the file location here because
+        // the rule token list may be empty (and thus wouldn't take its file
+        // location from the first appended list element).
+        return new RuleTokenList(FL);
+    }
+;
+
+rule_token %type "RuleToken *"
+:
+    token_identifier:token_identifier ':' IDENTIFIER:assigned_identifier
+    {
+        return new RuleToken(token_identifier, assigned_identifier);
+    }
+|
+    token_identifier:token_identifier
+    {
+        return new RuleToken(token_identifier, NULL);
+    }
+|
+    DIRECTIVE_ERROR:throwaway
+    {
+        delete throwaway;
+        return new RuleToken(new TokenIdentifierIdentifier("%error", FL), NULL);
+    }
+;
+
+rule_precedence_directive %type "AstCommon::Identifier *"
+:
+    PREC:throwaway IDENTIFIER:identifier
+    {
+        delete throwaway;
+        return identifier;
+    }
+|
+    // empty reduction rule
+    {
+        return NULL;
+    }
+;

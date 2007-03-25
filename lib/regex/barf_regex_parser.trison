@@ -1,0 +1,672 @@
+// ///////////////////////////////////////////////////////////////////////////
+// barf_regex_parser.trison by Victor Dods, created 2006/01/30
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%parser_header_file_top%{
+#if !defined(_BARF_REGEX_PARSER_HPP_)
+#define _BARF_REGEX_PARSER_HPP_
+
+#include "barf_regex.hpp"
+
+#include <istream>
+
+#include "barf_inputbase.hpp"
+#include "barf_regex_ast.hpp"
+#include "barf_util.hpp"
+
+namespace Barf {
+namespace Regex {
+%}
+
+%parser_class_name "Parser"
+%parser_class_inheritance "protected InputBase"
+%parser_superclass_and_member_constructors "InputBase()"
+%parser_parse_method_access "private:"
+
+%parser_class_methods_and_members{
+    using InputBase::GetIsOpen;
+    using InputBase::GetFileLocation;
+    using InputBase::GetInputName;
+
+    using InputBase::OpenFile;
+    using InputBase::OpenString;
+    using InputBase::OpenUsingStream;
+
+    using InputBase::Close;
+
+    // this method will throw a std::string if a macro is used without
+    // providing a macro map, or otherwise if an undefined macro is
+    // referenced.
+    ParserReturnCode Parse (RegularExpressionMap *macro_map);
+
+private:
+
+    Token::Type Scan ();
+
+    mutable RegularExpressionMap *m_macro_map;
+}
+
+%parser_header_file_bottom%{
+} // end of namespace Regex
+} // end of namespace Barf
+
+#endif // !defined(_BARF_REGEX_PARSER_HPP_)
+%}
+
+%parser_implementation_file_top%{
+#include <sstream>
+
+namespace Barf {
+namespace Regex {
+%}
+
+%parser_constructor_actions{
+    m_macro_map = NULL;
+}
+
+%parser_destructor_actions{
+    assert(m_macro_map == NULL);
+}
+
+%parser_start_of_parse_method_actions{
+}
+
+%parser_end_of_parse_method_actions{
+}
+
+%parser_implementation_file_bottom%{
+inline bool IsHexDigit (Uint8 const c)
+{
+    return c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f';
+}
+
+inline Uint8 GetHexDigitValue (Uint8 c)
+{
+    assert(IsHexDigit(c));
+    if (c >= '0' && c <= '9')
+        c -= '0';
+    else if (c >= 'A' && c <= 'F')
+        c += 0xA - 'A';
+    else if (c >= 'a' && c <= 'f')
+        c += 0xA - 'a';
+    return c;
+}
+
+Parser::ParserReturnCode Parser::Parse (RegularExpressionMap *macro_map)
+{
+    assert(m_macro_map == NULL);
+    m_macro_map = macro_map;
+    try {
+        ParserReturnCode retval = Parse();
+        m_macro_map = NULL;
+        return retval;
+    } catch (string const &exception) {
+        m_macro_map = NULL;
+        throw exception;
+    }
+}
+
+Parser::Token::Type Parser::Scan ()
+{
+    while (true)
+    {
+        int c;
+
+        c = In().get();
+        if (c == EOF)
+            return Token::END_;
+
+        if (c >= '0' && c <= '9')
+        {
+//             fprintf(stderr, "\n######## scanning DIGIT '%c'\n", static_cast<char>(c));
+            m_lookahead_token = new Character(c);
+            return Token::DIGIT;
+        }
+        else if (c >= 'A' && c <= 'Z'
+                 ||
+                 c >= 'a' && c <= 'z')
+        {
+//             fprintf(stderr, "\n######## scanning CHAR '%c'\n", static_cast<char>(c));
+            m_lookahead_token = new Character(c);
+            return Token::ALPHA;
+        }
+        else if (c >= 128 && c < 256)
+        {
+//             fprintf(stderr, "\n######## scanning extended ascii CHAR \\0x%02X\n", c);
+            m_lookahead_token = new Character(c);
+            return Token::ALPHA;
+        }
+
+        switch (c)
+        {
+            // special case for backslash, because it can be followed by a hex char
+            case '\\':
+                // fuck it for now, just return the backslash
+                /*
+                if (In().peek() == EOF)
+                {
+                    In().get();
+                    assert(In().eof());
+                    return static_cast<Token::Type>('\\');
+                }
+
+                c = In().peek();
+                if (c == 'x')
+                {
+                    In().get();
+                    assert(!In().eof());
+
+                    c = In().peek();
+                    if (c == EOF)
+                    {
+                        cerr << "\n\nBLAH BLAH\n\n" << endl;
+                        assert(In().eof());
+                    }
+                    if (c != EOF && IsHexDigit(c))
+                    {
+                        In().get();
+                        assert(!In().eof());
+                        Uint8 hex_value = GetHexDigitValue(c);
+
+                        c = In().peek();
+                        if (c != EOF && IsHexDigit(c))
+                        {
+                            In().get();
+                            assert(!In().eof());
+                            hex_value = (hex_value << 4) + GetHexDigitValue(c);
+                        }
+
+                        m_lookahead_token = new Character(hex_value, true);
+                        return Token::ALPHA;
+                    }
+                    else
+                    {
+                        // unget the 'x' char
+//                         In().putback('x');
+                        In().unget();
+//                         assert(!In().eof());
+//                         assert((c = In().peek()) == 'x');
+                        return static_cast<Token::Type>('\\');
+                    }
+                }
+                // if it didn't work, push the char back in the stream and return '\\'
+                else
+                {
+                    return static_cast<Token::Type>('\\');
+                }
+                */
+            case '^':
+            case '$':
+            case '*':
+            case '+':
+            case '?':
+            case '{':
+            case '}':
+            case '[':
+            case ']':
+            case '(':
+            case ')':
+            case '.':
+            case ',':
+            case '|':
+            case '-':
+            case ':':
+//                 fprintf(stderr, "\n######## scanning control char '%c'\n", static_cast<char>(c));
+                return static_cast<Token::Type>(c);
+
+            case '\0':
+            case '\a':
+            case '\b':
+            case '\t':
+            case '\n':
+            case '\v':
+            case '\f':
+            case '\r':
+//                 fprintf(stderr, "\n######## skipping escaped character\n");
+                break;
+
+            case ' ':
+            case '!':
+            case '"':
+            case '#':
+            case '%':
+            case '&':
+            case '\'':
+            case '/':
+            case ';':
+            case '<':
+            case '=':
+            case '>':
+            case '@':
+            case '_':
+            case '`':
+            case '~':
+//                 fprintf(stderr, "\n######## scanning CHAR '%c'\n", static_cast<char>(c));
+                m_lookahead_token = new Character(c);
+                return Token::CHAR;
+
+            default:
+//                 fprintf(stderr, "\n######## skipping invalid character\n");
+                break;
+        }
+    }
+}
+
+} // end of namespace Regex
+} // end of namespace Barf
+%}
+
+%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type_sentinel "NULL"
+%parser_custom_cast "DStaticCast"
+
+//////////////////////////////////////////////////////////////////////////////
+// grammar metadata
+//////////////////////////////////////////////////////////////////////////////
+
+%token BAD_TOKEN
+%token ALPHA %type "Character *"
+%token CHAR %type "Character *"
+%token DIGIT %type "Character *"
+                    // NOTE: quotes around examples for clarity
+%token '|'          // branch operator; e.g. "re1|re2" matches "re1" or "re2"
+%token '(' ')'      // associative grouping delimiters
+%token '?'          // "a?" matches "" or "a"
+%token '*'          // "a*" matches "" or "a" or "aa" or "aaa" etc
+%token '+'          // "a+" matches "a" or "aa" or "aaa" etc
+%token '{' ',' '}'  // "a{3}" matches "aaa"
+                    // "a{3,}" matches "aaa" or "aaaa" or "aaaaa" etc
+                    // "a{3,4}" matches "aaa" or "aaaa"
+%token '^'          // "^blah" matches "blah" only at the beginning of a line
+%token '$'          // "blah$" matches "blah" only at the end of a line
+%token '.'          // "." matches any non-newline character
+%token '\\'         // escape character
+%token '[' ']'      // bracket expression delimiters
+%token '-'          // bracket range delimiter
+%token ':'          // character class delimiter
+                    // "[abc]" matches "a" or "b" or "c"
+                    // "[a-e]" matches "a" or "b" or "c" or "d" or "e"
+                    // "[[:digit:]]" matches "0" or "1" or "2" or "3" or "4"
+                    //                    or "5" or "6" or "7" or "8" or "9"
+                    // other character classes include "alnum", "alpha", etc
+
+%start regex
+
+%%
+
+//////////////////////////////////////////////////////////////////////////////
+// grammar specification
+//////////////////////////////////////////////////////////////////////////////
+
+regex %type "RegularExpression *"
+:
+    regex:regex '|' branch:branch
+    {
+        regex->Append(branch);
+        return regex;
+    }
+|
+    branch:branch
+    {
+        RegularExpression *regex = new RegularExpression();
+        regex->Append(branch);
+        return regex;
+    }
+;
+
+branch %type "Branch *"
+:
+    branch_which_didnt_just_accept_an_atom:branch   { return branch; }
+|   branch_which_just_accepted_an_atom:branch       { return branch; }
+|   /* empty reduction rule */                      { return new Branch(); }
+;
+
+branch_which_didnt_just_accept_an_atom %type "Branch *"
+:
+    branch_which_just_accepted_an_atom:branch bound:bound
+    {
+        branch->AddBound(bound);
+        return branch;
+    }
+;
+
+branch_which_just_accepted_an_atom %type "Branch *"
+:
+    branch_which_just_accepted_an_atom:branch atom:atom
+    {
+        branch->AddAtom(atom);
+        return branch;
+    }
+|
+    branch_which_didnt_just_accept_an_atom:branch atom:atom
+    {
+        branch->AddAtom(atom);
+        return branch;
+    }
+|
+    atom:atom
+    {
+        Branch *branch = new Branch();
+        branch->AddAtom(atom);
+        return branch;
+    }
+;
+
+//////////////////////////////////////////////////////////////////////////////
+// atom and bound rules (which together make a piece)
+//////////////////////////////////////////////////////////////////////////////
+
+atom %type "Atom *"
+:
+    '{' identifier:macro_name '}'
+    {
+        assert(macro_name != NULL);
+        if (m_macro_map == NULL)
+            THROW_STRING("can not use regex macros if no macro map was provided");
+        RegularExpression *macro_regex = m_macro_map->GetElement(macro_name->GetText());
+        if (macro_regex == NULL)
+            THROW_STRING("undefined macro \"" + macro_name->GetText() + "\"");
+        return macro_regex;
+    }
+|
+    '(' regex:regex ')'            { return regex; }
+|   '(' ')'                        { return new RegularExpression(); }
+|   '^'                            { return new Character('\0', CT_BEGINNING_OF_LINE); }
+|   '$'                            { return new Character('\0', CT_END_OF_LINE); }
+|   '.'                            { return new BracketCharacterSet('\n', true); }
+|   atom_normal_character:ch       { return ch; }
+|   '\\' atom_normal_character:ch  { ch->Escape(); return ch; }
+|   '\\' atom_control_character:ch { return ch; }
+|   bracket_expression:exp         { return exp; }
+;
+
+bound %type "Bound *"
+:
+    '*' { return new Bound(0, Bound::NO_UPPER_BOUND); }
+|
+    '+' { return new Bound(1, Bound::NO_UPPER_BOUND); }
+|
+    '?' { return new Bound(0, 1); }
+|
+    '{' integer:exact_bound '}'
+    {
+        assert(exact_bound->GetValue() >= 0);
+        Bound *bound = new Bound(exact_bound->GetValue(), exact_bound->GetValue());
+        delete exact_bound;
+        return bound;
+    }
+|
+    '{' integer:lower_bound ',' '}'
+    {
+        assert(lower_bound->GetValue() >= 0);
+        return new Bound(lower_bound->GetValue(), Bound::NO_UPPER_BOUND);
+    }
+|
+    '{' integer:lower_bound ',' integer:upper_bound '}'
+    {
+        assert(lower_bound->GetValue() >= 0);
+        assert(upper_bound->GetValue() >= 0);
+        if (lower_bound->GetValue() > upper_bound->GetValue() ||
+            lower_bound->GetValue() == 0 && upper_bound->GetValue() == 0)
+        {
+            ostringstream out;
+            out << "invalid bound {" << lower_bound->GetValue() << ',' << upper_bound->GetValue() << '}';
+            throw out.str();
+        }
+        else if (lower_bound->GetValue() > Bound::GetMaximumBoundValue())
+        {
+            ostringstream out;
+            out << "bound value " << lower_bound->GetValue() << " is out of range (max 255)";
+            throw out.str();
+        }
+        else if (upper_bound->GetValue() > Bound::GetMaximumBoundValue())
+        {
+            ostringstream out;
+            out << "bound value " << upper_bound->GetValue() << " is out of range (max 255)";
+            throw out.str();
+        }
+        Bound *bound = new Bound(lower_bound->GetValue(), upper_bound->GetValue());
+        delete lower_bound;
+        delete upper_bound;
+        return bound;
+    }
+;
+
+//////////////////////////////////////////////////////////////////////////////
+// bracket expression rules
+//////////////////////////////////////////////////////////////////////////////
+
+bracket_expression %type "Atom *"
+:
+    '[' bracket_character_set:bracket_character_set ']'
+    {
+        if (bracket_character_set->GetIsEmpty())
+            THROW_STRING("invalid empty bracket expression");
+        return bracket_character_set;
+    }
+|
+    '[' '^' bracket_character_set:bracket_character_set ']'
+    {
+        if (bracket_character_set->GetIsEmpty())
+            THROW_STRING("invalid empty bracket expression");
+        bracket_character_set->Negate();
+        return bracket_character_set;
+    }
+;
+
+bracket_character_set %type "BracketCharacterSet *"
+:
+    bracket_character_set:bracket_character_set bracket_expression_character:ch
+    {
+        bracket_character_set->AddCharacter(ch->GetCharacter());
+        delete ch;
+        return bracket_character_set;
+    }
+|
+    bracket_character_set:bracket_character_set bracket_expression_character:begin_range '-' bracket_expression_character:end_range
+    {
+        if (end_range->GetCharacter() < begin_range->GetCharacter())
+            THROW_STRING("invalid bracketed range [" << GetCharacterLiteral(begin_range->GetCharacter(), false) << '-' << GetCharacterLiteral(end_range->GetCharacter(), false) << ']');
+        bracket_character_set->AddCharacterRange(
+            begin_range->GetCharacter(),
+            end_range->GetCharacter());
+        delete begin_range;
+        delete end_range;
+        return bracket_character_set;
+    }
+|
+    bracket_character_set:bracket_character_set '[' ':' identifier:identifier ':' ']'
+    {
+        bracket_character_set->AddCharacterClass(identifier->GetText());
+        delete identifier;
+        return bracket_character_set;
+    }
+|
+    // empty reduction rule
+    {
+        BracketCharacterSet *bracket_character_set = new BracketCharacterSet();
+        return bracket_character_set;
+    }
+;
+
+bracket_expression_character %type "Character *"
+:   // normal chars don't require any escaping.
+    bracket_expression_normal_character:normal_char        { return normal_char; }
+|   // some normal characters can be escaped (like '\n')
+    '\\' bracket_expression_normal_character:normal_char   { normal_char->Escape(); return normal_char; }
+|   // control chars require escaping.
+    '\\' bracket_expression_control_character:control_char { return control_char; }
+;
+
+//////////////////////////////////////////////////////////////////////////////
+// grammar primitive rules
+//////////////////////////////////////////////////////////////////////////////
+
+// these characters are special only in atom parsing (not inside
+// a bound or a bracket expression).  all others (with the exception
+// of backslash, the escape character) are treated as normal characters.
+// no character here should be present in atom_normal_character,
+// and the union of atom_normal_character, atom_control_character
+// and backslash should constitute all valid characters.
+atom_control_character %type "Character *"
+:
+    // branch operator
+    '|' { return new Character('|'); }
+|   // associative grouping delimiter (open)
+    '(' { return new Character('('); }
+|   // associative grouping delimiter (close)
+    ')' { return new Character(')'); }
+|   // bound delimiter (open)
+    '{' { return new Character('{'); }
+|   // bound delimiter (close)
+    '}' { return new Character('}'); }
+|   // bracket expression delimiter (open)
+    '[' { return new Character('['); }
+|   // bracket expression delimiter (close)
+    ']' { return new Character(']'); }
+|   // indicates 0 or 1 of the previous atom
+    '?' { return new Character('?'); }
+|   // indicates 0 or more of the previous atom
+    '*' { return new Character('*'); }
+|   // indicates 1 or more of the previous atom
+    '+' { return new Character('+'); }
+|   // match-any-non-newline character
+    '.' { return new Character('.'); }
+|   // match-the-beginning-of-a-line epsilon operator
+    '^' { return new Character('^'); }
+|   // match-the-end-of-a-line epsilon operator
+    '$' { return new Character('$'); }
+|   // backslash -- for escaping other characters
+    '\\' { return new Character('\\'); }
+;
+
+// these characters have no special meaning in atom parsing (not
+// inside a bound or a bracket expression).  all others (with the exception
+// of backslash, the escape character) are treated as control characters.
+// no character here should be present in atom_control_character,
+// and the union of atom_normal_character, atom_control_character
+// and backslash should constitute all valid characters.
+atom_normal_character %type "Character *"
+:
+    ALPHA:alpha { return alpha; }
+|   DIGIT:digit { return digit; }
+|   CHAR:ch     { return ch; }
+|   ','         { return new Character(','); }
+|   '-'         { return new Character('-'); }
+|   ':'         { return new Character(':'); }
+;
+
+// these characters are special only inside bracket expressions.  all others
+// (with the exception of backslash, the escape character) are treated as
+// normal characters.  no character here should be present in
+// bracket_expression_normal_character, and the union of
+// bracket_expression_normal_character, bracket_expression_control_character
+// and backslash should constitute all valid characters.
+bracket_expression_control_character %type "Character *"
+:
+    // delimits a bracket atom range
+    '-' { return new Character('-'); }
+|   // indicates bracket character set negation
+    '^' { return new Character('^'); }
+|   // indicates the beginning of a character class expression
+    '[' { return new Character('['); }
+|   // indicates the end of the bracket expression (or character class exp)
+    ']' { return new Character(']'); }
+|   // backslash -- for escaping other characters
+    '\\' { return new Character('\\'); }
+;
+
+// these characters have no special meaning inside bracket expressions.  all
+// others (with the exception of backslash, the escape character) are treated
+// as normal characters.  no character here should be present in
+// bracket_expression_normal_character, and the union of
+// bracket_expression_normal_character, bracket_expression_control_character
+// and backslash should constitute all valid characters.
+bracket_expression_normal_character %type "Character *"
+:
+    ALPHA:alpha { return alpha; }
+|   DIGIT:digit { return digit; }
+|   CHAR:ch     { return ch; }
+|   '|'         { return new Character('|'); }
+|   ':'         { return new Character(':'); }
+|   '?'         { return new Character('?'); }
+|   '*'         { return new Character('*'); }
+|   '+'         { return new Character('+'); }
+|   '.'         { return new Character('.'); }
+|   '$'         { return new Character('$'); }
+|   ','         { return new Character(','); }
+|   '('         { return new Character('('); }
+|   ')'         { return new Character(')'); }
+|   '{'         { return new Character('{'); }
+|   '}'         { return new Character('}'); }
+;
+
+identifier %type "AstCommon::Identifier *"
+:
+    identifier:identifier ALPHA:alpha
+    {
+        assert(identifier != NULL);
+        identifier->AppendCharacter(alpha->GetCharacter());
+        delete alpha;
+        return identifier;
+    }
+|
+    identifier:identifier CHAR:ch
+    {
+        assert(identifier != NULL);
+        identifier->AppendCharacter(ch->GetCharacter());
+        delete ch;
+        return identifier;
+    }
+|
+    identifier:identifier DIGIT:digit
+    {
+        assert(identifier != NULL);
+        identifier->AppendCharacter(digit->GetCharacter());
+        delete digit;
+        return identifier;
+    }
+|
+    ALPHA:alpha
+    {
+        string temp;
+        temp += alpha->GetCharacter();
+        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FileLocation::ms_invalid);
+        delete alpha;
+        return identifier;
+    }
+|
+    CHAR:ch
+    {
+        string temp;
+        temp += ch->GetCharacter();
+        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FileLocation::ms_invalid);
+        delete ch;
+        return identifier;
+    }
+;
+
+integer %type "AstCommon::SignedInteger *"
+:
+    integer:integer DIGIT:digit
+    {
+        integer->ShiftAndAdd(digit->GetCharacter() - '0');
+        if (integer->GetValue() > 255)
+            integer->SetValue(255);
+        delete digit;
+        return integer;
+    }
+|
+    DIGIT:digit
+    {
+        AstCommon::SignedInteger *integer = new AstCommon::SignedInteger(digit->GetCharacter() - '0', FileLocation::ms_invalid);
+        delete digit;
+        return integer;
+    }
+;

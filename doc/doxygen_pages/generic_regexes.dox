@@ -1,0 +1,155 @@
+/** @page generic_regexes Generic Regular Expressions (The Boring Kind)
+
+This page details the generic concept of regular expressions and may exclude certain implementation-specific concepts.  The BARF implementation of regular expressions has certain extensions and caveats which are described fully in @ref regexes_in_barf.
+
+A <strong>regular expression</strong> (regex) is a syntactical form for compactly specifying a regular language.  In other words, a regex is a string which defines a set of strings which are acceptable to the machine using the regex.  Examples of regular expressions:
+
+@verbatim xyz @endverbatim
+@verbatim hip{2}o @endverbatim
+@verbatim this|that @endverbatim
+@verbatim smashy( smashy)* @endverbatim
+
+@section generic_regexes_structure_of_a_regex Structure Of A Regular Expression
+TODO: write about regexes, branches, pieces, atoms, etc -- in the context of parsing a regex
+
+@section generic_regexes_atoms Atoms
+In the context of a regex, atoms are the most basic components from which more complicated regexes are created (hence the "atom" metaphor).  You can think of an atom as accepting a single character (though technically the special "conditional" characters count as atoms, but they will not be discussed in this page).  There are several forms of atoms.
+    <ul>
+    <li>A non-special <strong>normal character</strong> (the special characters are ones used in operators such as <tt>(</tt> <tt>)</tt> (parentheses), <tt>{</tt> <tt>}</tt> (curly braces), <tt>?</tt> (question mark), <tt>*</tt> (asterisk), <tt>+</tt> (plus) and <tt>|</tt> (pipe), as well as <tt>[</tt> <tt>]</tt> (square brackets), <tt>^</tt> (carat), <tt>$</tt> (dollar sign), <tt>.</tt> (period) and <tt>\\</tt> (backslash)).  Characters such as <tt>a</tt> or <tt>@@</tt> or space or <tt>\\n</tt> (newline) are considered normal characters and have no special meaning.  Basically any character that is not special in the current context is normal.  Each non-special character will accept only itself (e.g. <tt>a</tt> accepts only <tt>a</tt>, <tt>\\n</tt> accepts only <tt>\\n</tt>).
+    <li>The <strong>match-all</strong> <tt>.</tt> (period).  The period is used as shorthand for any non-newline character, and thus will accept any character except for <tt>\\n</tt> (newline).
+    <li>An <strong>escaped character</strong> -- a <tt> \\ </tt> (backslash) followed by any character (though some implementations do not allow normal characters to be escaped).  If the escaped character is a special character, then it loses its special meaning and becomes a normal character, accepting its literal value.  An escaped normal character does not change, and continues to accept itself (assuming the specific implementation allows escaped normal characters).  To accept a literal backslash, an escaped backslash must be used -- <tt> \\\\ </tt>
+    <li>A <strong>bracket expression</strong> is a terse way to specify a set of acceptable characters, without having to explicitly list each one.  A bracket expression is enclosed by the <tt>[</tt> <tt>]</tt> (bracket) characters.  The format of a bracket expression varies by implementation (so its full description can be found in @ref regexes_in_barf), but generally they allow:
+        <ul>
+        <li>Single characters -- the sets of normal and special characters within a bracket expression are different than for those in the atom context as described above.  Escaping and use of normal/special characters varies by implementation.  However, most of the normal characters in an atom are also normal in a bracket expression (the alphabetic and numeric characters for example).
+            This bracket expression accepts the string "j".
+            @verbatim [j] @endverbatim
+            This bracket expression accepts the strings "j", "u", "n", or "k".
+            @verbatim [junk] @endverbatim
+        <li>Character ranges -- a hyphen-delimited range of characters.  The numeric value of each character is indicated by the current locale (BARF specifically uses ASCII).
+            This bracket expression accepts "a", "b", "c", "d", "e" or "f".
+            @verbatim [a-f] @endverbatim
+            A character range may have only two endpoints -- the bracket expression <tt>[0-3-6]</tt> is invalid.  The way to use a literal <tt> - </tt> (hyphen) within a range is implementation-specific.  POSIX regular expressions indicate that it must be either the first or last character within the <tt>[</tt> <tt>]</tt> brackets, or the right-side (ending) character in a range (BARF implements this differently -- see @ref regexes_in_barf).
+        <li>Character classes -- of the form <tt>[:classname:]</tt>, character classes are predefined sets of characters which are defined by the current locale (BARF uses specifically ASCII).  See the manpage for <tt>wctype</tt> for details on each.
+        <li>Set negation -- indicated by the <tt>^</tt> (carat) character immediatly after the opening <tt>[</tt> bracket.  This serves to negate the set, causing the bracket expression to match everything @em except those specified within.  This bracket expression accepts all single-character strings except "a", "b" and "c".
+            @verbatim [^a-c] @endverbatim
+        </ul>
+        Bracket expressions can contain a series of the above-listed elements concatenated together.  For example, the following bracket expression accepts the strings "a", "b", "c", "x", "0", "1", "2", "3", "4", "5", "6", "7", "8" or "9".
+        @verbatim [a-cx[:digit:]] @endverbatim
+    <li>A parenthesized regular expression.  Though this doesn't necessarily accept a single character, it does behave as a single atom within the context of the regex operators (see @ref generic_regexes_operations).
+    </ul>
+
+@section generic_regexes_operations Operations
+Regular expressions use a terse notation -- they wouldn't be very useful if each regex string was longer than the strings each accepts.  For the sake of simplicity, the examples in this section will not use escaped characters or bracket expressions.  The operations are as follows, in order of highest to lowest precedence.
+
+    <ul>
+    <li>Parenthesized subexpressions -- used for grouping sequences, overriding the higher precedence of other operations (as in common arithmetic).  The grouped subexpression must be a regular expression in its own right.  Examples:
+        <ul>
+        <li>Trivial subgrouping which is equivalent to the regex <tt>hippo</tt>
+            @verbatim (hippo) @endverbatim
+        <li>The empty string is an acceptable regex.  Accepts only the empty string.
+            @verbatim () @endverbatim
+        <li>Accepts zero or more iterations of the sequence <tt>hippo</tt> -- it accepts "hippo", "hippohippo", "hippohippohippo", etc.
+            @verbatim (hippo)+ @endverbatim
+        <li>Contrast this the example to the above -- because iteration has higher precedence than concatenation, only the last "o" will be repeated.  This regex accepts "hippo", "hippo", "hippoo", "hippooo", etc.
+            @verbatim hippo+ @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>(hipp)((o)+)</tt>
+        <li>Accepts "what about a hippopotamus" or "what about an ostrich".
+            @verbatim what about (a hippopotamus|an ostrich) @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>(what about )((a hippopotamus)|(an ostrich))</tt>
+        <li>Contrast this example to the above -- because concatenation has higher precedence than alternation, the entire sequence <tt>what about a hippopotamus</tt> will be alternated with the sequence <tt>an ostrich</tt> -- it accepts "what about a hippopotamus" or "an ostrich".
+            @verbatim what about a hippopotamus|an ostrich @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>(what about a hippopotamus)|(an ostrich)</tt>
+        <li>Accepts "PirateNinja", "PirateZombie", "RobotNinja" or "RobotZombie".
+            @verbatim (Pirate|Robot)(Ninja|Zombie) @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>((Pirate)|(Robot))((Ninja)|(Zombie))</tt>
+        </ul>
+    <li>Iteration -- is a right-side unary operator.  The left-side operand should be repeated a number of times, the number being indicated by the right-side operator.  There are several forms of this.  The most generic is called a "bound" and uses a pair of non-negative integers indicating a range of acceptable iterations.  There are two alternate versions of the bound notation, and three shorthand single-character operators for the commonly used "zero or one", "zero or more" and "one or more".
+        <ul>
+        <li>The basic form of a bound is a range of non-negative integers, the left-side value being less than or equal to the right-side value.  Accepts "aaa", "aaaa" or "aaaaa".
+            @verbatim a{3,5} @endverbatim
+        <li>Using zero as a range value is also acceptable, keeping in mind that the relation between the values must be respected.  This regex accepts the empty string, "a", "aa" or "aaa".
+            @verbatim a{0,3} @endverbatim
+        <li>The second form of a bound leaves out the upper limit on the range.  This particular regex indicates that at least 2 iterations of the operand "a" must occur for the string to be accepted.  It accepts "aa", "aaa", "aaaa", etc.
+            @verbatim a{2,} @endverbatim
+        <li>Again, using zero as the lower limit for the open-ended bound is acceptable.  It indicates that any number of iterations of the operand is acceptable.  This regex accepts the empty string, "a", "aa", "aaa", etc.
+            @verbatim a{0,} @endverbatim
+        <li>The third form of a bound gives a single value indicating the only number of acceptable iterations.  This regex accepts only "aaaaaaaaaaaaaaaaa" (that's 17 iterations of the letter 'a').
+            @verbatim a{17} @endverbatim
+        <li>Zero is also acceptable in the third form of a bound.  This regex accepts only the empty string.
+            @verbatim a{0} @endverbatim
+        <li>The <tt>?</tt> character is used as shorthand for a bound accepting 0 or 1 iterations of the operand (<tt>?</tt> is equivalent to <tt>{0,1}</tt>.  This regex accepts the empty string or "a".
+            @verbatim a? @endverbatim
+        <li>The <tt>*</tt> character is used as shorthand for a bound accepting 0 or more iterations of the operand (<tt>*</tt> is equivalent to <tt>{0,}</tt>.  This regex accepts the empty string, "a", "aa", "aaa", etc.
+            @verbatim a* @endverbatim
+        <li>The <tt>+</tt> character is used as shorthand for a bound accepting 1 or more iterations of the operand (<tt>+</tt> is equivalent to <tt>{1,}</tt>.  This regex accepts "a", "aa", "aaa", etc.
+            @verbatim a+ @endverbatim
+        <li>Iteration has higher precedence than concatenation.  This regex accepts "ab", "abb", "abbb", etc.
+            @verbatim ab+ @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>(a)((b)+)</tt>
+        <li>If iteration of the sequence <tt>ab</tt> was desired, then the following regex would be used to accept "ab", "abab", "ababab", etc.
+            @verbatim (ab)+ @endverbatim
+        </ul>
+    <li>Concatenation -- indicates that the left-side operand should precede the right-side operand.  There is no physical operator character for this operation; it is performed by simply placing the operators next to one another in the regex.  Examples:
+        <ul>
+        <li>Only accepts the string "ab"
+            @verbatim ab @endverbatim
+        <li>Accepts the strings "ac", "ad", "bc" or "bd"
+            @verbatim (a|b)(c|d) @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>((a)|(b))((c)|(d))</tt>
+        <li>Accepts the string "ostrich!"
+            @verbatim ostrich! @endverbatim
+        <li>Iteration has higher precedence than concatenation.  Thus this regex accepts the strings "ostrich", "ostrich!", "ostrich!!", "ostrich!!!", etc.
+            @verbatim ostrich!* @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>(ostrich)((!)*)</tt>
+        <li>Accepts a string containing at least one of each of the letters, in order -- for example, "slow", "ssssslowww", "ssslllooowww", "sslllllloooooooooow", etc.
+            @verbatim s+l+o+w+ @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>((s)+)((l)+)((o)+)((w)+)</tt>
+        </ul>
+    <li>Alternation -- indicates that either the left-side operand or the right-side operand is acceptable, but not both.
+        <ul>
+        <li>Accepts "hippo" or "ostrich".
+            @verbatim hippo|ostrich @endverbatim
+        <li>Accepts "hippo" or the empty string.
+            @verbatim hippo| @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>(hippo)|()</tt>
+        <li>Accepts a string containing any nonempty sequence of the words "Hippo" or "Ostrich" -- for example, "Hippo", "Ostrich", "HippoHippo", "HippoOstrich", "OstrichHippoOstrichOstrichHippo", etc.
+            @verbatim (Hippo|Ostrich)+ @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>((Hippo)|(Ostrich))+</tt>
+        <li>Iteration has higher precedence than alternation, this regex alternates the sequences <tt>Hippo</tt> and <tt>(Ostrich)+</tt> thus accepting the strings "Hippo", "Ostrich", "OstrichOstrich", "OstrichOstrichOstrich", etc.
+            @verbatim (hippo)|(ostrich)+ @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>(hippo)|((ostrich)+)</tt>
+        <li>Contrast this example to the above -- because iteration has a higher precedence than both concatenation and alternation, it accepts the strings "Hippo", "Ostrich", "Ostrichh", "Ostrichhh", etc.
+            @verbatim Hippo|Ostrich+ @endverbatim
+            Equivalent to the unambiguously parenthesized regex: <tt>(Hippo)|((Ostric)((h)+))</tt>
+        </ul>
+    </ul>
+
+@section generic_regexes_conditionals Conditionals In Generic Regular Expressions
+From within the context of a regular expression (not inside a bracket expression), the characters <tt>^</tt> (carat) and <tt>$</tt> (dollar sign) are special -- they match the empty string at the beginning of the line and the end of the line, respectively.  The beginning of a line is denoted by the beginning of input, or if a newline was just accepted.  The end of a line is denoted by the end of input, or if the next character in the unread input is a newline.
+
+These two special characters are referred to as conditionals, in that they don't accept any physical input, but rather require certain input conditions to be met to accept.  In various regex implementations, other conditionals exist, such as:
+
+    <ul>
+    <li>Word boundary -- matches the empty string when the most recently accepted character is [a-zA-Z0-9_] and the next unread character is not, or vice versa.
+    <li>Not a word boundary -- matches the empty string when the word boundary condition is not met
+    <li>Beginning/end of input -- matches the empty string at the beginning or end of input
+    <li>Not beginning/end of input -- matches the empty string when the beginning/end of input condition is not met
+    <li>Not beginning/end of line -- the negation of the conditions indicated by <tt>^</tt> and <tt>$</tt>
+    </ul>
+
+Here is an illustrative example.
+
+@verbatim two
+lines! @endverbatim
+
+    <ul>
+    <li>Using the above text as input, the beginning-of-line condition <tt>^</tt> (carat) is met before the characters <tt>t</tt> and <tt>l</tt>, since they're both at the beginning of the line.
+    <li>The end-of-line condition <tt>$</tt> (dollar sign) is met after the characters <tt>o</tt> and <tt>!</tt>, since they're both at the end of the line.
+    <li>The word-boundary condition is met before the character <tt>t</tt>, after the character <tt>o</tt>, before the character <tt>l</tt>, and after the character <tt>s</tt>.
+    <li>The not-a-word-boundary condition is met in between the character pairs <tt>tw</tt>, <tt>wo</tt>, <tt>li</tt>, <tt>in</tt>, <tt>ne</tt>, <tt>es</tt> and after the character <tt>!</tt>.
+    <li>By now, you can probably guess where the other two aforementioned conditionals are satisfied (and frankly I'm sick of typing examples).
+    </ul>
+
+Again, see @ref regexes_in_barf for implementation-specific details.
+
+*/

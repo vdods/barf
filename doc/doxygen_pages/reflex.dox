@@ -1,0 +1,114 @@
+/** @page reflex Reflex
+
+TODO: detailed description of what reflex is
+
+Throughout this document, the term "primary source file" will be used to refer to the <tt>.reflex</tt> source file which is written by the user and is directly parsed by <tt>reflex</tt>.
+
+@section reflex_commandline Using Reflex From The Commandline
+The help message is printed by issuing the following command (the dollar sign indicates a unix-style command prompt, and isn't part of the command to issue).
+@verbatim
+$ reflex -h
+@endverbatim
+The help menu describes all commandline options in great detail.  The simplest way to use reflex to compile a <tt>.reflex</tt> source file is to run it as follows.
+@verbatim
+$ reflex -I path/to/data/directory input.reflex -o desired/output/directory/
+@endverbatim
+Slashes should be replaced with backslashes appropriately for different operating systems.  The "data" directory is the directory containing <tt>reflex.*.langspec</tt> and <tt>reflex.*.codespec</tt> files.  In the BARF tarball, this is the <tt>barf/data</tt> directory.  You can also set the environment variable BARF_DATA_PATH to the (absolute) path instead of using the <tt>-I</tt> option.
+
+@section reflex_format Format Of The Reflex Source File
+A primary source file is divided into two parts -- the preamble and the scanner specification.
+
+Everything at the top of the file, above the %% delimiter, is the preamble.  The preamble is where certain meta-properties are declared via directives:
+    <ul>
+    <li>Target language(s) -- indicates that scanners will be generated for each of the given target languages, with each language corresponding to a "langspec" file in the data directory.  This directive is optional; if omitted, <tt>reflex</tt> will process the specified scanner and internally generate the corresponding state machine, emitting warnings and errors if necessary, but will not generate any source code.  For example, @verbatim %target_languages cpp @endverbatim
+    <li>Target-language-specific directives -- as mentioned earlier, each target language an associated <tt>reflex.*.langspec</tt> (e.g. <tt>reflex.cpp.langspec</tt> for the <tt>cpp</tt> target) which defines what language-specific directives are available, which ones are required to be supplied in the <tt>.reflex</tt> source, as well as the parameter type for each.  For example, the <tt>ccp</tt> target only requires the <tt>class_name</tt> directive be specified; this would be done as @verbatim %language.cpp.class_name AwesomeScanner @endverbatim
+    <li>Regular expression macros -- are simple macro definitions for convenient in later <tt>\%macro</tt> directives or in scanner regexes.  For example, @verbatim %macro DIGIT ([0-9]) @endverbatim
+    <li>Starting state -- is the single required preamble directive.  It specifies the name of the default starting state, choosing from those defined after the preamble.  For example, @verbatim %start MAIN @endverbatim
+    </ul>
+The preamble is newline-sensitive, so each directive must be on its own line (though there can be an arbitrary number of newlines between directive lines).
+
+It should be noted that the preamble for both <tt>reflex</tt> and <tt>trison</tt> are nearly identical in format -- the exception being the tool-specific directives such as <tt>\%macro</tt> on the <tt>reflex</tt> side, and XXX (TODO: fill in later) on the <tt>trison</tt> side.
+
+Below the %% delimiter is the scanner state specification.  The format is comprised of one or more scanner states, each containing zero or more regex rules.  Each scanner state is essentially a unique mode of operation which dictates what regex rules can be accepted at any given time.  When the scanner is in a particular scanner state, only the regex rules specified within can be accepted.  The generated scanner code will provide facilities for switching the current scanner state at runtime.
+
+Scanner states are useful in separating modes of operation, such as scanning the body of a string literal, or ignoring everything except the closing delimiter of a block-style comment.
+
+Each regex rule in each scanner state must specify, for each target language declared in the preamble, a segment of code known as a rule handler.  This code will be executed when the corresponding regex has been successfully matched by the generated scanner.
+
+The following is an example primary source file which uses the <tt>cpp</tt> target.
+@verbatim
+%target_languages cpp
+
+%language.cpp.class_name AwesomeScanner
+%language.cpp.header_filename "awesome.hpp"
+%language.cpp.implementation_filename "awesome.cpp"
+%language.cpp.bottom_of_implementation_file %{
+int main (int argc, char **argv)
+{
+    AwesomeScanner scanner;
+    while (!scanner.IsAtEndOfInput())
+        scanner.Scan();
+    return 0;
+}
+%}
+
+%macro DIGIT ([0-9])
+%macro INTEGER ({DIGIT}+)
+
+%start MAIN
+
+%%
+
+%state MAIN
+:
+    ({INTEGER}) %language.cpp { std::cout << "integer" << std::endl; }
+|
+    ([\t\n ]) %language.cpp { std::cout << "whitespace" << std::endl; }
+|
+    ([*+]) %language.cpp { std::cout << "operator" << std::endl; }
+|
+    (\z) %language.cpp { std::cout << "EOF" << std::endl; return; }
+|
+    (/[*]) %language.cpp { TransitionToState(State::BLOCK_COMMENT); }
+;
+
+%state BLOCK_COMMENT
+:
+    ([*]/) %language.cpp { std::cout << "block comment" << std::endl; TransitionToState(State::MAIN); }
+|
+    ([^*]+|[*]) %language.cpp { }
+|
+    (\z) %language.cpp { std::cout << "unterminated block comment" << std::endl; TransitionToState(State::MAIN); }
+;
+@endverbatim
+
+TODO: overview of how a scanner functions
+
+@section reflex_using_targets Using Targets
+See @ref langspec_and_codespec.
+
+Using a particular target in a <tt>reflex</tt> scanner is straightforward.  Add its identifier (e.g. <tt>cpp</tt>) to the <tt>\%target_languages</tt> directive at the top of the source file.  This will cause <tt>reflex</tt> to look for a langspec file in the data path (TODO: make ref) corresponding to a the identifier specified, using a canonical form of <tt>reflex.XXX.langspec</tt> where <tt>XXX</tt> is the target's identifier.  The langspec file defines the target-specific interaction between the primary source file and the generated code, which is produced using the codespec files it indicates.
+
+Adding another target to the <tt>\%target_languages</tt> directive will cause <tt>reflex</tt> to require that certain directives, as specified by the corresponding langspec, are defined in the primary source file.  The langspec file mainly consists of specifications for "required" and "optional" directives.  As expected, all "required" directives established by the langspec must be present in the primary source file, or indicative error messages will be emitted.
+
+The langspec file will also require that the filename(s) of the output file(s) be specified.
+
+A langspec directive value is specified in the following manner.
+
+@verbatim
+%language.target_name.directive_name directive_value
+@endverbatim
+
+Where <tt>target_name</tt> is the name of the target (e.g. <tt>cpp</tt>), <tt>directive_name</tt> is the langspec-specified identifier for the particular directive, and <tt>directive_value</tt> is the value for the directive, of a type specified by the langspec (see @ref langspec_and_codespec for details on these types).  These directives go in the preamble of the primary source, so they are sensitive to newlines; there must not be a newline anywhere between the opening <tt>\%</tt> and the beginning of <tt>directive_value</tt>.
+
+In addition to adding the directive values required by the langspec, you must also add code handlers for all regex rules, using the following form.
+
+@verbatim
+    (whatever regex) %language.XXX { code goes here }
+@endverbatim
+
+These declarations are in the body of the primary source, so are not newline-sensitive.  If rule handler code isn't present for each target for each regex, error messages will be emitted.
+
+At this point, you should have enough working knowledge to use <tt>reflex</tt> to implement a scanner using the target of your choice.
+
+*/

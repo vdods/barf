@@ -1,0 +1,330 @@
+/** @page regexes_in_barf Regular Expressions As Implemented By BARF (The Awesome Kind)
+
+I would recommend reading @ref generic_regexes for background on regular expressions before proceeding.
+
+@section regexes_in_barf_escape_characters Necessarily Escaped Characters
+In order to represent non-printable characters escape codes must be used.  The printable characters (see the manpage for wctype) are defined by the current locale (BARF uses specifically ASCII).  For ASCII, the printable characters are characters in the range from space (ASCII value 32), to <tt>~</tt> (tilde; ASCII value 126).  Some terminals are able to print characters in the extended ASCII character set (values between 128 and 255), but for the sake of portability, these "extended" characters will be considered unprintable (and thus require an escape code).
+
+An escaped character consists of a backslash followed by a single character (or formatted sequence in the case of hexadecimal escape characters).  For example, a newline is represented as <tt>\\n</tt> while <tt>\\xF3</tt> represents the ASCII character with numeric value 0xF3.  The necessarily escaped characters are:
+
+    <ul>
+    <li><tt>\\a</tt> (bell character)
+    <li><tt>\\b</tt> (backspace)
+    <li><tt>\\t</tt> (tab)
+    <li><tt>\\n</tt> (newline)
+    <li><tt>\\v</tt> (vertical tab)
+    <li><tt>\\f</tt> (form feed)
+    <li><tt>\\r</tt> (carriage return)
+    <li><tt>\\x#</tt> (hexadecimal character literal) -- # represents a string with length of at least one, composed of the hexadecimal digits <tt>[0-9a-fA-F]</tt> indicating the value of an unsigned hexadecimal integer.  If <tt>\\x</tt> is not followed by any hexadecimal characters, it is an error.  A hexadecimal character value can technically be any value, but values above <tt>\\xFF</tt> will be truncated.  It is preferred to use two hexadecimal characters for the value string, indicative of the value space of the 8-bit value commonly used for a character.  Any value, including printable characters which otherwise don't need any escaping, may be represented in this format.
+    </ul>
+
+It is an error to have a single backslash at the end of a regular expression.
+
+@section regexes_in_barf_atom_characters Atom-Context Normal And Special Characters
+In the context of atoms (i.e. in the non-bracket-expression body of a regex), the following characters have special meaning, and must be escaped to be used literally.
+
+    <ul>
+    <li><tt>(</tt> and <tt>)</tt> (parentheses) -- grouping delimiters
+    <li><tt>{</tt> and <tt>}</tt> (curly braces) -- bound delimiters
+    <li><tt>[</tt> and <tt>]</tt> (square brackets) -- bracket expression delimiters
+    <li><tt>|</tt> (pipe) -- alternation operator
+    <li><tt>?</tt> (question mark) -- indicates 0 or 1 of the previous atom
+    <li><tt>*</tt> (asterisk) -- indicates 0 or more of the previous atom
+    <li><tt>+</tt> (plus) -- indicates 1 or more of the previous atom
+    <li><tt>.</tt> (period) -- matches any character except newline
+    <li><tt>^</tt> (carat) -- matches the empty string at the beginning of a line
+    <li><tt>$</tt> (dollar sign) -- matches the empty string at the end of a line
+    <li><tt>\\</tt> (backslash) -- used for escaping characters
+    </ul>
+
+All other printable characters (see @ref regexes_in_barf_escape_characters) have no special meaning, and can be used directly, each accepting itself literally.  Any normal character can be escaped, and unless it is one of those listed in @ref regexes_in_barf_conditionals, it will remain unchanged.  Non-printable characters will be ignored.  For example, a literal newline character within a regular expression will have no effect; it will be as if the newline didn't exist.
+
+Some implementations of regexes have caveats about when certain special characters can be used as normal characters without escaping (such as allowing <tt>)</tt> as a normal character in the atom-context of a POSIX regex).  This is entirely avoided in BARF for purposes of simplicity and consistency.  The rule is that any special character in the applicable context must be escaped to use literally.  If this is ever not the case, it is a bug in BARF.
+
+@section regexes_in_barf_bracket_characters Bracket-Expression-Context Normal And Special Characters
+In the context of bracket expressions, the following characters have special meaning, and must be escaped to be used literally.
+
+    <ul>
+    <li><tt>[</tt> and <tt>]</tt> (square brackets) -- character class (and bracket expression) delimiters
+    <li><tt>-</tt> (hyphen) -- character range operator
+    <li><tt>^</tt> (carat) -- bracket expression negation operator
+    <li><tt>\\</tt> (backslash) -- used for escaping characters
+    </ul>
+
+Just like in the atom context, all other printable characters (see @ref regexes_in_barf_escape_characters) have no special meaning, and can be used directly, each accepting itself literally.  In the context of bracket expressions, there are no special escaped characters such as the conditionals described in @ref regexes_in_barf_conditionals.  Escaping any character in a bracket expression will cause it to accept itself literally.  The necessarily escaped characters such as hexadecimal escape characters, <tt>\\t</tt> (tab), <tt>\\n</tt> (newline), etc, accept themselves as would be expected.  Non-printable characters will be ignored.
+
+Some implementations of regexes have caveats about when certain special characters can be used as normal characters without escaping (such as allowing <tt>]</tt> if it is the first character, possibly following a <tt>^</tt>, as a normal character in the bracket-expression-context of a POSIX regex).  This is entirely avoided in BARF for purposes of simplicity and consistency.  The rule is that any special character in the applicable context must be escaped to use literally.  If this is ever not the case, it is a bug in BARF.
+
+@section regexes_in_barf_conditionals Conditionals In BARF Regular Expressions
+In addition to the <tt>^</tt> and <tt>$</tt> (beginning and end of line) generic regex conditionals, BARF provides several others in the form of escaped characters.  They are the following.
+
+    <ul>
+    <li><tt>^</tt> (carat) -- the generic regex special character which accepts the empty string at the beginning of a line
+    <li><tt>$</tt> (dollar sign) -- the generic regex special character which accepts the empty string at the end of a line
+    <li><tt>\\b</tt> -- accepts the empty string at a word boundary (i.e. the previous character matches <tt>[a-zA-Z0-9_]</tt> and the next character doesn't, or vice versa)
+    <li><tt>\\B</tt> -- is the opposite of <tt>\\b</tt> in that it accepts the empty string anywhere that isn't at a word boundary (i.e. both the previous and next characters match <tt>[a-zA-Z0-9_]</tt> or they both don't)
+    <li><tt>\\e</tt> -- is equivalent to <tt>$</tt> and is included for consistency -- it accepts the empty string at the end of a line
+    <li><tt>\\E</tt> -- is the opposite of <tt>$</tt> and <tt>\\e</tt> in that it accepts the empty string anywhere that isn't the end of a line
+    <li><tt>\\l</tt> -- is equivalent to <tt>^</tt> and is included for consistency -- it accepts the empty string at the beginning of a line
+    <li><tt>\\L</tt> -- is the opposite of <tt>^</tt> and <tt>\\l</tt> in that it accepts the empty string anywhere that isn't the beginning of a line
+    <li><tt>\\y</tt> -- accepts the empty string at the beginning of input (e.g. at the beginning of the input file)
+    <li><tt>\\Y</tt> -- is the opposite of <tt>\\y</tt> in that it accepts the empty string anywhere that isn't the beginning of input
+    <li><tt>\\z</tt> -- accepts the empty string at the end of input (e.g. at the end of the input file)
+    <li><tt>\\Z</tt> -- is the opposite of <tt>\\z</tt> in that it accepts the empty string anywhere that isn't the end of input
+    </ul>
+
+@section regexes_in_barf_examples Example Regular Expressions
+Here are some examples illustrating the usage of the forms described above, as they may be unfamiliar to someone used to a different implementation of regexes (e.g. <tt>grep</tt>'s POSIX regexes).
+
+    <ul>
+    <li>Accepts "ostrich" and "head" separated by a tab character.
+        @verbatim ostrich\thead @endverbatim
+    <li>Alternate version of the above example -- 0x09 is the hex value for the ASCII tab character.
+        @verbatim ostrich\x09 @endverbatim
+    <li>Accepts "Content-Type: text/plain" followed by 2 newline characters.
+        @verbatim Content-Type: text/plain\n\n @endverbatim
+    <li>Accepts the string "HIPPO".
+        @verbatim \x48\x49\x50\x50\x4F @endverbatim
+    <li>This is an error because <tt>]</tt> is a special character and must be escaped to use in the atom context.
+        @verbatim ] @endverbatim
+    <li>This is the correct form of the above attempt, which accepts the string "]".
+        @verbatim \] @endverbatim
+    <li>Accepts the string "(){}[]|?*+.^$\".
+        @verbatim \(\)\{\}\[\]\|\?\*\+\.\^\$\\ @endverbatim
+    <li>Accepts "hippos are my favorite.", "ostriches are my favorite." or "dromedaries are my favorite." (notice the escaped period at the end).
+        @verbatim (hippos|ostriches|dromedaries) are my favorite\. @endverbatim
+    <li>Accepts any string of length 10 not containing a newline.
+        @verbatim .{10} @endverbatim
+    <li>Accepts any string of even length containing any digit.
+        @verbatim ([0-9][0-9])* @endverbatim
+    <li>Alternate form of the above example.
+        @verbatim ([0-9]{2})* @endverbatim
+    <li>This is an erroneous form of the above example -- a bound must not directly follow a bound (this is a limitation on the part of the grammar which will allow the currently unimplemented syntax for greedy matching -- a question mark after a bound -- to cause less confusion).
+        @verbatim [0-9]{2}* @endverbatim
+    <li>Accepts the string "donkey" if it spans the entire line from beginning to end.
+        @verbatim ^donkey$ @endverbatim
+    <li>Alternate form of the above example, using BARF's equivalent conditional escape codes.
+        @verbatim \ldonkey\e @endverbatim
+    <li>Accepts the string "donkey" as long as it doesn't occur at the beginning or end of the line.
+        @verbatim \Ldonkey\E @endverbatim
+    <li>Accepts any character.
+        @verbatim .|\n @endverbatim
+    <li>Accepts any string not containing a decimal digit.
+        @verbatim [^0-9]* @endverbatim
+    <li>Alternate form of the above example, using a character class.
+        @verbatim [^[:digit:]]* @endverbatim
+    <li>Non-bracket-expression regex which accepts any string containing only any of the atom-context special characters (e.g. "$$^^())([][]{}...$$\\$").
+        @verbatim \(\)\{\}\[\]\|\?\*\+\.\^\$\\ @endverbatim
+    <li>Bracket expression form of the above example.  Note which characters are escaped and which are not.
+        @verbatim [(){}\[\]|?*+.\^$\\] @endverbatim
+    <li>Non-bracket-expression regex which accepts any string containing only any of the bracket-expression-context special characters (e.g. "--[--[]-^^--\\\\--][").  Note which characters are escaped and which are not.
+        @verbatim \[\]-\^ @endverbatim
+    <li>Bracket expression form of the above example.
+        @verbatim [\[\]\-\^] @endverbatim
+    <li>Accepts the word "LOL" typed at any and every retarded volume.
+        @verbatim LOL!* @endverbatim
+    <li>Slightly more retarded version of the above example.
+        @verbatim L(OL)+!* @endverbatim
+    <li>The retardedest (yes, I said "retardedest") version yet.
+        @verbatim L(OL)+!+1+(one)+ @endverbatim
+    </ul>
+
+@section regexes_in_barf_fa_generation Finite Automaton Generation
+This section describes how BARF converts a regular expression into the finite automaton which accepts it.  The final result is a DFA (which is the easiest FA to implement and the fastest to run).  This happens in the following stages.
+
+    <ul>
+    <li>The regex string is parsed using an LALR(1) parser.  An AST representation of the regex is the result of this process.
+    <li>An NFA is generated by traversing the AST, generating sub-NFAs for each node.  The starting state and set of accept states is recorded.
+    <li>A DFA is generated from the NFA using the subset construction algorithm, which uses the starting state and set of accept states from the NFA.  A new starting state and set of accept states is produced.
+    </ul>
+
+All the regular expression facilities of BARF are contained within the Barf::Regex namespace, all the files of which are located in the lib/regex directory.
+
+@subsection regexes_in_barf_fa_generation_parsing Parsing Regular Expressions
+BARF performs parsing of regular expressions using an LALR(1) grammar parser class (Barf::Regex::Parser) generated by <tt>trison</tt>.  The grammar source file is barf_regex_parser.trison and the AST classes it uses are defined in the files barf_regex_ast.hpp and barf_regex_ast.cpp .  Here is the AST resulting from parsing the regex <tt>^/{2}.*|\\n|"[^"]*"</tt> -- that is, one which accepts C++ style comments which start at the beginning of a line, newlines, or simple C-style string literals without any escaped characters.
+
+@dot
+digraph "AST" {
+    fontname=courier;
+    node [shape=box, fontname=courier];
+
+    subgraph cluster {
+        label="AST";
+
+        node [label="^/{2}.*|\\n|\"[^\"]*\""];
+        root
+
+        node [label="^/{2}.*"];
+        branch_0
+        node [label="{1}"];
+        bound_0_0
+        node [label="^"];
+        atom_0_0
+        node [label="{2}"];
+        bound_0_1
+        node [label="/"];
+        atom_0_1
+        node [label="{0,}"];
+        bound_0_2
+        node [label="."];
+        atom_0_2
+
+        node [label="\\n"];
+        branch_1
+        node [label="{1}"];
+        bound_1_0
+        node [label="\\n"];
+        atom_1_0
+
+        node [label="\"[^\"]*\""];
+        branch_2
+        node [label="{1}"];
+        bound_2_0
+        node [label="\""];
+        atom_2_0
+        node [label="{0,}"];
+        bound_2_1
+        node [label="[^\"]"];
+        atom_2_1
+        node [label="{1}"];
+        bound_2_2
+        node [label="\""];
+        atom_2_2
+
+        root -> branch_0
+        root -> branch_1
+        root -> branch_2
+
+        branch_0 -> bound_0_0
+        bound_0_0 -> atom_0_0
+        branch_0 -> bound_0_1
+        bound_0_1 -> atom_0_1
+        branch_0 -> bound_0_2
+        bound_0_2 -> atom_0_2
+
+        branch_1 -> bound_1_0
+        bound_1_0 -> atom_1_0
+
+        branch_2 -> bound_2_0
+        bound_2_0 -> atom_2_0
+        branch_2 -> bound_2_1
+        bound_2_1 -> atom_2_1
+        branch_2 -> bound_2_2
+        bound_2_2 -> atom_2_2
+    }
+}
+@enddot
+
+If an error is encountered, an exception is thrown -- this is done because the regex facilities in BARF are used as utility functions from within other applications, and to avoid uncontrolled printing of error messages, errors are indicated via exceptions.
+
+@subsection regexes_in_barf_fa_generation_nfa_generation NFA Generation
+Once a regular expression has been successfully parsed and exists in AST form, an NFA can be generated by walking the AST recursively, generating sub-NFAs for each sub-regex and constructing certain forms of NFA for each construct.  The generic Barf::Graph class and its subordinates (which are defined in barf_graph.hpp and barf_graph.cpp) are used to represent the NFA (as well as all FAs in BARF).  The start and accept states are labeled, and each node is numbered, for reference later in the corresponding DFA.
+
+@dot
+digraph "NFA" {
+    fontname=courier;
+    subgraph cluster {
+        label="NFA";
+        node [label="0:accept", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        0
+        node [label="1:start", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=2];
+        1
+        node [label="2", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        2
+        node [label="3", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        3
+        node [label="4", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        4
+        node [label="5", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        5
+        node [label="6", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        6
+        node [label="7", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        7
+        node [label="8", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        8
+        node [label="9", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        9
+
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        1 -> 2
+        edge [label="TT_BEGINNING_OF_LINE", fontname=courier, color="#000000", fontcolor="#000000"];
+        2 -> 3
+        edge [label="'\\n'", fontname=courier, color="#000000", fontcolor="#000000"];
+        2 -> 0
+        edge [label="'\"'", fontname=courier, color="#000000", fontcolor="#000000"];
+        2 -> 7
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        3 -> 5
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        4 -> 6
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        5 -> 4
+        edge [label="[^\\n]", fontname=courier, color="#000000", fontcolor="#000000"];
+        6 -> 6
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        6 -> 0
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        7 -> 9
+        edge [label="'\"'", fontname=courier, color="#000000", fontcolor="#000000"];
+        8 -> 0
+        edge [label="[^\"]", fontname=courier, color="#000000", fontcolor="#000000"];
+        9 -> 9
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        9 -> 8
+    }
+}
+@enddot
+
+Again, since the regex facilities in BARF are used as utility functions from within other applications, and each application requires a certain amount of customizability in the use of the generated NFAs, the NFA-generating code does not create the NFA's start or accept states -- the client application must provide these.  The client application must also take care to keep track of the provided start and accept states, as they are effectively the only point of entry/exit for the NFA.
+
+@subsection regexes_in_barf_fa_generation_dfa_generation DFA Generation
+Once an NFA has been generated, the modified subset construction algorithm (TODO: make into ref) is used to generate an equivalent DFA.  Each DFA state is actually a set of NFA states (hence the name "subset construction algorithm").  The start and accept states are labeled and each node is numbered, suffixed by ": DFA".  The corresponding set of NFA states is also indicated, suffixed by ": NFA".
+
+@dot
+digraph "DFA" {
+    fontname=courier;
+    subgraph cluster {
+        label="DFA";
+        node [label="0:start : DFA\n1:start, 2 : NFA", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=2];
+        0
+        node [label="1 : DFA\n2 : NFA", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        1
+        node [label="2:accept : DFA\n0:accept : NFA", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        2
+        node [label="3 : DFA\n8, 9 : NFA", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        3
+        node [label="4 : DFA\n2, 3 : NFA", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        4
+        node [label="5 : DFA\n5 : NFA", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        5
+        node [label="6:accept : DFA\n0:accept, 6 : NFA", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        6
+
+        edge [label="TT_NOT_BEGINNING_OF_LINE", fontname=courier, color="#000000", fontcolor="#000000"];
+        0 -> 1
+        edge [label="TT_BEGINNING_OF_LINE", fontname=courier, color="#000000", fontcolor="#000000"];
+        0 -> 4
+        edge [label="'\\n'", fontname=courier, color="#000000", fontcolor="#000000"];
+        1 -> 2
+        edge [label="'\"'", fontname=courier, color="#000000", fontcolor="#000000"];
+        1 -> 3
+        edge [label="'\"'", fontname=courier, color="#000000", fontcolor="#000000"];
+        3 -> 2
+        edge [label="[^\"]", fontname=courier, color="#000000", fontcolor="#000000"];
+        3 -> 3
+        edge [label="'\\n'", fontname=courier, color="#000000", fontcolor="#000000"];
+        4 -> 2
+        edge [label="'\"'", fontname=courier, color="#000000", fontcolor="#000000"];
+        4 -> 3
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        4 -> 5
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        5 -> 6
+        edge [label="[^\\n]", fontname=courier, color="#000000", fontcolor="#000000"];
+        6 -> 6
+    }
+}
+@enddot
+
+*/

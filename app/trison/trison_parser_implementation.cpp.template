@@ -1,0 +1,473 @@
+#include "$$HEADER_FILENAME$$"
+
+#include <cassert>
+#include <cstdio>
+#include <iomanip>
+#include <iostream>
+
+#define DEBUG_SPEW_1(x) if (m_debug_spew_level >= 1) std::cerr << x
+#define DEBUG_SPEW_2(x) if (m_debug_spew_level >= 2) std::cerr << x
+
+$$IMPLEMENTATION_FILE_TOP$$
+
+$$CLASS_NAME$$::$$CLASS_NAME$$ ()
+$$SUPERCLASS_AND_MEMBER_CONSTRUCTORS$$
+{
+$$CONSTRUCTOR_ACTIONS$$
+    m_debug_spew_level = 0;
+    DEBUG_SPEW_2("### number of state transitions = " << ms_state_transition_count << std::endl);
+    m_reduction_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;
+}
+
+$$CLASS_NAME$$::~$$CLASS_NAME$$ ()
+{
+$$DESTRUCTOR_ACTIONS$$
+}
+
+void $$CLASS_NAME$$::CheckStateConsistency ()
+{
+    unsigned int counter = 1;
+    for (unsigned int i = 0; i < ms_state_count; ++i)
+    {
+        if (ms_state[i].m_lookahead_transition_offset > 0)
+        {
+            assert(counter == ms_state[i].m_lookahead_transition_offset);
+            assert(ms_state[i].m_lookahead_transition_count > 0);
+        }
+        else
+            assert(ms_state[i].m_lookahead_transition_count == 0);
+
+        counter += ms_state[i].m_lookahead_transition_count;
+
+        if (ms_state[i].m_default_action_offset > 0)
+            ++counter;
+
+        if (ms_state[i].m_non_terminal_transition_offset > 0)
+        {
+            assert(counter == ms_state[i].m_non_terminal_transition_offset);
+            assert(ms_state[i].m_non_terminal_transition_offset > 0);
+        }
+        else
+            assert(ms_state[i].m_non_terminal_transition_offset == 0);
+
+        counter += ms_state[i].m_non_terminal_transition_count;
+    }
+    assert(counter == ms_state_transition_count);
+}
+
+$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::Parse ()
+{
+$$START_OF_PARSE_METHOD_ACTIONS$$
+
+    ParserReturnCode return_code = PrivateParse();
+
+$$END_OF_PARSE_METHOD_ACTIONS$$
+
+    return return_code;
+}
+
+bool $$CLASS_NAME$$::GetDoesStateAcceptErrorToken ($$CLASS_NAME$$::StateNumber state_number) const
+{
+    assert(state_number < ms_state_count);
+    State const &state = ms_state[state_number];
+
+    for (unsigned int transition = state.m_lookahead_transition_offset,
+                      transition_end = state.m_lookahead_transition_offset +
+                                       state.m_lookahead_transition_count;
+         transition < transition_end;
+         ++transition)
+    {
+        if (ms_state_transition[transition].m_token_type == Token::ERROR_)
+            return true;
+    }
+
+    return false;
+}
+
+$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()
+{
+    m_state_stack.clear();
+    m_token_stack.clear();
+
+    m_lookahead_token_type = Token::INVALID_;
+    m_lookahead_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;
+    m_is_new_lookahead_token_required = true;
+
+    m_saved_lookahead_token_type = Token::INVALID_;
+    m_get_new_lookahead_token_type_from_saved = false;
+    m_previous_transition_accepted_error_token = false;
+
+    m_is_returning_with_non_terminal = false;
+    m_returning_with_this_non_terminal = Token::INVALID_;
+
+    // start in state 0
+    PushState(0);
+
+    while (true)
+    {
+        StateNumber current_state_number = m_state_stack.back();
+        assert(current_state_number < ms_state_count);
+        State const &current_state = ms_state[current_state_number];
+
+        unsigned int state_transition_number;
+        unsigned int state_transition_count;
+        unsigned int default_action_state_transition_number;
+        Token::Type state_transition_token_type = Token::INVALID_;
+
+        // if we've just reduced to a non-terminal, coming from
+        // another state, use the non-terminal transitions.
+        if (m_is_returning_with_non_terminal)
+        {
+            m_is_returning_with_non_terminal = false;
+            state_transition_number = current_state.m_non_terminal_transition_offset;
+            state_transition_count = current_state.m_non_terminal_transition_count;
+            default_action_state_transition_number = 0;
+            state_transition_token_type = m_returning_with_this_non_terminal;
+        }
+        // otherwise use the lookahead transitions, with the default action
+        else
+        {
+            state_transition_number = current_state.m_lookahead_transition_offset;
+            state_transition_count = current_state.m_lookahead_transition_count;
+            default_action_state_transition_number = current_state.m_default_action_offset;
+            // GetLookaheadTokenType may cause Scan to be called, which may
+            // block execution.  only scan a token if necessary.
+            if (state_transition_count != 0)
+            {
+                state_transition_token_type = GetLookaheadTokenType();
+                DEBUG_SPEW_1("*** lookahead token type: " << state_transition_token_type << std::endl);
+            }
+        }
+
+        unsigned int i;
+        for (i = 0;
+             i < state_transition_count;
+             ++i, ++state_transition_number)
+        {
+            StateTransition const &state_transition =
+                ms_state_transition[state_transition_number];
+            // if this token matches the current transition, do its action
+            if (state_transition.m_token_type == state_transition_token_type)
+            {
+                if (state_transition.m_token_type == Token::ERROR_)
+                    m_previous_transition_accepted_error_token = true;
+                else
+                    m_previous_transition_accepted_error_token = false;
+
+                PrintStateTransition(state_transition_number);
+                if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)
+                    return PRC_SUCCESS; // the accepted token is in m_reduction_token
+                else
+                    break;
+            }
+        }
+
+        // if no transition matched, check for a default action.
+        if (i == state_transition_count)
+        {
+            // check for the default action
+            if (default_action_state_transition_number != 0)
+            {
+                PrintStateTransition(default_action_state_transition_number);
+                Action const &default_action =
+                    ms_state_transition[default_action_state_transition_number].m_action;
+                if (ProcessAction(default_action) == ARC_ACCEPT_AND_RETURN)
+                    return PRC_SUCCESS; // the accepted token is in m_reduction_token
+            }
+            // otherwise go into error recovery mode
+            else
+            {
+                assert(!m_is_new_lookahead_token_required);
+
+                DEBUG_SPEW_1("!!! error recovery: begin" << std::endl);
+
+                // if an error was encountered, and this state accepts the %error
+                // token, then we don't need to pop states
+                if (GetDoesStateAcceptErrorToken(current_state_number))
+                {
+                    // if an error token was previously accepted, then throw
+                    // away the lookahead token, because whatever the lookahead
+                    // was didn't match.  this prevents an infinite loop.
+                    if (m_previous_transition_accepted_error_token)
+                    {
+                        ThrowAwayToken(m_lookahead_token);
+                        m_is_new_lookahead_token_required = true;
+                    }
+                    // otherwise, save off the lookahead token so that once the
+                    // %error token has been shifted, the lookahead can be
+                    // re-analyzed.
+                    else
+                    {
+                        m_saved_lookahead_token_type = m_lookahead_token_type;
+                        m_get_new_lookahead_token_type_from_saved = true;
+                        m_lookahead_token_type = Token::ERROR_;
+                    }
+                }
+                // otherwise save off the lookahead token for the error panic popping
+                else
+                {
+                    // save off the lookahead token type and set the current to Token::ERROR_
+                    m_saved_lookahead_token_type = m_lookahead_token_type;
+                    m_get_new_lookahead_token_type_from_saved = true;
+                    m_lookahead_token_type = Token::ERROR_;
+
+                    // pop until we either run off the stack, or find a state
+                    // which accepts the %error token.
+                    assert(m_state_stack.size() > 0);
+                    do
+                    {
+                        DEBUG_SPEW_1("!!! error recovery: popping state " << current_state_number << std::endl);
+                        m_state_stack.pop_back();
+
+                        if (m_state_stack.size() == 0)
+                        {
+                            ThrowAwayTokenStack();
+                            DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
+                            return PRC_UNHANDLED_PARSE_ERROR;
+                        }
+
+                        assert(m_token_stack.size() > 0);
+                        ThrowAwayToken(m_token_stack.back());
+                        m_token_stack.pop_back();
+                        current_state_number = m_state_stack.back();
+                    }
+                    while (!GetDoesStateAcceptErrorToken(current_state_number));
+                }
+
+                DEBUG_SPEW_1("!!! error recovery: found state which accepts %error token" << std::endl);
+                PrintStateStack();
+            }
+        }
+    }
+
+    // this should never happen because the above loop is infinite
+    return PRC_UNHANDLED_PARSE_ERROR;
+}
+
+$$CLASS_NAME$$::ActionReturnCode $$CLASS_NAME$$::ProcessAction ($$CLASS_NAME$$::Action const &action)
+{
+    if (action.m_transition_action == TA_SHIFT_AND_PUSH_STATE)
+    {
+        ShiftLookaheadToken();
+        PushState(action.m_data);
+    }
+    else if (action.m_transition_action == TA_PUSH_STATE)
+    {
+        PushState(action.m_data);
+    }
+    else if (action.m_transition_action == TA_REDUCE_USING_RULE)
+    {
+        unsigned int reduction_rule_number = action.m_data;
+        assert(reduction_rule_number < ms_reduction_rule_count);
+        ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];
+        ReduceUsingRule(reduction_rule, false);
+    }
+    else if (action.m_transition_action == TA_REDUCE_AND_ACCEPT_USING_RULE)
+    {
+        unsigned int reduction_rule_number = action.m_data;
+        assert(reduction_rule_number < ms_reduction_rule_count);
+        ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];
+        ReduceUsingRule(reduction_rule, true);
+        DEBUG_SPEW_1("*** accept" << std::endl);
+        // everything is done, so just return.
+        return ARC_ACCEPT_AND_RETURN;
+    }
+    else if (action.m_transition_action == TA_THROW_AWAY_LOOKAHEAD_TOKEN)
+    {
+        assert(!m_is_new_lookahead_token_required);
+        ThrowAwayToken(m_lookahead_token);
+        m_is_new_lookahead_token_required = true;
+    }
+
+    return ARC_CONTINUE_PARSING;
+}
+
+void $$CLASS_NAME$$::ShiftLookaheadToken ()
+{
+    assert(m_lookahead_token_type != Token::DEFAULT_);
+    assert(m_lookahead_token_type != Token::INVALID_);
+    DEBUG_SPEW_1("*** shifting lookahead token -- type " << m_lookahead_token_type << std::endl);
+    m_token_stack.push_back(m_lookahead_token);
+    m_is_new_lookahead_token_required = true;
+}
+
+void $$CLASS_NAME$$::PushState (StateNumber const state_number)
+{
+    assert(state_number < ms_state_count);
+
+    DEBUG_SPEW_1("*** going to state " << state_number << std::endl);
+    m_state_stack.push_back(state_number);
+    PrintStateStack();
+}
+
+void $$CLASS_NAME$$::ReduceUsingRule (ReductionRule const &reduction_rule, bool and_accept)
+{
+    if (and_accept)
+    {
+        assert(reduction_rule.m_number_of_tokens_to_reduce_by == m_state_stack.size() - 1);
+        assert(reduction_rule.m_number_of_tokens_to_reduce_by == m_token_stack.size());
+    }
+    else
+    {
+        assert(reduction_rule.m_number_of_tokens_to_reduce_by < m_state_stack.size());
+        assert(reduction_rule.m_number_of_tokens_to_reduce_by <= m_token_stack.size());
+    }
+
+    DEBUG_SPEW_1("*** reducing: " << reduction_rule.m_description << std::endl);
+
+    m_is_returning_with_non_terminal = true;
+    m_returning_with_this_non_terminal = reduction_rule.m_non_terminal_to_reduce_to;
+    m_reduction_rule_token_count = reduction_rule.m_number_of_tokens_to_reduce_by;
+
+    // call the reduction rule handler if it exists
+    if (reduction_rule.m_handler != NULL)
+        m_reduction_token = (this->*(reduction_rule.m_handler))();
+    // pop the states and tokens
+    PopStates(reduction_rule.m_number_of_tokens_to_reduce_by, false);
+
+    // only push the reduced token if we aren't accepting yet
+    if (!and_accept)
+    {
+        // push the token that resulted from the reduction
+        m_token_stack.push_back(m_reduction_token);
+        PrintStateStack();
+    }
+}
+
+void $$CLASS_NAME$$::PopStates (unsigned int number_of_states_to_pop, bool print_state_stack)
+{
+    assert(number_of_states_to_pop < m_state_stack.size());
+    assert(number_of_states_to_pop <= m_token_stack.size());
+
+    while (number_of_states_to_pop-- > 0)
+    {
+        m_state_stack.pop_back();
+        m_token_stack.pop_back();
+    }
+
+    if (print_state_stack)
+        PrintStateStack();
+}
+
+void $$CLASS_NAME$$::PrintStateStack () const
+{
+    DEBUG_SPEW_2("*** state stack: ");
+    for (StateStack::const_iterator it = m_state_stack.begin(),
+                                 it_end = m_state_stack.end();
+         it != it_end;
+         ++it)
+    {
+        DEBUG_SPEW_2(*it << " ");
+    }
+    DEBUG_SPEW_2(std::endl);
+}
+
+void $$CLASS_NAME$$::PrintStateTransition (unsigned int const state_transition_number) const
+{
+    assert(state_transition_number < ms_state_transition_count);
+    DEBUG_SPEW_2("&&& exercising state transition " << std::setw(4) << std::right << state_transition_number << std::endl);
+}
+
+void $$CLASS_NAME$$::ScanANewLookaheadToken ()
+{
+    assert(!m_is_new_lookahead_token_required);
+    m_lookahead_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;
+    m_lookahead_token_type = Scan();
+    DEBUG_SPEW_1("*** scanned a new lookahead token -- type " << m_lookahead_token_type << std::endl);
+}
+
+void $$CLASS_NAME$$::ThrowAwayToken ($$BASE_ASSIGNED_TYPE$$ token)
+{
+$$THROW_AWAY_TOKEN_ACTIONS$$
+}
+
+void $$CLASS_NAME$$::ThrowAwayTokenStack ()
+{
+    while (!m_token_stack.empty())
+    {
+        ThrowAwayToken(m_token_stack.back());
+        m_token_stack.pop_back();
+    }
+}
+
+std::ostream &operator << (std::ostream &stream, $$CLASS_NAME$$::Token::Type token_type)
+{
+    static std::string const s_token_type_string[] =
+    {
+$$TERMINAL_TOKEN_STRINGS$$
+$$NONTERMINAL_TOKEN_STRINGS$$
+        "%error",
+        "DEFAULT_",
+        "INVALID_"
+    };
+    static unsigned int const s_token_type_string_count =
+        sizeof(s_token_type_string) /
+        sizeof(std::string);
+
+    unsigned token_type_value = static_cast<unsigned int>(token_type);
+    if (token_type_value < 0x20)
+        stream << token_type_value;
+    else if (token_type_value < 0x7F)
+        stream << "'" << static_cast<char>(token_type) << "'";
+    else if (token_type_value < 0x100)
+        stream << token_type_value;
+    else if (token_type_value < 0x100 + s_token_type_string_count)
+        stream << s_token_type_string[token_type_value - 0x100];
+    else
+        stream << token_type_value;
+
+    return stream;
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+// state machine reduction rule handlers
+// ///////////////////////////////////////////////////////////////////////////
+
+$$REDUCTION_RULE_HANDLER_DEFINITIONS$$
+
+// ///////////////////////////////////////////////////////////////////////////
+// reduction rule lookup table
+// ///////////////////////////////////////////////////////////////////////////
+
+$$CLASS_NAME$$::ReductionRule const $$CLASS_NAME$$::ms_reduction_rule[] =
+{
+$$REDUCTION_RULE_LOOKUP_TABLE$$
+    // special error panic reduction rule
+    {                 Token::ERROR_,  1,                                     NULL, "* -> error"}
+};
+
+unsigned int const $$CLASS_NAME$$::ms_reduction_rule_count =
+    sizeof($$CLASS_NAME$$::ms_reduction_rule) /
+    sizeof($$CLASS_NAME$$::ReductionRule);
+
+// ///////////////////////////////////////////////////////////////////////////
+// state transition lookup table
+// ///////////////////////////////////////////////////////////////////////////
+
+$$CLASS_NAME$$::State const $$CLASS_NAME$$::ms_state[] =
+{
+$$STATE_TRANSITION_LOOKUP_TABLE$$
+};
+
+unsigned int const $$CLASS_NAME$$::ms_state_count =
+    sizeof($$CLASS_NAME$$::ms_state) /
+    sizeof($$CLASS_NAME$$::State);
+
+// ///////////////////////////////////////////////////////////////////////////
+// state transition table
+// ///////////////////////////////////////////////////////////////////////////
+
+$$CLASS_NAME$$::StateTransition const $$CLASS_NAME$$::ms_state_transition[] =
+{
+    // dummy transition in the NULL transition
+    {               Token::INVALID_, {                       TA_COUNT,    0}},
+
+$$STATE_TRANSITION_TABLE$$
+};
+
+unsigned int const $$CLASS_NAME$$::ms_state_transition_count =
+    sizeof($$CLASS_NAME$$::ms_state_transition) /
+    sizeof($$CLASS_NAME$$::StateTransition);
+
+$$IMPLEMENTATION_FILE_BOTTOM$$
+

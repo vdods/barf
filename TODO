@@ -1,0 +1,228 @@
+// ///////////////////////////////////////////////////////////////////////////
+// BARF general
+// ///////////////////////////////////////////////////////////////////////////
+
+- descriptions should be indicate "finite-automata-based scanners" and
+  "pushdown-automata-based parsers"
+- error when any output file is the same as an input file
+- shorten the enabled_verbosity names (and rename scanning/parsing spew to
+  scanner/parser)
+- add dot graph generation for ASTs
+- add recursive block comments into barf_commonlang_scanner.reflex
+- move DIRECTORY_SLASH_* into config.h
+- rename OutputDir to OutputDirectory once the other options have been
+  deprecated
+- use Contains() everywhere
+- add _barf_version to preprocessor shit?
+- change BARF_DATA_PATH to BARF_SEARCH_PATH (and make all else consistent) ?
+- use Sc, Dc and Dsc instead of static_cast, dynamic_cast and DStaticCast
+- move trison/reflex stuff into lib/trison and lib/reflex? and only keep
+  main, options and main header file in app dir (so test apps can link the
+  libs and run tests)?  put stuff in Barf::Xxx namespace
+- rename stuff to be shorter?  e.g. FileLocation -> FiLoc, Identifier -> Id
+  Character -> Char, String -> Str, etc.
+- move all AST usage to smart pointers to ease-ify stuff and to escape the
+  woes of memory leaks (not like it matters that much in this context) --
+  or do comprehensive deleting of stuff (which would probably set a better
+  example for people who read the source code).
+- get rid of AST hierarchy overviews once doxygen docs are to some decent state
+- use AstCommon::Directive::GetDirectiveString in error messages instead of
+  creating the error messages by hand -- make all directives derive from
+  AstCommon::Directive
+- add "execution debug spew" mode for each program, which says what it's doing,
+  e.g. opening files, doing type checking, env vars its using, etc
+- investigate efficiency of generated code from templates in different
+  compilers (especially MSVC), to see if more effective use of templates
+  can be made without additional overhead.
+- make some sort of AST class framework so very little typing (and redundancy)
+  is required.  preferably make the members public
+- see if i can get rid of exceptions
+- get rid of that can-print-extended-ascii crap and just always use escape chars
+- add option to disable the timestamp at top of generated code
+- make all enums alphabetical (unless they can't be) to make an easy/consistent
+  order for the enum-string functions
+
+// ///////////////////////////////////////////////////////////////////////////
+// documentation
+// ///////////////////////////////////////////////////////////////////////////
+
+- table of contents inside each doxygen_pages page
+- pyramidal documentation
+
+// ///////////////////////////////////////////////////////////////////////////
+// commonlang
+// ///////////////////////////////////////////////////////////////////////////
+
+- language directives (including rule handlers) should accept multiple targets
+  like
+  %language.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
+
+// ///////////////////////////////////////////////////////////////////////////
+// core
+// ///////////////////////////////////////////////////////////////////////////
+
+- change Graph::Transition's raw member access into accessors
+- change Graph::Node::Data's coloring stuff to just use integers instead of strings
+- change TransitionType to be Uint8
+- rename AstCommon::Ast to Ast::Base
+- typedef Graph::Node::Index and use that everywhere
+- in util's GetEscapedString, make it read overflowed hex chars
+- move trison's conflict messages into barf_message.h/cpp
+- add "-i" "--print-include-data-path" option to OptionsBase
+- make a GraphNodeIndex vector type in barf_graph.h (replacing the ad-hoc
+  vector<Uint32> used all over the place)
+- somehow allow subgraphs, so that better dot graphs can be made (for reflex
+  primarily)
+
+// ///////////////////////////////////////////////////////////////////////////
+// langspec
+// ///////////////////////////////////////////////////////////////////////////
+
+- add_codespec should check for bad filename chars
+- allow using previously declared directive identifiers as default values
+- confirm that the declared name matches the filename
+- eventually rename TargetLanguage into Target (%language -> %target ?)
+- add new "add_optional_codespec" directive which requires the directive
+  identifier of an add_optional_directive, for optional output files (like
+  baseclasses which could be common to multiple parsers/scanners).
+  OR
+  think of a good way to specify not-very-often-changing baseclass-like
+  files which may be common to many parsers/scanners
+- add error handling to the parser grammar
+- change AST classes into structs
+
+// ///////////////////////////////////////////////////////////////////////////
+// preprocessor
+// ///////////////////////////////////////////////////////////////////////////
+
+- add some way to use a different file location for errors/warnings
+- add comments (C++ and C style)
+- make _blah identifiers not be able to be defined in-file, they're reserved
+- add redefine directive so you can do stuff like
+  @<redefine(x)>@@<x+1>@@<end_redefine>@
+- add eval directive so you can parse and execute a block of text as a preprocessor body.
+- add "-[ \t\n]*2147483648" as a scanner token, so that number can be scanned
+- add assignment operator? to do stuff like @<x=3*y>@
+- add similar looping construct for arrays?
+- caching for integer values on symbols (so getting the integer value of
+  a symbol dereference is faster)
+- maybe make the Textifier detect if a newline was just printed, so that
+  it doesn't print unnecessary newlines when generating line directives
+- see if the scanner can be half hand-scanned and half reflex-scanned, so that
+  only the "code" portions are reflex-scanned.  this will allow for flexibility
+  in defining the code section delimiters
+- change <*{ into <*| or <| so it doesn't screw up brace matching
+- includes should use search path
+- add default value for Body::Body()'s file_location param as
+  FileLocation::ms_invalid, so it doesn't have to be specified explicitly
+  everywhere
+- in symbol table dump, don't print out the AT_BODY part, only the AT_TEXT or
+  AT_INTEGER or whatever.
+
+// ///////////////////////////////////////////////////////////////////////////
+// regex
+// ///////////////////////////////////////////////////////////////////////////
+
+- consider getting rid of \a \b \f \r \v and only having \t and \n, so that
+  conditionals can use \a \b etc.
+- emit error/warning when a non-printable char is encountered in a regex
+- in graph printing, TT_INPUT_ATOM_RANGEs which include [ or ] as the ending
+  char need to escape them
+- attempt to get rid of the initial epsilon transitions currently required
+  in each regex
+- make a parse-string method which returns a Regex::RegularExpression and
+  possibly throws to indicate errors.
+- maybe use \c and \C to turn case sensitivity off/on -- this would not be a
+  state-machine-determined thing, but it would influence character classes
+  and such.
+- implement ungreedy matching
+- test cases where m_accumulated_input has to give up more than 1/0 chars
+- fix up the \x stuff in the scanner (disallow \x alone, require a hex char)
+- verify that '\0' cannot be used as a transition atom
+- rename _nfa/_dfa_node_* to _nfa/_dfa_state_*
+
+// ///////////////////////////////////////////////////////////////////////////
+// bpp
+// ///////////////////////////////////////////////////////////////////////////
+
+- add -D define options (like the C preprocessor)
+
+// ///////////////////////////////////////////////////////////////////////////
+// grope
+// ///////////////////////////////////////////////////////////////////////////
+
+- write it
+
+// ///////////////////////////////////////////////////////////////////////////
+// reflex
+// ///////////////////////////////////////////////////////////////////////////
+
+- add option for line directives referencing codespecs
+- maybe rename scanner states to "modes"
+- add thing that checks for EOF-handling in each scanner state?
+- get rid of STL usage in C++ codespecs (separate target)
+- add option which prints the targets available in the current search path
+- add codespec macro of the regex for each rule
+- get rid of StartDirective (just use an AstCommon::Identifier)
+- use smallest integer type to store state and transition indices, etc.
+- see if the state machine stuff (in the generated scanner) can go in a
+  base class, using private members, so that the user can't screw things up
+  by accident
+- add _reflex_version to the code generator (_barf_version?)
+- the rule handler code block type should be specifiable by the langspec
+- add debugging preprocessor symbols (e.g regex strings, rule strings, etc)
+- make Uint8 Sint8 Uint16 Sint16, etc typedefs in C++ scanner
+- make the debug spew stuff generated conditionally upon directive
+  enable_debug or something to that effect
+- add -D option for defining crap in the preprocessor stage -- before and
+  after the .reflex source is read
+- use %default_start_state instead of %start
+- see if the AST classes can be made more structurey, with all the significant
+  code moved to external functions
+- rename cpp's TransitionToState -> SetScannerState (or something)
+- warn about langspec directive values that weren't referenced in the
+  code generation (preprocessor) stage
+- change stuff up so that '\0' can be scanned (e.g. for scanning binary files)
+- add "push accepted string back into buffer" API
+
+// ///////////////////////////////////////////////////////////////////////////
+// trison
+// ///////////////////////////////////////////////////////////////////////////
+
+- change "%prec %left BLAH" into "%prec.left BLAH"
+- NPDA: node-merging can happen at the end of the trunk
+- NPDA conflict resolution: when the child nodes of a node change and there
+  is only a shift and a reduce, conflict resolution can take place (picking
+  shift, reduce, or handling nonassoc error)
+- you shouldn't have to specify %token 'X' for ascii chars.  you should
+  just be able to use them
+- specifying any %language.xxx directive seems to add the target; stop this
+- rename _accept_handler_code to _rule_code (or something), and generally
+  consistencize the nomenclature of the NPDA preprocessor symbols in general
+- add option for line directives referencing codespecs
+- get rid of STL usage in C++ codespecs (separate target)
+- add option which prints the targets available in the current search path
+- move Associativity into Rule
+- rename %token to %terminal (and friends)
+- require %nonterminal keyword before nonterminal definition
+- END_ shouldn't be acceptable by %error
+- take out default reduction rule handler return (it blocks the 'no retval'
+  gcc warning)
+- check for reduction rule variable name collisions
+- call throw-away-token-actions on all tokens in token stack during parser
+  destructor
+- add the implicit start rule which ends with END_ -- think about this, END_
+  might go away.
+- allow parsing for a specific nonterminal
+- update the output basename help message
+- add -D option for defining crap in the preprocessor stage -- before and
+  after the .trison source is read
+- make directives parseable in any order?
+- add a directive for what to do with unnamed tokens (they could be non-NULL
+  or whatever).
+- get rid of trison_message (and move the crap into barf_message)
+- use %default_start_nonterminal instead of %start
+- if no output basename is specified, warn, but don't output any code
+- warn about langspec directive values that weren't referenced in the
+  code generation (preprocessor) stage
+- rename _npda_node_* to _npda_state_*

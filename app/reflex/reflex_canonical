@@ -1,0 +1,83 @@
+// REQUIRED: stating the language to be used (this indicates which scanner specification to use)
+%target_languages cpp java
+
+// language-specific directives (indicated by the scanner specification of the chosen language).
+// they are all of the form "%scanner.", then the language identifier, then "." and then the
+// language-specific directive name.  the requirement/optionality of these directives is
+// indicated by the scanner specification of the chosen language.
+%scanner.cpp.class_name "AwesomeScanner"
+
+%scanner.cpp.header_file_top%{
+#include "stuff.h"
+%}
+
+%scanner.cpp.header_file_bottom  %{
+
+%}
+
+/*
+for any preamble directive, you must put the value on the same line.
+
+you can't have:
+
+%scanner.cpp.thingy
+{
+    blah;
+}
+
+you must have
+
+%scanner.cpp.thingy {
+    blah;
+}
+*/
+
+%scanner.java.class_name "StupidScanner"
+
+%scanner.java.stuff %{ blah %}
+
+
+/* OPTIONAL: helper regexes (they must be inside matching parens) */
+%define IDENTIFIER ([a-zA-Z_][a-zA-Z_0-9]+)
+%define integer    (0|[1-9][0-9]*)
+%define deCImaL    ([0-9]*\.[0-9]+|{integer}\.[0-9]*)
+
+// REQUIRED: defines the start state
+%start BLAH
+
+// REQUIRED: preamble-ending indicator
+%%
+
+// REQUIRED: there must be at least one state (the start state)
+%state BLAH
+:
+    // OPTIONAL: regexes to match text
+    (abc*|xq{3})
+        // OPTIONAL: code to execute when the associated regex is matched
+        // OPTIONAL: a language specifier for the code block that follows.
+        // not all languages must be specified.  if one is missing, it will
+        // not have a handler for that rule.
+        %cpp %{
+            BlahBlah();
+        %}
+        %java %{
+            blahBlah();
+        %}
+|
+    // the lack of a %XXX language identifier before the code block indicates
+    // that the code is for all languages -- TODO: think about if this is wise
+    ({IDENTIFIER})   { printf("stuff"); GoToState(OTHER_STATE); }
+|
+    (^stuff$) // this regex has no code handlers in any language
+; // end of state BLAH
+
+%state OTHER_STATE
+:
+    (stuff?)
+        %cpp %{ /* this regex only has a cpp handler */ %}
+|
+    ((1025)+)
+        %java %{ /* this regex only has a java handler */ %}
+; // end of state OTHER_STATE
+
+

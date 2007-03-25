@@ -1,0 +1,330 @@
+// ///////////////////////////////////////////////////////////////////////////
+// barf_langspec_parser.trison by Victor Dods, created 2006/10/22
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%parser_class_name "Parser"
+
+%parser_header_file_top%{
+#if !defined(_BARF_LANGSPEC_PARSER_HPP_)
+#define _BARF_LANGSPEC_PARSER_HPP_
+
+#include "barf.hpp"
+
+#include "barf_commonlang_scanner.hpp"
+
+namespace Barf {
+namespace AstCommon {
+
+class Ast;
+
+} // end of namespace AstCommon
+
+namespace LangSpec {
+
+struct AddCodeSpecList;
+struct AddDirectiveMap;
+%}
+
+%parser_class_methods_and_members{
+    inline FileLocation const &GetFileLocation () const { return m_scanner.GetFileLocation(); }
+
+    bool OpenFile (string const &input_filename);
+
+private:
+
+    Token::Type Scan ();
+
+    CommonLang::Scanner m_scanner;
+    AddCodeSpecList *m_add_codespec_list;
+    AddDirectiveMap *m_add_directive_map;
+}
+
+%parser_header_file_bottom%{
+} // end of namespace LangSpec
+} // end of namespace Barf
+
+#endif // !defined(_BARF_LANGSPEC_PARSER_HPP_)
+%}
+
+%parser_implementation_file_top%{
+#include "barf_astcommon.hpp"
+#include "barf_langspec_ast.hpp"
+
+namespace Barf {
+namespace LangSpec {
+%}
+
+%parser_constructor_actions{
+}
+
+%parser_destructor_actions{
+}
+
+%parser_throw_away_token_actions{
+    delete token;
+}
+
+%parser_start_of_parse_method_actions{
+    m_add_codespec_list = new AddCodeSpecList();
+    m_add_directive_map = new AddDirectiveMap();
+}
+
+%parser_implementation_file_bottom%{
+bool Parser::OpenFile (string const &input_filename)
+{
+    return m_scanner.OpenFile(input_filename);
+}
+
+Parser::Token::Type Parser::Scan ()
+{
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&m_lookahead_token);
+    assert(scanner_token_type >= 0);
+    if (scanner_token_type < 0x100)
+        return Parser::Token::Type(scanner_token_type);
+    switch (scanner_token_type)
+    {
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                   return Parser::Token::END_;
+        case CommonLang::Scanner::Token::BAD_TOKEN:                         return Parser::Token::BAD_TOKEN;
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:            return Parser::Token::DIRECTIVE_ADD_CODESPEC;
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:  return Parser::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE;
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:  return Parser::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE;
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:                 return Parser::Token::DIRECTIVE_DEFAULT;
+        case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:         return Parser::Token::DIRECTIVE_DUMB_CODE_BLOCK;
+        case CommonLang::Scanner::Token::DIRECTIVE_IDENTIFIER:              return Parser::Token::DIRECTIVE_IDENTIFIER;
+        case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:       return Parser::Token::DIRECTIVE_STRICT_CODE_BLOCK;
+        case CommonLang::Scanner::Token::DIRECTIVE_STRING:                  return Parser::Token::DIRECTIVE_STRING;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:         return Parser::Token::DIRECTIVE_TARGET_LANGUAGE;
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                   return Parser::Token::DUMB_CODE_BLOCK;
+        case CommonLang::Scanner::Token::END_OF_FILE:                       return Parser::Token::END_;
+        case CommonLang::Scanner::Token::IDENTIFIER:                        return Parser::Token::IDENTIFIER;
+        case CommonLang::Scanner::Token::NEWLINE:                           return Parser::Token::NEWLINE;
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                 return Parser::Token::STRICT_CODE_BLOCK;
+        case CommonLang::Scanner::Token::STRING_LITERAL:                    return Parser::Token::STRING_LITERAL;
+
+        case CommonLang::Scanner::Token::CHARACTER_LITERAL:
+        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:
+        case CommonLang::Scanner::Token::DIRECTIVE_LANGUAGE:
+        case CommonLang::Scanner::Token::DIRECTIVE_LEFT:
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
+        case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:
+        case CommonLang::Scanner::Token::DIRECTIVE_PREC:
+        case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
+        case CommonLang::Scanner::Token::DIRECTIVE_START:
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE:
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGES:
+        case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
+        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
+        case CommonLang::Scanner::Token::END_PREAMBLE:
+        case CommonLang::Scanner::Token::REGEX:
+            assert(m_lookahead_token != NULL);
+            EmitError(m_lookahead_token->GetFileLocation(), "unrecognized token encountered in langspec");
+            delete m_lookahead_token;
+            m_lookahead_token = NULL;
+            return Parser::Token::BAD_TOKEN;
+
+        default:
+            assert(false && "this should never happen");
+            return Parser::Token::BAD_TOKEN;
+    }
+}
+
+} // end of namespace LangSpec
+} // end of namespace Barf
+%}
+
+%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type_sentinel "NULL"
+%parser_custom_cast "DStaticCast"
+
+%token BAD_TOKEN
+%token DIRECTIVE_ADD_CODESPEC %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_ADD_OPTIONAL_DIRECTIVE %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_ADD_REQUIRED_DIRECTIVE %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_DEFAULT %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_DUMB_CODE_BLOCK
+%token DIRECTIVE_IDENTIFIER
+%token DIRECTIVE_STRICT_CODE_BLOCK
+%token DIRECTIVE_STRING
+%token DIRECTIVE_TARGET_LANGUAGE %type "AstCommon::ThrowAway *"
+%token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
+%token IDENTIFIER %type "AstCommon::Identifier *"
+%token NEWLINE
+%token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
+%token STRING_LITERAL %type "AstCommon::String *"
+
+%start root
+
+%%
+
+// ///////////////////////////////////////////////////////////////////////////
+// root rule
+// ///////////////////////////////////////////////////////////////////////////
+
+root %type "Specification *"
+:
+    at_least_zero_newlines
+    target_language:target_language
+    directives
+    {
+        assert(m_add_codespec_list != NULL);
+        assert(m_add_directive_map != NULL);
+        return new Specification(
+            target_language,
+            m_add_codespec_list,
+            m_add_directive_map);
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// target language rules
+// ///////////////////////////////////////////////////////////////////////////
+
+target_language %type "AstCommon::Identifier *"
+:
+    DIRECTIVE_TARGET_LANGUAGE:throwaway IDENTIFIER:language_identifier at_least_one_newline
+    {
+        delete throwaway;
+        return language_identifier;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// directives (add_codespec and add_*_directive)
+// ///////////////////////////////////////////////////////////////////////////
+
+directives
+:
+    directives add_codespec at_least_one_newline
+|
+    directives add_directive at_least_one_newline
+|
+    // empty reduction rule
+;
+
+add_codespec
+:
+    DIRECTIVE_ADD_CODESPEC:throwaway STRING_LITERAL:filename IDENTIFIER:filename_directive_identifier
+    {
+        assert(m_add_codespec_list != NULL);
+        assert(m_add_directive_map != NULL);
+        AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_identifier->GetText());
+        if (add_directive == NULL)
+            EmitError(throwaway->GetFileLocation(), "undeclared directive identifier \"" + filename_directive_identifier->GetText() + "\" in add_codespec directive");
+        if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != AstCommon::AT_STRING)
+            EmitError(throwaway->GetFileLocation(), "directive identifier \"" + filename_directive_identifier->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
+        m_add_codespec_list->Append(new AddCodeSpec(filename, filename_directive_identifier));
+        delete throwaway;
+        return NULL;
+    }
+;
+
+add_directive %type "AddDirective *"
+:
+    DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway IDENTIFIER:directive_to_add_identifier param_spec:param_type
+    {
+        assert(m_add_directive_map != NULL);
+        m_add_directive_map->Add(
+            directive_to_add_identifier->GetText(),
+            new AddOptionalDirective(directive_to_add_identifier, param_type->m_param_type, NULL));
+        delete throwaway;
+        delete param_type;
+        return NULL;
+    }
+|
+    DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway1 IDENTIFIER:directive_to_add_identifier param_spec:param_type DIRECTIVE_DEFAULT:throwaway2 default_value:default_value
+    {
+        assert(m_add_directive_map != NULL);
+        AddDirective *directive =
+            new AddOptionalDirective(
+                directive_to_add_identifier,
+                param_type->m_param_type, default_value);
+        m_add_directive_map->Add(
+            directive_to_add_identifier->GetText(),
+            directive);
+        if (param_type->m_param_type != default_value->GetAstType())
+            EmitError(
+                throwaway1->GetFileLocation(),
+                "type mismatch for default value for directive " + directive->GetDirectiveString() +
+                "; was expecting type " + AstCommon::TextBase::GetDirectiveTypeString(param_type->m_param_type) +
+                " but got type " + AstCommon::TextBase::GetDirectiveTypeString(default_value->GetAstType()));
+        delete throwaway1;
+        delete param_type;
+        delete throwaway2;
+        return NULL;
+    }
+|
+    DIRECTIVE_ADD_REQUIRED_DIRECTIVE:throwaway IDENTIFIER:directive_to_add_identifier param_spec:param_type
+    {
+        assert(m_add_directive_map != NULL);
+        m_add_directive_map->Add(
+            directive_to_add_identifier->GetText(),
+            new AddRequiredDirective(directive_to_add_identifier, param_type->m_param_type));
+        delete throwaway;
+        delete param_type;
+        return NULL;
+    }
+;
+
+param_spec %type "ParamType *"
+:
+    // empty reduction rule
+    {
+        return new ParamType(AstCommon::AT_NONE);
+    }
+|
+    DIRECTIVE_IDENTIFIER:throwaway
+    {
+        delete throwaway;
+        return new ParamType(AstCommon::AT_IDENTIFIER);
+    }
+|
+    DIRECTIVE_STRING:throwaway
+    {
+        delete throwaway;
+        return new ParamType(AstCommon::AT_STRING);
+    }
+|
+    DIRECTIVE_DUMB_CODE_BLOCK:throwaway
+    {
+        delete throwaway;
+        return new ParamType(AstCommon::AT_DUMB_CODE_BLOCK);
+    }
+|
+    DIRECTIVE_STRICT_CODE_BLOCK:throwaway
+    {
+        delete throwaway;
+        return new ParamType(AstCommon::AT_STRICT_CODE_BLOCK);
+    }
+;
+
+default_value %type "AstCommon::TextBase *"
+:
+    IDENTIFIER:value        { return value; }
+|   STRING_LITERAL:value    { return value; }
+|   DUMB_CODE_BLOCK:value   { return value; }
+|   STRICT_CODE_BLOCK:value { return value; }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// misc rules
+// ///////////////////////////////////////////////////////////////////////////
+
+at_least_zero_newlines
+:
+    at_least_zero_newlines NEWLINE
+|
+    // empty reduction rule
+;
+
+at_least_one_newline
+:
+    at_least_one_newline NEWLINE
+|
+    NEWLINE
+;

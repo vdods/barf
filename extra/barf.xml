@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<!-- This is a syntax highlighting file for the katepart component of KDE; the editor widget used by kwrite, kate, and kdevelop. -->
+<language name="BARF" version="1.0" kateversion="2.5.5" section="Sources" extensions="*.reflex;*.trison;*.langspec" author="Victor Dods" license="GPL">
+
+    <highlighting>
+        <list name="keywords">
+            <item>target_languages</item>
+            <item>language</item>
+            <item>macro</item>
+            <item>start</item>
+            <item>state</item>
+            <item>token</item>
+            <item>prec</item>
+            <item>left</item>
+            <item>right</item>
+            <item>nonassoc</item>
+            <item>error</item>
+            <item>target_language</item>
+            <item>add_required_directive</item>
+            <item>add_optional_directive</item>
+            <item>add_codespec</item>
+            <item>string</item>
+            <item>identifier</item>
+            <item>dumb_code_block</item>
+            <item>strict_code_block</item>
+            <item>default</item>
+        </list>
+
+        <contexts>
+            <context name="preamble" attribute="Normal Text" lineEndContext="#stay">
+                <DetectSpaces />
+                <DetectChar char="&quot;" attribute="Symbol" context="string" />
+                <DetectChar char="%" attribute="Symbol" context="directive" />
+                <DetectChar char="{" attribute="Symbol" context="strict_code_block" beginRegion="Strict Code Block" />
+                <Detect2Chars char="/" char1="/" attribute="Comment" context="line_comment" />
+                <Detect2Chars char="/" char1="*" attribute="Comment" context="block_comment" beginRegion="Comment"/>
+                <DetectIdentifier attribute="Identifier" context="#stay" />
+                <AnyChar String="." attribute="Symbol" context="#stay" />
+                <DetectChar char="(" attribute="Symbol" context="regex" />
+                <DetectChar char="'" attribute="Char" context="char" />
+            </context>
+
+            <context name="body" attribute="Normal Text" lineEndContext="#stay">
+                <DetectSpaces />
+                <Detect2Chars char="/" char1="/" attribute="Comment" context="line_comment" />
+                <Detect2Chars char="/" char1="*" attribute="Comment" context="block_comment" beginRegion="Comment"/>
+                <AnyChar String=":;|.," attribute="Symbol" context="#stay" />
+                <DetectChar char="(" attribute="Symbol" context="regex" />
+                <DetectChar char="&quot;" attribute="Symbol" context="string" />
+                <DetectChar char="%" attribute="Symbol" context="directive" />
+                <DetectChar char="{" attribute="Symbol" context="strict_code_block" beginRegion="Strict Code Block" />
+                <DetectChar char="'" attribute="Char" context="char" />
+            </context>
+            
+            <context name="directive" attribute="Keyword" lineEndContext="#pop">
+                <keyword String="keywords" attribute="Keyword" context="#pop" />
+                <DetectChar char="%" attribute="Symbol" context="body" />
+                <DetectChar char="{" attribute="Symbol" context="dumb_code_block" beginRegion="Dumb Code Block" />
+            </context>
+            
+            <context name="string" attribute="String" lineEndContext="#pop">
+                <DetectSpaces />
+                <DetectChar char="&quot;" attribute="Symbol" context="#pop" />
+                <DetectChar char="\" attribute="String" context="escaped_char_in_string" />
+            </context>
+
+            <context name="escaped_char_in_string" attribute="String" lineEndContext="#pop">
+                <RegExpr String=".|\n" attribute="Char" context="#pop" />
+            </context>
+
+            <context name="char" attribute="Char" lineEndContext="#pop">
+                <DetectSpaces />
+                <DetectChar char="\" attribute="Char" context="escaped_char" />
+                <DetectChar char="'" attribute="Char" context="#pop" />
+            </context>
+
+            <context name="escaped_char" attribute="Char" lineEndContext="#pop">
+                <DetectSpaces />
+                <RegExpr String=".|\n" attribute="Char" context="#pop" />
+            </context>
+            
+            <context name="dumb_code_block" attribute="Dumb Code Block" lineEndContext="#stay">
+                <DetectSpaces />
+                <Detect2Chars char="%" char1="}" attribute="Symbol" context="#pop" endRegion="Dumb Code Block" />
+            </context>
+
+            <context name="strict_code_block" attribute="Strict Code Block" lineEndContext="#stay">
+                <DetectSpaces />
+                <DetectChar char="&quot;" attribute="String Inside Strict Code Block" context="string_inside_strict_code_block" />
+                <DetectChar char="'" attribute="Char Inside Strict Code Block" context="char_inside_strict_code_block" />
+                <Detect2Chars char="/" char1="/" attribute="Comment Inside Strict Code Block" context="line_comment_inside_strict_code_block" />
+                <Detect2Chars char="/" char1="*" attribute="Comment Inside Strict Code Block" context="block_comment_inside_strict_code_block" beginRegion="Comment" />
+                <DetectChar char="{" attribute="Strict Code Block" context="inner_strict_code_block" />
+                <DetectChar char="}" attribute="Symbol" context="#pop" endRegion="Strict Code Block" />
+            </context>
+            
+            <context name="inner_strict_code_block" attribute="Strict Code Block" lineEndContext="#stay">
+                <DetectSpaces />
+                <DetectChar char="&quot;" attribute="String Inside Strict Code Block" context="string_inside_strict_code_block" />
+                <DetectChar char="'" attribute="Char Inside Strict Code Block" context="char_inside_strict_code_block" />
+                <Detect2Chars char="/" char1="/" attribute="Comment Inside Strict Code Block" context="line_comment_inside_strict_code_block" />
+                <Detect2Chars char="/" char1="*" attribute="Comment Inside Strict Code Block" context="block_comment_inside_strict_code_block" beginRegion="Comment" />
+                <DetectChar char="{" attribute="Strict Code Block" context="inner_strict_code_block" />
+                <DetectChar char="}" attribute="Strict Code Block" context="#pop" />
+            </context>
+            
+            <context name="string_inside_strict_code_block" attribute="String Inside Strict Code Block" lineEndContext="#stay">
+                <DetectSpaces />
+                <DetectChar char="\" attribute="String Inside Strict Code Block" context="escaped_char_inside_string_inside_strict_code_block" />
+                <DetectChar char="&quot;" attribute="String Inside Strict Code Block" context="#pop" />
+            </context>
+
+            <context name="escaped_char_inside_string_inside_strict_code_block" attribute="String Inside Strict Code Block" lineEndContext="#pop">
+                <DetectSpaces />
+                <RegExpr String=".|\n" attribute="String Inside Strict Code Block" context="#pop" />
+                <LineContinue attribute="String Inside Strict Code Block" context="#pop" />
+            </context>
+
+            <context name="char_inside_strict_code_block" attribute="Char Inside Strict Code Block" lineEndContext="#pop">
+                <DetectSpaces />
+                <DetectChar char="\" attribute="Char Inside Strict Code Block" context="escaped_char_inside_strict_code_block" />
+                <DetectChar char="'" attribute="Char Inside Strict Code Block" context="#pop" />
+            </context>
+
+            <context name="escaped_char_inside_strict_code_block" attribute="Char Inside Strict Code Block" lineEndContext="#pop">
+                <DetectSpaces />
+                <RegExpr String=".|\n" attribute="Char Inside Strict Code Block" context="#pop" />
+            </context>
+
+            <context name="line_comment_inside_strict_code_block" attribute="Comment Inside Strict Code Block" lineEndContext="#pop">
+                <DetectSpaces />
+            </context>
+            
+            <context name="block_comment_inside_strict_code_block" attribute="Comment Inside Strict Code Block" lineEndContext="#stay">
+                <DetectSpaces />
+                <Detect2Chars char="*" char1="/" attribute="Comment Inside Strict Code Block" context="#pop" endRegion="Comment" />
+            </context>
+            
+            <context name="regex" attribute="Regular Expression" lineEndContext="#stay">
+                <DetectChar char=")" attribute="Symbol" context="#pop" />
+                <DetectChar char="(" attribute="Regular Expression" context="regex2" />
+                <DetectChar char="\" attribute="Regular Expression" context="escaped_char_inside_regex" />
+                <DetectChar char="[" attribute="Regular Expression" context="bracket_ex_inside_regex" />
+            </context>
+
+            <context name="regex2" attribute="Regular Expression" lineEndContext="#stay">
+                <DetectChar char=")" attribute="Regular Expression" context="#pop" />
+                <DetectChar char="(" attribute="Regular Expression" context="regex2" />
+                <DetectChar char="\" attribute="Regular Expression" context="escaped_char_inside_regex" />
+                <DetectChar char="[" attribute="Regular Expression" context="bracket_ex_inside_regex" />
+            </context>
+
+            <context name="bracket_ex_inside_regex" attribute="Regular Expression" lineEndContext="#stay">
+                <DetectChar char="]" attribute="Regular Expression" context="#pop" />
+                <DetectChar char="[" attribute="Regular Expression" context="bracket_ex_inside_regex" />
+                <DetectChar char="\" attribute="Regular Expression" context="escaped_char_inside_regex" />
+            </context>
+            
+            <context name="escaped_char_inside_regex" attribute="Regular Expression" lineEndContext="#stay">
+                <RegExpr String=".|\n" attribute="Regular Expression" context="#pop" />
+                <LineContinue attribute="Regular Expression" context="#pop" />
+            </context>            
+            
+            <context name="line_comment" attribute="Comment" lineEndContext="#pop" />
+
+            <context name="block_comment" attribute="Comment" lineEndContext="#stay">
+                <DetectSpaces />
+                <Detect2Chars char="*" char1="/" attribute="Comment" context="#pop" endRegion="Comment" />
+            </context>
+
+        </contexts>
+    
+        <itemDatas>
+            <itemData name="Normal Text"                        defStyleNum="dsNormal"/>
+            <itemData name="Identifier"                         defStyleNum="dsFunction"/>
+            <itemData name="Keyword"                            defStyleNum="dsKeyword"/>
+            <itemData name="Char"                               defStyleNum="dsChar"/>
+            <itemData name="String"                             defStyleNum="dsString"/>
+            <itemData name="String Char"                        defStyleNum="dsChar"/>
+            <itemData name="Identifier As Parameter"            defStyleNum="dsString"/>
+            <itemData name="Dumb Code Block"                    defStyleNum="dsString"/>
+            <itemData name="Strict Code Block"                  defStyleNum="dsString"/>
+            <itemData name="String Inside Strict Code Block"    defStyleNum="dsString"/>
+            <itemData name="Char Inside Strict Code Block"      defStyleNum="dsString"/>
+            <itemData name="Comment Inside Strict Code Block"   defStyleNum="dsString"/>
+            <itemData name="Comment"                            defStyleNum="dsComment"/>
+            <itemData name="Symbol"                             defStyleNum="dsSymbol"/>
+            <itemData name="Regular Expression"                 defStyleNum="dsString"/>
+        </itemDatas>
+    </highlighting>
+
+    <general>
+        <comments>
+            <comment name="singleLine" start="//" />
+            <comment name="multiLine" start="/*" end="*/" />
+        </comments>
+        <keywords casesensitive="1" additionalDeliminator="'&quot;" />
+    </general>
+  
+</language>

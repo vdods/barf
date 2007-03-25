@@ -1,0 +1,812 @@
+// ///////////////////////////////////////////////////////////////////////////
+// trison_parser.trison by Victor Dods, created 2006/02/19
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%parser_class_name "Parser"
+
+%parser_header_file_top%{
+#if !defined(_TRISON_PARSER_HPP_)
+#define _TRISON_PARSER_HPP_
+
+#include "trison.hpp"
+
+#include "barf_commonlang_scanner.hpp"
+#include "trison_message.hpp"
+
+namespace Barf {
+namespace AstCommon {
+
+class Ast;
+class IdentifierMap;
+class IntegerMap;
+
+} // end of namespace AstCommon
+
+namespace CommonLang {
+
+class TargetLanguageMap;
+
+} // end of namespace CommonLang
+} // end of namespace Barf
+
+namespace Trison {
+
+struct NonterminalList;
+struct PrecedenceList;
+struct PrecedenceMap;
+struct TokenMap;
+%}
+
+%parser_class_methods_and_members{
+    inline FileLocation const &GetFileLocation () const { return m_scanner.GetFileLocation(); }
+
+    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
+    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+
+    bool OpenFile (string const &input_filename);
+
+private:
+
+    Token::Type Scan ();
+
+    CommonLang::Scanner m_scanner;
+    CommonLang::TargetLanguageMap *m_target_language_map;
+    TokenMap *m_token_map;
+    PrecedenceList *m_precedence_list;
+    PrecedenceMap *m_precedence_map;
+    NonterminalList *m_nonterminal_list;
+}
+
+%parser_header_file_bottom%{
+} // end of namespace Trison
+
+#endif // !defined(_TRISON_PARSER_HPP_)
+%}
+
+%parser_implementation_file_top%{
+#include <sstream>
+
+#include "trison_ast.hpp"
+
+namespace Trison {
+%}
+
+%parser_constructor_actions{
+}
+
+%parser_destructor_actions{
+}
+
+%parser_throw_away_token_actions{
+    delete token;
+}
+
+%parser_start_of_parse_method_actions{
+    m_target_language_map = NULL;
+    m_token_map = NULL;
+    m_precedence_list = NULL;
+    m_precedence_map = NULL;
+    m_nonterminal_list = NULL;
+}
+
+%parser_implementation_file_bottom%{
+bool Parser::OpenFile (string const &input_filename)
+{
+    return m_scanner.OpenFile(input_filename);
+}
+
+Parser::Token::Type Parser::Scan ()
+{
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&m_lookahead_token);
+    assert(scanner_token_type >= 0);
+    if (scanner_token_type < 0x100)
+        return Parser::Token::Type(scanner_token_type);
+    switch (scanner_token_type)
+    {
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:            return Parser::Token::END_;
+        case CommonLang::Scanner::Token::BAD_TOKEN:                  return Parser::Token::BAD_TOKEN;
+        case CommonLang::Scanner::Token::CHARACTER_LITERAL:          return Parser::Token::CHARACTER_LITERAL;
+        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:            return Parser::Token::DIRECTIVE_ERROR;
+        case CommonLang::Scanner::Token::DIRECTIVE_LANGUAGE:         return Parser::Token::DIRECTIVE_LANGUAGE;
+        case CommonLang::Scanner::Token::DIRECTIVE_LEFT:             return Parser::Token::DIRECTIVE_LEFT;
+        case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:         return Parser::Token::DIRECTIVE_NONASSOC;
+        case CommonLang::Scanner::Token::DIRECTIVE_PREC:             return Parser::Token::DIRECTIVE_PREC;
+        case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:            return Parser::Token::DIRECTIVE_RIGHT;
+        case CommonLang::Scanner::Token::DIRECTIVE_START:            return Parser::Token::DIRECTIVE_START;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGES: return Parser::Token::DIRECTIVE_TARGET_LANGUAGES;
+        case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:            return Parser::Token::DIRECTIVE_TOKEN;
+        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:             return Parser::Token::DIRECTIVE_TYPE;
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:            return Parser::Token::DUMB_CODE_BLOCK;
+        case CommonLang::Scanner::Token::END_OF_FILE:                return Parser::Token::END_;
+        case CommonLang::Scanner::Token::END_PREAMBLE:               return Parser::Token::END_PREAMBLE;
+        case CommonLang::Scanner::Token::IDENTIFIER:                 return Parser::Token::IDENTIFIER;
+        case CommonLang::Scanner::Token::NEWLINE:                    return Parser::Token::NEWLINE;
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:          return Parser::Token::STRICT_CODE_BLOCK;
+        case CommonLang::Scanner::Token::STRING_LITERAL:             return Parser::Token::STRING_LITERAL;
+
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:
+        case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:
+        case CommonLang::Scanner::Token::DIRECTIVE_IDENTIFIER:
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE:
+        case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
+        case CommonLang::Scanner::Token::DIRECTIVE_STRING:
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:
+        case CommonLang::Scanner::Token::REGEX:
+            assert(m_lookahead_token != NULL);
+            EmitError(m_lookahead_token->GetFileLocation(), "unrecognized token encountered in langspec");
+            delete m_lookahead_token;
+            m_lookahead_token = NULL;
+            return Parser::Token::BAD_TOKEN;
+
+        default:
+            assert(false && "this should never happen");
+            return Parser::Token::BAD_TOKEN;
+    }
+}
+
+} // end of namespace Trison
+%}
+
+%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type_sentinel "NULL"
+%parser_custom_cast "DStaticCast"
+
+%token BAD_TOKEN
+%token CHARACTER_LITERAL %type "AstCommon::Character *"
+%token DIRECTIVE_ERROR %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_LANGUAGE %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_LEFT %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_NONASSOC %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_PREC %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_RIGHT %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_START %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_TARGET_LANGUAGES %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_TOKEN %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_TYPE %type "AstCommon::ThrowAway *"
+%token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
+%token END_PREAMBLE %type "AstCommon::ThrowAway *"
+%token IDENTIFIER %type "AstCommon::Identifier *"
+%token NEWLINE
+%token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
+%token STRING_LITERAL %type "AstCommon::String *"
+%token '.' ':' ';' '|'
+
+%start root
+
+%%
+
+// ///////////////////////////////////////////////////////////////////////////
+// root rule
+// ///////////////////////////////////////////////////////////////////////////
+
+root %type "Representation *"
+:
+    at_least_zero_newlines
+    target_languages_directive:target_language_map
+    language_directives
+    token_directives:token_map
+    precedence_directives:precedence_map
+    start_directive:start_nonterminal_identifier
+    END_PREAMBLE:throwaway
+    nonterminals:nonterminal_map
+    {
+        assert(m_target_language_map != NULL);
+        assert(target_language_map == m_target_language_map);
+        assert(m_token_map != NULL);
+        assert(token_map == m_token_map);
+        assert(m_precedence_list != NULL);
+        assert(precedence_map != NULL);
+        assert(m_precedence_map == precedence_map);
+        assert(m_nonterminal_list != NULL);
+
+        // set the TargetLanguageMap's primary source path
+        target_language_map->SetSourcePath(m_scanner.GetInputName());
+        // make sure the %start directive value specifies a real scanner state
+        if (start_nonterminal_identifier != NULL &&
+            nonterminal_map->GetElement(start_nonterminal_identifier->GetText()) == NULL)
+        {
+            EmitError(
+                start_nonterminal_identifier->GetFileLocation(),
+                "undeclared nonterminal \"" + start_nonterminal_identifier->GetText() + "\"");
+        }
+
+        Representation *representation =
+            new Representation(
+                target_language_map,
+                token_map,
+                precedence_map,
+                m_precedence_list,
+                start_nonterminal_identifier->GetText(),
+                throwaway->GetFileLocation(),
+                nonterminal_map,
+                m_nonterminal_list);
+        delete throwaway;
+        delete start_nonterminal_identifier;
+        return representation;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// target language directive rules
+// ///////////////////////////////////////////////////////////////////////////
+
+target_languages_directive %type "CommonLang::TargetLanguageMap *"
+:
+    DIRECTIVE_TARGET_LANGUAGES:throwaway target_language_identifiers:target_language_map at_least_one_newline
+    {
+        assert(m_target_language_map == NULL);
+        m_target_language_map = target_language_map;
+        delete throwaway;
+        return target_language_map;
+    }
+|
+    // empty reduction rule
+    {
+        assert(m_target_language_map == NULL);
+        m_target_language_map = new CommonLang::TargetLanguageMap();
+        return m_target_language_map;
+    }
+|
+    DIRECTIVE_TARGET_LANGUAGES:throwaway %error at_least_one_newline
+    {
+        assert(m_target_language_map == NULL);
+        EmitError(throwaway->GetFileLocation(), "parse error in directive %target_languages");
+        m_target_language_map = new CommonLang::TargetLanguageMap();
+        return m_target_language_map;
+    }
+;
+
+target_language_identifiers %type "CommonLang::TargetLanguageMap *"
+:
+    target_language_identifiers:target_language_map IDENTIFIER:target_language_identifier
+    {
+        CommonLang::TargetLanguage *target_language = new CommonLang::TargetLanguage(target_language_identifier->GetText());
+        target_language->EnableCodeGeneration();
+        target_language_map->Add(target_language_identifier->GetText(), target_language);
+        return target_language_map;
+    }
+|
+    // empty reduction rule
+    {
+        assert(m_target_language_map == NULL);
+        return new CommonLang::TargetLanguageMap();
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// language directive rules
+// ///////////////////////////////////////////////////////////////////////////
+
+language_directives
+:
+    language_directives language_directive:language_directive
+    {
+        assert(m_target_language_map != NULL);
+        if (language_directive != NULL)
+            m_target_language_map->AddLanguageDirective(language_directive);
+        return NULL;
+    }
+|
+    // empty reduction rule
+    {
+        if (m_target_language_map == NULL)
+            m_target_language_map = new CommonLang::TargetLanguageMap();
+        return NULL;
+    }
+;
+
+language_directive %type "CommonLang::LanguageDirective *"
+:
+    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive language_directive_param:param at_least_one_newline
+    {
+        delete throwaway;
+        return new CommonLang::LanguageDirective(language_identifier, language_directive, param);
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
+        delete throwaway;
+        delete language_identifier;
+        delete language_directive;
+        return NULL;
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in directive name for directive %language." + language_identifier->GetText());
+        delete throwaway;
+        delete language_identifier;
+        return NULL;
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in language name for directive %language");
+        delete throwaway;
+        return NULL;
+    }
+;
+
+language_directive_param %type "AstCommon::TextBase *"
+:
+    IDENTIFIER:value            { return value; }
+|   STRING_LITERAL:value        { return value; }
+|   STRICT_CODE_BLOCK:value     { return value; }
+|   DUMB_CODE_BLOCK:value       { return value; }
+|   /* empty reduction rule */  { return NULL; }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// token directive rules
+// ///////////////////////////////////////////////////////////////////////////
+
+token_directives %type "TokenMap *"
+:
+    token_directives:token_map token_directive
+    {
+        assert(token_map == m_token_map);
+        return token_map;
+    }
+|
+    // empty reduction rule
+    {
+        m_token_map = new TokenMap();
+        return m_token_map;
+    }
+;
+
+token_directive
+:
+    DIRECTIVE_TOKEN:throwaway tokens:token_list token_type_spec:assigned_type at_least_one_newline
+    {
+        assert(m_token_map != NULL);
+        assert(token_list != NULL);
+        for (TokenList::iterator it = token_list->begin(),
+                                 it_end = token_list->end();
+             it != it_end;
+             ++it)
+        {
+            Trison::Token *token = *it;
+            assert(token != NULL);
+            if (assigned_type != NULL)
+                token->SetAssignedType(assigned_type->GetText());
+            m_token_map->Add(token->GetSourceText(), token);
+        }
+        delete throwaway;
+        delete assigned_type;
+        return NULL;
+    }
+;
+
+tokens %type "TokenList *"
+:
+    tokens:token_list token:token
+    {
+        if (token != NULL)
+            token_list->Append(token);
+        return token_list;
+    }
+|
+    token:token
+    {
+        TokenList *token_list = new TokenList();
+        if (token != NULL)
+            token_list->Append(token);
+        return token_list;
+    }
+;
+
+token_type_spec %type "AstCommon::String *"
+:
+    DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
+    {
+        delete throwaway;
+        return assigned_type;
+    }
+|
+    // empty reduction rule
+    {
+        return NULL;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// precedence directive rules
+// ///////////////////////////////////////////////////////////////////////////
+
+precedence_directives %type "PrecedenceMap *"
+:
+    precedence_directives:precedence_map precedence_directive
+    {
+        assert(precedence_map != NULL);
+        assert(m_precedence_map == precedence_map);
+        assert(m_precedence_list != NULL);
+        return precedence_map;
+    }
+|
+    // empty reduction rule
+    {
+        assert(m_precedence_list == NULL);
+        assert(m_precedence_map == NULL);
+        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FileLocation::ms_invalid, 0);
+        m_precedence_list = new PrecedenceList();
+        m_precedence_list->Append(precedence);
+        m_precedence_map = new PrecedenceMap();
+        m_precedence_map->Add("DEFAULT_", precedence);
+        return m_precedence_map;
+    }
+;
+
+precedence_directive %type "PrecedenceMap *"
+:
+    DIRECTIVE_PREC:throwaway IDENTIFIER:identifier at_least_one_newline
+    {
+        assert(m_precedence_list != NULL);
+        assert(m_precedence_map != NULL);
+        Precedence *precedence =
+            new Precedence(
+                identifier->GetText(),
+                A_NONASSOC,
+                identifier->GetFileLocation(),
+                m_precedence_map->size());
+        m_precedence_list->Append(precedence);
+        m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
+        delete throwaway;
+        delete identifier;
+        return m_precedence_map;
+    }
+|
+    DIRECTIVE_PREC:throwaway DIRECTIVE_LEFT:throwaway2 IDENTIFIER:identifier at_least_one_newline
+    {
+        assert(m_precedence_list != NULL);
+        assert(m_precedence_map != NULL);
+        Precedence *precedence =
+            new Precedence(
+                identifier->GetText(),
+                A_LEFT,
+                identifier->GetFileLocation(),
+                m_precedence_map->size());
+        m_precedence_list->Append(precedence);
+        m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
+        delete throwaway;
+        delete throwaway2;
+        delete identifier;
+        return m_precedence_map;
+    }
+|
+    DIRECTIVE_PREC:throwaway DIRECTIVE_NONASSOC:throwaway2 IDENTIFIER:identifier at_least_one_newline
+    {
+        assert(m_precedence_list != NULL);
+        assert(m_precedence_map != NULL);
+        Precedence *precedence =
+            new Precedence(
+                identifier->GetText(),
+                A_NONASSOC,
+                identifier->GetFileLocation(),
+                m_precedence_map->size());
+        m_precedence_list->Append(precedence);
+        m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
+        delete throwaway;
+        delete throwaway2;
+        delete identifier;
+        return m_precedence_map;
+    }
+|
+    DIRECTIVE_PREC:throwaway DIRECTIVE_RIGHT:throwaway2 IDENTIFIER:identifier at_least_one_newline
+    {
+        assert(m_precedence_list != NULL);
+        assert(m_precedence_map != NULL);
+        Precedence *precedence =
+            new Precedence(
+                identifier->GetText(),
+                A_RIGHT,
+                identifier->GetFileLocation(),
+                m_precedence_map->size());
+        m_precedence_list->Append(precedence);
+        m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
+        delete throwaway;
+        delete throwaway2;
+        delete identifier;
+        return m_precedence_map;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// start directive rule
+// ///////////////////////////////////////////////////////////////////////////
+
+start_directive %type "AstCommon::Identifier *"
+:
+    DIRECTIVE_START:throwaway IDENTIFIER:identifier at_least_one_newline
+    {
+        delete throwaway;
+        return identifier;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// nonterminal rules
+// ///////////////////////////////////////////////////////////////////////////
+
+nonterminals %type "NonterminalMap *"
+:
+    nonterminals:nonterminal_map nonterminal:nonterminal
+    {
+        assert(m_token_map != NULL);
+        assert(m_nonterminal_list != NULL);
+        if (nonterminal != NULL)
+        {
+            nonterminal_map->Add(nonterminal->m_identifier, nonterminal);
+            m_nonterminal_list->Append(nonterminal);
+        }
+        return nonterminal_map;
+    }
+|
+    // empty reduction rule
+    {
+        assert(m_nonterminal_list == NULL);
+        m_nonterminal_list = new NonterminalList();
+        return new NonterminalMap();
+    }
+;
+
+nonterminal %type "Nonterminal *"
+:
+    nonterminal_specification:nonterminal ':' rules:rule_list ';'
+    {
+        nonterminal->SetRuleList(rule_list);
+        return nonterminal;
+    }
+|
+    %error ';'
+    {
+        EmitError(GetFileLocation(), "syntax error in nonterminal definition");
+        return NULL;
+    }
+;
+
+nonterminal_specification %type "Nonterminal *"
+:
+    IDENTIFIER:identifier DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
+    {
+        assert(m_token_map != NULL);
+        if (m_token_map->GetElement(identifier->GetText()) != NULL)
+            EmitError(identifier->GetFileLocation(), "identifier collision with %token " + identifier->GetText());
+        Nonterminal *nonterminal =
+            new Nonterminal(
+                identifier->GetText(),
+                identifier->GetFileLocation(),
+                assigned_type->GetText());
+        delete throwaway;
+        delete identifier;
+        delete assigned_type;
+        return nonterminal;
+    }
+|
+    IDENTIFIER:identifier
+    {
+        assert(m_token_map != NULL);
+        if (m_token_map->GetElement(identifier->GetText()) != NULL)
+            EmitError(identifier->GetFileLocation(), "identifier collision with %token " + identifier->GetText());
+        Nonterminal *nonterminal =
+            new Nonterminal(
+                identifier->GetText(),
+                identifier->GetFileLocation());
+        delete identifier;
+        return nonterminal;
+    }
+|
+    %error
+    {
+        EmitError(GetFileLocation(), "syntax error while parsing nonterminal specification");
+        return NULL;
+    }
+|
+    IDENTIFIER:identifier %error
+    {
+        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal directive");
+        delete identifier;
+        return NULL;
+    }
+|
+    IDENTIFIER:identifier DIRECTIVE_TYPE:throwaway %error
+    {
+        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal %type directive; was expecting a string");
+        delete identifier;
+        delete throwaway;
+        return NULL;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// rule rules
+// ///////////////////////////////////////////////////////////////////////////
+
+rules %type "RuleList *"
+:
+    rules:rule_list '|' rule:rule
+    {
+        rule_list->Append(rule);
+        return rule_list;
+    }
+|
+    rule:rule
+    {
+        RuleList *rule_list = new RuleList();
+        rule_list->Append(rule);
+        return rule_list;
+    }
+;
+
+rule %type "Rule *"
+:
+    rule_specification:rule rule_handlers:rule_handler_map
+    {
+        rule->m_rule_handler_map = rule_handler_map;
+        return rule;
+    }
+;
+
+rule_specification %type "Rule *"
+:
+    rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive
+    {
+        string const &rule_precedence_identifier =
+            rule_precedence_directive != NULL ?
+            rule_precedence_directive->GetText() :
+            "DEFAULT_";
+        Rule *rule = new Rule(rule_token_list, rule_precedence_identifier);
+        delete rule_precedence_directive;
+        return rule;
+    }
+;
+
+rule_handlers %type "CommonLang::RuleHandlerMap *"
+:
+    rule_handlers:rule_handler_map rule_handler:rule_handler
+    {
+        if (rule_handler != NULL)
+            rule_handler_map->Add(rule_handler->m_language_identifier->GetText(), rule_handler);
+        return rule_handler_map;
+    }
+|
+    // empty reduction rule
+    {
+        return new CommonLang::RuleHandlerMap();
+    }
+;
+
+rule_handler %type "CommonLang::RuleHandler *"
+:
+    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier any_type_of_code_block:code_block
+    {
+        delete throwaway;
+        assert(m_target_language_map != NULL);
+        if (m_target_language_map->GetElement(language_identifier->GetText()) == NULL)
+            EmitWarning(
+                language_identifier->GetFileLocation(),
+                "undeclared target language \"" + language_identifier->GetText() + "\"");
+        return new CommonLang::RuleHandler(language_identifier, code_block);
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway %error any_type_of_code_block:code_block
+    {
+        assert(m_target_language_map != NULL);
+        EmitError(throwaway->GetFileLocation(), "parse error in language identifier after directive %language");
+        delete throwaway;
+        delete code_block;
+        return NULL;
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway %error
+    {
+        assert(m_target_language_map != NULL);
+        EmitError(throwaway->GetFileLocation(), "parse error in directive %language");
+        delete throwaway;
+        return NULL;
+    }
+|
+    %error any_type_of_code_block:code_block
+    {
+        assert(m_target_language_map != NULL);
+        EmitError(code_block->GetFileLocation(), "missing directive %language before rule handler code block");
+        delete code_block;
+        return NULL;
+    }
+;
+
+rule_token_list %type "RuleTokenList *"
+:
+    rule_token_list:rule_token_list rule_token:rule_token
+    {
+        rule_token_list->Append(rule_token);
+        return rule_token_list;
+    }
+|
+    // empty reduction rule
+    {
+        return new RuleTokenList();
+    }
+;
+
+rule_token %type "RuleToken *"
+:
+    token:token ':' IDENTIFIER:assigned_identifier
+    {
+        RuleToken *rule_token =
+            token != NULL ?
+            new RuleToken(token->GetSourceText(), token->GetFileLocation(), assigned_identifier->GetText()) :
+            NULL;
+        delete token;
+        delete assigned_identifier;
+        return rule_token;
+    }
+|
+    token:token
+    {
+        RuleToken *rule_token =
+            token != NULL ?
+            new RuleToken(token->GetSourceText(), token->GetFileLocation()) :
+            NULL;
+        delete token;
+        return rule_token;
+    }
+;
+
+rule_precedence_directive %type "AstCommon::Identifier *"
+:
+    DIRECTIVE_PREC:throwaway IDENTIFIER:identifier
+    {
+        delete throwaway;
+        return identifier;
+    }
+|
+    // empty reduction rule
+    {
+        return NULL;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// misc rules
+// ///////////////////////////////////////////////////////////////////////////
+
+at_least_zero_newlines
+:
+    at_least_zero_newlines NEWLINE
+|
+    // empty reduction rule
+;
+
+at_least_one_newline
+:
+    at_least_one_newline NEWLINE
+|
+    NEWLINE
+;
+
+token %type "Trison::Token *"
+:
+    IDENTIFIER:id        { return new Trison::Token(id); }
+|
+    CHARACTER_LITERAL:ch { return new Trison::Token(ch); }
+;
+
+any_type_of_code_block %type "AstCommon::CodeBlock *"
+:
+    DUMB_CODE_BLOCK:dumb_code_block { return dumb_code_block; }
+|
+    STRICT_CODE_BLOCK:strict_code_block { return strict_code_block; }
+;
+

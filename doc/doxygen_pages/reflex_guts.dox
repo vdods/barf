@@ -1,0 +1,502 @@
+/** @page reflex_guts The Grotesque Innards Of Reflex
+
+@section reflex_guts_regex_usage Regular Expressions As Used By Reflex
+I would recommend reading the pages on @ref language_theory, @ref generic_regexes and @ref regexes_in_barf before proceeding.  The latter is essential for understanding this section and the next.
+
+The body of a <tt>reflex</tt> scanner source file consists of one or more named scanner states.  A scanner state is composed of one or more rules.  A rule is a regular expression with associated handler code.  Essentially each scanner state is a separate state machine, as it is impossible to transition from anywhere in one scanner state to a different scanner state without an explicit transition in the rule handler code.  Each rule regex in a given scanner state is essentially a separate branch in a massively alternated regex.
+
+TODO: graph of AST produced by the example
+
+Here is the NFA produced from the example <tt>reflex</tt> source given in @ref reflex_format.
+
+@dot
+digraph "NFA" {
+    fontname=courier;
+    subgraph cluster_0 {
+        label="%state MAIN";
+        node [label="3:({INTEGER})", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        3
+        node [label="4:([\\t\\n ])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        4
+        node [label="5:([*+])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        5
+        node [label="6:(\\z)", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        6
+        node [label="7:(/[*])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        7
+        node [label="14:MAIN", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=2];
+        14
+        node [label="15", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        15
+        node [label="16", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        16
+        node [label="17", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        17
+        node [label="18", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        18
+        node [label="19", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        19
+        node [label="20", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        20
+        node [label="21", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        21
+        node [label="22", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        22
+        node [label="23", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        23
+        node [label="24", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        24
+
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        14 -> 15
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        14 -> 20
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        14 -> 21
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        14 -> 22
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        14 -> 23
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        15 -> 16
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        16 -> 18
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        17 -> 19
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        17 -> 3
+        edge [label="[0-9]", fontname=courier, color="#000000", fontcolor="#000000"];
+        18 -> 17
+        edge [label="[0-9]", fontname=courier, color="#000000", fontcolor="#000000"];
+        19 -> 17
+        edge [label="[\\t\\n ]", fontname=courier, color="#000000", fontcolor="#000000"];
+        20 -> 4
+        edge [label="[*+]", fontname=courier, color="#000000", fontcolor="#000000"];
+        21 -> 5
+        edge [label="TT_END_OF_INPUT", fontname=courier, color="#000000", fontcolor="#000000"];
+        22 -> 6
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        23 -> 24
+        edge [label="'*'", fontname=courier, color="#000000", fontcolor="#000000"];
+        24 -> 7
+    }
+}
+@enddot
+
+@dot
+digraph "NFA" {
+    fontname=courier;
+    subgraph cluster_0 {
+        label="%state BLOCK_COMMENT";
+        node [label="0:([*]/)", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        0
+        node [label="1:([^*]+|[*])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        1
+        node [label="2:(\\z)", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        2
+        node [label="8:BLOCK_COMMENT", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=2];
+        8
+        node [label="9", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        9
+        node [label="10", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        10
+        node [label="11", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        11
+        node [label="12", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        12
+        node [label="13", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        13
+
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        8 -> 9
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        8 -> 11
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        8 -> 13
+        edge [label="'*'", fontname=courier, color="#000000", fontcolor="#000000"];
+        9 -> 10
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        10 -> 0
+        edge [label="[^*]", fontname=courier, color="#000000", fontcolor="#000000"];
+        11 -> 12
+        edge [label="'*'", fontname=courier, color="#000000", fontcolor="#000000"];
+        11 -> 1
+        edge [label="[^*]", fontname=courier, color="#000000", fontcolor="#000000"];
+        12 -> 12
+        edge [label="(e)", fontname=courier, color="#EF280E", fontcolor="#EF280E"];
+        12 -> 1
+        edge [label="TT_END_OF_INPUT", fontname=courier, color="#000000", fontcolor="#000000"];
+        13 -> 2
+    }
+}
+@enddot
+
+Notice that the two scanner states are entirely separate NFAs.  Also notice that though there is only one start state (the double-lined graph nodes) for each scanner state, there are multiple accept states (the green graph nodes).  This is because not only does the scanner need to decide wether or not the input is accepted by any of the regexes in the scanner state, but it has to determine which one(s) accept the input.  However, notice that there is only one accept state for each regex.  This fact will be contrasted after DFA generation.
+
+In order to construct the DFA from which to generate the scanner targets, we will use the modified subset construction algorithm on each separate scanner state's NFA.  The result is an equal number of DFAs, each corresponding to the NFA it was generated from.  Here are the DFAs corresponding to the above NFAs.
+
+@dot
+digraph "DFA" {
+    fontname=courier;
+    subgraph cluster {
+        label="%state MAIN";
+        node [label="6 : DFA\n14:MAIN, 18, 20, 21, 22, 23", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=2];
+        6
+        node [label="7 : DFA\n18, 20, 21, 23", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        7
+        node [label="8 : DFA\n4:([\\t\\n ])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        8
+        node [label="9 : DFA\n5:([*+])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        9
+        node [label="10 : DFA\n24", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        10
+        node [label="11 : DFA\n7:(/[*])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        11
+        node [label="12 : DFA\n3:({INTEGER}), 19", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        12
+        node [label="13 : DFA\n6:(\\z), 18, 20, 21, 23", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        13
+
+        edge [label="TT_NOT_END_OF_INPUT", fontname=courier, color="#000000", fontcolor="#000000"];
+        6 -> 7
+        edge [label="TT_END_OF_INPUT", fontname=courier, color="#000000", fontcolor="#000000"];
+        6 -> 13
+        edge [label="[\\t\\n ]", fontname=courier, color="#000000", fontcolor="#000000"];
+        7 -> 8
+        edge [label="[*+]", fontname=courier, color="#000000", fontcolor="#000000"];
+        7 -> 9
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        7 -> 10
+        edge [label="[0-9]", fontname=courier, color="#000000", fontcolor="#000000"];
+        7 -> 12
+        edge [label="'*'", fontname=courier, color="#000000", fontcolor="#000000"];
+        10 -> 11
+        edge [label="[0-9]", fontname=courier, color="#000000", fontcolor="#000000"];
+        12 -> 12
+        edge [label="[\\t\\n ]", fontname=courier, color="#000000", fontcolor="#000000"];
+        13 -> 8
+        edge [label="[*+]", fontname=courier, color="#000000", fontcolor="#000000"];
+        13 -> 9
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        13 -> 10
+        edge [label="[0-9]", fontname=courier, color="#000000", fontcolor="#000000"];
+        13 -> 12
+    }
+}
+@enddot
+
+@dot
+digraph "DFA" {
+    fontname=courier;
+    subgraph cluster {
+        label="%state BLOCK_COMMENT";
+        node [label="0 : DFA\n8:BLOCK_COMMENT, 9, 11, 13", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=2];
+        0
+        node [label="1 : DFA\n9, 11", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
+        1
+        node [label="2 : DFA\n1:([^*]+|[*]), 12", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        2
+        node [label="3 : DFA\n1:([^*]+|[*]), 10", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        3
+        node [label="4 : DFA\n0:([*]/)", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        4
+        node [label="5 : DFA\n2:(\\z), 9, 11", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
+        5
+
+        edge [label="TT_NOT_END_OF_INPUT", fontname=courier, color="#000000", fontcolor="#000000"];
+        0 -> 1
+        edge [label="TT_END_OF_INPUT", fontname=courier, color="#000000", fontcolor="#000000"];
+        0 -> 5
+        edge [label="[^*]", fontname=courier, color="#000000", fontcolor="#000000"];
+        1 -> 2
+        edge [label="'*'", fontname=courier, color="#000000", fontcolor="#000000"];
+        1 -> 3
+        edge [label="[^*]", fontname=courier, color="#000000", fontcolor="#000000"];
+        2 -> 2
+        edge [label="'/'", fontname=courier, color="#000000", fontcolor="#000000"];
+        3 -> 4
+        edge [label="[^*]", fontname=courier, color="#000000", fontcolor="#000000"];
+        5 -> 2
+        edge [label="'*'", fontname=courier, color="#000000", fontcolor="#000000"];
+        5 -> 3
+    }
+}
+@enddot
+
+Because each DFA state is a set of NFA states, each node is labeled first with the DFA state index, then the list of NFA states it corresponds to.  Again, start states are indicated by double-lined graph nodes and accept states are indicated by green graph nodes.  For the DFA states which contain accept states from the NFA, the accepting regex is indicated after the state index, separated by a colon (just like in the NFA graph).  If a DFA state contains an accept state from the NFA, it is also an accept state.  Notice that in the DFA graph for <tt>\%state BLOCK_COMMENT</tt> there are two DFA states which contain the NFA state <tt>1:([^*]+|[*])</tt>.  This is a result of the subset construction algorithm.  Another result is that over all states in a DFA, the corresponding NFA state set is unique.
+
+If a DFA state contains more than one NFA accept state, the state with the lower index (i.e. declared first in the <tt>reflex</tt> source file) takes priority, as only one rule handler can be be executed for each string that is accepted.
+
+@section reflex_guts_implementing_a_target Implementing A Reflex Target
+Make sure to read the previous section and all referred pages before this one, but especially @ref langspec_and_codespec, as this section draws on the cumulative information contained in said material.
+
+The goal of this section is to enumerate the concepts and algorithms necessary to implement a target using whatever crappy language your heart desires.  What will be implemented is a machine which runs the FA generated by <tt>reflex</tt> (both an NFA and equivalent DFA are generated), and it must conform to certain standards and obey certain rules to provide consistent behavior across all targets.
+
+First, you must gain an understanding of exactly what a scanner does.  The scanner simply analyzes input, one character at a time, attempting to accept the longest string which satisfies its FA.  Once the scanner can make no valid transitions based on the next input atom, it executes the code associated with the most recently encountered accept state(s).  Assuming the executed code didn't cause the scanning to halt, the machine sets the current state to the starting state for the current scanner state (e.g. for <tt>\%state MAIN</tt> in the above example, DFA state 6) and continues processing.
+
+The main parts of a scanner, as defined in this document, are:
+
+    <ul>
+    <li>The input apparatus -- reads from input, tracks the buffered atoms, and manages the various cursors defined below.  Knows nothing about state machines.
+    <li>The automaton apparatus -- runs the finite automaton (FA) and controls the subordinate input apparatus.
+    <li>The scanner apparatus -- uses the subordinate automaton apparatus to determine what strings were accepted by the user-specified scanner, and which code to run to handle each. This is what is customized using the values specified in the primary source.
+    </ul>
+
+The input and automaton apparati are essentially unchangeable, to be used as common code to all customized scanner apparati (e.g. the input and automaton apparati could be implemented as base classes for each of many possible customized scanner apparati to subclass).  The following is an example class hierarchy chart to illustrate the point.
+
+@dot
+digraph apparatus_hierarchy {
+    rankdir=RL;
+    node [shape=box];
+    node [label="class InputApparatus"];
+    input
+    node [label="class AutomatonApparatus"];
+    automaton
+    node [label="class MapFileScanner"];
+    map_file
+    node [label="class NetworkCommandScanner"];
+    network_command
+    node [label="class ArithmeticScanner"];
+    arithmetic
+
+    automaton -> input
+    map_file -> automaton
+    network_command -> automaton
+    arithmetic -> automaton
+}
+@enddot
+
+Because all of the customized scanner apparati (MapFileScanner, NetworkCommandScanner, and ArithmeticScanner) use AutomatonApparatus and InputApparatus as their base classes, there must be no scanner-specific customization in either.  Specifically, this means that the codespec files which specify the input and automaton apparati must not use any of the scanner-specific codespec macros.  TODO: write stuff gooder.
+
+@subsection reflex_guts_implementing_a_target_definitions Definitions
+First, some concepts will be defined for use in the forthcoming scanner algorithm definition.
+
+An <strong>atom</strong> is one piece of input, in this case an ASCII character.  It can be anything in the range 0-255 (though 0 is reserved to represent beginning-of-input and end-of-input).
+
+The scanner uses the <strong>input buffer</strong>, which is a deque (double-ended queue) of atoms, to track the accepted text and unread text.  It is a data structure whose elements can be referred to by element index, starting with index 0.  These indices will each be referred to as a <strong>cursor</strong>.  As will become apparent soon, a cursor is only valid if it has index greater than 0.  The input buffer is split into four sections.
+
+    <ul>
+    <li>The <strong>previous atom</strong> is the single atom at the beginning of the input buffer.  It is necessary for calculating the <strong>conditionals</strong> (which will be defined later).  Its index is always 0.
+    <li>The <strong>accepted string</strong> signifies the string of atoms which have been most recently accepted by any applicable regex; if no string has yet been accepted, then the accepted string does not exist.  The existence and/or end of the accept string is demarcated by the <strong>accept cursor</strong>.
+        <ul>
+        <li>If the accept cursor is 0, the accept string does not exist.  If it is greater than 0, then the accept string exists.
+        <li>If the accept string exists, then the accept string is the string of atoms in the range [1, accept cursor) -- inclusive on the lower range end, exclusive on the upper end.  It is possible for this string to exist but be empty.
+        </ul>
+    <li>The <strong>unaccepted string</strong> signifies the string of atoms which have been read (are before the read cursor) but haven't yet been accepted.  Its end is demarcated by the <strong>read cursor</strong>.  It is possible for this string to be empty.
+    <li>The <strong>unread string</strong> is a string of length one or greater, directly after the unaccepted string.  This signifies the string of atoms which have not yet been read (are after the read cursor).
+    </ul>
+
+To illustrate the input buffer graphically:
+
+@verbatim
+previous  accepted   unaccepted   unread
+    atom   string      string     string
+
+       ABBBBBBBBBBBBCCCCCCCCCCCCDDDDDDDDDD
+        ^           ^           ^         ^
+        |           |           |         |
+      index       accept       read     length
+        1         cursor      cursor      of
+                                        buffer
+@endverbatim
+
+The accepted string (<tt>BBBBBBBBBBBB</tt>) and the unaccepted string (<tt>CCCCCCCCCCCC</tt>) may both independently have length 0.
+
+When first constructing the input buffer, the value '\\0' (null-terminating char) should be added as the very first element (index 0).  This value for the previous atom indicates the beginning of input.  As more atoms are read, the end of input will eventually be encountered.  Once this happens, the value '\\0' should be added to the end of the input buffer, at which point, no more atoms may be read.  This final atom indicates the end of input.  Correspondingly, any normal atom (not the beginning or end of input) must not be '\\0'.
+
+A <strong>conditional</strong> is a pair of bitfields -- a mask and a set of flags -- which indicate a set of conditions.  The mask indicates which bits are active in the conditional, while the flags indicate the values of the active bits.  Each bit corresponds to a different condition at the read cursor.  The conditions and corresponding bitfield values are as follows.  In the following pseudocode, the existence of the previous atom is shown to be necessary (by the subtraction of 1 within the array index expression)
+
+    <ul>
+    <li>beginning of input = 00000001 -- true if and only if the atom before the read cursor is '\\0' (the null char).  In pseudocode,
+        @verbatim input_buffer[read_cursor-1] == '\\0' @endverbatim
+    <li>end of input       = 00000010 -- true if and only if the atom at the read cursor is '\\0'.  In pseudocode,
+        @verbatim input_buffer[read_cursor] == '\\0' @endverbatim
+    <li>beginning of line  = 00000100 -- true if and only if the atom before the read cursor is '\\0' or a newline.  In pseudocode,
+        @verbatim input_buffer[read_cursor-1] == '\\0' || input_buffer[read_cursor-1] == '\n' @endverbatim
+    <li>end of line        = 00001000 -- true if and only if the atom at the read cursor is '\\0' or a newline.  In pseudocode,
+        @verbatim input_buffer[read_cursor] == '\\0' || input_buffer[read_cursor] == '\n' @endverbatim
+    <li>word boundary      = 00010000 -- true if and only if the condition of the atom before the read cursor being a word character is not equal to the condition of the atom at the read cursor being a word character.  In pseudocode,
+        @verbatim IsWordChar(input_buffer[read_cursor-1]) != IsWordChar(input_buffer[read_cursor]) @endverbatim
+    </ul>
+
+The <strong>current conditional flags</strong> is the flags portion of a conditional, indicating the conditions active in the input buffer at the read cursor.  The existence of the previous atom is solely to guarantee that there is always at least one atom before the read cursor upon which to perform the calculation of the current conditional flags.
+
+The above definitions have been made for use in the following definition.
+
+@subsubsection reflex_guts_implementing_a_target_definitions_input_apparatus The Input Apparatus
+
+The <strong>input apparatus</strong> is an interface which provides certain well-defined operations on the above-defined entities.  Its encapsulation serves to simplify the interaction with the automaton apparatus (explained later) which runs the state machine.  The interface follows.
+
+    <ul>
+    <li>type: <tt>bitfield</tt> -- An integer large enough to store the highest conditional bit flag.
+    <li>type: <tt>buffer_index</tt> -- An integer which can store an index into the input buffer.
+    <li>type: <tt>atom</tt> -- An 8-bit integer value to store atoms.
+    <li>type: <tt>string</tt> -- A string of atoms.
+    <li>type: <tt>method_returning_boolean</tt> -- A type which can be used to call a method taking no arguments, returning a boolean (e.g. a C++ method pointer).
+    <li>type: <tt>method_returning_atom</tt> -- A type which can be used to call a method taking no arguments, returning an atom (e.g. a C++ method pointer).
+
+    <li>member: <tt>input buffer</tt> -- Of a type satisfying the above definition of the input buffer.
+    <li>member: <tt>read cursor</tt> -- Of type buffer_index
+    <li>member: <tt>accept cursor</tt> -- Of type buffer_index
+    <li>member: <tt>current conditional flags</tt> -- Of type bitfield
+    <li>member: <tt>is_at_end_of_input_method</tt> -- Of type method_returning_boolean.  Stores the method to call to evaluate if there is no more input to be read (e.g. EOF).  This abstraction allows client code (i.e. the automaton apparatus, which is described below) to specify custom methods for retrieving end-of-input state.
+    <li>member: <tt>read_next_atom_method</tt> -- Of type method_returning_atom.  Stores the method to call to return the next atom from input (whatever form that may be).
+
+    <li>method: <tt>Construct (method_returning_boolean is_at_end_of_input_method, method_returning_atom read_next_atom_method)</tt> -- should be called once and only once upon creation of this input apparatus.  Sets the value of is_at_end_of_input_method and read_next_atom_method using the passed-in values.  ResetForNewInput() can be called for pedantic safety, but in theory this is not necessary, as it will be called by the ResetForNewInput() method of the automaton apparatus (which is defined below).
+    <li>method: <tt>IsAtEndOfInput ()</tt> returns <tt>boolean</tt> -- returns true if and only if the current conditional flags indicate that the end-of-input condition is true.
+    <li>method: <tt>GetCurrentConditionalFlags ()</tt> returns <tt>bitfield</tt> -- Returns the conditional flags for the current value of the read cursor and input buffer.  This method will first have to ensure that at least one atom on either side of the current read cursor is available before performing the calculations.
+    <li>method: <tt>IsConditionalMet (bitfield conditional_mask, bitfield conditional_flags)</tt> returns <tt>boolean</tt> -- Returns true if and only if no relevant bits (the bits set in conditional_mask) differ between conditional_flags and GetCurrentConditionalFlags().  Using C-language operators, this can be calculated as <tt>((conditional_flags ^ GetCurrentConditionalFlags()) & conditional_mask) == 0</tt>.
+    <li>method: <tt>GetInputAtom ()</tt> returns <tt>atom</tt> -- Ensures there is at least one atom in the input buffer after the read cursor, by using is_at_end_of_input_method and read_next_atom_method as necessary.
+    <li>method: <tt>AdvanceReadCursor ()</tt> -- Increments the read cursor by one.  The read cursor should be greater than zero and less than the length of the input buffer.
+    <li>method: <tt>SetAcceptCursor ()</tt> -- Assigns the read cursor's value to the accept cursor.
+    <li>method: <tt>Accept ()</tt> returns <tt>string</tt> -- Extracts and returns the accepted string; the string of input buffer atoms in the range [1, accept cursor) -- if the accept cursor is 0, it is an error.  Pops the same number of atoms off the front of the input buffer.  Sets the read cursor to 1 (indicating the new beginning of the unread string).  Sets the accept cursor to 0 (indicating the non-existence of the accept string).  A result of the popping is that the new previous atom is the last atom in the accepted string.
+    <li>method: <tt>Reject ()</tt> returns <tt>atom</tt> -- Extracts and returns the atom at index 1 in the input buffer.  If the accept cursor is not 0, it is an error.  If the extracted atom is not 0 (null-terminating character), pops the front of the input buffer once.  Sets the read cursor to 1 (which is the new beginning of the unread string).
+    <li>method: <tt>ResetForNewInput ()</tt> -- Clears the input buffer.  Pushes an atom with value 0 onto the input buffer (at this point, a single atom with value 0 should be the only contents of the input buffer).  Sets the read cursor to 1 (indicating the beginning of the unread string).  Sets the accept cursor to 0 (indicating the non-existence of the accept string).  Must somehow indicate that the current conditional flags have not been calculated (so that when GetCurrentConditionalFlags is called, the current conditional flags can be calculated).  This method must be called to initialize the input buffer before being used, as well as any time this input buffer is being reused for a new input source (e.g. reading from a second, different file).
+    </ul>
+
+All of the following definitions are independent of the input apparatus -- they are definitions for the components required to run the FA generated by <tt>reflex</tt>.
+
+The <strong>current scanner state</strong> (not to be confused with an FA state) is the currently active "mode" of the scanner -- the two scanner states in the example from @ref reflex_format are <tt>MAIN</tt> and <tt>BLOCK_COMMENT</tt>.  Each has an associated FA -- a set of states, transitions, a starting state, and a set of accept states.
+
+A <strong>state identifier</strong> is an abstract indicator for a single state in an FA.  It can be invalid (i.e. indicating no real FA state), and its validity must be detectable.  A state identifier could be implemented as a pointer to a memory address (in which case the invalid value would be NULL), the FA state index (the invalid value could be one higher than the highest valid FA state index), or whatever.
+
+The above definitions have been made for use in the following definition.
+
+@subsubsection reflex_guts_implementing_a_target_definitions_automaton_apparatus The Automaton Apparatus
+
+The <strong>automaton apparatus</strong> is an interface which provides certain well-defined operations on the above-defined entities.  Like the input apparatus, its encapsulation serves to simplify the interaction with the final generated scanner.  The given definition is that of a DFA (and not an NFA); because all NFAs have an equivalent DFA, we will choose to implement the easier/faster DFA.  The definition of the automaton apparatus for an NFA may be given at a later time.  The interface follows.
+
+    <ul>
+    <li>type: <tt>accept_handler_index</tt> -- an index into the table of accept handlers which are provided by <tt>reflex</tt>.  If this value is greater or equal to the total number of accept handlers (from all scanner states), then it is invalid.  This type must be large enough to hold the total number of accept handlers.
+    <li>type: <tt>state_identifier</tt> -- a type satisfying the above definition of a state identifier.
+    <li>type: <tt>dfa_state</tt> -- is a compound, implementing the concept of an FA state, containing:
+        <ul>
+        <li>member: <tt>accept_index</tt> -- of type accept_handler_index.  If it is a valid accept_handler_index value, then this state is an accept state.  If invalid, this state is not an accept state.
+        <li>member: <tt>transitions</tt> -- a set whose elements are of type dfa_transition (described below).  This is the set of all transitions from this state to others.  For any given state, all transitions will either be atomic (i.e. of type TT_INPUT_ATOM or TT_INPUT_ATOM_RANGE, explained below) or conditional (i.e. of type TT_CONDITIONAL, explained below).
+        </ul>
+    <li>type: <tt>dfa_transition</tt> -- is a compound, implementing the concept of an FA transition, containing:
+        <ul>
+        <li>member: <tt>target_dfa_state</tt> -- of type state identifier.  This is the dfa_state which will become the new current state should this transition be exercised.
+        <li>member: <tt>data_0</tt> -- of a type capable of storing the integer values 0 through 255, inclusive.  The use of this member will be explained shortly.
+        <li>member: <tt>data_1</tt> -- of a type capable of storing the integer values 0 through 255, inclusive.  The use of this member will be explained shortly.
+        <li>member: <tt>transition_type</tt> -- of a type capable of storing the integer values 0, 1, 2 and 3.  This value represents what type of FA transition this dfa_transition is.  The types are enumerated by <tt>reflex</tt> as follows:
+            <ul>
+            <li><tt>TT_INPUT_ATOM = 0</tt> -- indicates that data_0 contains the ASCII value (1 through 255, inclusive) of the single atom which this transition may be exercised upon.
+            <li><tt>TT_INPUT_ATOM_RANGE = 1</tt> -- indicates the range [data_0, data_1] (inclusive on both ends) of contiguous ASCII values (1 through 255, inclusive) of atoms which this transition may be exercised upon.  If the dfa_transition's type is TT_INPUT_ATOM_RANGE, data_0 will be less than data_1.
+            <li><tt>TT_CONDITIONAL = 2</tt> -- indicates that data_0 and data_1 contain the mask and flags, respectively, of a conditional.  A dfa_transition of this type may only be exercised when the input buffer's current conditional flags are accepted by conditional defined by data_0 and data_1.  Calculating wether or not a set of conditional flags are accepted by a conditional will be explained below.
+            <li><tt>TT_EPSILON = 3</tt> -- indicates that this is an epsilon-transition and may be exercised without consuming any input.  It is ONLY used in NFAs, and so will NEVER appear in a DFA.
+            </ul>
+
+        <li>method: <tt>AcceptsInputAtom (atom input_atom)</tt> returns <tt>boolean</tt> -- indicates if the given input_atom (of the input apparatus' atom type) is accepted by this dfa_transition</tt>
+        <li>method: <tt>AcceptsConditionalFlags (bitfield conditional_flags)</tt> returns <tt>boolean</tt> -- indicates if the given conditional_flags are accepted by this dfa_transition.  Returns true if and only if no relevant bits (the bits set in data_0) differ between conditional_flags and data_1.  The C-language expression to calculate this is:
+            @verbatim return ((conditional_flags ^ data_1) & data_0) == 0; @endverbatim
+        </ul>
+
+    <li>member: <tt>accept_handler_count</tt> -- of type accept_handler_index.  This stores the number of accept handlers, and indicates the least invalid value for members of type accept_handler_index.
+    <li>member: <tt>initial_state</tt> -- of type state identifier.  Stores the starting state for the current scanner state.  Its value is used to initialize current_state (see below).  It must never be invalid.
+    <li>member: <tt>current_state</tt> -- of type state identifier.  Indicates the current state (as described in @ref language_theory_definitions) in the running FA.
+    <li>member: <tt>accept_state</tt> -- of type state identifier.  Indicates the FA accept state which was most recently encountered (i.e. the most recent value of the current state which was an FA accept state).  It is always initialized as invalid.
+    <li>member: <tt>input_buffer</tt> -- of a type implementing the input apparatus interface.
+
+    <li>method: <tt>Construct (accept_handler_index accept_handler_count, method_returning_boolean is_at_end_of_input_method, method_returning_atom read_next_atom_method)</tt> -- Should be called once and only once upon creation of this automaton apparatus.  Passes the values is_at_end_of_input_method and read_next_atom_method into input_buffer.Construct().  Assigns the value of accept_handler_count using the passed-in value.  ResetForNewInput() can be called for pedantic safety, but in theory this is not necessary, as it will be called by the ResetForNewInput() method of the scanner apparatus (which is defined below).
+    <li>method: <tt>ResetForNewInput (state_identifier initial_state)</tt> -- calls input_buffer.ResetForNewInput(), assigns the indicated value to initial_state, and sets current_state and accept_state to invalid.
+    <li>method: <tt>RunDfa ()</tt> returns <tt>accept_handler_index, string</tt> -- runs the FA as long as it can go; until the FA has no more transitions.  The resulting value of accept_state will indicate if any accept state was encountered, and if so, which one.  The return values are:
+        <ul>
+        <li>If accept_state was valid, the returned accept_handler_index will be the value of the accept_index member of the dfa_state indicated by accept_state, while the returned string will be the accepted string.
+        <li>If accept_state was invalid, the returned accept_handler_index will be invalid, while the returned string will be the single atom following the previous atom.
+        </ul>
+        The algorithm demands more than a couple English sentences, so it will be described in the following pseudocode.
+@verbatim
+ensure initial_state is valid; // i.e. assert
+current_state = initial_state;
+ensure accept_state is invalid; // i.e. assert
+
+while (current_state is valid)
+{
+    if (the current state is an accept state)
+    {
+        // save the accept state and set the accept cursor
+        accept_state = current_state;
+        input_buffer.SetAcceptCursor();
+    }
+    // exercise a single transition, setting current_state to the
+    // transitioned-to state.  if no transition is possible, make
+    // current_state invalid.
+    current_state = ProcessInputAtom();
+}
+
+if (accept_state is valid)
+{
+    // record which rule handler for the scanner to run
+    accepted_index = accept_state.accept_index;
+    // extract the accepted string from the input buffer
+    accepted_string = input_buffer.Accept();
+    // clear the accept state for next time around
+    accept_state = invalid;
+    // return the calculated values
+    return accepted_index, accepted_string;
+}
+else // input went unaccepted
+{
+    // extract the first unaccepted atom
+    rejected_string = input_buffer.Reject();
+    // return the calculated values; no accepted state, so the returned
+    // accept_handler_index is invalid.
+    return invalid, rejected_string;
+}
+@endverbatim
+    <li>method: <tt>ProcessInputAtom ()</tt> returns <tt>state_identifier</tt> -- from the current state, this exercises the single matching dfa_transition if it exists and returns its target_dfa_state, or if no transition is possible it returns an invalid state_identifier.  Remember, as noted above, a transition can only be atomic (i.e. of type TT_INPUT_ATOM or TT_INPUT_ATOM_RANGE) or conditional (i.e. of type TT_CONDITIONAL).  The following pseudocode describes this method.
+@verbatim
+ensure current_state is valid; // i.e. assert
+// iterate through the current state's transitions, exercising the first
+// acceptable one and returning its target_dfa_state.
+for (transition in current_state.transitions)
+{
+    if (transition is atomic)
+    {
+        if (transition.AcceptsInputAtom(input_buffer.GetInputAtom()))
+        {
+            input_buffer.AdvanceReadCursor();
+            return transition.target_dfa_state;
+        }
+    }
+    else if (transition.AcceptsConditionalFlags_(input_buffer.GetCurrentConditionalFlags()))
+        return transition.target_dfa_state;
+}
+// if we reached here, no transition was possible
+return invalid state_identifier;
+@endverbatim
+    </ul>
+
+@subsubsection reflex_guts_implementing_a_target_definitions_scanner_apparatus The Scanner Apparatus
+
+TODO: yeah, this section isn't done.
+
+The <strong>scanner apparatus</strong> is the main interface and is publicly accessible to the user's code.  The API defined here defines the canonical behavior which all implemented <tt>reflex</tt> targets should follow (though there certainly is no absolute requirement to do so).  This conformance is intended to provide consistent and predictable behavior between different targets.
+
+One important difference between the scanner apparatus and the previously defined apparati is the fact that TODO later
+
+Each apparatus, in hiding its subordinate, provides a much cleaner and simpler API.  The scanner apparatus API is the simplest of all.  The previously defined input and FA apparati have been separated out for the following three reasons.
+
+    <ul>
+    <li>To formalize the API for each so that each could be implemented and tested separately
+    <li>To allow access-level member/method hiding in languages which support it (e.g. C++ and its public/protected/private access levels)
+    <li>To separate the common code from user-customized code, so that code-reuse is possible (e.g. the input and FA apparati could be implemented as unchanging C++ baseclasses used by each instance of user-customized code).  The automaton apparatus is designed to hide the input apparatus.  Similarly, the scanner apparatus is designed to hide the automaton apparatus (from the user).
+    </ul>
+
+The scanner apparatus API follows.
+
+    <ul>
+    <li>type: <tt>dfa_state_set</tt> -- A set type whose elements are of type dfa_state.
+
+    <li>member: <tt>automaton</tt> -- of a type satisfying the automaton apparatus.
+    <li>member: <tt>debug_spew</tt> -- of type boolean.  This is only present if
+    <li>member: <tt>states</tt>
+
+    <li>method: CONSTRUCTOR/INITIALIZER -- one-time and each-time initializations; calls automaton.ResetForNewInput() and sets debug_spew to false.
+    <li>method: <tt>IsAtEndOfInput ()</tt> returns <tt>boolean</tt> -- simply returns the value of automaton.input_buffer.IsAtEndOfInput().
+    </ul>
+
+TODO: more words
+
+*/

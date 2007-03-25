@@ -1,0 +1,606 @@
+// ///////////////////////////////////////////////////////////////////////////
+// reflex_parser.trison by Victor Dods, created 2006/10/18
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%parser_class_name "Parser"
+
+%parser_header_file_top%{
+#if !defined(_REFLEX_PARSER_HPP_)
+#define _REFLEX_PARSER_HPP_
+
+#include "reflex.hpp"
+
+#include "barf_commonlang_scanner.hpp"
+#include "barf_message.hpp"
+
+namespace Barf {
+namespace AstCommon {
+
+class Ast;
+
+} // end of namespace AstCommon
+
+namespace CommonLang {
+
+class TargetLanguageMap;
+
+} // end of namespace CommonLang
+
+namespace Regex {
+
+class RegularExpressionMap;
+
+} // end of namespace Regex
+} // end of namespace Barf
+
+namespace Reflex {
+%}
+
+%parser_class_methods_and_members{
+    FileLocation const &GetFileLocation () const { return m_scanner.GetFileLocation(); }
+
+    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
+    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+
+    bool OpenFile (string const &input_filename);
+
+private:
+
+    Token::Type Scan ();
+
+    CommonLang::Scanner m_scanner;
+    CommonLang::TargetLanguageMap *m_target_language_map;
+    Regex::RegularExpressionMap *m_regex_macro_map;
+}
+
+%parser_header_file_bottom%{
+} // end of namespace Reflex
+
+#endif // !defined(_REFLEX_PARSER_HPP_)
+%}
+
+%parser_implementation_file_top%{
+#include <sstream>
+
+#include "barf_regex_ast.hpp"
+#include "barf_regex_parser.hpp"
+#include "reflex_ast.hpp"
+
+namespace Reflex {
+%}
+
+%parser_constructor_actions{
+    m_target_language_map = NULL;
+    m_regex_macro_map = NULL;
+}
+
+%parser_destructor_actions{
+}
+
+%parser_throw_away_token_actions{
+    delete token;
+}
+
+%parser_implementation_file_bottom%{
+bool Parser::OpenFile (string const &input_filename)
+{
+    return m_scanner.OpenFile(input_filename);
+}
+
+Parser::Token::Type Parser::Scan ()
+{
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&m_lookahead_token);
+    assert(scanner_token_type >= 0);
+    if (scanner_token_type < 0x100)
+        return Parser::Token::Type(scanner_token_type);
+    switch (scanner_token_type)
+    {
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:            return Parser::Token::END_;
+        case CommonLang::Scanner::Token::BAD_TOKEN:                  return Parser::Token::BAD_TOKEN;
+        case CommonLang::Scanner::Token::DIRECTIVE_LANGUAGE:         return Parser::Token::DIRECTIVE_LANGUAGE;
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:            return Parser::Token::DIRECTIVE_MACRO;
+        case CommonLang::Scanner::Token::DIRECTIVE_START:            return Parser::Token::DIRECTIVE_START;
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE:            return Parser::Token::DIRECTIVE_STATE;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGES: return Parser::Token::DIRECTIVE_TARGET_LANGUAGES;
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:            return Parser::Token::DUMB_CODE_BLOCK;
+        case CommonLang::Scanner::Token::END_OF_FILE:                return Parser::Token::END_;
+        case CommonLang::Scanner::Token::END_PREAMBLE:               return Parser::Token::END_PREAMBLE;
+        case CommonLang::Scanner::Token::IDENTIFIER:                 return Parser::Token::IDENTIFIER;
+        case CommonLang::Scanner::Token::NEWLINE:                    return Parser::Token::NEWLINE;
+        case CommonLang::Scanner::Token::REGEX:                      return Parser::Token::REGEX;
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:          return Parser::Token::STRICT_CODE_BLOCK;
+        case CommonLang::Scanner::Token::STRING_LITERAL:             return Parser::Token::STRING_LITERAL;
+
+        case CommonLang::Scanner::Token::CHARACTER_LITERAL:
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:
+        case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:
+        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:
+        case CommonLang::Scanner::Token::DIRECTIVE_IDENTIFIER:
+        case CommonLang::Scanner::Token::DIRECTIVE_LEFT:
+        case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:
+        case CommonLang::Scanner::Token::DIRECTIVE_PREC:
+        case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
+        case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
+        case CommonLang::Scanner::Token::DIRECTIVE_STRING:
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:
+        case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
+        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
+            assert(m_lookahead_token != NULL);
+            EmitError(m_lookahead_token->GetFileLocation(), "unrecognized token encountered in langspec");
+            delete m_lookahead_token;
+            m_lookahead_token = NULL;
+            return Parser::Token::BAD_TOKEN;
+
+        default:
+            assert(false && "this should never happen");
+            return Parser::Token::BAD_TOKEN;
+    }
+}
+
+} // end of namespace Reflex
+%}
+
+%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type_sentinel "NULL"
+%parser_custom_cast "DStaticCast"
+
+%token BAD_TOKEN
+%token DIRECTIVE_LANGUAGE %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_MACRO %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_START %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_STATE %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_TARGET_LANGUAGES %type "AstCommon::ThrowAway *"
+%token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
+%token END_PREAMBLE %type "AstCommon::ThrowAway *"
+%token IDENTIFIER %type "AstCommon::Identifier *"
+%token NEWLINE
+%token REGEX %type "AstCommon::String *"
+%token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
+%token STRING_LITERAL %type "AstCommon::String *"
+%token '.' ':' '|' ';'
+
+%start root
+
+%%
+
+// ///////////////////////////////////////////////////////////////////////////
+// root rule
+// ///////////////////////////////////////////////////////////////////////////
+
+root %type "Representation *"
+:
+    at_least_zero_newlines
+    target_languages_directive:target_language_map
+    language_directives
+    macro_directives:regular_expression_map
+    start_directive:start_directive
+    END_PREAMBLE:throwaway
+    scanner_states:scanner_state_map
+    {
+        assert(m_target_language_map != NULL);
+        assert(target_language_map == m_target_language_map);
+
+        // set the TargetLanguageMap's primary source path
+        target_language_map->SetSourcePath(m_scanner.GetInputName());
+        // make sure the %start directive value specifies a real scanner state
+        if (start_directive != NULL &&
+            scanner_state_map->GetElement(start_directive->m_start_state_identifier->GetText()) == NULL)
+        {
+            EmitError(
+                start_directive->GetFileLocation(),
+                "undeclared state \"" + start_directive->m_start_state_identifier->GetText() + "\"");
+        }
+
+        Representation *representation =
+            new Representation(
+                target_language_map,
+                regular_expression_map,
+                start_directive,
+                throwaway->GetFileLocation(),
+                scanner_state_map);
+        delete throwaway;
+        return representation;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// target language directive rules
+// ///////////////////////////////////////////////////////////////////////////
+
+target_languages_directive %type "CommonLang::TargetLanguageMap *"
+:
+    DIRECTIVE_TARGET_LANGUAGES:throwaway target_language_identifiers:target_language_map at_least_one_newline
+    {
+        assert(m_target_language_map == NULL);
+        m_target_language_map = target_language_map;
+        delete throwaway;
+        return target_language_map;
+    }
+|
+    // empty reduction rule
+    {
+        assert(m_target_language_map == NULL);
+        m_target_language_map = new CommonLang::TargetLanguageMap();
+        return m_target_language_map;
+    }
+|
+    DIRECTIVE_TARGET_LANGUAGES:throwaway %error at_least_one_newline
+    {
+        assert(m_target_language_map == NULL);
+        EmitError(throwaway->GetFileLocation(), "parse error in directive %target_languages");
+        m_target_language_map = new CommonLang::TargetLanguageMap();
+        return m_target_language_map;
+    }
+;
+
+target_language_identifiers %type "CommonLang::TargetLanguageMap *"
+:
+    target_language_identifiers:target_language_map IDENTIFIER:target_language_identifier
+    {
+        CommonLang::TargetLanguage *target_language = new CommonLang::TargetLanguage(target_language_identifier->GetText());
+        target_language->EnableCodeGeneration();
+        target_language_map->Add(target_language_identifier->GetText(), target_language);
+        return target_language_map;
+    }
+|
+    // empty reduction rule
+    {
+        assert(m_target_language_map == NULL);
+        return new CommonLang::TargetLanguageMap();
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// language directive rules
+// ///////////////////////////////////////////////////////////////////////////
+
+language_directives
+:
+    language_directives language_directive:language_directive
+    {
+        assert(m_target_language_map != NULL);
+        if (language_directive != NULL)
+            m_target_language_map->AddLanguageDirective(language_directive);
+        return NULL;
+    }
+|
+    // empty reduction rule
+    {
+        if (m_target_language_map == NULL)
+            m_target_language_map = new CommonLang::TargetLanguageMap();
+        return NULL;
+    }
+;
+
+language_directive %type "CommonLang::LanguageDirective *"
+:
+    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive language_directive_param:param at_least_one_newline
+    {
+        delete throwaway;
+        return new CommonLang::LanguageDirective(language_identifier, language_directive, param);
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
+        delete throwaway;
+        delete language_identifier;
+        delete language_directive;
+        return NULL;
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in directive name for directive %language." + language_identifier->GetText());
+        delete throwaway;
+        delete language_identifier;
+        return NULL;
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in language name for directive %language");
+        delete throwaway;
+        return NULL;
+    }
+;
+
+language_directive_param %type "AstCommon::TextBase *"
+:
+    IDENTIFIER:value            { return value; }
+|   STRING_LITERAL:value        { return value; }
+|   STRICT_CODE_BLOCK:value     { return value; }
+|   DUMB_CODE_BLOCK:value       { return value; }
+|   /* empty reduction rule */  { return NULL; }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// macro directive rules
+// ///////////////////////////////////////////////////////////////////////////
+
+macro_directives %type "Regex::RegularExpressionMap *"
+:
+    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway IDENTIFIER:macro_identifier REGEX:macro_regex_string at_least_one_newline
+    {
+        Regex::Parser parser;
+        istringstream in(macro_regex_string->GetText());
+        parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
+        try {
+            if (parser.Parse(regular_expression_map) == Regex::Parser::PRC_SUCCESS)
+                regular_expression_map->Add(
+                    macro_identifier->GetText(),
+                    DStaticCast<Regex::RegularExpression *>(parser.GetAcceptedToken()));
+            else
+                EmitError(throwaway->GetFileLocation(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
+        } catch (string const &exception) {
+            EmitError(throwaway->GetFileLocation(), exception + " in regular expression (" + macro_regex_string->GetText() + ")");
+        }
+        delete throwaway;
+        delete macro_identifier;
+        delete macro_regex_string;
+        return regular_expression_map;
+    }
+|
+    // empty reduction rule
+    {
+        // we save the regex macro map in a member var, so that the reduction
+        // rule handler for the scanner state rules can use it.
+        m_regex_macro_map = new Regex::RegularExpressionMap();
+        return m_regex_macro_map;
+    }
+|
+    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway IDENTIFIER:macro_identifier %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in directive %macro " + macro_identifier->GetText());
+        delete throwaway;
+        delete macro_identifier;
+        return regular_expression_map;
+    }
+|
+    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in directive %macro");
+        delete throwaway;
+        return regular_expression_map;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// start directive rule
+// ///////////////////////////////////////////////////////////////////////////
+
+start_directive %type "StartDirective *"
+:
+    DIRECTIVE_START:throwaway IDENTIFIER:start_state_identifier at_least_one_newline
+    {
+        delete throwaway;
+        return new StartDirective(start_state_identifier);
+    }
+|
+    DIRECTIVE_START:throwaway %error at_least_one_newline
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in directive %start");
+        delete throwaway;
+        return NULL;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// scanner state rules
+// ///////////////////////////////////////////////////////////////////////////
+
+scanner_states %type "ScannerStateMap *"
+:
+    scanner_states:scanner_state_map scanner_state:scanner_state
+    {
+        if (scanner_state != NULL)
+            scanner_state_map->Add(scanner_state->m_scanner_state_identifier->GetText(), scanner_state);
+        return scanner_state_map;
+    }
+|
+    // empty reduction rule
+    {
+        return new ScannerStateMap();
+    }
+;
+
+scanner_state %type "ScannerState *"
+:
+    DIRECTIVE_STATE:throwaway IDENTIFIER:scanner_state_identifier ':' scanner_state_rules:rule_list ';'
+    {
+        delete throwaway;
+        return new ScannerState(scanner_state_identifier, rule_list);
+    }
+|
+    DIRECTIVE_STATE:throwaway IDENTIFIER:scanner_state_identifier ':' %error ';'
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in scanner state rule list");
+        delete throwaway;
+        return new ScannerState(scanner_state_identifier, new RuleList());
+    }
+|
+    DIRECTIVE_STATE:throwaway %error ':' scanner_state_rules:rule_list ';'
+    {
+        EmitError(throwaway->GetFileLocation(), "parse error in scanner state identifier");
+        delete throwaway;
+        delete rule_list;
+        return NULL;
+    }
+;
+
+scanner_state_rules %type "RuleList *"
+:
+    rule_list:rule_list
+    {
+        return rule_list;
+    }
+|
+    // empty reduction rule
+    {
+        return new RuleList();
+    }
+;
+
+rule_list %type "RuleList *"
+:
+    rule_list:rule_list '|' rule:rule
+    {
+        rule_list->Append(rule);
+        return rule_list;
+    }
+|
+    rule:rule
+    {
+        RuleList *rule_list = new RuleList();
+        rule_list->Append(rule);
+        return rule_list;
+    }
+;
+
+rule %type "Rule *"
+:
+    REGEX:regex_string rule_handlers:rule_handler_map
+    {
+        assert(m_regex_macro_map != NULL);
+
+        // parse the rule regex
+        Regex::RegularExpression *regex = NULL;
+        {
+            Regex::Parser parser;
+            istringstream in(regex_string->GetText());
+            parser.OpenUsingStream(&in, regex_string->GetText(), false);
+            try {
+                if (parser.Parse(m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
+                    regex = DStaticCast<Regex::RegularExpression *>(parser.GetAcceptedToken());
+                else
+                {
+                    EmitError(
+                        regex_string->GetFileLocation(),
+                        "parse error in regular expression (" + regex_string->GetText() + ")");
+                    regex = new Regex::RegularExpression();
+                }
+            } catch (string const &exception) {
+                EmitError(
+                    regex_string->GetFileLocation(),
+                    exception + " in regular expression (" + regex_string->GetText() + ")");
+                regex = new Regex::RegularExpression();
+            }
+            assert(regex != NULL);
+        }
+
+        // enforcement of presence of rule handlers for all target languages
+        assert(m_target_language_map != NULL);
+        for (CommonLang::TargetLanguageMap::const_iterator it = m_target_language_map->begin(),
+                                                           it_end = m_target_language_map->end();
+             it != it_end;
+             ++it)
+        {
+            string const &target_language_identifier = it->first;
+            if (rule_handler_map->GetElement(target_language_identifier) == NULL)
+            {
+                EmitWarning(
+                    regex_string->GetFileLocation(),
+                    "missing rule handler for target language \"" + target_language_identifier + "\"");
+                // add a blank code block for the rule handler's missing target language
+                rule_handler_map->Add(
+                    target_language_identifier,
+                    new CommonLang::RuleHandler(
+                        new AstCommon::Identifier(target_language_identifier, FileLocation::ms_invalid),
+                        new AstCommon::StrictCodeBlock(FileLocation::ms_invalid)));
+                assert(rule_handler_map->GetElement(target_language_identifier) != NULL);
+            }
+        }
+
+        Rule *rule = new Rule(regex_string->GetText(), regex, rule_handler_map);
+        delete regex_string;
+        return rule;
+    }
+;
+
+rule_handlers %type "CommonLang::RuleHandlerMap *"
+:
+    rule_handlers:rule_handler_map rule_handler:rule_handler
+    {
+        if (rule_handler != NULL)
+            rule_handler_map->Add(rule_handler->m_language_identifier->GetText(), rule_handler);
+        return rule_handler_map;
+    }
+|
+    // empty reduction rule
+    {
+        return new CommonLang::RuleHandlerMap();
+    }
+;
+
+rule_handler %type "CommonLang::RuleHandler *"
+:
+    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier any_type_of_code_block:code_block
+    {
+        delete throwaway;
+        assert(m_target_language_map != NULL);
+        if (m_target_language_map->GetElement(language_identifier->GetText()) == NULL)
+            EmitWarning(
+                language_identifier->GetFileLocation(),
+                "undeclared target language \"" + language_identifier->GetText() + "\"");
+        return new CommonLang::RuleHandler(language_identifier, code_block);
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway %error any_type_of_code_block:code_block
+    {
+        assert(m_target_language_map != NULL);
+        EmitError(throwaway->GetFileLocation(), "parse error in language identifier after directive %language");
+        delete throwaway;
+        delete code_block;
+        return NULL;
+    }
+|
+    DIRECTIVE_LANGUAGE:throwaway %error
+    {
+        assert(m_target_language_map != NULL);
+        EmitError(throwaway->GetFileLocation(), "parse error in directive %language");
+        delete throwaway;
+        return NULL;
+    }
+|
+    %error any_type_of_code_block:code_block
+    {
+        assert(m_target_language_map != NULL);
+        EmitError(code_block->GetFileLocation(), "missing directive %language before rule handler code block");
+        delete code_block;
+        return NULL;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// misc rules
+// ///////////////////////////////////////////////////////////////////////////
+
+any_type_of_code_block %type "AstCommon::CodeBlock *"
+:
+    DUMB_CODE_BLOCK:dumb_code_block { return dumb_code_block; }
+|
+    STRICT_CODE_BLOCK:strict_code_block { return strict_code_block; }
+;
+
+at_least_zero_newlines
+:
+    at_least_zero_newlines NEWLINE
+|
+    // empty reduction rule
+;
+
+at_least_one_newline
+:
+    at_least_one_newline NEWLINE
+|
+    NEWLINE
+;

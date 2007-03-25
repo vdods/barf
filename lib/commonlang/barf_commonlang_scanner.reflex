@@ -1,0 +1,851 @@
+// ///////////////////////////////////////////////////////////////////////////
+// barf_commonlang_scanner.reflex by Victor Dods, created 2006/11/09
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%target_languages cpp
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner header-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%language.cpp.header_filename "barf_commonlang_scanner.hpp"
+%language.cpp.implementation_filename "barf_commonlang_scanner.cpp"
+%language.cpp.top_of_header_file %{
+#if !defined(_BARF_COMMONLANG_SCANNER_HPP_)
+#define _BARF_COMMONLANG_SCANNER_HPP_
+
+#include "barf_commonlang.hpp"
+
+#include <ostream>
+
+#include "barf_inputbase.hpp"
+
+namespace Barf {
+namespace AstCommon {
+
+class Ast;
+
+} // end of namespace AstCommon
+
+namespace CommonLang {
+%}
+%language.cpp.class_name Scanner
+%language.cpp.class_inheritance { protected InputBase }
+%language.cpp.top_of_class {
+    struct Token
+    {
+        enum Type
+        {
+            BAD_END_OF_FILE = 0x100,
+            BAD_TOKEN,
+            CHARACTER_LITERAL,
+            DIRECTIVE_ADD_CODESPEC,
+            DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
+            DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
+            DIRECTIVE_DEFAULT,
+            DIRECTIVE_DUMB_CODE_BLOCK,
+            DIRECTIVE_ERROR,
+            DIRECTIVE_IDENTIFIER,
+            DIRECTIVE_LANGUAGE,
+            DIRECTIVE_LEFT,
+            DIRECTIVE_MACRO,
+            DIRECTIVE_NONASSOC,
+            DIRECTIVE_PREC,
+            DIRECTIVE_RIGHT,
+            DIRECTIVE_START,
+            DIRECTIVE_STATE,
+            DIRECTIVE_STRICT_CODE_BLOCK,
+            DIRECTIVE_STRING,
+            DIRECTIVE_TARGET_LANGUAGE,
+            DIRECTIVE_TARGET_LANGUAGES,
+            DIRECTIVE_TOKEN,
+            DIRECTIVE_TYPE,
+            DUMB_CODE_BLOCK,
+            END_OF_FILE,
+            END_PREAMBLE,
+            IDENTIFIER,
+            NEWLINE,
+            REGEX,
+            STRICT_CODE_BLOCK,
+            STRING_LITERAL,
+
+            COUNT_PLUS_0x100
+        }; // end of enum Scanner::Token::Type
+    }; // end of struct Scanner::Token
+}
+%language.cpp.scan_method_parameters { AstCommon::Ast **token }
+%language.cpp.bottom_of_class {
+    using InputBase::GetIsOpen;
+    using InputBase::GetFileLocation;
+    using InputBase::GetInputName;
+
+    bool OpenFile (string const &input_filename);
+    void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
+    void OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers);
+
+    using InputBase::Close;
+
+private:
+
+    Token::Type ParseDirective (string const &accepted_string, AstCommon::Ast **token);
+
+    bool m_is_in_preamble;
+    Uint32 m_regex_paren_level;
+    Uint32 m_regex_bracket_level;
+    Uint32 m_code_block_bracket_level;
+    State::Name m_return_state;
+}
+%language.cpp.bottom_of_header_file %{
+ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
+
+} // end of namespace CommonLang
+} // end of namespace Barf
+
+#endif // !defined(_BARF_COMMONLANG_SCANNER_HPP_)
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner implementation-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%language.cpp.top_of_implementation_file %{
+#include <cstdlib>
+#include <sstream>
+
+#include "barf_astcommon.hpp"
+#include "barf_util.hpp"
+
+// #define SPEW(x) cerr << x << endl
+#define SPEW(x)
+
+namespace Barf {
+namespace CommonLang {
+
+ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
+{
+    static string const s_scanner_token_type_string[Scanner::Token::COUNT_PLUS_0x100 - 0x100] =
+    {
+        "BAD_END_OF_FILE",
+        "BAD_TOKEN",
+        "CHARACTER_LITERAL",
+        "DIRECTIVE_ADD_CODESPEC",
+        "DIRECTIVE_ADD_OPTIONAL_DIRECTIVE",
+        "DIRECTIVE_ADD_REQUIRED_DIRECTIVE",
+        "DIRECTIVE_DEFAULT",
+        "DIRECTIVE_DUMB_CODE_BLOCK",
+        "DIRECTIVE_ERROR",
+        "DIRECTIVE_IDENTIFIER",
+        "DIRECTIVE_LANGUAGE",
+        "DIRECTIVE_LEFT",
+        "DIRECTIVE_MACRO",
+        "DIRECTIVE_NONASSOC",
+        "DIRECTIVE_PREC",
+        "DIRECTIVE_RIGHT",
+        "DIRECTIVE_START",
+        "DIRECTIVE_STATE",
+        "DIRECTIVE_STRICT_CODE_BLOCK",
+        "DIRECTIVE_STRING",
+        "DIRECTIVE_TARGET_LANGUAGE",
+        "DIRECTIVE_TARGET_LANGUAGES",
+        "DIRECTIVE_TOKEN",
+        "DIRECTIVE_TYPE",
+        "DUMB_CODE_BLOCK",
+        "END_OF_FILE",
+        "END_PREAMBLE",
+        "IDENTIFIER",
+        "NEWLINE",
+        "REGEX",
+        "STRICT_CODE_BLOCK",
+        "STRING_LITERAL"
+    };
+    if (scanner_token_type < 0x100)
+    {
+        assert(scanner_token_type >= 0);
+        return stream << GetCharacterLiteral(Uint8(scanner_token_type));
+    }
+    else
+    {
+        assert(scanner_token_type < Scanner::Token::COUNT_PLUS_0x100);
+        return stream << s_scanner_token_type_string[scanner_token_type - 0x100];
+    }
+}
+
+bool Scanner::OpenFile (string const &input_filename)
+{
+    bool open_succeeded = InputBase::OpenFile(input_filename);
+    if (open_succeeded)
+        ResetForNewInput_();
+    return open_succeeded;
+}
+
+void Scanner::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
+{
+    InputBase::OpenString(input_string, input_name, use_line_numbers);
+    ResetForNewInput_();
+}
+
+void Scanner::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
+{
+    InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
+    ResetForNewInput_();
+}
+
+Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, AstCommon::Ast **token)
+{
+    assert(token != NULL);
+    assert(*token == NULL);
+
+    if (accepted_string == "%add_codespec") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_ADD_CODESPEC; }
+    if (accepted_string == "%add_optional_directive") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE; }
+    if (accepted_string == "%add_required_directive") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE; }
+    if (accepted_string == "%default") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_DEFAULT; }
+    if (accepted_string == "%dumb_code_block") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_DUMB_CODE_BLOCK; }
+    if (accepted_string == "%error") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_ERROR; }
+    if (accepted_string == "%identifier") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_IDENTIFIER; }
+    if (accepted_string == "%language") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_LANGUAGE; }
+    if (accepted_string == "%left") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_LEFT; }
+    if (accepted_string == "%macro") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_MACRO; }
+    if (accepted_string == "%nonassoc") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_NONASSOC; }
+    if (accepted_string == "%prec") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_PREC; }
+    if (accepted_string == "%right") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_RIGHT; }
+    if (accepted_string == "%start") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_START; }
+    if (accepted_string == "%state") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_STATE; }
+    if (accepted_string == "%strict_code_block") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
+    if (accepted_string == "%string") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_STRING; }
+    if (accepted_string == "%target_language") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_TARGET_LANGUAGE; }
+    if (accepted_string == "%target_languages") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_TARGET_LANGUAGES; }
+    if (accepted_string == "%token") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_TOKEN; }
+    if (accepted_string == "%type") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_TYPE; }
+
+    EmitError(GetFileLocation(), "invalid directive \"" + accepted_string + "\"");
+    return Token::BAD_TOKEN;
+}
+%}
+%language.cpp.start_of_scan_method_actions %{
+    assert(token != NULL);
+    assert(*token == NULL);
+%}
+%language.cpp.end_of_scan_method_actions %{
+    assert(false && "you didn't handle EOF properly");
+    return Token::BAD_END_OF_FILE;
+%}
+%language.cpp.bottom_of_implementation_file %{
+} // end of namespace CommonLang
+} // end of namespace Barf
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner I/O parameters
+// ///////////////////////////////////////////////////////////////////////////
+
+%language.cpp.return_type "Scanner::Token::Type"
+%language.cpp.return_true_iff_input_is_at_end {
+    return In().peek() == char_traits<char>::eof();
+}
+%language.cpp.return_next_input_char {
+    return In().get();
+}
+%language.cpp.rejection_actions {
+    EmitError(GetFileLocation(), "unrecognized character " + GetCharacterLiteral(rejected_atom));
+}
+%language.cpp.reset_for_new_input_actions {
+    m_is_in_preamble = true;
+    m_regex_paren_level = 0;
+    m_code_block_bracket_level = 0;
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner misc directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%language.cpp.generate_debug_spew_code
+
+// ///////////////////////////////////////////////////////////////////////////
+// language-independent scanner directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// a single octal (base 8) digit
+%macro OCT_DIGIT            ([0-7])
+// an octal escape character (e.g. \042)
+%macro OCT_CHAR             (\\0{OCT_DIGIT}+)
+
+// a single hexadecimal (base 16) digit
+%macro HEX_DIGIT            ([0-9A-Fa-f])
+// a hexidecimal escape character (e.g. \xF9)
+%macro HEX_CHAR             (\\x{HEX_DIGIT}+)
+
+// an escaped character literal (e.g. '\t', '\0' or even '\j')
+%macro CHAR_ESC_CHAR        (\\[[:print:]])
+// everything that doesn't need to be escaped in a character literal (e.g. 'p')
+%macro CHAR_NORMAL_CHAR     ([^[:cntrl:]"'\\])
+
+// single-char escape codes for a string literal (e.g. "yo!\n")
+%macro STRING_ESC_CHAR      (\\[[:print:]])
+// everything that doesn't need to be escaped in a string literal
+%macro STRING_NORMAL_CHAR   ([^[:cntrl:]"\\]|\t|\n)
+
+// identifier (same as C-style, but can't start or end with an underscore)
+%macro IDENTIFIER           ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
+
+// all operators that should be returned by ascii value
+%macro OPERATOR             ([.:;|])
+// non-newline whitespace
+%macro WHITESPACE           ([ \t])
+// newline
+%macro NEWLINE              (\n)
+// any character
+%macro ANYTHING             (\n|.)
+
+%start MAIN
+
+%%
+
+// ///////////////////////////////////////////////////////////////////////////
+// scanner states and constituent regex rules
+// ///////////////////////////////////////////////////////////////////////////
+
+%state MAIN
+:
+    (/\*) // opening delimiter for a block comment
+    %language.cpp {
+        SPEW("MAIN - (/\\*) = " << GetStringLiteral(accepted_string));
+        m_return_state = State::MAIN;
+        SetScannerState(State::BLOCK_COMMENT);
+    }
+|
+    (//.*) // line comment (not including the newline)
+    %language.cpp {
+        SPEW("MAIN - (//.*) = " << GetStringLiteral(accepted_string));
+    }
+|
+    (') // opening quote for a character literal
+    %language.cpp {
+        SPEW("MAIN - (') = " << GetStringLiteral(accepted_string));
+        SetScannerState(State::CHARACTER_LITERAL_GUTS);
+    }
+|
+    (") // opening quote for a string literal
+    %language.cpp {
+        SPEW("MAIN - (\") = " << GetStringLiteral(accepted_string));
+        *token = new AstCommon::String(GetFileLocation());
+        SetScannerState(State::STRING_LITERAL_GUTS);
+    }
+|
+    (\() // opening delimiter for a regular expression
+    %language.cpp {
+        SPEW("MAIN - (\\() = " << GetStringLiteral(accepted_string));
+        *token = new AstCommon::String(GetFileLocation());
+        SetScannerState(State::REGULAR_EXPRESSION);
+    }
+|
+    (%\{) // opening delimiter for a dumb code block
+    %language.cpp {
+        SPEW("MAIN - (%\\{) = " << GetStringLiteral(accepted_string));
+        *token = new AstCommon::DumbCodeBlock(GetFileLocation());
+        SetScannerState(State::DUMB_CODE_BLOCK);
+    }
+|
+    (\{) // opening delimiter for a strict code block
+    %language.cpp {
+        SPEW("MAIN - (\\{) = " << GetStringLiteral(accepted_string));
+        *token = new AstCommon::StrictCodeBlock(GetFileLocation());
+        SetScannerState(State::STRICT_CODE_BLOCK);
+    }
+|
+    (%{IDENTIFIER}) // a directive
+    %language.cpp {
+        SPEW("MAIN - (%{IDENTIFIER}) = " << GetStringLiteral(accepted_string));
+        return Scanner::ParseDirective(accepted_string, token);
+    }
+|
+    (%%)
+    %language.cpp {
+        SPEW("MAIN - (%%) = " << GetStringLiteral(accepted_string));
+        *token = new AstCommon::ThrowAway(GetFileLocation());
+        m_is_in_preamble = false;
+        return Token::END_PREAMBLE;
+    }
+|
+    ({IDENTIFIER})
+    %language.cpp {
+        SPEW("MAIN - ({IDENTIFIER}) = " << GetStringLiteral(accepted_string));
+        *token = new AstCommon::Identifier(accepted_string, GetFileLocation());
+        return Token::IDENTIFIER;
+    }
+|
+    ({OPERATOR})
+    %language.cpp {
+        SPEW("MAIN - ({OPERATOR}) = " << GetStringLiteral(accepted_string));
+        return Token::Type(accepted_string[0]);
+    }
+|
+    ({WHITESPACE})
+    %language.cpp {
+        SPEW("MAIN - ({WHITESPACE}) = " << GetStringLiteral(accepted_string));
+        // ignore all whitespace
+    }
+|
+    ({NEWLINE})
+    %language.cpp {
+        SPEW("MAIN - ({NEWLINE}) = " << GetStringLiteral(accepted_string));
+        IncrementLineNumber();
+        if (m_is_in_preamble)
+            return Token::NEWLINE;
+    }
+|
+    (\z)
+    %language.cpp {
+        SPEW("MAIN - (\\z) = " << GetStringLiteral(accepted_string));
+        return Token::END_OF_FILE;
+    }
+|
+    (.)
+    %language.cpp {
+        SPEW("MAIN - (.) = " << GetStringLiteral(accepted_string));
+        EmitError(GetFileLocation(), "unexpected character " + GetCharacterLiteral(accepted_string[0]));
+        return Token::BAD_TOKEN;
+    }
+;
+
+%state BLOCK_COMMENT
+:
+    (\*/) // closing delimiter for a block comment
+    %language.cpp {
+        SPEW("BLOCK_COMMENT - (\\*/) = " << GetStringLiteral(accepted_string));
+        if (*token != NULL)
+            DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        SetScannerState(m_return_state);
+    }
+|
+    ([^*]+|\*)
+    %language.cpp {
+        SPEW("BLOCK_COMMENT - ([^*]+|\\*) = " << GetStringLiteral(accepted_string));
+        if (*token != NULL)
+            DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+    }
+|
+    (\z)
+    %language.cpp {
+        SPEW("BLOCK_COMMENT - (\\z) = " << GetStringLiteral(accepted_string));
+        EmitWarning(GetFileLocation(), "unterminated block comment");
+        return Token::END_OF_FILE;
+    }
+;
+
+%state CHARACTER_LITERAL_GUTS
+:
+    ({OCT_CHAR})
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string));
+        assert(accepted_string.length() >= 3);
+        assert(accepted_string[0] == '\\');
+        assert(accepted_string[1] == '0');
+        Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
+        if (value >= 0x100)
+            EmitError(GetFileLocation(), "octal character literal value out of range (" + accepted_string + ")");
+        *token = new AstCommon::Character(Uint8(value), GetFileLocation());
+        SetScannerState(State::CHARACTER_LITERAL_END);
+    }
+|
+    ({HEX_CHAR})
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string));
+        assert(accepted_string.length() >= 3);
+        assert(accepted_string[0] == '\\');
+        assert(accepted_string[1] == 'x');
+        Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
+        if (value >= 0x100)
+            EmitError(GetFileLocation(), "hexadecimal character literal value out of range (" + accepted_string + ")");
+        *token = new AstCommon::Character(Uint8(value), GetFileLocation());
+        SetScannerState(State::CHARACTER_LITERAL_END);
+    }
+|
+    ({CHAR_ESC_CHAR})
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_GUTS - ({CHAR_ESC_CHAR}) = " << GetStringLiteral(accepted_string));
+        assert(accepted_string.length() == 2);
+        assert(accepted_string[0] == '\\');
+        AstCommon::Character *character = new AstCommon::Character(Uint8(accepted_string[1]), GetFileLocation());
+        character->Escape();
+        *token = character;
+        SetScannerState(State::CHARACTER_LITERAL_END);
+    }
+|
+    ({CHAR_NORMAL_CHAR})
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_GUTS - ({CHAR_NORMAL_CHAR}) = " << GetStringLiteral(accepted_string));
+        assert(accepted_string.length() == 1);
+        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFileLocation());
+        SetScannerState(State::CHARACTER_LITERAL_END);
+    }
+|
+    (\\?\z) // end of file (which may be preceded by a backslash)
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        EmitError(GetFileLocation(), "unterminated character literal");
+        return Token::END_OF_FILE;
+    }
+|
+    ({ANYTHING}) // anything else just means it's malformed
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
+        EmitError(GetFileLocation(), "unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in character literal");
+        if (accepted_string[0] == '\n')
+            IncrementLineNumber();
+        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFileLocation());
+        SetScannerState(State::CHARACTER_LITERAL_END);
+    }
+;
+
+%state CHARACTER_LITERAL_END
+:
+    (') // closing single-quote
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_END - (') - accepted_string = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        SetScannerState(State::MAIN);
+        return Token::CHARACTER_LITERAL;
+    }
+|
+    (\\?\z) // end of file (which may be preceded by a backslash)
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_END - (\\\\?\\z) - accepted_string = " << GetStringLiteral(accepted_string));
+        EmitError(GetFileLocation(), "unterminated character literal");
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        SetScannerState(State::MAIN);
+        return Token::END_OF_FILE;
+    }
+|
+    ({ANYTHING}) // anything else just means it's malformed
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_END - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
+        EmitError(GetFileLocation(), "malformed character literal");
+        if (accepted_string[0] == '\n')
+            IncrementLineNumber();
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        SetScannerState(State::MAIN);
+        return Token::BAD_TOKEN;
+    }
+;
+
+%state STRING_LITERAL_GUTS
+:
+    ({OCT_CHAR})
+    %language.cpp {
+        SPEW("STRING_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        assert(accepted_string.length() >= 3);
+        assert(accepted_string[0] == '\\');
+        assert(accepted_string[1] == '0');
+        Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
+        if (value >= 0x100)
+            EmitError(GetFileLocation(), "octal character literal value out of range (" + accepted_string + ")");
+        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+    }
+|
+    ({HEX_CHAR})
+    %language.cpp {
+        SPEW("STRING_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        assert(accepted_string.length() >= 3);
+        assert(accepted_string[0] == '\\');
+        assert(accepted_string[1] == 'x');
+        Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
+        if (value >= 0x100)
+            EmitError(GetFileLocation(), "hexadecimal character literal value out of range (" + accepted_string + ")");
+        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+    }
+|
+    ({STRING_ESC_CHAR})
+    %language.cpp {
+        SPEW("STRING_LITERAL_GUTS - ({STRING_ESC_CHAR}) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        assert(accepted_string.length() == 2);
+        assert(accepted_string[0] == '\\');
+        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(GetEscapedChar(Uint8(accepted_string[1])));
+    }
+|
+    ({STRING_NORMAL_CHAR}+)
+    %language.cpp {
+        SPEW("STRING_LITERAL_GUTS - ({STRING_NORMAL_CHAR}+) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        DStaticCast<AstCommon::TextBase *>(*token)->AppendText(accepted_string);
+    }
+|
+    (") // the closing quote for the string literal
+    %language.cpp {
+        SPEW("STRING_LITERAL_GUTS - (\") = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        SetScannerState(State::MAIN);
+        return Token::STRING_LITERAL;
+    }
+|
+    (\\?\z) // end of file (which may be preceded by a backslash)
+    %language.cpp {
+        SPEW("STRING_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        EmitError(GetFileLocation(), "unterminated string literal");
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        return Token::END_OF_FILE;
+    }
+|
+    ({ANYTHING}) // anything else is an unexpected char
+    %language.cpp {
+        SPEW("STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        EmitError(GetFileLocation(), "ignoring unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in string literal");
+    }
+;
+
+%state REGULAR_EXPRESSION
+:
+    (\)) // closing delimiter for a regular expression
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION - (\\)) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        if (m_regex_paren_level == 0)
+        {
+            SetScannerState(State::MAIN);
+            return Token::REGEX;
+        }
+        --m_regex_paren_level;
+        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+    }
+|
+    (\() // opening delimeter for a sub-expression
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION - (\\() = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        ++m_regex_paren_level;
+        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+    }
+|
+    (\[) // opening delimiter for a bracket expression
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION - (\\[) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        m_regex_bracket_level = 0;
+        SetScannerState(State::REGULAR_EXPRESSION_BRACKET_EXPRESSION);
+    }
+|
+    (([^()\[\]\\]|\\{ANYTHING})+) // any not-()[]-or-backslash, or any escaped char
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION - (([^()\\[\\]{}\\\\)|\\\\{ANYTHING})+) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+    }
+|
+    (\\?\z) // end of file (which may be preceded by a backslash)
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        EmitError(GetFileLocation(), "unterminated regular expression");
+        return Token::END_OF_FILE;
+    }
+;
+
+%state REGULAR_EXPRESSION_BRACKET_EXPRESSION
+:
+    (\]) // closing delimiter for bracket expression (or character class)
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\]) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        if (m_regex_bracket_level == 0)
+            SetScannerState(State::REGULAR_EXPRESSION);
+        else
+            --m_regex_bracket_level;
+    }
+|
+    (\[) // opening delimiter for character class
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\[) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        ++m_regex_bracket_level;
+    }
+|
+    (([^\[\]\\]|\\{ANYTHING})+) // any non-delimiter non-backslash or any escaped char
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (([^\\[\\]\\\\]|\\\\{ANYTHING})+) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+    }
+|
+    (\\?\z) // end of file (which may be preceded by a backslash)
+    %language.cpp {
+        SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        EmitError(GetFileLocation(), "unterminated bracket expression inside regular expression");
+        return Token::END_OF_FILE;
+    }
+;
+
+%state DUMB_CODE_BLOCK
+:
+    (%\}) // closing delimiter for a dumb code block
+    %language.cpp {
+        SPEW("DUMB_CODE_BLOCK - (%\\}) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        SetScannerState(State::MAIN);
+        return Token::DUMB_CODE_BLOCK;
+    }
+|
+    ([^%]+|%)
+    %language.cpp {
+        SPEW("DUMB_CODE_BLOCK - ([^%]+) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+    }
+|
+    (\z)
+    %language.cpp {
+        SPEW("DUMB_CODE_BLOCK - (\\z) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        EmitError(GetFileLocation(), "unterminated %{ %} style code block");
+        return Token::END_OF_FILE;
+    }
+;
+
+%state STRICT_CODE_BLOCK
+:
+    (\}) // closing delimiter for a code block
+    %language.cpp {
+        SPEW("STRICT_CODE_BLOCK - (\\}) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        if (m_code_block_bracket_level == 0)
+        {
+            SetScannerState(State::MAIN);
+            return Token::STRICT_CODE_BLOCK;
+        }
+        --m_code_block_bracket_level;
+        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+    }
+|
+    (\{) // opening delimiter for a code block
+    %language.cpp {
+        SPEW("STRICT_CODE_BLOCK - (\\{) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        ++m_code_block_bracket_level;
+    }
+|
+    (') // opening quote for a character literal
+    %language.cpp {
+        SPEW("STRICT_CODE_BLOCK - (') = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        SetScannerState(State::CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK);
+    }
+|
+    (") // opening quote for a string literal
+    %language.cpp {
+        SPEW("STRICT_CODE_BLOCK - (\") = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        SetScannerState(State::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK);
+    }
+|
+    (/[*]) // opening delimiter for a block comment
+    %language.cpp {
+        SPEW("STRICT_CODE_BLOCK - (/[*]) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        m_return_state = State::STRICT_CODE_BLOCK;
+        SetScannerState(State::BLOCK_COMMENT);
+    }
+|
+    (//.*) // line comment (not including the newline)
+    %language.cpp {
+        SPEW("STRICT_CODE_BLOCK - (//.*) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+    }
+|
+    ([^{}'"/]+|.) // any non-delimiter char or just any single char
+    %language.cpp {
+        SPEW("STRICT_CODE_BLOCK - ([^{}'\"/]+|.) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+    }
+|
+    (\z) // end of file
+    %language.cpp {
+        SPEW("STRICT_CODE_BLOCK - (\\z) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        EmitError(GetFileLocation(), "unterminated { } style code block");
+        return Token::END_OF_FILE;
+    }
+;
+
+%state CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK
+:
+    (([^'\\]|\\{ANYTHING})*') // everything up to and including the first non-escaped single quote
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*') = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        DStaticCast<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
+        SetScannerState(State::STRICT_CODE_BLOCK);
+    }
+|
+    (([^'\\]|\\{ANYTHING})*\\?\z) // everything up to an end of file encountered before the first single quote
+    %language.cpp {
+        SPEW("CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        EmitError(GetFileLocation(), "unterminated character literal in { } style code block");
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        return Token::END_OF_FILE;
+    }
+;
+
+%state STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK
+:
+    (([^"\\]|\\{ANYTHING})*") // everything up to and including the first non-escaped double quote
+    %language.cpp {
+        SPEW("STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^\"\\\\]|\\\\{ANYTHING})*\") = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        DStaticCast<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        SetScannerState(State::STRICT_CODE_BLOCK);
+    }
+|
+    (([^"\\]|\\{ANYTHING})*\\?\z) // everything up to an end of file encountered before the first double quote
+    %language.cpp {
+        SPEW("STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^\"\\\\]|\\\\{ANYTHING}))*\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        EmitError(GetFileLocation(), "unterminated string literal in { } style code block");
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        return Token::END_OF_FILE;
+    }
+;

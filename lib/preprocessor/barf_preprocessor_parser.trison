@@ -1,0 +1,454 @@
+// ///////////////////////////////////////////////////////////////////////////
+// barf_preprocessor_parser.trison by Victor Dods, created 2006/10/15
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%parser_class_name "Parser"
+
+%parser_header_file_top%{
+#if !defined(_BARF_PREPROCESSOR_PARSER_HPP_)
+#define _BARF_PREPROCESSOR_PARSER_HPP_
+
+#include "barf_preprocessor.hpp"
+
+namespace Barf {
+namespace AstCommon {
+
+class Ast;
+
+} // end of namespace AstCommon
+
+namespace Preprocessor {
+
+class Scanner;
+%}
+
+%parser_class_methods_and_members{
+    bool OpenFile (string const &input_filename);
+    void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
+    void OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers);
+
+private:
+
+    Token::Type Scan ();
+
+    Scanner *m_scanner;
+}
+
+%parser_header_file_bottom%{
+} // end of namespace Preprocessor
+} // end of namespace Barf
+
+#endif // !defined(_BARF_PREPROCESSOR_PARSER_HPP_)
+%}
+
+%parser_implementation_file_top%{
+#include "barf_preprocessor_ast.hpp"
+#include "barf_preprocessor_scanner.hpp"
+
+namespace Barf {
+namespace Preprocessor {
+%}
+
+%parser_constructor_actions{
+    m_scanner = new Scanner();
+}
+
+%parser_destructor_actions{
+    delete m_scanner;
+}
+
+%parser_throw_away_token_actions{
+    delete token;
+}
+
+%parser_implementation_file_bottom%{
+bool Parser::OpenFile (string const &input_filename)
+{
+    assert(m_scanner != NULL);
+    return m_scanner->OpenFile(input_filename);
+}
+
+void Parser::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
+{
+    assert(m_scanner != NULL);
+    return m_scanner->OpenString(input_string, input_name, use_line_numbers);
+}
+
+void Parser::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
+{
+    assert(m_scanner != NULL);
+    return m_scanner->OpenUsingStream(input_stream, input_name, use_line_numbers);
+}
+
+Parser::Token::Type Parser::Scan ()
+{
+    assert(m_scanner != NULL);
+    return m_scanner->Scan(&m_lookahead_token);
+}
+
+} // end of namespace Preprocessor
+} // end of namespace Barf
+%}
+
+%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type_sentinel "NULL"
+%parser_custom_cast "DStaticCast"
+
+%token TEXT %type "Text *"
+%token START_CODE END_CODE
+%token CODE_LINE CODE_NEWLINE
+%token IDENTIFIER %type "AstCommon::Identifier *"
+%token DUMP_SYMBOL_TABLE
+%token IF ELSE ELSE_IF END_IF
+%token UNDEFINE
+%token DECLARE_ARRAY DECLARE_MAP
+%token DEFINE END_DEFINE
+%token LOOP END_LOOP
+%token FOR_EACH END_FOR_EACH
+%token INCLUDE SANDBOX_INCLUDE
+%token WARNING ERROR FATAL_ERROR
+%token SIZEOF
+%token IS_DEFINED
+%token INTEGER %type "Integer *"
+%token STRING %type "Text *"
+%token KEYWORD_INT KEYWORD_STRING
+%token STRING_LENGTH
+%token '(' ')' '[' ']' ',' '?'
+%token '.' '+' '-' '*' '/' '%'
+%token '!' '&' '|' '=' '<' '>'
+%token BAD_TOKEN
+
+%prec LOGICAL_OR
+%prec LOGICAL_AND
+%prec EQUALITY
+%prec COMPARISON
+%prec CONCATENATION
+%prec ADDITION
+%prec MULTIPLICATION
+%prec UNARY
+
+%start body
+
+%%
+
+body %type "Body *"
+:
+    // empty reduction rule
+    {
+        return new Body();
+    }
+|
+    TEXT:text
+    {
+        Body *body = new Body();
+        body->Append(text);
+        return body;
+    }
+|
+    body:body executable:executable
+    {
+        if (executable != NULL)
+            body->Append(executable);
+        return body;
+    }
+|
+    body:body executable:executable TEXT:text
+    {
+        if (executable != NULL)
+            body->Append(executable);
+        body->Append(text);
+        return body;
+    }
+;
+
+executable %type "ExecutableAst *"
+:
+    START_CODE code:code END_CODE    { return code; }
+|
+    CODE_LINE code:code CODE_NEWLINE { return code; }
+|
+    conditional_series:conditional   { return conditional; }
+|
+    define:define body:body end_define
+    {
+        define->SetBody(body);
+        return define;
+    }
+|
+    loop:loop body:body end_loop
+    {
+        loop->SetBody(body);
+        return loop;
+    }
+|
+    for_each:for_each body:body end_for_each
+    {
+        for_each->SetBody(body);
+        return for_each;
+    }
+;
+
+code %type "ExecutableAst *"
+:
+    // empty reduction rule
+    { return NULL; }
+|
+    expression:expression
+    { return expression; }
+|
+    DUMP_SYMBOL_TABLE '(' ')'
+    { return new DumpSymbolTable(); }
+|
+    UNDEFINE '(' IDENTIFIER:identifier ')'
+    { return new Undefine(identifier); }
+|
+    DECLARE_ARRAY '(' IDENTIFIER:identifier ')'
+    { return new DeclareArray(identifier); }
+|
+    DECLARE_MAP '(' IDENTIFIER:identifier ')'
+    { return new DeclareMap(identifier); }
+|
+    INCLUDE '(' expression:include_filename_expression ')'
+    { return new Include(include_filename_expression, false); }
+|
+    SANDBOX_INCLUDE '(' expression:include_filename_expression ')'
+    { return new Include(include_filename_expression, true); }
+|
+    WARNING '(' expression:message_expression ')'
+    { return new Message(message_expression, Message::WARNING); }
+|
+    ERROR '(' expression:message_expression ')'
+    { return new Message(message_expression, Message::ERROR); }
+|
+    FATAL_ERROR '(' expression:message_expression ')'
+    { return new Message(message_expression, Message::FATAL_ERROR); }
+;
+
+conditional_series %type "Conditional *"
+:
+    if_statement:conditional body:if_body conditional_series_end:else_body
+    {
+        conditional->SetIfBody(if_body);
+        conditional->SetElseBody(else_body);
+        return conditional;
+    }
+;
+
+conditional_series_end %type "Body *"
+:
+    end_if { return NULL; }
+|
+    else_statement body:body end_if { return body; }
+|
+    else_if_statement:conditional body:if_body conditional_series_end:else_body
+    {
+        conditional->SetIfBody(if_body);
+        conditional->SetElseBody(else_body);
+        Body *body = new Body();
+        body->Append(conditional);
+        return body;
+    }
+;
+
+if_statement %type "Conditional *"
+:
+    START_CODE IF '(' expression:expression ')' END_CODE
+    { return new Conditional(expression); }
+|
+    CODE_LINE IF '(' expression:expression ')' CODE_NEWLINE
+    { return new Conditional(expression); }
+;
+
+else_statement
+:
+    START_CODE ELSE END_CODE
+|
+    CODE_LINE ELSE CODE_NEWLINE
+;
+
+else_if_statement %type "Conditional *"
+:
+    START_CODE ELSE_IF '(' expression:expression ')' END_CODE
+    { return new Conditional(expression); }
+|
+    CODE_LINE ELSE_IF '(' expression:expression ')' CODE_NEWLINE
+    { return new Conditional(expression); }
+;
+
+end_if
+:
+    START_CODE END_IF END_CODE
+|
+    CODE_LINE END_IF CODE_NEWLINE
+;
+
+define %type "Define *"
+:
+    define_scalar:define        { return define; }
+|
+    define_array_element:define { return define; }
+|
+    define_map_element:define   { return define; }
+;
+
+define_scalar %type "Define *"
+:
+    START_CODE DEFINE '(' IDENTIFIER:identifier ')' END_CODE
+    { return new Define(identifier); }
+|
+    CODE_LINE DEFINE '(' IDENTIFIER:identifier ')' CODE_NEWLINE
+    { return new Define(identifier); }
+;
+
+define_array_element %type "Define *"
+:
+    START_CODE DEFINE '(' IDENTIFIER:identifier '[' ']' ')' END_CODE
+    { return new DefineArrayElement(identifier); }
+|
+    CODE_LINE DEFINE '(' IDENTIFIER:identifier '[' ']' ')' CODE_NEWLINE
+    { return new DefineArrayElement(identifier); }
+;
+
+define_map_element %type "Define *"
+:
+    START_CODE DEFINE '(' IDENTIFIER:identifier '[' STRING:key ']' ')' END_CODE
+    { return new DefineMapElement(identifier, key); }
+|
+    CODE_LINE DEFINE '(' IDENTIFIER:identifier '[' STRING:key ']' ')' CODE_NEWLINE
+    { return new DefineMapElement(identifier, key); }
+;
+
+end_define
+:
+    START_CODE END_DEFINE END_CODE
+|
+    CODE_LINE END_DEFINE CODE_NEWLINE
+;
+
+loop %type "Loop *"
+:
+    START_CODE LOOP '(' IDENTIFIER:iterator_identifier ',' expression:iteration_count_expression ')' END_CODE
+    { return new Loop(iterator_identifier, iteration_count_expression); }
+|
+    CODE_LINE LOOP '(' IDENTIFIER:iterator_identifier ',' expression:iteration_count_expression ')' CODE_NEWLINE
+    { return new Loop(iterator_identifier, iteration_count_expression); }
+;
+
+end_loop
+:
+    START_CODE END_LOOP END_CODE
+|
+    CODE_LINE END_LOOP CODE_NEWLINE
+;
+
+for_each %type "ForEach *"
+:
+    START_CODE FOR_EACH '(' IDENTIFIER:key_identifier ',' IDENTIFIER:map_identifier ')' END_CODE
+    { return new ForEach(key_identifier, map_identifier); }
+|
+    CODE_LINE FOR_EACH '(' IDENTIFIER:key_identifier ',' IDENTIFIER:map_identifier ')' CODE_NEWLINE
+    { return new ForEach(key_identifier, map_identifier); }
+;
+
+end_for_each
+:
+    START_CODE END_FOR_EACH END_CODE
+|
+    CODE_LINE END_FOR_EACH CODE_NEWLINE
+;
+
+expression %type "Expression *"
+:
+    STRING:str
+    { return str; }
+|
+    INTEGER:integer
+    { return integer; }
+|
+    SIZEOF '(' IDENTIFIER:identifier ')'
+    { return new Sizeof(identifier); }
+|
+    KEYWORD_INT '(' expression:expression ')'
+    { return new Operation(Operation::INT_CAST, expression); }
+|
+    KEYWORD_STRING '(' expression:expression ')'
+    { return new Operation(Operation::STRING_CAST, expression); }
+|
+    STRING_LENGTH '(' expression:expression ')'
+    { return new Operation(Operation::STRING_LENGTH, expression); }
+|
+    IS_DEFINED '(' IDENTIFIER:identifier ')'
+    { return new IsDefined(identifier, NULL); }
+|
+    IS_DEFINED '(' IDENTIFIER:identifier '[' expression:element_index_expression ']' ')'
+    { return new IsDefined(identifier, element_index_expression); }
+|
+    IDENTIFIER:identifier
+    { return new Dereference(identifier, NULL, DEREFERENCE_ALWAYS); }
+|
+    IDENTIFIER:identifier '[' expression:element_index_expression ']'
+    { return new Dereference(identifier, element_index_expression, DEREFERENCE_ALWAYS); }
+|
+    IDENTIFIER:identifier '?'
+    { return new Dereference(identifier, NULL, DEREFERENCE_IFF_DEFINED); }
+|
+    IDENTIFIER:identifier '[' expression:element_index_expression ']' '?'
+    { return new Dereference(identifier, element_index_expression, DEREFERENCE_IFF_DEFINED); }
+|
+    expression:left '.' expression:right %prec CONCATENATION
+    { return new Operation(left, Operation::CONCATENATE, right); }
+|
+    expression:left '|' '|' expression:right %prec LOGICAL_OR
+    { return new Operation(left, Operation::LOGICAL_OR, right); }
+|
+    expression:left '&' '&' expression:right %prec LOGICAL_AND
+    { return new Operation(left, Operation::LOGICAL_AND, right); }
+|
+    expression:left '=' '=' expression:right %prec EQUALITY
+    { return new Operation(left, Operation::EQUAL, right); }
+|
+    expression:left '!' '=' expression:right %prec EQUALITY
+    { return new Operation(left, Operation::NOT_EQUAL, right); }
+|
+    expression:left '<' expression:right %prec COMPARISON
+    { return new Operation(left, Operation::LESS_THAN, right); }
+|
+    expression:left '<' '=' expression:right %prec COMPARISON
+    { return new Operation(left, Operation::LESS_THAN_OR_EQUAL, right); }
+|
+    expression:left '>' expression:right %prec COMPARISON
+    { return new Operation(left, Operation::GREATER_THAN, right); }
+|
+    expression:left '>' '=' expression:right %prec COMPARISON
+    { return new Operation(left, Operation::GREATER_THAN_OR_EQUAL, right); }
+|
+    expression:left '+' expression:right %prec ADDITION
+    { return new Operation(left, Operation::PLUS, right); }
+|
+    expression:left '-' expression:right %prec ADDITION
+    { return new Operation(left, Operation::MINUS, right); }
+|
+    expression:left '*' expression:right %prec MULTIPLICATION
+    { return new Operation(left, Operation::MULTIPLY, right); }
+|
+    expression:left '/' expression:right %prec MULTIPLICATION
+    { return new Operation(left, Operation::DIVIDE, right); }
+|
+    expression:left '%' expression:right %prec MULTIPLICATION
+    { return new Operation(left, Operation::REMAINDER, right); }
+|
+    '-' expression:expression            %prec UNARY
+    { return new Operation(Operation::MINUS, expression); }
+|
+    '!' expression:expression            %prec UNARY
+    { return new Operation(Operation::LOGICAL_NOT, expression); }
+|
+    '(' expression:expression ')'
+    { return expression; }
+;

@@ -1,0 +1,161 @@
+/** @page language_theory Language Theory
+
+This documentation shouldn't be used as a definitive reference on language theory -- it is just a presentation of my own understanding of the topic.  It could very well be wrong.  See @ref references for links to words from more qualified people than I.
+
+@section language_theory_definitions Definitions
+An <strong>alphabet</strong> is a finite set of symbols over which a language will be defined (e.g. the Latin alphabet, or the set of ASCII character codes, or the set of integers from 0 to 255).
+
+A <strong>string</strong> is an ordered set of members of an alphabet, of arbitrary size.  A string of length zero is called the <strong>empty string</strong>, and is sometimes referred to as <strong>epsilon</strong>.
+
+In this context, a <strong>language</strong> is a set of strings over a given alphabet.  It can be finite (finite number of finite-length strings) or infinite (infinite number of possibly infinite-length strings).
+
+A language is <strong>decidable</strong> if there exists a Turing Machine, which takes any string as input, that will halt and then accept or reject -- accepting if and only if the string is a member of the language.  If no such Turing Machine exists, the language is said to be <strong>undecidable</strong>.
+
+A <strong>finite automaton</strong> (FA) is an abstract machine consisting of:
+    <ul>
+    <li>An alphabet
+    <li>A finite set of <strong>states</strong>
+    <li>A finite set of <strong>transitions</strong> -- each of which is a triplet:
+        <ul>
+        <li>Current state -- a member of the state set
+        <li>Input atom -- epsilon or a member of the alphabet<li>
+        <li>Target state -- a member of the state set
+        </ul>
+    <li>A starting state -- a member of the state set
+    <li>The set of acceptable states -- a subset of the state set
+    </ul>
+The only persistent property of an FA is which member of the state set is the <strong>current state</strong>.  The FA is run by sequentially reading the input string, one alphabet member at a time (the <strong>input atom</strong>), and exercising the transition which matches the current state and input atom.  An epsilon-transition can be exercised without using up an input atom.  The FA's current state is then changed to the target state specified by the exercised transition.  If no such transition exists, the input string is rejected.  If there is no more input to read and the current state is a member of the set of acceptable states, then the input string is accepted by the FA.
+
+A finite automaton is a <strong>deterministic finite automaton</strong> (DFA) if there are no epsilon-transitions (FA transitions which have epsilon as their input atom) and for each state, for each alphabet member, there is at most one transition.  In other words, from any given state, a given input atom can either result in a transition to a single state or cause the input string to be rejected.  Because a DFA can only be in one state at any given time, its memory requirements are constant, and they are relatively easy to implement as algorithms.  Another important feature of DFA-running algorithms is that their runtime complexity is @f$ O(n) @f$ where @f$ n @f$ is the length of the input string -- one computation per input atom, for the length of the input string.
+
+Here is a graphical example of a DFA which accepts the strings "abc", "xc", "xxc", "xxxc", etc, "xyz", "xxyz", "xxxyz", etc.  Note that from any state, there is at most one transition for any given input atom.
+
+@dot
+digraph DFA {
+    node [fontname=courier];
+    edge [fontname=courier];
+    rankdir=LR
+
+    node [label="start"];
+    0
+    node [label="\N"];
+    1
+    2
+    3
+    4
+    node [label="accept"];
+    5
+    6
+
+    edge [label="a"];
+    0 -> 1
+    edge [label="b"];
+    1 -> 2
+    edge [label="x"];
+    0 -> 3
+    edge [label="x"];
+    3 -> 3
+    edge [label="c"];
+    3 -> 5
+    edge [label="c"];
+    2 -> 5
+    edge [label="y"];
+    3 -> 4
+    edge [label="z"];
+    4 -> 6
+}
+@enddot
+
+A finite automaton is a <strong>nondeterministic finite automaton</strong> (NFA) if it is not a DFA -- if there are any epsilon transitions, or multiple transitions from a given state for a given input atom.  This means that an NFA can potentially be in many states at once.  For example, if there were two transitions from the current state which accept the same input atom, the next "current state" would actually be the set of target states of each exercised transition -- the <strong>current state set</strong>.  Note that a <strong>set</strong> cannot have duplicated members.  If there were two different states which both transitioned into the same state, the resulting current state set would be the single target state identified by both the exercised transitions.  Because an NFA's current state set can potentially have as many members as it has states, its memory requirements are not constant.  Implementing an algorithm which runs an NFA is more difficult than for a DFA, because more computation (e.g. epsilon-closure) must be done by the algorithm.  The runtime complexity of an NFA-running algorithm is @f$ O(m^2 n) @f$ where @f$ m @f$ is the number of states and @f$ n @f$ is the length of the input string -- up to @f$ m @f$ possible members in the current state set, each transitioning to at most @f$ m @f$ states, once per input atom, for the length of the string.
+
+Here is a graphical example of an NFA which accepts the strings "ac", "abc", "ax", "axx", "axxx", etc, and the empty string.  Note that from some states, there are multiple transitions using the same input atom.  There are also epsilon transitions indicated by the transition label (e).
+
+@dot
+digraph NFA {
+    node [fontname=courier];
+    edge [fontname=courier];
+    rankdir=LR
+
+    node [label="start"];
+    0
+    node [label="\N"];
+    1
+    2
+    3
+    4
+    node [label="accept"];
+    5
+    6
+
+    edge [label="a"];
+    0 -> 1
+    edge [label="(e)"];
+    1 -> 2
+    edge [label="b"];
+    1 -> 2
+    edge [label="c"];
+    2 -> 3
+    edge [label="a"];
+    0 -> 4
+    edge [label="x"];
+    4 -> 5
+    edge [label="x"];
+    5 -> 5
+    edge [label="(e)"];
+    0 -> 6
+}
+@enddot
+
+There exists an algorithm called the <strong>subset construction algorithm</strong> to convert any NFA into a DFA.  It essentially involves calculating every possible current state set reachable from the starting state.  Each unique current state set reachable in this manner is mapped into a single state in the DFA.  This is a useful result because one can convert any NFA into an easy-to-implement-and-run and fast-running DFA.
+
+Because of the result provided by the subset construction algorithm, the classifications NFA and DFA are equivalent.  Forthwith, FA refers to the generic classification of finite automata, which includes the equivalent classifications NFA and DFA.
+
+A language is a <strong>regular language</strong> if and only if there exists an FA which decides it.  In other words, if and only if there is a FA which accepts all strings in the language and rejects all strings not in the language, then the language is regular.
+
+A <strong>regular expression</strong> (regex) is a syntactical form for compactly specifying a regular language.  See @ref generic_regexes for more information.  Because each regex specifies a regular language, for each regex there exists an FA which decides if a string is accepted by the regex.  It is straightforward to construct an NFA from a regex, and using the subset construction algorithm, generate an equivalent DFA.
+
+TODO: write about DPDAs, NPDAs
+
+TODO: write about context-free languages and their NPDAs, and the deterministic CFL subset and their DPDAs.
+
+TODO: write about ASTs
+
+@section language_theory_languages Language Classifications
+At this point, a distinction should be made between certain classifications of languages and what type of automaton is required to decide each.
+
+@dot
+digraph chomsky_hierarchy {
+    fontname=courier;
+    subgraph cluster_free_languages {
+        label="Unrestricted Languages:\ndecidable by a Turing Machine";
+        subgraph cluster_context_sensitive_languages {
+            label="Context-Sensitive Languages:\ndecidable by a linear-bounded automaton";
+            subgraph cluster_context_free_languages {
+                label="Context-Free Languages:\ndecidable by a nondeterministic pushdown automaton";
+                subgraph cluster_deterministic_context_free_languages {
+                    label="Deterministic Context-Free Languages:\ndecidable by a deterministic pushdown automaton";
+                    subgraph cluster_regular_languages {
+                        label="Regular Languages:\ndecidable by a finite automaton";
+                        node [style=invis];
+                        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                    }
+                }
+            }
+        }
+    }
+}
+@enddot
+
+The nesting of language classifications indicate that the contained classification is a subset of the containing one.  <strong>Regular languages</strong> are the most limited and are a subset of everything, and are consequently the most simple and easiest to implement algorithmically.  <strong>Context-free languages</strong> are the immediate superset of regular languages and require what's known as a <strong>pushdown automaton</strong> (PDA) to decide them.  Therefore, anything decidable by an FA is decidable by a PDA.  <tt>reflex</tt> uses regular languages via regular expressions to implement an FA to decide input.  <tt>trison</tt> uses context-free languages via Backus-Naur form grammars to implement a PDA to decide input.  A PDA is just an FA with an auxiliary memory stack.  If it weren't for certain extensions in <tt>reflex</tt> (e.g. ^ and $ and other conditionals), any scanner FA written using <tt>reflex</tt> would be equivalent to some parser PDA in <tt>trison</tt>.
+
+TODO: make sure above paragraph is consistent with the TODOs in the previous section
+
+TODO: subset algo
+
+TODO: modified NFAs
+
+TODO: modified subset algo
+
+TODO: modified DFAs
+
+*/

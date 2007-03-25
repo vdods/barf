@@ -1,0 +1,116 @@
+// ///////////////////////////////////////////////////////////////////////////
+// barf_astcommon.cpp by Victor Dods, created 2006/10/22
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+#include "barf_astcommon.hpp"
+
+#include <sstream>
+
+namespace Barf {
+namespace AstCommon {
+
+string const &GetAstTypeString (AstType ast_type)
+{
+    static string const s_ast_type_string[AT_START_CUSTOM_TYPES_HERE_] =
+    {
+        "AT_THROW_AWAY",
+        "AT_CHARACTER",
+        "AT_SIGNED_INTEGER",
+        "AT_UNSIGNED_INTEGER",
+        "AT_STRING",
+        "AT_IDENTIFIER",
+        "AT_DUMB_CODE_BLOCK",
+        "AT_STRICT_CODE_BLOCK",
+        "AT_DIRECTIVE",
+        "AT_IDENTIFIER_LIST",
+        "AT_IDENTIFIER_MAP",
+        "AT_DIRECTIVE_LIST"
+    };
+
+    assert(ast_type < AT_START_CUSTOM_TYPES_HERE_);
+    return s_ast_type_string[ast_type];
+}
+
+void Ast::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
+}
+
+void Character::Escape ()
+{
+    m_character = GetEscapedChar(m_character);
+}
+
+void Character::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharacterLiteral() << endl;
+}
+
+void SignedInteger::ShiftAndAdd (Sint32 value)
+{
+    assert(0 <= value && value <= 9);
+    if (m_value > SINT32_UPPER_BOUND/10 || value > SINT32_UPPER_BOUND%10)
+        THROW_STRING("integer overflow");
+    m_value = (10 * m_value) + value;
+}
+
+void SignedInteger::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_value << endl;
+}
+
+void UnsignedInteger::ShiftAndAdd (Uint32 value)
+{
+    assert(0 <= value && value <= 9);
+    if (m_value > UINT32_UPPER_BOUND/10 || value > UINT32_UPPER_BOUND%10)
+        THROW_STRING("integer overflow");
+    m_value = (10 * m_value) + value;
+}
+
+void UnsignedInteger::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_value << endl;
+}
+
+TextBase::~TextBase ()
+{
+}
+
+string TextBase::GetDirectiveTypeString (AstType ast_type)
+{
+    if (ast_type == AT_STRING) return "%string";
+    if (ast_type == AT_IDENTIFIER) return "%identifier";
+    if (ast_type == AT_DUMB_CODE_BLOCK) return "%dumb_code_block";
+    if (ast_type == AT_STRICT_CODE_BLOCK) return "%strict_code_block";
+
+    assert(false && "invalid TextBase AstType");
+    return gs_empty_string;
+}
+
+void TextBase::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetStringLiteral(GetText()) << endl;
+}
+
+void Identifier::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetText() << endl;
+}
+
+CodeBlock::~CodeBlock ()
+{
+}
+
+void Directive::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << " (" << GetText() << ')' << endl;
+}
+
+} // end of namespace AstCommon
+} // end of namespace Barf

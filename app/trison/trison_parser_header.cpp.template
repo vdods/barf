@@ -1,0 +1,178 @@
+#include <ostream>
+#include <string>
+#include <vector>
+
+$$HEADER_FILE_TOP$$
+
+class $$CLASS_NAME$$
+$$CLASS_INHERITANCE$$
+{
+public:
+
+    struct Token
+    {
+        enum Type
+        {
+            // user-defined terminal, non-single-character tokens
+$$TERMINAL_TOKEN_DECLARATIONS$$
+            // user-defined nonterminal tokens
+$$NONTERMINAL_TOKEN_DECLARATIONS$$
+            // parser's sentinel and special tokens
+            ERROR_,
+            DEFAULT_,
+            INVALID_
+        }; // end of enum $$CLASS_NAME$$::Token::Type
+    }; // end of struct $$CLASS_NAME$$::Token
+
+    $$CLASS_NAME$$ ();
+    $$FORCE_VIRTUAL_DESTRUCTOR$$~$$CLASS_NAME$$ ();
+
+    inline $$BASE_ASSIGNED_TYPE$$ const &GetAcceptedToken () const { return m_reduction_token; }
+    inline void ClearAcceptedToken () { m_reduction_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$; }
+
+    inline unsigned int GetDebugSpewLevel () const { return m_debug_spew_level; }
+    inline void SetDebugSpewLevel (unsigned int debug_spew_level) { m_debug_spew_level = debug_spew_level; }
+
+    static void CheckStateConsistency ();
+
+    enum ParserReturnCode
+    {
+        PRC_SUCCESS = 0,
+        PRC_UNHANDLED_PARSE_ERROR = 1
+    }; // end of enum ParserReturnCode
+
+$$PARSE_METHOD_ACCESS$$
+
+    ParserReturnCode Parse ();
+
+public:
+
+$$CLASS_METHODS_AND_MEMBERS$$
+
+private:
+
+    typedef unsigned int StateNumber;
+
+    enum TransitionAction
+    {
+        TA_SHIFT_AND_PUSH_STATE = 0,
+        TA_PUSH_STATE,
+        TA_REDUCE_USING_RULE,
+        TA_REDUCE_AND_ACCEPT_USING_RULE,
+        TA_THROW_AWAY_LOOKAHEAD_TOKEN,
+
+        TA_COUNT
+    };
+
+    enum ActionReturnCode
+    {
+        ARC_CONTINUE_PARSING = 0,
+        ARC_ACCEPT_AND_RETURN
+    };
+
+    struct ReductionRule
+    {
+        typedef $$BASE_ASSIGNED_TYPE$$ ($$CLASS_NAME$$::*ReductionRuleHandler)();
+
+        Token::Type m_non_terminal_to_reduce_to;
+        unsigned int m_number_of_tokens_to_reduce_by;
+        ReductionRuleHandler m_handler;
+        std::string m_description;
+    };
+
+    struct Action
+    {
+        TransitionAction m_transition_action;
+        unsigned int m_data;
+    };
+
+    struct StateTransition
+    {
+        Token::Type m_token_type;
+        Action m_action;
+    };
+
+    struct State
+    {
+        unsigned int m_lookahead_transition_offset;
+        unsigned int m_lookahead_transition_count;
+        unsigned int m_default_action_offset;
+        unsigned int m_non_terminal_transition_offset;
+        unsigned int m_non_terminal_transition_count;
+    };
+
+    inline void GetNewLookaheadToken ()
+    {
+        if (m_is_new_lookahead_token_required)
+        {
+            m_is_new_lookahead_token_required = false;
+            if (m_get_new_lookahead_token_type_from_saved)
+            {
+                m_get_new_lookahead_token_type_from_saved = false;
+                m_lookahead_token_type = m_saved_lookahead_token_type;
+            }
+            else
+                ScanANewLookaheadToken();
+        }
+    }
+    inline Token::Type GetLookaheadTokenType ()
+    {
+        GetNewLookaheadToken();
+        return m_lookahead_token_type;
+    }
+    inline $$BASE_ASSIGNED_TYPE$$ const &GetLookaheadToken ()
+    {
+        GetNewLookaheadToken();
+        return m_lookahead_token;
+    }
+    bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
+
+    ParserReturnCode PrivateParse ();
+
+    ActionReturnCode ProcessAction (Action const &action);
+    void ShiftLookaheadToken ();
+    void PushState (StateNumber state_number);
+    void ReduceUsingRule (ReductionRule const &reduction_rule, bool and_accept);
+    void PopStates (unsigned int number_of_states_to_pop, bool print_state_stack = true);
+    void PrintStateStack () const;
+    void PrintTokenStack () const;
+    void PrintStateTransition (unsigned int state_transition_number) const;
+    void ScanANewLookaheadToken ();
+    void ThrowAwayToken ($$BASE_ASSIGNED_TYPE$$ token);
+    void ThrowAwayTokenStack ();
+
+    typedef std::vector<StateNumber> StateStack;
+    typedef std::vector< $$BASE_ASSIGNED_TYPE$$ > TokenStack;
+
+    unsigned int m_debug_spew_level;
+
+    StateStack m_state_stack;
+    TokenStack m_token_stack;
+
+    Token::Type m_lookahead_token_type;
+    $$BASE_ASSIGNED_TYPE$$ m_lookahead_token;
+    bool m_is_new_lookahead_token_required;
+
+    Token::Type m_saved_lookahead_token_type;
+    bool m_get_new_lookahead_token_type_from_saved;
+    bool m_previous_transition_accepted_error_token;
+
+    bool m_is_returning_with_non_terminal;
+    Token::Type m_returning_with_this_non_terminal;
+
+    $$BASE_ASSIGNED_TYPE$$ m_reduction_token;
+    unsigned int m_reduction_rule_token_count;
+
+    static State const ms_state[];
+    static unsigned int const ms_state_count;
+    static ReductionRule const ms_reduction_rule[];
+    static unsigned int const ms_reduction_rule_count;
+    static StateTransition const ms_state_transition[];
+    static unsigned int const ms_state_transition_count;
+
+$$REDUCTION_RULE_HANDLER_DECLARATIONS$$
+}; // end of class $$CLASS_NAME$$
+
+std::ostream &operator << (std::ostream &stream, $$CLASS_NAME$$::Token::Type token_type);
+
+$$HEADER_FILE_BOTTOM$$
