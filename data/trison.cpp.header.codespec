@@ -150,10 +150,10 @@ protected:
         ActionTreeNode_ *m_parent_;
         Uint32_ m_rule_stack_level_;
 
-        TreeNode_ (Uint32_ rule_stack_level, TreeNodeType_ tree_node_type)
+        TreeNode_ (Uint32_ rule_stack_level, ActionTreeNode_ *parent, TreeNodeType_ tree_node_type)
             :
             m_tree_node_type_(tree_node_type),
-            m_parent_(NULL),
+            m_parent_(parent),
             m_rule_stack_level_(rule_stack_level)
         { }
         virtual ~TreeNode_ ()
@@ -246,14 +246,23 @@ protected:
 
         ChildSet_ m_child_set_;
         ActionType_ m_action_type_;
+        // precedence range
+        // associativity - N/A unless the precedence range is 1 value
+        // rule index range - N/A unless the precedence range is 1 value
         Rule_ const *m_associated_rule_;
         bool &m_nonassoc_error_encountered_;
         Uint32_ m_e_closure_state_; // TODO: this is going away soon
         bool m_is_completed_;
 
-        ActionTreeNode_ (ActionType_ action_type, Rule_ const *associated_rule, bool &nonassoc_error_encountered, Uint32_ e_closure_state /* TODO: going away soon */, Uint32_ rule_stack_level)
+        ActionTreeNode_ (
+            ActionType_ action_type,
+            Rule_ const *associated_rule,
+            bool &nonassoc_error_encountered,
+            Uint32_ e_closure_state /* TODO: going away soon */,
+            Uint32_ rule_stack_level,
+            ActionTreeNode_ *parent)
             :
-            TreeNode_(rule_stack_level, ACTION_TREE_NODE_),
+            TreeNode_(rule_stack_level, parent, ACTION_TREE_NODE_),
             m_action_type_(action_type),
             m_associated_rule_(associated_rule),
             m_nonassoc_error_encountered_(nonassoc_error_encountered),
@@ -609,15 +618,12 @@ private:
     bool m_is_shift_blocked_;
     bool m_reduce_transitions_were_performed_;
     bool m_nonassoc_error_encountered_;
-//     ScheduledTransitionList_ m_scheduled_transition_list_;
     BranchVector_ m_dead_branch_list_;
     TokenBuffer_ m_token_stack_;
     TokenBuffer_ m_lookahead_queue_;
     TokenBuffer_::size_type m_lookahead_queue_cursor_;
     bool m_return_state_encountered_;
     ActionQueue_ m_saved_return_action_queue_;
-//     State_ const *m_most_recent_return_state_;
-//     Token_ m_return_token_;
 <*{if(is_defined(generate_debug_spew_code))
     bool m_debug_spew_;
 

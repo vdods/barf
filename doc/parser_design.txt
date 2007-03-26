@@ -1,0 +1,52 @@
+algo
+{
+    create tree root (rule stack level 0, no parent)
+    create initial branch (using starting state of specified start nonterminal)
+    add initial branch as child to tree root
+    add initial branch to branch set
+    is_shift_blocked = false
+    reduce_transitions_were_performed = false
+    shift_transitions_were_performed = false
+    while (true)
+    {
+        perform e-closure (simple)
+        if (!is_shift_blocked)
+            perform reduce transitions (setting reduce_actions_were_performed and is_shift_blocked if they were)
+        if (!reduce_transitions_were_performed)
+        {
+            if (is_shift_blocked)
+                perform shift transitions (only for those branches with a private nonterminal lookahead, setting shift_transitions_were_performed if they were, recording doomed branches)
+            else
+                perform shift transitions (on all branches, setting shift_transitions_were_performed if they were, recording doomed branches)
+
+            if (there were doomed branches)
+            {
+                if (shift_transitions_were_performed)
+                    prune all doomed branches
+                else if (there are any doomed branches at a return state) // this can only happen when !is_shift_blocked
+                    prune only non-return-state doomed branches
+                else
+                    go into error-handling mode (TODO)
+            }
+
+            is_shift_blocked = false
+        }
+
+        execute and remove the trunk
+
+        if (there is a single branch and it is at a return state)
+            return the single stack token
+    }
+}
+
+notes:
+
+- more thought needs to be put into error handling (especially for trying
+  to return using the most recently encountered return state)
+- performing the shift/reduce transitions involves resolving conflicts
+- i conject that, at a given action tree node, there can be: 0 or 1 reduce
+  child nodes and 0 or 1 shift child nodes.  if more than one reduce
+  transition comes about at a particular action tree node, only the highest
+  priority one is used.  i'm guessing that there can only ever be one shift
+  action from any given node, because it's reading from a necessarily common
+  lookahead (nonterminal or terminal type).

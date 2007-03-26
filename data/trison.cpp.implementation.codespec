@@ -530,6 +530,8 @@ void <{class_name}::SaveReturnActions_ (BranchTreeNode_ *branch)
 
 void <{class_name}::PruneDeadBranches_ ()
 {
+    // NOTE: there can't be any pruning when un-shift-blocking because there's
+    // no way for a branch with a lookahead nonterminal to fail to shift it.
     for (BranchVector_::iterator it = m_dead_branch_list_.begin(), it_end = m_dead_branch_list_.end();
          it != it_end;
          ++it)
@@ -556,6 +558,7 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
                 std::cerr << " shift,";
                 std::cout << " shift,";
                 // pop redundant actions from the saved return action queue
+                // TODO: assert that the popped action is identical to the one being executed
                 if (!m_saved_return_action_queue_.empty())
                     m_saved_return_action_queue_.pop_front();
                 break;
@@ -565,6 +568,7 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
                 std::cerr << " reduce " << m_tree_root_->m_associated_rule_->m_description_ << ',';
                 std::cout << " reduce " << m_tree_root_->m_associated_rule_->m_description_ << ',';
                 // pop redundant actions from the saved return action queue
+                // TODO: assert that the popped action is identical to the one being executed
                 if (!m_saved_return_action_queue_.empty())
                     m_saved_return_action_queue_.pop_front();
                 break;
