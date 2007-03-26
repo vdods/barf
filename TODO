@@ -189,8 +189,9 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
-- prohibit epsilon-loops in NPDA
-- change "%prec %left BLAH" into "%prec.left BLAH"
+- add default values in trison cpp langspec for Scan implementation
+- prohibit (check for) epsilon-loops in NPDA
+- change "%prec %left BLAH" into "%prec.left BLAH" (and maybe prec into precedence)
 - NPDA: each action node in the tree gets a set of precedences.  when a node's
   child set changes, the precedence set is updated, and then conflict resolution
   can happen

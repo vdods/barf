@@ -145,6 +145,7 @@ protected:
     typedef std::set<ActionTreeNode_ *> NodeSet_;
     struct TreeNode_ // TODO: make non-virtual
     {
+        // TODO: make non-public
         enum TreeNodeType_ { ACTION_TREE_NODE_ = 0, BRANCH_TREE_NODE_ };
         TreeNodeType_ m_tree_node_type_;
         ActionTreeNode_ *m_parent_;
@@ -242,39 +243,50 @@ protected:
     typedef std::set<BranchTreeNode_ *> BranchSet_;
     struct ActionTreeNode_ : public TreeNode_
     {
-        typedef std::set<TreeNode_ *, TreeNodeOrder_> ChildSet_;
-
-        ChildSet_ m_child_set_;
+        // TODO: make non-public
+        // there can only ever be up to 2 children, one of each type.
+        TreeNode_ *m_reduce_child_;
+        TreeNode_ *m_shift_child_;
+        // there can be arbitrarily many branch children
+        BranchSet_ m_child_branch_set_;
+        // indicates what type of node this is -- ACTION_SHIFT_, ACTION_REDUCE_,
+        // or ACTION_NONE_ (which is only valid for the root node).
         ActionType_ m_action_type_;
-        // precedence range
-        // associativity - N/A unless the precedence range is 1 value
-        // rule index range - N/A unless the precedence range is 1 value
-        Rule_ const *m_associated_rule_;
-        bool &m_nonassoc_error_encountered_;
-        Uint32_ m_e_closure_state_; // TODO: this is going away soon
-        bool m_is_completed_;
+        // precedence range - primary criteria for node priority
+        Uint32_ m_precedence_range_lower_;
+        Uint32_ m_precedence_range_upper_;
+        // associativity - secondary criteria for node priority (N/A unless the precedence range is 1 value)
+        Associativity_ m_associativity_;
+        // rule index range - tertiary criteria for node priority (N/A unless the precedence range is 1 value)
+        Uint32_ m_rule_index_range_lower_;
+        Uint32_ m_rule_index_range_upper_;
 
         ActionTreeNode_ (
             ActionType_ action_type,
-            Rule_ const *associated_rule,
-            bool &nonassoc_error_encountered,
-            Uint32_ e_closure_state /* TODO: going away soon */,
+            Uint32_ precedence_range_lower,
+            Uint32_ precedence_range_upper,
+            Associativity_ associativity,
+            Uint32_ rule_index_range_lower,
+            Uint32_ rule_index_range_upper,
             Uint32_ rule_stack_level,
             ActionTreeNode_ *parent)
             :
             TreeNode_(rule_stack_level, parent, ACTION_TREE_NODE_),
+            m_reduce_child_(NULL),
+            m_shift_child_(NULL),
             m_action_type_(action_type),
-            m_associated_rule_(associated_rule),
-            m_nonassoc_error_encountered_(nonassoc_error_encountered),
-            m_e_closure_state_(e_closure_state), // TODO: going away soon
-            m_is_completed_(false)
+            m_precedence_range_lower_(precedence_range_lower),
+            m_precedence_range_upper_(precedence_range_upper),
+            m_associativity_(associativity),
+            m_rule_index_range_lower_(rule_index_range_lower),
+            m_rule_index_range_upper_(rule_index_range_upper)
         { }
         virtual ~ActionTreeNode_ ()
         {
-            assert(m_child_set_.empty());
+            assert(m_reduce_child_ == NULL);
+            assert(m_shift_child_ == NULL);
         }
 
-        virtual bool IsActionTreeNode_ () const { return true; }
         virtual void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
             std::string tab_string(2*indent_level, ' ');
@@ -304,6 +316,59 @@ protected:
             }
         }
 
+        void AddChildBranch_ (BranchTreeNode_ *child_branch)
+        {
+            assert(child_branch != NULL);
+            assert(child_branch->m_parent_ == NULL);
+            assert(m_child_branch_set_.find(child_branch) == m_child_branch_set_.end());
+            child_branch->m_parent_ = this;
+            m_child_branch_set_.insert(child_branch);
+        }
+        void RemoveChildBranch_ (BranchTreeNode_ *child_branch)
+        {
+            assert(child_branch != NULL);
+            assert(child_branch->m_parent_ == this);
+            assert(m_child_branch_set_.find(child_branch) != m_child_branch_set_.end());
+            child_branch->m_parent_ = NULL;
+            m_child_branch_set_.erase(child_branch);
+        }
+        void SetShiftChild_ (ActionTreeNode_ *shift_child, BranchSet_ &branch_set)
+        {
+            assert(shift_child != NULL);
+            assert(shift_child->m_parent_ == NULL);
+            assert(shift_child->m_reduce_child_ == NULL);
+            assert(shift_child->m_shift_child_ == NULL);
+            assert(shift_child->m_child_branch_set_.empty());
+            assert(m_shift_child_ == NULL);
+            shift_child->m_parent_ = this;
+            m_shift_child_ = shift_child;
+            PerformShiftReduceConflictResolution_(branch_set);
+        }
+        void SetReduceChild_ (ActionTreeNode_ *reduce_child, BranchSet_ &branch_set)
+        {
+            assert(reduce_child != NULL);
+            assert(reduce_child->m_parent_ == NULL);
+            assert(reduce_child->m_reduce_child_ == NULL);
+            assert(reduce_child->m_shift_child_ == NULL);
+            assert(reduce_child->m_child_branch_set_.empty());
+            if (m_reduce_child_ != NULL)
+            {
+                TODO: start here
+
+                assert(m_reduce_child_ and reduce_child have unequal priorities && "it should be impossible for 2 different reduce actions to have the same priority");
+                if (m_reduce_child_ has lower priority than reduce_child)
+                {
+                    get ridda m_reduce_child_ (and pass in branch_set)
+                    m_reduce_child_ = reduce_child;
+                }
+                else if (reduce_child has lower priority than m_reduce_child_)
+                {
+                    get ridda reduce_child
+                }
+            }
+            PerformShiftReduceConflictResolution_(branch_set);
+        }
+/*
         void AddChild_ (TreeNode_ *child)
         {
             assert(child != NULL);
@@ -404,6 +469,7 @@ protected:
             node->m_parent_->RemoveChild_(node);
             delete node;
         }
+*/
     }; // end of struct TrisonCpp_::Npda_::ActionTreeNode_
     struct BranchTreeNode_ : public TreeNode_
     {
