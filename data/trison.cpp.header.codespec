@@ -141,24 +141,6 @@ protected:
     }; // end of struct TrisonCpp_::Npda_::Transition_
     struct BranchTreeNode_;
     typedef std::vector<BranchTreeNode_ *> BranchVector_;
-    /*
-    struct ScheduledTransition_
-    {
-        ActionType_ m_action_type_;
-        Uint32_ m_data_;
-        BranchTreeNode_ *m_branch_;
-
-        ScheduledTransition_ (ActionType_ action_type, Uint32_ data, BranchTreeNode_ *branch)
-            :
-            m_action_type_(action_type),
-            m_data_(data),
-            m_branch_(branch)
-        {
-            assert(m_branch_ != NULL);
-        }
-    }; // end of struct TrisonCpp_::Npda_::ScheduledTransition_
-    typedef std::vector<ScheduledTransition_> ScheduledTransitionList_;
-    */
     struct ActionTreeNode_;
     typedef std::set<ActionTreeNode_ *> NodeSet_;
     struct TreeNode_ // TODO: make non-virtual
@@ -326,53 +308,15 @@ protected:
         }
         void RemoveChild_ (TreeNode_ *child)
         {
-            /*
-            std::cerr << __PRETTY_FUNCTION__ << " start -- this = " << this << ", child = " << child << std::endl;
-            for (ChildSet_::const_iterator it = m_child_set_.begin(), it_end = m_child_set_.end();
-                 it != it_end;
-                 ++it)
-            {
-                TreeNode_ const *ch = *it;
-                bool less_than = TreeNodeOrder_::LessThan_(child, ch);
-                bool greater_than = TreeNodeOrder_::LessThan_(ch, child);
-                std::cerr << "    " << ch << ' ';
-                switch ((less_than ? 2 : 0) + (greater_than ? 1 : 0))
-                {
-                    case 0: std::cerr << "it == child"; break;
-                    case 1: std::cerr << "it < child"; break;
-                    case 2: std::cerr << "child < it"; break;
-                    case 3: assert(false && "inconsistent TreeNodeOrder_"); break;
-                }
-                std::cerr << std::endl;
-            }
-            */
             assert(child != NULL);
             assert(child->m_parent_ == this);
             assert(!TreeNodeOrder_::LessThan_(child, child));
             child->m_parent_ = NULL;
             assert(m_child_set_.find(child) != m_child_set_.end());
-//             std::cerr << __PRETTY_FUNCTION__ << " end" << std::endl;
             m_child_set_.erase(child);
         }
         ActionTreeNode_ *EnsureChildExists_ (ActionType_ action_type, Rule_ const *associated_rule, bool &nonassoc_error_encountered, Uint32_ e_closure_state, Uint32_ rule_stack_level)
         {
-            /*
-            // TODO: see if this can be optimized with std::set::find() -- create an ActionTreeNode_ on the stack and call find on it
-            for (ChildSet_::iterator it = m_child_set_.begin(), it_end = m_child_set_.end();
-                 it != it_end;
-                 ++it)
-            {
-                TreeNode_ *child = *it;
-                if (child != NULL &&
-                    child->IsActionTreeNode_() &&
-                    static_cast<ActionTreeNode_ *>(child)->m_action_type_ == action_type &&
-                    static_cast<ActionTreeNode_ *>(child)->m_associated_rule_ == associated_rule)
-                {
-                    child->m_rule_stack_level_ = std::max(child->m_rule_stack_level_, rule_stack_level);
-                    return static_cast<ActionTreeNode_ *>(child);
-                }
-            }
-            */
             // check for child equivalent to the one requested
             ActionTreeNode_ dummy_node(action_type, associated_rule, nonassoc_error_encountered, e_closure_state, rule_stack_level);
             ChildSet_::iterator it = m_child_set_.find(&dummy_node);
@@ -509,19 +453,6 @@ protected:
             cloned->m_is_epsilon_closed_ = false;
             return cloned;
         }
-        /*
-        BranchTreeNode_ *Fork_ ()
-        {
-            assert(m_scheduled_transition_count_ > 0);
-            if (--m_scheduled_transition_count_ == 0)
-                return this;
-            BranchTreeNode_ *forked = new BranchTreeNode_(*this);
-            forked->m_parent_ = NULL;
-            forked->m_is_epsilon_closed_ = false;
-            forked->m_scheduled_transition_count_ = 0;
-            return forked;
-        }
-        */
     }; // end of struct TrisonCpp_::Npda_::BranchTreeNode_
 }; // end of class TrisonCpp_::Npda_
 

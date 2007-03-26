@@ -311,38 +311,41 @@ void <{class_name}::PerformEpsilonClosure_ (BranchTreeNode_ const &source_branch
         // within a single nonterminal's rules.  this single characteristic is
         // what allows nonterminal-scope precedence to work.
         ActionTreeNode_ *parent = source_branch.m_parent_;
-        Rule_ const *previously_encountered_rule = parent->m_associated_rule_;
-        Rule_ const *most_recently_encountered_rule = parent->m_associated_rule_;
-        TokenId_ previous_reduction_nonterminal_token_id = source_branch.Top_().m_associated_nonterminal_token_id_;
+        Rule_ const *previous_rule = source_branch.Top_().m_associated_rule_;
+        Rule_ const *most_recent_rule = source_branch.Top_().m_associated_rule_;
+        assert(previous_rule == NULL || previous_rule->m_precedence_ != NULL);
+        TrisonCpp_::Uint32_ previously_encountered_precedence_level = previous_rule != NULL ? previous_rule->m_precedence_->m_level_ : 0; // default precedence
+        TrisonCpp_::Uint32_ most_recently_encountered_precedence_level = previously_encountered_precedence_level;
+        TokenId_ previous_nonterminal_token_id = source_branch.Top_().m_associated_nonterminal_token_id_;
         for (TrisonCpp_::Uint32_ i = 0; i < extra_state_stack.size(); ++i)
         {
             assert(parent != NULL);
             State_ const *next_e_closure_state = extra_state_stack[i];
             assert(next_e_closure_state != NULL);
             if (next_e_closure_state->m_associated_rule_ != NULL)
-                most_recently_encountered_rule = next_e_closure_state->m_associated_rule_;
-            TokenId_ next_reduction_nonterminal_token_id = next_e_closure_state->m_associated_nonterminal_token_id_;
+                most_recent_rule = next_e_closure_state->m_associated_rule_;
+            if (next_e_closure_state->m_associated_rule_ != NULL)
+                most_recently_encountered_precedence_level = next_e_closure_state->m_associated_rule_->m_precedence_->m_level_;
+            TokenId_ most_recent_nonterminal_token_id = next_e_closure_state->m_associated_nonterminal_token_id_;
 
-            // TODO: start here by figuring out if additional e-closure nodes have to be added
-            // maybe add nodes when the rule changes, or maybe when the precedence level changes
-
-            // only add an e-closure node if the nonterminal varies between the two states.
-            if (next_reduction_nonterminal_token_id != previous_reduction_nonterminal_token_id/* ||
-                most_recently_encountered_rule != previously_encountered_rule*/)
+            // only add an e-closure node if the nonterminal or precedence level varies between the two states
+            if (most_recent_nonterminal_token_id != previous_nonterminal_token_id ||
+                most_recently_encountered_precedence_level != previously_encountered_precedence_level)
             {
                 parent =
                     parent->EnsureChildExists_(
                         ACTION_NONE_,
-                        most_recently_encountered_rule,
+                        most_recent_rule,
                         m_nonassoc_error_encountered_,
                         next_e_closure_state - ms_state_table_,
                         source_branch.m_rule_stack_level_ + i/2);
                 assert(parent != NULL);
                 // TODO: figure out if EnsureChildExists_ can fail here (i think it might not be able to fail)
-                previous_reduction_nonterminal_token_id = next_reduction_nonterminal_token_id;
+                previous_nonterminal_token_id = most_recent_nonterminal_token_id;
             }
 
-            previously_encountered_rule = most_recently_encountered_rule;
+            previous_rule = most_recent_rule;
+            previously_encountered_precedence_level = most_recently_encountered_precedence_level;
         }
         // clone the source branch, push the states contained in
         // extra_state_stack and then add it to m_branch_set_.
