@@ -142,7 +142,6 @@ protected:
     struct BranchTreeNode_;
     typedef std::vector<BranchTreeNode_ *> BranchVector_;
     struct ActionTreeNode_;
-    typedef std::set<ActionTreeNode_ *> NodeSet_;
     struct TreeNode_ // TODO: make non-virtual
     {
         // TODO: make non-public
@@ -151,96 +150,78 @@ protected:
         ActionTreeNode_ *m_parent_;
         Uint32_ m_rule_stack_level_;
 
-        TreeNode_ (Uint32_ rule_stack_level, ActionTreeNode_ *parent, TreeNodeType_ tree_node_type)
+        TreeNode_ (Uint32_ rule_stack_level, TreeNodeType_ tree_node_type)
             :
             m_tree_node_type_(tree_node_type),
-            m_parent_(parent),
+            m_parent_(NULL),
             m_rule_stack_level_(rule_stack_level)
         { }
         virtual ~TreeNode_ ()
         {
             if (m_parent_ != NULL)
             {
-                assert(m_parent_->IsActionTreeNode_());
-                ActionTreeNode_ *parent = static_cast<ActionTreeNode_ *>(m_parent_);
-                parent->RemoveChild_(this);
+                m_parent_->RemoveChild_(this);
                 // delete parent node if it has no children, but not if it's the root node
-                if (parent->m_child_set_.empty() && parent->m_parent_ != NULL)
-                    delete parent;
+                if (!m_parent->HasChildren_() && m_parent_->m_parent_ != NULL)
+                    delete m_parent_;
             }
         }
 
         bool IsActionTreeNode_ () const { return m_tree_node_type_ == ACTION_TREE_NODE_; }
         virtual void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const = 0;
     }; // end of struct TrisonCpp_::Npda_::TreeNode_
-    struct TreeNodeOrder_
-    {
-        bool operator () (TreeNode_ const *n0, TreeNode_ const *n1) { return LessThan_(n0, n1); }
-        static bool LessThan_ (TreeNode_ const *n0, TreeNode_ const *n1)
-        {
-            assert(n0 != NULL);
-            assert(n1 != NULL);
-
-            // obviously a node is not less than itself
-            if (n0 == n1)
-                return false;
-
-            // BranchTreeNode_ elements should move to the front
-            bool n0_is_action_tree_node = n0->IsActionTreeNode_();
-            bool n1_is_action_tree_node = n1->IsActionTreeNode_();
-            if (!n0_is_action_tree_node && !n1_is_action_tree_node)
-                return n0 < n1; // but BranchTreeNode_ relative ordering is arbitrary
-            if (n0_is_action_tree_node && !n1_is_action_tree_node)
-                return false;
-            if (!n0_is_action_tree_node && n1_is_action_tree_node)
-                return true;
-
-            ActionTreeNode_ const &atn0 = *static_cast<ActionTreeNode_ const *>(n0);
-            ActionTreeNode_ const &atn1 = *static_cast<ActionTreeNode_ const *>(n1);
-            assert(&atn0.m_nonassoc_error_encountered_ == &atn1.m_nonassoc_error_encountered_);
-
-            // if either of the nodes have no associated rule, then we're
-            // at the root of the action tree, and ActionTreeNode_ objects
-            // can only be epsilon-closure or shift-to-a-return-state nodes
-            if (atn0.m_associated_rule_ == NULL || atn1.m_associated_rule_ == NULL)
-            {
-                assert(atn0.m_action_type_ == ACTION_NONE_ || atn0.m_action_type_ == ACTION_SHIFT_);
-                assert(atn1.m_action_type_ == ACTION_NONE_ || atn1.m_action_type_ == ACTION_SHIFT_);
-                // prefer shift-to-a-return-state over epsilon-closure nodes
-                return atn0.m_action_type_ < atn1.m_action_type_;
-            }
-
-            Precedence_ const &p0 = *atn0.m_associated_rule_->m_precedence_;
-            Precedence_ const &p1 = *atn1.m_associated_rule_->m_precedence_;
-
-            // higher precedence elements move to the front
-            if (p0.m_level_ != p1.m_level_)
-                return p0.m_level_ > p1.m_level_;
-
-            // associativity ordering; for left-assoc, reduce is preferred,
-            // while for right-assoc, shift is preferred.  nonassoc grouping
-            // will cause the nonassoc error flag to be set.
-            assert(p0.m_associativity_ == p1.m_associativity_ &&
-                   "rules with the same precedence must have the same associativity");
-            if (atn0.m_action_type_ == ACTION_SHIFT_ && atn1.m_action_type_ == ACTION_REDUCE_)
-            {
-                if (p0.m_associativity_ == ASSOCIATIVITY_NONASSOC_)
-                    atn0.m_nonassoc_error_encountered_ = true;
-                return p0.m_associativity_ == ASSOCIATIVITY_RIGHT_;
-            }
-            else if (atn0.m_action_type_ == ACTION_REDUCE_ && atn1.m_action_type_ == ACTION_SHIFT_)
-            {
-                if (p0.m_associativity_ == ASSOCIATIVITY_NONASSOC_)
-                    atn0.m_nonassoc_error_encountered_ = true;
-                return p0.m_associativity_ == ASSOCIATIVITY_LEFT_;
-            }
-
-            // the final (fail-safe) criteria is preference of lower rule index
-            return atn0.m_associated_rule_ < atn1.m_associated_rule_;
-        }
-    }; // end of struct TrisonCpp_::Npda_::TreeNodeOrder_
     struct BranchTreeNode_;
-    typedef std::set<BranchTreeNode_ *> BranchSet_;
+    struct BranchTreeNodeLessThan_
+    {
+        // a consequence of this ordering functor using the branches' parent
+        // nodes is that the branch must have its m_parent_ member set to the
+        // involved parent when this functor is called (e.g. set insert, erase)
+        bool operator () (BranchTreeNode_ const *b0, BranchTreeNode_ const *b1)
+        {
+            assert(b0 != NULL);
+            assert(b1 != NULL);
+            assert(b0->m_parent_ != NULL);
+            assert(b1->m_parent_ != NULL);
+            assert(b0->m_parent_ == b1->m_parent_);
+            assert(b0->Top_().m_associated_rule_ == NULL && b0->m_parent_->IsRootNode_() || 
+                   b0->Top_().m_associated_rule_ != NULL && !b0->m_parent_->IsRootNode_());
+            assert(b1->Top_().m_associated_rule_ == NULL && b1->m_parent_->IsRootNode_() || 
+                   b1->Top_().m_associated_rule_ != NULL && !b1->m_parent_->IsRootNode_());
+            
+            // a branch is not less than itself
+            if (b0 == b1) 
+                return false;
+                
+            // ordering of child branches at the root node is arbitrary.
+            // ordering of child branches of an ACTION_REDUCE_ node is arbitrary 
+            // (because the reduce action node takes its prioritizing values from
+            // the reduction rule directly, instead of its child nodes/branches).
+            if (b0->m_parent_->IsRootNode_() || b0->m_parent_->m_action_type_ == ACTION_REDUCE_)
+                return b0 < b1;
+                
+            State_ const &b0_top_state = b0->Top_();
+            State_ const &b1_top_state = b1->Top_();
+            assert(b0_top_state.m_associated_rule_ != NULL);
+            assert(b1_top_state.m_associated_rule_ != NULL);
+            Rule_ const &b0_associated_rule = *b0_top_state.m_associated_rule_;
+            Rule_ const &b1_associated_rule = *b1_top_state.m_associated_rule_;
+            assert(b0_associated_rule.m_precedence_ != NULL);
+            assert(b1_associated_rule.m_precedence_ != NULL);
+            
+            // higher precedence level takes priority (moves to front)
+            if (b0_associated_rule.m_precedence_->m_level_ != b1_associated_rule.m_precedence_->m_level_)
+                return b0_associated_rule.m_precedence_->m_level_ > b1_associated_rule.m_precedence_->m_level_;
+                
+            // lower rule index takes priority (moves to front)
+            if (&b0_associated_rule != &b1_associated_rule)
+                return &b0_associated_rule < b1_associated_rule;
+            
+            // otherwise, ordering is arbitrary
+            return b0 < b1;
+        }
+    }; // end of struct TrisonCpp_::Npda_::BranchTreeNodeLessThan_
+    // NOTE: the BranchSet_ ordering isn't required for the branch set kept by the parser itself; only ActionTreeNode_s
+    typedef std::set<BranchTreeNode_ *, BranchTreeNodeLessThan_> BranchSet_; 
     struct ActionTreeNode_ : public TreeNode_
     {
         // TODO: make non-public
@@ -261,6 +242,14 @@ protected:
         Uint32_ m_rule_index_range_lower_;
         Uint32_ m_rule_index_range_upper_;
 
+        // for constructing the root node only
+        ActionTreeNode_ () 
+            : 
+            TreeNode_(0, ACTION_TREE_NODE_),
+            m_reduce_child_(NULL),
+            m_shift_child_(NULL),
+            m_action_type_(ACTION_NONE_)
+        { }
         ActionTreeNode_ (
             ActionType_ action_type,
             Uint32_ precedence_range_lower,
@@ -268,10 +257,9 @@ protected:
             Associativity_ associativity,
             Uint32_ rule_index_range_lower,
             Uint32_ rule_index_range_upper,
-            Uint32_ rule_stack_level,
-            ActionTreeNode_ *parent)
+            Uint32_ rule_stack_level)
             :
-            TreeNode_(rule_stack_level, parent, ACTION_TREE_NODE_),
+            TreeNode_(rule_stack_level, ACTION_TREE_NODE_),
             m_reduce_child_(NULL),
             m_shift_child_(NULL),
             m_action_type_(action_type),
@@ -285,6 +273,7 @@ protected:
         {
             assert(m_reduce_child_ == NULL);
             assert(m_shift_child_ == NULL);
+            assert(m_child_branch_set_.empty());
         }
 
         virtual void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
@@ -316,13 +305,24 @@ protected:
             }
         }
 
-        void AddChildBranch_ (BranchTreeNode_ *child_branch)
+        bool IsRootNode_ () const { return m_parent_ == NULL; }
+        bool HasChildren_ () const { return m_reduce_child_ != NULL || m_shift_child_ != NULL || !m_child_branch_set_.empty(); }
+        void PerformReduceTransition_ (BranchTreeNode_ *child_branch, BranchSet_ &branch_set, State
+        void StealChildBranch_ (BranchTreeNode_ *child_branch)
         {
             assert(child_branch != NULL);
-            assert(child_branch->m_parent_ == NULL);
+            assert(m_parent_ != NULL && "the root node can't steal a child branch because it has no parent");
+            assert(child_branch->m_parent_ == m_parent_ && "a branch can only be passed down to the child of its former parent");
+            assert(m_parent_->m_child_branch_set_.find(child_branch) != m_parent->m_child_branch_set_.end());
             assert(m_child_branch_set_.find(child_branch) == m_child_branch_set_.end());
+            m_parent_->m_child_branch_set_.erase(child_branch);
             child_branch->m_parent_ = this;
             m_child_branch_set_.insert(child_branch);
+            // if this is a shift node, then we must re-figure-out the precedence-range, associativity and rule index range
+            if (m_action_type_ == ACTION_SHIFT_)
+            {
+                
+            }
         }
         void RemoveChildBranch_ (BranchTreeNode_ *child_branch)
         {
@@ -477,15 +477,13 @@ protected:
         TokenId_ m_lookahead_nonterminal_token_id_;
         bool m_is_epsilon_closed_;
         bool m_is_scheduled_to_die_;
-        Uint32_ m_scheduled_transition_count_;
 
         BranchTreeNode_ (State_ const *starting_state, Uint32_ rule_stack_level)
             :
             TreeNode_(rule_stack_level, BRANCH_TREE_NODE_),
             m_lookahead_nonterminal_token_id_(0), // none_
             m_is_epsilon_closed_(false),
-            m_is_scheduled_to_die_(false),
-            m_scheduled_transition_count_(0)
+            m_is_scheduled_to_die_(false)
         {
             assert(starting_state != NULL);
             m_state_stack_.push_back(starting_state);
@@ -522,7 +520,6 @@ protected:
         }
         BranchTreeNode_ *Clone_ () const
         {
-            assert(m_scheduled_transition_count_ == 0);
             BranchTreeNode_ *cloned = new BranchTreeNode_(*this);
             cloned->m_parent_ = NULL;
             cloned->m_is_epsilon_closed_ = false;
@@ -661,14 +658,13 @@ private:
     // blah
     ParserReturnCode Parse_ (StartNonterminal::Name nonterminal_to_parse_);
     Token_ &ShiftLookaheadToken_ ();
-    void PerformEpsilonClosure_ ();
-    void PerformEpsilonClosure_ (BranchTreeNode_ const &source_branch, StateStack_ &extra_state_stack);
     void PerformReduceTransitions_ ();
     void PerformReduceTransition_ (BranchTreeNode_ *branch, Rule_ const *reduction_rule);
     void PerformShiftTransitionsAndSaveReturnActions_ ();
     void PerformShiftTransition_ (BranchTreeNode_ *branch, State_ const *target_state);
     void SaveReturnActions_ (BranchTreeNode_ *branch);
-    void PruneDeadBranches_ ();
+    void PruneAllDoomedBranches_ ();
+    void PruneNonReturnStateDoomedBranches_ ();
     void ExecuteAndRemoveTrunk_ ();
     // end blah
 
@@ -683,13 +679,13 @@ private:
     BranchSet_ m_branch_set_;
     bool m_is_shift_blocked_;
     bool m_reduce_transitions_were_performed_;
+    bool m_shift_transitions_were_performed_;
     bool m_nonassoc_error_encountered_;
-    BranchVector_ m_dead_branch_list_;
+    bool m_there_are_doomed_branches_at_a_return_state_;
+    BranchVector_ m_doomed_branch_list_;
     TokenBuffer_ m_token_stack_;
     TokenBuffer_ m_lookahead_queue_;
     TokenBuffer_::size_type m_lookahead_queue_cursor_;
-    bool m_return_state_encountered_;
-    ActionQueue_ m_saved_return_action_queue_;
 <*{if(is_defined(generate_debug_spew_code))
     bool m_debug_spew_;
 

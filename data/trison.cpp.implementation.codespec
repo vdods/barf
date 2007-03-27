@@ -143,7 +143,7 @@ void <{class_name}::ResetForNewInput_ ()
     assert(m_branch_set_.empty());
 
     // create the tree root
-    m_tree_root_ = new ActionTreeNode_(ACTION_NONE_, NULL, m_nonassoc_error_encountered_, 0, 0);
+    m_tree_root_ = new ActionTreeNode_();
     {
         // create the initial branch with a rule stack level of 0
         BranchTreeNode_ *initial_branch_ = new BranchTreeNode_(ms_state_table_ + nonterminal_to_parse_, 0);
@@ -154,11 +154,11 @@ void <{class_name}::ResetForNewInput_ ()
     }
     // initialize other members
     m_is_shift_blocked_ = false;
+    m_reduce_transitions_were_performed_ = false;
+    m_shift_transitions_were_performed_ = false;
     m_nonassoc_error_encountered_ = false;
-//     m_scheduled_transition_list_.clear();
-    m_dead_branch_list_.clear();
-    m_return_state_encountered_ = false;
-    m_saved_return_action_queue_.clear();
+    m_there_are_doomed_branches_at_a_return_state_ = false;
+    m_doomed_branch_list_.clear();
 
     std::cerr << "!!! start !!!" << std::endl;
     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
@@ -166,16 +166,17 @@ void <{class_name}::ResetForNewInput_ ()
     while (true)
     {
         std::cerr << std::endl << std::endl << "!!! iteration !!!" << std::endl;
-        // e-closure nodes should not be added for self-recursive rules.  e-closures
-        // should only be done on non-closed branches.  the rule stack level should
-        // be incremented on the transition after an e-closure.
-        std::cerr << "*** e-close ***" << std::endl;
-        PerformEpsilonClosure_();
-        m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+//         // e-closure nodes should not be added for self-recursive rules.  e-closures
+//         // should only be done on non-closed branches.  the rule stack level should
+//         // be incremented on the transition after an e-closure.
+//         std::cerr << "*** e-close ***" << std::endl;
+//         PerformEpsilonClosure_();
+//         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
         // only schedule reduce transitions if no branches have nonterminal lookaheads
         // (equivalent to not being shift-blocked)
         std::cerr << "*** transitions ***" << std::endl;
         m_reduce_transitions_were_performed_ = false;
+        m_there_are_doomed_branches_at_a_return_state_ = false;
         if (!m_is_shift_blocked_)
             PerformReduceTransitions_();
         // we can only ever schedule shift transitions if no reduce transitions were
@@ -185,56 +186,30 @@ void <{class_name}::ResetForNewInput_ ()
             // if we are currently shift-blocked, only schedule shift transitions for
             // branches which have a nonterminal lookahead.  during shift-transition
             // scheduling, if a branch has no transitions, it is scheduled to be pruned.
-            PerformShiftTransitionsAndSaveReturnActions_();
+            PerformShiftTransitions_();
             m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
-            // if no transitions were scheduled at all (reduce OR shift), then we must
-            // either return or go into error-handling mode.
-            if (m_dead_branch_list_.size() == m_branch_set_.size())
+            
+            // if there were doomed branches
+            if (!m_doomed_branch_list_.empty())
             {
-                // if there are no saved return actions, then go into error-recovery mode.
-                if (!m_return_state_encountered_)
+                if (m_shift_transitions_were_performed_)
                 {
-                    assert(false && "error recovery mode not implemented yet");
+                    PruneAllDoomedBranches_();
                 }
-                // otherwise, execute saved return actions and return the single stack token
+                else if (m_there_are_doomed_branches_at_a_return_state_) 
+                {
+                    assert(!m_is_shift_blocked_);
+                    PruneNonReturnStateDoomedBranches_();
+                }
                 else
                 {
-                    std::cerr << "executing saved return actions:";
-                    for (ActionQueue_::iterator it = m_saved_return_action_queue_.begin(), it_end = m_saved_return_action_queue_.end();
-                         it != it_end;
-                         ++it)
-                    {
-                        Action_ const &action = *it;
-                        switch (action.m_action_type_)
-                        {
-                            default: assert(false); break;
-
-                            case ACTION_SHIFT_:
-                                std::cerr << " shift,";
-                                std::cout << " shift,";
-                                break;
-
-                            case ACTION_REDUCE_:
-                                std::cerr << " reduce " << action.m_reduction_rule_->m_description_ << ",";
-                                std::cout << " reduce " << action.m_reduction_rule_->m_description_ << ",";
-                                break;
-                        }
-                    }
-                    std::cerr << std::endl;
-                    std::cout << std::endl;
-                    return PRC_SUCCESS;
+                    assert(false && "error handling mode not implemented yet");
                 }
             }
-            // otherwise, prune dead branches (branches which had no scheduled transitions).
-            else
-            {
-                std::cerr << "*** pruning dead branches ***" << std::endl;
-                PruneDeadBranches_();
-                m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
-            }
+            
+            m_is_shift_blocked_ = false;
         }
-        else
-            m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+        m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
         // TODO: handle nonassoc errors -- should this be
         // detected before PerformScheduledTransitions_ ?
         assert(!m_nonassoc_error_encountered_ && "nonassoc error handling not implemented yet");
@@ -242,11 +217,22 @@ void <{class_name}::ResetForNewInput_ ()
         // Because the action tree represents all possible valid parses of the input
         // read so far, the "trunk" of the tree represents the actions which all of
         // the branches agree upon.  therefore, there is no reason not to execute said
-        // actions now.  execute said actions (ignoring e-closure nodes), and then
-        // remove the trunk.
+        // actions now.  execute said actions, removing them as you go.
         std::cerr << "*** execute trunk ***" << std::endl;
         ExecuteAndRemoveTrunk_();
         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+        
+        // if there is a single branch and it is at a return state
+        assert(m_branch_set_.size() != 1 || *m_branch_set_.begin() != NULL);
+        if (m_branch_set_.size() == 1 && 
+            (*m_branch_set_.begin())->Top_().m_transition_table_ != NULL && 
+            (*m_branch_set_.begin())->Top_().m_transition_count_ == 0 && 
+            (*m_branch_set_.begin())->Top_().m_transition_table_->m_transition_type_ == Transition_::TT_RETURN_)
+        {
+            // return the single stack token TODO
+            parser_return_code_ = PRC_SUCCESS;
+            break;
+        }
     }
 
     return parser_return_code_;
@@ -260,146 +246,68 @@ void <{class_name}::ResetForNewInput_ ()
     return m_lookahead_queue_[m_lookahead_queue_cursor_++];
 }
 
-void <{class_name}::PerformEpsilonClosure_ ()
-{
-    // perform epsilon closure on the top stack states
-    // of all non-epsilon-closed branches.
-    std::vector<State_ const *> extra_state_stack;
-    for (BranchSet_::iterator it = m_branch_set_.begin(), it_end = m_branch_set_.end(); it != it_end; ++it)
-    {
-        BranchTreeNode_ *branch = *it;
-        assert(branch != NULL);
-        if (!branch->m_is_epsilon_closed_)
-        {
-            branch->m_is_epsilon_closed_ = true;
-            assert(extra_state_stack.empty());
-            PerformEpsilonClosure_(*branch, extra_state_stack);
-            assert(extra_state_stack.empty());
-        }
-    }
-}
-
-void <{class_name}::PerformEpsilonClosure_ (BranchTreeNode_ const &source_branch, StateStack_ &extra_state_stack)
-{
-    // iterate through the transitions from the top state of the branch,
-    // recursively epsilon-closing epsilon transitions.  also, remember
-    // if we have encountered a non-epsilon transition; this indicates
-    // that a branch should be cloned and added here.
-    bool non_epsilon_transition_encountered = false;
-    for (Transition_ const *transition = (extra_state_stack.empty() ? source_branch.Top_().m_transition_table_ : extra_state_stack.back()->m_transition_table_),
-                           *transition_end = transition + (extra_state_stack.empty() ? source_branch.Top_().m_transition_count_ : extra_state_stack.back()->m_transition_count_);
-         transition != transition_end;
-         ++transition)
-    {
-        if (transition->m_transition_type_ == Transition_::TT_EPSILON_)
-        {
-            extra_state_stack.push_back(transition->m_target_state_);
-            PerformEpsilonClosure_(source_branch, extra_state_stack);
-            extra_state_stack.pop_back();
-        }
-        else
-            non_epsilon_transition_encountered = true;
-    }
-
-    // we don't clone the source branch if the extra state stack is empty
-    // because it would be identical to the source branch which is already
-    // contained in m_branch_set_.
-    if (!extra_state_stack.empty() && non_epsilon_transition_encountered)
-    {
-        // create all necessary e-closure ancestor nodes for the closed branch.
-        // e-closure nodes are NOT created when the epsilon transition occurs
-        // within a single nonterminal's rules.  this single characteristic is
-        // what allows nonterminal-scope precedence to work.
-        ActionTreeNode_ *parent = source_branch.m_parent_;
-        Rule_ const *previous_rule = source_branch.Top_().m_associated_rule_;
-        Rule_ const *most_recent_rule = source_branch.Top_().m_associated_rule_;
-        assert(previous_rule == NULL || previous_rule->m_precedence_ != NULL);
-        TrisonCpp_::Uint32_ previously_encountered_precedence_level = previous_rule != NULL ? previous_rule->m_precedence_->m_level_ : 0; // default precedence
-        TrisonCpp_::Uint32_ most_recently_encountered_precedence_level = previously_encountered_precedence_level;
-        TokenId_ previous_nonterminal_token_id = source_branch.Top_().m_associated_nonterminal_token_id_;
-        for (TrisonCpp_::Uint32_ i = 0; i < extra_state_stack.size(); ++i)
-        {
-            assert(parent != NULL);
-            State_ const *next_e_closure_state = extra_state_stack[i];
-            assert(next_e_closure_state != NULL);
-            if (next_e_closure_state->m_associated_rule_ != NULL)
-                most_recent_rule = next_e_closure_state->m_associated_rule_;
-            if (next_e_closure_state->m_associated_rule_ != NULL)
-                most_recently_encountered_precedence_level = next_e_closure_state->m_associated_rule_->m_precedence_->m_level_;
-            TokenId_ most_recent_nonterminal_token_id = next_e_closure_state->m_associated_nonterminal_token_id_;
-
-            // only add an e-closure node if the nonterminal or precedence level varies between the two states
-            if (most_recent_nonterminal_token_id != previous_nonterminal_token_id ||
-                most_recently_encountered_precedence_level != previously_encountered_precedence_level)
-            {
-                parent =
-                    parent->EnsureChildExists_(
-                        ACTION_NONE_,
-                        most_recent_rule,
-                        m_nonassoc_error_encountered_,
-                        next_e_closure_state - ms_state_table_,
-                        source_branch.m_rule_stack_level_ + i/2);
-                assert(parent != NULL);
-                // TODO: figure out if EnsureChildExists_ can fail here (i think it might not be able to fail)
-                previous_nonterminal_token_id = most_recent_nonterminal_token_id;
-            }
-
-            previous_rule = most_recent_rule;
-            previously_encountered_precedence_level = most_recently_encountered_precedence_level;
-        }
-        // clone the source branch, push the states contained in
-        // extra_state_stack and then add it to m_branch_set_.
-        BranchTreeNode_ *closed_branch = source_branch.Clone_();
-        assert(closed_branch->m_parent_ == NULL);
-        closed_branch->m_rule_stack_level_ = source_branch.m_rule_stack_level_ + extra_state_stack.size()/2;
-        closed_branch->m_is_epsilon_closed_ = true;
-        closed_branch->m_state_stack_.insert(closed_branch->m_state_stack_.end(), extra_state_stack.begin(), extra_state_stack.end());
-        // this insertion does not affect the iteration being performed
-        // in <{class_name}::PerformEpsilonClosure_() because existing
-        // std::set iterators are unaffected by insert().
-        m_branch_set_.insert(closed_branch);
-        // finally add the e-closed branch to the appropriate node.
-        parent->AddChild_(closed_branch);
-    }
-}
-
 void <{class_name}::PerformReduceTransitions_ ()
 {
     assert(!m_is_shift_blocked_);
+    StateStack_ epsilon_closure_state_stack;
     for (BranchSet_::iterator it = m_branch_set_.begin(), it_end = m_branch_set_.end(); it != it_end; ++it)
     {
         BranchTreeNode_ *branch = *it;
         assert(branch != NULL);
         assert(branch->m_lookahead_nonterminal_token_id_ == 0);
-        assert(branch->m_scheduled_transition_count_ == 0);
-        State_ const &state = branch->Top_();
-        for (Transition_ const *transition = state.m_transition_table_,
-                               *transition_end = transition + state.m_transition_count_;
-             transition != transition_end;
-             ++transition)
+        assert(epsilon_closure_state_stack.empty());
+        PerformReduceTransitions_(branch, epsilon_closure_state_stack);
+        assert(epsilon_closure_state_stack.empty());
+    }
+}
+        
+void <{class_name}::PerformReduceTransitions_ (BranchTreeNode_ *branch, StateStack_ &epsilon_closure_state_stack)
+{
+    assert(branch != NULL);
+    assert(branch->m_lookahead_nonterminal_token_id_ == 0);
+    assert(epsilon_closure_state_stack.empty() || epsilon_closure_state_stack.back() != NULL);
+    State_ const &state = epsilon_closure_state_stack.empty() ? branch->Top_() : *epsilon_closure_state_stack.back();
+    for (Transition_ const *transition = state.m_transition_table_,
+                           *transition_end = transition + state.m_transition_count_;
+         transition != transition_end;
+         ++transition)
+    {
+        switch (transition->m_transition_type_)
         {
-            if (transition->m_transition_type_ == Transition_::TT_REDUCE_)
-            {
+            default: assert(false); 
+            case Transition_::TT_RETURN_:
+            case Transition_::TT_SHIFT_:
+                break;
+            
+            case Transition_::TT_EPSILON_:
+                assert(transition->m_transition_data_ < ms_state_count_);
+                epsilon_closure_state_stack.push_back(ms_state_table_ + transition->m_transition_data_);
+                // TODO: graph cycle checking
+                PerformReduceTransitions_(branch, epsilon_closure_state_stack);
+                epsilon_closure_state_stack.pop_back();
+                break;
+            
+            case Transition_::TT_REDUCE_:
                 m_is_shift_blocked_ = true;
                 m_reduce_transitions_were_performed_ = true;
-                PerformReduceTransition_(branch, ms_rule_table_ + transition->m_transition_data_);
-                break; // there can be only one reduce-action per state
-            }
+                assert(transition->m_transition_data_ < ms_rule_count_);
+                PerformReduceTransition_(branch, epsilon_closure_state_stack, ms_rule_table_ + transition->m_transition_data_);
+                break;
         }
     }
 }
 
-void <{class_name}::PerformReduceTransition_ (BranchTreeNode_ *branch, Rule_ const *reduction_rule)
+void <{class_name}::PerformReduceTransition_ (BranchTreeNode_ *branch, StateStack_ &epsilon_closure_state_stack, Rule_ const *reduction_rule)
 {
     assert(branch != NULL);
     assert(branch->m_lookahead_nonterminal_token_id_ == 0); // none_
     assert(reduction_rule >= ms_rule_table_ && reduction_rule < ms_rule_table_ + ms_rule_count_);
-    assert(branch->m_state_stack_.size() > reduction_rule->m_token_count_ + 2);
+    assert(branch->m_state_stack_.size() > reduction_rule->m_token_count_ + 1);
     ActionTreeNode_ *parent_node = branch->m_parent_;
     assert(parent_node != NULL);
     parent_node->RemoveChild_(branch);
     branch->m_is_epsilon_closed_ = false;
-    branch->m_state_stack_.resize(branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 2));
+    branch->m_state_stack_.resize(branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 1));
     branch->m_lookahead_nonterminal_token_id_ = reduction_rule->m_reduction_nonterminal_token_id_;
     ActionTreeNode_ *reduce_action_node =
         parent_node->EnsureChildExists_(
@@ -430,7 +338,7 @@ void <{class_name}::PerformReduceTransition_ (BranchTreeNode_ *branch, Rule_ con
 void <{class_name}::PerformShiftTransitionsAndSaveReturnActions_ ()
 {
     assert(!m_reduce_transitions_were_performed_);
-    assert(m_dead_branch_list_.empty());
+    assert(m_doomed_branch_list_.empty());
 
     Token_ dummy_lookahead_token;
     Token_ &lookahead_token = m_is_shift_blocked_ ? dummy_lookahead_token : ShiftLookaheadToken_();
@@ -445,7 +353,6 @@ void <{class_name}::PerformShiftTransitionsAndSaveReturnActions_ ()
         // branches that have a lookahead nonterminal token.
         if (m_is_shift_blocked_ && branch->m_lookahead_nonterminal_token_id_ == 0)
             continue;
-        assert(branch->m_scheduled_transition_count_ == 0);
         State_ const &state = branch->Top_();
         bool a_shift_transition_was_performed = false;
         for (Transition_ const *transition = state.m_transition_table_,
@@ -475,7 +382,7 @@ void <{class_name}::PerformShiftTransitionsAndSaveReturnActions_ ()
         if (!a_shift_transition_was_performed)
         {
 //             std::cerr << "dead branch: " << branch << std::endl;
-            m_dead_branch_list_.push_back(branch);
+            m_doomed_branch_list_.push_back(branch);
         }
     }
     m_is_shift_blocked_ = false;
@@ -503,7 +410,7 @@ void <{class_name}::PerformShiftTransition_ (BranchTreeNode_ *branch, State_ con
         shift_action_node->AddChild_(branch);
     }
     else
-        m_dead_branch_list_.push_back(branch);
+        m_doomed_branch_list_.push_back(branch);
 
 //     std::cerr << __PRETTY_FUNCTION__ << " added child" << std::endl;
 //     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 1);
@@ -528,11 +435,11 @@ void <{class_name}::SaveReturnActions_ (BranchTreeNode_ *branch)
     m_return_state_encountered_ = true;
 }
 
-void <{class_name}::PruneDeadBranches_ ()
+void <{class_name}::PruneDoomedBranches_ ()
 {
     // NOTE: there can't be any pruning when un-shift-blocking because there's
     // no way for a branch with a lookahead nonterminal to fail to shift it.
-    for (BranchVector_::iterator it = m_dead_branch_list_.begin(), it_end = m_dead_branch_list_.end();
+    for (BranchVector_::iterator it = m_doomed_branch_list_.begin(), it_end = m_doomed_branch_list_.end();
          it != it_end;
          ++it)
     {
@@ -541,7 +448,7 @@ void <{class_name}::PruneDeadBranches_ ()
         m_branch_set_.erase(branch);
         delete branch;
     }
-    m_dead_branch_list_.clear();
+    m_doomed_branch_list_.clear();
 }
 
 void <{class_name}::ExecuteAndRemoveTrunk_ ()
