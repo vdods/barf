@@ -1,4 +1,4 @@
-algo
+main parsing algorithm:
 {
     create tree root (rule stack level 0, no parent)
     create initial branch (using starting state of specified start nonterminal)
@@ -39,6 +39,66 @@ algo
     }
 }
 
+to perform (a single) reduce transition:
+{
+    if (source action tree node already has a reduce child)
+    {
+        if (transition reduce action has lower priority than existing reduce child)
+        {
+            prune source branch
+            return
+        }
+        else if (transition reduce action has higher priority than existing reduce child)
+        {
+            prune existing reduce child
+            create a new reduce child using the transition's specifications
+        }
+        else // equal priority
+        {
+        }
+    }
+    else // no existing reduce child
+    {
+        create a new reduce child using the transition's specifications
+    }
+    
+    move the source branch to the reduce child
+    update the priorities of the source action tree node
+}
+
+to perform (a single) shift transition:
+{
+    if (source action tree node already has a shift child)
+    {
+        integrate the source branch's precedence level, associativity and rule index into the existing shift child's
+    }
+    else // no existing shift child
+    {
+        create a new shift child using the transition's specifications, with the source branch's precedence level, associativity and rule index
+    }
+        
+    move the source branch to the shift child    
+    update the priorities of the source action tree node
+}
+
+to update the priorities of an action tree node
+{
+    if (this is a shift node)
+    {
+        integrate all child branches' precedence level, associativity and rule index
+        TODO
+    }
+    else if (this is a reduce node)
+    {
+        // do nothing
+    }
+    else // tree root
+    {
+        // do nothing
+    }
+    TODO: figure out how to propogate the changes down the ancestor line
+}
+
 notes:
 
 - more thought needs to be put into error handling (especially for trying
@@ -50,3 +110,10 @@ notes:
   priority one is used.  i'm guessing that there can only ever be one shift
   action from any given node, because it's reading from a necessarily common
   lookahead (nonterminal or terminal type).
+- branch nodes can only be removed from the action tree in the following cases:
+  1. no transitions, so it is pruned as a doomed branch
+  2. it can be moved to a child shift or reduce node during a shift or reduce transition
+  therefore, at the first moment an action tree node has no child branch nodes,
+  and exactly one shift child or reduce child, it can update its precedence 
+  level range, associativity, and rule index range.
+
