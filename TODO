@@ -215,10 +215,9 @@
   gcc warning)
 - check for reduction rule variable name collisions
 - call throw-away-token-actions on all tokens in token stack during parser
-  destructor
+  destructor (or actually at the end of the parse method)
 - add the implicit start rule which ends with END_ -- think about this, END_
   might go away.
-- allow parsing for a specific nonterminal
 - update the output basename help message
 - add -D option for defining crap in the preprocessor stage -- before and
   after the .trison source is read

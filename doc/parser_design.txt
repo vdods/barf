@@ -101,19 +101,11 @@ to update the priorities of an action tree node
 
 notes:
 
-- more thought needs to be put into error handling (especially for trying
-  to return using the most recently encountered return state)
 - performing the shift/reduce transitions involves resolving conflicts
 - i conject that, at a given action tree node, there can be: 0 or 1 reduce
   child nodes and 0 or 1 shift child nodes.  if more than one reduce
   transition comes about at a particular action tree node, only the highest
-  priority one is used.  i'm guessing that there can only ever be one shift
-  action from any given node, because it's reading from a necessarily common
-  lookahead (nonterminal or terminal type).
-- branch nodes can only be removed from the action tree in the following cases:
-  1. no transitions, so it is pruned as a doomed branch
-  2. it can be moved to a child shift or reduce node during a shift or reduce transition
-  therefore, at the first moment an action tree node has no child branch nodes,
-  and exactly one shift child or reduce child, it can update its precedence 
-  level range, associativity, and rule index range.
+  priority one is used.  there can only ever be one shift action from any
+  given node, because it's reading from a necessarily common lookahead
+  (nonterminal or terminal type).
 

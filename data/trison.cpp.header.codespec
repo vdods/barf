@@ -73,6 +73,69 @@ enum
         Assert_<sizeof(Size_) == sizeof(void*)>::v
 };
 
+template <typename T>
+class WeakReference
+{
+public:
+
+    WeakReference () : m_instance(NULL) { }
+    WeakReference (T *pointer) : m_instance(new Instance<T>(pointer)) { m_instance->IncrementReferenceCount(); }
+    WeakReference (WeakReference<T> const &r) { m_instance = r.m_instance; if (m_instance != NULL) m_instance->IncrementReferenceCount(); }
+    ~WeakReference () { if (m_instance != NULL) m_instance->DecrementReferenceCount(); }
+    void operator = (WeakReference<T> const &r)
+    {
+        if (m_instance != NULL)
+            m_instance->DecrementReferenceCount();
+        m_instance = r.m_instance;
+        if (m_instance != NULL)
+            m_instance->IncrementReferenceCount();
+    }
+
+    T &operator * () { assert(m_instance != NULL); return **m_instance; }
+    T const &operator * () const { assert(m_instance != NULL); return **m_instance; }
+
+    T *operator -> () { assert(m_instance != NULL); return &**m_instance; }
+    T const *operator -> () const { assert(m_instance != NULL); return &**m_instance; }
+
+    bool IsValid () const { return m_instance != NULL; }
+    void Release () { if (m_instance != NULL) { m_instance->DecrementReferenceCount(); m_instance = NULL; } }
+
+    bool InstanceIsValid () const { assert(m_instance != NULL); return m_instance->IsValid(); }
+    void ReleaseInstance () { assert(m_instance != NULL); m_instance->Release(); }
+    Uint32_ ReferenceCount () const { assert(m_instance != NULL); return m_instance->ReferenceCount(); }
+
+private:
+
+    template <typename U>
+    class Instance
+    {
+    public:
+
+        Instance (U *pointer) : m_pointer(pointer), m_reference_count(0) { }
+        ~Instance () { assert(m_reference_count == 0); }
+
+        U &operator * () { assert(m_pointer != NULL && "dereferenced a NULL pointer"); return *m_pointer; }
+        U const &operator * () const { assert(m_pointer != NULL && "dereferenced a NULL pointer"); return *m_pointer; }
+
+        bool IsValid () const { return m_pointer != NULL; }
+        void Release () { m_pointer = NULL; }
+        Uint32_ ReferenceCount () const { return m_reference_count; }
+
+        void IncrementReferenceCount () { assert(m_reference_count < Uint32_(-1)); ++m_reference_count; }
+        void DecrementReferenceCount () { assert(m_reference_count > 0); if (--m_reference_count == 0) delete this; }
+
+    private:
+
+        Instance (Instance const &) { assert(false && "this should never be called"); }
+        void operator = (Instance const &) { assert(false && "this should never be called"); }
+
+        U *m_pointer;
+        Uint32_ m_reference_count;
+    }; // end of class TrisonCpp_::WeakReference<T>::Instance<U>
+
+    Instance<T> *m_instance;
+}; // end of class TrisonCpp_::WeakReference<T>
+
 class Npda_
 {
 protected:
@@ -136,7 +199,7 @@ protected:
     {
         enum Type_ { TT_EPSILON_ = 0, TT_REDUCE_, TT_RETURN_, TT_SHIFT_ };
         Uint8_ m_transition_type_;
-        TokenId_ m_transition_data_;
+        Uint32_ m_transition_data_;
         State_ const *m_target_state_;
     }; // end of struct TrisonCpp_::Npda_::Transition_
     struct BranchTreeNode_;
@@ -175,6 +238,8 @@ protected:
     struct BranchTreeNode_;
     struct BranchTreeNodeLessThan_
     {
+        // TODO: an analogous ordering will be used for the reference counted still-alive shift branches
+
         // a consequence of this ordering functor using the branches' parent
         // nodes is that the branch must have its m_parent_ member set to the
         // involved parent when this functor is called (e.g. set insert, erase)
@@ -231,18 +296,16 @@ protected:
         TreeNode_ *m_reduce_child_;
         TreeNode_ *m_shift_child_;
         // there can be arbitrarily many branch children
+        // TODO: should this be a queue instead?  it doesn't need to be ordered
         BranchSet_ m_child_branch_set_;
         // indicates what type of node this is -- ACTION_SHIFT_, ACTION_REDUCE_,
         // or ACTION_NONE_ (which is only valid for the root node).
         ActionType_ m_action_type_;
-        // precedence range - primary criteria for node priority
-        Uint32_ m_precedence_level_range_lower_;
-        Uint32_ m_precedence_level_range_upper_;
-        // associativity - secondary criteria for node priority (N/A unless the precedence range is 1 value)
-        Associativity_ m_associativity_;
-        // rule index range - tertiary criteria for node priority (N/A unless the precedence range is 1 value)
-        Uint32_ m_rule_index_range_lower_;
-        Uint32_ m_rule_index_range_upper_;
+        // for reduce action nodes, this is the reduction rule.  for shift action nodes,
+        // this is the rule associated with the target state.  this may only ever be
+        // NULL for shift action nodes whose target state is a return state, or for
+        // the root node.
+        Rule_ const *m_associated_rule_;
 
         // for constructing the root node only
         ActionTreeNode_ ()
@@ -250,35 +313,22 @@ protected:
             TreeNode_(0, ACTION_TREE_NODE_),
             m_reduce_child_(NULL),
             m_shift_child_(NULL),
-            m_action_type_(ACTION_NONE_)
+            m_action_type_(ACTION_NONE_),
+            m_associated_rule_(NULL)
         { }
         ActionTreeNode_ (
             ActionType_ action_type,
-            Uint32_ precedence_level_range_lower,
-            Uint32_ precedence_level_range_upper,
-            Associativity_ associativity,
-            Uint32_ rule_index_range_lower,
-            Uint32_ rule_index_range_upper,
+            Rule_ const *associated_rule,
             Uint32_ rule_stack_level)
             :
             TreeNode_(rule_stack_level, ACTION_TREE_NODE_),
             m_reduce_child_(NULL),
             m_shift_child_(NULL),
             m_action_type_(action_type),
-            m_precedence_level_range_lower_(precedence_level_range_lower),
-            m_precedence_level_range_upper_(precedence_level_range_upper),
-            m_associativity_(associativity),
-            m_rule_index_range_lower_(rule_index_range_lower),
-            m_rule_index_range_upper_(rule_index_range_upper)
+            m_associated_rule_(associated_rule)
         {
             assert(m_action_type_ == ACTION_REDUCE_ || m_action_type_ == ACTION_SHIFT_);
-            assert(m_action_type_ == ACTION_REDUCE_ &&
-                   precedence_level_range_lower == precedence_level_range_upper &&
-                   rule_index_range_lower == rule_index_range_upper
-                   ||
-                   m_action_type_ == ACTION_SHIFT_ &&
-                   precedence_level_range_lower <= precedence_level_range_upper &&
-                   rule_index_range_lower <= rule_index_range_upper);
+            assert(m_action_type_ != ACTION_REDUCE_ || m_associated_rule_ != NULL);
         }
         virtual ~ActionTreeNode_ ()
         {
@@ -296,7 +346,7 @@ protected:
                 default: assert(false);
                 case ACTION_NONE_  : stream << "root"; break;
                 case ACTION_SHIFT_ : stream << "shift"; break;
-                case ACTION_REDUCE_: stream << "reduce \"" << rule_table[m_rule_index_range_lower_].m_description_ << '\"'; break;
+                case ACTION_REDUCE_: stream << "reduce \"" << m_associated_rule_->m_description_ << '\"'; break;
             }
             stream << ' ' << this << std::endl;
             for (BranchSet_::const_iterator it = m_child_branch_set_.begin(), it_end = m_child_branch_set_.end();
@@ -358,6 +408,7 @@ protected:
 
             }
         }
+        */
         void RemoveChildBranch_ (BranchTreeNode_ *child_branch)
         {
             assert(child_branch != NULL);
@@ -366,6 +417,7 @@ protected:
             child_branch->m_parent_ = NULL;
             m_child_branch_set_.erase(child_branch);
         }
+        /*
         void SetShiftChild_ (ActionTreeNode_ *shift_child, BranchSet_ &branch_set)
         {
             assert(shift_child != NULL);
@@ -689,8 +741,8 @@ private:
     Token_ &ShiftLookaheadToken_ ();
     void PerformEpsilonClosure_ ();
     void PerformEpsilonClosure_ (BranchTreeNode_ const &source_branch, StateStack_ &extra_state_stack);
-//     void PerformReduceTransitions_ ();
-//     void PerformReduceTransition_ (BranchTreeNode_ *branch, Rule_ const *reduction_rule);
+    void PerformReduceTransitions_ ();
+    void PerformReduceTransition_ (BranchTreeNode_ const &source_branch, Rule_ const *reduction_rule);
 //     void PerformShiftTransitionsAndSaveReturnActions_ ();
 //     void PerformShiftTransition_ (BranchTreeNode_ *branch, State_ const *target_state);
 //     void SaveReturnActions_ (BranchTreeNode_ *branch);

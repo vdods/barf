@@ -173,7 +173,6 @@ void <{class_name}::ResetForNewInput_ ()
         std::cerr << "*** e-close ***" << std::endl;
         PerformEpsilonClosure_();
         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
-    /*
         // only schedule reduce transitions if no branches have nonterminal lookaheads
         // (equivalent to not being shift-blocked)
         std::cerr << "*** transitions ***" << std::endl;
@@ -181,6 +180,7 @@ void <{class_name}::ResetForNewInput_ ()
         m_there_are_doomed_branches_at_a_return_state_ = false;
         if (!m_is_shift_blocked_)
             PerformReduceTransitions_();
+    /*
         // we can only ever schedule shift transitions if no reduce transitions were
         // scheduled, because we want to keep all branches' lookahead reading in sync.
         if (!m_reduce_transitions_were_performed_)
@@ -309,21 +309,55 @@ void <{class_name}::PerformEpsilonClosure_ (BranchTreeNode_ const &source_branch
         source_branch.m_parent_->m_child_branch_set_.insert(closed_branch);
     }
 }
-/*
+
 void <{class_name}::PerformReduceTransitions_ ()
 {
     assert(!m_is_shift_blocked_);
+    assert(!m_reduce_transitions_were_performed_);
+    for (BranchSet_::iterator next_it = m_branch_set_.begin(),
+                              it_end = m_branch_set_.end(),
+                              it = (next_it != it_end) ? next_it++ : next_it;
+         it != it_end;
+         it = (next_it != it_end) ? next_it++ : next_it)
+    {
+        BranchTreeNode_ *branch = *it;
+        assert(branch != NULL);
+        assert(branch->m_parent_ != NULL);
+        State_ const &state = branch->Top_();
+        bool reduce_transitions_were_performed_on_this_branch = false;
+        for (Transition_ const *transition = state.m_transition_table_,
+                               *transition_end = transition + state.m_transition_count_;
+             transition != transition_end;
+             ++transition)
+        {
+            if (transition->m_transition_type_ == Transition_::TT_REDUCE_)
+            {
+                PerformReduceTransition_(*branch, ms_rule_table_ + transition->m_transition_data_);
+                reduce_transitions_were_performed_on_this_branch = true;
+            }
+        }
+        if (reduce_transitions_were_performed_on_this_branch)
+        {
+            m_branch_set_.erase(it);
+            branch->m_parent_->RemoveChildBranch_(branch);
+            delete branch;
+        }
+    }
 }
 
-void <{class_name}::PerformReduceTransition_ (BranchTreeNode_ *branch, Rule_ const *reduction_rule)
+void <{class_name}::PerformReduceTransition_ (BranchTreeNode_ const &source_branch, Rule_ const *reduction_rule)
 {
-    assert(branch != NULL);
-    assert(branch->m_lookahead_nonterminal_token_id_ == 0); // none_
+    assert(reduction_rule != NULL);
     assert(reduction_rule >= ms_rule_table_ && reduction_rule < ms_rule_table_ + ms_rule_count_);
-    assert(branch->m_state_stack_.size() > reduction_rule->m_token_count_ + 1);
-    ActionTreeNode_ *parent_node = branch->m_parent_;
-    assert(parent_node != NULL);
-    parent_node->RemoveChild_(branch);
+    assert(source_branch.m_lookahead_nonterminal_token_id_ == 0); // none_
+    assert(source_branch.m_state_stack_.size() > reduction_rule->m_token_count_ + 1);
+    assert(source_branch.m_parent_ != NULL);
+    m_reduce_transitions_were_performed_ = true;
+    ActionTreeNode_ *parent_node = source_branch.m_parent_;
+
+    TODO start here
+
+    parent_node->RemoveChildBranch_(branch);
     branch->m_is_epsilon_closed_ = false;
     branch->m_state_stack_.resize(branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 1));
     branch->m_lookahead_nonterminal_token_id_ = reduction_rule->m_reduction_nonterminal_token_id_;
@@ -352,7 +386,7 @@ void <{class_name}::PerformReduceTransition_ (BranchTreeNode_ *branch, Rule_ con
     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 1);
     std::cerr << __PRETTY_FUNCTION__ << " done" << std::endl;
 }
-
+/*
 void <{class_name}::PerformShiftTransitionsAndSaveReturnActions_ ()
 {
     assert(!m_reduce_transitions_were_performed_);
