@@ -188,6 +188,7 @@ public:
         assert(node != NULL);
         assert(node->NodeClass_() == LNCT_FLOATY_ && "can't insert a node that is already in a list");
         assert(NodeClass_() == LNCT_BODY_ || NodeClass_() == LNCT_TAIL_ && "can't insert a node before a head or a floaty");
+        assert(node != this && "can't insert a node before itself");
         m_prev_->m_next_ = node;
         node->m_prev_ = m_prev_;
         node->m_next_ = static_cast<ListNodeSubclass_ *>(this);
@@ -198,6 +199,7 @@ public:
         assert(node != NULL);
         assert(node->NodeClass_() == LNCT_FLOATY_ && "can't insert a node that is already in a list");
         assert(NodeClass_() == LNCT_HEAD_ || NodeClass_() == LNCT_BODY_ && "can't insert a node after a tail or a floaty");
+        assert(node != this && "can't insert a node after itself");
         m_next_->m_prev_ = node;
         node->m_next_ = m_next_;
         node->m_prev_ = static_cast<ListNodeSubclass_ *>(this);
@@ -305,6 +307,7 @@ protected:
 
     typedef std::vector<State_ const *> StateStack_;
     typedef Uint32_ TokenId_;
+    enum { none__ = 0 }; // single known value for built-in nonterminal
 
     enum Associativity_
     {
@@ -325,7 +328,7 @@ protected:
         Uint32_ m_token_count_;
         char const *m_description_;
 
-        static bool IsHigherPriority (Rule_ const &left, Rule_ const &right)
+        static bool IsHigherPriority_ (Rule_ const &left, Rule_ const &right)
         {
             // order by higher precedence, and then lower rule index
             return left.m_precedence_->m_level_ > right.m_precedence_->m_level_
@@ -396,7 +399,7 @@ protected:
         Branch_ (State_ const *starting_state)
             :
             TreeNode_(BRANCH_),
-            m_lookahead_nonterminal_token_id_(0), // none_
+            m_lookahead_nonterminal_token_id_(none__),
             m_is_epsilon_closed_(false)
         {
             assert(starting_state != NULL);
@@ -404,22 +407,23 @@ protected:
         }
         ~Branch_ ()
         {
-            // delete the action tree down to the root or the first fork
-            TreeNode_ *node = this;
-            Action_ *parent = node->m_parent_;
-            do
+//             std::cerr << "~Branch(); this = " << this << std::endl;
+            Action_ *parent = m_parent_;
+            if (parent != NULL) // a NULL parent is possible with floaty branches
             {
-                if (parent != NULL)
-                {
-                    parent->RemoveChild_(node);
-                    assert(node->m_parent_ == NULL);
-                }
-                if (node != this) // we don't want to recurse
-                    delete node;  // into this object's destructor
-                node = parent;
-                parent = node != NULL ? node->m_parent_ : NULL;
+                parent->RemoveChild_(this);
+                assert(m_parent_ == NULL);
             }
-            while (parent != NULL && parent->SingleChild_() == node);
+            // iterate until we're out of parents, we hit the root node,
+            // or there are other children which rely on the parent to live.
+            while (parent != NULL && parent->m_parent_ != NULL && !parent->HasChildren_())
+            {
+                TreeNode_ *node = parent;
+                parent = node->m_parent_;
+                parent->RemoveChild_(node);
+                assert(node != this);
+                delete node;
+            }
         }
 
         State_ const &Top_ () const
@@ -456,7 +460,7 @@ protected:
                 assert(stack_state != NULL);
                 stream << ' ' << (stack_state - state_table);
             }
-            if (m_lookahead_nonterminal_token_id_ != 0) // none_
+            if (m_lookahead_nonterminal_token_id_ != none__)
                 stream << " (" << m_lookahead_nonterminal_token_id_ << ')';
             stream << ' ' << this << std::endl;
         }
@@ -500,6 +504,8 @@ protected:
         { }
         ~Action_ ()
         {
+//             std::cerr << "~Action(); this = " << this << std::endl;
+
             // delete this and all children out to the leaves
             if (m_parent_ != NULL)
                 m_parent_->RemoveChild_(this);
@@ -517,6 +523,7 @@ protected:
             }
         }
 
+        bool HasChildren_ () const { return m_reduce_child_ != NULL || m_shift_child_ != NULL || !m_action_branch_list_.IsEmpty_(); }
         TreeNode_ *SingleChild_ ()
         {
             if (m_reduce_child_ != NULL && m_shift_child_ == NULL && m_action_branch_list_.IsEmpty_())
@@ -532,7 +539,7 @@ protected:
         {
             assert(reduction_rule != NULL);
             assert(m_shift_child_ == NULL && "this should never happen");
-            return m_reduce_child_ == NULL || Rule_::IsHigherPriority(*reduction_rule, *m_reduce_child_->m_reduction_rule_);
+            return m_reduce_child_ == NULL || Rule_::IsHigherPriority_(*reduction_rule, *m_reduce_child_->m_reduction_rule_);
         }
 
         void AddChild_ (TreeNode_ *child)
@@ -792,8 +799,7 @@ private:
     void PerformReduceTransition_ (Branch_ const &source_branch, Rule_ const *reduction_rule);
     void PerformShiftTransitions_ ();
     void PerformShiftTransition_ (Branch_ const &source_branch, State_ const *target_state);
-    void PruneDoomedNonreturnBranches_ ();
-    void PruneDoomedReturnBranches_ ();
+    void PruneBranchList_ (ParserBranchList_ &branch_list);
     void ExecuteAndRemoveTrunk_ ();
     // end blah
 

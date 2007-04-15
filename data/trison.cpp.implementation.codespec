@@ -179,6 +179,7 @@ void <{class_name}::ResetForNewInput_ ()
         // (equivalent to not being shift-blocked)
         std::cerr << "*** transitions ***" << std::endl;
         m_reduce_transitions_were_performed_ = false;
+        m_shift_transitions_were_performed_ = false;
         // we can only perform reduce transitions if we're not blocked with
         // lookahead nonterminals.  we must wait to shift the lookahead nonterminals
         // so all branches can stay in lock-step with the scanner input.
@@ -207,9 +208,9 @@ void <{class_name}::ResetForNewInput_ ()
                 // doomed branches (because there was a valid transition)
                 if (m_shift_transitions_were_performed_)
                 {
-                    std::cerr << "*** pruning doomed branches ***" << std::endl;
-                    PruneDoomedNonreturnBranches_();
-                    PruneDoomedReturnBranches_();
+                    std::cerr << "*** pruning all doomed branches ***" << std::endl;
+                    PruneBranchList_(m_doomed_nonreturn_branch_list_);
+                    PruneBranchList_(m_doomed_return_branch_list_);
                     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
                 }
                 // if no shift transitions were performed but the doomed
@@ -217,9 +218,9 @@ void <{class_name}::ResetForNewInput_ ()
                 // non-return branches, keeping the return branches.
                 else if (!m_doomed_return_branch_list_.IsEmpty_())
                 {
-                    std::cerr << "*** pruning doomed branches ***" << std::endl;
+                    std::cerr << "*** pruning doomed non-return branches only ***" << std::endl;
                     assert(m_parser_branch_list_.IsEmpty_());
-                    PruneDoomedNonreturnBranches_();
+                    PruneBranchList_(m_doomed_nonreturn_branch_list_);
                     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
                 }
                 // if none of the above, go into error handling mode
@@ -253,6 +254,7 @@ void <{class_name}::ResetForNewInput_ ()
         {
             // return the single stack token TODO
             parser_return_code_ = PRC_SUCCESS;
+            std::cerr << "*** returning successfully ***" << std::endl;
             break;
         }
     }
@@ -368,7 +370,7 @@ void <{class_name}::PerformReduceTransition_ (Branch_ const &source_branch, Rule
 {
     assert(reduction_rule != NULL);
     assert(reduction_rule >= ms_rule_table_ && reduction_rule < ms_rule_table_ + ms_rule_count_);
-    assert(source_branch.m_lookahead_nonterminal_token_id_ == 0); // none_
+    assert(source_branch.m_lookahead_nonterminal_token_id_ == none__);
     assert(source_branch.m_state_stack_.size() > reduction_rule->m_token_count_ + 1);
     assert(source_branch.m_parent_ != NULL);
 
@@ -395,12 +397,15 @@ void <{class_name}::PerformShiftTransitions_ ()
     assert(m_doomed_nonreturn_branch_list_.IsEmpty_());
 
     Token_ dummy_lookahead_token;
+    // only shift a lookahead token if we're not blocked waiting to
+    // sync up the branch-wise token reading.
     Token_ &lookahead_token = m_is_shift_blocked_ ? dummy_lookahead_token : ShiftLookaheadToken_();
 
     ParserBranch_ *parser_branch = m_parser_branch_list_.Front_();
     while (parser_branch != NULL)
     {
         Branch_ *branch = static_cast<Branch_ *>(parser_branch);
+        parser_branch = parser_branch->Next_();
 //         std::cerr << "branch: " << branch << std::endl;
         assert(m_is_shift_blocked_ || branch->m_lookahead_nonterminal_token_id_ == 0);
         // if we're shift-blocked, then we only want to transition those
@@ -424,13 +429,12 @@ void <{class_name}::PerformShiftTransitions_ ()
                 TransitionAcceptsTokenId_(transition, lookahead_token.m_token_id_))
             {
                 PerformShiftTransition_(*branch, transition->m_target_state_);
-                break; // there can be only one shift transition per state
             }
             else if (transition->m_transition_type_ == Transition_::TT_RETURN_)
+            {
                 return_state_encountered = true;
+            }
         }
-
-        parser_branch = parser_branch->Next_();
 
         branch->RemoveFromBranchList_(TrisonCpp_::BLT_PARSER_);
         if (return_state_encountered)
@@ -448,7 +452,7 @@ void <{class_name}::PerformShiftTransition_ (Branch_ const &source_branch, State
     // clone the branch and update it
     Branch_ *shifted_branch = source_branch.Clone_();
     shifted_branch->m_state_stack_.push_back(target_state);
-    shifted_branch->m_lookahead_nonterminal_token_id_ = 0; // none_
+    shifted_branch->m_lookahead_nonterminal_token_id_ = none__;
     // tell the parent to process the shift (adding a Shift_ child if
     // necessary.  this will also add the new branch to the Shift_ child.
     source_branch.m_parent_->AddShift_(shifted_branch, target_state->m_associated_rule_);
@@ -456,24 +460,18 @@ void <{class_name}::PerformShiftTransition_ (Branch_ const &source_branch, State
     m_parser_branch_list_.InsertFront_(shifted_branch);
 }
 
-void <{class_name}::PruneDoomedNonreturnBranches_ ()
+void <{class_name}::PruneBranchList_ (ParserBranchList_ &branch_list)
 {
     // there can't be any pruning when un-shift-blocking because there's
     // no way for a branch with a lookahead nonterminal to fail to shift it.
     assert(!m_is_shift_blocked_);
     ParserBranch_ *parser_branch;
-    while ((parser_branch = m_doomed_nonreturn_branch_list_.Front_()) != NULL)
+    while ((parser_branch = branch_list.Front_()) != NULL)
+    {
+//         std::cerr << "pruning branch " << static_cast<Branch_ *>(parser_branch) << std::endl;
         delete static_cast<Branch_ *>(parser_branch);
-}
-
-void <{class_name}::PruneDoomedReturnBranches_ ()
-{
-    // there can't be any pruning when un-shift-blocking because there's
-    // no way for a branch with a lookahead nonterminal to fail to shift it.
-    assert(!m_is_shift_blocked_);
-    ParserBranch_ *parser_branch;
-    while ((parser_branch = m_doomed_return_branch_list_.Front_()) != NULL)
-        delete static_cast<Branch_ *>(parser_branch);
+//         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+    }
 }
 
 void <{class_name}::ExecuteAndRemoveTrunk_ ()
