@@ -140,18 +140,17 @@ void <{class_name}::ResetForNewInput_ ()
     // TODO: clear any existing tree/branches
 
     assert(m_tree_root_ == NULL);
-    assert(m_branch_set_.empty());
+    assert(m_parser_branch_list_.IsEmpty_());
 
     // create the tree root
-    m_tree_root_ = new ActionTreeNode_();
+    m_tree_root_ = new Action_(TreeNode_::ROOT_TREE_NODE_);
     {
         // create the initial branch with a rule stack level of 0
-        BranchTreeNode_ *initial_branch_ = new BranchTreeNode_(ms_state_table_ + nonterminal_to_parse_, 0);
+        Branch_ *initial_branch = new Branch_(ms_state_table_ + nonterminal_to_parse_);
         // add the initial nonterminal state as a child to the tree
-        m_tree_root_->m_child_branch_set_.insert(initial_branch_); // TODO: make this into AddChild_
-        initial_branch_->m_parent_ = m_tree_root_;
+        m_tree_root_->AddChild_(initial_branch);
         // initialize the current branch set with the created branch
-        m_branch_set_.insert(initial_branch_);
+        m_parser_branch_list_.InsertFront_(initial_branch);
     }
     // initialize other members
     m_is_shift_blocked_ = false;
@@ -159,7 +158,7 @@ void <{class_name}::ResetForNewInput_ ()
     m_shift_transitions_were_performed_ = false;
     m_nonassoc_error_encountered_ = false;
     m_there_are_doomed_branches_at_a_return_state_ = false;
-    m_doomed_branch_list_.clear();
+//     m_doomed_branch_list_.clear();
 
     std::cerr << "!!! start !!!" << std::endl;
     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
@@ -178,9 +177,9 @@ void <{class_name}::ResetForNewInput_ ()
         std::cerr << "*** transitions ***" << std::endl;
         m_reduce_transitions_were_performed_ = false;
         m_there_are_doomed_branches_at_a_return_state_ = false;
+    /*
         if (!m_is_shift_blocked_)
             PerformReduceTransitions_();
-    /*
         // we can only ever schedule shift transitions if no reduce transitions were
         // scheduled, because we want to keep all branches' lookahead reading in sync.
         if (!m_reduce_transitions_were_performed_)
@@ -238,6 +237,10 @@ void <{class_name}::ResetForNewInput_ ()
     */
     }
 
+    delete m_tree_root_;
+    m_tree_root_ = NULL;
+    assert(m_parser_branch_list_.IsEmpty_());
+
     return parser_return_code_;
 }
 
@@ -254,21 +257,22 @@ void <{class_name}::PerformEpsilonClosure_ ()
     // perform epsilon closure on the top stack states
     // of all non-epsilon-closed branches.
     std::vector<State_ const *> extra_state_stack;
-    for (BranchSet_::iterator it = m_branch_set_.begin(), it_end = m_branch_set_.end(); it != it_end; ++it)
+    for (ParserBranch_ *parser_branch = m_parser_branch_list_.Front_(); parser_branch != NULL; parser_branch = parser_branch->Next_())
     {
-        BranchTreeNode_ *branch = *it;
-        assert(branch != NULL);
+        Branch_ *branch = static_cast<Branch_ *>(parser_branch);
         if (!branch->m_is_epsilon_closed_)
         {
             branch->m_is_epsilon_closed_ = true;
             assert(extra_state_stack.empty());
+            // this will add branches to the beginning of m_parser_branch_list_,
+            // so we don't need to worry about it interfering with iteration.
             PerformEpsilonClosure_(*branch, extra_state_stack);
             assert(extra_state_stack.empty());
         }
     }
 }
 
-void <{class_name}::PerformEpsilonClosure_ (BranchTreeNode_ const &source_branch, StateStack_ &extra_state_stack)
+void <{class_name}::PerformEpsilonClosure_ (Branch_ const &source_branch, StateStack_ &extra_state_stack)
 {
     // iterate through the transitions from the top state of the branch,
     // recursively epsilon-closing epsilon transitions.  also, remember
@@ -292,24 +296,26 @@ void <{class_name}::PerformEpsilonClosure_ (BranchTreeNode_ const &source_branch
 
     // we don't clone the source branch if the extra state stack is empty
     // because it would be identical to the source branch which is already
-    // contained in m_branch_set_.
+    // contained in m_parser_branch_list_.
     if (!extra_state_stack.empty() && non_epsilon_transition_encountered)
     {
         // clone the source branch, push the states contained in
         // extra_state_stack and then add it to m_branch_set_.
-        BranchTreeNode_ *closed_branch = source_branch.Clone_();
+        Branch_ *closed_branch = source_branch.Clone_();
         assert(closed_branch->m_parent_ == NULL);
         closed_branch->m_is_epsilon_closed_ = true;
         closed_branch->m_state_stack_.insert(closed_branch->m_state_stack_.end(), extra_state_stack.begin(), extra_state_stack.end());
         // this insertion does not affect the iteration being performed
-        // in <{class_name}::PerformEpsilonClosure_() because existing
-        // std::set iterators are unaffected by insert().
-        m_branch_set_.insert(closed_branch);
+        // in <{class_name}::PerformEpsilonClosure_() because we're adding
+        // only to the front of m_parser_branch_list_, while it's being traversed
+        // via ParserBranch_::Next_().
+        m_parser_branch_list_.InsertFront_(closed_branch);
         // finally add the e-closed branch to the parent of the source branch
-        source_branch.m_parent_->m_child_branch_set_.insert(closed_branch);
+        source_branch.m_parent_->AddChild_(closed_branch);
     }
 }
 
+/*
 void <{class_name}::PerformReduceTransitions_ ()
 {
     assert(!m_is_shift_blocked_);
@@ -320,7 +326,7 @@ void <{class_name}::PerformReduceTransitions_ ()
          it != it_end;
          it = (next_it != it_end) ? next_it++ : next_it)
     {
-        BranchTreeNode_ *branch = *it;
+        Branch_ *branch = *it;
         assert(branch != NULL);
         assert(branch->m_parent_ != NULL);
         State_ const &state = branch->Top_();
@@ -345,7 +351,7 @@ void <{class_name}::PerformReduceTransitions_ ()
     }
 }
 
-void <{class_name}::PerformReduceTransition_ (BranchTreeNode_ const &source_branch, Rule_ const *reduction_rule)
+void <{class_name}::PerformReduceTransition_ (Branch_ const &source_branch, Rule_ const *reduction_rule)
 {
     assert(reduction_rule != NULL);
     assert(reduction_rule >= ms_rule_table_ && reduction_rule < ms_rule_table_ + ms_rule_count_);
@@ -386,7 +392,7 @@ void <{class_name}::PerformReduceTransition_ (BranchTreeNode_ const &source_bran
     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 1);
     std::cerr << __PRETTY_FUNCTION__ << " done" << std::endl;
 }
-/*
+
 void <{class_name}::PerformShiftTransitionsAndSaveReturnActions_ ()
 {
     assert(!m_reduce_transitions_were_performed_);
@@ -397,7 +403,7 @@ void <{class_name}::PerformShiftTransitionsAndSaveReturnActions_ ()
 
     for (BranchSet_::iterator it = m_branch_set_.begin(), it_end = m_branch_set_.end(); it != it_end; ++it)
     {
-        BranchTreeNode_ *branch = *it;
+        Branch_ *branch = *it;
 //         std::cerr << "branch: " << branch << std::endl;
         assert(branch != NULL);
         assert(m_is_shift_blocked_ || branch->m_lookahead_nonterminal_token_id_ == 0);
@@ -440,7 +446,7 @@ void <{class_name}::PerformShiftTransitionsAndSaveReturnActions_ ()
     m_is_shift_blocked_ = false;
 }
 
-void <{class_name}::PerformShiftTransition_ (BranchTreeNode_ *branch, State_ const *target_state)
+void <{class_name}::PerformShiftTransition_ (Branch_ *branch, State_ const *target_state)
 {
     assert(branch != NULL);
     assert(target_state >= ms_state_table_ && target_state < ms_state_table_ + ms_state_count_);
@@ -469,7 +475,7 @@ void <{class_name}::PerformShiftTransition_ (BranchTreeNode_ *branch, State_ con
 //     std::cerr << __PRETTY_FUNCTION__ << " done" << std::endl;
 }
 
-void <{class_name}::SaveReturnActions_ (BranchTreeNode_ *branch)
+void <{class_name}::SaveReturnActions_ (Branch_ *branch)
 {
     assert(branch != NULL);
     assert(branch->m_parent_ != NULL);
@@ -495,7 +501,7 @@ void <{class_name}::PruneDoomedBranches_ ()
          it != it_end;
          ++it)
     {
-        BranchTreeNode_ *branch = *it;
+        Branch_ *branch = *it;
         assert(branch != NULL);
         m_branch_set_.erase(branch);
         delete branch;

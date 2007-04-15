@@ -39,65 +39,109 @@ main parsing algorithm:
     }
 }
 
-to perform (a single) reduce transition:
+to perform (a single) reduce transition (from a particular action tree node):
 {
+    assert(there are no shift transitions at this node)
     if (source action tree node already has a reduce child)
     {
+        assert(transition reduce action has different priority than existing reduce child)
         if (transition reduce action has lower priority than existing reduce child)
         {
             prune source branch
             return
         }
-        else if (transition reduce action has higher priority than existing reduce child)
+        else // transition reduce action has higher priority than existing reduce child
         {
             prune existing reduce child
             create a new reduce child using the transition's specifications
-        }
-        else // equal priority
-        {
         }
     }
     else // no existing reduce child
     {
         create a new reduce child using the transition's specifications
     }
-    
+
+    assert(reduce child has no children)
     move the source branch to the reduce child
     update the priorities of the source action tree node
 }
 
 to perform (a single) shift transition:
 {
-    if (source action tree node already has a shift child)
-    {
-        integrate the source branch's precedence level, associativity and rule index into the existing shift child's
-    }
-    else // no existing shift child
-    {
-        create a new shift child using the transition's specifications, with the source branch's precedence level, associativity and rule index
-    }
-        
-    move the source branch to the shift child    
-    update the priorities of the source action tree node
+    ensure shift child exists
+    assert(shift child has no children)
+    move the source branch to the shift child
+    if (source action tree node already has a reduce child)
+        add a priority ref to shift child from source branch
 }
 
-to update the priorities of an action tree node
+to delete an action tree node: // towards leaves
 {
-    if (this is a shift node)
+    if (exists a reduce child)
     {
-        integrate all child branches' precedence level, associativity and rule index
-        TODO
+        set reduce child's parent pointer to NULL
+        delete reduce child
     }
-    else if (this is a reduce node)
+    if (exists a shift child)
     {
-        // do nothing
+        set shift child's parent pointer to NULL
+        delete shift child
     }
-    else // tree root
+    for each child branch
     {
-        // do nothing
+        set branch's parent pointer to NULL
+        delete branch
     }
-    TODO: figure out how to propogate the changes down the ancestor line
+    if (this node's parent pointer != NULL)
+        remove this node from its parent
+    delete this
 }
+
+to delete a branch tree node: // towards root
+{
+    node = this;
+    parent = node->parent;
+    // if the parent is not NULL and the only child is node
+    while (parent != NULL && parent->SingleChild() == node)
+    {
+        delete node;
+        node = parent;
+        parent = node->parent;
+    }
+}
+
+diagram stuff
+
+tree node
+    node type (root, branch, shift, reduce) specifies the subclass
+    parent tree node
+
+branch tree node (inherits tree node)
+    prev branch (within parser's branch list -- used for constant-time insertion/removal)
+    next branch (within parser's branch list -- used for constant-time insertion/removal)
+    list of weak references to shift-action ref counts
+    state stack
+    lookahead nonterminal token id
+    is epsilon closed flag
+
+action tree node (inherits tree node)
+    child branches (probably a list, because no ordering is necessary, but arbitrary element removal is)
+    shift child (single pointer)
+    reduce child (single pointer)
+
+shift action tree node (inherits action tree node)
+    ref count list (list which contains pointers to ref-counted objects used in deciding the priority of this node)
+    shifted token name (in debug spew mode)
+
+reduce action tree node (inherits action tree node)
+    associated rule (can't be null)
+
+
+
+
+
+
+
 
 notes:
 
