@@ -144,6 +144,12 @@ enum ListNodeClassType_ { LNCT_FLOATY_ = 0|0, LNCT_HEAD_ = 0|1, LNCT_TAIL_ = 2|0
 template <typename ListNodeSubclass_>
 struct ListNode_
 {
+protected:
+
+    ListNode_ () : m_prev_(NULL), m_next_(NULL) { assert(NodeClass_() == LNCT_FLOATY_); }
+
+public:
+
     ~ListNode_ ()
     {
         // remove this node from its list if it's a body
@@ -181,7 +187,7 @@ struct ListNode_
     {
         assert(node != NULL);
         assert(node->NodeClass_() == LNCT_FLOATY_ && "can't insert a node that is already in a list");
-        assert(NodeClass_() == LNCT_BODY_ || NodeClass_() == LNCT_TAIL_ && "can't insert a node before the head or a floaty");
+        assert(NodeClass_() == LNCT_BODY_ || NodeClass_() == LNCT_TAIL_ && "can't insert a node before a head or a floaty");
         m_prev_->m_next_ = node;
         node->m_prev_ = m_prev_;
         node->m_next_ = static_cast<ListNodeSubclass_ *>(this);
@@ -191,7 +197,7 @@ struct ListNode_
     {
         assert(node != NULL);
         assert(node->NodeClass_() == LNCT_FLOATY_ && "can't insert a node that is already in a list");
-        assert(NodeClass_() == LNCT_HEAD_ || NodeClass_() == LNCT_BODY_ && "can't insert a node after the tail or a floaty");
+        assert(NodeClass_() == LNCT_HEAD_ || NodeClass_() == LNCT_BODY_ && "can't insert a node after a tail or a floaty");
         m_next_->m_prev_ = node;
         node->m_next_ = m_next_;
         node->m_prev_ = static_cast<ListNodeSubclass_ *>(this);
@@ -209,11 +215,6 @@ struct ListNode_
         assert(NodeClass_() == LNCT_FLOATY_);
         return static_cast<ListNodeSubclass_ *>(this);
     }
-
-protected:
-
-    // the constructor is protected so the only way you can use this class is by inheritance.
-    ListNode_ () : m_prev_(NULL), m_next_(NULL) { assert(NodeClass_() == LNCT_FLOATY_); }
 
 private:
 
@@ -249,6 +250,34 @@ struct List_
     ElementType_ *Back_ () { return m_tail_.Prev_(); }
     ElementType_ const *Back_ () const { return m_tail_.Prev_(); }
 
+    void InsertFront_ (List_<ElementType_> &list)
+    {
+        assert(&list != this);
+        if (list.IsEmpty_())
+            return;
+        // put the contents of the source list before the first element
+        list.m_head_.m_next_->m_prev_ = static_cast<ElementType_ *>(&m_head_);
+        list.m_tail_.m_prev_->m_next_ = m_head_.m_next_;
+        m_head_.m_next_->m_prev_ = list.m_tail_.m_prev_;
+        m_head_.m_next_ = list.m_head_.m_next_;
+        // empty the source list
+        list.m_head_.m_next_ = static_cast<ElementType_ *>(&list.m_tail_);
+        list.m_tail_.m_prev_ = static_cast<ElementType_ *>(&list.m_head_);
+    }
+    void InsertBack_ (List_<ElementType_> &list)
+    {
+        assert(&list != this);
+        if (list.IsEmpty_())
+            return;
+        // put the contents of the source list after the last element
+        list.m_tail_.m_prev_->m_next_ = static_cast<ElementType_ *>(&m_tail_);
+        list.m_head_.m_next_->m_prev_ = m_tail_.m_prev_;
+        m_tail_.m_prev_->m_next_ = list.m_head_.m_next_;
+        m_tail_.m_prev_ = list.m_tail_.m_prev_;
+        // empty the source list
+        list.m_head_.m_next_ = static_cast<ElementType_ *>(&list.m_tail_);
+        list.m_tail_.m_prev_ = static_cast<ElementType_ *>(&list.m_head_);
+    }
     void InsertFront_ (ElementType_ *node) { m_head_.InsertNext_(node); }
     void InsertBack_ (ElementType_ *node) { m_tail_.InsertPrev_(node); }
     ElementType_ *RemoveFront_ () { assert(Front_() != NULL && "can't remove from an empty list"); return Front_()->Remove_(); }
@@ -346,7 +375,7 @@ protected:
     struct TreeNode_
     {
         // TODO: make non-public
-        enum TreeNodeType_ { ROOT_TREE_NODE_ = 0, BRANCH_TREE_NODE_, REDUCE_ACTION_TREE_NODE_, SHIFT_ACTION_TREE_NODE_ };
+        enum TreeNodeType_ { ACTION_ = 0, BRANCH_, REDUCE_, SHIFT_ };
         TreeNodeType_ const m_tree_node_type_;
         Action_ *m_parent_;
 
@@ -366,7 +395,7 @@ protected:
 
         Branch_ (State_ const *starting_state)
             :
-            TreeNode_(BRANCH_TREE_NODE_),
+            TreeNode_(BRANCH_),
             m_lookahead_nonterminal_token_id_(0), // none_
             m_is_epsilon_closed_(false)
         {
@@ -437,7 +466,7 @@ protected:
         // for use only by Clone_()
         Branch_ (StateStack_ const &state_stack, TokenId_ lookahead_nonterminal_token_id)
             :
-            TreeNode_(BRANCH_TREE_NODE_),
+            TreeNode_(BRANCH_),
             m_state_stack_(state_stack),
             m_lookahead_nonterminal_token_id_(lookahead_nonterminal_token_id),
             m_is_epsilon_closed_(false)
@@ -488,7 +517,7 @@ protected:
             }
         }
 
-        TreeNode_ const *SingleChild_ () const
+        TreeNode_ *SingleChild_ ()
         {
             if (m_reduce_child_ != NULL && m_shift_child_ == NULL && m_action_branch_list_.IsEmpty_())
                 return m_reduce_child_;
@@ -513,10 +542,10 @@ protected:
             switch (child->m_tree_node_type_)
             {
                 default:
-                case ROOT_TREE_NODE_         : assert(false && "this should never happen"); break;
-                case BRANCH_TREE_NODE_       : m_action_branch_list_.InsertBack_(static_cast<Branch_ *>(child)); break;
-                case REDUCE_ACTION_TREE_NODE_: assert(m_reduce_child_ == NULL); m_reduce_child_ = static_cast<Reduce_ *>(child); break;
-                case SHIFT_ACTION_TREE_NODE_ : assert(m_shift_child_ == NULL); m_shift_child_ = static_cast<Shift_ *>(child); break;
+                case ACTION_         : assert(false && "this should never happen"); break;
+                case BRANCH_       : m_action_branch_list_.InsertBack_(static_cast<Branch_ *>(child)); break;
+                case REDUCE_: assert(m_reduce_child_ == NULL); m_reduce_child_ = static_cast<Reduce_ *>(child); break;
+                case SHIFT_ : assert(m_shift_child_ == NULL); m_shift_child_ = static_cast<Shift_ *>(child); break;
             }
             child->m_parent_ = this;
         }
@@ -527,10 +556,10 @@ protected:
             switch (child->m_tree_node_type_)
             {
                 default:
-                case ROOT_TREE_NODE_         : assert(false && "this should never happen"); break;
-                case BRANCH_TREE_NODE_       : static_cast<Branch_ *>(child)->RemoveFromBranchList_(BLT_ACTION_); break;
-                case REDUCE_ACTION_TREE_NODE_: assert(child == m_reduce_child_); m_reduce_child_ = NULL; break;
-                case SHIFT_ACTION_TREE_NODE_ : assert(child == m_shift_child_); m_shift_child_ = NULL; break;
+                case ACTION_         : assert(false && "this should never happen"); break;
+                case BRANCH_       : static_cast<Branch_ *>(child)->RemoveFromBranchList_(BLT_ACTION_); break;
+                case REDUCE_: assert(child == m_reduce_child_); m_reduce_child_ = NULL; break;
+                case SHIFT_ : assert(child == m_shift_child_); m_shift_child_ = NULL; break;
             }
             child->m_parent_ = NULL;
             // TODO: conflict resolution checking time!
@@ -546,15 +575,35 @@ protected:
             delete m_reduce_child_;
             // add the new reduce child and add the branch to it
             m_reduce_child_ = new Reduce_(reduction_rule);
+            m_reduce_child_->m_parent_ = this;
             m_reduce_child_->AddChild_(reduced_branch);
+        }
+        void AddShift_ (Branch_ *shifted_branch, Rule_ const *associated_rule)
+        {
+            assert(shifted_branch != NULL);
+            // associated_rule may be NULL when shifting into a return state
+            if (m_shift_child_ == NULL)
+            {
+                m_shift_child_ = new Shift_();
+                m_shift_child_->m_parent_ = this;
+            }
+            m_shift_child_->AddChild_(shifted_branch);
         }
 
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
-            assert(m_tree_node_type_ == ROOT_TREE_NODE_);
-            stream << std::string(2*indent_level, ' ') << "root " << this << std::endl;
-            PrintChildNodes_(stream, rule_table, state_table, indent_level+1);
+            switch (m_tree_node_type_)
+            {
+                default:
+                case BRANCH_: assert(false && "this should never happen"); break;
+                case ACTION_: PrivatePrint_(stream, rule_table, state_table, indent_level); break;
+                case REDUCE_: static_cast<Reduce_ const *>(this)->Print_(stream, rule_table, state_table, indent_level); break;
+                case SHIFT_ : static_cast<Shift_ const *>(this)->Print_(stream, rule_table, state_table, indent_level); break;
+            }
         }
+
+    protected:
+
         void PrintChildNodes_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
             for (ActionBranch_ const *action_branch = m_action_branch_list_.Front_(); action_branch != NULL; action_branch = action_branch->Next_())
@@ -564,6 +613,15 @@ protected:
             if (m_shift_child_ != NULL)
                 m_shift_child_->Print_(stream, rule_table, state_table, indent_level);
         }
+
+    private:
+
+        void PrivatePrint_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
+        {
+            assert(m_parent_ == NULL);
+            stream << std::string(2*indent_level, ' ') << "root " << this << std::endl;
+            PrintChildNodes_(stream, rule_table, state_table, indent_level+1);
+        }
     }; // end of struct TrisonCpp_::Npda_::Action_
     struct Reduce_ : public Action_
     {
@@ -571,7 +629,7 @@ protected:
 
         Reduce_ (Rule_ const *reduction_rule)
             :
-            Action_(REDUCE_ACTION_TREE_NODE_),
+            Action_(REDUCE_),
             m_reduction_rule_(reduction_rule)
         {
             assert(m_reduction_rule_ != NULL);
@@ -579,7 +637,7 @@ protected:
 
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
-            stream << std::string(2*indent_level, ' ') << "reduce " << this << " \"" << m_reduction_rule_->m_description_ << '\"' << std::endl;
+            stream << std::string(2*indent_level, ' ') << (m_parent_ != NULL ? "reduce " : "root ") << this << " \"" << m_reduction_rule_->m_description_ << '\"' << std::endl;
             PrintChildNodes_(stream, rule_table, state_table, indent_level+1);
         }
     }; // end of struct TrisonCpp_::Npda_::Reduce_
@@ -588,11 +646,11 @@ protected:
 //         typedef std::list<WeakReference> RefCountList_;
 //         RefCountList_ m_ref_count_list_;
 
-        Shift_ () : Action_(SHIFT_ACTION_TREE_NODE_) { }
+        Shift_ () : Action_(SHIFT_) { }
 
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
-            stream << std::string(2*indent_level, ' ') << "shift " << this << std::endl;
+            stream << std::string(2*indent_level, ' ') << (m_parent_ != NULL ? "shift " : "root ") << this << std::endl;
             PrintChildNodes_(stream, rule_table, state_table, indent_level+1);
         }
     }; // end of struct TrisonCpp_::Npda_::Shift_
@@ -732,12 +790,11 @@ private:
     void PerformEpsilonClosure_ (Branch_ const &source_branch, StateStack_ &extra_state_stack);
     void PerformReduceTransitions_ ();
     void PerformReduceTransition_ (Branch_ const &source_branch, Rule_ const *reduction_rule);
-//     void PerformShiftTransitionsAndSaveReturnActions_ ();
-//     void PerformShiftTransition_ (Branch_ *branch, State_ const *target_state);
-//     void SaveReturnActions_ (Branch_ *branch);
-//     void PruneAllDoomedBranches_ ();
-//     void PruneNonReturnStateDoomedBranches_ ();
-//     void ExecuteAndRemoveTrunk_ ();
+    void PerformShiftTransitions_ ();
+    void PerformShiftTransition_ (Branch_ const &source_branch, State_ const *target_state);
+    void PruneDoomedNonreturnBranches_ ();
+    void PruneDoomedReturnBranches_ ();
+    void ExecuteAndRemoveTrunk_ ();
     // end blah
 
 
@@ -749,12 +806,12 @@ private:
     // TODO: move as much stuff to the base class as possible
     Action_ *m_tree_root_;
     ParserBranchList_ m_parser_branch_list_;
+    ParserBranchList_ m_doomed_nonreturn_branch_list_;
+    ParserBranchList_ m_doomed_return_branch_list_;
     bool m_is_shift_blocked_;
     bool m_reduce_transitions_were_performed_;
     bool m_shift_transitions_were_performed_;
     bool m_nonassoc_error_encountered_;
-    bool m_there_are_doomed_branches_at_a_return_state_;
-//     BranchVector_ m_doomed_branch_list_;
     TokenBuffer_ m_token_stack_;
     TokenBuffer_ m_lookahead_queue_; // TODO: make the lookahead queue into its own class/object so it's a separate API
     TokenBuffer_::size_type m_lookahead_queue_cursor_;
