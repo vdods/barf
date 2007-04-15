@@ -177,9 +177,10 @@ void <{class_name}::ResetForNewInput_ ()
         std::cerr << "*** transitions ***" << std::endl;
         m_reduce_transitions_were_performed_ = false;
         m_there_are_doomed_branches_at_a_return_state_ = false;
-    /*
         if (!m_is_shift_blocked_)
             PerformReduceTransitions_();
+        m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0); // TEMP
+    /*
         // we can only ever schedule shift transitions if no reduce transitions were
         // scheduled, because we want to keep all branches' lookahead reading in sync.
         if (!m_reduce_transitions_were_performed_)
@@ -315,20 +316,14 @@ void <{class_name}::PerformEpsilonClosure_ (Branch_ const &source_branch, StateS
     }
 }
 
-/*
 void <{class_name}::PerformReduceTransitions_ ()
 {
     assert(!m_is_shift_blocked_);
     assert(!m_reduce_transitions_were_performed_);
-    for (BranchSet_::iterator next_it = m_branch_set_.begin(),
-                              it_end = m_branch_set_.end(),
-                              it = (next_it != it_end) ? next_it++ : next_it;
-         it != it_end;
-         it = (next_it != it_end) ? next_it++ : next_it)
+    ParserBranch_ *parser_branch = m_parser_branch_list_.Front_();
+    while (parser_branch != NULL)
     {
-        Branch_ *branch = *it;
-        assert(branch != NULL);
-        assert(branch->m_parent_ != NULL);
+        Branch_ *branch = static_cast<Branch_ *>(parser_branch);
         State_ const &state = branch->Top_();
         bool reduce_transitions_were_performed_on_this_branch = false;
         for (Transition_ const *transition = state.m_transition_table_,
@@ -342,12 +337,11 @@ void <{class_name}::PerformReduceTransitions_ ()
                 reduce_transitions_were_performed_on_this_branch = true;
             }
         }
+
+        parser_branch = parser_branch->Next_();
+
         if (reduce_transitions_were_performed_on_this_branch)
-        {
-            m_branch_set_.erase(it);
-            branch->m_parent_->RemoveChildBranch_(branch);
             delete branch;
-        }
     }
 }
 
@@ -358,41 +352,25 @@ void <{class_name}::PerformReduceTransition_ (Branch_ const &source_branch, Rule
     assert(source_branch.m_lookahead_nonterminal_token_id_ == 0); // none_
     assert(source_branch.m_state_stack_.size() > reduction_rule->m_token_count_ + 1);
     assert(source_branch.m_parent_ != NULL);
-    m_reduce_transitions_were_performed_ = true;
-    ActionTreeNode_ *parent_node = source_branch.m_parent_;
 
-    TODO start here
-
-    parent_node->RemoveChildBranch_(branch);
-    branch->m_is_epsilon_closed_ = false;
-    branch->m_state_stack_.resize(branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 1));
-    branch->m_lookahead_nonterminal_token_id_ = reduction_rule->m_reduction_nonterminal_token_id_;
-    ActionTreeNode_ *reduce_action_node =
-        parent_node->EnsureChildExists_(
-            ACTION_REDUCE_,
-            reduction_rule,
-            m_nonassoc_error_encountered_,
-            0,
-            branch->m_rule_stack_level_);
-    assert(reduce_action_node != NULL);
-    // TODO: can EnsureChildExists_ return NULL in this case?
-    --branch->m_rule_stack_level_;
-    // add the branch to the reduce-action node and complete it
-    reduce_action_node->AddChild_(branch);
-
-    std::cerr << __PRETTY_FUNCTION__ << " added child" << std::endl;
-    m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 1);
-    std::cerr << __PRETTY_FUNCTION__ << " done" << std::endl;
-
-    // it's ok for branches to be pruned here because it's impossible
-    // for all branches to die (which would lead to error recovery).
-    reduce_action_node->CompleteReduceAction_(m_branch_set_);
-
-    std::cerr << __PRETTY_FUNCTION__ << " completed reduce action" << std::endl;
-    m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 1);
-    std::cerr << __PRETTY_FUNCTION__ << " done" << std::endl;
+    // only bother with a reduce action if it would actually succeed
+    // (and not immediately be superceded by an existing reduce action.
+    if (source_branch.m_parent_->ReduceActionWouldSucceed_(reduction_rule))
+    {
+        m_reduce_transitions_were_performed_ = true;
+        // now that we know the reduce will work, clone the branch and update it
+        Branch_ *reduced_branch = source_branch.Clone_();
+        reduced_branch->m_state_stack_.resize(reduced_branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 1));
+        reduced_branch->m_lookahead_nonterminal_token_id_ = reduction_rule->m_reduction_nonterminal_token_id_;
+        // tell the parent to process the reduce (adding a Reduce_ child if
+        // necessary.  this will also add the new branch to the Reduce_ child.
+        source_branch.m_parent_->SetReduce_(reduced_branch, reduction_rule);
+        // add the new branch to the parser branch list
+        m_parser_branch_list_.InsertFront_(reduced_branch);
+    }
 }
 
+/*
 void <{class_name}::PerformShiftTransitionsAndSaveReturnActions_ ()
 {
     assert(!m_reduce_transitions_were_performed_);
@@ -450,12 +428,12 @@ void <{class_name}::PerformShiftTransition_ (Branch_ *branch, State_ const *targ
 {
     assert(branch != NULL);
     assert(target_state >= ms_state_table_ && target_state < ms_state_table_ + ms_state_count_);
-    ActionTreeNode_ *parent_node = branch->m_parent_;
+    Action_ *parent_node = branch->m_parent_;
     assert(parent_node != NULL);
     branch->m_is_epsilon_closed_ = false;
     branch->m_state_stack_.push_back(target_state);
     branch->m_lookahead_nonterminal_token_id_ = 0; // none_
-    ActionTreeNode_ *shift_action_node =
+    Action_ *shift_action_node =
         parent_node->EnsureChildExists_(
             ACTION_SHIFT_,
             target_state->m_associated_rule_,
@@ -480,7 +458,7 @@ void <{class_name}::SaveReturnActions_ (Branch_ *branch)
     assert(branch != NULL);
     assert(branch->m_parent_ != NULL);
     m_saved_return_action_queue_.clear();
-    ActionTreeNode_ *node = branch->m_parent_;
+    Action_ *node = branch->m_parent_;
     while (node != NULL)
     {
         Rule_ const *reduction_rule = NULL;
@@ -548,7 +526,7 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
 
         if (m_tree_root_->m_child_set_.size() == 1 && (*m_tree_root_->m_child_set_.begin())->IsActionTreeNode_())
         {
-            ActionTreeNode_ *next_trunk_node = static_cast<ActionTreeNode_ *>(*m_tree_root_->m_child_set_.begin());
+            Action_ *next_trunk_node = static_cast<Action_ *>(*m_tree_root_->m_child_set_.begin());
             assert(next_trunk_node != NULL);
             m_tree_root_->RemoveChild_(next_trunk_node);
             delete m_tree_root_;

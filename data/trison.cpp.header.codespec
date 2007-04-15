@@ -295,6 +295,15 @@ protected:
         Precedence_ const *m_precedence_;
         Uint32_ m_token_count_;
         char const *m_description_;
+
+        static bool IsHigherPriority (Rule_ const &left, Rule_ const &right)
+        {
+            // order by higher precedence, and then lower rule index
+            return left.m_precedence_->m_level_ > right.m_precedence_->m_level_
+                   ||
+                   left.m_precedence_->m_level_ == right.m_precedence_->m_level_ &&
+                   &left < &right;
+        }
     }; // end of struct TrisonCpp_::Npda_::Rule_
     struct State_
     {
@@ -366,23 +375,22 @@ protected:
         }
         ~Branch_ ()
         {
-            RemoveFromBranchList_(BLT_PARSER_);
             // delete the action tree down to the root or the first fork
             TreeNode_ *node = this;
             Action_ *parent = node->m_parent_;
-            while (parent != NULL && parent->SingleChild_() == node)
+            do
             {
-                // the first time through, this should remove this
-                // node from the ActionBranchList_ it belongs to.
-                parent->RemoveChild_(node);
-                assert(node->m_parent_ == NULL);
+                if (parent != NULL)
+                {
+                    parent->RemoveChild_(node);
+                    assert(node->m_parent_ == NULL);
+                }
                 if (node != this) // we don't want to recurse
                     delete node;  // into this object's destructor
                 node = parent;
-                parent = node->m_parent_;
+                parent = node != NULL ? node->m_parent_ : NULL;
             }
-            assert(ParserBranch_::NodeClass_() == LNCT_FLOATY_);
-            assert(ActionBranch_::NodeClass_() == LNCT_FLOATY_);
+            while (parent != NULL && parent->SingleChild_() == node);
         }
 
         State_ const &Top_ () const
@@ -463,26 +471,20 @@ protected:
         { }
         ~Action_ ()
         {
+            // delete this and all children out to the leaves
             if (m_parent_ != NULL)
                 m_parent_->RemoveChild_(this);
-            if (m_reduce_child_ != NULL)
-            {
-                m_reduce_child_->m_parent_ = NULL;
-                delete m_reduce_child_;
-            }
-            if (m_shift_child_ != NULL)
-            {
-                m_shift_child_->m_parent_ = NULL;
-                delete m_shift_child_;
-            }
+
+            delete m_reduce_child_;
+            delete m_shift_child_;
+
             ActionBranch_ *action_branch;
             while ((action_branch = m_action_branch_list_.Front_()) != NULL)
             {
                 Branch_ *branch = static_cast<Branch_ *>(static_cast<ActionBranch_ *>(action_branch));
-                RemoveChild_(branch);
-                assert(action_branch->NodeClass_() == LNCT_FLOATY_);
-                assert(m_action_branch_list_.Front_() != action_branch);
+                branch->m_parent_ = NULL; // to stop ~Branch_() from interfering
                 delete branch;
+                assert(m_action_branch_list_.Front_() != action_branch);
             }
         }
 
@@ -497,6 +499,13 @@ protected:
             else
                 return NULL;
         }
+        bool ReduceActionWouldSucceed_ (Rule_ const *reduction_rule) const
+        {
+            assert(reduction_rule != NULL);
+            assert(m_shift_child_ == NULL && "this should never happen");
+            return m_reduce_child_ == NULL || Rule_::IsHigherPriority(*reduction_rule, *m_reduce_child_->m_reduction_rule_);
+        }
+
         void AddChild_ (TreeNode_ *child)
         {
             assert(child != NULL);
@@ -524,6 +533,20 @@ protected:
                 case SHIFT_ACTION_TREE_NODE_ : assert(child == m_shift_child_); m_shift_child_ = NULL; break;
             }
             child->m_parent_ = NULL;
+            // TODO: conflict resolution checking time!
+        }
+        void SetReduce_ (Branch_ *reduced_branch, Rule_ const *reduction_rule)
+        {
+            assert(reduced_branch != NULL);
+            assert(reduction_rule != NULL);
+            assert(ReduceActionWouldSucceed_(reduction_rule) && "nice try, jerk");
+            // if we have a reduce child (which will necessary be overridden
+            // by the incoming reduce action), delete it, causing all its
+            // children out to the leaves (branches) to be deleted.
+            delete m_reduce_child_;
+            // add the new reduce child and add the branch to it
+            m_reduce_child_ = new Reduce_(reduction_rule);
+            m_reduce_child_->AddChild_(reduced_branch);
         }
 
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
@@ -534,17 +557,6 @@ protected:
         }
         void PrintChildNodes_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
-            // TODO: different iteration
-            /*
-            for (BranchSet_::const_iterator it = m_child_branch_set_.begin(), it_end = m_child_branch_set_.end();
-                 it != it_end;
-                 ++it)
-            {
-                Branch_ const *child_branch = *it;
-                assert (child_branch != NULL);
-                child_branch->Print_(stream, rule_table, state_table, indent_level);
-            }
-            */
             for (ActionBranch_ const *action_branch = m_action_branch_list_.Front_(); action_branch != NULL; action_branch = action_branch->Next_())
                 static_cast<Branch_ const *>(action_branch)->Print_(stream, rule_table, state_table, indent_level);
             if (m_reduce_child_ != NULL)
@@ -552,12 +564,6 @@ protected:
             if (m_shift_child_ != NULL)
                 m_shift_child_->Print_(stream, rule_table, state_table, indent_level);
         }
-        /*
-        Action_ *EnsureChildExists_ (TODO)
-        {
-            // TODO
-        }
-        */
     }; // end of struct TrisonCpp_::Npda_::Action_
     struct Reduce_ : public Action_
     {
@@ -724,8 +730,8 @@ private:
     Token_ &ShiftLookaheadToken_ ();
     void PerformEpsilonClosure_ ();
     void PerformEpsilonClosure_ (Branch_ const &source_branch, StateStack_ &extra_state_stack);
-//     void PerformReduceTransitions_ ();
-//     void PerformReduceTransition_ (Branch_ const &source_branch, Rule_ const *reduction_rule);
+    void PerformReduceTransitions_ ();
+    void PerformReduceTransition_ (Branch_ const &source_branch, Rule_ const *reduction_rule);
 //     void PerformShiftTransitionsAndSaveReturnActions_ ();
 //     void PerformShiftTransition_ (Branch_ *branch, State_ const *target_state);
 //     void SaveReturnActions_ (Branch_ *branch);
