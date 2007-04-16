@@ -177,7 +177,6 @@ void <{class_name}::ResetForNewInput_ ()
         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
         // only schedule reduce transitions if no branches have nonterminal lookaheads
         // (equivalent to not being shift-blocked)
-        std::cerr << "*** transitions ***" << std::endl;
         m_reduce_transitions_were_performed_ = false;
         m_shift_transitions_were_performed_ = false;
         // we can only perform reduce transitions if we're not blocked with
@@ -187,6 +186,7 @@ void <{class_name}::ResetForNewInput_ ()
             PerformReduceTransitions_();
         if (m_reduce_transitions_were_performed_)
         {
+            std::cerr << "*** reduce transitions ***" << std::endl;
             m_is_shift_blocked_ = true;
             m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
         }
@@ -198,8 +198,16 @@ void <{class_name}::ResetForNewInput_ ()
             // branches which have a nonterminal lookahead.  during shift-transition
             // scheduling, if a branch has no transitions, it is scheduled to be pruned.
             PerformShiftTransitions_();
+            if (m_shift_transitions_were_performed_)
+            {
+                if (m_is_shift_blocked_)
+                    std::cerr << "*** shift transitions (for lookahead nonterminal branches only) ***" << std::endl;
+                else
+                    std::cerr << "*** shift transitions (for all branches) ***" << std::endl;
+                m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+            }
+
             m_is_shift_blocked_ = false;
-            m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
 
             // if there were doomed branches
             if (!m_doomed_nonreturn_branch_list_.IsEmpty_() || !m_doomed_return_branch_list_.IsEmpty_())
@@ -243,8 +251,9 @@ void <{class_name}::ResetForNewInput_ ()
         // read so far, the "trunk" of the tree represents the actions which all of
         // the branches agree upon.  therefore, there is no reason not to execute said
         // actions now.  execute said actions, removing them as you go.
-        std::cerr << "*** execute trunk ***" << std::endl;
+        std::cerr << "*** executing and removing trunk (actions:";
         ExecuteAndRemoveTrunk_();
+        std::cerr << ") ***" << std::endl;
         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
 
         // if there is only a single doomed return branch, return the single stack token
@@ -278,7 +287,7 @@ void <{class_name}::PerformEpsilonClosure_ ()
 {
     // perform epsilon closure on the top stack states
     // of all non-epsilon-closed branches.
-    std::vector<State_ const *> extra_state_stack;
+    StateStack_ extra_state_stack;
     for (ParserBranch_ *parser_branch = m_parser_branch_list_.Front_(); parser_branch != NULL; parser_branch = parser_branch->Next_())
     {
         Branch_ *branch = static_cast<Branch_ *>(parser_branch);
@@ -477,8 +486,8 @@ void <{class_name}::PruneBranchList_ (ParserBranchList_ &branch_list)
 void <{class_name}::ExecuteAndRemoveTrunk_ ()
 {
     Action_ *action = m_tree_root_;
+    bool first_action = true;
 
-    std::cerr << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ executing actions:";
     while (true)
     {
         assert(action != NULL);
@@ -502,14 +511,21 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
             {
                 Reduce_ *reduce = static_cast<Reduce_ *>(action);
                 assert(reduce->m_reduction_rule_ != NULL);
-                std::cerr << " reduce " << reduce->m_reduction_rule_->m_description_ << ',';
+                if (!first_action)
+                    std::cerr << ',';
+                std::cerr << " reduce \"" << reduce->m_reduction_rule_->m_description_ << '\"';
+                first_action = false;
                 break;
             }
 
             case TreeNode_::SHIFT_:
             {
-//                 Shift_ *shift = static_cast<Shift_ *>(action);
-                std::cerr << " shift " << ',';
+                Shift_ *shift = static_cast<Shift_ *>(action);
+                shift->ClearRuleRange_();
+                if (!first_action)
+                    std::cerr << ',';
+                std::cerr << " shift";
+                first_action = false;
                 break;
             }
         }
@@ -521,7 +537,6 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
 
         action = static_cast<Action_ *>(single_child);
     }
-    std::cerr << std::endl;
 
     // the trunk has been executed.  now delete it.
     while (m_tree_root_ != action)
@@ -614,10 +629,10 @@ TrisonCpp_::Size_ const <{class_name}::ms_transition_count_ = sizeof(<{class_nam
 enum
 {
     TABLE_SIZE_ASSERTIONS_ =
-        TrisonCpp_::Assert_<<{class_name}::ms_precedence_count_ == <{_npda_precedence_count}>::v &&
-        TrisonCpp_::Assert_<<{class_name}::ms_rule_count_ == <{_rule_count}>::v &&
-        TrisonCpp_::Assert_<<{class_name}::ms_state_count_ == <{_npda_node_count}>::v &&
-        TrisonCpp_::Assert_<<{class_name}::ms_transition_count_ == <{_npda_transition_count}>::v
+        TrisonCpp_::Assert_<<{class_name}::ms_precedence_count_ == <{_npda_precedence_count}>::v_ &&
+        TrisonCpp_::Assert_<<{class_name}::ms_rule_count_ == <{_rule_count}>::v_ &&
+        TrisonCpp_::Assert_<<{class_name}::ms_state_count_ == <{_npda_node_count}>::v_ &&
+        TrisonCpp_::Assert_<<{class_name}::ms_transition_count_ == <{_npda_transition_count}>::v_
 };
 <*{if(is_defined(bottom_of_implementation_file))
 

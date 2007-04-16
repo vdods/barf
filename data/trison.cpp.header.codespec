@@ -10,7 +10,7 @@
 #include <cassert>
 #include <deque>
 #include <iostream> // TEMP
-#include <set>
+#include <map>
 #include <vector>
 
 #if !defined(TrisonCpp_namespace_)
@@ -23,15 +23,17 @@ namespace TrisonCpp_ {
 // /////////////////////////////////////////////////////////////////////////////
 
 template <bool condition_, typename Then_, typename Else_> struct If_;
-template <typename Then_, typename Else_> struct If_<true,Then_,Else_> { typedef Then_ T; };
-template <typename Then_, typename Else_> struct If_<false,Then_,Else_> { typedef Else_ T; };
+template <typename Then_, typename Else_> struct If_<true,Then_,Else_> { typedef Then_ T_; };
+template <typename Then_, typename Else_> struct If_<false,Then_,Else_> { typedef Else_ T_; };
 
 template <bool condition_> struct Assert_;
-template <> struct Assert_<true> { static bool const v = true; operator bool () { return v; } };
+template <> struct Assert_<true> { static bool const v_ = true; operator bool () { return v_; } };
 
-template <typename Sint_, typename Uint_> struct IntPair_ { typedef Sint_ S; typedef Uint_ U; };
+template <typename Sint_, typename Uint_> struct IntPair_ { typedef Sint_ S_; typedef Uint_ U_; };
 
 template <int bits_> struct Integer_ {
+private:
+
     typedef
         typename If_<bits_ == 8*sizeof(char),      IntPair_<char,unsigned char>,
         typename If_<bits_ == 8*sizeof(short),     IntPair_<short,unsigned short>,
@@ -39,11 +41,15 @@ template <int bits_> struct Integer_ {
         typename If_<bits_ == 8*sizeof(long),      IntPair_<long,unsigned long>,
         typename If_<bits_ == 8*sizeof(long long), IntPair_<long long,unsigned long long>,
         Integer_<0> // if no match, cause a compile error
-        >::T >::T >::T >::T >::T IntPair;
-    typedef typename IntPair::S Signed;
-    typedef typename IntPair::U Unsigned;
+        >::T_ >::T_ >::T_ >::T_ >::T_ PrivateIntPair_;
     static bool const assert_size =
-        Assert_<bits_ == 8*sizeof(Signed) && bits_ == 8*sizeof(Unsigned)>::v;
+        Assert_<bits_ == 8*sizeof(typename PrivateIntPair_::S_) &&
+                bits_ == 8*sizeof(typename PrivateIntPair_::U_)>::v_;
+
+public:
+
+    typedef typename PrivateIntPair_::S_ Signed_;
+    typedef typename PrivateIntPair_::U_ Unsigned_;
 };
 template <> struct Integer_<0> { }; // empty for intentional compile errors
 
@@ -51,90 +57,91 @@ template <> struct Integer_<0> { }; // empty for intentional compile errors
 // typedefs for the integer types used in the "cpp" trison target
 // /////////////////////////////////////////////////////////////////////////////
 
-typedef Integer_<8> ::Signed   Sint8_;
-typedef Integer_<8> ::Unsigned Uint8_;
-typedef Integer_<16>::Signed   Sint16_;
-typedef Integer_<16>::Unsigned Uint16_;
-typedef Integer_<32>::Signed   Sint32_;
-typedef Integer_<32>::Unsigned Uint32_;
-typedef Integer_<8*sizeof(void*)>::Signed   Diff_;
-typedef Integer_<8*sizeof(void*)>::Unsigned Size_;
+typedef Integer_<8> ::Signed_   Sint8_;
+typedef Integer_<8> ::Unsigned_ Uint8_;
+typedef Integer_<16>::Signed_   Sint16_;
+typedef Integer_<16>::Unsigned_ Uint16_;
+typedef Integer_<32>::Signed_   Sint32_;
+typedef Integer_<32>::Unsigned_ Uint32_;
+typedef Integer_<8*sizeof(void*)>::Signed_   Diff_;
+typedef Integer_<8*sizeof(void*)>::Unsigned_ Size_;
 
 enum
 {
     TYPE_SIZE_ASSERTIONS_ =
-        Assert_<sizeof(Sint8_) == 1>::v &&
-        Assert_<sizeof(Uint8_) == 1>::v &&
-        Assert_<sizeof(Sint16_) == 2>::v &&
-        Assert_<sizeof(Uint16_) == 2>::v &&
-        Assert_<sizeof(Sint32_) == 4>::v &&
-        Assert_<sizeof(Uint32_) == 4>::v &&
-        Assert_<sizeof(Diff_) == sizeof(void*)>::v &&
-        Assert_<sizeof(Size_) == sizeof(void*)>::v
+        Assert_<sizeof(Sint8_) == 1>::v_ &&
+        Assert_<sizeof(Uint8_) == 1>::v_ &&
+        Assert_<sizeof(Sint16_) == 2>::v_ &&
+        Assert_<sizeof(Uint16_) == 2>::v_ &&
+        Assert_<sizeof(Sint32_) == 4>::v_ &&
+        Assert_<sizeof(Uint32_) == 4>::v_ &&
+        Assert_<sizeof(Diff_) == sizeof(void*)>::v_ &&
+        Assert_<sizeof(Size_) == sizeof(void*)>::v_
 };
 
-template <typename T>
-class WeakReference
+template <typename T_>
+class WeakReference_
 {
 public:
 
-    WeakReference () : m_instance(NULL) { }
-    WeakReference (T *pointer) : m_instance(new Instance<T>(pointer)) { m_instance->IncrementReferenceCount(); }
-    WeakReference (WeakReference<T> const &r) { m_instance = r.m_instance; if (m_instance != NULL) m_instance->IncrementReferenceCount(); }
-    ~WeakReference () { if (m_instance != NULL) m_instance->DecrementReferenceCount(); }
-    void operator = (WeakReference<T> const &r)
+    WeakReference_ () : m_instance_(NULL) { }
+    WeakReference_ (T_ *pointer) : m_instance_(new Instance_<T_>(pointer)) { m_instance_->IncrementReferenceCount(); }
+    WeakReference_ (WeakReference_<T_> const &r) { m_instance_ = r.m_instance_; if (m_instance_ != NULL) m_instance_->IncrementReferenceCount(); }
+    ~WeakReference_ () { if (m_instance_ != NULL) m_instance_->DecrementReferenceCount(); }
+    WeakReference_ &operator = (WeakReference_<T_> const &r)
     {
-        if (m_instance != NULL)
-            m_instance->DecrementReferenceCount();
-        m_instance = r.m_instance;
-        if (m_instance != NULL)
-            m_instance->IncrementReferenceCount();
+        if (m_instance_ != NULL)
+            m_instance_->DecrementReferenceCount();
+        m_instance_ = r.m_instance_;
+        if (m_instance_ != NULL)
+            m_instance_->IncrementReferenceCount();
+        return *this;
     }
 
-    T &operator * () { assert(m_instance != NULL); return **m_instance; }
-    T const &operator * () const { assert(m_instance != NULL); return **m_instance; }
+    T_ &operator * () { assert(m_instance_ != NULL); return **m_instance_; }
+    T_ const &operator * () const { assert(m_instance_ != NULL); return **m_instance_; }
 
-    T *operator -> () { assert(m_instance != NULL); return &**m_instance; }
-    T const *operator -> () const { assert(m_instance != NULL); return &**m_instance; }
+    T_ *operator -> () { assert(m_instance_ != NULL); return &**m_instance_; }
+    T_ const *operator -> () const { assert(m_instance_ != NULL); return &**m_instance_; }
 
-    bool IsValid () const { return m_instance != NULL; }
-    void Release () { if (m_instance != NULL) { m_instance->DecrementReferenceCount(); m_instance = NULL; } }
+    bool IsValid_ () const { return m_instance_ != NULL; }
+    void Release_ () { if (m_instance_ != NULL) { m_instance_->DecrementReferenceCount(); m_instance_ = NULL; } }
 
-    bool InstanceIsValid () const { assert(m_instance != NULL); return m_instance->IsValid(); }
-    void ReleaseInstance () { assert(m_instance != NULL); m_instance->Release(); }
-    Uint32_ ReferenceCount () const { assert(m_instance != NULL); return m_instance->ReferenceCount(); }
+    bool InstanceIsValid_ () const { assert(m_instance_ != NULL); return m_instance_->IsValid_(); }
+    void InstanceRelease_ () { assert(m_instance_ != NULL); m_instance_->Release_(); }
+    Uint32_ ReferenceCount_ () const { assert(m_instance_ != NULL); return m_instance_->ReferenceCount_(); }
 
 private:
 
-    template <typename U>
-    class Instance
+    template <typename U_>
+    class Instance_
     {
     public:
 
-        Instance (U *pointer) : m_pointer(pointer), m_reference_count(0) { }
-        ~Instance () { assert(m_reference_count == 0); }
+        Instance_ (U_ *pointer) : m_pointer_(pointer), m_reference_count_(0) { /*std::cerr << __PRETTY_FUNCTION__ << std::endl;*/ }
+        ~Instance_ () { assert(m_reference_count_ == 0); /*std::cerr << __PRETTY_FUNCTION__ << std::endl;*/ }
 
-        U &operator * () { assert(m_pointer != NULL && "dereferenced a NULL pointer"); return *m_pointer; }
-        U const &operator * () const { assert(m_pointer != NULL && "dereferenced a NULL pointer"); return *m_pointer; }
+        U_ &operator * () { assert(m_pointer_ != NULL && "dereferenced a NULL pointer"); return *m_pointer_; }
+        U_ const &operator * () const { assert(m_pointer_ != NULL && "dereferenced a NULL pointer"); return *m_pointer_; }
 
-        bool IsValid () const { return m_pointer != NULL; }
-        void Release () { m_pointer = NULL; }
-        Uint32_ ReferenceCount () const { return m_reference_count; }
+        bool IsValid_ () const { return m_pointer_ != NULL; }
+        void Release_ () { m_pointer_ = NULL; }
+        Uint32_ ReferenceCount_ () const { return m_reference_count_; }
 
-        void IncrementReferenceCount () { assert(m_reference_count < Uint32_(-1)); ++m_reference_count; }
-        void DecrementReferenceCount () { assert(m_reference_count > 0); if (--m_reference_count == 0) delete this; }
+        void IncrementReferenceCount () { assert(m_reference_count_ < Uint32_(-1)); /*std::cerr << __PRETTY_FUNCTION__ << std::endl;*/ ++m_reference_count_; }
+        void DecrementReferenceCount () { assert(m_reference_count_ > 0); /*std::cerr << __PRETTY_FUNCTION__ << std::endl;*/ if (--m_reference_count_ == 0) delete this; }
 
     private:
 
-        Instance (Instance const &) { assert(false && "this should never be called"); }
-        void operator = (Instance const &) { assert(false && "this should never be called"); }
+        Instance_ (Instance_ const &) { assert(false && "this should never be called"); }
+        void operator = (Instance_ const &) { assert(false && "this should never be called"); }
 
-        U *m_pointer;
-        Uint32_ m_reference_count;
-    }; // end of class TrisonCpp_::WeakReference<T>::Instance<U>
+        U_ *m_pointer_;
+        Uint32_ m_reference_count_;
+    }; // end of class TrisonCpp_::WeakReference_<T_>::Instance_<U_>
 
-    Instance<T> *m_instance;
-}; // end of class TrisonCpp_::WeakReference<T>
+    Instance_<T_> *m_instance_;
+}; // end of class TrisonCpp_::WeakReference_<T_>
 
 // TODO: enums should be in TrisonCpp_ namespace
 
@@ -295,7 +302,6 @@ class Npda_
 {
 protected:
 
-
     struct Action_;
     struct ActionBranch_ : public ListNode_<ActionBranch_> { protected: ActionBranch_ () { } };
     struct ParserBranch_ : public ListNode_<ParserBranch_> { protected: ParserBranch_ () { } };
@@ -336,6 +342,22 @@ protected:
                    left.m_precedence_->m_level_ == right.m_precedence_->m_level_ &&
                    &left < &right;
         }
+
+        struct Order_
+        {
+            bool operator () (Rule_ const *left, Rule_ const *right)
+            {
+                // prefer NULL over non-NULL rules, and then go by Rule_::IsHigherPriority_
+                if (left == NULL && right == NULL)
+                    return false;
+                else if (left == NULL && right != NULL)
+                    return true;
+                else if (left != NULL && right == NULL)
+                    return false;
+                else
+                    return Rule_::IsHigherPriority_(*left, *right);
+            }
+        }; // end of struct TrisonCpp_::Npda_::Rule_::Order_
     }; // end of struct TrisonCpp_::Npda_::Rule_
     struct State_
     {
@@ -354,30 +376,39 @@ protected:
         State_ const *m_target_state_;
     }; // end of struct TrisonCpp_::Npda_::Transition_
     /*
-    struct ShiftActionTreeNodeRulePair_
+    struct RuleReference_
     {
-        Shift_ &m_shift_action_tree_node_;
-        Rule_ const &m_rule_;
+        Shift_ *m_shift_;
+        WeakReference_<Shift_ *> m_reference_;
 
-        ShiftActionTreeNodeRulePair_ (Shift_ *shift_action_tree_node, Rule_ const *rule)
+        RuleReference_ () // this should only be used by RuleReferenceMap_
             :
-            m_shift_action_tree_node_(assert(shift_action_tree_node != NULL), *shift_action_tree_node),
-            m_rule_(assert(rule != NULL), *rule)
-        { }
-
-        static bool IsLessThan (ActionTreeNodeRulePair_ const &left, ActionTreeNodeRulePair_ const &right)
+            m_shift_(NULL)
         {
-            // order by higher precedence, then lower rule index
-            return left.m_rule_.m_precedence_->m_level_ > right.m_rule_.m_precedence_->m_level_
-                   ||
-                   left.m_rule_.m_precedence_->m_level_ == right.m_rule_.m_precedence_->m_level_ &&
-                   &left.m_rule_ < &right.m_rule_;
+            std::cerr << __PRETTY_FUNCTION__ << ", this = " << this << ", m_shift_ = " << m_shift_ << std::endl;
         }
-    }; // end of struct TrisonCpp_::Npda_::ActionTreeNodeRulePair_
+        RuleReference_ (RuleReference_ const &r)
+            :
+            m_shift_(r.m_shift_),
+            m_reference_(r.m_reference_)
+        {
+            std::cerr << __PRETTY_FUNCTION__ << ", this = " << this << ", m_shift_ = " << m_shift_ << ", r = " << &r << ", r.m_shift_ = " << r.m_shift_ << std::endl;
+        }
+        RuleReference_ (Shift_ *shift)
+            :
+            m_shift_(shift),
+            m_reference_(this)
+        {
+            std::cerr << __PRETTY_FUNCTION__ << ", this = " << this << ", m_shift_ = " << m_shift_ << std::endl;
+            assert(m_shift_ != NULL);
+            assert(m_reference_.ReferenceCount_() == 1);
+        }
+    }; // end of struct TrisonCpp_::Npda_::RuleReference_
     */
+    typedef WeakReference_<Shift_> ShiftReference_;
+    typedef std::map<Rule_ const *, ShiftReference_, Rule_::Order_> ShiftReferenceMap_;
     struct TreeNode_
     {
-        // TODO: make non-public
         enum TreeNodeType_ { ACTION_ = 0, BRANCH_, REDUCE_, SHIFT_ };
         TreeNodeType_ const m_tree_node_type_;
         Action_ *m_parent_;
@@ -390,8 +421,8 @@ protected:
     }; // end of struct TrisonCpp_::Npda_::TreeNode_
     struct Branch_ : public TreeNode_, public ActionBranch_, public ParserBranch_
     {
-//         typedef std::list<WeakReference<ShiftActionTreeNodeRulePair_> > ConflictReferenceList_;
-//         ConflictReferenceList_ m_conflict_reference_list_;
+        typedef std::vector<ShiftReference_> ShiftReferenceList_;
+        ShiftReferenceList_ m_shift_reference_list_;
         StateStack_ m_state_stack_;
         TokenId_ m_lookahead_nonterminal_token_id_;
         bool m_is_epsilon_closed_;
@@ -424,6 +455,23 @@ protected:
                 assert(node != this);
                 delete node;
             }
+            // release all the rule references.  if the ref count is about to go to
+            // 1, inform the Shift_ (if it exists) that it should resolve conflicts.
+            for (ShiftReferenceList_::iterator it = m_shift_reference_list_.begin(), it_end = m_shift_reference_list_.end();
+                 it != it_end;
+                 ++it)
+            {
+                ShiftReference_ &shift_reference = *it;
+                assert(shift_reference.IsValid_());
+                if (shift_reference.ReferenceCount_() == 2 && shift_reference.InstanceIsValid_())
+                {
+                    Shift_ *shift = &*shift_reference;
+                    assert(shift != NULL);
+                    assert(shift->m_parent_ != NULL);
+                    shift_reference.Release_();
+                    shift->m_parent_->ResolveConflicts_();
+                }
+            }
         }
 
         State_ const &Top_ () const
@@ -438,6 +486,22 @@ protected:
             assert(cloned->m_parent_ == NULL);
             assert(cloned->ParserBranch_::NodeClass_() == LNCT_FLOATY_);
             assert(cloned->ActionBranch_::NodeClass_() == LNCT_FLOATY_);
+            // duplicate the shift reference list
+            for (ShiftReferenceList_::const_iterator it = m_shift_reference_list_.begin(),
+                                                    it_end = m_shift_reference_list_.end();
+                 it != it_end;
+                 ++it)
+            {
+                ShiftReference_ const &shift_reference = *it;
+                assert(shift_reference.IsValid_());
+                assert(shift_reference.ReferenceCount_() >= 1);
+                // only copy the reference if it's valid
+                if (shift_reference.InstanceIsValid_())
+                {
+                    assert(&*shift_reference != NULL);
+                    cloned->m_shift_reference_list_.push_back(shift_reference);
+                }
+            }
             return cloned;
         }
         void RemoveFromBranchList_ (BranchListType_ branch_list_type)
@@ -451,7 +515,7 @@ protected:
 
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
-            stream << std::string(2*indent_level, ' ') << (m_is_epsilon_closed_ ? 'c' : '_');
+            stream << std::string(2*indent_level, ' ') << (m_is_epsilon_closed_ ? 'c' : '_') << " branch " << this;
             for (StateStack_::const_iterator it = m_state_stack_.begin(), it_end = m_state_stack_.end();
                  it != it_end;
                  ++it)
@@ -462,7 +526,7 @@ protected:
             }
             if (m_lookahead_nonterminal_token_id_ != none__)
                 stream << " (" << m_lookahead_nonterminal_token_id_ << ')';
-            stream << ' ' << this << std::endl;
+            stream << " \"" << Top_().m_description_ << '\"' << std::endl;
         }
 
     private:
@@ -555,6 +619,7 @@ protected:
                 case SHIFT_ : assert(m_shift_child_ == NULL); m_shift_child_ = static_cast<Shift_ *>(child); break;
             }
             child->m_parent_ = this;
+            ResolveConflicts_();
         }
         void RemoveChild_ (TreeNode_ *child)
         {
@@ -563,13 +628,13 @@ protected:
             switch (child->m_tree_node_type_)
             {
                 default:
-                case ACTION_         : assert(false && "this should never happen"); break;
-                case BRANCH_       : static_cast<Branch_ *>(child)->RemoveFromBranchList_(BLT_ACTION_); break;
+                case ACTION_: assert(false && "this should never happen"); break;
+                case BRANCH_: static_cast<Branch_ *>(child)->RemoveFromBranchList_(BLT_ACTION_); break;
                 case REDUCE_: assert(child == m_reduce_child_); m_reduce_child_ = NULL; break;
                 case SHIFT_ : assert(child == m_shift_child_); m_shift_child_ = NULL; break;
             }
             child->m_parent_ = NULL;
-            // TODO: conflict resolution checking time!
+            ResolveConflicts_();
         }
         void SetReduce_ (Branch_ *reduced_branch, Rule_ const *reduction_rule)
         {
@@ -595,10 +660,53 @@ protected:
                 m_shift_child_->m_parent_ = this;
             }
             m_shift_child_->AddChild_(shifted_branch);
+            // only add a shift reference if there could be a conflict
+            if (m_reduce_child_ != NULL)
+            {
+                ShiftReference_ shift_reference = m_shift_child_->EnsureShiftReferenceExists_(associated_rule);
+                assert(&*shift_reference == m_shift_child_);
+                shifted_branch->m_shift_reference_list_.push_back(shift_reference);
+            }
+        }
+        void ResolveConflicts_ ()
+        {
+            // the only time this should really be called is when adding/removing
+            // a child or when the rule range on a shift child changes.
+
+            // no conflicts can be resolved until there are no
+            // pending child branches at this node.
+            if (!m_action_branch_list_.IsEmpty_())
+                return;
+
+            // there is no conflict if there is only one child
+            if (m_reduce_child_ != NULL && m_shift_child_ == NULL || m_reduce_child_ == NULL && m_shift_child_ != NULL)
+                return;
+
+            // at this point we have no child branches, and we have both a reduce and a
+            // shift child.  the reduce child has a single specific reduction rule, while
+            // the shift child has potentially a range of reduction rules, each with an
+            // assigned priority.  if the shift child's rule range does not overlap the
+            // reduce child's rule, we can prune one of them to resolve the conflict.
+            // TODO
+
+            // in the case where the shift child's rule range overlaps the reduction rule
+            // by one (i.e. one of the endpoints of the shift child's rule range has the
+            // same priority as the reduce child's rule), AND the resolution between the
+            // overlapping rules (reduce and shift) results in the same outcome as the
+            // overall higher priority action (i.e. two cases: 1. if the shift child's
+            // rule range lower end coincides with the reduce child's rule and the shift
+            // child wins, or 2. if the shift child's rule range upper end coincides with
+            // the reduce child's rule and the reduce child wins).  this type of conflict
+            // must necessarily be resolved by associativity, since "coinciding rules"
+            // imply the rule precedences are equal.
+            // TODO
+
+            // otherwise, the conflict can't be resolved at this time.  BOO.
         }
 
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
+            // fake polymorphism here, because we don't want to use virtual inheritance
             switch (m_tree_node_type_)
             {
                 default:
@@ -644,22 +752,88 @@ protected:
 
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
-            stream << std::string(2*indent_level, ' ') << (m_parent_ != NULL ? "reduce " : "root ") << this << " \"" << m_reduction_rule_->m_description_ << '\"' << std::endl;
+            stream << std::string(2*indent_level, ' ') << (m_parent_ != NULL ? "reduce " : "root ") << this
+                   << " \"" << m_reduction_rule_->m_description_ << '\"'
+                   << ", precedence = " << m_reduction_rule_->m_precedence_->m_level_
+                   << ", associativity = " << m_reduction_rule_->m_precedence_->m_associativity_
+                   << ", rule index = " << m_reduction_rule_-rule_table << std::endl;
             PrintChildNodes_(stream, rule_table, state_table, indent_level+1);
         }
     }; // end of struct TrisonCpp_::Npda_::Reduce_
     struct Shift_ : public Action_
     {
-//         typedef std::list<WeakReference> RefCountList_;
-//         RefCountList_ m_ref_count_list_;
-
         Shift_ () : Action_(SHIFT_) { }
+        ~Shift_ () { ClearRuleRange_(); }
+
+        ShiftReference_ EnsureShiftReferenceExists_ (Rule_ const *rule)
+        {
+            ShiftReferenceMap_::iterator it = m_rule_range_.find(rule);
+            if (it == m_rule_range_.end())
+            {
+                ShiftReference_ &shift_reference = m_rule_range_[rule] = ShiftReference_(this);
+                assert(shift_reference.ReferenceCount_() == 1);
+                return shift_reference;
+            }
+            else
+            {
+                ShiftReference_ &shift_reference = it->second;
+                assert(shift_reference.ReferenceCount_() >= 1);
+                return shift_reference;
+            }
+        }
+        void ClearRuleRange_ ()
+        {
+            // go through all rule references and release the instances (so any
+            // branches which refer to them can know that they're no longer active)
+            for (ShiftReferenceMap_::iterator it = m_rule_range_.begin(), it_end = m_rule_range_.end();
+                 it != it_end;
+                 ++it)
+            {
+                ShiftReference_ &shift_reference = it->second;
+                assert(shift_reference.IsValid_());
+                assert(shift_reference.ReferenceCount_() >= 1);
+                assert(shift_reference.InstanceIsValid_());
+                shift_reference.InstanceRelease_();
+                assert(shift_reference.IsValid_());
+                assert(shift_reference.ReferenceCount_() >= 1);
+                assert(!shift_reference.InstanceIsValid_());
+            }
+            m_rule_range_.clear();
+        }
 
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
             stream << std::string(2*indent_level, ' ') << (m_parent_ != NULL ? "shift " : "root ") << this << std::endl;
+            if (!m_rule_range_.empty())
+                stream << std::string(2*(indent_level+1), ' ') << "rule range" << std::endl;
+            for (ShiftReferenceMap_::const_iterator it = m_rule_range_.begin(), it_end = m_rule_range_.end();
+                 it != it_end;
+                 ++it)
+            {
+                Rule_ const *rule = it->first;
+                ShiftReference_ const &shift_reference = it->second;
+                assert(shift_reference.IsValid_());
+                assert(shift_reference.InstanceIsValid_());
+                // TODO: make into assert(shift_reference.ReferenceCount_() > 1); -- changes in the ref count should cause cleanup in the rule range
+                if (shift_reference.ReferenceCount_() > 1)
+                {
+                    stream << std::string(2*(indent_level+2), ' ') << rule;
+                    if (rule != NULL)
+                        stream << " \"" << rule->m_description_ << '\"'
+                            << ", precedence = " << rule->m_precedence_->m_level_
+                            << ", associativity = " << rule->m_precedence_->m_associativity_
+                            << ", rule index = " << rule-rule_table
+                            << ", ref count = " << shift_reference.ReferenceCount_();
+                    stream << std::endl;
+                }
+            }
+            // TODO: print rule range
             PrintChildNodes_(stream, rule_table, state_table, indent_level+1);
         }
+
+    private:
+
+        ShiftReferenceMap_ m_rule_range_;
     }; // end of struct TrisonCpp_::Npda_::Shift_
 }; // end of class TrisonCpp_::Npda_
 
