@@ -256,6 +256,8 @@ void <{class_name}::ResetForNewInput_ ()
         std::cerr << ") ***" << std::endl;
         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
 
+        assert(!m_parser_branch_list_.IsEmpty_() || !m_doomed_nonreturn_branch_list_.IsEmpty_() || !m_doomed_return_branch_list_.IsEmpty_());
+
         // if there is only a single doomed return branch, return the single stack token
         if (m_parser_branch_list_.IsEmpty_() &&
             !m_doomed_return_branch_list_.IsEmpty_() &&
@@ -319,16 +321,13 @@ void <{class_name}::PerformEpsilonClosure_ (Branch_ const &source_branch, StateS
         {
             // don't perform epsilon closure on this transition if the target
             // state has already been visited during this epsilon closure overall.
-            bool transition_target_has_been_visited = false;
+            bool transition_target_has_been_visited = &source_branch.Top_() == transition->m_target_state_;
             for (StateStack_::iterator it = extra_state_stack.begin(), it_end = extra_state_stack.end();
-                 it != it_end;
+                 !transition_target_has_been_visited && it != it_end;
                  ++it)
             {
                 if (transition->m_target_state_ == *it)
-                {
                     transition_target_has_been_visited = true;
-                    break;
-                }
             }
             if (!transition_target_has_been_visited)
             {

@@ -355,7 +355,7 @@ protected:
             {
                 return left.m_precedence_->m_level_ == right.m_precedence_->m_level_;
             }
-        
+
             struct Order_
             {
                 bool operator () (Rule_ const *left, Rule_ const *right)
@@ -588,7 +588,7 @@ protected:
         {
             assert(reduction_rule != NULL);
             assert(m_shift_child_ == NULL && "this should never happen");
-            return m_reduce_child_ == NULL || Rule_::ReduceReduceConflict_::IsHigherPriority_(*reduction_rule, *m_reduce_child_->m_reduction_rule_);
+            return m_reduce_child_ == NULL || !Rule_::ReduceReduceConflict_::IsHigherPriority_(*m_reduce_child_->m_reduction_rule_, *reduction_rule);
         }
 
         void AddChild_ (TreeNode_ *child)
@@ -627,13 +627,21 @@ protected:
             assert(reduced_branch != NULL);
             assert(reduction_rule != NULL);
             assert(ReduceActionWouldSucceed_(reduction_rule) && "nice try, jerk");
-            // if we have a reduce child (which will necessary be overridden
-            // by the incoming reduce action), delete it, causing all its
-            // children out to the leaves (branches) to be deleted.
-            delete m_reduce_child_;
-            // add the new reduce child and add the branch to it
-            m_reduce_child_ = new Reduce_(reduction_rule);
-            m_reduce_child_->m_parent_ = this;
+            // three possible cases here: 1. no existing reduce child, so the
+            // incoming branch gets added trivially.  2. the incoming reduction
+            // rule has higher priority than that of the reduce child; so prune
+            // the reduce child and use the incoming reduction rule instead.
+            // 3. the incoming reduction rule is of equal priority as the existing
+            // reduce child; so add the incoming branch to the reduce child.
+            assert(m_reduce_child_ == NULL || !Rule_::ReduceReduceConflict_::IsHigherPriority_(*m_reduce_child_->m_reduction_rule_, *reduction_rule));
+            // in case 1 or 2, we must prune a possibly existing reduce child and recreate it.
+            if (m_reduce_child_ == NULL || Rule_::ReduceReduceConflict_::IsHigherPriority_(*reduction_rule, *m_reduce_child_->m_reduction_rule_))
+            {
+                delete m_reduce_child_;
+                m_reduce_child_ = new Reduce_(reduction_rule);
+                m_reduce_child_->m_parent_ = this;
+            }
+            // in all cases, we add the incoming branch to the reduce child
             m_reduce_child_->AddChild_(reduced_branch);
         }
         void AddShift_ (Branch_ *shifted_branch, Rule_ const *associated_rule)
@@ -656,12 +664,6 @@ protected:
         }
         void ResolveShiftReduceConflicts_ ()
         {
-//             static int blah = 0;
-//             ++blah;
-//             if (blah == 76)
-//             {
-//                 blah = blah;
-//             }
 //             std::cerr << "~ResolveShiftReduceConflicts_(); this = " << this << ", blah = " << blah << std::endl;
             // the only time this should really be called is when adding/removing
             // a child or when the rule range on a shift child changes.
@@ -688,8 +690,8 @@ protected:
             assert(reduce_rule != NULL);
             assert(!Rule_::ShiftReduceConflict_::IsHigherPriority_(*low_shift_rule, *high_shift_rule));
 
-            // 6 possibilities (the higher lines indicate higher priority.  same line 
-            // indicates equality).  there is always exactly one reduce, and at least 
+            // 6 possibilities (the higher lines indicate higher priority.  same line
+            // indicates equality).  there is always exactly one reduce, and at least
             // one shift.
             //
             // 1.     shift        2.     shift        3.
@@ -703,10 +705,10 @@ protected:
             //        shift               shift
             //
             // cases 1 and 5 can be trivially resolved -- by pruning the reduce
-            // and by pruning the shift respectively.  
-            // 
-            // case 3 may be trivially resolved via rule associativity (LEFT causes the 
-            // shift to be pruned, RIGHT causes the reduce to be pruned, and NONASSOC 
+            // and by pruning the shift respectively.
+            //
+            // case 3 may be trivially resolved via rule associativity (LEFT causes the
+            // shift to be pruned, RIGHT causes the reduce to be pruned, and NONASSOC
             // should cause an error).
             //
             // case 4 can only be resolved if the associativity of the reduction rule
@@ -714,7 +716,7 @@ protected:
             //
             // case 2 can only be resolved if the associativity of the reduction rule
             // is RIGHT, otherwise no resolution can be reached at this point.
-            // 
+            //
             // case 6 can not be resolved at this point.
 
             if (Rule_::ShiftReduceConflict_::IsHigherPriority_(*low_shift_rule, *reduce_rule))
@@ -887,7 +889,7 @@ protected:
             // that have a ref count of 1 (indicating we're the only ones using
             // them).  the wacky iteration is so we don't have to worry about
             // incrementing an erased iterator.
-            for (ShiftReferenceMap_::iterator next_it = m_rule_range_.begin(), 
+            for (ShiftReferenceMap_::iterator next_it = m_rule_range_.begin(),
                                               it_end = m_rule_range_.end(),
                                               it = (next_it != it_end) ? next_it++ : next_it;
                  it != it_end;

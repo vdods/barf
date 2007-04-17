@@ -189,6 +189,7 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+- fix assert crash where a rule token is undeclared
 - add default values in trison cpp langspec for Scan implementation
 - prohibit (check for) epsilon-loops in NPDA at runtime
 - change "%prec %left BLAH" into "%prec.left BLAH" (and maybe prec into precedence)
