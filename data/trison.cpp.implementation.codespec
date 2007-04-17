@@ -317,9 +317,25 @@ void <{class_name}::PerformEpsilonClosure_ (Branch_ const &source_branch, StateS
     {
         if (transition->m_transition_type_ == Transition_::TT_EPSILON_)
         {
-            extra_state_stack.push_back(transition->m_target_state_);
-            PerformEpsilonClosure_(source_branch, extra_state_stack);
-            extra_state_stack.pop_back();
+            // don't perform epsilon closure on this transition if the target
+            // state has already been visited during this epsilon closure overall.
+            bool transition_target_has_been_visited = false;
+            for (StateStack_::iterator it = extra_state_stack.begin(), it_end = extra_state_stack.end();
+                 it != it_end;
+                 ++it)
+            {
+                if (transition->m_target_state_ == *it)
+                {
+                    transition_target_has_been_visited = true;
+                    break;
+                }
+            }
+            if (!transition_target_has_been_visited)
+            {
+                extra_state_stack.push_back(transition->m_target_state_);
+                PerformEpsilonClosure_(source_branch, extra_state_stack);
+                extra_state_stack.pop_back();
+            }
         }
         else
             non_epsilon_transition_encountered = true;
