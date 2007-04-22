@@ -166,6 +166,7 @@ void <{class_name}::ResetForNewInput_ ()
     {
         std::cerr << std::endl << std::endl << "!!! iteration !!!" << std::endl;
 
+        assert(!m_parser_branch_list_.IsEmpty_());
         assert(m_doomed_nonreturn_branch_list_.IsEmpty_());
         assert(m_doomed_return_branch_list_.IsEmpty_());
 
@@ -217,19 +218,32 @@ void <{class_name}::ResetForNewInput_ ()
                 if (m_shift_transitions_were_performed_)
                 {
                     std::cerr << "*** pruning all doomed branches ***" << std::endl;
-                    PruneBranchList_(m_doomed_nonreturn_branch_list_);
+                    assert(!m_parser_branch_list_.IsEmpty_());
                     PruneBranchList_(m_doomed_return_branch_list_);
+                    PruneBranchList_(m_doomed_nonreturn_branch_list_);
                     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
                 }
-                // if no shift transitions were performed but the doomed
-                // return branch list isn't empty, prune only the doomed
-                // non-return branches, keeping the return branches.
+                // if no shift transitions were performed but the doomed return branch
+                // list isn't empty, prune only the doomed non-return branches, keeping
+                // the return branches.  then return the single stack token.
                 else if (!m_doomed_return_branch_list_.IsEmpty_())
                 {
                     std::cerr << "*** pruning doomed non-return branches only ***" << std::endl;
                     assert(m_parser_branch_list_.IsEmpty_());
                     PruneBranchList_(m_doomed_nonreturn_branch_list_);
+                    assert(m_doomed_nonreturn_branch_list_.IsEmpty_());
                     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+
+                    // TODO technically there should only be one return branch at this
+                    // point, but currently there's no way of guaranteeing branch uniqueness,
+                    // so mutually recursive rules will produce redundant branches.
+                    //assert(!m_doomed_return_branch_list_.IsEmpty_() && // TODO: enable this assert when appropriate
+                    //       m_doomed_return_branch_list_.Front_() == m_doomed_return_branch_list_.Back_());
+
+                    // return the single stack token TODO
+                    parser_return_code_ = PRC_SUCCESS;
+                    std::cerr << "*** returning successfully ***" << std::endl;
+                    break;
                 }
                 // if none of the above, go into error handling mode
                 else
@@ -241,7 +255,9 @@ void <{class_name}::ResetForNewInput_ ()
                 }
             }
 
+            assert(!m_parser_branch_list_.IsEmpty_());
             assert(m_doomed_nonreturn_branch_list_.IsEmpty_());
+            assert(m_doomed_return_branch_list_.IsEmpty_());
         }
         // TODO: handle nonassoc errors -- should this be
         // detected before PerformScheduledTransitions_ ?
@@ -257,17 +273,6 @@ void <{class_name}::ResetForNewInput_ ()
         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
 
         assert(!m_parser_branch_list_.IsEmpty_() || !m_doomed_nonreturn_branch_list_.IsEmpty_() || !m_doomed_return_branch_list_.IsEmpty_());
-
-        // if there is only a single doomed return branch, return the single stack token
-        if (m_parser_branch_list_.IsEmpty_() &&
-            !m_doomed_return_branch_list_.IsEmpty_() &&
-            m_doomed_return_branch_list_.Front_() == m_doomed_return_branch_list_.Back_())
-        {
-            // return the single stack token TODO
-            parser_return_code_ = PRC_SUCCESS;
-            std::cerr << "*** returning successfully ***" << std::endl;
-            break;
-        }
     }
 
     delete m_tree_root_;

@@ -151,10 +151,6 @@ enum ListNodeClassType_ { LNCT_FLOATY_ = 0|0, LNCT_HEAD_ = 0|1, LNCT_TAIL_ = 2|0
 template <typename ListNodeSubclass_>
 struct ListNode_
 {
-protected:
-
-    ListNode_ () : m_prev_(NULL), m_next_(NULL) { assert(NodeClass_() == LNCT_FLOATY_); }
-
 public:
 
     ~ListNode_ ()
@@ -225,6 +221,10 @@ public:
         return static_cast<ListNodeSubclass_ *>(this);
     }
 
+protected:
+
+    ListNode_ () : m_prev_(NULL), m_next_(NULL) { assert(NodeClass_() == LNCT_FLOATY_); }
+
 private:
 
     ListNodeSubclass_ *m_prev_;
@@ -291,9 +291,50 @@ struct List_
     void InsertBack_ (ElementType_ *node) { m_tail_.InsertPrev_(node); }
     ElementType_ *RemoveFront_ () { assert(Front_() != NULL && "can't remove from an empty list"); return Front_()->Remove_(); }
     ElementType_ *RemoveBack_ () { assert(Back_() != NULL && "can't remove from an empty list"); return Back_()->Remove_(); }
-
+/*
+    void Swap_ (List_<ElementType_> &list)
+    {
+        if (IsEmpty_())
+        {
+            if (list.IsEmpty_())
+                ; // do nothing
+            else
+                list.SwapWithEmpty_(*this);
+        }
+        else
+        {
+            if (list.IsEmpty_())
+                SwapWithEmpty_(list);
+            else
+            {
+                std::swap(m_head_.m_next_->m_prev_, list.m_head_.m_next_->m_prev_);
+                std::swap(m_tail_.m_prev_->m_next_, list.m_tail_.m_prev_->m_next_);
+                std::swap(m_head_.m_next_, list.m_head_.m_next_);
+                std::swap(m_tail_.m_prev_, list.m_tail_.m_prev_);
+            }
+        }
+    }
+*/
 private:
-
+/*
+    void SwapWithEmpty_ (List_<ElementType_> &empty)
+    {
+        assert(!IsEmpty_());
+        assert(empty.IsEmpty_());
+        empty.m_head_.m_next_ = m_head_.m_next_;
+        empty.m_tail_.m_prev_ = m_tail_.m_prev_;
+        empty.m_head_.m_next_->m_prev_ = static_cast<ElementType_ *>(&empty.m_head_);
+        empty.m_tail_.m_prev_->m_next_ = static_cast<ElementType_ *>(&empty.m_tail_);
+        m_head_.m_next_ = static_cast<ElementType_ *>(&m_tail_);
+        m_tail_.m_prev_ = static_cast<ElementType_ *>(&m_head_);
+        assert(empty.m_head_.NodeClass_() == LNCT_HEAD_);
+        assert(empty.m_tail_.NodeClass_() == LNCT_TAIL_);
+        assert(empty.m_head_.m_next_->NodeClass_() == LNCT_BODY_);
+        assert(empty.m_tail_.m_prev_->NodeClass_() == LNCT_BODY_);
+        assert(m_head_.NodeClass_() == LNCT_HEAD_);
+        assert(m_tail_.NodeClass_() == LNCT_TAIL_);
+    }
+*/
     ListNode_<ElementType_> m_head_;
     ListNode_<ElementType_> m_tail_;
 }; // end of struct TrisonCpp_::List_<ElementType_>
