@@ -189,9 +189,7 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
-- see if i can avoid using a sorted container in NPDA by inserting branches
-  into branch lists in specific orders.  i will still need to figure out how
-  to guarantee branch uniqueness though.
+- figure out how to guarantee branch uniqueness per Action_ branch list in C++ parser.
 - fix assert crash where a rule token is undeclared
 - add default values in trison cpp langspec for Scan implementation
 - prohibit (check for) epsilon-loops in NPDA at runtime

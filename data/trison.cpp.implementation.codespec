@@ -142,25 +142,26 @@ void <{class_name}::ResetForNewInput_ ()
     assert(m_tree_root_ == NULL);
     assert(m_parser_branch_list_.IsEmpty_());
 
-    // create the tree root
+    // create the tree root - TODO move the below initialization into Action_() for case TreeNode_::ACTION_
     m_tree_root_ = new Action_(TreeNode_::ACTION_);
     {
         // create the initial branch with a rule stack level of 0
         Branch_ *initial_branch = new Branch_(ms_state_table_ + nonterminal_to_parse_);
         // add the initial nonterminal state as a child to the tree
-        m_tree_root_->AddChild_(initial_branch);
-        // initialize the current branch set with the created branch
-        m_parser_branch_list_.InsertFront_(initial_branch);
+        m_tree_root_->AddChildBranch_(initial_branch);
+        // add the initial branch to the action and parser branch lists
+        m_tree_root_->m_action_branch_list_.Prepend_(initial_branch);
+        m_parser_branch_list_.Prepend_(initial_branch);
     }
     // initialize other members
     m_is_shift_blocked_ = false;
     m_reduce_transitions_were_performed_ = false;
     m_shift_transitions_were_performed_ = false;
     m_nonassoc_error_encountered_ = false;
-//     m_doomed_nonreturn_branch_list_.clear();
 
     std::cerr << "!!! start !!!" << std::endl;
     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+    assert(m_tree_root_->AssertActionAndParserBranchListsAreConsistent_(m_parser_branch_list_));
 
     while (true)
     {
@@ -219,9 +220,12 @@ void <{class_name}::ResetForNewInput_ ()
                 {
                     std::cerr << "*** pruning all doomed branches ***" << std::endl;
                     assert(!m_parser_branch_list_.IsEmpty_());
+                    // TODO: figure out if deleting these branch lists in this order guarantees
+                    // no shift/reduce conflicts will be resolved incorrectly
                     PruneBranchList_(m_doomed_return_branch_list_);
                     PruneBranchList_(m_doomed_nonreturn_branch_list_);
                     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+                    assert(m_tree_root_->AssertActionAndParserBranchListsAreConsistent_(m_parser_branch_list_));
                 }
                 // if no shift transitions were performed but the doomed return branch
                 // list isn't empty, prune only the doomed non-return branches, keeping
@@ -231,7 +235,12 @@ void <{class_name}::ResetForNewInput_ ()
                     std::cerr << "*** pruning doomed non-return branches only ***" << std::endl;
                     assert(m_parser_branch_list_.IsEmpty_());
                     PruneBranchList_(m_doomed_nonreturn_branch_list_);
+                    m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
                     assert(m_doomed_nonreturn_branch_list_.IsEmpty_());
+
+                    std::cerr << "*** executing and removing trunk (actions:";
+                    ExecuteAndRemoveTrunk_();
+                    std::cerr << ") ***" << std::endl;
                     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
 
                     // TODO technically there should only be one return branch at this
@@ -250,7 +259,7 @@ void <{class_name}::ResetForNewInput_ ()
                 {
                     assert(m_parser_branch_list_.IsEmpty_());
                     assert(m_doomed_return_branch_list_.IsEmpty_());
-                    m_parser_branch_list_.TrisonCpp_::List_<ParserBranch_>::InsertFront_(m_doomed_nonreturn_branch_list_);
+                    m_parser_branch_list_.TrisonCpp_::List_<ParserBranch_>::Prepend_(m_doomed_nonreturn_branch_list_);
                     assert(false && "error handling mode not implemented yet");
                 }
             }
@@ -271,6 +280,7 @@ void <{class_name}::ResetForNewInput_ ()
         ExecuteAndRemoveTrunk_();
         std::cerr << ") ***" << std::endl;
         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+        assert(m_tree_root_->AssertActionAndParserBranchListsAreConsistent_(m_parser_branch_list_));
 
         assert(!m_parser_branch_list_.IsEmpty_() || !m_doomed_nonreturn_branch_list_.IsEmpty_() || !m_doomed_return_branch_list_.IsEmpty_());
     }
@@ -310,7 +320,7 @@ void <{class_name}::PerformEpsilonClosure_ ()
     }
 }
 
-void <{class_name}::PerformEpsilonClosure_ (Branch_ const &source_branch, StateStack_ &extra_state_stack)
+void <{class_name}::PerformEpsilonClosure_ (Branch_ &source_branch, StateStack_ &extra_state_stack)
 {
     // iterate through the transitions from the top state of the branch,
     // recursively epsilon-closing epsilon transitions.  also, remember
@@ -350,19 +360,8 @@ void <{class_name}::PerformEpsilonClosure_ (Branch_ const &source_branch, StateS
     // contained in m_parser_branch_list_.
     if (!extra_state_stack.empty() && non_epsilon_transition_encountered)
     {
-        // clone the source branch, push the states contained in
-        // extra_state_stack and then add it to m_branch_set_.
-        Branch_ *closed_branch = source_branch.Clone_();
-        assert(closed_branch->m_parent_ == NULL);
-        closed_branch->m_is_epsilon_closed_ = true;
-        closed_branch->m_state_stack_.insert(closed_branch->m_state_stack_.end(), extra_state_stack.begin(), extra_state_stack.end());
-        // this insertion does not affect the iteration being performed
-        // in <{class_name}::PerformEpsilonClosure_() because we're adding
-        // only to the front of m_parser_branch_list_, while it's being traversed
-        // via ParserBranch_::Next_().
-        m_parser_branch_list_.InsertFront_(closed_branch);
-        // finally add the e-closed branch to the parent of the source branch
-        source_branch.m_parent_->AddChild_(closed_branch);
+        source_branch.m_parent_->AddEpsilonClosure_(source_branch, extra_state_stack);
+        assert(m_tree_root_->AssertActionAndParserBranchListsAreConsistent_(m_parser_branch_list_));
     }
 }
 
@@ -374,28 +373,32 @@ void <{class_name}::PerformReduceTransitions_ ()
     while (parser_branch != NULL)
     {
         Branch_ *branch = static_cast<Branch_ *>(parser_branch);
-        State_ const &state = branch->Top_();
-        bool reduce_transitions_were_performed_on_this_branch = false;
-        for (Transition_ const *transition = state.m_transition_table_,
-                               *transition_end = transition + state.m_transition_count_;
-             transition != transition_end;
-             ++transition)
-        {
-            if (transition->m_transition_type_ == Transition_::TT_REDUCE_)
-            {
-                PerformReduceTransition_(*branch, ms_rule_table_ + transition->m_transition_data_);
-                reduce_transitions_were_performed_on_this_branch = true;
-            }
-        }
-
         parser_branch = parser_branch->Next_();
 
-        if (reduce_transitions_were_performed_on_this_branch)
-            delete branch;
+        // only attempt to transition from non-transition-fromed branches
+        if (branch->m_is_epsilon_closed_)
+        {
+            bool reduce_transitions_were_performed_on_this_branch = false;
+            State_ const &state = branch->Top_();
+            for (Transition_ const *transition = state.m_transition_table_,
+                                   *transition_end = transition + state.m_transition_count_;
+                 transition != transition_end;
+                 ++transition)
+            {
+                if (transition->m_transition_type_ == Transition_::TT_REDUCE_)
+                {
+                    PerformReduceTransition_(*branch, ms_rule_table_ + transition->m_transition_data_);
+                    reduce_transitions_were_performed_on_this_branch = true;
+                }
+            }
+
+            if (reduce_transitions_were_performed_on_this_branch)
+                delete branch;
+        }
     }
 }
 
-void <{class_name}::PerformReduceTransition_ (Branch_ const &source_branch, Rule_ const *reduction_rule)
+void <{class_name}::PerformReduceTransition_ (Branch_ &source_branch, Rule_ const *reduction_rule)
 {
     assert(reduction_rule != NULL);
     assert(reduction_rule >= ms_rule_table_ && reduction_rule < ms_rule_table_ + ms_rule_count_);
@@ -408,15 +411,10 @@ void <{class_name}::PerformReduceTransition_ (Branch_ const &source_branch, Rule
     if (source_branch.m_parent_->ReduceActionWouldSucceed_(reduction_rule))
     {
         m_reduce_transitions_were_performed_ = true;
-        // now that we know the reduce will work, clone the branch and update it
-        Branch_ *reduced_branch = source_branch.Clone_();
-        reduced_branch->m_state_stack_.resize(reduced_branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 1));
-        reduced_branch->m_lookahead_nonterminal_token_id_ = reduction_rule->m_reduction_nonterminal_token_id_;
-        // tell the parent to process the reduce (adding a Reduce_ child if
-        // necessary.  this will also add the new branch to the Reduce_ child.
-        source_branch.m_parent_->SetReduce_(reduced_branch, reduction_rule);
-        // add the new branch to the parser branch list
-        m_parser_branch_list_.InsertFront_(reduced_branch);
+        source_branch.m_parent_->AddReduce_(source_branch, reduction_rule);
+//         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+//         PrintParserBranchList_();
+        assert(m_tree_root_->AssertActionAndParserBranchListsAreConsistent_(m_parser_branch_list_));
     }
 }
 
@@ -441,6 +439,11 @@ void <{class_name}::PerformShiftTransitions_ ()
         // branches that have a lookahead nonterminal token.
         if (m_is_shift_blocked_ && branch->m_lookahead_nonterminal_token_id_ == 0)
             continue;
+        // if this branch is not epsilon closed, then it's already transitioned.
+        if (!branch->m_is_epsilon_closed_)
+            continue;
+        // otherwise iterate through the transitions at this state and transition
+        // all that match the current lookahead.
         State_ const &state = branch->Top_();
         bool return_state_encountered = false;
         for (Transition_ const *transition = state.m_transition_table_,
@@ -467,26 +470,20 @@ void <{class_name}::PerformShiftTransitions_ ()
 
         branch->RemoveFromBranchList_(TrisonCpp_::BLT_PARSER_);
         if (return_state_encountered)
-            m_doomed_return_branch_list_.InsertBack_(branch);
+            m_doomed_return_branch_list_.Append_(branch);
         else
-            m_doomed_nonreturn_branch_list_.InsertBack_(branch);
+            m_doomed_nonreturn_branch_list_.Append_(branch);
     }
 }
 
-void <{class_name}::PerformShiftTransition_ (Branch_ const &source_branch, State_ const *target_state)
+void <{class_name}::PerformShiftTransition_ (Branch_ &source_branch, State_ const *target_state)
 {
     assert(target_state >= ms_state_table_ && target_state < ms_state_table_ + ms_state_count_);
 
     m_shift_transitions_were_performed_ = true;
-    // clone the branch and update it
-    Branch_ *shifted_branch = source_branch.Clone_();
-    shifted_branch->m_state_stack_.push_back(target_state);
-    shifted_branch->m_lookahead_nonterminal_token_id_ = none__;
-    // tell the parent to process the shift (adding a Shift_ child if
-    // necessary.  this will also add the new branch to the Shift_ child.
-    source_branch.m_parent_->AddShift_(shifted_branch, target_state->m_associated_rule_);
-    // add the new branch to the parser branch list
-    m_parser_branch_list_.InsertFront_(shifted_branch);
+    source_branch.m_parent_->AddShift_(source_branch, target_state);
+//     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
+//     PrintParserBranchList_();
 }
 
 void <{class_name}::PruneBranchList_ (ParserBranchList_ &branch_list)
@@ -494,8 +491,12 @@ void <{class_name}::PruneBranchList_ (ParserBranchList_ &branch_list)
     // there can't be any pruning when un-shift-blocking because there's
     // no way for a branch with a lookahead nonterminal to fail to shift it.
     assert(!m_is_shift_blocked_);
+    // prune from the end of the list towards the front -- necessary to
+    // prevent certain shift/reduce conflicts from being incorrectly resolved.
+    // this is due to the order which branches are added to the Action_
+    // branch lists.
     ParserBranch_ *parser_branch;
-    while ((parser_branch = branch_list.Front_()) != NULL)
+    while ((parser_branch = branch_list.Back_()) != NULL)
     {
 //         std::cerr << "pruning branch " << static_cast<Branch_ *>(parser_branch) << std::endl;
         delete static_cast<Branch_ *>(parser_branch);
@@ -575,6 +576,14 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
         }
         m_tree_root_ = static_cast<Action_ *>(single_child);
     }
+}
+
+void <{class_name}::PrintParserBranchList_ ()
+{
+    std::cerr << "&&& parser branch list &&&" << std::endl;
+    for (ParserBranch_ *parser_branch = m_parser_branch_list_.Front_(); parser_branch != NULL; parser_branch = parser_branch->Next_())
+        static_cast<Branch_ *>(parser_branch)->Print_(std::cerr, ms_rule_table_, ms_state_table_, 1);
+    std::cerr << "&&& end of parser branch list &&&" << std::endl;
 }
 
 <*{loop(i, _rule_count)

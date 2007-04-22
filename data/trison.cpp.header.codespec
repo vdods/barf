@@ -146,7 +146,6 @@ private:
 // TODO: enums should be in TrisonCpp_ namespace
 
 enum BranchListType_ { BLT_PARSER_ = 0, BLT_ACTION_, BLT_COUNT_ };
-enum ListNodeClassType_ { LNCT_FLOATY_ = 0|0, LNCT_HEAD_ = 0|1, LNCT_TAIL_ = 2|0, LNCT_BODY_ = 2|1 };
 
 template <typename ListNodeSubclass_>
 struct ListNode_
@@ -156,52 +155,52 @@ public:
     ~ListNode_ ()
     {
         // remove this node from its list if it's a body
-        if (NodeClass_() == LNCT_BODY_)
+        if (NodeClass_() == CT_BODY_)
             Remove_();
         // now ensure this node is a floaty or it is a head or tail of an empty list
-        assert(NodeClass_() == LNCT_FLOATY_ ||
-               NodeClass_() == LNCT_HEAD_ && m_next_->NodeClass_() == LNCT_TAIL_ && m_next_->m_prev_ == this ||
-               NodeClass_() == LNCT_TAIL_ && m_prev_->NodeClass_() == LNCT_HEAD_ && m_prev_->m_next_ == this);
+        assert(NodeClass_() == CT_FLOATY_ ||
+               NodeClass_() == CT_HEAD_ && m_next_->NodeClass_() == CT_TAIL_ && m_next_->m_prev_ == this ||
+               NodeClass_() == CT_TAIL_ && m_prev_->NodeClass_() == CT_HEAD_ && m_prev_->m_next_ == this);
     }
 
-    ListNodeClassType_ NodeClass_ () const { return ListNodeClassType_((m_prev_ != NULL ? 2 : 0) | (m_next_ != NULL ? 1 : 0)); }
+    bool IsAnElement_ () const { return NodeClass_() == CT_BODY_; }
     ListNodeSubclass_ *Prev_ ()
     {
-        assert(NodeClass_() != LNCT_HEAD_ && "can't call Prev_() on a head node");
-        return m_prev_->NodeClass_() != LNCT_HEAD_ ? m_prev_ : NULL;
+        assert(NodeClass_() != CT_HEAD_ && "can't call Prev_() on a head node");
+        return m_prev_->NodeClass_() != CT_HEAD_ ? m_prev_ : NULL;
     }
     ListNodeSubclass_ const *Prev_ () const
     {
-        assert(NodeClass_() != LNCT_HEAD_ && "can't call Prev_() on a head node");
-        return m_prev_->NodeClass_() != LNCT_HEAD_ ? m_prev_ : NULL;
+        assert(NodeClass_() != CT_HEAD_ && "can't call Prev_() on a head node");
+        return m_prev_->NodeClass_() != CT_HEAD_ ? m_prev_ : NULL;
     }
     ListNodeSubclass_ *Next_ ()
     {
-        assert(NodeClass_() != LNCT_TAIL_ && "can't call Next_() on a tail node");
-        return m_next_->NodeClass_() != LNCT_TAIL_ ? m_next_ : NULL;
+        assert(NodeClass_() != CT_TAIL_ && "can't call Next_() on a tail node");
+        return m_next_->NodeClass_() != CT_TAIL_ ? m_next_ : NULL;
     }
     ListNodeSubclass_ const *Next_ () const
     {
-        assert(NodeClass_() != LNCT_TAIL_ && "can't call Next_() on a tail node");
-        return m_next_->NodeClass_() != LNCT_TAIL_ ? m_next_ : NULL;
+        assert(NodeClass_() != CT_TAIL_ && "can't call Next_() on a tail node");
+        return m_next_->NodeClass_() != CT_TAIL_ ? m_next_ : NULL;
     }
 
-    void InsertPrev_ (ListNodeSubclass_ *node)
+    void InsertBefore_ (ListNodeSubclass_ *node)
     {
         assert(node != NULL);
-        assert(node->NodeClass_() == LNCT_FLOATY_ && "can't insert a node that is already in a list");
-        assert(NodeClass_() == LNCT_BODY_ || NodeClass_() == LNCT_TAIL_ && "can't insert a node before a head or a floaty");
+        assert(node->NodeClass_() == CT_FLOATY_ && "can't insert a node that is already in a list");
+        assert(NodeClass_() == CT_BODY_ || NodeClass_() == CT_TAIL_ && "can't insert a node before a head or a floaty");
         assert(node != this && "can't insert a node before itself");
         m_prev_->m_next_ = node;
         node->m_prev_ = m_prev_;
         node->m_next_ = static_cast<ListNodeSubclass_ *>(this);
         m_prev_ = node;
     }
-    void InsertNext_ (ListNodeSubclass_ *node)
+    void InsertAfter_ (ListNodeSubclass_ *node)
     {
         assert(node != NULL);
-        assert(node->NodeClass_() == LNCT_FLOATY_ && "can't insert a node that is already in a list");
-        assert(NodeClass_() == LNCT_HEAD_ || NodeClass_() == LNCT_BODY_ && "can't insert a node after a tail or a floaty");
+        assert(node->NodeClass_() == CT_FLOATY_ && "can't insert a node that is already in a list");
+        assert(NodeClass_() == CT_HEAD_ || NodeClass_() == CT_BODY_ && "can't insert a node after a tail or a floaty");
         assert(node != this && "can't insert a node after itself");
         m_next_->m_prev_ = node;
         node->m_next_ = m_next_;
@@ -210,22 +209,26 @@ public:
     }
     ListNodeSubclass_ *Remove_ ()
     {
-        assert(NodeClass_() == LNCT_BODY_);
+        assert(NodeClass_() == CT_BODY_);
         assert(m_prev_->m_next_ == this);
         assert(m_next_->m_prev_ == this);
         m_prev_->m_next_ = m_next_;
         m_next_->m_prev_ = m_prev_;
         m_next_ = NULL;
         m_prev_ = NULL;
-        assert(NodeClass_() == LNCT_FLOATY_);
+        assert(NodeClass_() == CT_FLOATY_);
         return static_cast<ListNodeSubclass_ *>(this);
     }
 
 protected:
 
-    ListNode_ () : m_prev_(NULL), m_next_(NULL) { assert(NodeClass_() == LNCT_FLOATY_); }
+    ListNode_ () : m_prev_(NULL), m_next_(NULL) { assert(NodeClass_() == CT_FLOATY_); }
 
 private:
+
+    enum ClassType_ { CT_FLOATY_ = 0|0, CT_HEAD_ = 0|1, CT_TAIL_ = 2|0, CT_BODY_ = 2|1 };
+
+    ClassType_ NodeClass_ () const { return ClassType_((m_prev_ != NULL ? 2 : 0) | (m_next_ != NULL ? 1 : 0)); }
 
     ListNodeSubclass_ *m_prev_;
     ListNodeSubclass_ *m_next_;
@@ -243,15 +246,15 @@ struct List_
         // these two casts are technically unsafe, but we'll be responsible.
         m_head_.m_next_ = static_cast<ElementType_ *>(&m_tail_);
         m_tail_.m_prev_ = static_cast<ElementType_ *>(&m_head_);
-        assert(m_head_.NodeClass_() == LNCT_HEAD_);
-        assert(m_tail_.NodeClass_() == LNCT_TAIL_);
+        assert(m_head_.NodeClass_() == ListNode_<ElementType_>::CT_HEAD_);
+        assert(m_tail_.NodeClass_() == ListNode_<ElementType_>::CT_TAIL_);
     }
     ~List_ () { assert(IsEmpty_() && "list not empty upon destruction"); }
 
     bool IsEmpty_ () const
     {
-        assert(m_head_.NodeClass_() == LNCT_HEAD_);
-        assert(m_tail_.NodeClass_() == LNCT_TAIL_);
+        assert(m_head_.NodeClass_() == ListNode_<ElementType_>::CT_HEAD_);
+        assert(m_tail_.NodeClass_() == ListNode_<ElementType_>::CT_TAIL_);
         return m_head_.m_next_ == &m_tail_;
     }
     ElementType_ *Front_ () { return m_head_.Next_(); }
@@ -259,7 +262,7 @@ struct List_
     ElementType_ *Back_ () { return m_tail_.Prev_(); }
     ElementType_ const *Back_ () const { return m_tail_.Prev_(); }
 
-    void InsertFront_ (List_<ElementType_> &list)
+    void Prepend_ (List_<ElementType_> &list)
     {
         assert(&list != this);
         if (list.IsEmpty_())
@@ -273,7 +276,7 @@ struct List_
         list.m_head_.m_next_ = static_cast<ElementType_ *>(&list.m_tail_);
         list.m_tail_.m_prev_ = static_cast<ElementType_ *>(&list.m_head_);
     }
-    void InsertBack_ (List_<ElementType_> &list)
+    void Append_ (List_<ElementType_> &list)
     {
         assert(&list != this);
         if (list.IsEmpty_())
@@ -287,54 +290,13 @@ struct List_
         list.m_head_.m_next_ = static_cast<ElementType_ *>(&list.m_tail_);
         list.m_tail_.m_prev_ = static_cast<ElementType_ *>(&list.m_head_);
     }
-    void InsertFront_ (ElementType_ *node) { m_head_.InsertNext_(node); }
-    void InsertBack_ (ElementType_ *node) { m_tail_.InsertPrev_(node); }
+    void Prepend_ (ElementType_ *node) { m_head_.InsertAfter_(node); }
+    void Append_ (ElementType_ *node) { m_tail_.InsertBefore_(node); }
     ElementType_ *RemoveFront_ () { assert(Front_() != NULL && "can't remove from an empty list"); return Front_()->Remove_(); }
     ElementType_ *RemoveBack_ () { assert(Back_() != NULL && "can't remove from an empty list"); return Back_()->Remove_(); }
-/*
-    void Swap_ (List_<ElementType_> &list)
-    {
-        if (IsEmpty_())
-        {
-            if (list.IsEmpty_())
-                ; // do nothing
-            else
-                list.SwapWithEmpty_(*this);
-        }
-        else
-        {
-            if (list.IsEmpty_())
-                SwapWithEmpty_(list);
-            else
-            {
-                std::swap(m_head_.m_next_->m_prev_, list.m_head_.m_next_->m_prev_);
-                std::swap(m_tail_.m_prev_->m_next_, list.m_tail_.m_prev_->m_next_);
-                std::swap(m_head_.m_next_, list.m_head_.m_next_);
-                std::swap(m_tail_.m_prev_, list.m_tail_.m_prev_);
-            }
-        }
-    }
-*/
+
 private:
-/*
-    void SwapWithEmpty_ (List_<ElementType_> &empty)
-    {
-        assert(!IsEmpty_());
-        assert(empty.IsEmpty_());
-        empty.m_head_.m_next_ = m_head_.m_next_;
-        empty.m_tail_.m_prev_ = m_tail_.m_prev_;
-        empty.m_head_.m_next_->m_prev_ = static_cast<ElementType_ *>(&empty.m_head_);
-        empty.m_tail_.m_prev_->m_next_ = static_cast<ElementType_ *>(&empty.m_tail_);
-        m_head_.m_next_ = static_cast<ElementType_ *>(&m_tail_);
-        m_tail_.m_prev_ = static_cast<ElementType_ *>(&m_head_);
-        assert(empty.m_head_.NodeClass_() == LNCT_HEAD_);
-        assert(empty.m_tail_.NodeClass_() == LNCT_TAIL_);
-        assert(empty.m_head_.m_next_->NodeClass_() == LNCT_BODY_);
-        assert(empty.m_tail_.m_prev_->NodeClass_() == LNCT_BODY_);
-        assert(m_head_.NodeClass_() == LNCT_HEAD_);
-        assert(m_tail_.NodeClass_() == LNCT_TAIL_);
-    }
-*/
+
     ListNode_<ElementType_> m_head_;
     ListNode_<ElementType_> m_tail_;
 }; // end of struct TrisonCpp_::List_<ElementType_>
@@ -510,8 +472,6 @@ protected:
         {
             Branch_ *cloned = new Branch_(m_state_stack_, m_lookahead_nonterminal_token_id_);
             assert(cloned->m_parent_ == NULL);
-            assert(cloned->ParserBranch_::NodeClass_() == LNCT_FLOATY_);
-            assert(cloned->ActionBranch_::NodeClass_() == LNCT_FLOATY_);
             // duplicate the shift reference list
             for (ShiftReferenceList_::const_iterator it = m_shift_reference_list_.begin(),
                                                     it_end = m_shift_reference_list_.end();
@@ -570,13 +530,13 @@ protected:
     }; // end of struct TrisonCpp_::Npda_::Branch_
     struct ActionBranchList_ : public List_<ActionBranch_>
     {
-        void InsertFront_ (Branch_ *node) { List_<ActionBranch_>::InsertFront_(static_cast<ActionBranch_ *>(node)); }
-        void InsertBack_ (Branch_ *node) { List_<ActionBranch_>::InsertBack_(static_cast<ActionBranch_ *>(node)); }
+        void Prepend_ (Branch_ *node) { List_<ActionBranch_>::Prepend_(static_cast<ActionBranch_ *>(node)); }
+        void Append_ (Branch_ *node) { List_<ActionBranch_>::Append_(static_cast<ActionBranch_ *>(node)); }
     }; // end of struct TrisonCpp_::Npda_::ActionBranchList_
     struct ParserBranchList_ : public List_<ParserBranch_>
     {
-        void InsertFront_ (Branch_ *node) { List_<ParserBranch_>::InsertFront_(static_cast<ParserBranch_ *>(node)); }
-        void InsertBack_ (Branch_ *node) { List_<ParserBranch_>::InsertBack_(static_cast<ParserBranch_ *>(node)); }
+        void Prepend_ (Branch_ *node) { List_<ParserBranch_>::Prepend_(static_cast<ParserBranch_ *>(node)); }
+        void Append_ (Branch_ *node) { List_<ParserBranch_>::Append_(static_cast<ParserBranch_ *>(node)); }
     }; // end of struct TrisonCpp_::Npda_::ParserBranchList_
     struct Action_ : public TreeNode_
     {
@@ -614,6 +574,12 @@ protected:
         }
 
         bool HasChildren_ () const { return m_reduce_child_ != NULL || m_shift_child_ != NULL || !m_action_branch_list_.IsEmpty_(); }
+        bool AssertActionAndParserBranchListsAreConsistent_ (ParserBranchList_ const &parser_branch_list) const
+        {
+            ParserBranch_ const *parser_branch = parser_branch_list.Front_();
+            AssertActionAndParserBranchListsAreConsistent_(parser_branch);
+            return true; // dummy value so this can be wrapped in assert()
+        }
         TreeNode_ *SingleChild_ ()
         {
             if (m_reduce_child_ != NULL && m_shift_child_ == NULL && m_action_branch_list_.IsEmpty_())
@@ -625,6 +591,27 @@ protected:
             else
                 return NULL;
         }
+        ActionBranch_ *LastSubordinateBranch_ ()
+        {
+            if (m_shift_child_ != NULL)
+            {
+                ActionBranch_ *last_subordinate_branch = m_shift_child_->LastSubordinateBranch_();
+                if (last_subordinate_branch != NULL)
+                    return last_subordinate_branch;
+            }
+            if (m_reduce_child_ != NULL)
+            {
+                ActionBranch_ *last_subordinate_branch = m_reduce_child_->LastSubordinateBranch_();
+                if (last_subordinate_branch != NULL)
+                    return last_subordinate_branch;
+            }
+            {
+                ActionBranch_ *last_subordinate_branch = m_action_branch_list_.Back_();
+                if (last_subordinate_branch != NULL)
+                    return last_subordinate_branch;
+            }
+            return NULL;
+        }
         bool ReduceActionWouldSucceed_ (Rule_ const *reduction_rule) const
         {
             assert(reduction_rule != NULL);
@@ -632,20 +619,16 @@ protected:
             return m_reduce_child_ == NULL || !Rule_::ReduceReduceConflict_::IsHigherPriority_(*m_reduce_child_->m_reduction_rule_, *reduction_rule);
         }
 
-        void AddChild_ (TreeNode_ *child)
+        void AddChildBranch_ (Branch_ *child)
         {
             assert(child != NULL);
             assert(child->m_parent_ == NULL);
-            switch (child->m_tree_node_type_)
-            {
-                default:
-                case ACTION_: assert(false && "this should never happen"); break;
-                case BRANCH_: m_action_branch_list_.InsertBack_(static_cast<Branch_ *>(child)); break;
-                case REDUCE_: assert(m_reduce_child_ == NULL); m_reduce_child_ = static_cast<Reduce_ *>(child); break;
-                case SHIFT_ : assert(m_shift_child_ == NULL); m_shift_child_ = static_cast<Shift_ *>(child); break;
-            }
+            assert(!child->ActionBranch_::IsAnElement_());
+            assert(!child->ParserBranch_::IsAnElement_());
+            assert(child->m_tree_node_type_ == BRANCH_);
             child->m_parent_ = this;
-            ResolveShiftReduceConflicts_();
+            // no need to call ResolveShiftReduceConflicts_() because it is
+            // a no-op when the action branch list is non-empty.
         }
         void RemoveChild_ (TreeNode_ *child)
         {
@@ -662,10 +645,26 @@ protected:
             child->m_parent_ = NULL;
             ResolveShiftReduceConflicts_();
         }
-        void SetReduce_ (Branch_ *reduced_branch, Rule_ const *reduction_rule)
+        void AddEpsilonClosure_ (Branch_ &source_branch, StateStack_ &extra_state_stack)
         {
+            assert(source_branch.m_parent_ == this);
+            // TODO: here is where to check for branch collisions
+
+            // clone the source branch, push the states contained in extra_state_stack.
+            Branch_ *closed_branch = source_branch.Clone_();
+            assert(closed_branch->m_parent_ == NULL);
+            closed_branch->m_is_epsilon_closed_ = true;
+            closed_branch->m_state_stack_.insert(closed_branch->m_state_stack_.end(), extra_state_stack.begin(), extra_state_stack.end());
+            // add the closed branch as a child
+            AddChildBranch_(closed_branch);
+            // add the closed branch to the action and parser branch lists before source_branch
+            source_branch.ActionBranch_::InsertBefore_(closed_branch);
+            source_branch.ParserBranch_::InsertBefore_(closed_branch);
+        }
+        void AddReduce_ (Branch_ &source_branch, Rule_ const *reduction_rule)
+        {
+            assert(source_branch.m_parent_ == this);
             assert(m_shift_child_ == NULL);
-            assert(reduced_branch != NULL);
             assert(reduction_rule != NULL);
             assert(ReduceActionWouldSucceed_(reduction_rule) && "nice try, jerk");
             // three possible cases here: 1. no existing reduce child, so the
@@ -682,23 +681,91 @@ protected:
                 m_reduce_child_ = new Reduce_(reduction_rule);
                 m_reduce_child_->m_parent_ = this;
             }
-            // in all cases, we add the incoming branch to the reduce child
-            m_reduce_child_->AddChild_(reduced_branch);
+            // clone the source branch and operate on it
+            Branch_ *reduced_branch = source_branch.Clone_();
+            assert(reduced_branch != NULL);
+            reduced_branch->m_state_stack_.resize(reduced_branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 1));
+            reduced_branch->m_lookahead_nonterminal_token_id_ = reduction_rule->m_reduction_nonterminal_token_id_;
+            // add the reduced branch as a child of the reduce child
+            m_reduce_child_->AddChildBranch_(reduced_branch);
+            // add the reduced branch to the proper place in the action and parser
+            // branch lists indicated by members in various action branch lists.
+            if (m_reduce_child_->m_action_branch_list_.IsEmpty_())
+            {
+                // if the reduce child's action branch list is empty, add the
+                // reduced branch to the front of the empty reduce child's action
+                // branch list, and to parser branch list corresponding to the end
+                // of this node's action branch list.
+                assert(!m_action_branch_list_.IsEmpty_());
+                assert(m_action_branch_list_.Back_() != NULL);
+                static_cast<Branch_ *>(m_action_branch_list_.Back_())->ParserBranch_::InsertAfter_(reduced_branch);
+                m_reduce_child_->m_action_branch_list_.Prepend_(reduced_branch);
+            }
+            else
+            {
+                // otherwise, we can add it directly before the first branch
+                // belonging to the reduce child -- in both branch lists.
+                assert(m_reduce_child_->m_action_branch_list_.Front_() != NULL);
+                static_cast<Branch_ *>(m_reduce_child_->m_action_branch_list_.Front_())->ParserBranch_::InsertBefore_(reduced_branch);
+                m_reduce_child_->m_action_branch_list_.Front_()->InsertBefore_(reduced_branch);
+            }
         }
-        void AddShift_ (Branch_ *shifted_branch, Rule_ const *associated_rule)
+        void AddShift_ (Branch_ &source_branch, State_ const *target_state)
         {
-            assert(shifted_branch != NULL);
+            assert(source_branch.m_parent_ == this);
             // associated_rule may be NULL when shifting into a return state
             if (m_shift_child_ == NULL)
             {
                 m_shift_child_ = new Shift_();
                 m_shift_child_->m_parent_ = this;
             }
-            m_shift_child_->AddChild_(shifted_branch);
+            // clone the source branch and operate on it
+            Branch_ *shifted_branch = source_branch.Clone_();
+            assert(shifted_branch != NULL);
+            shifted_branch->m_state_stack_.push_back(target_state);
+            shifted_branch->m_lookahead_nonterminal_token_id_ = none__;
+//             std::cerr << "adding parser branch " << static_cast<ParserBranch_ *>(shifted_branch)
+//                       << " which is action branch " << static_cast<ActionBranch_ *>(shifted_branch)
+//                       << std::endl;
+            // add the shifted branch as a child of the shift child
+            m_shift_child_->AddChildBranch_(shifted_branch);
+            // add the shifted branch to the proper place in the parser branch list
+            // indicated by members in various action branch lists.
+            if (m_shift_child_->m_action_branch_list_.IsEmpty_())
+            {
+                // if the shift child's action branch list is empty, we'll have to
+                // attempt to use elements of the reduce child to determine where to
+                // add the branch into the branch lists.
+                ActionBranch_ *last_reduce_subordinate_branch = m_reduce_child_ != NULL ? m_reduce_child_->LastSubordinateBranch_() : NULL;
+                if (last_reduce_subordinate_branch == NULL)
+                {
+                    // if there are no reduce subordinate branches, we'll add it after the
+                    // this node's last action branch list member.
+                    assert(!m_action_branch_list_.IsEmpty_());
+                    assert(m_action_branch_list_.Back_() != NULL);
+                    static_cast<Branch_ *>(m_action_branch_list_.Back_())->ParserBranch_::InsertAfter_(shifted_branch);
+                }
+                else
+                {
+                    // otherwise, we can add it to the parser branch list directly after
+                    // the branch corresponding to the last branch in the parser branch
+                    // list subordinate to the reduce child.
+                    static_cast<Branch_ *>(last_reduce_subordinate_branch)->ParserBranch_::InsertAfter_(shifted_branch);
+                }
+            }
+            else
+            {
+                // otherwise, we can add it directly before the first branch
+                // belonging to the shift child.  NOTE: this could be InsertAfter_
+                assert(m_shift_child_->m_action_branch_list_.Front_() != NULL);
+                static_cast<Branch_ *>(m_shift_child_->m_action_branch_list_.Front_())->ParserBranch_::InsertBefore_(shifted_branch);
+            }
+            // add the shifted branch to the shift child's action branch list.
+            m_shift_child_->m_action_branch_list_.Prepend_(shifted_branch);
             // only add a shift reference if there could be a conflict
             if (m_reduce_child_ != NULL)
             {
-                ShiftReference_ shift_reference = m_shift_child_->EnsureShiftReferenceExists_(associated_rule);
+                ShiftReference_ shift_reference = m_shift_child_->EnsureShiftReferenceExists_(target_state->m_associated_rule_);
                 assert(&*shift_reference == m_shift_child_);
                 shifted_branch->m_shift_reference_list_.push_back(shift_reference);
             }
@@ -851,6 +918,24 @@ protected:
 
     private:
 
+        void AssertActionAndParserBranchListsAreConsistent_ (ParserBranch_ const *&parser_branch) const
+        {
+            if (parser_branch == NULL)
+                assert(!HasChildren_());
+            for (ActionBranch_ const *action_branch = m_action_branch_list_.Front_();
+                 action_branch != NULL;
+                 action_branch = action_branch->Next_(), parser_branch = parser_branch != NULL ? parser_branch->Next_() : parser_branch)
+            {
+//                 std::cerr << "checking parser branch " << static_cast<Branch_ const *>(parser_branch)
+//                           << " against action branch " << static_cast<Branch_ const *>(action_branch)
+//                           << std::endl;
+                assert(parser_branch != NULL && static_cast<Branch_ const *>(parser_branch) == static_cast<Branch_ const *>(action_branch));
+            }
+            if (m_reduce_child_ != NULL)
+                m_reduce_child_->AssertActionAndParserBranchListsAreConsistent_(parser_branch);
+            if (m_shift_child_ != NULL)
+                m_shift_child_->AssertActionAndParserBranchListsAreConsistent_(parser_branch);
+        }
         void PrivatePrint_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
             assert(m_parent_ == NULL);
@@ -1111,13 +1196,14 @@ private:
     ParserReturnCode Parse_ (StartNonterminal::Name nonterminal_to_parse_);
     Token_ &ShiftLookaheadToken_ ();
     void PerformEpsilonClosure_ ();
-    void PerformEpsilonClosure_ (Branch_ const &source_branch, StateStack_ &extra_state_stack);
+    void PerformEpsilonClosure_ (Branch_ &source_branch, StateStack_ &extra_state_stack);
     void PerformReduceTransitions_ ();
-    void PerformReduceTransition_ (Branch_ const &source_branch, Rule_ const *reduction_rule);
+    void PerformReduceTransition_ (Branch_ &source_branch, Rule_ const *reduction_rule);
     void PerformShiftTransitions_ ();
-    void PerformShiftTransition_ (Branch_ const &source_branch, State_ const *target_state);
+    void PerformShiftTransition_ (Branch_ &source_branch, State_ const *target_state);
     void PruneBranchList_ (ParserBranchList_ &branch_list);
     void ExecuteAndRemoveTrunk_ ();
+    void PrintParserBranchList_ (); // TEMP
     // end blah
 
 
