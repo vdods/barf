@@ -25,12 +25,8 @@ bool GetCharNeedsHexEscaping (Uint8 const c)
     // normal escaping will suffice for these (a b t n v f r are contiguous).
     if (c == '\0' || c >= '\a' && c <= '\r')
         return false;
-
-    if (g_can_print_extended_ascii)
-        // true if c is below space or equal to DEL (0x7F).
-        return c < ' ' || c == 0x7F;
+    // otherwise, only use hex escaping for anything outside the printables
     else
-        // true if c is outside the range of space to tilde.
         return c < ' ' || c > '~';
 }
 

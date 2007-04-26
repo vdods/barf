@@ -156,4 +156,10 @@
 // When present, indicates that the code associated with debug spew will be
 // generated; the methods Get/SetDebugSpewFlags will be generated.
 %add_optional_directive generate_debug_spew_code
+// When present, will prevent the timestamp from being added to the top of
+// the generated source code files (useful when the generated files are
+// checked into a version control system).  The default behavior is to 
+// put a timestamp in the generated header and implementation files.
+%add_optional_directive dont_generate_timestamps
+
 // TODO: add BARF-developer debug code directive

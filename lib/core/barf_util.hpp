@@ -17,9 +17,6 @@
 
 #include "barf_filelocation.hpp"
 
-// the application must define in the global namespace the following symbol:
-extern bool g_can_print_extended_ascii;
-
 namespace Barf {
 
 struct Tabs

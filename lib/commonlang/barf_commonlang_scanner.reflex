@@ -265,6 +265,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 // ///////////////////////////////////////////////////////////////////////////
 
 %language.cpp.generate_debug_spew_code
+%language.cpp.dont_generate_timestamps
 
 // ///////////////////////////////////////////////////////////////////////////
 // language-independent scanner directives

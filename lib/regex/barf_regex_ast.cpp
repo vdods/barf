@@ -183,8 +183,6 @@ void BracketCharacterSet::AddCharacterClass (string const &character_class)
     {
         // space is not included in this class
         AddCharacterRange('!', '~');
-        if (g_can_print_extended_ascii)
-            AddCharacterRange('\x80', '\xFF');
     }
     else if (character_class == "space")
     {
@@ -211,17 +209,11 @@ void BracketCharacterSet::AddCharacterClass (string const &character_class)
     else if (character_class == "cntrl")
     {
         AddCharacterRange('\x00', '\x1F');
-        // space through tilde are not included in this class
-        if (g_can_print_extended_ascii)
-            AddCharacter('\x7F');
-        else
-            AddCharacterRange('\x7F', '\xFF');
+        AddCharacterRange('\x7F', '\xFF');
     }
     else if (character_class == "print")
     {
         AddCharacterRange(' ', '~');
-        if (g_can_print_extended_ascii)
-            AddCharacterRange('\x80', '\xFF');
     }
     else if (character_class == "xdigit")
     {

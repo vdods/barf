@@ -8,7 +8,8 @@
 - shorten the enabled_verbosity names (and rename scanning/parsing spew to
   scanner/parser)
 - add dot graph generation for ASTs
-- add recursive block comments into barf_commonlang_scanner.reflex
+- add recursive block comments into barf_commonlang_scanner.reflex (think 
+  about how this will interact with other-languaged code blocks)
 - move DIRECTORY_SLASH_* into config.h
 - rename OutputDir to OutputDirectory once the other options have been
   deprecated
@@ -24,7 +25,7 @@
 - move all AST usage to smart pointers to ease-ify stuff and to escape the
   woes of memory leaks (not like it matters that much in this context) --
   or do comprehensive deleting of stuff (which would probably set a better
-  example for people who read the source code).
+  example for people who read the source code of the parsers/scanners).
 - get rid of AST hierarchy overviews once doxygen docs are to some decent state
 - use AstCommon::Directive::GetDirectiveString in error messages instead of
   creating the error messages by hand -- make all directives derive from
@@ -37,8 +38,6 @@
 - make some sort of AST class framework so very little typing (and redundancy)
   is required.  preferably make the members public
 - see if i can get rid of exceptions
-- get rid of that can-print-extended-ascii crap and just always use escape chars
-- add option to disable the timestamp at top of generated code
 - make all enums alphabetical (unless they can't be) to make an easy/consistent
   order for the enum-string functions
 

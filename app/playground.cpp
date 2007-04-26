@@ -19,7 +19,6 @@ using namespace Barf;
 // these globals are required by barf_message.h
 OptionsBase *g_options = NULL;
 bool g_errors_encountered = false;
-bool g_can_print_extended_ascii = false;
 
 int main (int argc, char **argv)
 {
