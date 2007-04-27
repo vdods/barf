@@ -68,11 +68,11 @@ void Graph::PrintDotGraph (ostream &stream, string const &graph_name) const
         {
             Transition const &transition = *it;
 
-            string hex_color(FORMAT(setfill('0') << setw(6) << hex << transition.m_hex_color));
-            stream << "        edge [label=" << GetStringLiteral(transition.m_label)
+            string hex_color(FORMAT(setfill('0') << setw(6) << hex << transition.HexColor()));
+            stream << "        edge [label=" << GetStringLiteral(transition.Label())
                    << ", fontname=courier, color=\"#" << hex_color << "\", fontcolor=\"#" << hex_color << "\", dir="
                    << (transition.HasTarget() ? "forward" : "none") << "];" << endl;
-            stream << "        " << i << " -> " << (transition.HasTarget() ? transition.m_target_index : i) << endl;
+            stream << "        " << i << " -> " << (transition.HasTarget() ? transition.TargetIndex() : i) << endl;
         }
     }
     stream << "    }" << endl

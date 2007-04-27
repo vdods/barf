@@ -80,7 +80,7 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
          ++it)
     {
         Graph::Transition const &transition = *it;
-        switch (transition.m_transition_type)
+        switch (transition.Type())
         {
             case TT_INPUT_ATOM:
             case TT_INPUT_ATOM_RANGE:
@@ -90,23 +90,23 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
 
             case TT_EPSILON:
                 // if it's an epsilon transition, recurse.
-                PerformTransitionClosure(graph_context, transition.m_target_index, conditional, target_state_map, visited);
+                PerformTransitionClosure(graph_context, transition.TargetIndex(), conditional, target_state_map, visited);
                 break;
 
             case TT_CONDITIONAL:
             {
-                // get the Conditional value from transition.m_transition_type
-                Conditional transition_conditional(GetConditionalFromConditionalType(transition.m_data_0));
+                // get the Conditional value from transition.Type()
+                Conditional transition_conditional(GetConditionalFromConditionalType(transition.Data0()));
                 // check if it conflicts with the passed-in conditional
                 if (conditional.ConflictsWith(transition_conditional))
-                    throw string("conditional ") + GetConditionalTypeString(transition.m_data_0) + " conflicts with previous adjacent conditionals";
+                    throw string("conditional ") + GetConditionalTypeString(transition.Data0()) + " conflicts with previous adjacent conditionals";
                 // compose this transition's conditional with the one passed-in.
                 Conditional transitioned_conditional(
                     conditional.m_mask|transition_conditional.m_mask,
                     conditional.m_flags|transition_conditional.m_flags);
                 // recurse to the state indicated by this transition, composing
                 // this transition's conditional with the current.
-                PerformTransitionClosure(graph_context, transition.m_target_index, transitioned_conditional, target_state_map, visited);
+                PerformTransitionClosure(graph_context, transition.TargetIndex(), transitioned_conditional, target_state_map, visited);
                 break;
             }
         }
@@ -146,8 +146,8 @@ void PerformEpsilonClosure (GraphContext const &graph_context, Uint32 nfa_state,
     {
         Graph::Transition const &transition = *it;
         // if it's an epsilon transition, recurse.
-        if (transition.m_transition_type == TT_EPSILON)
-            PerformEpsilonClosure(graph_context, transition.m_target_index, dfa_state, visited);
+        if (transition.Type() == TT_EPSILON)
+            PerformEpsilonClosure(graph_context, transition.TargetIndex(), dfa_state, visited);
         // otherwise add it to the closed dfa state
         else
             dfa_state.insert(nfa_state);
@@ -258,11 +258,11 @@ Uint32 GetDfaStateIndex (GraphContext &graph_context, DfaState const &dfa_state,
                      ++trans_it)
                 {
                     Graph::Transition const &transition = *trans_it;
-                    if (transition.m_transition_type == TT_INPUT_ATOM)
-                        transition_map[transition.m_data_0].insert(transition.m_target_index);
-                    else if (transition.m_transition_type == TT_INPUT_ATOM_RANGE)
-                        for (Uint32 atom = transition.m_data_0; atom <= transition.m_data_1; ++atom)
-                            transition_map[atom].insert(transition.m_target_index);
+                    if (transition.Type() == TT_INPUT_ATOM)
+                        transition_map[transition.Data0()].insert(transition.TargetIndex());
+                    else if (transition.Type() == TT_INPUT_ATOM_RANGE)
+                        for (Uint32 atom = transition.Data0(); atom <= transition.Data1(); ++atom)
+                            transition_map[atom].insert(transition.TargetIndex());
                 }
             }
             // add the transitions from the above-made map

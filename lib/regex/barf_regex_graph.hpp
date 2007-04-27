@@ -52,7 +52,7 @@ struct InputAtomRangeTransition : public Graph::Transition
             range_lower,
             range_upper,
             target_index,
-            string("[") + GetCharacterLiteral(m_data_0, false) + "-" + GetCharacterLiteral(m_data_1, false) + "]")
+            string("[") + GetCharacterLiteral(range_lower, false) + "-" + GetCharacterLiteral(range_upper, false) + "]")
     { }
 }; // end of struct InputAtomRangeTransition
 
@@ -70,7 +70,7 @@ struct DfaConditionalTransition : public Graph::Transition
         :
         Graph::Transition(TT_CONDITIONAL, mask, flags, target_index, gs_empty_string, 0x0000FF)
     {
-        m_label = GetDfaTransitionString(*this);
+        SetLabel(GetDfaTransitionString(*this));
     }
 }; // end of struct ConditionalTransition
 
@@ -80,7 +80,7 @@ struct NfaConditionalTransition : public Graph::Transition
         :
         Graph::Transition(TT_CONDITIONAL, type, type, target_index, gs_empty_string, 0x0000FF)
     {
-        m_label = GetNfaTransitionString(*this);
+        SetLabel(GetNfaTransitionString(*this));
     }
 }; // end of struct ConditionalTransition
 

@@ -60,9 +60,8 @@
 // core
 // ///////////////////////////////////////////////////////////////////////////
 
-- change Graph::Transition's raw member access into accessors
+- change TransitionType into Graph::Transition::Type ?
 - change Graph::Node::Data's coloring stuff to just use integers instead of strings
-- change TransitionType to be Uint8
 - rename AstCommon::Ast to Ast::Base
 - typedef Graph::Node::Index and use that everywhere
 - in util's GetEscapedString, make it read overflowed hex chars
@@ -70,8 +69,6 @@
 - add "-i" "--print-include-data-path" option to OptionsBase
 - make a GraphNodeIndex vector type in barf_graph.h (replacing the ad-hoc
   vector<Uint32> used all over the place)
-- somehow allow subgraphs, so that better dot graphs can be made (for reflex
-  primarily)
 
 // ///////////////////////////////////////////////////////////////////////////
 // langspec

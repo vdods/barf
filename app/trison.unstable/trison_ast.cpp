@@ -651,23 +651,23 @@ void Representation::GenerateAutomatonSymbols (
 
                 npda_transition_type_index_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_transition_type),
+                        Sint32(transition.Type()),
                         FileLocation::ms_invalid));
                 npda_transition_type_name_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        GetTransitionTypeString(transition.m_transition_type),
+                        GetTransitionTypeString(transition.Type()),
                         FileLocation::ms_invalid));
                 npda_transition_data_index_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_data_0),
+                        Sint32(transition.Data0()),
                         FileLocation::ms_invalid));
                 npda_transition_data_name_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        transition.m_label,
+                        transition.Label(),
                         FileLocation::ms_invalid));
                 npda_transition_target_node_index_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_target_index),
+                        Sint32(transition.TargetIndex()),
                         FileLocation::ms_invalid));
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);

@@ -18,9 +18,10 @@
 
 namespace Barf {
 
-// again, i think it's probably pretty safe to assume there will not be more
-// than 2^16 different Graph::Transition types.
-typedef Uint16 TransitionType;
+// There will never be more than 2^8 different Graph::Transition types.  In 
+// fact, there are 4 ::Barf::Regex's transition type enums, and 4 ::Trison 
+// transition type enums.  ::Reflex uses the regex transition type enums.
+typedef Uint8 TransitionType;
 
 class Graph
 {
@@ -32,15 +33,13 @@ public:
 
         static Uint32 const ms_no_target_index = UINT32_UPPER_BOUND;
 
-        TransitionType m_transition_type;
-        Uint32 m_data_0;
-        Uint32 m_data_1;
-        Uint32 m_target_index;
-        string m_label;
-        Uint32 m_hex_color;
-        // TODO: add "has target" accessor
-
         bool HasTarget () const { return m_target_index != ms_no_target_index; }
+        TransitionType Type () const { return m_transition_type; }
+        Uint32 Data0 () const { return m_data_0; }
+        Uint32 Data1 () const { return m_data_1; }
+        Uint32 TargetIndex () const { return m_target_index; }
+        string const &Label () const { return m_label; }
+        Uint32 HexColor () const { return m_hex_color; }
 
     protected:
 
@@ -55,22 +54,33 @@ public:
         {
             assert(m_hex_color <= 0xFFFFFF);
         }
+        
+        void SetLabel (string const &label) { m_label = label; }
+        
+    private:
+    
+        TransitionType m_transition_type;
+        Uint32 m_data_0;
+        Uint32 m_data_1;
+        Uint32 m_target_index;
+        string m_label;
+        Uint32 m_hex_color;
     }; // end of struct Transition
 
     struct TransitionOrder
     {
         bool operator () (Transition const &t0, Transition const &t1)
         {
-            return t0.m_transition_type < t1.m_transition_type
+            return t0.Type() < t1.Type()
                    ||
-                   t0.m_transition_type == t1.m_transition_type &&
-                   t0.m_data_0 < t1.m_data_0
+                   t0.Type() == t1.Type() &&
+                   t0.Data0() < t1.Data0()
                    ||
-                   t0.m_data_0 == t1.m_data_0 &&
-                   t0.m_data_1 < t1.m_data_1
+                   t0.Data0() == t1.Data0() &&
+                   t0.Data1() < t1.Data1()
                    ||
-                   t0.m_data_1 == t1.m_data_1 &&
-                   t0.m_target_index < t1.m_target_index;
+                   t0.Data1() == t1.Data1() &&
+                   t0.TargetIndex() < t1.TargetIndex();
         }
     };
 

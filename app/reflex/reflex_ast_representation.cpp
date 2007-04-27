@@ -321,23 +321,23 @@ void Representation::GenerateAutomatonSymbols (
 
                 nfa_transition_type_integer_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_transition_type),
+                        Sint32(transition.Type()),
                         FileLocation::ms_invalid));
                 nfa_transition_type_name_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Regex::GetTransitionTypeString(transition.m_transition_type),
+                        Regex::GetTransitionTypeString(transition.Type()),
                         FileLocation::ms_invalid));
                 nfa_transition_data_0_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_data_0),
+                        Sint32(transition.Data0()),
                         FileLocation::ms_invalid));
                 nfa_transition_data_1_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_data_1),
+                        Sint32(transition.Data1()),
                         FileLocation::ms_invalid));
                 nfa_transition_target_node_index_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_target_index),
+                        Sint32(transition.TargetIndex()),
                         FileLocation::ms_invalid));
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);
@@ -464,23 +464,23 @@ void Representation::GenerateAutomatonSymbols (
 
                 dfa_transition_type_integer_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_transition_type),
+                        Sint32(transition.Type()),
                         FileLocation::ms_invalid));
                 dfa_transition_type_name_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Regex::GetTransitionTypeString(transition.m_transition_type),
+                        Regex::GetTransitionTypeString(transition.Type()),
                         FileLocation::ms_invalid));
                 dfa_transition_data_0_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_data_0),
+                        Sint32(transition.Data0()),
                         FileLocation::ms_invalid));
                 dfa_transition_data_1_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_data_1),
+                        Sint32(transition.Data1()),
                         FileLocation::ms_invalid));
                 dfa_transition_target_node_index_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        Sint32(transition.m_target_index),
+                        Sint32(transition.TargetIndex()),
                         FileLocation::ms_invalid));
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);

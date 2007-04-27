@@ -28,10 +28,10 @@ string const &GetTransitionTypeString (TransitionType transition_type)
 
 string GetDfaTransitionString (Graph::Transition const &transition)
 {
-    if (transition.m_transition_type == TT_CONDITIONAL)
+    if (transition.Type() == TT_CONDITIONAL)
     {
         string retval;
-        Conditional conditional(transition.m_data_0, transition.m_data_1);
+        Conditional conditional(transition.Data0(), transition.Data1());
         while (conditional.m_mask != 0)
         {
             ConditionalType conditional_type = GetConditionalTypeFromConditional(conditional);
@@ -42,15 +42,15 @@ string GetDfaTransitionString (Graph::Transition const &transition)
         return retval;
     }
     else
-        return GetTransitionTypeString(transition.m_transition_type);
+        return GetTransitionTypeString(transition.Type());
 }
 
 string GetNfaTransitionString (Graph::Transition const &transition)
 {
-    if (transition.m_transition_type == TT_CONDITIONAL)
-        return GetConditionalTypeString(transition.m_data_0);
+    if (transition.Type() == TT_CONDITIONAL)
+        return GetConditionalTypeString(transition.Data0());
     else
-        return GetTransitionTypeString(transition.m_transition_type);
+        return GetTransitionTypeString(transition.Type());
 }
 
 } // end of namespace Regex
