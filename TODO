@@ -60,8 +60,6 @@
 // core
 // ///////////////////////////////////////////////////////////////////////////
 
-- change TransitionType into Graph::Transition::Type ?
-- change Graph::Node::Data's coloring stuff to just use integers instead of strings
 - rename AstCommon::Ast to Ast::Base
 - typedef Graph::Node::Index and use that everywhere
 - in util's GetEscapedString, make it read overflowed hex chars
@@ -69,6 +67,7 @@
 - add "-i" "--print-include-data-path" option to OptionsBase
 - make a GraphNodeIndex vector type in barf_graph.h (replacing the ad-hoc
   vector<Uint32> used all over the place)
+- move Graph::TransitionOrder into Graph::Transition::Order
 
 // ///////////////////////////////////////////////////////////////////////////
 // langspec
@@ -136,6 +135,7 @@
 - fix up the \x stuff in the scanner (disallow \x alone, require a hex char)
 - verify that '\0' cannot be used as a transition atom
 - rename _nfa/_dfa_node_* to _nfa/_dfa_state_*
+- move NodeData into separate file
 
 // ///////////////////////////////////////////////////////////////////////////
 // bpp

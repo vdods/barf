@@ -42,7 +42,7 @@ struct ReduceTransition : public Graph::Transition
 {
     ReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name)
         :
-        Graph::Transition(TT_REDUCE, reduction_rule_index, reduction_rule_index, ms_no_target_index, "reduce: " + nonterminal_name, 0x00AA00)
+        Graph::Transition(TT_REDUCE, reduction_rule_index, reduction_rule_index, ms_no_target_index, "reduce: " + nonterminal_name, Graph::Color(0x00AA00))
     { }
 }; // end of struct ReduceTransition
 
@@ -50,7 +50,7 @@ struct ReturnTransition : public Graph::Transition
 {
     ReturnTransition (string const &nonterminal_name)
         :
-        Graph::Transition(TT_RETURN, 0, 0, ms_no_target_index, "return: " + nonterminal_name, 0x0000FF)
+        Graph::Transition(TT_RETURN, 0, 0, ms_no_target_index, "return: " + nonterminal_name, Graph::Color(0x0000FF))
     { }
 }; // end of struct ReturnTransition
 
@@ -58,7 +58,7 @@ struct EpsilonTransition : public Graph::Transition
 {
     EpsilonTransition (Uint32 target_index)
         :
-        Graph::Transition(TT_EPSILON, 0, 0, target_index, "(e)", 0xEF280E)
+        Graph::Transition(TT_EPSILON, 0, 0, target_index, "(e)", Graph::Color(0xEF280E))
     { }
 }; // end of struct EpsilonTransition
 

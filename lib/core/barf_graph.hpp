@@ -27,6 +27,17 @@ class Graph
 {
 public:
 
+    struct Color
+    {
+        explicit Color (Uint32 hex_value) : m_hex_value(hex_value) { assert(m_hex_value <= 0xFFFFFF); }
+        
+    private:
+    
+        Uint32 m_hex_value;
+        
+        friend ostream &operator << (ostream &stream, Color const &color);
+    }; // end of struct Graph::Color
+
     struct Transition
     {
         typedef string (*Stringify)(Transition const &);
@@ -39,21 +50,19 @@ public:
         Uint32 Data1 () const { return m_data_1; }
         Uint32 TargetIndex () const { return m_target_index; }
         string const &Label () const { return m_label; }
-        Uint32 HexColor () const { return m_hex_color; }
+        Color const &DotGraphColor () const { return m_dot_graph_color; }
 
     protected:
 
-        Transition (TransitionType type, Uint32 data_0, Uint32 data_1, Uint32 target_index, string const &label, Uint32 hex_color = 0x000000)
+        Transition (TransitionType type, Uint32 data_0, Uint32 data_1, Uint32 target_index, string const &label, Color const &dot_graph_color = Color(0x000000))
             :
             m_transition_type(type),
             m_data_0(data_0),
             m_data_1(data_1),
             m_target_index(target_index),
             m_label(label),
-            m_hex_color(hex_color)
-        {
-            assert(m_hex_color <= 0xFFFFFF);
-        }
+            m_dot_graph_color(dot_graph_color)
+        { }
         
         void SetLabel (string const &label) { m_label = label; }
         
@@ -64,8 +73,8 @@ public:
         Uint32 m_data_1;
         Uint32 m_target_index;
         string m_label;
-        Uint32 m_hex_color;
-    }; // end of struct Transition
+        Color m_dot_graph_color;
+    }; // end of struct Graph::Transition
 
     struct TransitionOrder
     {
@@ -82,7 +91,7 @@ public:
                    t0.Data1() == t1.Data1() &&
                    t0.TargetIndex() < t1.TargetIndex();
         }
-    };
+    }; // end of struct Graph::TransitionOrder
 
     class Node
     {
@@ -95,7 +104,7 @@ public:
         {
             virtual ~Data () { }
             virtual string GetAsText (Uint32 node_index) const = 0;
-            virtual string GetNodeColor (Uint32 node_index) const = 0;
+            virtual Color DotGraphColor (Uint32 node_index) const = 0;
             virtual Uint32 GetNodePeripheries (Uint32 node_index) const { return 1; }
         };
 
@@ -122,7 +131,7 @@ public:
 
         TransitionSet m_transition_set;
         Data const *m_data;
-    }; // end of class Node
+    }; // end of class Graph::Node
 
     Uint32 GetNodeCount () const { return m_node_array.size(); }
     Node const &GetNode (Uint32 index) const
@@ -141,6 +150,8 @@ private:
 
     NodeArray m_node_array;
 }; // end of class Graph
+
+ostream &operator << (ostream &stream, Graph::Color const &color);
 
 } // end of namespace Barf
 

@@ -44,7 +44,7 @@ struct RuleNpdaNodeData : public NpdaNodeData
         out << m_rule->GetAsText(m_stage);
         return out.str();
     }
-    virtual string GetNodeColor (Uint32 node_index) const { return "B6FFAE"; }
+    virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color(0xB6FFAE); }
 
     // NpdaNodeData interface methods
     virtual bool IsEpsilonClosureState () const { return m_stage == 0; }
@@ -95,7 +95,7 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
         }
         return out.str();
     }
-    virtual string GetNodeColor (Uint32 node_index) const { return "AEF5FF"; }
+    virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color(0xAEF5FF); }
 
     // NpdaNodeData interface methods
     virtual bool IsEpsilonClosureState () const { return true; }
@@ -106,17 +106,16 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
 struct GenericNpdaNodeData : public NpdaNodeData
 {
     string const m_text;
-    string const m_node_color;
+    Graph::Color const m_dot_graph_color;
     bool const m_is_return_state;
 
-    GenericNpdaNodeData (string const &text, string const &node_color, bool is_return_state = false)
+    GenericNpdaNodeData (string const &text, Graph::Color const &dot_graph_color, bool is_return_state = false)
         :
         m_text(text),
-        m_node_color(node_color),
+        m_dot_graph_color(dot_graph_color),
         m_is_return_state(is_return_state)
     {
         assert(!m_text.empty());
-        assert(node_color.find_first_not_of("0123456789ABCDEFabcdef") == string::npos);
     }
 
     // Graph::Node::Data interface methods
@@ -127,7 +126,7 @@ struct GenericNpdaNodeData : public NpdaNodeData
         out << m_text;
         return out.str();
     }
-    virtual string GetNodeColor (Uint32 node_index) const { return m_node_color; }
+    virtual Graph::Color DotGraphColor (Uint32 node_index) const { return m_dot_graph_color; }
 
     // NpdaNodeData interface methods
     virtual bool IsReturnState () const { return m_is_return_state; }
@@ -270,8 +269,8 @@ void EnsureGeneratedNpda (
         return;
 
     // create the start, head and return states for this nonterminal
-    Uint32 graph_start_state = graph_context.m_graph.AddNode(new GenericNpdaNodeData("start: " + nonterminal.m_identifier, "AEC3FF"));
-    Uint32 graph_return_state = graph_context.m_graph.AddNode(new GenericNpdaNodeData("return: " + nonterminal.m_identifier, "C9AEFF", true));
+    Uint32 graph_start_state = graph_context.m_graph.AddNode(new GenericNpdaNodeData("start: " + nonterminal.m_identifier, Graph::Color(0xAEC3FF)));
+    Uint32 graph_return_state = graph_context.m_graph.AddNode(new GenericNpdaNodeData("return: " + nonterminal.m_identifier, Graph::Color(0xC9AEFF), true));
     Uint32 graph_head_state = graph_context.m_graph.AddNode(new NonterminalHeadNpdaNodeData(&nonterminal));
     // create the transitions from the start state to the head and return states
     graph_context.m_graph.AddTransition(graph_start_state, EpsilonTransition(graph_head_state));

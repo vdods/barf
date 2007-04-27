@@ -37,10 +37,8 @@ enum IsAcceptNode
     IS_ACCEPT_NODE
 };
 
-// TODO: move into separate file
 struct NodeData : public Graph::Node::Data
 {
-
     bool const m_is_start_node;
     bool const m_is_accept_node;
     string const m_node_label;
@@ -62,12 +60,12 @@ struct NodeData : public Graph::Node::Data
             out << ':' << m_node_label;
         return out.str();
     }
-    virtual string GetNodeColor (Uint32 node_index) const
+    virtual Graph::Color DotGraphColor (Uint32 node_index) const
     {
         if (m_is_accept_node)
-            return "B6FFAE";
+            return Graph::Color(0xB6FFAE);
         else
-            return "FCFFAE";
+            return Graph::Color(0xFCFFAE);
     }
     virtual Uint32 GetNodePeripheries (Uint32 node_index) const
     {

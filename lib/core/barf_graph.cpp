@@ -47,7 +47,7 @@ void Graph::PrintDotGraph (ostream &stream, string const &graph_name) const
         Node const &node = m_node_array[i];
         if (node.GetHasData())
             stream << "        node [label=" << GetStringLiteral(node.GetData().GetAsText(i))
-                   << ", style=filled, fillcolor=\"#" << node.GetData().GetNodeColor(i)
+                   << ", style=filled, fillcolor=\"#" << node.GetData().DotGraphColor(i)
                    << "\", shape=box, fontname=courier, peripheries="
                    << node.GetData().GetNodePeripheries(i) << "];" << endl;
         else
@@ -67,16 +67,21 @@ void Graph::PrintDotGraph (ostream &stream, string const &graph_name) const
              ++it)
         {
             Transition const &transition = *it;
-
-            string hex_color(FORMAT(setfill('0') << setw(6) << hex << transition.HexColor()));
+            
             stream << "        edge [label=" << GetStringLiteral(transition.Label())
-                   << ", fontname=courier, color=\"#" << hex_color << "\", fontcolor=\"#" << hex_color << "\", dir="
-                   << (transition.HasTarget() ? "forward" : "none") << "];" << endl;
+                   << ", fontname=courier, color=\"#" << transition.DotGraphColor()
+                   << "\", fontcolor=\"#" << transition.DotGraphColor()
+                   << "\", dir=" << (transition.HasTarget() ? "forward" : "none") << "];" << endl;
             stream << "        " << i << " -> " << (transition.HasTarget() ? transition.TargetIndex() : i) << endl;
         }
     }
     stream << "    }" << endl
            << "}" << endl;
+}
+
+ostream &operator << (ostream &stream, Graph::Color const &color)
+{
+    return stream << FORMAT(setfill('0') << setw(6) << hex << color.m_hex_value);
 }
 
 } // end of namespace Barf
