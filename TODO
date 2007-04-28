@@ -40,6 +40,10 @@
 - see if i can get rid of exceptions
 - make all enums alphabetical (unless they can't be) to make an easy/consistent
   order for the enum-string functions
+- file locations should be "2d range" -- a starting line/column and an ending
+  line/column.  nonterminal expressions can then be the union of the file 
+  locations of their component parts.  this technique will be useful later in
+  compiler design for debugging info.  
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -61,13 +65,14 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - rename AstCommon::Ast to Ast::Base
-- typedef Graph::Node::Index and use that everywhere
+- typedef Graph::Node::Index as an enum with a value UINT32_UPPER_BOUND (to
+  force it to be unsigned) and use that everywhere for node index values.
 - in util's GetEscapedString, make it read overflowed hex chars
 - move trison's conflict messages into barf_message.h/cpp
 - add "-i" "--print-include-data-path" option to OptionsBase
 - make a GraphNodeIndex vector type in barf_graph.h (replacing the ad-hoc
   vector<Uint32> used all over the place)
-- move Graph::TransitionOrder into Graph::Transition::Order
+- move Graph::TransitionOrder to Graph::Transition::Order
 
 // ///////////////////////////////////////////////////////////////////////////
 // langspec
