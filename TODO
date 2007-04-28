@@ -8,9 +8,9 @@
 - shorten the enabled_verbosity names (and rename scanning/parsing spew to
   scanner/parser)
 - add dot graph generation for ASTs
-- add recursive block comments into barf_commonlang_scanner.reflex (think 
+- add recursive block comments into barf_commonlang_scanner.reflex (think
   about how this will interact with other-languaged code blocks)
-- move DIRECTORY_SLASH_* into config.h
+- move DIRECTORY_SLASH_* into config.h (?)
 - rename OutputDir to OutputDirectory once the other options have been
   deprecated
 - use Contains() everywhere
@@ -41,9 +41,9 @@
 - make all enums alphabetical (unless they can't be) to make an easy/consistent
   order for the enum-string functions
 - file locations should be "2d range" -- a starting line/column and an ending
-  line/column.  nonterminal expressions can then be the union of the file 
+  line/column.  nonterminal expressions can then be the union of the file
   locations of their component parts.  this technique will be useful later in
-  compiler design for debugging info.  
+  compiler design for debugging info.
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -65,14 +65,14 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - rename AstCommon::Ast to Ast::Base
-- typedef Graph::Node::Index as an enum with a value UINT32_UPPER_BOUND (to
-  force it to be unsigned) and use that everywhere for node index values.
+- typedef Graph::Node::Index as a struct or an enum with a value
+  UINT32_UPPER_BOUND (to force it to be unsigned) and use that everywhere for
+  node index values.
 - in util's GetEscapedString, make it read overflowed hex chars
 - move trison's conflict messages into barf_message.h/cpp
 - add "-i" "--print-include-data-path" option to OptionsBase
 - make a GraphNodeIndex vector type in barf_graph.h (replacing the ad-hoc
   vector<Uint32> used all over the place)
-- move Graph::TransitionOrder to Graph::Transition::Order
 
 // ///////////////////////////////////////////////////////////////////////////
 // langspec
@@ -193,15 +193,10 @@
 - figure out how to guarantee branch uniqueness per Action_ branch list in C++ parser.
 - fix assert crash where a rule token is undeclared
 - add default values in trison cpp langspec for Scan implementation
-- prohibit (check for) epsilon-loops in NPDA at runtime
 - change "%prec %left BLAH" into "%prec.left BLAH" (and maybe prec into precedence)
 - NPDA: each action node in the tree gets a set of precedences.  when a node's
   child set changes, the precedence set is updated, and then conflict resolution
   can happen
-- NPDA: node-merging can happen at the end of the trunk
-- NPDA conflict resolution: when the child nodes of a node change and there
-  is only a shift and a reduce, conflict resolution can take place (picking
-  shift, reduce, or handling nonassoc error)
 - you shouldn't have to specify %token 'X' for ascii chars.  you should
   just be able to use them
 - specifying any %language.xxx directive seems to add the target; stop this
@@ -210,17 +205,15 @@
 - add option for line directives referencing codespecs
 - get rid of STL usage in C++ codespecs (separate target)
 - add option which prints the targets available in the current search path
-- move Associativity into Rule
 - rename %token to %terminal (and friends)
 - require %nonterminal keyword before nonterminal definition
-- END_ shouldn't be acceptable by %error
-- take out default reduction rule handler return (it blocks the 'no retval'
-  gcc warning)
+- add %end keyword which matches the builtin terminal END_
+- old trison: END_ shouldn't be acceptable by %error
+- old trison: take out default reduction rule handler return (it blocks the
+  'no retval' compiler warning)
 - check for reduction rule variable name collisions
 - call throw-away-token-actions on all tokens in token stack during parser
-  destructor (or actually at the end of the parse method)
-- add the implicit start rule which ends with END_ -- think about this, END_
-  might go away.
+  destructor and at the end of the parse method
 - update the output basename help message
 - add -D option for defining crap in the preprocessor stage -- before and
   after the .trison source is read
@@ -229,7 +222,6 @@
   or whatever).
 - get rid of trison_message (and move the crap into barf_message)
 - use %default_start_nonterminal instead of %start
-- if no output basename is specified, warn, but don't output any code
 - warn about langspec directive values that weren't referenced in the
   code generation (preprocessor) stage
 - rename _npda_node_* to _npda_state_*
