@@ -20,10 +20,10 @@ string const &GetAstTypeString (AstType ast_type)
     static string const s_ast_type_string[AT_COUNT-AstCommon::AT_START_CUSTOM_TYPES_HERE_] =
     {
         "AT_BOUND",
-        "AT_PIECE",
+        "AT_BRACKET_CHAR_SET",
         "AT_BRANCH",
         "AT_CHAR",
-        "AT_BRACKET_CHAR_SET",
+        "AT_PIECE",
         "AT_REGULAR_EXPRESSION",
         "AT_REGULAR_EXPRESSION_MAP"
     };

@@ -19,13 +19,13 @@ string const &GetAstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AT_COUNT-AstCommon::AT_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_SPECIFICATION_MAP",
-        "AT_ADD_CODESPEC_LIST",
-        "AT_ADD_DIRECTIVE_MAP",
-        "AT_SPECIFICATION",
         "AT_ADD_CODESPEC",
+        "AT_ADD_CODESPEC_LIST",
         "AT_ADD_DIRECTIVE",
+        "AT_ADD_DIRECTIVE_MAP",
         "AT_PARAM_TYPE",
+        "AT_SPECIFICATION",
+        "AT_SPECIFICATION_MAP"
     };
 
     assert(ast_type < AT_COUNT);

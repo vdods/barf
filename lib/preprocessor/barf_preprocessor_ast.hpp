@@ -107,8 +107,8 @@ class Undefine;
 
 enum DereferenceType
 {
-    DEREFERENCE_IFF_DEFINED,
-    DEREFERENCE_ALWAYS
+    DEREFERENCE_ALWAYS = 0,
+    DEREFERENCE_IFF_DEFINED
 }; // end of enum DereferenceType
 
 string const &GetDereferenceTypeString (DereferenceType dereference_type);
@@ -118,25 +118,25 @@ enum
     AT_BODY = AstCommon::AT_START_CUSTOM_TYPES_HERE_,
     AT_BODY_LIST,
     AT_CONDITIONAL,
-    AT_DUMP_SYMBOL_TABLE,
     AT_DECLARE_ARRAY,
     AT_DECLARE_MAP,
     AT_DEFINE,
     AT_DEFINE_ARRAY_ELEMENT,
     AT_DEFINE_MAP_ELEMENT,
-    AT_UNDEFINE,
-    AT_LOOP,
+    AT_DEREFERENCE,
+    AT_DUMP_SYMBOL_TABLE,
     AT_FOR_EACH,
     AT_INCLUDE,
-    AT_MESSAGE,
-    AT_TEXT,
     AT_INTEGER,
-    AT_SIZEOF,
     AT_INTEGER_CAST,
-    AT_STRING_CAST,
     AT_IS_DEFINED,
-    AT_DEREFERENCE,
+    AT_LOOP,
+    AT_MESSAGE,
     AT_OPERATION,
+    AT_SIZEOF,
+    AT_STRING_CAST,
+    AT_TEXT,
+    AT_UNDEFINE,
 
     AT_COUNT
 };
@@ -697,21 +697,21 @@ public:
     enum Operator
     {
         CONCATENATE = 0,
-        LOGICAL_OR,
-        LOGICAL_AND,
+        DIVIDE,
         EQUAL,
-        NOT_EQUAL,
-        LESS_THAN,
-        LESS_THAN_OR_EQUAL,
         GREATER_THAN,
         GREATER_THAN_OR_EQUAL,
-        PLUS,
+        INT_CAST,
+        LESS_THAN,
+        LESS_THAN_OR_EQUAL,
+        LOGICAL_AND,
+        LOGICAL_NOT,
+        LOGICAL_OR,
         MINUS,
         MULTIPLY,
-        DIVIDE,
+        NOT_EQUAL,
+        PLUS,
         REMAINDER,
-        LOGICAL_NOT,
-        INT_CAST,
         STRING_CAST,
         STRING_LENGTH,
 

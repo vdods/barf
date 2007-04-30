@@ -19,18 +19,18 @@ string const &GetAstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AT_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_THROW_AWAY",
         "AT_CHAR",
-        "AT_SIGNED_INTEGER",
-        "AT_UNSIGNED_INTEGER",
-        "AT_STRING",
-        "AT_ID",
-        "AT_DUMB_CODE_BLOCK",
-        "AT_STRICT_CODE_BLOCK",
         "AT_DIRECTIVE",
+        "AT_DIRECTIVE_LIST",
+        "AT_DUMB_CODE_BLOCK",
+        "AT_ID",
         "AT_ID_LIST",
         "AT_ID_MAP",
-        "AT_DIRECTIVE_LIST"
+        "AT_SIGNED_INTEGER",
+        "AT_STRICT_CODE_BLOCK",
+        "AT_STRING",
+        "AT_THROW_AWAY",
+        "AT_UNSIGNED_INTEGER"
     };
 
     assert(ast_type < AT_START_CUSTOM_TYPES_HERE_);

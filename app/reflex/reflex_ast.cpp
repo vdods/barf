@@ -18,12 +18,12 @@ string const &GetAstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AT_COUNT-CommonLang::AT_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_START_DIRECTIVE",
+        "AT_REPRESENTATION",
         "AT_RULE",
         "AT_RULE_LIST",
         "AT_SCANNER_STATE",
         "AT_SCANNER_STATE_MAP",
-        "AT_REPRESENTATION"
+        "AT_START_DIRECTIVE"
     };
 
     assert(ast_type < AT_COUNT);

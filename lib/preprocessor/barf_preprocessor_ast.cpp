@@ -21,8 +21,8 @@ string const &GetDereferenceTypeString (DereferenceType dereference_type)
 {
     static string const s_dereference_type_string[2] =
     {
-        "DEREFERENCE_IFF_DEFINED",
-        "DEREFERENCE_ALWAYS"
+        "DEREFERENCE_ALWAYS",
+        "DEREFERENCE_IFF_DEFINED"
     };
 
     assert(dereference_type >= 0 && dereference_type < 2);
@@ -36,25 +36,25 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_BODY",
         "AT_BODY_LIST",
         "AT_CONDITIONAL",
-        "AT_DUMP_SYMBOL_TABLE",
         "AT_DECLARE_ARRAY",
         "AT_DECLARE_MAP",
         "AT_DEFINE",
         "AT_DEFINE_ARRAY_ELEMENT",
         "AT_DEFINE_MAP_ELEMENT",
-        "AT_UNDEFINE",
-        "AT_LOOP",
+        "AT_DEREFERENCE",
+        "AT_DUMP_SYMBOL_TABLE",
         "AT_FOR_EACH",
         "AT_INCLUDE",
-        "AT_MESSAGE",
-        "AT_TEXT",
         "AT_INTEGER",
-        "AT_SIZEOF",
         "AT_INTEGER_CAST",
-        "AT_STRING_CAST",
         "AT_IS_DEFINED",
-        "AT_DEREFERENCE",
-        "AT_OPERATION"
+        "AT_LOOP",
+        "AT_MESSAGE",
+        "AT_OPERATION",
+        "AT_SIZEOF",
+        "AT_STRING_CAST",
+        "AT_TEXT",
+        "AT_UNDEFINE"
     };
 
     assert(ast_type < AT_COUNT);
@@ -609,21 +609,21 @@ ostream &operator << (ostream &stream, Operation::Operator op)
     static string const s_operator_string[Operation::OPERATOR_COUNT] =
     {
         "CONCATENATE",
-        "LOGICAL_OR",
-        "LOGICAL_AND",
+        "DIVIDE",
         "EQUAL",
-        "NOT_EQUAL",
-        "LESS_THAN",
-        "LESS_THAN_OR_EQUAL",
         "GREATER_THAN",
         "GREATER_THAN_OR_EQUAL",
-        "PLUS",
+        "INT_CAST",
+        "LESS_THAN",
+        "LESS_THAN_OR_EQUAL",
+        "LOGICAL_AND",
+        "LOGICAL_NOT",
+        "LOGICAL_OR",
         "MINUS",
         "MULTIPLY",
-        "DIVIDE",
+        "NOT_EQUAL",
+        "PLUS",
         "REMAINDER",
-        "LOGICAL_NOT",
-        "INT_CAST",
         "STRING_CAST",
         "STRING_LENGTH"
     };

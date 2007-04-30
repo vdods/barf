@@ -21,6 +21,7 @@
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
 - rename more stuff to be shorter?
+- get rid of empty xxx_enums.xpp files (once BARF is near complete)
 - move all AST usage to smart pointers to ease-ify stuff and to escape the
   woes of memory leaks (not like it matters that much in this context) --
   or do comprehensive deleting of stuff (which would probably set a better
@@ -31,12 +32,12 @@
   AstCommon::Directive
 - add "execution debug spew" mode for each program, which says what it's doing,
   e.g. opening files, doing type checking, env vars its using, etc
-- make all enums alphabetical (unless they can't be) to make an easy/consistent
-  order for the enum-string functions
 - file locations should be "2d range" -- a starting line/column and an ending
   line/column.  nonterminal expressions can then be the union of the file
   locations of their component parts.  this technique will be useful later in
   compiler design for debugging info.
+- coolify the compile time assert
+- in AST printing (e.g. -Vprint-ast, use 2/4 spaces instead of tabs)
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation

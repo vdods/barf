@@ -26,22 +26,9 @@ enum Associativity
     A_COUNT
 }; // end of enum Associativity
 
-enum TransitionAction
-{
-    TA_SHIFT_AND_PUSH_STATE = 0,
-    TA_PUSH_STATE,
-    TA_REDUCE_USING_RULE,
-    TA_REDUCE_AND_ACCEPT_USING_RULE,
-    TA_THROW_AWAY_LOOKAHEAD_TOKEN,
-
-    TA_COUNT
-}; // end of enum TransitionAction
-
 void PrettyPrint (ostream &stream, Associativity associativity);
-void PrettyPrint (ostream &stream, TransitionAction transition_action);
 
 ostream &operator << (ostream &stream, Associativity associativity);
-ostream &operator << (ostream &stream, TransitionAction transition_action);
 
 } // end of namespace Trison
 
