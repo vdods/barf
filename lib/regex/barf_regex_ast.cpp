@@ -22,8 +22,8 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_BOUND",
         "AT_PIECE",
         "AT_BRANCH",
-        "AT_CHARACTER",
-        "AT_BRACKET_CHARACTER_SET",
+        "AT_CHAR",
+        "AT_BRACKET_CHAR_SET",
         "AT_REGULAR_EXPRESSION",
         "AT_REGULAR_EXPRESSION_MAP"
     };
@@ -92,14 +92,14 @@ void Branch::AddBound (Bound *bound)
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-void Character::Escape ()
+void Char::Escape ()
 {
     // TODO: emit warning if trying to escape a hex char?
 
-    if (GetIsControlCharacter())
+    if (GetIsControlChar())
         return;
 
-    switch (m_character)
+    switch (m_char)
     {
         // conditional escape chars
         case 'y': m_conditional_type = CT_BEGINNING_OF_INPUT;     break;
@@ -114,154 +114,154 @@ void Character::Escape ()
         case 'B': m_conditional_type = CT_NOT_WORD_BOUNDARY;      break;
         // escaping '0' should not provide a literal '\0'.
         case '0': break;
-        // otherwise, do normal character escaping (e.g. '\a', '\n', etc).
-        default : m_character = GetEscapedChar(m_character);             break;
+        // otherwise, do normal char escaping (e.g. '\a', '\n', etc).
+        default : m_char = GetEscapedChar(m_char);             break;
     }
 }
 
-void Character::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void Char::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    if (GetIsControlCharacter())
+    if (GetIsControlChar())
         stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_conditional_type << ' ' << endl;
     else
-        stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharacterLiteral(m_character) << endl;
+        stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharLiteral(m_char) << endl;
 }
 
 // ///////////////////////////////////////////////////////////////////////////
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-void BracketCharacterSet::AddCharacter (Uint8 character)
+void BracketCharSet::AddChar (Uint8 ch)
 {
-    m_character_set.set(character);
-    m_character_set.reset(0); // '\0' can never be in the set
+    m_char_set.set(ch);
+    m_char_set.reset(0); // '\0' can never be in the set
 }
 
-void BracketCharacterSet::AddCharacterRange (Uint8 low_character, Uint8 high_character)
+void BracketCharSet::AddCharRange (Uint8 low_char, Uint8 high_char)
 {
-    assert(low_character <= high_character);
-    if (high_character == 0xFF)
-        m_character_set.set(high_character--);
-    while (low_character <= high_character)
-        m_character_set.set(low_character++);
-    m_character_set.reset(0); // '\0' can never be in the set
+    assert(low_char <= high_char);
+    if (high_char == 0xFF)
+        m_char_set.set(high_char--);
+    while (low_char <= high_char)
+        m_char_set.set(low_char++);
+    m_char_set.reset(0); // '\0' can never be in the set
 }
 
-void BracketCharacterSet::AddCharacterClass (string const &character_class)
+void BracketCharSet::AddCharClass (string const &char_class)
 {
     // see http://opengroup.org/onlinepubs/007908799/xbd/locale.html for more info on specific character classes.
 
-    if (character_class == "alnum")
+    if (char_class == "alnum")
     {
-        AddCharacterRange('a', 'z');
-        AddCharacterRange('A', 'Z');
-        AddCharacterRange('0', '9');
+        AddCharRange('a', 'z');
+        AddCharRange('A', 'Z');
+        AddCharRange('0', '9');
     }
-    else if (character_class == "digit")
+    else if (char_class == "digit")
     {
-        AddCharacterRange('0', '9');
+        AddCharRange('0', '9');
     }
-    else if (character_class == "punct")
+    else if (char_class == "punct")
     {
-        // control characters below space are not included in this class
+        // control chars below space are not included in this class
         // space is not included in this class
-        AddCharacterRange('!', '/');
+        AddCharRange('!', '/');
         // the decimal digits are not included in this class
-        AddCharacterRange(':', '@');
-        // the uppercase alphabetic characters are not included in this class
-        AddCharacterRange('[', '`');
-        // the lowercase alphabetic characters are not included in this class
-        AddCharacterRange('{', '~');
-        // the delete character and above are not included in this class
+        AddCharRange(':', '@');
+        // the uppercase alphabetic chars are not included in this class
+        AddCharRange('[', '`');
+        // the lowercase alphabetic chars are not included in this class
+        AddCharRange('{', '~');
+        // the delete char and above are not included in this class
     }
-    else if (character_class == "alpha")
+    else if (char_class == "alpha")
     {
-        AddCharacterRange('a', 'z');
-        AddCharacterRange('A', 'Z');
+        AddCharRange('a', 'z');
+        AddCharRange('A', 'Z');
     }
-    else if (character_class == "graph")
+    else if (char_class == "graph")
     {
         // space is not included in this class
-        AddCharacterRange('!', '~');
+        AddCharRange('!', '~');
     }
-    else if (character_class == "space")
+    else if (char_class == "space")
     {
-        AddCharacter(' ');
-        AddCharacter('\n');
-        AddCharacter('\t');
-        AddCharacter('\r');
-        AddCharacter('\f');
-        AddCharacter('\v');
+        AddChar(' ');
+        AddChar('\n');
+        AddChar('\t');
+        AddChar('\r');
+        AddChar('\f');
+        AddChar('\v');
     }
-    else if (character_class == "blank")
+    else if (char_class == "blank")
     {
-        AddCharacter(' ');
-        AddCharacter('\t');
+        AddChar(' ');
+        AddChar('\t');
     }
-    else if (character_class == "lower")
+    else if (char_class == "lower")
     {
-        AddCharacterRange('a', 'z');
+        AddCharRange('a', 'z');
     }
-    else if (character_class == "upper")
+    else if (char_class == "upper")
     {
-        AddCharacterRange('A', 'Z');
+        AddCharRange('A', 'Z');
     }
-    else if (character_class == "cntrl")
+    else if (char_class == "cntrl")
     {
-        AddCharacterRange('\x00', '\x1F');
-        AddCharacterRange('\x7F', '\xFF');
+        AddCharRange('\x00', '\x1F');
+        AddCharRange('\x7F', '\xFF');
     }
-    else if (character_class == "print")
+    else if (char_class == "print")
     {
-        AddCharacterRange(' ', '~');
+        AddCharRange(' ', '~');
     }
-    else if (character_class == "xdigit")
+    else if (char_class == "xdigit")
     {
-        AddCharacterRange('a', 'f');
-        AddCharacterRange('A', 'F');
-        AddCharacterRange('0', '9');
+        AddCharRange('a', 'f');
+        AddCharRange('A', 'F');
+        AddCharRange('0', '9');
     }
     else
     {
         ostringstream out;
-        out << "invalid character class [:" << character_class << ":]";
+        out << "invalid char class [:" << char_class << ":]";
         throw out.str();
     }
 
-    assert(!m_character_set.test(0) && "'\\0' should never be set");
+    assert(!m_char_set.test(0) && "'\\0' should never be set");
 }
 
-void BracketCharacterSet::Negate ()
+void BracketCharSet::Negate ()
 {
-    m_character_set.flip();
-    m_character_set.reset(0); // '\0' can never be in the set
+    m_char_set.flip();
+    m_char_set.reset(0); // '\0' can never be in the set
 }
 
-void BracketCharacterSet::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void BracketCharSet::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    assert(!m_character_set.test(0) && "'\\0' should never be set");
+    assert(!m_char_set.test(0) && "'\\0' should never be set");
 
     stream << Tabs(indent_level) << Stringify(GetAstType()) << " [";
 
-    // TODO: correct escaping of characters in the context of a bracket expression
+    // TODO: correct escaping of chars in the context of a bracket expression
 
     Uint16 c0 = 0;
     Uint16 c1;
     while (c0 < 256)
     {
-        if (m_character_set.test(c0))
+        if (m_char_set.test(c0))
         {
             c1 = c0;
-            while (c1 < 255 && m_character_set.test(c1+1))
+            while (c1 < 255 && m_char_set.test(c1+1))
                 ++c1;
 
             assert(c0 < 256 && c1 < 256);
             if (c0 == c1)
-                stream << GetCharacterLiteral(c0, false);
+                stream << GetCharLiteral(c0, false);
             else if (c0+1 == c1)
-                stream << GetCharacterLiteral(c0, false) << GetCharacterLiteral(c1, false);
+                stream << GetCharLiteral(c0, false) << GetCharLiteral(c1, false);
             else
-                stream << GetCharacterLiteral(c0, false) << '-' << GetCharacterLiteral(c1, false);
+                stream << GetCharLiteral(c0, false) << '-' << GetCharLiteral(c1, false);
 
             c0 = c1;
         }

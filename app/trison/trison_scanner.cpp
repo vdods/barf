@@ -80,7 +80,7 @@ Parser::Token::Type Scanner::Scan (AstCommon::Ast **const scanned_token)
             case '%': return ScanDirective(scanned_token);
             case '{': return ScanStrictCodeBlock(scanned_token);
             case '"': return ScanStringLiteral(scanned_token);
-            case '\'': return ScanCharacterLiteral(scanned_token);
+            case '\'': return ScanCharLiteral(scanned_token);
             case '\n':
                 ++m_line_number;
                 if (m_in_preamble)
@@ -120,7 +120,7 @@ Parser::Token::Type Scanner::ScanId (AstCommon::Ast **const scanned_token)
     }
 
     assert(!m_text.empty());
-    // if the last character is underscore, squirt an error, because ending
+    // if the last char is underscore, squirt an error, because ending
     // ids with underscores is a method used by the parser generator
     // to ensure unique state machine token types.
     if (*m_text.rbegin() == '_')
@@ -248,7 +248,7 @@ Parser::Token::Type Scanner::ScanStrictCodeBlock (AstCommon::Ast **const scanned
         {
             try
             {
-                ScanCharacterLiteral();
+                ScanCharLiteral();
             }
             catch (Parser::Token::Type token_type)
             {
@@ -410,7 +410,7 @@ Parser::Token::Type Scanner::ScanStringLiteral (AstCommon::Ast **const scanned_t
     }
 }
 
-Parser::Token::Type Scanner::ScanCharacterLiteral (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanCharLiteral (AstCommon::Ast **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -421,7 +421,7 @@ Parser::Token::Type Scanner::ScanCharacterLiteral (AstCommon::Ast **const scanne
 
     try
     {
-        ScanCharacterLiteral();
+        ScanCharLiteral();
     }
     catch (Parser::Token::Type token_type)
     {
@@ -436,15 +436,15 @@ Parser::Token::Type Scanner::ScanCharacterLiteral (AstCommon::Ast **const scanne
     if (m_text[1] == '\\')
     {
         assert(m_text.length() == 4);
-        *scanned_token = new TokenIdCharacter(GetEscapedChar(m_text[2]), FL);
+        *scanned_token = new TokenIdChar(GetEscapedChar(m_text[2]), FL);
     }
     else
     {
         assert(m_text.length() == 3);
-        *scanned_token = new TokenIdCharacter(m_text[1], FL);
+        *scanned_token = new TokenIdChar(m_text[1], FL);
     }
 
-    return Parser::Token::TOKEN_ID_CHARACTER;
+    return Parser::Token::TOKEN_ID_CHAR;
 }
 
 void Scanner::ScanStringLiteralInsideCodeBlock ()
@@ -477,7 +477,7 @@ void Scanner::ScanStringLiteralInsideCodeBlock ()
     }
 }
 
-void Scanner::ScanCharacterLiteral ()
+void Scanner::ScanCharLiteral ()
 {
     assert(!m_input.eof());
 

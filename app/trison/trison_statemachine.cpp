@@ -1201,7 +1201,7 @@ void StateMachine::GeneratePreprocessor ()
         string error_name("ERROR_");
         bool first_has_been_written = false;
 
-        // write out all of the grammar's non-single-character terminal tokens
+        // write out all of the grammar's non-single-char terminal tokens
         for (TerminalMap::const_iterator it = m_terminal_map.begin(),
                                      it_end = m_terminal_map.end();
              it != it_end;

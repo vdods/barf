@@ -20,7 +20,7 @@ string const &GetAstTypeString (AstType ast_type)
     static string const s_ast_type_string[AT_START_CUSTOM_TYPES_HERE_] =
     {
         "AT_THROW_AWAY",
-        "AT_CHARACTER",
+        "AT_CHAR",
         "AT_SIGNED_INTEGER",
         "AT_UNSIGNED_INTEGER",
         "AT_STRING",
@@ -42,14 +42,14 @@ void Ast::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_leve
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
 }
 
-void Character::Escape ()
+void Char::Escape ()
 {
-    m_character = GetEscapedChar(m_character);
+    m_char = GetEscapedChar(m_char);
 }
 
-void Character::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void Char::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharacterLiteral() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharLiteral() << endl;
 }
 
 void SignedInteger::ShiftAndAdd (Sint32 value)

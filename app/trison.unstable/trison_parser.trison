@@ -111,7 +111,7 @@ Parser::Token::Type Parser::Scan ()
     {
         case CommonLang::Scanner::Token::BAD_END_OF_FILE:            return Parser::Token::END_;
         case CommonLang::Scanner::Token::BAD_TOKEN:                  return Parser::Token::BAD_TOKEN;
-        case CommonLang::Scanner::Token::CHARACTER_LITERAL:          return Parser::Token::CHARACTER_LITERAL;
+        case CommonLang::Scanner::Token::CHAR_LITERAL:          return Parser::Token::CHAR_LITERAL;
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:            return Parser::Token::DIRECTIVE_ERROR;
         case CommonLang::Scanner::Token::DIRECTIVE_LANGUAGE:         return Parser::Token::DIRECTIVE_LANGUAGE;
         case CommonLang::Scanner::Token::DIRECTIVE_LEFT:             return Parser::Token::DIRECTIVE_LEFT;
@@ -162,7 +162,7 @@ Parser::Token::Type Parser::Scan ()
 %parser_custom_cast "Dsc"
 
 %token BAD_TOKEN
-%token CHARACTER_LITERAL %type "AstCommon::Character *"
+%token CHAR_LITERAL %type "AstCommon::Char *"
 %token DIRECTIVE_ERROR %type "AstCommon::ThrowAway *"
 %token DIRECTIVE_LANGUAGE %type "AstCommon::ThrowAway *"
 %token DIRECTIVE_LEFT %type "AstCommon::ThrowAway *"
@@ -800,7 +800,7 @@ token %type "Trison::Token *"
 :
     ID:id        { return new Trison::Token(id); }
 |
-    CHARACTER_LITERAL:ch { return new Trison::Token(ch); }
+    CHAR_LITERAL:ch { return new Trison::Token(ch); }
 ;
 
 any_type_of_code_block %type "AstCommon::CodeBlock *"

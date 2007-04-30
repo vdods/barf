@@ -20,7 +20,7 @@
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
-- rename stuff to be shorter?  e.g. Character -> Char, String -> Str, etc.
+- rename more stuff to be shorter?
 - move all AST usage to smart pointers to ease-ify stuff and to escape the
   woes of memory leaks (not like it matters that much in this context) --
   or do comprehensive deleting of stuff (which would probably set a better
@@ -31,12 +31,6 @@
   AstCommon::Directive
 - add "execution debug spew" mode for each program, which says what it's doing,
   e.g. opening files, doing type checking, env vars its using, etc
-- investigate efficiency of generated code from templates in different
-  compilers (especially MSVC), to see if more effective use of templates
-  can be made without additional overhead.
-- make some sort of AST class framework so very little typing (and redundancy)
-  is required.  preferably make the members public
-- see if i can get rid of exceptions
 - make all enums alphabetical (unless they can't be) to make an easy/consistent
   order for the enum-string functions
 - file locations should be "2d range" -- a starting line/column and an ending

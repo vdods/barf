@@ -426,7 +426,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
     static std::string const s_token_type_string[] =
     {
         "BAD_TOKEN",
-        "CHARACTER_LITERAL",
+        "CHAR_LITERAL",
         "DIRECTIVE_ERROR",
         "DIRECTIVE_LANGUAGE",
         "DIRECTIVE_LEFT",
@@ -1596,11 +1596,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0061 ()
     return NULL;
 }
 
-// rule 62: token <- CHARACTER_LITERAL:ch    
+// rule 62: token <- CHAR_LITERAL:ch    
 AstCommon::Ast * Parser::ReductionRuleHandler0062 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Character * ch = Dsc< AstCommon::Character * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Char * ch = Dsc< AstCommon::Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 803 "trison_parser.trison"
  return new Trison::Token(ch); 
@@ -1702,7 +1702,7 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     { Token::at_least_one_newline__,  2, &Parser::ReductionRuleHandler0059, "rule 59: at_least_one_newline <- at_least_one_newline NEWLINE    "},
     { Token::at_least_one_newline__,  1, &Parser::ReductionRuleHandler0060, "rule 60: at_least_one_newline <- NEWLINE    "},
     {                Token::token__,  1, &Parser::ReductionRuleHandler0061, "rule 61: token <- ID    "},
-    {                Token::token__,  1, &Parser::ReductionRuleHandler0062, "rule 62: token <- CHARACTER_LITERAL    "},
+    {                Token::token__,  1, &Parser::ReductionRuleHandler0062, "rule 62: token <- CHAR_LITERAL    "},
     {Token::any_type_of_code_block__,  1, &Parser::ReductionRuleHandler0063, "rule 63: any_type_of_code_block <- DUMB_CODE_BLOCK    "},
     {Token::any_type_of_code_block__,  1, &Parser::ReductionRuleHandler0064, "rule 64: any_type_of_code_block <- STRICT_CODE_BLOCK    "},
 
@@ -1999,7 +1999,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   20
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {      Token::CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   25}},
+    {           Token::CHAR_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   25}},
     {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   26}},
     // nonterminal transitions
     {               Token::tokens__, {                  TA_PUSH_STATE,   27}},
@@ -2052,7 +2052,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   27
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {      Token::CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   25}},
+    {           Token::CHAR_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   25}},
     {         Token::DIRECTIVE_TYPE, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   26}},
     // default transition
@@ -2435,7 +2435,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   78
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {      Token::CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   25}},
+    {           Token::CHAR_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   25}},
     {         Token::DIRECTIVE_PREC, {        TA_SHIFT_AND_PUSH_STATE,   82}},
     {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   26}},
     // default transition
@@ -2627,7 +2627,7 @@ Parser::Token::Type Parser::Scan ()
     {
         case CommonLang::Scanner::Token::BAD_END_OF_FILE:            return Parser::Token::END_;
         case CommonLang::Scanner::Token::BAD_TOKEN:                  return Parser::Token::BAD_TOKEN;
-        case CommonLang::Scanner::Token::CHARACTER_LITERAL:          return Parser::Token::CHARACTER_LITERAL;
+        case CommonLang::Scanner::Token::CHAR_LITERAL:          return Parser::Token::CHAR_LITERAL;
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:            return Parser::Token::DIRECTIVE_ERROR;
         case CommonLang::Scanner::Token::DIRECTIVE_LANGUAGE:         return Parser::Token::DIRECTIVE_LANGUAGE;
         case CommonLang::Scanner::Token::DIRECTIVE_LEFT:             return Parser::Token::DIRECTIVE_LEFT;

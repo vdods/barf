@@ -49,7 +49,7 @@ public:
         {
             // user-defined terminal, non-single-character tokens
             BAD_TOKEN = 0x100,
-            CHARACTER_LITERAL,
+            CHAR_LITERAL,
             DIRECTIVE_ERROR,
             DIRECTIVE_LANGUAGE,
             DIRECTIVE_LEFT,

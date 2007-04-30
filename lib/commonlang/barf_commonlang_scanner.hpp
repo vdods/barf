@@ -520,9 +520,9 @@ public:
         enum Name
         {
             BLOCK_COMMENT = 0,
-            CHARACTER_LITERAL_END = 6,
-            CHARACTER_LITERAL_GUTS = 13,
-            CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK = 26,
+            CHAR_LITERAL_END = 6,
+            CHAR_LITERAL_GUTS = 13,
+            CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK = 26,
             DUMB_CODE_BLOCK = 33,
             MAIN = 39,
             REGULAR_EXPRESSION = 61,
@@ -544,7 +544,7 @@ public:
         {
             BAD_END_OF_FILE = 0x100,
             BAD_TOKEN,
-            CHARACTER_LITERAL,
+            CHAR_LITERAL,
             DIRECTIVE_ADD_CODESPEC,
             DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
             DIRECTIVE_ADD_REQUIRED_DIRECTIVE,

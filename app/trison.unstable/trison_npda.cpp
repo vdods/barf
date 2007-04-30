@@ -170,8 +170,8 @@ void GenerateNpda (
     }
     else
     {
-        Uint32 transition_input = token.m_character->GetCharacter();
-        graph_context.m_graph.AddTransition(start_index, ShiftTransition(transition_input, GetCharacterLiteral(transition_input), end_index));
+        Uint32 transition_input = token.m_char->GetChar();
+        graph_context.m_graph.AddTransition(start_index, ShiftTransition(transition_input, GetCharLiteral(transition_input), end_index));
     }
 }
 

@@ -125,7 +125,7 @@ Parser::Token::Type Parser::Scan ()
         if (c >= '0' && c <= '9')
         {
 //             fprintf(stderr, "\n######## scanning DIGIT '%c'\n", static_cast<char>(c));
-            m_lookahead_token = new Character(c);
+            m_lookahead_token = new Char(c);
             return Token::DIGIT;
         }
         else if (c >= 'A' && c <= 'Z'
@@ -133,13 +133,13 @@ Parser::Token::Type Parser::Scan ()
                  c >= 'a' && c <= 'z')
         {
 //             fprintf(stderr, "\n######## scanning CHAR '%c'\n", static_cast<char>(c));
-            m_lookahead_token = new Character(c);
+            m_lookahead_token = new Char(c);
             return Token::ALPHA;
         }
         else if (c >= 128 && c < 256)
         {
 //             fprintf(stderr, "\n######## scanning extended ascii CHAR \\0x%02X\n", c);
-            m_lookahead_token = new Character(c);
+            m_lookahead_token = new Char(c);
             return Token::ALPHA;
         }
 
@@ -182,7 +182,7 @@ Parser::Token::Type Parser::Scan ()
                             hex_value = (hex_value << 4) + GetHexDigitValue(c);
                         }
 
-                        m_lookahead_token = new Character(hex_value, true);
+                        m_lookahead_token = new Char(hex_value, true);
                         return Token::ALPHA;
                     }
                     else
@@ -228,7 +228,7 @@ Parser::Token::Type Parser::Scan ()
             case '\v':
             case '\f':
             case '\r':
-//                 fprintf(stderr, "\n######## skipping escaped character\n");
+//                 fprintf(stderr, "\n######## skipping escaped char\n");
                 break;
 
             case ' ':
@@ -248,11 +248,11 @@ Parser::Token::Type Parser::Scan ()
             case '`':
             case '~':
 //                 fprintf(stderr, "\n######## scanning CHAR '%c'\n", static_cast<char>(c));
-                m_lookahead_token = new Character(c);
+                m_lookahead_token = new Char(c);
                 return Token::CHAR;
 
             default:
-//                 fprintf(stderr, "\n######## skipping invalid character\n");
+//                 fprintf(stderr, "\n######## skipping invalid char\n");
                 break;
         }
     }
@@ -271,9 +271,9 @@ Parser::Token::Type Parser::Scan ()
 //////////////////////////////////////////////////////////////////////////////
 
 %token BAD_TOKEN
-%token ALPHA %type "Character *"
-%token CHAR %type "Character *"
-%token DIGIT %type "Character *"
+%token ALPHA %type "Char *"
+%token CHAR %type "Char *"
+%token DIGIT %type "Char *"
                     // NOTE: quotes around examples for clarity
 %token '|'          // branch operator; e.g. "re1|re2" matches "re1" or "re2"
 %token '(' ')'      // associative grouping delimiters
@@ -285,16 +285,16 @@ Parser::Token::Type Parser::Scan ()
                     // "a{3,4}" matches "aaa" or "aaaa"
 %token '^'          // "^blah" matches "blah" only at the beginning of a line
 %token '$'          // "blah$" matches "blah" only at the end of a line
-%token '.'          // "." matches any non-newline character
-%token '\\'         // escape character
+%token '.'          // "." matches any non-newline char
+%token '\\'         // escape char
 %token '[' ']'      // bracket expression delimiters
 %token '-'          // bracket range delimiter
-%token ':'          // character class delimiter
+%token ':'          // char class delimiter
                     // "[abc]" matches "a" or "b" or "c"
                     // "[a-e]" matches "a" or "b" or "c" or "d" or "e"
                     // "[[:digit:]]" matches "0" or "1" or "2" or "3" or "4"
                     //                    or "5" or "6" or "7" or "8" or "9"
-                    // other character classes include "alnum", "alpha", etc
+                    // other char classes include "alnum", "alpha", etc
 
 %start regex
 
@@ -377,12 +377,12 @@ atom %type "Atom *"
 |
     '(' regex:regex ')'            { return regex; }
 |   '(' ')'                        { return new RegularExpression(); }
-|   '^'                            { return new Character('\0', CT_BEGINNING_OF_LINE); }
-|   '$'                            { return new Character('\0', CT_END_OF_LINE); }
-|   '.'                            { return new BracketCharacterSet('\n', true); }
-|   atom_normal_character:ch       { return ch; }
-|   '\\' atom_normal_character:ch  { ch->Escape(); return ch; }
-|   '\\' atom_control_character:ch { return ch; }
+|   '^'                            { return new Char('\0', CT_BEGINNING_OF_LINE); }
+|   '$'                            { return new Char('\0', CT_END_OF_LINE); }
+|   '.'                            { return new BracketCharSet('\n', true); }
+|   atom_normal_char:ch       { return ch; }
+|   '\\' atom_normal_char:ch  { ch->Escape(); return ch; }
+|   '\\' atom_control_char:ch { return ch; }
 |   bracket_expression:exp         { return exp; }
 ;
 
@@ -444,167 +444,167 @@ bound %type "Bound *"
 
 bracket_expression %type "Atom *"
 :
-    '[' bracket_character_set:bracket_character_set ']'
+    '[' bracket_char_set:bracket_char_set ']'
     {
-        if (bracket_character_set->GetIsEmpty())
+        if (bracket_char_set->GetIsEmpty())
             THROW_STRING("invalid empty bracket expression");
-        return bracket_character_set;
+        return bracket_char_set;
     }
 |
-    '[' '^' bracket_character_set:bracket_character_set ']'
+    '[' '^' bracket_char_set:bracket_char_set ']'
     {
-        if (bracket_character_set->GetIsEmpty())
+        if (bracket_char_set->GetIsEmpty())
             THROW_STRING("invalid empty bracket expression");
-        bracket_character_set->Negate();
-        return bracket_character_set;
+        bracket_char_set->Negate();
+        return bracket_char_set;
     }
 ;
 
-bracket_character_set %type "BracketCharacterSet *"
+bracket_char_set %type "BracketCharSet *"
 :
-    bracket_character_set:bracket_character_set bracket_expression_character:ch
+    bracket_char_set:bracket_char_set bracket_expression_char:ch
     {
-        bracket_character_set->AddCharacter(ch->GetCharacter());
+        bracket_char_set->AddChar(ch->GetChar());
         delete ch;
-        return bracket_character_set;
+        return bracket_char_set;
     }
 |
-    bracket_character_set:bracket_character_set bracket_expression_character:begin_range '-' bracket_expression_character:end_range
+    bracket_char_set:bracket_char_set bracket_expression_char:begin_range '-' bracket_expression_char:end_range
     {
-        if (end_range->GetCharacter() < begin_range->GetCharacter())
-            THROW_STRING("invalid bracketed range [" << GetCharacterLiteral(begin_range->GetCharacter(), false) << '-' << GetCharacterLiteral(end_range->GetCharacter(), false) << ']');
-        bracket_character_set->AddCharacterRange(
-            begin_range->GetCharacter(),
-            end_range->GetCharacter());
+        if (end_range->GetChar() < begin_range->GetChar())
+            THROW_STRING("invalid bracketed range [" << GetCharLiteral(begin_range->GetChar(), false) << '-' << GetCharLiteral(end_range->GetChar(), false) << ']');
+        bracket_char_set->AddCharRange(
+            begin_range->GetChar(),
+            end_range->GetChar());
         delete begin_range;
         delete end_range;
-        return bracket_character_set;
+        return bracket_char_set;
     }
 |
-    bracket_character_set:bracket_character_set '[' ':' id:id ':' ']'
+    bracket_char_set:bracket_char_set '[' ':' id:id ':' ']'
     {
-        bracket_character_set->AddCharacterClass(id->GetText());
+        bracket_char_set->AddCharClass(id->GetText());
         delete id;
-        return bracket_character_set;
+        return bracket_char_set;
     }
 |
     // empty reduction rule
     {
-        BracketCharacterSet *bracket_character_set = new BracketCharacterSet();
-        return bracket_character_set;
+        BracketCharSet *bracket_char_set = new BracketCharSet();
+        return bracket_char_set;
     }
 ;
 
-bracket_expression_character %type "Character *"
+bracket_expression_char %type "Char *"
 :   // normal chars don't require any escaping.
-    bracket_expression_normal_character:normal_char        { return normal_char; }
-|   // some normal characters can be escaped (like '\n')
-    '\\' bracket_expression_normal_character:normal_char   { normal_char->Escape(); return normal_char; }
+    bracket_expression_normal_char:normal_char        { return normal_char; }
+|   // some normal chars can be escaped (like '\n')
+    '\\' bracket_expression_normal_char:normal_char   { normal_char->Escape(); return normal_char; }
 |   // control chars require escaping.
-    '\\' bracket_expression_control_character:control_char { return control_char; }
+    '\\' bracket_expression_control_char:control_char { return control_char; }
 ;
 
 //////////////////////////////////////////////////////////////////////////////
 // grammar primitive rules
 //////////////////////////////////////////////////////////////////////////////
 
-// these characters are special only in atom parsing (not inside
+// these chars are special only in atom parsing (not inside
 // a bound or a bracket expression).  all others (with the exception
-// of backslash, the escape character) are treated as normal characters.
-// no character here should be present in atom_normal_character,
-// and the union of atom_normal_character, atom_control_character
-// and backslash should constitute all valid characters.
-atom_control_character %type "Character *"
+// of backslash, the escape char) are treated as normal chars.
+// no char here should be present in atom_normal_char,
+// and the union of atom_normal_char, atom_control_char
+// and backslash should constitute all valid chars.
+atom_control_char %type "Char *"
 :
     // branch operator
-    '|' { return new Character('|'); }
+    '|' { return new Char('|'); }
 |   // associative grouping delimiter (open)
-    '(' { return new Character('('); }
+    '(' { return new Char('('); }
 |   // associative grouping delimiter (close)
-    ')' { return new Character(')'); }
+    ')' { return new Char(')'); }
 |   // bound delimiter (open)
-    '{' { return new Character('{'); }
+    '{' { return new Char('{'); }
 |   // bound delimiter (close)
-    '}' { return new Character('}'); }
+    '}' { return new Char('}'); }
 |   // bracket expression delimiter (open)
-    '[' { return new Character('['); }
+    '[' { return new Char('['); }
 |   // bracket expression delimiter (close)
-    ']' { return new Character(']'); }
+    ']' { return new Char(']'); }
 |   // indicates 0 or 1 of the previous atom
-    '?' { return new Character('?'); }
+    '?' { return new Char('?'); }
 |   // indicates 0 or more of the previous atom
-    '*' { return new Character('*'); }
+    '*' { return new Char('*'); }
 |   // indicates 1 or more of the previous atom
-    '+' { return new Character('+'); }
-|   // match-any-non-newline character
-    '.' { return new Character('.'); }
+    '+' { return new Char('+'); }
+|   // match-any-non-newline char
+    '.' { return new Char('.'); }
 |   // match-the-beginning-of-a-line epsilon operator
-    '^' { return new Character('^'); }
+    '^' { return new Char('^'); }
 |   // match-the-end-of-a-line epsilon operator
-    '$' { return new Character('$'); }
-|   // backslash -- for escaping other characters
-    '\\' { return new Character('\\'); }
+    '$' { return new Char('$'); }
+|   // backslash -- for escaping other chars
+    '\\' { return new Char('\\'); }
 ;
 
-// these characters have no special meaning in atom parsing (not
+// these chars have no special meaning in atom parsing (not
 // inside a bound or a bracket expression).  all others (with the exception
-// of backslash, the escape character) are treated as control characters.
-// no character here should be present in atom_control_character,
-// and the union of atom_normal_character, atom_control_character
-// and backslash should constitute all valid characters.
-atom_normal_character %type "Character *"
+// of backslash, the escape char) are treated as control chars.
+// no char here should be present in atom_control_char,
+// and the union of atom_normal_char, atom_control_char
+// and backslash should constitute all valid chars.
+atom_normal_char %type "Char *"
 :
     ALPHA:alpha { return alpha; }
 |   DIGIT:digit { return digit; }
 |   CHAR:ch     { return ch; }
-|   ','         { return new Character(','); }
-|   '-'         { return new Character('-'); }
-|   ':'         { return new Character(':'); }
+|   ','         { return new Char(','); }
+|   '-'         { return new Char('-'); }
+|   ':'         { return new Char(':'); }
 ;
 
-// these characters are special only inside bracket expressions.  all others
-// (with the exception of backslash, the escape character) are treated as
-// normal characters.  no character here should be present in
-// bracket_expression_normal_character, and the union of
-// bracket_expression_normal_character, bracket_expression_control_character
-// and backslash should constitute all valid characters.
-bracket_expression_control_character %type "Character *"
+// these chars are special only inside bracket expressions.  all others
+// (with the exception of backslash, the escape char) are treated as
+// normal chars.  no char here should be present in
+// bracket_expression_normal_char, and the union of
+// bracket_expression_normal_char, bracket_expression_control_char
+// and backslash should constitute all valid chars.
+bracket_expression_control_char %type "Char *"
 :
     // delimits a bracket atom range
-    '-' { return new Character('-'); }
-|   // indicates bracket character set negation
-    '^' { return new Character('^'); }
-|   // indicates the beginning of a character class expression
-    '[' { return new Character('['); }
-|   // indicates the end of the bracket expression (or character class exp)
-    ']' { return new Character(']'); }
-|   // backslash -- for escaping other characters
-    '\\' { return new Character('\\'); }
+    '-' { return new Char('-'); }
+|   // indicates bracket char set negation
+    '^' { return new Char('^'); }
+|   // indicates the beginning of a char class expression
+    '[' { return new Char('['); }
+|   // indicates the end of the bracket expression (or char class exp)
+    ']' { return new Char(']'); }
+|   // backslash -- for escaping other chars
+    '\\' { return new Char('\\'); }
 ;
 
-// these characters have no special meaning inside bracket expressions.  all
-// others (with the exception of backslash, the escape character) are treated
-// as normal characters.  no character here should be present in
-// bracket_expression_normal_character, and the union of
-// bracket_expression_normal_character, bracket_expression_control_character
-// and backslash should constitute all valid characters.
-bracket_expression_normal_character %type "Character *"
+// these chars have no special meaning inside bracket expressions.  all
+// others (with the exception of backslash, the escape char) are treated
+// as normal chars.  no char here should be present in
+// bracket_expression_normal_char, and the union of
+// bracket_expression_normal_char, bracket_expression_control_char
+// and backslash should constitute all valid chars.
+bracket_expression_normal_char %type "Char *"
 :
     ALPHA:alpha { return alpha; }
 |   DIGIT:digit { return digit; }
 |   CHAR:ch     { return ch; }
-|   '|'         { return new Character('|'); }
-|   ':'         { return new Character(':'); }
-|   '?'         { return new Character('?'); }
-|   '*'         { return new Character('*'); }
-|   '+'         { return new Character('+'); }
-|   '.'         { return new Character('.'); }
-|   '$'         { return new Character('$'); }
-|   ','         { return new Character(','); }
-|   '('         { return new Character('('); }
-|   ')'         { return new Character(')'); }
-|   '{'         { return new Character('{'); }
-|   '}'         { return new Character('}'); }
+|   '|'         { return new Char('|'); }
+|   ':'         { return new Char(':'); }
+|   '?'         { return new Char('?'); }
+|   '*'         { return new Char('*'); }
+|   '+'         { return new Char('+'); }
+|   '.'         { return new Char('.'); }
+|   '$'         { return new Char('$'); }
+|   ','         { return new Char(','); }
+|   '('         { return new Char('('); }
+|   ')'         { return new Char(')'); }
+|   '{'         { return new Char('{'); }
+|   '}'         { return new Char('}'); }
 ;
 
 id %type "AstCommon::Id *"
@@ -612,7 +612,7 @@ id %type "AstCommon::Id *"
     id:id ALPHA:alpha
     {
         assert(id != NULL);
-        id->AppendCharacter(alpha->GetCharacter());
+        id->AppendChar(alpha->GetChar());
         delete alpha;
         return id;
     }
@@ -620,7 +620,7 @@ id %type "AstCommon::Id *"
     id:id CHAR:ch
     {
         assert(id != NULL);
-        id->AppendCharacter(ch->GetCharacter());
+        id->AppendChar(ch->GetChar());
         delete ch;
         return id;
     }
@@ -628,7 +628,7 @@ id %type "AstCommon::Id *"
     id:id DIGIT:digit
     {
         assert(id != NULL);
-        id->AppendCharacter(digit->GetCharacter());
+        id->AppendChar(digit->GetChar());
         delete digit;
         return id;
     }
@@ -636,7 +636,7 @@ id %type "AstCommon::Id *"
     ALPHA:alpha
     {
         string temp;
-        temp += alpha->GetCharacter();
+        temp += alpha->GetChar();
         AstCommon::Id *id = new AstCommon::Id(temp, FiLoc::ms_invalid);
         delete alpha;
         return id;
@@ -645,7 +645,7 @@ id %type "AstCommon::Id *"
     CHAR:ch
     {
         string temp;
-        temp += ch->GetCharacter();
+        temp += ch->GetChar();
         AstCommon::Id *id = new AstCommon::Id(temp, FiLoc::ms_invalid);
         delete ch;
         return id;
@@ -656,7 +656,7 @@ integer %type "AstCommon::SignedInteger *"
 :
     integer:integer DIGIT:digit
     {
-        integer->ShiftAndAdd(digit->GetCharacter() - '0');
+        integer->ShiftAndAdd(digit->GetChar() - '0');
         if (integer->GetValue() > 255)
             integer->SetValue(255);
         delete digit;
@@ -665,7 +665,7 @@ integer %type "AstCommon::SignedInteger *"
 |
     DIGIT:digit
     {
-        AstCommon::SignedInteger *integer = new AstCommon::SignedInteger(digit->GetCharacter() - '0', FiLoc::ms_invalid);
+        AstCommon::SignedInteger *integer = new AstCommon::SignedInteger(digit->GetChar() - '0', FiLoc::ms_invalid);
         delete digit;
         return integer;
     }

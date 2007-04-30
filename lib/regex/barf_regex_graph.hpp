@@ -39,7 +39,7 @@ struct InputAtomTransition : public Graph::Transition
 {
     InputAtomTransition (Uint8 input_atom, Uint32 target_index)
         :
-        Graph::Transition(TT_INPUT_ATOM, input_atom, input_atom, target_index, GetCharacterLiteral(input_atom))
+        Graph::Transition(TT_INPUT_ATOM, input_atom, input_atom, target_index, GetCharLiteral(input_atom))
     { }
 }; // end of struct InputAtomTransition
 
@@ -52,7 +52,7 @@ struct InputAtomRangeTransition : public Graph::Transition
             range_lower,
             range_upper,
             target_index,
-            string("[") + GetCharacterLiteral(range_lower, false) + "-" + GetCharacterLiteral(range_upper, false) + "]")
+            string("[") + GetCharLiteral(range_lower, false) + "-" + GetCharLiteral(range_upper, false) + "]")
     { }
 }; // end of struct InputAtomRangeTransition
 

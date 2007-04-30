@@ -438,7 +438,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
         "START",
         "STRICT_CODE_BLOCK",
         "STRING",
-        "TOKEN_ID_CHARACTER",
+        "TOKEN_ID_CHAR",
         "TYPE",
         "END_",
 
@@ -886,15 +886,15 @@ AstCommon::Ast * Parser::ReductionRuleHandler0022 ()
     return NULL;
 }
 
-// rule 23: token_id <- TOKEN_ID_CHARACTER:token_id_character    
+// rule 23: token_id <- TOKEN_ID_CHAR:token_id_char    
 AstCommon::Ast * Parser::ReductionRuleHandler0023 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    TokenIdCharacter * token_id_character = Dsc< TokenIdCharacter * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    TokenIdChar * token_id_char = Dsc< TokenIdChar * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 300 "trison_parser.trison"
 
-        return token_id_character;
+        return token_id_char;
     
 #line 900 "trison_parser.cpp"
     return NULL;
@@ -1364,7 +1364,7 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {        Token::token_id_list__,  2, &Parser::ReductionRuleHandler0020, "rule 20: token_id_list <- token_id_list token_id    "},
     {        Token::token_id_list__,  1, &Parser::ReductionRuleHandler0021, "rule 21: token_id_list <- token_id    "},
     {             Token::token_id__,  1, &Parser::ReductionRuleHandler0022, "rule 22: token_id <- ID    "},
-    {             Token::token_id__,  1, &Parser::ReductionRuleHandler0023, "rule 23: token_id <- TOKEN_ID_CHARACTER    "},
+    {             Token::token_id__,  1, &Parser::ReductionRuleHandler0023, "rule 23: token_id <- TOKEN_ID_CHAR    "},
     {Token::at_least_zero_newlines__,  2, &Parser::ReductionRuleHandler0024, "rule 24: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    "},
     {Token::at_least_zero_newlines__,  0, &Parser::ReductionRuleHandler0025, "rule 25: at_least_zero_newlines <-     "},
     { Token::at_least_one_newline__,  2, &Parser::ReductionRuleHandler0026, "rule 26: at_least_one_newline <- at_least_one_newline NEWLINE    "},
@@ -1588,7 +1588,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                 Token::ERROR_, {        TA_SHIFT_AND_PUSH_STATE,   23}},
     {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   24}},
-    {     Token::TOKEN_ID_CHARACTER, {        TA_SHIFT_AND_PUSH_STATE,   25}},
+    {          Token::TOKEN_ID_CHAR, {        TA_SHIFT_AND_PUSH_STATE,   25}},
     // nonterminal transitions
     {        Token::token_id_list__, {                  TA_PUSH_STATE,   26}},
     {             Token::token_id__, {                  TA_PUSH_STATE,   27}},
@@ -1724,7 +1724,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   24}},
     {                   Token::TYPE, {        TA_SHIFT_AND_PUSH_STATE,   41}},
-    {     Token::TOKEN_ID_CHARACTER, {        TA_SHIFT_AND_PUSH_STATE,   25}},
+    {          Token::TOKEN_ID_CHAR, {        TA_SHIFT_AND_PUSH_STATE,   25}},
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     // nonterminal transitions
     {             Token::token_id__, {                  TA_PUSH_STATE,   42}},
@@ -2033,7 +2033,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {               Token::NONASSOC, {        TA_SHIFT_AND_PUSH_STATE,   72}},
     {                   Token::PREC, {        TA_SHIFT_AND_PUSH_STATE,   73}},
     {                  Token::RIGHT, {        TA_SHIFT_AND_PUSH_STATE,   74}},
-    {     Token::TOKEN_ID_CHARACTER, {        TA_SHIFT_AND_PUSH_STATE,   25}},
+    {          Token::TOKEN_ID_CHAR, {        TA_SHIFT_AND_PUSH_STATE,   25}},
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   52}},
     // nonterminal transitions

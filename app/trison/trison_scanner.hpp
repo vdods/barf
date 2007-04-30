@@ -49,11 +49,11 @@ private:
     Parser::Token::Type ScanStrictCodeBlock (AstCommon::Ast **scanned_token);
     Parser::Token::Type ScanDumbCodeBlock (AstCommon::Ast **scanned_token);
     Parser::Token::Type ScanStringLiteral (AstCommon::Ast **scanned_token);
-    Parser::Token::Type ScanCharacterLiteral (AstCommon::Ast **scanned_token);
+    Parser::Token::Type ScanCharLiteral (AstCommon::Ast **scanned_token);
 
     void ScanStringLiteralInsideCodeBlock ();
-    void ScanCharacterLiteralInsideCodeBlock ();
-    void ScanCharacterLiteral ();
+    void ScanCharLiteralInsideCodeBlock ();
+    void ScanCharLiteral ();
     void ScanComment ();
 
     inline bool IsNextCharEOF (char *c = NULL)
@@ -68,7 +68,7 @@ private:
     static inline bool IsAlpha (char c) { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'; }
     static inline bool IsLowercaseAlpha (char c) { return c >= 'a' && c <= 'z'; }
     static inline bool IsDigit (char c) { return c >= '0' && c <= '9'; }
-    static inline bool IsEscapableCharacter (char c) { return c == '0' || c == 'a' || c == 'b' || c == 't' || c == 'n' || c == 'v' || c == 'f' || c == 'r' || c == '\\' || c == '"'; }
+    static inline bool IsEscapableChar (char c) { return c == '0' || c == 'a' || c == 'b' || c == 't' || c == 'n' || c == 'v' || c == 'f' || c == 'r' || c == '\\' || c == '"'; }
 
     string m_input_filename;
     ifstream m_input;

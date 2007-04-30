@@ -178,10 +178,10 @@ void State::PrintTransitions (ostream &stream, bool is_last_state, StateMachine 
         }
         else
         {
-            TokenIdCharacter const *token_id_character =
-                Dsc<TokenIdCharacter const *>(token_id);
+            TokenIdChar const *token_id_char =
+                Dsc<TokenIdChar const *>(token_id);
             string token_string("Token::Type(");
-            token_string += GetCharacterLiteral(token_id_character->GetCharacter());
+            token_string += GetCharLiteral(token_id_char->GetChar());
             token_string += ')';
             stream << "    {" << setw(30) << token_string << ", ";
             transition.PrintTransitionArrayElement(stream, state_machine);

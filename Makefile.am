@@ -243,13 +243,13 @@ if STABLE_REFLEX_EXISTS
 barf-commonlang-scanner: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-data-path $(DATA_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
+	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(DATA_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
 
 barf-commonlang-scanner-force: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-data-path $(DATA_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
+	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(DATA_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
 
 barf-commonlang-scanner-release: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-data-path $(DATA_PATH) --warnings-as-errors --without-line-directives --output-directory $(top_srcdir)/lib/commonlang/
+	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(DATA_PATH) --warnings-as-errors --without-line-directives --output-directory $(top_srcdir)/lib/commonlang/
 else # !STABLE_REFLEX_EXISTS
 barf-commonlang-scanner barf-commonlang-scanner-force barf-commonlang-scanner-release:
 	@echo "!!!"

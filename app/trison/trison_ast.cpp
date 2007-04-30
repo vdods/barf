@@ -39,7 +39,7 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_RULE_TOKEN_LIST",
         "AT_RULE_TOKEN",
         "AT_TOKEN_ID_ID",
-        "AT_TOKEN_ID_CHARACTER",
+        "AT_TOKEN_ID_CHAR",
         "AT_ID",
         "AT_CODE_BLOCK",
         "AT_STRING",
@@ -62,7 +62,7 @@ void TokenIdId::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
     stream << Tabs(indent_level) << Stringify(GetAstType()) << " " << GetText() << endl;
 }
 
-void TokenIdCharacter::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void TokenIdChar::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << " " << GetText() << endl;
 }

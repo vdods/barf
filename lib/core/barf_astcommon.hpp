@@ -29,7 +29,7 @@ namespace AstCommon {
 enum
 {
     AT_THROW_AWAY = 0,
-    AT_CHARACTER,
+    AT_CHAR,
     AT_SIGNED_INTEGER,
     AT_UNSIGNED_INTEGER,
     AT_STRING,
@@ -257,32 +257,32 @@ struct ThrowAway : public Ast
     }
 }; // end of struct ThrowAway
 
-class Character : public Ast
+class Char : public Ast
 {
 public:
 
-    Character (Uint8 character, FiLoc const &filoc)
+    Char (Uint8 ch, FiLoc const &filoc)
         :
-        Ast(filoc, AT_CHARACTER),
-        m_character(character)
+        Ast(filoc, AT_CHAR),
+        m_char(ch)
     { }
 
-    inline Uint8 GetCharacter () const { return m_character; }
-    inline string GetCharacterLiteral () const { return Barf::GetCharacterLiteral(m_character); }
+    inline Uint8 GetChar () const { return m_char; }
+    inline string GetCharLiteral () const { return Barf::GetCharLiteral(m_char); }
 
     virtual void Escape ();
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 protected:
 
-    Character (Uint8 character, FiLoc const &filoc, AstType ast_type)
+    Char (Uint8 ch, FiLoc const &filoc, AstType ast_type)
         :
         Ast(filoc, ast_type),
-        m_character(character)
+        m_char(ch)
     { }
 
-    Uint8 m_character;
-}; // end of class Character
+    Uint8 m_char;
+}; // end of class Char
 
 class SignedInteger : public Ast
 {
@@ -348,7 +348,7 @@ public:
     inline string const &GetText () const { return m_text; }
 
     inline void AppendText (string const &text) { m_text += text; }
-    inline void AppendCharacter (char character) { m_text += character; }
+    inline void AppendChar (char ch) { m_text += ch; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 

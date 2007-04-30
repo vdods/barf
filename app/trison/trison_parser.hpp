@@ -52,7 +52,7 @@ public:
             START,
             STRICT_CODE_BLOCK,
             STRING,
-            TOKEN_ID_CHARACTER,
+            TOKEN_ID_CHAR,
             TYPE,
 
             // special end-of-input terminal

@@ -50,34 +50,34 @@ string const &GetAstTypeString (AstType ast_type);
 struct Token : public AstCommon::Ast
 {
     AstCommon::Id const *const m_id;
-    AstCommon::Character const *const m_character;
+    AstCommon::Char const *const m_char;
 
     Token (AstCommon::Id const *id)
         :
         AstCommon::Ast(id->GetFiLoc(), AT_TOKEN),
         m_id(id),
-        m_character(NULL)
+        m_char(NULL)
     {
         assert(m_id != NULL);
     }
-    Token (AstCommon::Character const *character)
+    Token (AstCommon::Char const *ch)
         :
-        AstCommon::Ast(character->GetFiLoc(), AT_TOKEN),
+        AstCommon::Ast(ch->GetFiLoc(), AT_TOKEN),
         m_id(NULL),
-        m_character(character)
+        m_char(ch)
     {
-        assert(m_character != NULL);
+        assert(m_char != NULL);
     }
     ~Token ()
     {
         delete m_id;
-        delete m_character;
+        delete m_char;
     }
 
     bool GetIsId () const { return m_id != NULL; }
-    string GetSourceText () const { return m_id != NULL ? m_id->GetText() : GetCharacterLiteral(m_character->GetCharacter()); }
+    string GetSourceText () const { return m_id != NULL ? m_id->GetText() : GetCharLiteral(m_char->GetChar()); }
     string const &GetIdString () const { assert(m_id != NULL); return m_id->GetText(); }
-    Uint8 GetCharacterChar () const { assert(m_character != NULL); return m_character->GetCharacter(); }
+    Uint8 GetCharChar () const { assert(m_char != NULL); return m_char->GetChar(); }
     string const &GetAssignedType () const { return m_assigned_type; }
 
     void SetAssignedType (string const &assigned_type);

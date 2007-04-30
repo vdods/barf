@@ -30,7 +30,7 @@ bool GetCharNeedsHexEscaping (Uint8 const c)
         return c < ' ' || c > '~';
 }
 
-bool GetCharacterLiteralCharNeedsNormalEscaping (Uint8 const c)
+bool GetCharLiteralCharNeedsNormalEscaping (Uint8 const c)
 {
     // normal escaping will suffice for these (a b t n v f r are contiguous).
     return c == '\0' || c >= '\a' && c <= '\r' || c == '\\' || c == '\'';
@@ -58,14 +58,14 @@ Uint8 GetEscapeCode (Uint8 const c)
     }
 }
 
-bool GetIsHexDigitCharacter (Uint8 c)
+bool GetIsHexDigitChar (Uint8 c)
 {
     return c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f';
 }
 
 Uint8 GetHexDigit (Uint8 c)
 {
-    assert(GetIsHexDigitCharacter(c));
+    assert(GetIsHexDigitChar(c));
     if (c >= '0' && c <= '9')
         return c - '0';
     else if (c >= 'A' && c <= 'F')
@@ -74,7 +74,7 @@ Uint8 GetHexDigit (Uint8 c)
         return c - 'a' + 0xA;
 }
 
-Uint8 GetHexCharacter (Uint8 hex_digit)
+Uint8 GetHexChar (Uint8 hex_digit)
 {
     assert(hex_digit < 0x10);
     if (hex_digit < 0xA)
@@ -83,15 +83,15 @@ Uint8 GetHexCharacter (Uint8 hex_digit)
     return hex_digit + 'A';
 }
 
-string GetHexCharacterLiteral (Uint8 const c, bool with_quotes)
+string GetHexCharLiteral (Uint8 const c, bool with_quotes)
 {
     string retval;
     if (with_quotes)
         retval += '\'';
     retval += '\\';
     retval += 'x';
-    retval += (char)GetHexCharacter(c >> 4);
-    retval += (char)GetHexCharacter(c & 0xF);
+    retval += (char)GetHexChar(c >> 4);
+    retval += (char)GetHexChar(c & 0xF);
     if (with_quotes)
         retval += '\'';
     return retval;
@@ -140,7 +140,7 @@ string GetEscapedString (string const &text)
                 ++it;
                 if (it == it_end)
                     retval += 'x';
-                else if (!GetIsHexDigitCharacter(*it))
+                else if (!GetIsHexDigitChar(*it))
                     retval += 'x', retval += *it;
                 else
                 {
@@ -149,7 +149,7 @@ string GetEscapedString (string const &text)
                     ++it;
                     if (it == it_end)
                         retval += c;
-                    else if (!GetIsHexDigitCharacter(*it))
+                    else if (!GetIsHexDigitChar(*it))
                         retval += hex_value, retval += *it;
                     else
                         retval += (hex_value << 4) | GetHexDigit(*it);
@@ -164,16 +164,16 @@ string GetEscapedString (string const &text)
     return retval;
 }
 
-string GetCharacterLiteral (Uint8 const c, bool const with_quotes)
+string GetCharLiteral (Uint8 const c, bool const with_quotes)
 {
     string retval;
     if (with_quotes)
         retval += '\'';
 
-    if (GetCharacterLiteralCharNeedsNormalEscaping(c))
+    if (GetCharLiteralCharNeedsNormalEscaping(c))
         retval += '\\', retval += GetEscapeCode(c);
     else if (GetCharNeedsHexEscaping(c))
-        retval += GetHexCharacterLiteral(c, false);
+        retval += GetHexCharLiteral(c, false);
     else
         retval += c;
 
@@ -197,7 +197,7 @@ string GetStringLiteral (string const &text, bool const with_quotes)
         if (GetStringLiteralCharNeedsNormalEscaping(c))
             retval += '\\', retval += GetEscapeCode(c);
         else if (GetCharNeedsHexEscaping(c))
-            retval += GetHexCharacterLiteral(c, false);
+            retval += GetHexCharLiteral(c, false);
         else
             retval += char(c);
     }

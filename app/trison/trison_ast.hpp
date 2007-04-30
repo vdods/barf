@@ -32,7 +32,7 @@ class RuleToken;
 class StartDirective;
 class TokenDirective;
 class TokenId;
-class TokenIdCharacter;
+class TokenIdChar;
 class TokenIdId;
 
 /*
@@ -62,7 +62,7 @@ AstCommon::Ast (abstract)
     AstCommon::TextBase (abstract)
         TokenId (abstract)
             TokenIdId
-            TokenIdCharacter
+            TokenIdChar
 
 // ///////////////////////////////////////////////////////////////////////////
 // class composition
@@ -77,7 +77,7 @@ Grammar
         TokenDirective[]
             TokenIdList
                 TokenId[]
-                    std::string // stores the id or the character
+                    std::string // stores the id or the char
     PrecedenceDirectiveList // list of allowable rule precedences
         PrecedenceDirective[]
     StartDirective // stores the start nonterminal id
@@ -115,7 +115,7 @@ enum
     AT_RULE_TOKEN_LIST,
     AT_RULE_TOKEN,
     AT_TOKEN_ID_ID,
-    AT_TOKEN_ID_CHARACTER,
+    AT_TOKEN_ID_CHAR,
     AT_ID,
     AT_CODE_BLOCK,
     AT_STRING,
@@ -206,29 +206,29 @@ public:
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class TokenIdId
 
-class TokenIdCharacter : public TokenId
+class TokenIdChar : public TokenId
 {
 public:
 
-    TokenIdCharacter (
-        char id_character,
+    TokenIdChar (
+        char id_char,
         FiLoc const &filoc)
         :
         TokenId(
-            GetCharacterLiteral(id_character),
+            GetCharLiteral(id_char),
             filoc,
-            AT_TOKEN_ID_CHARACTER),
-        m_id_character(id_character)
+            AT_TOKEN_ID_CHAR),
+        m_id_char(id_char)
     { }
 
-    inline char GetCharacter () const { return m_id_character; }
+    inline char GetChar () const { return m_id_char; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    char const m_id_character;
-}; // end of class TokenIdCharacter
+    char const m_id_char;
+}; // end of class TokenIdChar
 
 class RuleToken : public AstCommon::Ast
 {

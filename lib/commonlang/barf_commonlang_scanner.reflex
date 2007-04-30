@@ -44,7 +44,7 @@ namespace CommonLang {
         {
             BAD_END_OF_FILE = 0x100,
             BAD_TOKEN,
-            CHARACTER_LITERAL,
+            CHAR_LITERAL,
             DIRECTIVE_ADD_CODESPEC,
             DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
             DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
@@ -133,7 +133,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
     {
         "BAD_END_OF_FILE",
         "BAD_TOKEN",
-        "CHARACTER_LITERAL",
+        "CHAR_LITERAL",
         "DIRECTIVE_ADD_CODESPEC",
         "DIRECTIVE_ADD_OPTIONAL_DIRECTIVE",
         "DIRECTIVE_ADD_REQUIRED_DIRECTIVE",
@@ -167,7 +167,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
     if (scanner_token_type < 0x100)
     {
         assert(scanner_token_type >= 0);
-        return stream << GetCharacterLiteral(Uint8(scanner_token_type));
+        return stream << GetCharLiteral(Uint8(scanner_token_type));
     }
     else
     {
@@ -252,7 +252,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     return In().get();
 }
 %language.cpp.rejection_actions {
-    EmitError(GetFiLoc(), "unrecognized character " + GetCharacterLiteral(rejected_atom));
+    EmitError(GetFiLoc(), "unrecognized character " + GetCharLiteral(rejected_atom));
 }
 %language.cpp.reset_for_new_input_actions {
     m_is_in_preamble = true;
@@ -273,17 +273,17 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 
 // a single octal (base 8) digit
 %macro OCT_DIGIT            ([0-7])
-// an octal escape character (e.g. \042)
+// an octal escape char (e.g. \042)
 %macro OCT_CHAR             (\\0{OCT_DIGIT}+)
 
 // a single hexadecimal (base 16) digit
 %macro HEX_DIGIT            ([0-9A-Fa-f])
-// a hexidecimal escape character (e.g. \xF9)
+// a hexadecimal escape char (e.g. \xF9)
 %macro HEX_CHAR             (\\x{HEX_DIGIT}+)
 
-// an escaped character literal (e.g. '\t', '\0' or even '\j')
+// an escaped char literal (e.g. '\t', '\0' or even '\j')
 %macro CHAR_ESC_CHAR        (\\[[:print:]])
-// everything that doesn't need to be escaped in a character literal (e.g. 'p')
+// everything that doesn't need to be escaped in a char literal (e.g. 'p')
 %macro CHAR_NORMAL_CHAR     ([^[:cntrl:]"'\\])
 
 // single-char escape codes for a string literal (e.g. "yo!\n")
@@ -300,7 +300,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 %macro WHITESPACE           ([ \t])
 // newline
 %macro NEWLINE              (\n)
-// any character
+// any char
 %macro ANYTHING             (\n|.)
 
 %start MAIN
@@ -325,10 +325,10 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("MAIN - (//.*) = " << GetStringLiteral(accepted_string));
     }
 |
-    (') // opening quote for a character literal
+    (') // opening quote for a char literal
     %language.cpp {
         SPEW("MAIN - (') = " << GetStringLiteral(accepted_string));
-        SetScannerState(State::CHARACTER_LITERAL_GUTS);
+        SetScannerState(State::CHAR_LITERAL_GUTS);
     }
 |
     (") // opening quote for a string literal
@@ -409,7 +409,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     (.)
     %language.cpp {
         SPEW("MAIN - (.) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFiLoc(), "unexpected character " + GetCharacterLiteral(accepted_string[0]));
+        EmitError(GetFiLoc(), "unexpected character " + GetCharLiteral(accepted_string[0]));
         return Token::BAD_TOKEN;
     }
 ;
@@ -440,84 +440,84 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state CHARACTER_LITERAL_GUTS
+%state CHAR_LITERAL_GUTS
 :
     ({OCT_CHAR})
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
         assert(accepted_string[1] == '0');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
-        *token = new AstCommon::Character(Uint8(value), GetFiLoc());
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        *token = new AstCommon::Char(Uint8(value), GetFiLoc());
+        SetScannerState(State::CHAR_LITERAL_END);
     }
 |
     ({HEX_CHAR})
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
-        *token = new AstCommon::Character(Uint8(value), GetFiLoc());
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        *token = new AstCommon::Char(Uint8(value), GetFiLoc());
+        SetScannerState(State::CHAR_LITERAL_END);
     }
 |
     ({CHAR_ESC_CHAR})
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_GUTS - ({CHAR_ESC_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - ({CHAR_ESC_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        AstCommon::Character *character = new AstCommon::Character(Uint8(accepted_string[1]), GetFiLoc());
-        character->Escape();
-        *token = character;
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        AstCommon::Char *ch = new AstCommon::Char(Uint8(accepted_string[1]), GetFiLoc());
+        ch->Escape();
+        *token = ch;
+        SetScannerState(State::CHAR_LITERAL_END);
     }
 |
     ({CHAR_NORMAL_CHAR})
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_GUTS - ({CHAR_NORMAL_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - ({CHAR_NORMAL_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() == 1);
-        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFiLoc());
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        *token = new AstCommon::Char(Uint8(accepted_string[0]), GetFiLoc());
+        SetScannerState(State::CHAR_LITERAL_END);
     }
 |
     (\\?\z) // end of file (which may be preceded by a backslash)
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "unterminated character literal");
         return Token::END_OF_FILE;
     }
 |
     ({ANYTHING}) // anything else just means it's malformed
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFiLoc(), "unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in character literal");
+        SPEW("CHAR_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
+        EmitError(GetFiLoc(), "unexpected character " + GetCharLiteral(accepted_string[0]) + " in character literal");
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
-        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFiLoc());
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        *token = new AstCommon::Char(Uint8(accepted_string[0]), GetFiLoc());
+        SetScannerState(State::CHAR_LITERAL_END);
     }
 ;
 
-%state CHARACTER_LITERAL_END
+%state CHAR_LITERAL_END
 :
     (') // closing single-quote
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_END - (') - accepted_string = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_END - (') - accepted_string = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         SetScannerState(State::MAIN);
-        return Token::CHARACTER_LITERAL;
+        return Token::CHAR_LITERAL;
     }
 |
     (\\?\z) // end of file (which may be preceded by a backslash)
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_END - (\\\\?\\z) - accepted_string = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_END - (\\\\?\\z) - accepted_string = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "unterminated character literal");
         assert(*token != NULL);
         delete *token;
@@ -528,7 +528,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     ({ANYTHING}) // anything else just means it's malformed
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_END - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_END - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "malformed character literal");
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
@@ -552,7 +552,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
-        Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+        Dsc<AstCommon::String *>(*token)->AppendChar(Uint8(value));
     }
 |
     ({HEX_CHAR})
@@ -565,7 +565,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
-        Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+        Dsc<AstCommon::String *>(*token)->AppendChar(Uint8(value));
     }
 |
     ({STRING_ESC_CHAR})
@@ -574,7 +574,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        Dsc<AstCommon::String *>(*token)->AppendCharacter(GetEscapedChar(Uint8(accepted_string[1])));
+        Dsc<AstCommon::String *>(*token)->AppendChar(GetEscapedChar(Uint8(accepted_string[1])));
     }
 |
     ({STRING_NORMAL_CHAR}+)
@@ -607,7 +607,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        EmitError(GetFiLoc(), "ignoring unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in string literal");
+        EmitError(GetFiLoc(), "ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal");
     }
 ;
 
@@ -664,7 +664,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 
 %state REGULAR_EXPRESSION_BRACKET_EXPRESSION
 :
-    (\]) // closing delimiter for bracket expression (or character class)
+    (\]) // closing delimiter for bracket expression (or char class)
     %language.cpp {
         SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\]) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
@@ -675,7 +675,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
             --m_regex_bracket_level;
     }
 |
-    (\[) // opening delimiter for character class
+    (\[) // opening delimiter for char class
     %language.cpp {
         SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\[) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
@@ -754,12 +754,12 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         ++m_code_block_bracket_level;
     }
 |
-    (') // opening quote for a character literal
+    (') // opening quote for a char literal
     %language.cpp {
         SPEW("STRICT_CODE_BLOCK - (') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
-        SetScannerState(State::CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK);
+        SetScannerState(State::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     }
 |
     (") // opening quote for a string literal
@@ -805,11 +805,11 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK
+%state CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK
 :
     (([^'\\]|\\{ANYTHING})*') // everything up to and including the first non-escaped single quote
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*') = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
@@ -818,7 +818,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     (([^'\\]|\\{ANYTHING})*\\?\z) // everything up to an end of file encountered before the first single quote
     %language.cpp {
-        SPEW("CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*\\\\?\\z) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         delete *token;
         *token = NULL;

@@ -2085,7 +2085,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:          return Parser::Token::STRICT_CODE_BLOCK;
         case CommonLang::Scanner::Token::STRING_LITERAL:             return Parser::Token::STRING_LITERAL;
 
-        case CommonLang::Scanner::Token::CHARACTER_LITERAL:
+        case CommonLang::Scanner::Token::CHAR_LITERAL:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:

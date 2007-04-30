@@ -108,7 +108,7 @@ Parser::Token::Type Parser::Scan ()
 %token RIGHT %type "AstCommon::ThrowAway *"
 %token START %type "AstCommon::ThrowAway *"
 %token TYPE %type "AstCommon::ThrowAway *"
-%token TOKEN_ID_CHARACTER %type "TokenIdCharacter *"
+%token TOKEN_ID_CHAR %type "TokenIdChar *"
 %token BAD_TOKEN
 %token NEWLINE
 
@@ -296,9 +296,9 @@ token_id %type "TokenId *"
         return token_id_id;
     }
 |
-    TOKEN_ID_CHARACTER:token_id_character
+    TOKEN_ID_CHAR:token_id_char
     {
-        return token_id_character;
+        return token_id_char;
     }
 ;
 

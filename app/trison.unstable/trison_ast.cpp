@@ -58,7 +58,7 @@ void Token::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_le
     if (m_id != NULL)
         m_id->Print(stream, Stringify, indent_level+1);
     else
-        m_character->Print(stream, Stringify, indent_level+1);
+        m_char->Print(stream, Stringify, indent_level+1);
 }
 
 void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const

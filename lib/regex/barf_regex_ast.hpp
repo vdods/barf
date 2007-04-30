@@ -34,9 +34,9 @@ AstCommon::Ast (abstract)
     Piece
     Atom (abstract)
         RegularExpression
-        ControlCharacter
-        NormalCharacter
-        BracketCharacterSet
+        ControlChar
+        NormalChar
+        BracketCharSet
     Bound
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -56,8 +56,8 @@ enum
     AT_BOUND = AstCommon::AT_START_CUSTOM_TYPES_HERE_,
     AT_PIECE,
     AT_BRANCH,
-    AT_CHARACTER,
-    AT_BRACKET_CHARACTER_SET,
+    AT_CHAR,
+    AT_BRACKET_CHAR_SET,
     AT_REGULAR_EXPRESSION,
     AT_REGULAR_EXPRESSION_MAP,
 
@@ -143,21 +143,21 @@ private:
     bool m_last_modification_was_atom_addition;
 }; // end of class Branch
 
-struct Character : public Atom
+struct Char : public Atom
 {
-    Character (Uint8 character, ConditionalType conditional_type = CT_COUNT)
+    Char (Uint8 ch, ConditionalType conditional_type = CT_COUNT)
         :
-        Atom(AT_CHARACTER),
-        m_character(character),
+        Atom(AT_CHAR),
+        m_char(ch),
         m_conditional_type(conditional_type)
     {
-        // only one of m_character or m_conditional_type may be specified
-        assert(m_character != '\0' && m_conditional_type == CT_COUNT ||
-               m_character == '\0' && m_conditional_type < CT_COUNT);
+        // only one of m_char or m_conditional_type may be specified
+        assert(m_char != '\0' && m_conditional_type == CT_COUNT ||
+               m_char == '\0' && m_conditional_type < CT_COUNT);
     }
 
-    inline Uint8 GetCharacter () const { return m_character; }
-    inline bool GetIsControlCharacter () const { return m_conditional_type != CT_COUNT; }
+    inline Uint8 GetChar () const { return m_char; }
+    inline bool GetIsControlChar () const { return m_conditional_type != CT_COUNT; }
     inline ConditionalType GetConditionalType () const { return m_conditional_type; }
 
     void Escape ();
@@ -166,44 +166,44 @@ struct Character : public Atom
 
 private:
 
-    Uint8 m_character;
+    Uint8 m_char;
     ConditionalType m_conditional_type;
-}; // end of class Character
+}; // end of class Char
 
-struct BracketCharacterSet : public Atom
+struct BracketCharSet : public Atom
 {
-    BracketCharacterSet ()
+    BracketCharSet ()
         :
-        Atom(AT_BRACKET_CHARACTER_SET)
+        Atom(AT_BRACKET_CHAR_SET)
     {
-        m_character_set.reset();
+        m_char_set.reset();
     }
-    BracketCharacterSet (Uint8 character, bool negate)
+    BracketCharSet (Uint8 ch, bool negate)
         :
-        Atom(AT_BRACKET_CHARACTER_SET)
+        Atom(AT_BRACKET_CHAR_SET)
     {
-        m_character_set.reset();
-        AddCharacter(character);
+        m_char_set.reset();
+        AddChar(ch);
         if (negate)
             Negate();
     }
 
-    inline bool GetIsEmpty () const { return m_character_set.none(); }
-    inline bool GetIsCharacterInSet (Uint8 character) const { return m_character_set.test(character); }
+    inline bool GetIsEmpty () const { return m_char_set.none(); }
+    inline bool GetIsCharInSet (Uint8 ch) const { return m_char_set.test(ch); }
 
-    void AddCharacter (Uint8 character);
-    void AddCharacterRange (Uint8 low_character, Uint8 high_character);
-    void AddCharacterClass (string const &character_class);
+    void AddChar (Uint8 ch);
+    void AddCharRange (Uint8 low_char, Uint8 high_char);
+    void AddCharClass (string const &char_class);
     void Negate ();
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    typedef bitset<256> CharacterSet;
+    typedef bitset<256> CharSet;
 
-    CharacterSet m_character_set;
-}; // end of BracketCharacterSet
+    CharSet m_char_set;
+}; // end of BracketCharSet
 
 struct RegularExpression : public Atom, public AstCommon::List<Branch>
 {

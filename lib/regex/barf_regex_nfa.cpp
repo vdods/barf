@@ -142,24 +142,24 @@ void GenerateNfa (RegularExpression const &regular_expression, Graph &graph, Uin
     }
 }
 
-void GenerateNfa (Character const &character, Graph &graph, Uint32 start_index, Uint32 end_index)
+void GenerateNfa (Char const &ch, Graph &graph, Uint32 start_index, Uint32 end_index)
 {
-    if (character.GetIsControlCharacter())
-        graph.AddTransition(start_index, NfaConditionalTransition(character.GetConditionalType(), end_index));
+    if (ch.GetIsControlChar())
+        graph.AddTransition(start_index, NfaConditionalTransition(ch.GetConditionalType(), end_index));
     else
-        graph.AddTransition(start_index, InputAtomTransition(character.GetCharacter(), end_index));
+        graph.AddTransition(start_index, InputAtomTransition(ch.GetChar(), end_index));
 }
 
-void GenerateNfa (BracketCharacterSet const &bracket_character_set, Graph &graph, Uint32 start_index, Uint32 end_index)
+void GenerateNfa (BracketCharSet const &bracket_char_set, Graph &graph, Uint32 start_index, Uint32 end_index)
 {
     Uint16 c0 = 0;
     Uint16 c1;
     while (c0 < 256)
     {
-        if (bracket_character_set.GetIsCharacterInSet(c0))
+        if (bracket_char_set.GetIsCharInSet(c0))
         {
             c1 = c0;
-            while (c1 < 255 && bracket_character_set.GetIsCharacterInSet(c1+1))
+            while (c1 < 255 && bracket_char_set.GetIsCharInSet(c1+1))
                 ++c1;
 
             graph.AddTransition(start_index, InputAtomRangeTransition(c0, c1, end_index));
@@ -176,8 +176,8 @@ void GenerateNfa (Atom const &atom, Graph &graph, Uint32 start_index, Uint32 end
     switch (atom.GetAstType())
     {
         case AT_REGULAR_EXPRESSION:     return GenerateNfa(static_cast<RegularExpression const &>(atom), graph, start_index, end_index);
-        case AT_CHARACTER:              return GenerateNfa(static_cast<Character const &>(atom), graph, start_index, end_index);
-        case AT_BRACKET_CHARACTER_SET:  return GenerateNfa(static_cast<BracketCharacterSet const &>(atom), graph, start_index, end_index);
+        case AT_CHAR:              return GenerateNfa(static_cast<Char const &>(atom), graph, start_index, end_index);
+        case AT_BRACKET_CHAR_SET:  return GenerateNfa(static_cast<BracketCharSet const &>(atom), graph, start_index, end_index);
         default: assert(false && "invalid atom type");
     }
 }

@@ -30,7 +30,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
     {
         "BAD_END_OF_FILE",
         "BAD_TOKEN",
-        "CHARACTER_LITERAL",
+        "CHAR_LITERAL",
         "DIRECTIVE_ADD_CODESPEC",
         "DIRECTIVE_ADD_OPTIONAL_DIRECTIVE",
         "DIRECTIVE_ADD_REQUIRED_DIRECTIVE",
@@ -64,7 +64,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
     if (scanner_token_type < 0x100)
     {
         assert(scanner_token_type >= 0);
-        return stream << GetCharacterLiteral(Uint8(scanner_token_type));
+        return stream << GetCharLiteral(Uint8(scanner_token_type));
     }
     else
     {
@@ -152,9 +152,9 @@ void Scanner::SetScannerState (State::Name state)
 {
     assert(
         state == State::BLOCK_COMMENT ||
-        state == State::CHARACTER_LITERAL_END ||
-        state == State::CHARACTER_LITERAL_GUTS ||
-        state == State::CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK ||
+        state == State::CHAR_LITERAL_END ||
+        state == State::CHAR_LITERAL_GUTS ||
+        state == State::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK ||
         state == State::DUMB_CODE_BLOCK ||
         state == State::MAIN ||
         state == State::REGULAR_EXPRESSION ||
@@ -167,9 +167,9 @@ void Scanner::SetScannerState (State::Name state)
     REFLEX_CPP_DEBUG_SPEW_(std::cerr << "*** scanner: transitioning to state ")
     if (false) { }
     else if (state == State::BLOCK_COMMENT) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "BLOCK_COMMENT") }
-    else if (state == State::CHARACTER_LITERAL_END) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "CHARACTER_LITERAL_END") }
-    else if (state == State::CHARACTER_LITERAL_GUTS) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "CHARACTER_LITERAL_GUTS") }
-    else if (state == State::CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK") }
+    else if (state == State::CHAR_LITERAL_END) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "CHAR_LITERAL_END") }
+    else if (state == State::CHAR_LITERAL_GUTS) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "CHAR_LITERAL_GUTS") }
+    else if (state == State::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK") }
     else if (state == State::DUMB_CODE_BLOCK) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "DUMB_CODE_BLOCK") }
     else if (state == State::MAIN) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "MAIN") }
     else if (state == State::REGULAR_EXPRESSION) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "REGULAR_EXPRESSION") }
@@ -228,7 +228,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 254 "barf_commonlang_scanner.reflex"
 
-    EmitError(GetFiLoc(), "unrecognized character " + GetCharacterLiteral(rejected_atom));
+    EmitError(GetFiLoc(), "unrecognized character " + GetCharLiteral(rejected_atom));
 
 #line 234 "barf_commonlang_scanner.cpp"
 
@@ -295,10 +295,10 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 511 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_END - (') - accepted_string = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_END - (') - accepted_string = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         SetScannerState(State::MAIN);
-        return Token::CHARACTER_LITERAL;
+        return Token::CHAR_LITERAL;
     
 #line 304 "barf_commonlang_scanner.cpp"
 
@@ -310,7 +310,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 519 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_END - (\\\\?\\z) - accepted_string = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_END - (\\\\?\\z) - accepted_string = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "unterminated character literal");
         assert(*token != NULL);
         delete *token;
@@ -328,7 +328,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 530 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_END - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_END - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "malformed character literal");
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
@@ -348,15 +348,15 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 446 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
         assert(accepted_string[1] == '0');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
-        *token = new AstCommon::Character(Uint8(value), GetFiLoc());
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        *token = new AstCommon::Char(Uint8(value), GetFiLoc());
+        SetScannerState(State::CHAR_LITERAL_END);
     
 #line 362 "barf_commonlang_scanner.cpp"
 
@@ -368,15 +368,15 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 459 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
-        *token = new AstCommon::Character(Uint8(value), GetFiLoc());
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        *token = new AstCommon::Char(Uint8(value), GetFiLoc());
+        SetScannerState(State::CHAR_LITERAL_END);
     
 #line 382 "barf_commonlang_scanner.cpp"
 
@@ -388,13 +388,13 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 472 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_GUTS - ({CHAR_ESC_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - ({CHAR_ESC_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        AstCommon::Character *character = new AstCommon::Character(Uint8(accepted_string[1]), GetFiLoc());
-        character->Escape();
-        *token = character;
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        AstCommon::Char *ch = new AstCommon::Char(Uint8(accepted_string[1]), GetFiLoc());
+        ch->Escape();
+        *token = ch;
+        SetScannerState(State::CHAR_LITERAL_END);
     
 #line 400 "barf_commonlang_scanner.cpp"
 
@@ -406,10 +406,10 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 483 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_GUTS - ({CHAR_NORMAL_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - ({CHAR_NORMAL_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() == 1);
-        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFiLoc());
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        *token = new AstCommon::Char(Uint8(accepted_string[0]), GetFiLoc());
+        SetScannerState(State::CHAR_LITERAL_END);
     
 #line 415 "barf_commonlang_scanner.cpp"
 
@@ -421,7 +421,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 491 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "unterminated character literal");
         return Token::END_OF_FILE;
     
@@ -435,12 +435,12 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 498 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFiLoc(), "unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in character literal");
+        SPEW("CHAR_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
+        EmitError(GetFiLoc(), "unexpected character " + GetCharLiteral(accepted_string[0]) + " in character literal");
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
-        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFiLoc());
-        SetScannerState(State::CHARACTER_LITERAL_END);
+        *token = new AstCommon::Char(Uint8(accepted_string[0]), GetFiLoc());
+        SetScannerState(State::CHAR_LITERAL_END);
     
 #line 446 "barf_commonlang_scanner.cpp"
 
@@ -452,7 +452,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 811 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*') = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
@@ -468,7 +468,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 820 "barf_commonlang_scanner.reflex"
 
-        SPEW("CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*\\\\?\\z) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -560,7 +560,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 329 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (') = " << GetStringLiteral(accepted_string));
-        SetScannerState(State::CHARACTER_LITERAL_GUTS);
+        SetScannerState(State::CHAR_LITERAL_GUTS);
     
 #line 566 "barf_commonlang_scanner.cpp"
 
@@ -725,7 +725,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 410 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (.) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFiLoc(), "unexpected character " + GetCharacterLiteral(accepted_string[0]));
+        EmitError(GetFiLoc(), "unexpected character " + GetCharLiteral(accepted_string[0]));
         return Token::BAD_TOKEN;
     
 #line 732 "barf_commonlang_scanner.cpp"
@@ -924,7 +924,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("STRICT_CODE_BLOCK - (') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
-        SetScannerState(State::CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK);
+        SetScannerState(State::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     
 #line 930 "barf_commonlang_scanner.cpp"
 
@@ -1021,7 +1021,7 @@ Scanner::Token::Type Scanner::Scan (
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
-        Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+        Dsc<AstCommon::String *>(*token)->AppendChar(Uint8(value));
     
 #line 1027 "barf_commonlang_scanner.cpp"
 
@@ -1041,7 +1041,7 @@ Scanner::Token::Type Scanner::Scan (
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
-        Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+        Dsc<AstCommon::String *>(*token)->AppendChar(Uint8(value));
     
 #line 1047 "barf_commonlang_scanner.cpp"
 
@@ -1057,7 +1057,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        Dsc<AstCommon::String *>(*token)->AppendCharacter(GetEscapedChar(Uint8(accepted_string[1])));
+        Dsc<AstCommon::String *>(*token)->AppendChar(GetEscapedChar(Uint8(accepted_string[1])));
     
 #line 1063 "barf_commonlang_scanner.cpp"
 
@@ -1118,7 +1118,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        EmitError(GetFiLoc(), "ignoring unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in string literal");
+        EmitError(GetFiLoc(), "ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal");
     
 #line 1124 "barf_commonlang_scanner.cpp"
 

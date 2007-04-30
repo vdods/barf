@@ -61,7 +61,7 @@ private:
 
 Uint8 GetEscapedChar (Uint8 c);
 string GetEscapedString (string const &text);
-string GetCharacterLiteral (Uint8 c, bool with_quotes = true);
+string GetCharLiteral (Uint8 c, bool with_quotes = true);
 string GetStringLiteral (string const &text, bool with_quotes = true);
 
 Uint32 GetNewlineCount (string const &text);
