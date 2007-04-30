@@ -26,27 +26,27 @@ void Transition::PrettyPrint (ostream &stream, string const &name, StateMachine 
         case TA_SHIFT_AND_PUSH_STATE:
         case TA_PUSH_STATE:
         {
-            Uint32 state_index = state_machine->GetStateIndex(m_transition_identifier);
+            Uint32 state_index = state_machine->GetStateIndex(m_transition_id);
 //             // this should be uncommented if the assert in
 //             // StateMachine::GetStateIndex fails.
 //             if (state_index == Uint32(-1))
-//                 stream << " N/A    (rule(s) " << m_transition_identifier << ")";
+//                 stream << " N/A    (rule(s) " << m_transition_id << ")";
 //             else
-            stream << " " << state_index << "    (rule(s) " << m_transition_identifier << ")";
+            stream << " " << state_index << "    (rule(s) " << m_transition_id << ")";
             break;
         }
 
         case TA_REDUCE_USING_RULE:
         case TA_REDUCE_AND_ACCEPT_USING_RULE:
         {
-            assert(m_transition_identifier.size() == 1);
-            RulePhase const &first_and_only_rule_phase = *m_transition_identifier.begin();
+            assert(m_transition_id.size() == 1);
+            RulePhase const &first_and_only_rule_phase = *m_transition_id.begin();
             stream << " " << first_and_only_rule_phase.m_rule_index;
             break;
         }
 
         case TA_THROW_AWAY_LOOKAHEAD_TOKEN:
-            assert(m_transition_identifier.size() == 0);
+            assert(m_transition_id.size() == 0);
             break;
 
         default:
@@ -65,20 +65,20 @@ void Transition::PrintTransitionArrayElement (ostream &stream, StateMachine cons
     {
         case TA_SHIFT_AND_PUSH_STATE:
         case TA_PUSH_STATE:
-            stream << setw(4) << state_machine->GetStateIndex(m_transition_identifier) << "}";
+            stream << setw(4) << state_machine->GetStateIndex(m_transition_id) << "}";
             break;
 
         case TA_REDUCE_USING_RULE:
         case TA_REDUCE_AND_ACCEPT_USING_RULE:
         {
-            assert(m_transition_identifier.size() == 1);
-            RulePhase const &first_and_only_rule_phase = *m_transition_identifier.begin();
+            assert(m_transition_id.size() == 1);
+            RulePhase const &first_and_only_rule_phase = *m_transition_id.begin();
             stream << setw(4) << first_and_only_rule_phase.m_rule_index << "}";
             break;
         }
 
         case TA_THROW_AWAY_LOOKAHEAD_TOKEN:
-            assert(m_transition_identifier.size() == 0);
+            assert(m_transition_id.size() == 0);
             stream << setw(4) << 0 << "}";
             break;
 

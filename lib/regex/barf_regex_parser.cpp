@@ -438,7 +438,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
         "branch",
         "branch_which_didnt_just_accept_an_atom",
         "branch_which_just_accepted_an_atom",
-        "identifier",
+        "id",
         "integer",
         "regex",
         "START_",
@@ -613,11 +613,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0009 ()
     return NULL;
 }
 
-// rule 10: atom <- '{' identifier:macro_name '}'    
+// rule 10: atom <- '{' id:macro_name '}'    
 AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
 {
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * macro_name = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Id * macro_name = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 368 "barf_regex_parser.trison"
 
@@ -911,18 +911,18 @@ AstCommon::Ast * Parser::ReductionRuleHandler0029 ()
     return NULL;
 }
 
-// rule 30: bracket_character_set <- bracket_character_set:bracket_character_set '[' ':' identifier:identifier ':' ']'    
+// rule 30: bracket_character_set <- bracket_character_set:bracket_character_set '[' ':' id:id ':' ']'    
 AstCommon::Ast * Parser::ReductionRuleHandler0030 ()
 {
     assert(0 < m_reduction_rule_token_count);
     BracketCharacterSet * bracket_character_set = Dsc< BracketCharacterSet * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 485 "barf_regex_parser.trison"
 
-        bracket_character_set->AddCharacterClass(identifier->GetText());
-        delete identifier;
+        bracket_character_set->AddCharacterClass(id->GetText());
+        delete id;
         return bracket_character_set;
     
 #line 929 "barf_regex_parser.cpp"
@@ -1390,64 +1390,64 @@ AstCommon::Ast * Parser::ReductionRuleHandler0074 ()
     return NULL;
 }
 
-// rule 75: identifier <- identifier:identifier ALPHA:alpha    
+// rule 75: id <- id:id ALPHA:alpha    
 AstCommon::Ast * Parser::ReductionRuleHandler0075 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Character * alpha = Dsc< Character * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 613 "barf_regex_parser.trison"
 
-        assert(identifier != NULL);
-        identifier->AppendCharacter(alpha->GetCharacter());
+        assert(id != NULL);
+        id->AppendCharacter(alpha->GetCharacter());
         delete alpha;
-        return identifier;
+        return id;
     
 #line 1409 "barf_regex_parser.cpp"
     return NULL;
 }
 
-// rule 76: identifier <- identifier:identifier CHAR:ch    
+// rule 76: id <- id:id CHAR:ch    
 AstCommon::Ast * Parser::ReductionRuleHandler0076 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Character * ch = Dsc< Character * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 621 "barf_regex_parser.trison"
 
-        assert(identifier != NULL);
-        identifier->AppendCharacter(ch->GetCharacter());
+        assert(id != NULL);
+        id->AppendCharacter(ch->GetCharacter());
         delete ch;
-        return identifier;
+        return id;
     
 #line 1428 "barf_regex_parser.cpp"
     return NULL;
 }
 
-// rule 77: identifier <- identifier:identifier DIGIT:digit    
+// rule 77: id <- id:id DIGIT:digit    
 AstCommon::Ast * Parser::ReductionRuleHandler0077 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Character * digit = Dsc< Character * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 629 "barf_regex_parser.trison"
 
-        assert(identifier != NULL);
-        identifier->AppendCharacter(digit->GetCharacter());
+        assert(id != NULL);
+        id->AppendCharacter(digit->GetCharacter());
         delete digit;
-        return identifier;
+        return id;
     
 #line 1447 "barf_regex_parser.cpp"
     return NULL;
 }
 
-// rule 78: identifier <- ALPHA:alpha    
+// rule 78: id <- ALPHA:alpha    
 AstCommon::Ast * Parser::ReductionRuleHandler0078 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1457,15 +1457,15 @@ AstCommon::Ast * Parser::ReductionRuleHandler0078 ()
 
         string temp;
         temp += alpha->GetCharacter();
-        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FiLoc::ms_invalid);
+        AstCommon::Id *id = new AstCommon::Id(temp, FiLoc::ms_invalid);
         delete alpha;
-        return identifier;
+        return id;
     
 #line 1465 "barf_regex_parser.cpp"
     return NULL;
 }
 
-// rule 79: identifier <- CHAR:ch    
+// rule 79: id <- CHAR:ch    
 AstCommon::Ast * Parser::ReductionRuleHandler0079 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1475,9 +1475,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0079 ()
 
         string temp;
         temp += ch->GetCharacter();
-        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FiLoc::ms_invalid);
+        AstCommon::Id *id = new AstCommon::Id(temp, FiLoc::ms_invalid);
         delete ch;
-        return identifier;
+        return id;
     
 #line 1483 "barf_regex_parser.cpp"
     return NULL;
@@ -1537,7 +1537,7 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {Token::branch_which_just_accepted_an_atom__,  2, &Parser::ReductionRuleHandler0007, "rule 7: branch_which_just_accepted_an_atom <- branch_which_just_accepted_an_atom atom    "},
     {Token::branch_which_just_accepted_an_atom__,  2, &Parser::ReductionRuleHandler0008, "rule 8: branch_which_just_accepted_an_atom <- branch_which_didnt_just_accept_an_atom atom    "},
     {Token::branch_which_just_accepted_an_atom__,  1, &Parser::ReductionRuleHandler0009, "rule 9: branch_which_just_accepted_an_atom <- atom    "},
-    {                 Token::atom__,  3, &Parser::ReductionRuleHandler0010, "rule 10: atom <- '{' identifier '}'    "},
+    {                 Token::atom__,  3, &Parser::ReductionRuleHandler0010, "rule 10: atom <- '{' id '}'    "},
     {                 Token::atom__,  3, &Parser::ReductionRuleHandler0011, "rule 11: atom <- '(' regex ')'    "},
     {                 Token::atom__,  2, &Parser::ReductionRuleHandler0012, "rule 12: atom <- '(' ')'    "},
     {                 Token::atom__,  1, &Parser::ReductionRuleHandler0013, "rule 13: atom <- '^'    "},
@@ -1557,7 +1557,7 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {   Token::bracket_expression__,  4, &Parser::ReductionRuleHandler0027, "rule 27: bracket_expression <- '[' '^' bracket_character_set ']'    "},
     {Token::bracket_character_set__,  2, &Parser::ReductionRuleHandler0028, "rule 28: bracket_character_set <- bracket_character_set bracket_expression_character    "},
     {Token::bracket_character_set__,  4, &Parser::ReductionRuleHandler0029, "rule 29: bracket_character_set <- bracket_character_set bracket_expression_character '-' bracket_expression_character    "},
-    {Token::bracket_character_set__,  6, &Parser::ReductionRuleHandler0030, "rule 30: bracket_character_set <- bracket_character_set '[' ':' identifier ':' ']'    "},
+    {Token::bracket_character_set__,  6, &Parser::ReductionRuleHandler0030, "rule 30: bracket_character_set <- bracket_character_set '[' ':' id ':' ']'    "},
     {Token::bracket_character_set__,  0, &Parser::ReductionRuleHandler0031, "rule 31: bracket_character_set <-     "},
     {Token::bracket_expression_character__,  1, &Parser::ReductionRuleHandler0032, "rule 32: bracket_expression_character <- bracket_expression_normal_character    "},
     {Token::bracket_expression_character__,  2, &Parser::ReductionRuleHandler0033, "rule 33: bracket_expression_character <- '\\' bracket_expression_normal_character    "},
@@ -1602,11 +1602,11 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {Token::bracket_expression_normal_character__,  1, &Parser::ReductionRuleHandler0072, "rule 72: bracket_expression_normal_character <- ')'    "},
     {Token::bracket_expression_normal_character__,  1, &Parser::ReductionRuleHandler0073, "rule 73: bracket_expression_normal_character <- '{'    "},
     {Token::bracket_expression_normal_character__,  1, &Parser::ReductionRuleHandler0074, "rule 74: bracket_expression_normal_character <- '}'    "},
-    {           Token::identifier__,  2, &Parser::ReductionRuleHandler0075, "rule 75: identifier <- identifier ALPHA    "},
-    {           Token::identifier__,  2, &Parser::ReductionRuleHandler0076, "rule 76: identifier <- identifier CHAR    "},
-    {           Token::identifier__,  2, &Parser::ReductionRuleHandler0077, "rule 77: identifier <- identifier DIGIT    "},
-    {           Token::identifier__,  1, &Parser::ReductionRuleHandler0078, "rule 78: identifier <- ALPHA    "},
-    {           Token::identifier__,  1, &Parser::ReductionRuleHandler0079, "rule 79: identifier <- CHAR    "},
+    {                   Token::id__,  2, &Parser::ReductionRuleHandler0075, "rule 75: id <- id ALPHA    "},
+    {                   Token::id__,  2, &Parser::ReductionRuleHandler0076, "rule 76: id <- id CHAR    "},
+    {                   Token::id__,  2, &Parser::ReductionRuleHandler0077, "rule 77: id <- id DIGIT    "},
+    {                   Token::id__,  1, &Parser::ReductionRuleHandler0078, "rule 78: id <- ALPHA    "},
+    {                   Token::id__,  1, &Parser::ReductionRuleHandler0079, "rule 79: id <- CHAR    "},
     {              Token::integer__,  2, &Parser::ReductionRuleHandler0080, "rule 80: integer <- integer DIGIT    "},
     {              Token::integer__,  1, &Parser::ReductionRuleHandler0081, "rule 81: integer <- DIGIT    "},
 
@@ -1824,7 +1824,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {                  Token::ALPHA, {        TA_SHIFT_AND_PUSH_STATE,   23}},
     {                   Token::CHAR, {        TA_SHIFT_AND_PUSH_STATE,   24}},
     // nonterminal transitions
-    {           Token::identifier__, {                  TA_PUSH_STATE,   25}},
+    {                   Token::id__, {                  TA_PUSH_STATE,   25}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state    6
@@ -2212,7 +2212,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {                   Token::CHAR, {        TA_SHIFT_AND_PUSH_STATE,   24}},
     {                  Token::DIGIT, {        TA_SHIFT_AND_PUSH_STATE,   80}},
     // nonterminal transitions
-    {           Token::identifier__, {                  TA_PUSH_STATE,   25}},
+    {                   Token::id__, {                  TA_PUSH_STATE,   25}},
     {              Token::integer__, {                  TA_PUSH_STATE,   81}},
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -2502,7 +2502,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {                  Token::ALPHA, {        TA_SHIFT_AND_PUSH_STATE,   23}},
     {                   Token::CHAR, {        TA_SHIFT_AND_PUSH_STATE,   24}},
     // nonterminal transitions
-    {           Token::identifier__, {                  TA_PUSH_STATE,   95}},
+    {                   Token::id__, {                  TA_PUSH_STATE,   95}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   91

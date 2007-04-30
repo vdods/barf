@@ -103,7 +103,7 @@ Parser::Token::Type Parser::Scan ()
 %token TEXT %type "Text *"
 %token START_CODE END_CODE
 %token CODE_LINE CODE_NEWLINE
-%token IDENTIFIER %type "AstCommon::Identifier *"
+%token ID %type "AstCommon::Id *"
 %token DUMP_SYMBOL_TABLE
 %token IF ELSE ELSE_IF END_IF
 %token UNDEFINE
@@ -205,14 +205,14 @@ code %type "ExecutableAst *"
     DUMP_SYMBOL_TABLE '(' ')'
     { return new DumpSymbolTable(); }
 |
-    UNDEFINE '(' IDENTIFIER:identifier ')'
-    { return new Undefine(identifier); }
+    UNDEFINE '(' ID:id ')'
+    { return new Undefine(id); }
 |
-    DECLARE_ARRAY '(' IDENTIFIER:identifier ')'
-    { return new DeclareArray(identifier); }
+    DECLARE_ARRAY '(' ID:id ')'
+    { return new DeclareArray(id); }
 |
-    DECLARE_MAP '(' IDENTIFIER:identifier ')'
-    { return new DeclareMap(identifier); }
+    DECLARE_MAP '(' ID:id ')'
+    { return new DeclareMap(id); }
 |
     INCLUDE '(' expression:include_filename_expression ')'
     { return new Include(include_filename_expression, false); }
@@ -299,29 +299,29 @@ define %type "Define *"
 
 define_scalar %type "Define *"
 :
-    START_CODE DEFINE '(' IDENTIFIER:identifier ')' END_CODE
-    { return new Define(identifier); }
+    START_CODE DEFINE '(' ID:id ')' END_CODE
+    { return new Define(id); }
 |
-    CODE_LINE DEFINE '(' IDENTIFIER:identifier ')' CODE_NEWLINE
-    { return new Define(identifier); }
+    CODE_LINE DEFINE '(' ID:id ')' CODE_NEWLINE
+    { return new Define(id); }
 ;
 
 define_array_element %type "Define *"
 :
-    START_CODE DEFINE '(' IDENTIFIER:identifier '[' ']' ')' END_CODE
-    { return new DefineArrayElement(identifier); }
+    START_CODE DEFINE '(' ID:id '[' ']' ')' END_CODE
+    { return new DefineArrayElement(id); }
 |
-    CODE_LINE DEFINE '(' IDENTIFIER:identifier '[' ']' ')' CODE_NEWLINE
-    { return new DefineArrayElement(identifier); }
+    CODE_LINE DEFINE '(' ID:id '[' ']' ')' CODE_NEWLINE
+    { return new DefineArrayElement(id); }
 ;
 
 define_map_element %type "Define *"
 :
-    START_CODE DEFINE '(' IDENTIFIER:identifier '[' STRING:key ']' ')' END_CODE
-    { return new DefineMapElement(identifier, key); }
+    START_CODE DEFINE '(' ID:id '[' STRING:key ']' ')' END_CODE
+    { return new DefineMapElement(id, key); }
 |
-    CODE_LINE DEFINE '(' IDENTIFIER:identifier '[' STRING:key ']' ')' CODE_NEWLINE
-    { return new DefineMapElement(identifier, key); }
+    CODE_LINE DEFINE '(' ID:id '[' STRING:key ']' ')' CODE_NEWLINE
+    { return new DefineMapElement(id, key); }
 ;
 
 end_define
@@ -333,11 +333,11 @@ end_define
 
 loop %type "Loop *"
 :
-    START_CODE LOOP '(' IDENTIFIER:iterator_identifier ',' expression:iteration_count_expression ')' END_CODE
-    { return new Loop(iterator_identifier, iteration_count_expression); }
+    START_CODE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' END_CODE
+    { return new Loop(iterator_id, iteration_count_expression); }
 |
-    CODE_LINE LOOP '(' IDENTIFIER:iterator_identifier ',' expression:iteration_count_expression ')' CODE_NEWLINE
-    { return new Loop(iterator_identifier, iteration_count_expression); }
+    CODE_LINE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' CODE_NEWLINE
+    { return new Loop(iterator_id, iteration_count_expression); }
 ;
 
 end_loop
@@ -349,11 +349,11 @@ end_loop
 
 for_each %type "ForEach *"
 :
-    START_CODE FOR_EACH '(' IDENTIFIER:key_identifier ',' IDENTIFIER:map_identifier ')' END_CODE
-    { return new ForEach(key_identifier, map_identifier); }
+    START_CODE FOR_EACH '(' ID:key_id ',' ID:map_id ')' END_CODE
+    { return new ForEach(key_id, map_id); }
 |
-    CODE_LINE FOR_EACH '(' IDENTIFIER:key_identifier ',' IDENTIFIER:map_identifier ')' CODE_NEWLINE
-    { return new ForEach(key_identifier, map_identifier); }
+    CODE_LINE FOR_EACH '(' ID:key_id ',' ID:map_id ')' CODE_NEWLINE
+    { return new ForEach(key_id, map_id); }
 ;
 
 end_for_each
@@ -371,8 +371,8 @@ expression %type "Expression *"
     INTEGER:integer
     { return integer; }
 |
-    SIZEOF '(' IDENTIFIER:identifier ')'
-    { return new Sizeof(identifier); }
+    SIZEOF '(' ID:id ')'
+    { return new Sizeof(id); }
 |
     KEYWORD_INT '(' expression:expression ')'
     { return new Operation(Operation::INT_CAST, expression); }
@@ -383,23 +383,23 @@ expression %type "Expression *"
     STRING_LENGTH '(' expression:expression ')'
     { return new Operation(Operation::STRING_LENGTH, expression); }
 |
-    IS_DEFINED '(' IDENTIFIER:identifier ')'
-    { return new IsDefined(identifier, NULL); }
+    IS_DEFINED '(' ID:id ')'
+    { return new IsDefined(id, NULL); }
 |
-    IS_DEFINED '(' IDENTIFIER:identifier '[' expression:element_index_expression ']' ')'
-    { return new IsDefined(identifier, element_index_expression); }
+    IS_DEFINED '(' ID:id '[' expression:element_index_expression ']' ')'
+    { return new IsDefined(id, element_index_expression); }
 |
-    IDENTIFIER:identifier
-    { return new Dereference(identifier, NULL, DEREFERENCE_ALWAYS); }
+    ID:id
+    { return new Dereference(id, NULL, DEREFERENCE_ALWAYS); }
 |
-    IDENTIFIER:identifier '[' expression:element_index_expression ']'
-    { return new Dereference(identifier, element_index_expression, DEREFERENCE_ALWAYS); }
+    ID:id '[' expression:element_index_expression ']'
+    { return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); }
 |
-    IDENTIFIER:identifier '?'
-    { return new Dereference(identifier, NULL, DEREFERENCE_IFF_DEFINED); }
+    ID:id '?'
+    { return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); }
 |
-    IDENTIFIER:identifier '[' expression:element_index_expression ']' '?'
-    { return new Dereference(identifier, element_index_expression, DEREFERENCE_IFF_DEFINED); }
+    ID:id '[' expression:element_index_expression ']' '?'
+    { return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); }
 |
     expression:left '.' expression:right %prec CONCATENATION
     { return new Operation(left, Operation::CONCATENATE, right); }

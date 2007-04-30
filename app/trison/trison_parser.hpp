@@ -43,7 +43,7 @@ public:
             DIRECTIVE_TOKEN,
             DUMB_CODE_BLOCK,
             END_PREAMBLE,
-            IDENTIFIER,
+            ID,
             LEFT,
             NEWLINE,
             NONASSOC,
@@ -52,7 +52,7 @@ public:
             START,
             STRICT_CODE_BLOCK,
             STRING,
-            TOKEN_IDENTIFIER_CHARACTER,
+            TOKEN_ID_CHARACTER,
             TYPE,
 
             // special end-of-input terminal
@@ -73,8 +73,8 @@ public:
             rule_specification__,
             rule_token__,
             rule_token_list__,
-            token_identifier__,
-            token_identifier_list__,
+            token_id__,
+            token_id_list__,
 
             // special start nonterminal
             START_,

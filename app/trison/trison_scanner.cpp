@@ -72,7 +72,7 @@ Parser::Token::Type Scanner::Scan (AstCommon::Ast **const scanned_token)
         m_text += c;
 
         if (IsAlpha(c))
-            return ScanIdentifier(scanned_token);
+            return ScanId(scanned_token);
         else if (IsOperator(c))
             return ScanOperator(scanned_token);
         else switch (c)
@@ -105,7 +105,7 @@ Parser::Token::Type Scanner::Scan (AstCommon::Ast **const scanned_token)
     }
 }
 
-Parser::Token::Type Scanner::ScanIdentifier (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanId (AstCommon::Ast **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -121,13 +121,13 @@ Parser::Token::Type Scanner::ScanIdentifier (AstCommon::Ast **const scanned_toke
 
     assert(!m_text.empty());
     // if the last character is underscore, squirt an error, because ending
-    // identifiers with underscores is a method used by the parser generator
+    // ids with underscores is a method used by the parser generator
     // to ensure unique state machine token types.
     if (*m_text.rbegin() == '_')
-        EmitError(FL, "identifiers can not end with an underscore (\"" + m_text + "\")");
+        EmitError(FL, "ids can not end with an underscore (\"" + m_text + "\")");
 
-    *scanned_token = new AstCommon::Identifier(m_text, FL);
-    return Parser::Token::IDENTIFIER;
+    *scanned_token = new AstCommon::Id(m_text, FL);
+    return Parser::Token::ID;
 }
 
 Parser::Token::Type Scanner::ScanOperator (AstCommon::Ast **const scanned_token)
@@ -436,15 +436,15 @@ Parser::Token::Type Scanner::ScanCharacterLiteral (AstCommon::Ast **const scanne
     if (m_text[1] == '\\')
     {
         assert(m_text.length() == 4);
-        *scanned_token = new TokenIdentifierCharacter(GetEscapedChar(m_text[2]), FL);
+        *scanned_token = new TokenIdCharacter(GetEscapedChar(m_text[2]), FL);
     }
     else
     {
         assert(m_text.length() == 3);
-        *scanned_token = new TokenIdentifierCharacter(m_text[1], FL);
+        *scanned_token = new TokenIdCharacter(m_text[1], FL);
     }
 
-    return Parser::Token::TOKEN_IDENTIFIER_CHARACTER;
+    return Parser::Token::TOKEN_ID_CHARACTER;
 }
 
 void Scanner::ScanStringLiteralInsideCodeBlock ()

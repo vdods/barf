@@ -31,9 +31,9 @@ class Rule;
 class RuleToken;
 class StartDirective;
 class TokenDirective;
-class TokenIdentifier;
-class TokenIdentifierCharacter;
-class TokenIdentifierIdentifier;
+class TokenId;
+class TokenIdCharacter;
+class TokenIdId;
 
 /*
 
@@ -46,7 +46,7 @@ AstCommon::Ast (abstract)
     DirectiveList (actually AstList<Directive>)
     ParserDirectiveSet
     TokenDirectiveList (actually AstList<TokenDirective>)
-    TokenIdentifierList (actually AstList<TokenIdentifier>)
+    TokenIdList (actually AstList<TokenId>)
     PrecedenceDirectiveList (actually AstList<PrecedenceDirective>)
     Directive (abstract)
         ParserDirective
@@ -60,9 +60,9 @@ AstCommon::Ast (abstract)
     RuleTokenList (actually AstList<RuleToken>)
     RuleToken
     AstCommon::TextBase (abstract)
-        TokenIdentifier (abstract)
-            TokenIdentifierIdentifier
-            TokenIdentifierCharacter
+        TokenId (abstract)
+            TokenIdId
+            TokenIdCharacter
 
 // ///////////////////////////////////////////////////////////////////////////
 // class composition
@@ -75,24 +75,24 @@ Grammar
             AstCommon::TextBase // the directive's value (if any)
     TokenDirectiveList // list of token declarations
         TokenDirective[]
-            TokenIdentifierList
-                TokenIdentifier[]
-                    std::string // stores the identifier or the character
+            TokenIdList
+                TokenId[]
+                    std::string // stores the id or the character
     PrecedenceDirectiveList // list of allowable rule precedences
         PrecedenceDirective[]
-    StartDirective // stores the start nonterminal identifier
+    StartDirective // stores the start nonterminal id
     NonterminalList // the list of other nonterminals (may be empty)
         Nonterminal[]
-            AstCommon::Identifier // the name of the nonterminal
+            AstCommon::Id // the name of the nonterminal
             AstCommon::String // the optional assigned variable type
             RuleList // list of rules that the nonterminal can reduce with
                 Rule[]
-                    TokenIdentifier // optional precedence token identifier
+                    TokenId // optional precedence token id
                     AstCommon::CodeBlock // optional code for when the rule is reduced
                     RuleTokenList // stores the rule tokens necessary to match
-                        RuleToken[] // pairs a token/nonterminal identifier with a variable identifier
-                            TokenIdentifier // the rule token identifier
-                            AstCommon::Identifier // optional identifier to assign to the rule token
+                        RuleToken[] // pairs a token/nonterminal id with a variable id
+                            TokenId // the rule token id
+                            AstCommon::Id // optional id to assign to the rule token
 
 */
 
@@ -106,7 +106,7 @@ enum
     AT_PARSER_DIRECTIVE,
     AT_START_DIRECTIVE,
     AT_TOKEN_DIRECTIVE_LIST,
-    AT_TOKEN_IDENTIFIER_LIST,
+    AT_TOKEN_ID_LIST,
     AT_PRECEDENCE_DIRECTIVE_LIST,
     AT_NONTERMINAL_LIST,
     AT_NONTERMINAL,
@@ -114,9 +114,9 @@ enum
     AT_RULE,
     AT_RULE_TOKEN_LIST,
     AT_RULE_TOKEN,
-    AT_TOKEN_IDENTIFIER_IDENTIFIER,
-    AT_TOKEN_IDENTIFIER_CHARACTER,
-    AT_IDENTIFIER,
+    AT_TOKEN_ID_ID,
+    AT_TOKEN_ID_CHARACTER,
+    AT_ID,
     AT_CODE_BLOCK,
     AT_STRING,
     AT_THROW_AWAY,
@@ -133,12 +133,12 @@ public:
     TokenDirectiveList () : AstCommon::AstList<TokenDirective>(AT_TOKEN_DIRECTIVE_LIST) { }
 }; // end of class TokenDirectiveList
 
-class TokenIdentifierList : public AstCommon::AstList<TokenIdentifier>
+class TokenIdList : public AstCommon::AstList<TokenId>
 {
 public:
 
-    TokenIdentifierList () : AstCommon::AstList<TokenIdentifier>(AT_TOKEN_IDENTIFIER_LIST) { }
-}; // end of class TokenIdentifierList
+    TokenIdList () : AstCommon::AstList<TokenId>(AT_TOKEN_ID_LIST) { }
+}; // end of class TokenIdList
 
 class PrecedenceDirectiveList : public AstCommon::AstList<PrecedenceDirective>
 {
@@ -169,99 +169,99 @@ public:
     RuleTokenList (FiLoc const &filoc) : AstCommon::AstList<RuleToken>(filoc, AT_RULE_TOKEN_LIST) { }
 }; // end of class RuleTokenList
 
-class TokenIdentifier : public AstCommon::TextBase
+class TokenId : public AstCommon::TextBase
 {
 public:
 
-    TokenIdentifier (
+    TokenId (
         FiLoc const &filoc,
         AstType ast_type)
         :
         AstCommon::TextBase(filoc, ast_type)
     { }
-    TokenIdentifier (
-        string const &identifier_text,
+    TokenId (
+        string const &id_text,
         FiLoc const &filoc,
         AstType ast_type)
         :
-        AstCommon::TextBase(identifier_text, filoc, ast_type)
+        AstCommon::TextBase(id_text, filoc, ast_type)
     { }
-    virtual ~TokenIdentifier () = 0;
-}; // end of class TokenIdentifier
+    virtual ~TokenId () = 0;
+}; // end of class TokenId
 
-class TokenIdentifierIdentifier : public TokenIdentifier
+class TokenIdId : public TokenId
 {
 public:
 
-    TokenIdentifierIdentifier (
-        string const &identifier_text,
+    TokenIdId (
+        string const &id_text,
         FiLoc const &filoc)
         :
-        TokenIdentifier(
-            identifier_text,
+        TokenId(
+            id_text,
             filoc,
-            AT_TOKEN_IDENTIFIER_IDENTIFIER)
+            AT_TOKEN_ID_ID)
     { }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class TokenIdentifierIdentifier
+}; // end of class TokenIdId
 
-class TokenIdentifierCharacter : public TokenIdentifier
+class TokenIdCharacter : public TokenId
 {
 public:
 
-    TokenIdentifierCharacter (
-        char identifier_character,
+    TokenIdCharacter (
+        char id_character,
         FiLoc const &filoc)
         :
-        TokenIdentifier(
-            GetCharacterLiteral(identifier_character),
+        TokenId(
+            GetCharacterLiteral(id_character),
             filoc,
-            AT_TOKEN_IDENTIFIER_CHARACTER),
-        m_identifier_character(identifier_character)
+            AT_TOKEN_ID_CHARACTER),
+        m_id_character(id_character)
     { }
 
-    inline char GetCharacter () const { return m_identifier_character; }
+    inline char GetCharacter () const { return m_id_character; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    char const m_identifier_character;
-}; // end of class TokenIdentifierCharacter
+    char const m_id_character;
+}; // end of class TokenIdCharacter
 
 class RuleToken : public AstCommon::Ast
 {
 public:
 
     RuleToken (
-        TokenIdentifier const *token_identifier,
-        AstCommon::Identifier const *assigned_identifier)
+        TokenId const *token_id,
+        AstCommon::Id const *assigned_id)
         :
-        AstCommon::Ast(token_identifier->GetFiLoc(), AT_RULE_TOKEN),
-        m_token_identifier(token_identifier),
-        m_assigned_identifier(assigned_identifier)
+        AstCommon::Ast(token_id->GetFiLoc(), AT_RULE_TOKEN),
+        m_token_id(token_id),
+        m_assigned_id(assigned_id)
     {
-        assert(m_token_identifier != NULL);
-        // m_assigned_identifier may be NULL
+        assert(m_token_id != NULL);
+        // m_assigned_id may be NULL
     }
     virtual ~RuleToken ()
     {
-        delete m_token_identifier;
-        delete m_assigned_identifier;
+        delete m_token_id;
+        delete m_assigned_id;
     }
 
-    inline TokenIdentifier const *GetTokenIdentifier () const { return m_token_identifier; }
-    inline AstCommon::Identifier const *GetAssignedIdentifier () const { return m_assigned_identifier; }
+    inline TokenId const *GetTokenId () const { return m_token_id; }
+    inline AstCommon::Id const *GetAssignedId () const { return m_assigned_id; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
     void PrettyPrint (ostream &stream) const;
-    void PrettyPrintWithAssignedIdentifier (ostream &stream) const;
+    void PrettyPrintWithAssignedId (ostream &stream) const;
 
 private:
 
-    TokenIdentifier const *const m_token_identifier;
-    AstCommon::Identifier const *const m_assigned_identifier;
+    TokenId const *const m_token_id;
+    AstCommon::Id const *const m_assigned_id;
 }; // end of class RuleToken
 
 class Rule : public AstCommon::Ast
@@ -271,28 +271,28 @@ public:
     Rule (
         RuleTokenList const *rule_token_list,
         Associativity associativity,
-        AstCommon::Identifier const *precedence_directive_identifier)
+        AstCommon::Id const *precedence_directive_id)
         :
         AstCommon::Ast(rule_token_list->GetFiLoc(), AT_RULE),
         m_rule_token_list(rule_token_list),
         m_associativity(associativity),
-        m_precedence_directive_identifier(precedence_directive_identifier)
+        m_precedence_directive_id(precedence_directive_id)
     {
         assert(m_rule_token_list != NULL);
         assert(m_associativity < A_COUNT);
-        // m_precedence_directive_identifier may be NULL
+        // m_precedence_directive_id may be NULL
         m_code_block = NULL;
         m_owner_nonterminal = NULL;
     }
     virtual ~Rule ()
     {
         delete m_rule_token_list;
-        delete m_precedence_directive_identifier;
+        delete m_precedence_directive_id;
         delete m_code_block;
     }
 
     inline Associativity GetAssociativity () const { return m_associativity; }
-    inline AstCommon::Identifier const *GetPrecedenceDirectiveIdentifier () const { return m_precedence_directive_identifier; }
+    inline AstCommon::Id const *GetPrecedenceDirectiveId () const { return m_precedence_directive_id; }
     inline AstCommon::CodeBlock const *GetCodeBlock () const { return m_code_block; }
     inline Nonterminal *GetOwnerNonterminal () const
     {
@@ -329,13 +329,13 @@ public:
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
     void PrettyPrint (ostream &stream) const;
     void PrettyPrint (ostream &stream, RulePhase const &rule_phase) const;
-    void PrettyPrintWithAssignedIdentifiers (ostream &stream) const;
+    void PrettyPrintWithAssignedIds (ostream &stream) const;
 
 private:
 
     RuleTokenList const *const m_rule_token_list;
     Associativity const m_associativity;
-    AstCommon::Identifier const *const m_precedence_directive_identifier;
+    AstCommon::Id const *const m_precedence_directive_id;
     AstCommon::CodeBlock const *m_code_block;
     Nonterminal *m_owner_nonterminal;
     Uint32 m_index;
@@ -346,26 +346,26 @@ class Nonterminal : public AstCommon::Ast
 public:
 
     Nonterminal (
-        AstCommon::Identifier const *identifier,
+        AstCommon::Id const *id,
         AstCommon::String const *assigned_variable_type)
         :
-        AstCommon::Ast(identifier->GetFiLoc(), AT_NONTERMINAL),
-        m_identifier(identifier),
+        AstCommon::Ast(id->GetFiLoc(), AT_NONTERMINAL),
+        m_id(id),
         m_assigned_variable_type(assigned_variable_type)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
         // m_assigned_variable_type may be NULL
         m_rule_list = NULL;
     }
     virtual ~Nonterminal ()
     {
-        delete m_identifier;
+        delete m_id;
         delete m_assigned_variable_type;
         delete m_rule_list;
     }
 
-    string GetImplementationFileIdentifier () const;
-    inline AstCommon::Identifier const *GetIdentifier () const { return m_identifier; }
+    string GetImplementationFileId () const;
+    inline AstCommon::Id const *GetId () const { return m_id; }
     inline AstCommon::String const *GetAssignedVariableType () const { return m_assigned_variable_type; }
     inline RuleList::const_iterator GetRuleListBegin () const { return m_rule_list->begin(); }
     inline RuleList::const_iterator GetRuleListEnd () const { return m_rule_list->end(); }
@@ -389,7 +389,7 @@ public:
 
 private:
 
-    AstCommon::Identifier const *const m_identifier;
+    AstCommon::Id const *const m_id;
     AstCommon::String const *const m_assigned_variable_type;
     RuleList const *m_rule_list;
 }; // end of class Nonterminal
@@ -398,20 +398,20 @@ class PrecedenceDirective : public AstCommon::Directive
 {
 public:
 
-    PrecedenceDirective (AstCommon::Identifier const *identifier)
+    PrecedenceDirective (AstCommon::Id const *id)
         :
-        AstCommon::Directive("%prec", identifier->GetFiLoc(), AT_PRECEDENCE_DIRECTIVE),
-        m_identifier(identifier),
+        AstCommon::Directive("%prec", id->GetFiLoc(), AT_PRECEDENCE_DIRECTIVE),
+        m_id(id),
         m_precedence_level(0)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
     }
     virtual ~PrecedenceDirective ()
     {
-        delete m_identifier;
+        delete m_id;
     }
 
-    inline AstCommon::Identifier const *GetIdentifier () const { return m_identifier; }
+    inline AstCommon::Id const *GetId () const { return m_id; }
     inline Uint32 GetPrecedenceLevel () const { return m_precedence_level; }
 
     inline void SetPrecedenceLevel (Uint32 precedence_level)
@@ -423,7 +423,7 @@ public:
 
 private:
 
-    AstCommon::Identifier const *const m_identifier;
+    AstCommon::Id const *const m_id;
     Uint32 m_precedence_level;
 }; // end of class PrecedenceDirective
 
@@ -432,31 +432,31 @@ class TokenDirective : public AstCommon::Directive
 public:
 
     TokenDirective (
-        TokenIdentifierList const *token_identifier_list,
+        TokenIdList const *token_id_list,
         AstCommon::String const *assigned_type)
         :
-        AstCommon::Directive("%token", token_identifier_list->GetFiLoc(), AT_TOKEN_DIRECTIVE),
-        m_token_identifier_list(token_identifier_list),
+        AstCommon::Directive("%token", token_id_list->GetFiLoc(), AT_TOKEN_DIRECTIVE),
+        m_token_id_list(token_id_list),
         m_assigned_type(assigned_type)
     {
-        assert(m_token_identifier_list != NULL);
+        assert(m_token_id_list != NULL);
         // m_assigned_type may be NULL
     }
     virtual ~TokenDirective ()
     {
-        delete m_token_identifier_list;
+        delete m_token_id_list;
         delete m_assigned_type;
     }
 
-    inline TokenIdentifierList::const_iterator GetTokenIdentifierBegin () const { return m_token_identifier_list->begin(); }
-    inline TokenIdentifierList::const_iterator GetTokenIdentifierEnd () const { return m_token_identifier_list->end(); }
+    inline TokenIdList::const_iterator GetTokenIdBegin () const { return m_token_id_list->begin(); }
+    inline TokenIdList::const_iterator GetTokenIdEnd () const { return m_token_id_list->end(); }
     inline AstCommon::String const *GetAssignedType () const { return m_assigned_type; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    TokenIdentifierList const *const m_token_identifier_list;
+    TokenIdList const *const m_token_id_list;
     AstCommon::String const *const m_assigned_type;
 }; // end of class TokenDirective
 
@@ -508,25 +508,25 @@ class StartDirective : public AstCommon::Directive
 {
 public:
 
-    StartDirective (AstCommon::Identifier const *start_nonterminal_identifier)
+    StartDirective (AstCommon::Id const *start_nonterminal_id)
         :
-        AstCommon::Directive("%start", start_nonterminal_identifier->GetFiLoc(), AT_START_DIRECTIVE),
-        m_start_nonterminal_identifier(start_nonterminal_identifier)
+        AstCommon::Directive("%start", start_nonterminal_id->GetFiLoc(), AT_START_DIRECTIVE),
+        m_start_nonterminal_id(start_nonterminal_id)
     {
-        assert(m_start_nonterminal_identifier != NULL);
+        assert(m_start_nonterminal_id != NULL);
     }
     virtual ~StartDirective ()
     {
-        delete m_start_nonterminal_identifier;
+        delete m_start_nonterminal_id;
     }
 
-    inline AstCommon::Identifier const *GetStartNonterminalIdentifier () const { return m_start_nonterminal_identifier; }
+    inline AstCommon::Id const *GetStartNonterminalId () const { return m_start_nonterminal_id; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    AstCommon::Identifier const *const m_start_nonterminal_identifier;
+    AstCommon::Id const *const m_start_nonterminal_id;
 }; // end of class StartDirective
 
 class ParserDirectiveSet : public AstCommon::Ast

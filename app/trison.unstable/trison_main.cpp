@@ -131,13 +131,13 @@ int main (int argc, char **argv)
                  it != it_end;
                  ++it)
             {
-                string const &target_language_identifier = it->first;
+                string const &target_language_id = it->first;
                 CommonLang::TargetLanguage const *target_language = it->second;
                 assert(target_language != NULL);
 
                 Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
 
-                representation->GenerateTargetLanguageDependentSymbols(target_language_identifier, local_symbol_table);
+                representation->GenerateTargetLanguageDependentSymbols(target_language_id, local_symbol_table);
                 target_language->GenerateCode(local_symbol_table);
             }
         }

@@ -431,7 +431,7 @@ trison_SOURCES = \
 	app/trison/trison_preprocessor.cpp \
 	app/trison/trison_scanner.cpp \
 	app/trison/trison_state.cpp \
-	app/trison/trison_stateidentifier.cpp \
+	app/trison/trison_stateid.cpp \
 	app/trison/trison_statemachine.cpp \
 	app/trison/trison_transition.cpp
 
@@ -558,7 +558,7 @@ noinst_HEADERS = \
 	app/trison/trison_rulephase.hpp \
 	app/trison/trison_scanner.hpp \
 	app/trison/trison_state.hpp \
-	app/trison/trison_stateidentifier.hpp \
+	app/trison/trison_stateid.hpp \
 	app/trison/trison_statemachine.hpp \
 	app/trison/trison_terminal.hpp \
 	app/trison/trison_transition.hpp \

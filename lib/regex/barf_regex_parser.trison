@@ -364,7 +364,7 @@ branch_which_just_accepted_an_atom %type "Branch *"
 
 atom %type "Atom *"
 :
-    '{' identifier:macro_name '}'
+    '{' id:macro_name '}'
     {
         assert(macro_name != NULL);
         if (m_macro_map == NULL)
@@ -481,10 +481,10 @@ bracket_character_set %type "BracketCharacterSet *"
         return bracket_character_set;
     }
 |
-    bracket_character_set:bracket_character_set '[' ':' identifier:identifier ':' ']'
+    bracket_character_set:bracket_character_set '[' ':' id:id ':' ']'
     {
-        bracket_character_set->AddCharacterClass(identifier->GetText());
-        delete identifier;
+        bracket_character_set->AddCharacterClass(id->GetText());
+        delete id;
         return bracket_character_set;
     }
 |
@@ -607,48 +607,48 @@ bracket_expression_normal_character %type "Character *"
 |   '}'         { return new Character('}'); }
 ;
 
-identifier %type "AstCommon::Identifier *"
+id %type "AstCommon::Id *"
 :
-    identifier:identifier ALPHA:alpha
+    id:id ALPHA:alpha
     {
-        assert(identifier != NULL);
-        identifier->AppendCharacter(alpha->GetCharacter());
+        assert(id != NULL);
+        id->AppendCharacter(alpha->GetCharacter());
         delete alpha;
-        return identifier;
+        return id;
     }
 |
-    identifier:identifier CHAR:ch
+    id:id CHAR:ch
     {
-        assert(identifier != NULL);
-        identifier->AppendCharacter(ch->GetCharacter());
+        assert(id != NULL);
+        id->AppendCharacter(ch->GetCharacter());
         delete ch;
-        return identifier;
+        return id;
     }
 |
-    identifier:identifier DIGIT:digit
+    id:id DIGIT:digit
     {
-        assert(identifier != NULL);
-        identifier->AppendCharacter(digit->GetCharacter());
+        assert(id != NULL);
+        id->AppendCharacter(digit->GetCharacter());
         delete digit;
-        return identifier;
+        return id;
     }
 |
     ALPHA:alpha
     {
         string temp;
         temp += alpha->GetCharacter();
-        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FiLoc::ms_invalid);
+        AstCommon::Id *id = new AstCommon::Id(temp, FiLoc::ms_invalid);
         delete alpha;
-        return identifier;
+        return id;
     }
 |
     CHAR:ch
     {
         string temp;
         temp += ch->GetCharacter();
-        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FiLoc::ms_invalid);
+        AstCommon::Id *id = new AstCommon::Id(temp, FiLoc::ms_invalid);
         delete ch;
-        return identifier;
+        return id;
     }
 ;
 

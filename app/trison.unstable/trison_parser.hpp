@@ -17,7 +17,7 @@ namespace Barf {
 namespace AstCommon {
 
 class Ast;
-class IdentifierMap;
+class IdMap;
 class IntegerMap;
 
 } // end of namespace AstCommon
@@ -62,7 +62,7 @@ public:
             DIRECTIVE_TYPE,
             DUMB_CODE_BLOCK,
             END_PREAMBLE,
-            IDENTIFIER,
+            ID,
             NEWLINE,
             STRICT_CODE_BLOCK,
             STRING_LITERAL,
@@ -92,7 +92,7 @@ public:
             rule_token_list__,
             rules__,
             start_directive__,
-            target_language_identifiers__,
+            target_language_ids__,
             target_languages_directive__,
             token__,
             token_directive__,

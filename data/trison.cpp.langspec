@@ -140,7 +140,7 @@
 %add_optional_directive token_data_type                     %string             %default "int"
 %add_optional_directive token_data_type_sentinel            %string             %default "0"
 %add_optional_directive custom_token_data_cast              %identifier         %default static_cast
-// uses identifier "token"
+// operates on variable "token" of type token_data_type
 %add_optional_directive token_throw_away_actions            %strict_code_block
 // TODO: scanner semantics
 

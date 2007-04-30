@@ -55,7 +55,7 @@ public:
             DIRECTIVE_TARGET_LANGUAGES,
             DUMB_CODE_BLOCK,
             END_PREAMBLE,
-            IDENTIFIER,
+            ID,
             NEWLINE,
             REGEX,
             STRICT_CODE_BLOCK,
@@ -81,7 +81,7 @@ public:
             scanner_state_rules__,
             scanner_states__,
             start_directive__,
-            target_language_identifiers__,
+            target_language_ids__,
             target_languages_directive__,
 
             // special start nonterminal

@@ -30,7 +30,7 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_PARSER_DIRECTIVE",
         "AT_START_DIRECTIVE",
         "AT_TOKEN_DIRECTIVE_LIST",
-        "AT_TOKEN_IDENTIFIER_LIST",
+        "AT_TOKEN_ID_LIST",
         "AT_PRECEDENCE_DIRECTIVE_LIST",
         "AT_NONTERMINAL_LIST",
         "AT_NONTERMINAL",
@@ -38,9 +38,9 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_RULE",
         "AT_RULE_TOKEN_LIST",
         "AT_RULE_TOKEN",
-        "AT_TOKEN_IDENTIFIER_IDENTIFIER",
-        "AT_TOKEN_IDENTIFIER_CHARACTER",
-        "AT_IDENTIFIER",
+        "AT_TOKEN_ID_ID",
+        "AT_TOKEN_ID_CHARACTER",
+        "AT_ID",
         "AT_CODE_BLOCK",
         "AT_STRING",
         "AT_THROW_AWAY"
@@ -53,38 +53,38 @@ string const &GetAstTypeString (AstType ast_type)
         return s_ast_type_string[ast_type-AstCommon::AT_START_CUSTOM_TYPES_HERE_];
 }
 
-TokenIdentifier::~TokenIdentifier ()
+TokenId::~TokenId ()
 {
 }
 
-void TokenIdentifierIdentifier::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void TokenIdId::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << " " << GetText() << endl;
 }
 
-void TokenIdentifierCharacter::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void TokenIdCharacter::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << " " << GetText() << endl;
 }
 
 void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << " " << m_token_identifier->GetText();
-    if (m_assigned_identifier != NULL)
-        stream << ":" << m_assigned_identifier->GetText();
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << " " << m_token_id->GetText();
+    if (m_assigned_id != NULL)
+        stream << ":" << m_assigned_id->GetText();
     stream << endl;
 }
 
 void RuleToken::PrettyPrint (ostream &stream) const
 {
-    stream << m_token_identifier->GetText();
+    stream << m_token_id->GetText();
 }
 
-void RuleToken::PrettyPrintWithAssignedIdentifier (ostream &stream) const
+void RuleToken::PrettyPrintWithAssignedId (ostream &stream) const
 {
-    stream << m_token_identifier->GetText();
-    if (m_assigned_identifier != NULL)
-        stream << ":" << m_assigned_identifier->GetText();
+    stream << m_token_id->GetText();
+    if (m_assigned_id != NULL)
+        stream << ":" << m_assigned_id->GetText();
 }
 
 bool Rule::GetIsABinaryOperation () const
@@ -92,10 +92,10 @@ bool Rule::GetIsABinaryOperation () const
     if (GetRuleTokenCount() != 3)
         return false;
 
-    string const &owner_nonterminal_name = GetOwnerNonterminal()->GetIdentifier()->GetText();
-    string const &left_operand_name = GetRuleToken(0)->GetTokenIdentifier()->GetText();
-    string const &operator_name = GetRuleToken(1)->GetTokenIdentifier()->GetText();
-    string const &right_operand_name = GetRuleToken(2)->GetTokenIdentifier()->GetText();
+    string const &owner_nonterminal_name = GetOwnerNonterminal()->GetId()->GetText();
+    string const &left_operand_name = GetRuleToken(0)->GetTokenId()->GetText();
+    string const &operator_name = GetRuleToken(1)->GetTokenId()->GetText();
+    string const &right_operand_name = GetRuleToken(2)->GetTokenId()->GetText();
     // both operands must have the same name as the target nonterminal.
     return
         owner_nonterminal_name == left_operand_name &&
@@ -110,9 +110,9 @@ void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
     if (GetIsABinaryOperation())
         stream << Tabs(indent_level+1) << "associativity: "
                << m_associativity << endl;
-    if (m_precedence_directive_identifier != NULL)
+    if (m_precedence_directive_id != NULL)
         stream << Tabs(indent_level+1) << "precedence token: "
-               << m_precedence_directive_identifier->GetText() << endl;
+               << m_precedence_directive_id->GetText() << endl;
     if (m_code_block != NULL)
         m_code_block->Print(stream, Stringify, indent_level+1);
 }
@@ -123,7 +123,7 @@ void Rule::PrettyPrint (ostream &stream) const
 
     streamsize old_width = stream.width(4);
     stream << "rule " << m_index << ": "
-           << m_owner_nonterminal->GetIdentifier()->GetText() << " <- ";
+           << m_owner_nonterminal->GetId()->GetText() << " <- ";
     for (RuleTokenList::const_iterator it = m_rule_token_list->begin(),
                                        it_end = m_rule_token_list->end();
          it != it_end;
@@ -140,8 +140,8 @@ void Rule::PrettyPrint (ostream &stream) const
     stream << "    ";
     if (GetIsABinaryOperation())
         Trison::PrettyPrint(stream, m_associativity);
-    if (m_precedence_directive_identifier != NULL)
-        stream << " %prec " << m_precedence_directive_identifier->GetText();
+    if (m_precedence_directive_id != NULL)
+        stream << " %prec " << m_precedence_directive_id->GetText();
     stream.width(old_width);
 }
 
@@ -153,7 +153,7 @@ void Rule::PrettyPrint (ostream &stream, RulePhase const &rule_phase) const
 
     streamsize old_width = stream.width(4);
     stream << "rule " << rule_phase << ": "
-           << m_owner_nonterminal->GetIdentifier()->GetText() << " <- ";
+           << m_owner_nonterminal->GetId()->GetText() << " <- ";
     Uint32 current_token = 0;
     Uint32 token_count = m_rule_token_list->size();
     for (RuleTokenList::const_iterator it = m_rule_token_list->begin(),
@@ -188,25 +188,25 @@ void Rule::PrettyPrint (ostream &stream, RulePhase const &rule_phase) const
     stream << "    ";
     if (GetIsABinaryOperation())
         Trison::PrettyPrint(stream, m_associativity);
-    if (m_precedence_directive_identifier != NULL)
-        stream << " %prec " << m_precedence_directive_identifier->GetText();
+    if (m_precedence_directive_id != NULL)
+        stream << " %prec " << m_precedence_directive_id->GetText();
     stream.width(old_width);
 }
 
-void Rule::PrettyPrintWithAssignedIdentifiers (ostream &stream) const
+void Rule::PrettyPrintWithAssignedIds (ostream &stream) const
 {
     assert(GetOwnerNonterminal() != NULL);
 
     streamsize old_width = stream.width(4);
     stream << "rule " << m_index << ": "
-           << m_owner_nonterminal->GetIdentifier()->GetText() << " <- ";
+           << m_owner_nonterminal->GetId()->GetText() << " <- ";
     for (RuleTokenList::const_iterator it = m_rule_token_list->begin(),
                                        it_end = m_rule_token_list->end();
          it != it_end;
          ++it)
     {
         RuleToken const *rule_token = *it;
-        rule_token->PrettyPrintWithAssignedIdentifier(stream);
+        rule_token->PrettyPrintWithAssignedId(stream);
 
         RuleTokenList::const_iterator test_it = it;
         ++test_it;
@@ -216,24 +216,24 @@ void Rule::PrettyPrintWithAssignedIdentifiers (ostream &stream) const
     stream << "    ";
     if (GetIsABinaryOperation())
         Trison::PrettyPrint(stream, m_associativity);
-    if (m_precedence_directive_identifier != NULL)
-        stream << " %prec " << m_precedence_directive_identifier->GetText();
+    if (m_precedence_directive_id != NULL)
+        stream << " %prec " << m_precedence_directive_id->GetText();
     stream.width(old_width);
 }
 
-string Nonterminal::GetImplementationFileIdentifier () const
+string Nonterminal::GetImplementationFileId () const
 {
-    assert(m_identifier != NULL);
-    if (m_identifier->GetText() == "%start")
+    assert(m_id != NULL);
+    if (m_id->GetText() == "%start")
         return "START_";
     else
-        return m_identifier->GetText() + "__";
+        return m_id->GetText() + "__";
 }
 
 void Nonterminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    m_identifier->Print(stream, Stringify, indent_level+1);
+    m_id->Print(stream, Stringify, indent_level+1);
     if (m_assigned_variable_type != NULL)
         stream << Tabs(indent_level+1) << "assigned variable type: "
                << m_assigned_variable_type->GetText() << endl;
@@ -248,7 +248,7 @@ void PrecedenceDirective::Print (ostream &stream, StringifyAstType Stringify, Ui
 void TokenDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    m_token_identifier_list->Print(stream, Stringify, indent_level+1);
+    m_token_id_list->Print(stream, Stringify, indent_level+1);
 }
 
 string const &ParserDirective::GetString (ParserDirectiveType parser_directive_type)
@@ -368,7 +368,7 @@ void ParserDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32
 
 void StartDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << " " << GetStartNonterminalIdentifier()->GetText() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << " " << GetStartNonterminalId()->GetText() << endl;
 }
 
 void ParserDirectiveSet::AddDirective (
@@ -553,25 +553,25 @@ Grammar::Grammar (
         EmitError(end_preamble_filoc, "missing %start directive");
     else
     {
-        AstCommon::Identifier *start_nonterminal_identifier =
-            new AstCommon::Identifier("%start", FiLoc::ms_invalid);
+        AstCommon::Id *start_nonterminal_id =
+            new AstCommon::Id("%start", FiLoc::ms_invalid);
         m_start_nonterminal =
-            new Nonterminal(start_nonterminal_identifier, NULL);
+            new Nonterminal(start_nonterminal_id, NULL);
 
         RuleTokenList *start_nonterminal_rule_token_list = new RuleTokenList();
         {
-            string const &start_nonterminal_name = start_directive->GetStartNonterminalIdentifier()->GetText();
-            TokenIdentifierIdentifier *first_rule_token_identifier =
-                new TokenIdentifierIdentifier(start_nonterminal_name, FiLoc::ms_invalid);
+            string const &start_nonterminal_name = start_directive->GetStartNonterminalId()->GetText();
+            TokenIdId *first_rule_token_id =
+                new TokenIdId(start_nonterminal_name, FiLoc::ms_invalid);
             RuleToken *first_rule_token =
-                new RuleToken(first_rule_token_identifier, NULL);
+                new RuleToken(first_rule_token_id, NULL);
             start_nonterminal_rule_token_list->Append(first_rule_token);
         }
         {
-            TokenIdentifierIdentifier *second_rule_token_identifier =
-                new TokenIdentifierIdentifier("END_", FiLoc::ms_invalid);
+            TokenIdId *second_rule_token_id =
+                new TokenIdId("END_", FiLoc::ms_invalid);
             RuleToken *second_rule_token =
-                new RuleToken(second_rule_token_identifier, NULL);
+                new RuleToken(second_rule_token_id, NULL);
             start_nonterminal_rule_token_list->Append(second_rule_token);
         }
 

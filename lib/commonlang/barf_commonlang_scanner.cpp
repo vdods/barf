@@ -37,7 +37,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DIRECTIVE_DEFAULT",
         "DIRECTIVE_DUMB_CODE_BLOCK",
         "DIRECTIVE_ERROR",
-        "DIRECTIVE_IDENTIFIER",
+        "DIRECTIVE_ID",
         "DIRECTIVE_LANGUAGE",
         "DIRECTIVE_LEFT",
         "DIRECTIVE_MACRO",
@@ -55,7 +55,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DUMB_CODE_BLOCK",
         "END_OF_FILE",
         "END_PREAMBLE",
-        "IDENTIFIER",
+        "ID",
         "NEWLINE",
         "REGEX",
         "STRICT_CODE_BLOCK",
@@ -104,7 +104,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%default") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DEFAULT; }
     if (accepted_string == "%dumb_code_block") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DUMB_CODE_BLOCK; }
     if (accepted_string == "%error") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ERROR; }
-    if (accepted_string == "%identifier") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_IDENTIFIER; }
+    if (accepted_string == "%identifier") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ID; }
     if (accepted_string == "%language") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_LANGUAGE; }
     if (accepted_string == "%left") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_LEFT; }
     if (accepted_string == "%macro") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_MACRO; }
@@ -628,7 +628,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 363 "barf_commonlang_scanner.reflex"
 
-        SPEW("MAIN - (%{IDENTIFIER}) = " << GetStringLiteral(accepted_string));
+        SPEW("MAIN - (%{ID}) = " << GetStringLiteral(accepted_string));
         return Scanner::ParseDirective(accepted_string, token);
     
 #line 635 "barf_commonlang_scanner.cpp"
@@ -656,9 +656,9 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 377 "barf_commonlang_scanner.reflex"
 
-        SPEW("MAIN - ({IDENTIFIER}) = " << GetStringLiteral(accepted_string));
-        *token = new AstCommon::Identifier(accepted_string, GetFiLoc());
-        return Token::IDENTIFIER;
+        SPEW("MAIN - ({ID}) = " << GetStringLiteral(accepted_string));
+        *token = new AstCommon::Id(accepted_string, GetFiLoc());
+        return Token::ID;
     
 #line 664 "barf_commonlang_scanner.cpp"
 

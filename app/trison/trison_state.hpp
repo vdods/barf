@@ -16,7 +16,7 @@
 #include <iostream>
 #include <map>
 
-#include "trison_stateidentifier.hpp"
+#include "trison_stateid.hpp"
 #include "trison_transition.hpp"
 
 namespace Trison {
@@ -38,15 +38,15 @@ public:
     }
 
     inline Uint32 GetStateIndex () const { return m_state_index; }
-    inline StateIdentifier const &GetStateIdentifier () const
+    inline StateId const &GetStateId () const
     {
-        assert(!m_state_identifier.empty());
-        return m_state_identifier;
+        assert(!m_state_id.empty());
+        return m_state_id;
     }
 
-    inline void SetStateIdentifier (StateIdentifier const &state_identifier)
+    inline void SetStateId (StateId const &state_id)
     {
-        m_state_identifier = state_identifier;
+        m_state_id = state_id;
     }
     inline void SetTerminalTransitionsOffset (Uint32 terminal_transitions_offset)
     {
@@ -67,7 +67,7 @@ public:
     }
     inline void SetDefaultTransition (Transition const &transition)
     {
-        assert(m_default_transition.GetTransitionIdentifier().empty());
+        assert(m_default_transition.GetTransitionId().empty());
         m_default_transition = transition;
     }
     inline void SetNonterminalTransitionsOffset (Uint32 nonterminal_transitions_offset)
@@ -78,7 +78,7 @@ public:
     inline void SetNonterminalTransition (Nonterminal const *input_nonterminal, Transition const &transition)
     {
         assert(input_nonterminal != NULL);
-        assert(!transition.GetTransitionIdentifier().empty());
+        assert(!transition.GetTransitionId().empty());
         assert(m_nonterminal_transition_map.find(input_nonterminal) == m_nonterminal_transition_map.end());
         m_nonterminal_transition_map[input_nonterminal] = transition;
     }
@@ -99,7 +99,7 @@ public:
 
     inline bool operator == (State const &operand) const
     {
-        return m_state_identifier == operand.m_state_identifier;
+        return m_state_id == operand.m_state_id;
     }
 
     inline void AddSpawnedRulePhase (RulePhase const &spawned_rule_phase)
@@ -119,7 +119,7 @@ private:
     typedef multimap<Terminal const *, Transition> ConflictedTerminalTransitionMap;
 
     Uint32 const m_state_index;
-    StateIdentifier m_state_identifier;
+    StateId m_state_id;
     set<RulePhase> m_spawned_rule_phase_set;
     Uint32 m_terminal_transitions_offset;
     TerminalTransitionMap m_terminal_transition_map;

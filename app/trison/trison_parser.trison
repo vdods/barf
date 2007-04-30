@@ -95,7 +95,7 @@ Parser::Token::Type Parser::Scan ()
 %token ':' ';' '|'
 %token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
 %token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
-%token IDENTIFIER %type "AstCommon::Identifier *"
+%token ID %type "AstCommon::Id *"
 %token DIRECTIVE_PARSER_WITH_PARAMETER %type "ParserDirective *"
 %token DIRECTIVE_PARSER_WITHOUT_PARAMETER %type "ParserDirective *"
 %token STRING %type "AstCommon::String *"
@@ -108,7 +108,7 @@ Parser::Token::Type Parser::Scan ()
 %token RIGHT %type "AstCommon::ThrowAway *"
 %token START %type "AstCommon::ThrowAway *"
 %token TYPE %type "AstCommon::ThrowAway *"
-%token TOKEN_IDENTIFIER_CHARACTER %type "TokenIdentifierCharacter *"
+%token TOKEN_ID_CHARACTER %type "TokenIdCharacter *"
 %token BAD_TOKEN
 %token NEWLINE
 
@@ -180,17 +180,17 @@ directive %type "AstCommon::Directive *"
         return parser_directive;
     }
 |
-    DIRECTIVE_TOKEN:throwaway token_identifier_list:token_identifier_list at_least_one_newline
+    DIRECTIVE_TOKEN:throwaway token_id_list:token_id_list at_least_one_newline
     {
         delete throwaway;
-        return new TokenDirective(token_identifier_list, NULL);
+        return new TokenDirective(token_id_list, NULL);
     }
 |
-    DIRECTIVE_TOKEN:throwaway1 token_identifier_list:token_identifier_list TYPE:throwaway2 STRING:assigned_type at_least_one_newline
+    DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 STRING:assigned_type at_least_one_newline
     {
         delete throwaway1;
         delete throwaway2;
-        return new TokenDirective(token_identifier_list, assigned_type);
+        return new TokenDirective(token_id_list, assigned_type);
     }
 |
     DIRECTIVE_TOKEN:throwaway %error at_least_one_newline
@@ -198,47 +198,47 @@ directive %type "AstCommon::Directive *"
         EmitError(throwaway->GetFiLoc(), "syntax error in %token directive");
 
         delete throwaway;
-        return new TokenDirective(new TokenIdentifierList(), NULL);
+        return new TokenDirective(new TokenIdList(), NULL);
     }
 |
-    DIRECTIVE_TOKEN:throwaway1 token_identifier_list:token_identifier_list TYPE:throwaway2 %error at_least_one_newline
+    DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 %error at_least_one_newline
     {
         EmitError(throwaway2->GetFiLoc(), "syntax error in %type directive");
 
         AstCommon::String *dummy_string = new AstCommon::String(throwaway2->GetFiLoc());
         delete throwaway1;
         delete throwaway2;
-        return new TokenDirective(token_identifier_list, dummy_string);
+        return new TokenDirective(token_id_list, dummy_string);
     }
 |
-    PREC:throwaway IDENTIFIER:identifier at_least_one_newline
+    PREC:throwaway ID:id at_least_one_newline
     {
         delete throwaway;
-        return new PrecedenceDirective(identifier);
+        return new PrecedenceDirective(id);
     }
 |
     PREC:throwaway %error at_least_one_newline
     {
         EmitError(throwaway->GetFiLoc(), "syntax error in %prec directive");
 
-        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFiLoc());
+        AstCommon::Id *dummy_id = new AstCommon::Id("ERROR", throwaway->GetFiLoc());
         delete throwaway;
-        return new PrecedenceDirective(dummy_identifier);
+        return new PrecedenceDirective(dummy_id);
     }
 |
-    START:throwaway IDENTIFIER:identifier at_least_one_newline
+    START:throwaway ID:id at_least_one_newline
     {
         delete throwaway;
-        return new StartDirective(identifier);
+        return new StartDirective(id);
     }
 |
     START:throwaway %error at_least_one_newline
     {
         EmitError(throwaway->GetFiLoc(), "syntax error in %start directive");
 
-        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFiLoc());
+        AstCommon::Id *dummy_id = new AstCommon::Id("ERROR", throwaway->GetFiLoc());
         delete throwaway;
-        return new StartDirective(dummy_identifier);
+        return new StartDirective(dummy_id);
     }
 |
     %error STRICT_CODE_BLOCK:value at_least_one_newline
@@ -270,35 +270,35 @@ directive %type "AstCommon::Directive *"
     }
 ;
 
-token_identifier_list %type "TokenIdentifierList *"
+token_id_list %type "TokenIdList *"
 :
-    token_identifier_list:token_identifier_list token_identifier:token_identifier
+    token_id_list:token_id_list token_id:token_id
     {
-        token_identifier_list->Append(token_identifier);
-        return token_identifier_list;
+        token_id_list->Append(token_id);
+        return token_id_list;
     }
 |
-    token_identifier:token_identifier
+    token_id:token_id
     {
-        TokenIdentifierList *token_identifier_list = new TokenIdentifierList();
-        token_identifier_list->Append(token_identifier);
-        return token_identifier_list;
+        TokenIdList *token_id_list = new TokenIdList();
+        token_id_list->Append(token_id);
+        return token_id_list;
     }
 ;
 
-token_identifier %type "TokenIdentifier *"
+token_id %type "TokenId *"
 :
-    IDENTIFIER:identifier
+    ID:id
     {
-        TokenIdentifierIdentifier *token_identifier_identifier =
-            new TokenIdentifierIdentifier(identifier->GetText(), identifier->GetFiLoc());
-        delete identifier;
-        return token_identifier_identifier;
+        TokenIdId *token_id_id =
+            new TokenIdId(id->GetText(), id->GetFiLoc());
+        delete id;
+        return token_id_id;
     }
 |
-    TOKEN_IDENTIFIER_CHARACTER:token_identifier_character
+    TOKEN_ID_CHARACTER:token_id_character
     {
-        return token_identifier_character;
+        return token_id_character;
     }
 ;
 
@@ -350,15 +350,15 @@ nonterminal %type "Nonterminal *"
 
 nonterminal_specification %type "Nonterminal *"
 :
-    IDENTIFIER:identifier TYPE:throwaway STRING:assigned_type
+    ID:id TYPE:throwaway STRING:assigned_type
     {
         delete throwaway;
-        return new Nonterminal(identifier, assigned_type);
+        return new Nonterminal(id, assigned_type);
     }
 |
-    IDENTIFIER:identifier
+    ID:id
     {
-        return new Nonterminal(identifier, NULL);
+        return new Nonterminal(id, NULL);
     }
 |
     %error
@@ -368,19 +368,19 @@ nonterminal_specification %type "Nonterminal *"
         return NULL;
     }
 |
-    IDENTIFIER:identifier %error
+    ID:id %error
     {
-        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal directive");
+        EmitError(id->GetFiLoc(), "syntax error in nonterminal directive");
 
-        return new Nonterminal(identifier, NULL);
+        return new Nonterminal(id, NULL);
     }
 |
-    IDENTIFIER:identifier TYPE:throwaway %error
+    ID:id TYPE:throwaway %error
     {
-        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
+        EmitError(id->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
 
         delete throwaway;
-        return new Nonterminal(identifier, NULL);
+        return new Nonterminal(id, NULL);
     }
 ;
 
@@ -470,29 +470,29 @@ rule_token_list %type "RuleTokenList *"
 
 rule_token %type "RuleToken *"
 :
-    token_identifier:token_identifier ':' IDENTIFIER:assigned_identifier
+    token_id:token_id ':' ID:assigned_id
     {
-        return new RuleToken(token_identifier, assigned_identifier);
+        return new RuleToken(token_id, assigned_id);
     }
 |
-    token_identifier:token_identifier
+    token_id:token_id
     {
-        return new RuleToken(token_identifier, NULL);
+        return new RuleToken(token_id, NULL);
     }
 |
     DIRECTIVE_ERROR:throwaway
     {
         delete throwaway;
-        return new RuleToken(new TokenIdentifierIdentifier("%error", FL), NULL);
+        return new RuleToken(new TokenIdId("%error", FL), NULL);
     }
 ;
 
-rule_precedence_directive %type "AstCommon::Identifier *"
+rule_precedence_directive %type "AstCommon::Id *"
 :
-    PREC:throwaway IDENTIFIER:identifier
+    PREC:throwaway ID:id
     {
         delete throwaway;
-        return identifier;
+        return id;
     }
 |
     // empty reduction rule

@@ -55,22 +55,22 @@ class LanguageDirective : public AstCommon::Directive
 {
 public:
 
-    AstCommon::Identifier const *const m_language_identifier;
-    AstCommon::Identifier const *const m_directive_identifier;
+    AstCommon::Id const *const m_language_id;
+    AstCommon::Id const *const m_directive_id;
     AstCommon::TextBase const *const m_directive_value;
 
     LanguageDirective (
-        AstCommon::Identifier const *language_identifier,
-        AstCommon::Identifier const *directive_identifier,
+        AstCommon::Id const *language_id,
+        AstCommon::Id const *directive_id,
         AstCommon::TextBase const *directive_value)
         :
-        Directive("%language", language_identifier->GetFiLoc(), AT_LANGUAGE_DIRECTIVE),
-        m_language_identifier(language_identifier),
-        m_directive_identifier(directive_identifier),
+        Directive("%language", language_id->GetFiLoc(), AT_LANGUAGE_DIRECTIVE),
+        m_language_id(language_id),
+        m_directive_id(directive_id),
         m_directive_value(directive_value)
     {
-        assert(m_language_identifier != NULL);
-        assert(m_directive_identifier != NULL);
+        assert(m_language_id != NULL);
+        assert(m_directive_id != NULL);
         // m_directive_value can be NULL
     }
 
@@ -82,9 +82,9 @@ class TargetLanguage : public AstCommon::AstMap<LanguageDirective>
 {
 public:
 
-    string const m_language_identifier;
+    string const m_language_id;
 
-    TargetLanguage (string const &language_identifier);
+    TargetLanguage (string const &language_id);
 
     // this is called on a TargetLanguage which appears in %target_languages
     // and will enable specific error checking required for later code generation
@@ -166,22 +166,22 @@ struct TargetLanguageMap : public AstCommon::AstMap<TargetLanguage>
 
 struct RuleHandler : public AstCommon::Ast
 {
-    AstCommon::Identifier const *const m_language_identifier;
+    AstCommon::Id const *const m_language_id;
     AstCommon::CodeBlock const *const m_rule_handler_code_block;
 
     RuleHandler (
-        AstCommon::Identifier const *language_identifier,
+        AstCommon::Id const *language_id,
         AstCommon::CodeBlock const *rule_handler_code_block)
         :
         AstCommon::Ast(
-            (language_identifier != NULL) ?
-            language_identifier->GetFiLoc() :
+            (language_id != NULL) ?
+            language_id->GetFiLoc() :
             rule_handler_code_block->GetFiLoc(),
             AT_RULE_HANDLER),
-        m_language_identifier(language_identifier),
+        m_language_id(language_id),
         m_rule_handler_code_block(rule_handler_code_block)
     {
-        assert(m_language_identifier != NULL);
+        assert(m_language_id != NULL);
         assert(m_rule_handler_code_block != NULL);
     }
 

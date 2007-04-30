@@ -15,7 +15,7 @@
 
 #include "trison_enums.hpp"
 #include "trison_rulephase.hpp"
-#include "trison_stateidentifier.hpp"
+#include "trison_stateid.hpp"
 
 namespace Trison {
 
@@ -28,7 +28,7 @@ public:
     Transition ()
         :
         m_transition_action(TA_COUNT),
-        m_transition_identifier()
+        m_transition_id()
     { }
 
     inline TransitionAction GetTransitionAction () const
@@ -36,17 +36,17 @@ public:
         assert(m_transition_action < TA_COUNT && "state transition action not set");
         return m_transition_action;
     }
-    inline StateIdentifier const &GetTransitionIdentifier () const
+    inline StateId const &GetTransitionId () const
     {
-        return m_transition_identifier;
+        return m_transition_id;
     }
-    inline StateIdentifier &GetTransitionIdentifier ()
+    inline StateId &GetTransitionId ()
     {
-        return m_transition_identifier;
+        return m_transition_id;
     }
     inline bool GetIsNontrivial () const
     {
-        return !m_transition_identifier.empty() ||
+        return !m_transition_id.empty() ||
                m_transition_action == TA_THROW_AWAY_LOOKAHEAD_TOKEN;
     }
 
@@ -57,12 +57,12 @@ public:
 
     inline void AddRulePhase (RulePhase const &rule_phase)
     {
-        m_transition_identifier.insert(rule_phase);
+        m_transition_id.insert(rule_phase);
     }
     inline void RemoveRulePhase (RulePhase const &rule_phase)
     {
-        assert(m_transition_identifier.find(rule_phase) != m_transition_identifier.end());
-        m_transition_identifier.erase(rule_phase);
+        assert(m_transition_id.find(rule_phase) != m_transition_id.end());
+        m_transition_id.erase(rule_phase);
     }
 
     void PrettyPrint (ostream &stream, string const &name, StateMachine const *state_machine) const;
@@ -71,7 +71,7 @@ public:
 private:
 
     TransitionAction m_transition_action;
-    StateIdentifier m_transition_identifier;
+    StateId m_transition_id;
 }; // end of class Transition
 
 } // end of namespace Trison

@@ -22,7 +22,7 @@
 #include "trison_enums.hpp"
 #include "trison_preprocessor.hpp"
 #include "trison_state.hpp"
-#include "trison_stateidentifier.hpp"
+#include "trison_stateid.hpp"
 #include "trison_terminal.hpp"
 #include "trison_transition.hpp"
 
@@ -42,7 +42,7 @@ public:
     ~StateMachine ();
 
     Rule const *GetRule (Uint32 rule_index) const;
-    Uint32 GetStateIndex (StateIdentifier const &state_identifier) const;
+    Uint32 GetStateIndex (StateId const &state_id) const;
 
     void Generate ();
 
@@ -52,7 +52,7 @@ public:
 
 private:
 
-    void GetStateTransitionIdentifiersFromRulePhase (
+    void GetStateTransitionIdsFromRulePhase (
         RulePhase const &rule_phase,
         map<Terminal *, Transition> *terminal_transition_map,
         map<Nonterminal *, Transition> *nonterminal_transition_map,
@@ -79,19 +79,19 @@ private:
     void GenerateReductionRuleVector ();
     void GenerateReductionRuleVectorForNonterminal (Nonterminal *nonterminal);
     void GenerateStatesFromTheStartNonterminal ();
-    void GenerateState (StateIdentifier const &state_identifier);
+    void GenerateState (StateId const &state_id);
 
     void AddErrorCollapsingTransitions (
         State *state,
         map<Terminal *, Transition> *terminal_transition_map);
     void ResolveReduceReduceAndErrorConflicts (
         State *state,
-        StateIdentifier const &state_identifier,
+        StateId const &state_id,
         map<Terminal *, Transition> *terminal_transition_map,
         map<Nonterminal *, Transition> *nonterminal_transition_map,
         Transition *default_transition);
     void ResolveShiftReduceConflicts (
-        StateIdentifier const &state_identifier,
+        StateId const &state_id,
         map<Terminal *, Transition> *terminal_transition_map,
         map<Nonterminal *, Transition> *nonterminal_transition_map,
         Transition *default_transition);
@@ -110,9 +110,9 @@ private:
     typedef map<string, Terminal *> TerminalMap;
     typedef vector<Rule *> RuleVector;
     typedef map<string, PrecedenceDirective const *> PrecedenceMap;
-    typedef map<StateIdentifier, State *> StateMap;
+    typedef map<StateId, State *> StateMap;
     typedef vector<State *> StateVector;
-    typedef list<StateIdentifier> TransitionGenerationQueue;
+    typedef list<StateId> TransitionGenerationQueue;
 
     Grammar const *const m_grammar;
 

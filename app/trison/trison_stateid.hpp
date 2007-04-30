@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// trison_stateidentifier.cpp by Victor Dods, created 2006/02/19
+// trison_stateid.hpp by Victor Dods, created 2006/02/19
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,26 +8,22 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#include "trison_stateidentifier.hpp"
+#if !defined(_TRISON_STATEID_HPP_)
+#define _TRISON_STATEID_HPP_
+
+#include "trison.hpp"
+
+#include <iostream>
+#include <set>
+
+#include "trison_rulephase.hpp"
 
 namespace Trison {
 
-ostream &operator << (ostream &stream, StateIdentifier const &state_identifier)
-{
-    for (StateIdentifier::const_iterator it = state_identifier.begin(),
-                                      it_end = state_identifier.end();
-         it != it_end;
-         ++it)
-    {
-        RulePhase const &rule_phase = *it;
-        stream << rule_phase;
+typedef set<RulePhase> StateId;
 
-        StateIdentifier::const_iterator test_it = it;
-        ++test_it;
-        if (test_it != it_end)
-            stream << " ";
-    }
-    return stream;
-}
+ostream &operator << (ostream &stream, StateId const &state_id);
 
 } // end of namespace Trison
+
+#endif // !defined(_TRISON_STATEID_HPP_)

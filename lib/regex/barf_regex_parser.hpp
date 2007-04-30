@@ -52,7 +52,7 @@ public:
             branch__,
             branch_which_didnt_just_accept_an_atom__,
             branch_which_just_accepted_an_atom__,
-            identifier__,
+            id__,
             integer__,
             regex__,
 

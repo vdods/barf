@@ -38,13 +38,13 @@ AstCommon::Ast (abstract)
 // ///////////////////////////////////////////////////////////////////////////
 
 Specification
-    Identifier (%target_language)
+    Id (%target_language)
     AstCommon::CodeBlock (%run_before_code_generation)
     AstCommon::DirectiveList
         AstCommon::Directive[]
 
 AddDirective
-    std::string (directive identifier)
+    std::string (directive id)
     ParamSpec
         AstType (param type)
         Bound
@@ -79,16 +79,16 @@ string const &GetAstTypeString (AstType ast_type);
 struct AddCodeSpec : public AstCommon::Directive
 {
     AstCommon::String const *const m_filename;
-    AstCommon::Identifier const *const m_filename_directive_identifier;
+    AstCommon::Id const *const m_filename_directive_id;
 
-    AddCodeSpec (AstCommon::String const *filename, AstCommon::Identifier const *filename_directive_identifier)
+    AddCodeSpec (AstCommon::String const *filename, AstCommon::Id const *filename_directive_id)
         :
         AstCommon::Directive("%add_codespec", filename->GetFiLoc(), AT_ADD_CODESPEC),
         m_filename(filename),
-        m_filename_directive_identifier(filename_directive_identifier)
+        m_filename_directive_id(filename_directive_id)
     {
         assert(m_filename != NULL);
-        assert(m_filename_directive_identifier != NULL);
+        assert(m_filename_directive_id != NULL);
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -101,17 +101,17 @@ struct AddCodeSpecList : public AstCommon::AstList<AddCodeSpec>
 
 struct AddDirective : public AstCommon::Directive
 {
-    AstCommon::Identifier const *const m_directive_to_add_identifier;
+    AstCommon::Id const *const m_directive_to_add_id;
     AstType const m_param_type;
 
-    AddDirective (AstCommon::Identifier const *directive_to_add_identifier, AstType param_type, string const &directive_identifier)
+    AddDirective (AstCommon::Id const *directive_to_add_id, AstType param_type, string const &directive_id)
         :
-        AstCommon::Directive(directive_identifier, directive_to_add_identifier->GetFiLoc(), AT_ADD_DIRECTIVE),
-        m_directive_to_add_identifier(directive_to_add_identifier),
+        AstCommon::Directive(directive_id, directive_to_add_id->GetFiLoc(), AT_ADD_DIRECTIVE),
+        m_directive_to_add_id(directive_to_add_id),
         m_param_type(param_type)
     {
-        assert(m_directive_to_add_identifier != NULL);
-        assert(m_param_type == AstCommon::AT_IDENTIFIER ||
+        assert(m_directive_to_add_id != NULL);
+        assert(m_param_type == AstCommon::AT_ID ||
                m_param_type == AstCommon::AT_STRING ||
                m_param_type == AstCommon::AT_DUMB_CODE_BLOCK ||
                m_param_type == AstCommon::AT_STRICT_CODE_BLOCK ||
@@ -131,9 +131,9 @@ struct AddDirectiveMap : public AstCommon::AstMap<AddDirective>
 
 struct AddRequiredDirective : public AddDirective
 {
-    AddRequiredDirective (AstCommon::Identifier *directive_to_add_identifier, AstType param_type)
+    AddRequiredDirective (AstCommon::Id *directive_to_add_id, AstType param_type)
         :
-        AddDirective(directive_to_add_identifier, param_type, "%add_required_directive")
+        AddDirective(directive_to_add_id, param_type, "%add_required_directive")
     { }
 
     virtual bool GetIsRequired () const { return true; }
@@ -143,9 +143,9 @@ struct AddOptionalDirective : public AddDirective
 {
     AstCommon::TextBase const *const m_default_value;
 
-    AddOptionalDirective (AstCommon::Identifier *directive_to_add_identifier, AstType param_type, AstCommon::TextBase const *default_value)
+    AddOptionalDirective (AstCommon::Id *directive_to_add_id, AstType param_type, AstCommon::TextBase const *default_value)
         :
-        AddDirective(directive_to_add_identifier, param_type, "%add_optional_directive"),
+        AddDirective(directive_to_add_id, param_type, "%add_optional_directive"),
         m_default_value(default_value)
     { }
 
@@ -161,7 +161,7 @@ struct ParamType : public AstCommon::Ast
         AstCommon::Ast(FiLoc::ms_invalid, AT_PARAM_TYPE),
         m_param_type(param_type)
     {
-        assert(m_param_type == AstCommon::AT_IDENTIFIER ||
+        assert(m_param_type == AstCommon::AT_ID ||
                m_param_type == AstCommon::AT_STRING ||
                m_param_type == AstCommon::AT_DUMB_CODE_BLOCK ||
                m_param_type == AstCommon::AT_STRICT_CODE_BLOCK ||
@@ -173,21 +173,21 @@ struct ParamType : public AstCommon::Ast
 
 struct Specification : public AstCommon::Ast
 {
-    AstCommon::Identifier const *const m_target_language_identifier;
+    AstCommon::Id const *const m_target_language_id;
     AddCodeSpecList const *const m_add_codespec_list;
     AddDirectiveMap const *const m_add_directive_map;
 
     Specification (
-        AstCommon::Identifier const *target_language_identifier,
+        AstCommon::Id const *target_language_id,
         AddCodeSpecList const *add_codespec_list,
         AddDirectiveMap const *add_directive_map)
         :
-        AstCommon::Ast(target_language_identifier->GetFiLoc(), AT_SPECIFICATION),
-        m_target_language_identifier(target_language_identifier),
+        AstCommon::Ast(target_language_id->GetFiLoc(), AT_SPECIFICATION),
+        m_target_language_id(target_language_id),
         m_add_codespec_list(add_codespec_list),
         m_add_directive_map(add_directive_map)
     {
-        assert(m_target_language_identifier != NULL);
+        assert(m_target_language_id != NULL);
         assert(m_add_directive_map != NULL);
         assert(m_add_codespec_list != NULL);
     }

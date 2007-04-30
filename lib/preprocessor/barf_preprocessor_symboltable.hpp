@@ -33,11 +33,11 @@ class Symbol
 {
 public:
 
-    Symbol (string const &identifier)
+    Symbol (string const &id)
         :
-        m_identifier(identifier)
+        m_id(id)
     {
-        assert(!m_identifier.empty());
+        assert(!m_id.empty());
     }
     virtual ~Symbol () { }
 
@@ -51,7 +51,7 @@ public:
 
 protected:
 
-    string const m_identifier;
+    string const m_id;
 }; // end of class Symbol
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -62,7 +62,7 @@ class ScalarSymbol : public Symbol
 {
 public:
 
-    ScalarSymbol (string const &identifier) : Symbol(identifier) { }
+    ScalarSymbol (string const &id) : Symbol(id) { }
 
     virtual bool GetIsScalarSymbol () const { return true; }
     Body const *GetScalarBody () const { return m_body; }
@@ -86,7 +86,7 @@ class ArraySymbol : public Symbol
 {
 public:
 
-    ArraySymbol (string const &identifier) : Symbol(identifier) { }
+    ArraySymbol (string const &id) : Symbol(id) { }
 
     virtual bool GetIsArraySymbol () const { return true; }
     Uint32 GetArrayElementCount () const { return m_body_vector.size(); }
@@ -116,7 +116,7 @@ public:
 
     typedef map<string, Body const *> BodyMap;
 
-    MapSymbol (string const &identifier) : Symbol(identifier) { }
+    MapSymbol (string const &id) : Symbol(id) { }
 
     virtual bool GetIsMapSymbol () const { return true; }
     Uint32 GetMapElementCount () const { return m_body_map.size(); }
@@ -156,14 +156,14 @@ public:
     SymbolTable (SymbolTable const &symbol_table);
     ~SymbolTable ();
 
-    Symbol *GetSymbol (string const &identifier);
+    Symbol *GetSymbol (string const &id);
 
-    ScalarSymbol *DefineScalarSymbol (string const &identifier, FiLoc const &filoc);
-    ScalarSymbol *DefineScalarSymbolAsText (string const &identifier, FiLoc const &filoc, string const &text);
-    ScalarSymbol *DefineScalarSymbolAsInteger (string const &identifier, FiLoc const &filoc, Sint32 integer);
-    ArraySymbol *DefineArraySymbol (string const &identifier, FiLoc const &filoc);
-    MapSymbol *DefineMapSymbol (string const &identifier, FiLoc const &filoc);
-    void UndefineSymbol (string const &identifier, FiLoc const &filoc);
+    ScalarSymbol *DefineScalarSymbol (string const &id, FiLoc const &filoc);
+    ScalarSymbol *DefineScalarSymbolAsText (string const &id, FiLoc const &filoc, string const &text);
+    ScalarSymbol *DefineScalarSymbolAsInteger (string const &id, FiLoc const &filoc, Sint32 integer);
+    ArraySymbol *DefineArraySymbol (string const &id, FiLoc const &filoc);
+    MapSymbol *DefineMapSymbol (string const &id, FiLoc const &filoc);
+    void UndefineSymbol (string const &id, FiLoc const &filoc);
 
     void Print (ostream &stream) const;
 

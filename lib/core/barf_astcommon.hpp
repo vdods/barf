@@ -33,12 +33,12 @@ enum
     AT_SIGNED_INTEGER,
     AT_UNSIGNED_INTEGER,
     AT_STRING,
-    AT_IDENTIFIER,
+    AT_ID,
     AT_DUMB_CODE_BLOCK,
     AT_STRICT_CODE_BLOCK,
     AT_DIRECTIVE,
-    AT_IDENTIFIER_LIST,
-    AT_IDENTIFIER_MAP,
+    AT_ID_LIST,
+    AT_ID_MAP,
     AT_DIRECTIVE_LIST,
 
     AT_START_CUSTOM_TYPES_HERE_,
@@ -371,17 +371,17 @@ struct String : public TextBase
     inline string GetStringLiteral () const { return Barf::GetStringLiteral(GetText()); }
 }; // end of struct String
 
-struct Identifier : public TextBase
+struct Id : public TextBase
 {
-    Identifier (string const &identifier_text, FiLoc const &filoc)
+    Id (string const &id_text, FiLoc const &filoc)
         :
-        TextBase(identifier_text, filoc, AT_IDENTIFIER)
+        TextBase(id_text, filoc, AT_ID)
     {
         assert(!GetText().empty());
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of struct Identifier
+}; // end of struct Id
 
 struct CodeBlock : public TextBase
 {
@@ -416,10 +416,10 @@ class Directive : public TextBase
 public:
 
     Directive (
-        string const &directive_identifier,
+        string const &directive_id,
         FiLoc const &filoc)
         :
-        TextBase(directive_identifier, filoc, AT_DIRECTIVE)
+        TextBase(directive_id, filoc, AT_DIRECTIVE)
     { }
 
     virtual string GetDirectiveString () const { return GetText(); }
@@ -428,23 +428,23 @@ public:
 protected:
 
     Directive (
-        string const &directive_identifier,
+        string const &directive_id,
         FiLoc const &filoc,
         AstType ast_type)
         :
-        TextBase(directive_identifier, filoc, ast_type)
+        TextBase(directive_id, filoc, ast_type)
     { }
 }; // end of class Directive
 
-struct IdentifierList : public AstList<Identifier>
+struct IdList : public AstList<Id>
 {
-    IdentifierList () : AstList<Identifier>(AT_IDENTIFIER_LIST) { }
-}; // end of struct IdentifierList
+    IdList () : AstList<Id>(AT_ID_LIST) { }
+}; // end of struct IdList
 
-struct IdentifierMap : public AstMap<Identifier>
+struct IdMap : public AstMap<Id>
 {
-    IdentifierMap () : AstMap<Identifier>(AT_IDENTIFIER_MAP) { }
-}; // end of struct IdentifierMap
+    IdMap () : AstMap<Id>(AT_ID_MAP) { }
+}; // end of struct IdMap
 
 struct DirectiveList : public AstList<Directive>
 {

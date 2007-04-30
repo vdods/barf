@@ -43,7 +43,7 @@ void Specification::Print (ostream &stream, Uint32 indent_level) const
 void Specification::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     AstCommon::Ast::Print(stream, Stringify, indent_level);
-    stream << Tabs(indent_level+1) << "target language: " << m_target_language_identifier->GetText() << endl;
+    stream << Tabs(indent_level+1) << "target language: " << m_target_language_id->GetText() << endl;
     m_add_directive_map->Print(stream, Stringify, indent_level+1);
     m_add_codespec_list->Print(stream, Stringify, indent_level+1);
 }
@@ -52,7 +52,7 @@ void AddDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 in
 {
     AstCommon::Ast::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << (GetIsRequired() ? "required" : "optional") << endl;
-    m_directive_to_add_identifier->Print(stream, Stringify, indent_level+1);
+    m_directive_to_add_id->Print(stream, Stringify, indent_level+1);
     stream << Tabs(indent_level+1) << ParamType::GetParamTypeString(m_param_type) << endl;
 }
 
@@ -60,19 +60,19 @@ void AddCodeSpec::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
 {
     AstCommon::Ast::Print(stream, Stringify, indent_level);
     m_filename->Print(stream, Stringify, indent_level+1);
-    m_filename_directive_identifier->Print(stream, Stringify, indent_level+1);
+    m_filename_directive_id->Print(stream, Stringify, indent_level+1);
 }
 
 string const &ParamType::GetParamTypeString (AstType ast_type)
 {
-    static string const s_identifier("%identifier");
+    static string const s_id("%identifier");
     static string const s_string("%string");
     static string const s_dumb_code_block("%dumb_code_block");
     static string const s_strict_code_block("%strict_code_block");
 
     switch (ast_type)
     {
-        case AstCommon::AT_IDENTIFIER:        return s_identifier;
+        case AstCommon::AT_ID:        return s_id;
         case AstCommon::AT_STRING:            return s_string;
         case AstCommon::AT_DUMB_CODE_BLOCK:   return s_dumb_code_block;
         case AstCommon::AT_STRICT_CODE_BLOCK: return s_strict_code_block;

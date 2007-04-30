@@ -20,8 +20,7 @@
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
-- rename stuff to be shorter?  e.g. Identifier -> Id, Character -> Char, 
-  String -> Str, etc.
+- rename stuff to be shorter?  e.g. Character -> Char, String -> Str, etc.
 - move all AST usage to smart pointers to ease-ify stuff and to escape the
   woes of memory leaks (not like it matters that much in this context) --
   or do comprehensive deleting of stuff (which would probably set a better
@@ -79,11 +78,11 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - add_codespec should check for bad filename chars
-- allow using previously declared directive identifiers as default values
+- allow using previously declared directive ids as default values
 - confirm that the declared name matches the filename
 - eventually rename TargetLanguage into Target (%language -> %target ?)
 - add new "add_optional_codespec" directive which requires the directive
-  identifier of an add_optional_directive, for optional output files (like
+  id of an add_optional_directive, for optional output files (like
   baseclasses which could be common to multiple parsers/scanners).
   OR
   think of a good way to specify not-very-often-changing baseclass-like
@@ -97,7 +96,7 @@
 
 - add some way to use a different file location for errors/warnings
 - add comments (C++ and C style)
-- make _blah identifiers not be able to be defined in-file, they're reserved
+- make _blah ids not be able to be defined in-file, they're reserved
 - add redefine directive so you can do stuff like
   @<redefine(x)>@@<x+1>@@<end_redefine>@
 - add eval directive so you can parse and execute a block of text as a preprocessor body.

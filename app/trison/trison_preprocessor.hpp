@@ -83,7 +83,7 @@ public:
 
 private:
 
-    string const &GetReplacementIdentifier (Replacement replacement) const;
+    string const &GetReplacementId (Replacement replacement) const;
 
     string m_replacement_value[REPLACEMENT_COUNT];
     mutable bool m_was_successful;

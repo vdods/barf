@@ -40,12 +40,12 @@ void Conditional::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
 
 void DeclareArray::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_identifier->GetText() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_id->GetText() << endl;
 }
 
 void DeclareMap::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_identifier->GetText() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_id->GetText() << endl;
 }
 
 void Define::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -53,7 +53,7 @@ void Define::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_l
     assert(m_body != NULL);
 
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    stream << Tabs(indent_level+1) << "identifier: " << m_identifier->GetText() << endl;
+    stream << Tabs(indent_level+1) << "id: " << m_id->GetText() << endl;
     stream << Tabs(indent_level+1) << "body: " << endl;
     m_body->Print(stream, Stringify, indent_level+2);
 }
@@ -63,7 +63,7 @@ void DefineMapElement::Print (ostream &stream, StringifyAstType Stringify, Uint3
     assert(m_body != NULL);
 
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    stream << Tabs(indent_level+1) << "identifier: " << m_identifier->GetText() << endl;
+    stream << Tabs(indent_level+1) << "id: " << m_id->GetText() << endl;
     stream << Tabs(indent_level+1) << "key: " << m_key->GetText() << endl;
     stream << Tabs(indent_level+1) << "body: " << endl;
     m_body->Print(stream, Stringify, indent_level+2);
@@ -72,7 +72,7 @@ void DefineMapElement::Print (ostream &stream, StringifyAstType Stringify, Uint3
 void Undefine::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    stream << Tabs(indent_level+1) << "identifier: " << m_identifier->GetText() << endl;
+    stream << Tabs(indent_level+1) << "id: " << m_id->GetText() << endl;
 }
 
 void Loop::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -80,7 +80,7 @@ void Loop::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
     assert(m_body != NULL);
 
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    stream << Tabs(indent_level+1) << "iterator identifier: " << m_iterator_identifier->GetText() << endl;
+    stream << Tabs(indent_level+1) << "iterator id: " << m_iterator_id->GetText() << endl;
     stream << Tabs(indent_level+1) << "iteration count expression:" << endl;
     m_iteration_count_expression->Print(stream, Stringify, indent_level+2);
     stream << Tabs(indent_level+1) << "loop body:" << endl;
@@ -92,8 +92,8 @@ void ForEach::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_
     assert(m_body != NULL);
 
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    stream << Tabs(indent_level+1) << "key identifier: " << m_key_identifier->GetText() << endl;
-    stream << Tabs(indent_level+1) << "map identifier:" << m_map_identifier->GetText() << endl;
+    stream << Tabs(indent_level+1) << "key id: " << m_key_id->GetText() << endl;
+    stream << Tabs(indent_level+1) << "map id:" << m_map_id->GetText() << endl;
     stream << Tabs(indent_level+1) << "loop body:" << endl;
     m_body->Print(stream, Stringify, indent_level+2);
 }
@@ -124,13 +124,13 @@ void Integer::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_
 
 void Sizeof::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << " identifier: " << m_identifier->GetText() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << " id: " << m_id->GetText() << endl;
 }
 
 void Dereference::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    stream << Tabs(indent_level+1) << "identifier: " << m_identifier->GetText() << endl;
+    stream << Tabs(indent_level+1) << "id: " << m_id->GetText() << endl;
     if (m_element_index_expression != NULL)
     {
         stream << Tabs(indent_level+1) << "element index expression:" << endl;

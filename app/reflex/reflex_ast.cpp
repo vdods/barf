@@ -36,12 +36,12 @@ string const &GetAstTypeString (AstType ast_type)
 void StartDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     AstCommon::Directive::Print(stream, Stringify, indent_level);
-    m_start_state_identifier->Print(stream, Stringify, indent_level+1);
+    m_start_state_id->Print(stream, Stringify, indent_level+1);
 }
 
 void ScannerState::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_scanner_state_identifier->GetText() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_scanner_state_id->GetText() << endl;
     for (RuleList::const_iterator it = m_rule_list->begin(),
                                  it_end = m_rule_list->end();
          it != it_end;

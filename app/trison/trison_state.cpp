@@ -25,9 +25,9 @@ void State::PrettyPrint (ostream &stream, StateMachine const *state_machine) con
     stream << "state " << m_state_index << endl;
 
     // print the rules that could be matched in this state
-    assert(!m_state_identifier.empty());
-    for (StateIdentifier::const_iterator it = m_state_identifier.begin(),
-                                      it_end = m_state_identifier.end();
+    assert(!m_state_id.empty());
+    for (StateId::const_iterator it = m_state_id.begin(),
+                                      it_end = m_state_id.end();
          it != it_end;
          ++it)
     {
@@ -70,13 +70,13 @@ void State::PrettyPrint (ostream &stream, StateMachine const *state_machine) con
             assert(terminal != NULL);
             assert(transition.GetIsNontrivial());
             stream << Tabs(1);
-            transition.PrettyPrint(stream, terminal->GetTokenIdentifier()->GetText(), state_machine);
+            transition.PrettyPrint(stream, terminal->GetTokenId()->GetText(), state_machine);
             stream << endl;
         }
     }
 
     // print the default action
-    if (!m_default_transition.GetTransitionIdentifier().empty())
+    if (!m_default_transition.GetTransitionId().empty())
     {
         stream << endl << Tabs(1);
         m_default_transition.PrettyPrint(stream, "default", state_machine);
@@ -95,9 +95,9 @@ void State::PrettyPrint (ostream &stream, StateMachine const *state_machine) con
             Nonterminal const *nonterminal = it->first;
             Transition const &transition = it->second;
             assert(nonterminal != NULL);
-            assert(!transition.GetTransitionIdentifier().empty());
+            assert(!transition.GetTransitionId().empty());
             stream << Tabs(1);
-            transition.PrettyPrint(stream, nonterminal->GetIdentifier()->GetText(), state_machine);
+            transition.PrettyPrint(stream, nonterminal->GetId()->GetText(), state_machine);
             stream << endl;
         }
     }
@@ -119,7 +119,7 @@ void State::PrettyPrint (ostream &stream, StateMachine const *state_machine) con
             if (terminal != NULL)
             {
                 stream << Tabs(1) << "[[ ";
-                transition.PrettyPrint(stream, terminal->GetTokenIdentifier()->GetText(), state_machine);
+                transition.PrettyPrint(stream, terminal->GetTokenId()->GetText(), state_machine);
                 stream << " ]]" << endl;
             }
             // if terminal is NULL, then it's a default transition.
@@ -150,7 +150,7 @@ void State::PrintTransitions (ostream &stream, bool is_last_state, StateMachine 
 
     Uint32 total_transition_count = 0;
     total_transition_count += m_terminal_transition_map.size();
-    if (!m_default_transition.GetTransitionIdentifier().empty())
+    if (!m_default_transition.GetTransitionId().empty())
         ++total_transition_count;
     total_transition_count += m_nonterminal_transition_map.size();
 
@@ -168,20 +168,20 @@ void State::PrintTransitions (ostream &stream, bool is_last_state, StateMachine 
         Transition const &transition = it->second;
         assert(transition.GetIsNontrivial());
 
-        TokenIdentifier const *token_identifier = terminal->GetTokenIdentifier();
-        assert(token_identifier != NULL);
-        if (token_identifier->GetAstType() == AT_TOKEN_IDENTIFIER_IDENTIFIER)
+        TokenId const *token_id = terminal->GetTokenId();
+        assert(token_id != NULL);
+        if (token_id->GetAstType() == AT_TOKEN_ID_ID)
         {
-            stream << "    {" << setw(30) << ("Token::" + terminal->GetImplementationFileIdentifier()) << ", ";
+            stream << "    {" << setw(30) << ("Token::" + terminal->GetImplementationFileId()) << ", ";
             transition.PrintTransitionArrayElement(stream, state_machine);
             stream << '}';
         }
         else
         {
-            TokenIdentifierCharacter const *token_identifier_character =
-                Dsc<TokenIdentifierCharacter const *>(token_identifier);
+            TokenIdCharacter const *token_id_character =
+                Dsc<TokenIdCharacter const *>(token_id);
             string token_string("Token::Type(");
-            token_string += GetCharacterLiteral(token_identifier_character->GetCharacter());
+            token_string += GetCharacterLiteral(token_id_character->GetCharacter());
             token_string += ')';
             stream << "    {" << setw(30) << token_string << ", ";
             transition.PrintTransitionArrayElement(stream, state_machine);
@@ -194,7 +194,7 @@ void State::PrintTransitions (ostream &stream, bool is_last_state, StateMachine 
             stream << '\n';
     }
 
-    if (!m_default_transition.GetTransitionIdentifier().empty())
+    if (!m_default_transition.GetTransitionId().empty())
     {
         stream << "    // default transition\n"
                << "    {               Token::DEFAULT_, ";
@@ -215,10 +215,10 @@ void State::PrintTransitions (ostream &stream, bool is_last_state, StateMachine 
         Nonterminal const *nonterminal = it->first;
         assert(nonterminal != NULL);
         Transition const &transition = it->second;
-        assert(!transition.GetTransitionIdentifier().empty());
+        assert(!transition.GetTransitionId().empty());
 
         stream << "    {" << setw(30)
-               << ("Token::" + nonterminal->GetImplementationFileIdentifier()) << ", ";
+               << ("Token::" + nonterminal->GetImplementationFileId()) << ", ";
         transition.PrintTransitionArrayElement(stream, state_machine);
         stream << "}";
 

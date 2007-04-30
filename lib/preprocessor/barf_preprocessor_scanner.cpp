@@ -221,42 +221,42 @@ Parser::Token::Type Scanner::ScanCode (AstCommon::Ast **scanned_token)
     }
     else if (IsAlpha(m_text[m_current_position]))
     {
-        string::size_type identifier_end =
+        string::size_type id_end =
             m_text.find_first_not_of(
                 "abcdefghijklmnopqrstuvwxyz"
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 "0123456789_",
                 m_current_position);
-        string identifier = m_text.substr(m_current_position, identifier_end-m_current_position);
-        m_current_position = identifier_end;
+        string id = m_text.substr(m_current_position, id_end-m_current_position);
+        m_current_position = id_end;
 
-        if (identifier == "undefine") return Parser::Token::UNDEFINE;
-        if (identifier == "declare_array") return Parser::Token::DECLARE_ARRAY;
-        if (identifier == "declare_map") return Parser::Token::DECLARE_MAP;
-        if (identifier == "define") return Parser::Token::DEFINE;
-        if (identifier == "end_define") return Parser::Token::END_DEFINE;
-        if (identifier == "loop") return Parser::Token::LOOP;
-        if (identifier == "end_loop") return Parser::Token::END_LOOP;
-        if (identifier == "for_each") return Parser::Token::FOR_EACH;
-        if (identifier == "end_for_each") return Parser::Token::END_FOR_EACH;
-        if (identifier == "include") return Parser::Token::INCLUDE;
-        if (identifier == "sandbox_include") return Parser::Token::SANDBOX_INCLUDE;
-        if (identifier == "sizeof") return Parser::Token::SIZEOF;
-        if (identifier == "is_defined") return Parser::Token::IS_DEFINED;
-        if (identifier == "dump_symbol_table") return Parser::Token::DUMP_SYMBOL_TABLE;
-        if (identifier == "if") return Parser::Token::IF;
-        if (identifier == "else") return Parser::Token::ELSE;
-        if (identifier == "else_if") return Parser::Token::ELSE_IF;
-        if (identifier == "end_if") return Parser::Token::END_IF;
-        if (identifier == "int") return Parser::Token::KEYWORD_INT;
-        if (identifier == "string") return Parser::Token::KEYWORD_STRING;
-        if (identifier == "string_length") return Parser::Token::STRING_LENGTH;
-        if (identifier == "warning") return Parser::Token::WARNING;
-        if (identifier == "error") return Parser::Token::ERROR;
-        if (identifier == "fatal_error") return Parser::Token::FATAL_ERROR;
+        if (id == "undefine") return Parser::Token::UNDEFINE;
+        if (id == "declare_array") return Parser::Token::DECLARE_ARRAY;
+        if (id == "declare_map") return Parser::Token::DECLARE_MAP;
+        if (id == "define") return Parser::Token::DEFINE;
+        if (id == "end_define") return Parser::Token::END_DEFINE;
+        if (id == "loop") return Parser::Token::LOOP;
+        if (id == "end_loop") return Parser::Token::END_LOOP;
+        if (id == "for_each") return Parser::Token::FOR_EACH;
+        if (id == "end_for_each") return Parser::Token::END_FOR_EACH;
+        if (id == "include") return Parser::Token::INCLUDE;
+        if (id == "sandbox_include") return Parser::Token::SANDBOX_INCLUDE;
+        if (id == "sizeof") return Parser::Token::SIZEOF;
+        if (id == "is_defined") return Parser::Token::IS_DEFINED;
+        if (id == "dump_symbol_table") return Parser::Token::DUMP_SYMBOL_TABLE;
+        if (id == "if") return Parser::Token::IF;
+        if (id == "else") return Parser::Token::ELSE;
+        if (id == "else_if") return Parser::Token::ELSE_IF;
+        if (id == "end_if") return Parser::Token::END_IF;
+        if (id == "int") return Parser::Token::KEYWORD_INT;
+        if (id == "string") return Parser::Token::KEYWORD_STRING;
+        if (id == "string_length") return Parser::Token::STRING_LENGTH;
+        if (id == "warning") return Parser::Token::WARNING;
+        if (id == "error") return Parser::Token::ERROR;
+        if (id == "fatal_error") return Parser::Token::FATAL_ERROR;
 
-        *scanned_token = new AstCommon::Identifier(identifier, GetFiLoc());
-        return Parser::Token::IDENTIFIER;
+        *scanned_token = new AstCommon::Id(id, GetFiLoc());
+        return Parser::Token::ID;
     }
     else if (IsDigit(m_text[m_current_position]))
     {

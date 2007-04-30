@@ -96,13 +96,13 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:  return Parser::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE;
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:                 return Parser::Token::DIRECTIVE_DEFAULT;
         case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:         return Parser::Token::DIRECTIVE_DUMB_CODE_BLOCK;
-        case CommonLang::Scanner::Token::DIRECTIVE_IDENTIFIER:              return Parser::Token::DIRECTIVE_IDENTIFIER;
+        case CommonLang::Scanner::Token::DIRECTIVE_ID:              return Parser::Token::DIRECTIVE_ID;
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:       return Parser::Token::DIRECTIVE_STRICT_CODE_BLOCK;
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:                  return Parser::Token::DIRECTIVE_STRING;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:         return Parser::Token::DIRECTIVE_TARGET_LANGUAGE;
         case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                   return Parser::Token::DUMB_CODE_BLOCK;
         case CommonLang::Scanner::Token::END_OF_FILE:                       return Parser::Token::END_;
-        case CommonLang::Scanner::Token::IDENTIFIER:                        return Parser::Token::IDENTIFIER;
+        case CommonLang::Scanner::Token::ID:                        return Parser::Token::ID;
         case CommonLang::Scanner::Token::NEWLINE:                           return Parser::Token::NEWLINE;
         case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                 return Parser::Token::STRICT_CODE_BLOCK;
         case CommonLang::Scanner::Token::STRING_LITERAL:                    return Parser::Token::STRING_LITERAL;
@@ -148,12 +148,12 @@ Parser::Token::Type Parser::Scan ()
 %token DIRECTIVE_ADD_REQUIRED_DIRECTIVE %type "AstCommon::ThrowAway *"
 %token DIRECTIVE_DEFAULT %type "AstCommon::ThrowAway *"
 %token DIRECTIVE_DUMB_CODE_BLOCK
-%token DIRECTIVE_IDENTIFIER
+%token DIRECTIVE_ID
 %token DIRECTIVE_STRICT_CODE_BLOCK
 %token DIRECTIVE_STRING
 %token DIRECTIVE_TARGET_LANGUAGE %type "AstCommon::ThrowAway *"
 %token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
-%token IDENTIFIER %type "AstCommon::Identifier *"
+%token ID %type "AstCommon::Id *"
 %token NEWLINE
 %token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
 %token STRING_LITERAL %type "AstCommon::String *"
@@ -185,12 +185,12 @@ root %type "Specification *"
 // target language rules
 // ///////////////////////////////////////////////////////////////////////////
 
-target_language %type "AstCommon::Identifier *"
+target_language %type "AstCommon::Id *"
 :
-    DIRECTIVE_TARGET_LANGUAGE:throwaway IDENTIFIER:language_identifier at_least_one_newline
+    DIRECTIVE_TARGET_LANGUAGE:throwaway ID:language_id at_least_one_newline
     {
         delete throwaway;
-        return language_identifier;
+        return language_id;
     }
 ;
 
@@ -209,16 +209,16 @@ directives
 
 add_codespec
 :
-    DIRECTIVE_ADD_CODESPEC:throwaway STRING_LITERAL:filename IDENTIFIER:filename_directive_identifier
+    DIRECTIVE_ADD_CODESPEC:throwaway STRING_LITERAL:filename ID:filename_directive_id
     {
         assert(m_add_codespec_list != NULL);
         assert(m_add_directive_map != NULL);
-        AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_identifier->GetText());
+        AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_id->GetText());
         if (add_directive == NULL)
-            EmitError(throwaway->GetFiLoc(), "undeclared directive identifier \"" + filename_directive_identifier->GetText() + "\" in add_codespec directive");
+            EmitError(throwaway->GetFiLoc(), "undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive");
         if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != AstCommon::AT_STRING)
-            EmitError(throwaway->GetFiLoc(), "directive identifier \"" + filename_directive_identifier->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
-        m_add_codespec_list->Append(new AddCodeSpec(filename, filename_directive_identifier));
+            EmitError(throwaway->GetFiLoc(), "directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
+        m_add_codespec_list->Append(new AddCodeSpec(filename, filename_directive_id));
         delete throwaway;
         return NULL;
     }
@@ -226,26 +226,26 @@ add_codespec
 
 add_directive %type "AddDirective *"
 :
-    DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway IDENTIFIER:directive_to_add_identifier param_spec:param_type
+    DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway ID:directive_to_add_id param_spec:param_type
     {
         assert(m_add_directive_map != NULL);
         m_add_directive_map->Add(
-            directive_to_add_identifier->GetText(),
-            new AddOptionalDirective(directive_to_add_identifier, param_type->m_param_type, NULL));
+            directive_to_add_id->GetText(),
+            new AddOptionalDirective(directive_to_add_id, param_type->m_param_type, NULL));
         delete throwaway;
         delete param_type;
         return NULL;
     }
 |
-    DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway1 IDENTIFIER:directive_to_add_identifier param_spec:param_type DIRECTIVE_DEFAULT:throwaway2 default_value:default_value
+    DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway1 ID:directive_to_add_id param_spec:param_type DIRECTIVE_DEFAULT:throwaway2 default_value:default_value
     {
         assert(m_add_directive_map != NULL);
         AddDirective *directive =
             new AddOptionalDirective(
-                directive_to_add_identifier,
+                directive_to_add_id,
                 param_type->m_param_type, default_value);
         m_add_directive_map->Add(
-            directive_to_add_identifier->GetText(),
+            directive_to_add_id->GetText(),
             directive);
         if (param_type->m_param_type != default_value->GetAstType())
             EmitError(
@@ -259,12 +259,12 @@ add_directive %type "AddDirective *"
         return NULL;
     }
 |
-    DIRECTIVE_ADD_REQUIRED_DIRECTIVE:throwaway IDENTIFIER:directive_to_add_identifier param_spec:param_type
+    DIRECTIVE_ADD_REQUIRED_DIRECTIVE:throwaway ID:directive_to_add_id param_spec:param_type
     {
         assert(m_add_directive_map != NULL);
         m_add_directive_map->Add(
-            directive_to_add_identifier->GetText(),
-            new AddRequiredDirective(directive_to_add_identifier, param_type->m_param_type));
+            directive_to_add_id->GetText(),
+            new AddRequiredDirective(directive_to_add_id, param_type->m_param_type));
         delete throwaway;
         delete param_type;
         return NULL;
@@ -278,10 +278,10 @@ param_spec %type "ParamType *"
         return new ParamType(AstCommon::AT_NONE);
     }
 |
-    DIRECTIVE_IDENTIFIER:throwaway
+    DIRECTIVE_ID:throwaway
     {
         delete throwaway;
-        return new ParamType(AstCommon::AT_IDENTIFIER);
+        return new ParamType(AstCommon::AT_ID);
     }
 |
     DIRECTIVE_STRING:throwaway
@@ -305,7 +305,7 @@ param_spec %type "ParamType *"
 
 default_value %type "AstCommon::TextBase *"
 :
-    IDENTIFIER:value        { return value; }
+    ID:value        { return value; }
 |   STRING_LITERAL:value    { return value; }
 |   DUMB_CODE_BLOCK:value   { return value; }
 |   STRICT_CODE_BLOCK:value { return value; }

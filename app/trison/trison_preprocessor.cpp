@@ -41,7 +41,7 @@ string Preprocessor::ProcessString (string const &string_to_process, string cons
         Replacement replacement = Replacement(i);
         ReplaceAllInString(
             &processed_string,
-            GetReplacementIdentifier(replacement),
+            GetReplacementId(replacement),
             GetReplacementValue(replacement));
     }
 
@@ -104,9 +104,9 @@ string Preprocessor::ProcessFile (string const &filename) const
     }
 }
 
-string const &Preprocessor::GetReplacementIdentifier (Replacement replacement) const
+string const &Preprocessor::GetReplacementId (Replacement replacement) const
 {
-    static string const s_replacement_identifier[REPLACEMENT_COUNT] =
+    static string const s_replacement_id[REPLACEMENT_COUNT] =
     {
         "$$HEADER_FILE_TOP$$",
         "$$HEADER_FILE_BOTTOM$$",
@@ -139,7 +139,7 @@ string const &Preprocessor::GetReplacementIdentifier (Replacement replacement) c
     };
 
     assert(replacement < REPLACEMENT_COUNT);
-    return s_replacement_identifier[replacement];
+    return s_replacement_id[replacement];
 }
 
 string const &Preprocessor::GetReplacementValue (Replacement replacement) const

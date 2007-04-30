@@ -111,7 +111,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:            return Parser::Token::DUMB_CODE_BLOCK;
         case CommonLang::Scanner::Token::END_OF_FILE:                return Parser::Token::END_;
         case CommonLang::Scanner::Token::END_PREAMBLE:               return Parser::Token::END_PREAMBLE;
-        case CommonLang::Scanner::Token::IDENTIFIER:                 return Parser::Token::IDENTIFIER;
+        case CommonLang::Scanner::Token::ID:                 return Parser::Token::ID;
         case CommonLang::Scanner::Token::NEWLINE:                    return Parser::Token::NEWLINE;
         case CommonLang::Scanner::Token::REGEX:                      return Parser::Token::REGEX;
         case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:          return Parser::Token::STRICT_CODE_BLOCK;
@@ -124,7 +124,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:
         case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:
-        case CommonLang::Scanner::Token::DIRECTIVE_IDENTIFIER:
+        case CommonLang::Scanner::Token::DIRECTIVE_ID:
         case CommonLang::Scanner::Token::DIRECTIVE_LEFT:
         case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:
@@ -161,7 +161,7 @@ Parser::Token::Type Parser::Scan ()
 %token DIRECTIVE_TARGET_LANGUAGES %type "AstCommon::ThrowAway *"
 %token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
 %token END_PREAMBLE %type "AstCommon::ThrowAway *"
-%token IDENTIFIER %type "AstCommon::Identifier *"
+%token ID %type "AstCommon::Id *"
 %token NEWLINE
 %token REGEX %type "AstCommon::String *"
 %token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
@@ -193,11 +193,11 @@ root %type "Representation *"
         target_language_map->SetSourcePath(m_scanner.GetInputName());
         // make sure the %start directive value specifies a real scanner state
         if (start_directive != NULL &&
-            scanner_state_map->GetElement(start_directive->m_start_state_identifier->GetText()) == NULL)
+            scanner_state_map->GetElement(start_directive->m_start_state_id->GetText()) == NULL)
         {
             EmitError(
                 start_directive->GetFiLoc(),
-                "undeclared state \"" + start_directive->m_start_state_identifier->GetText() + "\"");
+                "undeclared state \"" + start_directive->m_start_state_id->GetText() + "\"");
         }
 
         Representation *representation =
@@ -218,7 +218,7 @@ root %type "Representation *"
 
 target_languages_directive %type "CommonLang::TargetLanguageMap *"
 :
-    DIRECTIVE_TARGET_LANGUAGES:throwaway target_language_identifiers:target_language_map at_least_one_newline
+    DIRECTIVE_TARGET_LANGUAGES:throwaway target_language_ids:target_language_map at_least_one_newline
     {
         assert(m_target_language_map == NULL);
         m_target_language_map = target_language_map;
@@ -242,13 +242,13 @@ target_languages_directive %type "CommonLang::TargetLanguageMap *"
     }
 ;
 
-target_language_identifiers %type "CommonLang::TargetLanguageMap *"
+target_language_ids %type "CommonLang::TargetLanguageMap *"
 :
-    target_language_identifiers:target_language_map IDENTIFIER:target_language_identifier
+    target_language_ids:target_language_map ID:target_language_id
     {
-        CommonLang::TargetLanguage *target_language = new CommonLang::TargetLanguage(target_language_identifier->GetText());
+        CommonLang::TargetLanguage *target_language = new CommonLang::TargetLanguage(target_language_id->GetText());
         target_language->EnableCodeGeneration();
-        target_language_map->Add(target_language_identifier->GetText(), target_language);
+        target_language_map->Add(target_language_id->GetText(), target_language);
         return target_language_map;
     }
 |
@@ -283,26 +283,26 @@ language_directives
 
 language_directive %type "CommonLang::LanguageDirective *"
 :
-    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive language_directive_param:param at_least_one_newline
+    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id '.' ID:language_directive language_directive_param:param at_least_one_newline
     {
         delete throwaway;
-        return new CommonLang::LanguageDirective(language_identifier, language_directive, param);
+        return new CommonLang::LanguageDirective(language_id, language_directive, param);
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive %error at_least_one_newline
+    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id '.' ID:language_directive %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %language." + language_id->GetText() + "." + language_directive->GetText());
         delete throwaway;
-        delete language_identifier;
+        delete language_id;
         delete language_directive;
         return NULL;
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier %error at_least_one_newline
+    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %language." + language_identifier->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %language." + language_id->GetText());
         delete throwaway;
-        delete language_identifier;
+        delete language_id;
         return NULL;
     }
 |
@@ -316,7 +316,7 @@ language_directive %type "CommonLang::LanguageDirective *"
 
 language_directive_param %type "AstCommon::TextBase *"
 :
-    IDENTIFIER:value            { return value; }
+    ID:value            { return value; }
 |   STRING_LITERAL:value        { return value; }
 |   STRICT_CODE_BLOCK:value     { return value; }
 |   DUMB_CODE_BLOCK:value       { return value; }
@@ -329,7 +329,7 @@ language_directive_param %type "AstCommon::TextBase *"
 
 macro_directives %type "Regex::RegularExpressionMap *"
 :
-    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway IDENTIFIER:macro_identifier REGEX:macro_regex_string at_least_one_newline
+    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id REGEX:macro_regex_string at_least_one_newline
     {
         Regex::Parser parser;
         istringstream in(macro_regex_string->GetText());
@@ -337,7 +337,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
         try {
             if (parser.Parse(regular_expression_map) == Regex::Parser::PRC_SUCCESS)
                 regular_expression_map->Add(
-                    macro_identifier->GetText(),
+                    macro_id->GetText(),
                     Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken()));
             else
                 EmitError(throwaway->GetFiLoc(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
@@ -345,7 +345,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
             EmitError(throwaway->GetFiLoc(), exception + " in regular expression (" + macro_regex_string->GetText() + ")");
         }
         delete throwaway;
-        delete macro_identifier;
+        delete macro_id;
         delete macro_regex_string;
         return regular_expression_map;
     }
@@ -358,11 +358,11 @@ macro_directives %type "Regex::RegularExpressionMap *"
         return m_regex_macro_map;
     }
 |
-    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway IDENTIFIER:macro_identifier %error at_least_one_newline
+    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %macro " + macro_identifier->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %macro " + macro_id->GetText());
         delete throwaway;
-        delete macro_identifier;
+        delete macro_id;
         return regular_expression_map;
     }
 |
@@ -380,10 +380,10 @@ macro_directives %type "Regex::RegularExpressionMap *"
 
 start_directive %type "StartDirective *"
 :
-    DIRECTIVE_START:throwaway IDENTIFIER:start_state_identifier at_least_one_newline
+    DIRECTIVE_START:throwaway ID:start_state_id at_least_one_newline
     {
         delete throwaway;
-        return new StartDirective(start_state_identifier);
+        return new StartDirective(start_state_id);
     }
 |
     DIRECTIVE_START:throwaway %error at_least_one_newline
@@ -403,7 +403,7 @@ scanner_states %type "ScannerStateMap *"
     scanner_states:scanner_state_map scanner_state:scanner_state
     {
         if (scanner_state != NULL)
-            scanner_state_map->Add(scanner_state->m_scanner_state_identifier->GetText(), scanner_state);
+            scanner_state_map->Add(scanner_state->m_scanner_state_id->GetText(), scanner_state);
         return scanner_state_map;
     }
 |
@@ -415,22 +415,22 @@ scanner_states %type "ScannerStateMap *"
 
 scanner_state %type "ScannerState *"
 :
-    DIRECTIVE_STATE:throwaway IDENTIFIER:scanner_state_identifier ':' scanner_state_rules:rule_list ';'
+    DIRECTIVE_STATE:throwaway ID:scanner_state_id ':' scanner_state_rules:rule_list ';'
     {
         delete throwaway;
-        return new ScannerState(scanner_state_identifier, rule_list);
+        return new ScannerState(scanner_state_id, rule_list);
     }
 |
-    DIRECTIVE_STATE:throwaway IDENTIFIER:scanner_state_identifier ':' %error ';'
+    DIRECTIVE_STATE:throwaway ID:scanner_state_id ':' %error ';'
     {
         EmitError(throwaway->GetFiLoc(), "parse error in scanner state rule list");
         delete throwaway;
-        return new ScannerState(scanner_state_identifier, new RuleList());
+        return new ScannerState(scanner_state_id, new RuleList());
     }
 |
     DIRECTIVE_STATE:throwaway %error ':' scanner_state_rules:rule_list ';'
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner state identifier");
+        EmitError(throwaway->GetFiLoc(), "parse error in scanner state id");
         delete throwaway;
         delete rule_list;
         return NULL;
@@ -504,19 +504,19 @@ rule %type "Rule *"
              it != it_end;
              ++it)
         {
-            string const &target_language_identifier = it->first;
-            if (rule_handler_map->GetElement(target_language_identifier) == NULL)
+            string const &target_language_id = it->first;
+            if (rule_handler_map->GetElement(target_language_id) == NULL)
             {
                 EmitWarning(
                     regex_string->GetFiLoc(),
-                    "missing rule handler for target language \"" + target_language_identifier + "\"");
+                    "missing rule handler for target language \"" + target_language_id + "\"");
                 // add a blank code block for the rule handler's missing target language
                 rule_handler_map->Add(
-                    target_language_identifier,
+                    target_language_id,
                     new CommonLang::RuleHandler(
-                        new AstCommon::Identifier(target_language_identifier, FiLoc::ms_invalid),
+                        new AstCommon::Id(target_language_id, FiLoc::ms_invalid),
                         new AstCommon::StrictCodeBlock(FiLoc::ms_invalid)));
-                assert(rule_handler_map->GetElement(target_language_identifier) != NULL);
+                assert(rule_handler_map->GetElement(target_language_id) != NULL);
             }
         }
 
@@ -531,7 +531,7 @@ rule_handlers %type "CommonLang::RuleHandlerMap *"
     rule_handlers:rule_handler_map rule_handler:rule_handler
     {
         if (rule_handler != NULL)
-            rule_handler_map->Add(rule_handler->m_language_identifier->GetText(), rule_handler);
+            rule_handler_map->Add(rule_handler->m_language_id->GetText(), rule_handler);
         return rule_handler_map;
     }
 |
@@ -543,21 +543,21 @@ rule_handlers %type "CommonLang::RuleHandlerMap *"
 
 rule_handler %type "CommonLang::RuleHandler *"
 :
-    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier any_type_of_code_block:code_block
+    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id any_type_of_code_block:code_block
     {
         delete throwaway;
         assert(m_target_language_map != NULL);
-        if (m_target_language_map->GetElement(language_identifier->GetText()) == NULL)
+        if (m_target_language_map->GetElement(language_id->GetText()) == NULL)
             EmitWarning(
-                language_identifier->GetFiLoc(),
-                "undeclared target language \"" + language_identifier->GetText() + "\"");
-        return new CommonLang::RuleHandler(language_identifier, code_block);
+                language_id->GetFiLoc(),
+                "undeclared target language \"" + language_id->GetText() + "\"");
+        return new CommonLang::RuleHandler(language_id, code_block);
     }
 |
     DIRECTIVE_LANGUAGE:throwaway %error any_type_of_code_block:code_block
     {
         assert(m_target_language_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in language identifier after directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in language id after directive %language");
         delete throwaway;
         delete code_block;
         return NULL;

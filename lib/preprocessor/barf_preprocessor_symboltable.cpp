@@ -24,14 +24,14 @@ namespace Preprocessor {
 
 Symbol *ScalarSymbol::Clone () const
 {
-    ScalarSymbol *retval = new ScalarSymbol(m_identifier);
+    ScalarSymbol *retval = new ScalarSymbol(m_id);
     retval->m_body = m_body;
     return retval;
 }
 
 void ScalarSymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << m_identifier << " (scalar)" << endl;
+    stream << Tabs(indent_level) << m_id << " (scalar)" << endl;
     assert(m_body != NULL);
     m_body->Print(stream, Stringify, indent_level+1);
 }
@@ -42,14 +42,14 @@ void ScalarSymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 in
 
 Symbol *ArraySymbol::Clone () const
 {
-    ArraySymbol *retval = new ArraySymbol(m_identifier);
+    ArraySymbol *retval = new ArraySymbol(m_id);
     retval->m_body_vector = m_body_vector;
     return retval;
 }
 
 void ArraySymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << m_identifier << " (array - " << m_body_vector.size() << " elements)" << endl;
+    stream << Tabs(indent_level) << m_id << " (array - " << m_body_vector.size() << " elements)" << endl;
     stream << Tabs(indent_level) << '{' << endl;
     for (Uint32 i = 0; i < m_body_vector.size(); ++i)
     {
@@ -67,14 +67,14 @@ void ArraySymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
 
 Symbol *MapSymbol::Clone () const
 {
-    MapSymbol *retval = new MapSymbol(m_identifier);
+    MapSymbol *retval = new MapSymbol(m_id);
     retval->m_body_map = m_body_map;
     return retval;
 }
 
 void MapSymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << m_identifier << " (map - " << m_body_map.size() << " elements)" << endl;
+    stream << Tabs(indent_level) << m_id << " (map - " << m_body_map.size() << " elements)" << endl;
     stream << Tabs(indent_level) << '{' << endl;
     for (BodyMap::const_iterator it = m_body_map.begin(),
                               it_end = m_body_map.end();
@@ -110,102 +110,102 @@ SymbolTable::~SymbolTable ()
     for_each(m_symbol_map.begin(), m_symbol_map.end(), DeletePairSecondFunctor<pair<string, Symbol *> >());
 }
 
-Symbol *SymbolTable::GetSymbol (string const &identifier)
+Symbol *SymbolTable::GetSymbol (string const &id)
 {
-    assert(!identifier.empty());
+    assert(!id.empty());
     SymbolMap::iterator it;
-    return Contains(m_symbol_map, identifier, it) ? it->second : NULL;
+    return Contains(m_symbol_map, id, it) ? it->second : NULL;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &identifier, FiLoc const &filoc)
+ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &id, FiLoc const &filoc)
 {
-    assert(!identifier.empty());
+    assert(!id.empty());
 
-    if (GetSymbol(identifier) != NULL)
+    if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, filoc);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        UndefineSymbol(id, filoc);
     }
 
-    ScalarSymbol *symbol = new ScalarSymbol(identifier);
-    m_symbol_map[identifier] = symbol;
+    ScalarSymbol *symbol = new ScalarSymbol(id);
+    m_symbol_map[id] = symbol;
     return symbol;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbolAsText (string const &identifier, FiLoc const &filoc, string const &text)
+ScalarSymbol *SymbolTable::DefineScalarSymbolAsText (string const &id, FiLoc const &filoc, string const &text)
 {
-    assert(!identifier.empty());
+    assert(!id.empty());
 
-    if (GetSymbol(identifier) != NULL)
+    if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, filoc);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        UndefineSymbol(id, filoc);
     }
 
-    ScalarSymbol *symbol = new ScalarSymbol(identifier);
-    m_symbol_map[identifier] = symbol;
+    ScalarSymbol *symbol = new ScalarSymbol(id);
+    m_symbol_map[id] = symbol;
     symbol->SetScalarBody(new Body(text, FiLoc::ms_invalid));
     return symbol;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbolAsInteger (string const &identifier, FiLoc const &filoc, Sint32 integer)
+ScalarSymbol *SymbolTable::DefineScalarSymbolAsInteger (string const &id, FiLoc const &filoc, Sint32 integer)
 {
-    assert(!identifier.empty());
+    assert(!id.empty());
 
-    if (GetSymbol(identifier) != NULL)
+    if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, filoc);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        UndefineSymbol(id, filoc);
     }
 
-    ScalarSymbol *symbol = new ScalarSymbol(identifier);
-    m_symbol_map[identifier] = symbol;
+    ScalarSymbol *symbol = new ScalarSymbol(id);
+    m_symbol_map[id] = symbol;
     symbol->SetScalarBody(new Body(integer, FiLoc::ms_invalid));
     return symbol;
 }
 
-ArraySymbol *SymbolTable::DefineArraySymbol (string const &identifier, FiLoc const &filoc)
+ArraySymbol *SymbolTable::DefineArraySymbol (string const &id, FiLoc const &filoc)
 {
-    assert(!identifier.empty());
+    assert(!id.empty());
 
-    if (GetSymbol(identifier) != NULL)
+    if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, filoc);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        UndefineSymbol(id, filoc);
     }
 
-    ArraySymbol *symbol = new ArraySymbol(identifier);
-    m_symbol_map[identifier] = symbol;
+    ArraySymbol *symbol = new ArraySymbol(id);
+    m_symbol_map[id] = symbol;
     return symbol;
 }
 
-MapSymbol *SymbolTable::DefineMapSymbol (string const &identifier, FiLoc const &filoc)
+MapSymbol *SymbolTable::DefineMapSymbol (string const &id, FiLoc const &filoc)
 {
-    assert(!identifier.empty());
+    assert(!id.empty());
 
-    if (GetSymbol(identifier) != NULL)
+    if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, filoc);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        UndefineSymbol(id, filoc);
     }
 
-    MapSymbol *symbol = new MapSymbol(identifier);
-    m_symbol_map[identifier] = symbol;
+    MapSymbol *symbol = new MapSymbol(id);
+    m_symbol_map[id] = symbol;
     return symbol;
 }
 
-void SymbolTable::UndefineSymbol (string const &identifier, FiLoc const &filoc)
+void SymbolTable::UndefineSymbol (string const &id, FiLoc const &filoc)
 {
-    assert(!identifier.empty());
+    assert(!id.empty());
     SymbolMap::iterator it;
-    if (Contains(m_symbol_map, identifier, it))
+    if (Contains(m_symbol_map, id, it))
     {
         assert(it->second != NULL);
         delete it->second;
         m_symbol_map.erase(it);
     }
     else
-        EmitWarning(filoc, "macro \"" + identifier + "\" is not currently defined");
+        EmitWarning(filoc, "macro \"" + id + "\" is not currently defined");
 }
 
 void SymbolTable::Print (ostream &stream) const

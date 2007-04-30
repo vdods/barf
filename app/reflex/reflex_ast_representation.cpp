@@ -31,11 +31,11 @@ void Rule::GenerateNfa (Graph &graph, Uint32 start_index, Uint32 end_index) cons
 }
 
 void Rule::PopulateAcceptHandlerCodeArraySymbol (
-    string const &target_language_identifier,
+    string const &target_language_id,
     Preprocessor::ArraySymbol *accept_handler_code_symbol) const
 {
     assert(accept_handler_code_symbol != NULL);
-    CommonLang::RuleHandler const *rule_handler = m_rule_handler_map->GetElement(target_language_identifier);
+    CommonLang::RuleHandler const *rule_handler = m_rule_handler_map->GetElement(target_language_id);
     assert(rule_handler != NULL);
     AstCommon::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
     assert(rule_handler_code_block != NULL);
@@ -59,7 +59,7 @@ void ScannerState::GenerateNfa (
             new Regex::NodeData(
                 Regex::IS_START_NODE,
                 Regex::NOT_ACCEPT_NODE,
-                m_scanner_state_identifier->GetText()));
+                m_scanner_state_id->GetText()));
     start_state_index_array.push_back(master_start_state_index);
 
     // each rule is effectively or'ed together (i.e. using regex operator '|')
@@ -76,7 +76,7 @@ void ScannerState::GenerateNfa (
 }
 
 void ScannerState::PopulateAcceptHandlerCodeArraySymbol (
-    string const &target_language_identifier,
+    string const &target_language_id,
     Preprocessor::ArraySymbol *accept_handler_code_symbol) const
 {
     assert(accept_handler_code_symbol != NULL);
@@ -88,7 +88,7 @@ void ScannerState::PopulateAcceptHandlerCodeArraySymbol (
     {
         Rule const *rule = *it;
         assert(rule != NULL);
-        rule->PopulateAcceptHandlerCodeArraySymbol(target_language_identifier, accept_handler_code_symbol);
+        rule->PopulateAcceptHandlerCodeArraySymbol(target_language_id, accept_handler_code_symbol);
     }
 }
 
@@ -223,7 +223,7 @@ void Representation::GenerateAutomatonSymbols (
             symbol_table.DefineScalarSymbol("_start", FiLoc::ms_invalid);
         symbol->SetScalarBody(
             new Preprocessor::Body(
-                m_start_directive->m_start_state_identifier->GetText(),
+                m_start_directive->m_start_state_id->GetText(),
                 FiLoc::ms_invalid));
     }
 
@@ -511,7 +511,7 @@ void Representation::GenerateAutomatonSymbols (
 }
 
 void Representation::GenerateTargetLanguageDependentSymbols (
-    string const &target_language_identifier,
+    string const &target_language_id,
     Preprocessor::SymbolTable &symbol_table) const
 {
     // _accept_handler_count -- gives the number of accept handlers.
@@ -536,7 +536,7 @@ void Representation::GenerateTargetLanguageDependentSymbols (
             ScannerState const *scanner_state = it->second;
             assert(scanner_state != NULL);
             scanner_state->PopulateAcceptHandlerCodeArraySymbol(
-                target_language_identifier,
+                target_language_id,
                 accept_handler_code_symbol);
         }
     }

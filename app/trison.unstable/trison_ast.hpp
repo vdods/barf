@@ -49,34 +49,34 @@ string const &GetAstTypeString (AstType ast_type);
 
 struct Token : public AstCommon::Ast
 {
-    AstCommon::Identifier const *const m_identifier;
+    AstCommon::Id const *const m_id;
     AstCommon::Character const *const m_character;
 
-    Token (AstCommon::Identifier const *identifier)
+    Token (AstCommon::Id const *id)
         :
-        AstCommon::Ast(identifier->GetFiLoc(), AT_TOKEN),
-        m_identifier(identifier),
+        AstCommon::Ast(id->GetFiLoc(), AT_TOKEN),
+        m_id(id),
         m_character(NULL)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
     }
     Token (AstCommon::Character const *character)
         :
         AstCommon::Ast(character->GetFiLoc(), AT_TOKEN),
-        m_identifier(NULL),
+        m_id(NULL),
         m_character(character)
     {
         assert(m_character != NULL);
     }
     ~Token ()
     {
-        delete m_identifier;
+        delete m_id;
         delete m_character;
     }
 
-    bool GetIsIdentifier () const { return m_identifier != NULL; }
-    string GetSourceText () const { return m_identifier != NULL ? m_identifier->GetText() : GetCharacterLiteral(m_character->GetCharacter()); }
-    string const &GetIdentifierString () const { assert(m_identifier != NULL); return m_identifier->GetText(); }
+    bool GetIsId () const { return m_id != NULL; }
+    string GetSourceText () const { return m_id != NULL ? m_id->GetText() : GetCharacterLiteral(m_character->GetCharacter()); }
+    string const &GetIdString () const { assert(m_id != NULL); return m_id->GetText(); }
     Uint8 GetCharacterChar () const { assert(m_character != NULL); return m_character->GetCharacter(); }
     string const &GetAssignedType () const { return m_assigned_type; }
 
@@ -101,16 +101,16 @@ struct TokenMap : public AstCommon::AstMap<Token>
 
 struct RuleToken : public AstCommon::Ast
 {
-    string const m_token_identifier;
-    string const m_assigned_identifier;
+    string const m_token_id;
+    string const m_assigned_id;
 
-    RuleToken (string const &token_identifier, FiLoc const &filoc, string const &assigned_identifier = gs_empty_string)
+    RuleToken (string const &token_id, FiLoc const &filoc, string const &assigned_id = gs_empty_string)
         :
         AstCommon::Ast(filoc, AT_RULE_TOKEN),
-        m_token_identifier(token_identifier),
-        m_assigned_identifier(assigned_identifier)
+        m_token_id(token_id),
+        m_assigned_id(assigned_id)
     {
-        assert(!m_token_identifier.empty());
+        assert(!m_token_id.empty());
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -125,15 +125,15 @@ struct Rule : public AstCommon::Ast
 {
     Nonterminal const *m_owner_nonterminal;
     RuleTokenList const *const m_rule_token_list;
-    string const m_rule_precedence_identifier;
+    string const m_rule_precedence_id;
     CommonLang::RuleHandlerMap const *m_rule_handler_map;
 
-    Rule (RuleTokenList const *rule_token_list, string const &rule_precedence_identifier)
+    Rule (RuleTokenList const *rule_token_list, string const &rule_precedence_id)
         :
         AstCommon::Ast(rule_token_list->GetFiLoc(), AT_RULE),
         m_owner_nonterminal(NULL),
         m_rule_token_list(rule_token_list),
-        m_rule_precedence_identifier(rule_precedence_identifier),
+        m_rule_precedence_id(rule_precedence_id),
         m_rule_handler_map(NULL),
         m_accept_state_index(UINT32_UPPER_BOUND)
     {
@@ -147,7 +147,7 @@ struct Rule : public AstCommon::Ast
     void SetAcceptStateIndex (Uint32 accept_state_index) const;
 
     void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_language_identifier,
+        string const &target_language_id,
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -164,24 +164,24 @@ struct RuleList : public AstCommon::AstList<Rule>
 
 struct Nonterminal : public AstCommon::Ast
 {
-    string const m_identifier;
+    string const m_id;
     string const m_assigned_type;
     RuleList const *m_rule_list;
 
     Nonterminal (
-        string const &identifier,
+        string const &id,
         FiLoc const &filoc,
         string const &assigned_type = gs_empty_string)
         :
         AstCommon::Ast(filoc, AT_NONTERMINAL),
-        m_identifier(identifier),
+        m_id(id),
         m_assigned_type(assigned_type),
         m_rule_list(NULL),
         m_npda_graph_start_state(UINT32_UPPER_BOUND),
         m_npda_graph_head_state(UINT32_UPPER_BOUND),
         m_npda_graph_return_state(UINT32_UPPER_BOUND)
     {
-        assert(!m_identifier.empty());
+        assert(!m_id.empty());
     }
 
     bool GetHasAssignedType () const { return !m_assigned_type.empty(); }
@@ -194,7 +194,7 @@ struct Nonterminal : public AstCommon::Ast
     void SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda_graph_head_state, Uint32 npda_graph_return_state) const;
 
     void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_language_identifier,
+        string const &target_language_id,
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -228,22 +228,22 @@ struct Precedence : public AstCommon::Ast
         DEFAULT_PRECEDENCE_LEVEL = -1
     };
 
-    string const m_precedence_identifier;
+    string const m_precedence_id;
     Associativity const m_precedence_associativity;
     Sint32 const m_precedence_level;
 
     Precedence (
-        string const &precedence_identifier,
+        string const &precedence_id,
         Associativity precedence_associativity,
         FiLoc const &filoc,
         Sint32 precedence_level = DEFAULT_PRECEDENCE_LEVEL)
         :
         AstCommon::Ast(filoc, AT_PRECEDENCE),
-        m_precedence_identifier(precedence_identifier),
+        m_precedence_id(precedence_id),
         m_precedence_associativity(precedence_associativity),
         m_precedence_level(precedence_level)
     {
-        assert(!m_precedence_identifier.empty());
+        assert(!m_precedence_id.empty());
         assert(m_precedence_associativity == A_LEFT ||
                m_precedence_associativity == A_NONASSOC ||
                m_precedence_associativity == A_RIGHT);
@@ -269,7 +269,7 @@ struct Representation : public AstCommon::Ast
     TokenMap const *const m_token_map;
     PrecedenceMap const *const m_precedence_map;
     PrecedenceList const *const m_precedence_list;
-    string const m_start_nonterminal_identifier;
+    string const m_start_nonterminal_id;
     NonterminalMap const *const m_nonterminal_map;
     NonterminalList const *const m_nonterminal_list;
 
@@ -278,7 +278,7 @@ struct Representation : public AstCommon::Ast
         TokenMap const *token_map,
         PrecedenceMap const *precedence_map,
         PrecedenceList const *precedence_list,
-        string const &start_nonterminal_identifier,
+        string const &start_nonterminal_id,
         FiLoc const &filoc,
         NonterminalMap const *nonterminal_map,
         NonterminalList const *nonterminal_list)
@@ -288,7 +288,7 @@ struct Representation : public AstCommon::Ast
         m_token_map(token_map),
         m_precedence_map(precedence_map),
         m_precedence_list(precedence_list),
-        m_start_nonterminal_identifier(start_nonterminal_identifier),
+        m_start_nonterminal_id(start_nonterminal_id),
         m_nonterminal_map(nonterminal_map),
         m_nonterminal_list(nonterminal_list)
     {
@@ -296,13 +296,13 @@ struct Representation : public AstCommon::Ast
         assert(m_token_map != NULL);
         assert(m_precedence_map != NULL);
         assert(m_precedence_list != NULL);
-        assert(!m_start_nonterminal_identifier.empty());
+        assert(!m_start_nonterminal_id.empty());
         assert(m_nonterminal_map != NULL);
         assert(m_nonterminal_list != NULL);
         AssignRuleIndices();
     }
 
-    Uint32 GetTokenIndex (string const &token_identifier) const;
+    Uint32 GetTokenIndex (string const &token_id) const;
     Uint32 GetRuleCount () const { return m_nonterminal_list->GetRuleCount(); }
     Rule const *GetRule (Uint32 rule_index) const;
 
@@ -312,7 +312,7 @@ struct Representation : public AstCommon::Ast
     void GenerateAutomatonSymbols (
         Preprocessor::SymbolTable &symbol_table) const;
     void GenerateTargetLanguageDependentSymbols (
-        string const &target_language_identifier,
+        string const &target_language_id,
         Preprocessor::SymbolTable &symbol_table) const;
     void AssignRuleIndices ();
     // this is the non-virtual, top-level Print method, not

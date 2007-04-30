@@ -43,13 +43,13 @@ void DumpSymbolTable::Execute (Textifier &textifier, SymbolTable &symbol_table) 
 
 void DeclareArray::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    ArraySymbol *symbol = symbol_table.DefineArraySymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
+    ArraySymbol *symbol = symbol_table.DefineArraySymbol(m_id->GetText(), m_id->GetFiLoc());
     assert(symbol->GetArrayElementCount() == 0);
 }
 
 void DeclareMap::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    MapSymbol *symbol = symbol_table.DefineMapSymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
+    MapSymbol *symbol = symbol_table.DefineMapSymbol(m_id->GetText(), m_id->GetFiLoc());
     assert(symbol->GetMapElementCount() == 0);
 }
 
@@ -63,7 +63,7 @@ void Define::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     Body *evaluated_body = new Body();
     evaluated_body->Append(new Text(out.str(), FiLoc::ms_invalid));
 
-    ScalarSymbol *symbol = symbol_table.DefineScalarSymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
+    ScalarSymbol *symbol = symbol_table.DefineScalarSymbol(m_id->GetText(), m_id->GetFiLoc());
     symbol->SetScalarBody(evaluated_body);
 }
 
@@ -71,10 +71,10 @@ void DefineArrayElement::Execute (Textifier &textifier, SymbolTable &symbol_tabl
 {
     assert(m_body != NULL);
 
-    Symbol *symbol = symbol_table.GetSymbol(m_identifier->GetText());
+    Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
     if (symbol != NULL && !symbol->GetIsArraySymbol())
     {
-        EmitError(m_identifier->GetFiLoc(), "macro \"" + m_identifier->GetText() + "\" is not an array");
+        EmitError(m_id->GetFiLoc(), "macro \"" + m_id->GetText() + "\" is not an array");
         return;
     }
 
@@ -86,7 +86,7 @@ void DefineArrayElement::Execute (Textifier &textifier, SymbolTable &symbol_tabl
 
     ArraySymbol *array_symbol = Dsc<ArraySymbol *>(symbol);
     if (array_symbol == NULL)
-        array_symbol = symbol_table.DefineArraySymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
+        array_symbol = symbol_table.DefineArraySymbol(m_id->GetText(), m_id->GetFiLoc());
     array_symbol->AppendArrayElement(evaluated_body);
 }
 
@@ -94,10 +94,10 @@ void DefineMapElement::Execute (Textifier &textifier, SymbolTable &symbol_table)
 {
     assert(m_body != NULL);
 
-    Symbol *symbol = symbol_table.GetSymbol(m_identifier->GetText());
+    Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
     if (symbol != NULL && !symbol->GetIsMapSymbol())
     {
-        EmitError(m_identifier->GetFiLoc(), "macro \"" + m_identifier->GetText() + "\" is not a map");
+        EmitError(m_id->GetFiLoc(), "macro \"" + m_id->GetText() + "\" is not a map");
         return;
     }
 
@@ -109,13 +109,13 @@ void DefineMapElement::Execute (Textifier &textifier, SymbolTable &symbol_table)
 
     MapSymbol *map_symbol = Dsc<MapSymbol *>(symbol);
     if (map_symbol == NULL)
-        map_symbol = symbol_table.DefineMapSymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
+        map_symbol = symbol_table.DefineMapSymbol(m_id->GetText(), m_id->GetFiLoc());
     map_symbol->SetMapElement(m_key->GetText(), evaluated_body);
 }
 
 void Undefine::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    symbol_table.UndefineSymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
+    symbol_table.UndefineSymbol(m_id->GetText(), m_id->GetFiLoc());
 }
 
 void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
@@ -137,8 +137,8 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     {
         ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol(
-                m_iterator_identifier->GetText(),
-                m_iterator_identifier->GetFiLoc());
+                m_iterator_id->GetText(),
+                m_iterator_id->GetFiLoc());
         symbol->SetScalarBody(m_iterator_integer_body);
     }
 
@@ -157,8 +157,8 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         m_body->Execute(textifier, symbol_table);
     }
     symbol_table.UndefineSymbol(
-        m_iterator_identifier->GetText(),
-        m_iterator_identifier->GetFiLoc());
+        m_iterator_id->GetText(),
+        m_iterator_id->GetFiLoc());
 }
 
 void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
@@ -167,15 +167,15 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 
     MapSymbol *map_symbol = NULL;
     {
-        Symbol *symbol = symbol_table.GetSymbol(m_map_identifier->GetText());
+        Symbol *symbol = symbol_table.GetSymbol(m_map_id->GetText());
         if (symbol == NULL)
         {
-            EmitError(m_map_identifier->GetFiLoc(), "undefined macro \"" + m_map_identifier->GetText() + "\"");
+            EmitError(m_map_id->GetFiLoc(), "undefined macro \"" + m_map_id->GetText() + "\"");
             return;
         }
         if (!symbol->GetIsMapSymbol())
         {
-            EmitError(m_map_identifier->GetFiLoc(), "macro \"" + m_map_identifier->GetText() + "\" is not a map");
+            EmitError(m_map_id->GetFiLoc(), "macro \"" + m_map_id->GetText() + "\" is not a map");
             return;
         }
         map_symbol = Dsc<MapSymbol *>(symbol);
@@ -196,8 +196,8 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     {
         ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol(
-                m_key_identifier->GetText(),
-                m_key_identifier->GetFiLoc());
+                m_key_id->GetText(),
+                m_key_id->GetFiLoc());
         symbol->SetScalarBody(m_key_text_body);
     }
 
@@ -210,8 +210,8 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         m_body->Execute(textifier, symbol_table);
     }
     symbol_table.UndefineSymbol(
-        m_key_identifier->GetText(),
-        m_key_identifier->GetFiLoc());
+        m_key_id->GetText(),
+        m_key_id->GetFiLoc());
 }
 
 void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const

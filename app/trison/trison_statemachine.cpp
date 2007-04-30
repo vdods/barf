@@ -51,7 +51,7 @@ StateMachine::~StateMachine ()
     for_each(
         m_state_map.begin(),
         m_state_map.end(),
-        DeletePairSecondFunctor<pair<StateIdentifier, State *> >());
+        DeletePairSecondFunctor<pair<StateId, State *> >());
 }
 
 Rule const *StateMachine::GetRule (Uint32 rule_index) const
@@ -60,9 +60,9 @@ Rule const *StateMachine::GetRule (Uint32 rule_index) const
     return m_rule_vector[rule_index];
 }
 
-Uint32 StateMachine::GetStateIndex (StateIdentifier const &state_identifier) const
+Uint32 StateMachine::GetStateIndex (StateId const &state_id) const
 {
-    StateMap::const_iterator it = m_state_map.find(state_identifier);
+    StateMap::const_iterator it = m_state_map.find(state_id);
 
     {
     assert(it != m_state_map.end() && "if this assert fails, uncomment the stuff using Uint32(-1), and delete this assert");
@@ -167,7 +167,7 @@ void StateMachine::PrintImplementationFile (ostream &stream)
             GetOptions()->GetImplementationFilename());
 }
 
-void StateMachine::GetStateTransitionIdentifiersFromRulePhase (
+void StateMachine::GetStateTransitionIdsFromRulePhase (
     RulePhase const &rule_phase,
     map<Terminal *, Transition> *terminal_transition_map,
     map<Nonterminal *, Transition> *nonterminal_transition_map,
@@ -180,7 +180,7 @@ void StateMachine::GetStateTransitionIdentifiersFromRulePhase (
 
     // if there are no tokens to the right in the current phase, this is
     // the last rule phase in its rule, so add it to the default state
-    // identifier, and return.
+    // id, and return.
     if (GetIsLastPhaseInRule(rule_phase))
     {
         assert(rule_phase.m_rule_index < m_rule_vector.size());
@@ -197,7 +197,7 @@ void StateMachine::GetStateTransitionIdentifiersFromRulePhase (
     // get the token name
     RuleToken const *rule_token = GetRuleTokenToRight(rule_phase);
     assert(rule_token != NULL);
-    string const &token_name = rule_token->GetTokenIdentifier()->GetText();
+    string const &token_name = rule_token->GetTokenId()->GetText();
 
     // if the token name corresponds to a terminal,
     TerminalMap::const_iterator terminal_it;
@@ -215,13 +215,13 @@ void StateMachine::GetStateTransitionIdentifiersFromRulePhase (
     {
         Nonterminal *nonterminal = nonterminal_it->second;
         assert(nonterminal != NULL);
-        // check if it's already in the nonterminal's transition identifier.  if not, add
+        // check if it's already in the nonterminal's transition id.  if not, add
         // it and traverse it.  this check is necessary to avoid infinite recursion
         // due to recursive nonterminals.
         Transition &nonterminal_transition = (*nonterminal_transition_map)[nonterminal];
         nonterminal_transition.SetTransitionAction(TA_PUSH_STATE);
-        StateIdentifier &nonterminal_transition_identifier = nonterminal_transition.GetTransitionIdentifier();
-        if (nonterminal_transition_identifier.find(rule_phase + 1) == nonterminal_transition_identifier.end())
+        StateId &nonterminal_transition_id = nonterminal_transition.GetTransitionId();
+        if (nonterminal_transition_id.find(rule_phase + 1) == nonterminal_transition_id.end())
         {
             nonterminal_transition.AddRulePhase(rule_phase + 1);
             for (RuleList::const_iterator rule_it = nonterminal->GetRuleListBegin(),
@@ -233,7 +233,7 @@ void StateMachine::GetStateTransitionIdentifiersFromRulePhase (
                 assert(rule != NULL);
                 RulePhase spawned_rule_phase(rule->GetIndex(), 0);
 
-                GetStateTransitionIdentifiersFromRulePhase(
+                GetStateTransitionIdsFromRulePhase(
                     spawned_rule_phase,
                     terminal_transition_map,
                     nonterminal_transition_map,
@@ -243,7 +243,7 @@ void StateMachine::GetStateTransitionIdentifiersFromRulePhase (
                 {
                     RuleToken const *spawned_rule_token = GetRuleTokenToRight(spawned_rule_phase);
                     assert(spawned_rule_token != NULL);
-                    string const &spawned_token_name = spawned_rule_token->GetTokenIdentifier()->GetText();
+                    string const &spawned_token_name = spawned_rule_token->GetTokenId()->GetText();
                     NonterminalMap::const_iterator spawned_nonterminal_it =
                         m_nonterminal_map.find(spawned_token_name);
                     if (spawned_nonterminal_it != m_nonterminal_map.end())
@@ -257,10 +257,10 @@ void StateMachine::GetStateTransitionIdentifiersFromRulePhase (
             }
         }
     }
-    // otherwise, this is an unidentified token identifier
+    // otherwise, this is an unidentified token id
     else
         EmitError(
-            rule_token->GetTokenIdentifier()->GetFiLoc(),
+            rule_token->GetTokenId()->GetFiLoc(),
             "undeclared token \"" + token_name + "\"");
 }
 
@@ -296,9 +296,9 @@ void StateMachine::GetRulePhasesWithNonterminalOnLeft (
         {
             RuleToken const *rule_token = rule->GetRuleToken(rule_token_index);
             assert(rule_token != NULL);
-            TokenIdentifier const *rule_token_identifier = rule_token->GetTokenIdentifier();
-            assert(rule_token_identifier != NULL);
-            string const &rule_token_name = rule_token_identifier->GetText();
+            TokenId const *rule_token_id = rule_token->GetTokenId();
+            assert(rule_token_id != NULL);
+            string const &rule_token_name = rule_token_id->GetText();
             NonterminalMap::const_iterator nonterminal_it = m_nonterminal_map.find(rule_token_name);
             if (nonterminal_it != m_nonterminal_map.end())
             {
@@ -357,17 +357,17 @@ Associativity StateMachine::GetRuleAssociativity (Uint32 rule_index) const
 Uint32 StateMachine::GetRulePrecedence (Uint32 rule_index) const
 {
     assert(rule_index < m_rule_vector.size());
-    AstCommon::Identifier const *precedence_directive_identifier =
-        m_rule_vector[rule_index]->GetPrecedenceDirectiveIdentifier();
-    if (precedence_directive_identifier != NULL)
+    AstCommon::Id const *precedence_directive_id =
+        m_rule_vector[rule_index]->GetPrecedenceDirectiveId();
+    if (precedence_directive_id != NULL)
     {
-        string const &precedence_directive_name = precedence_directive_identifier->GetText();
+        string const &precedence_directive_name = precedence_directive_id->GetText();
         PrecedenceMap::const_iterator it = m_precedence_map.find(precedence_directive_name);
         if (it == m_precedence_map.end())
         {
             EmitError(
-                precedence_directive_identifier->GetFiLoc(),
-                "undeclared precedence directive identifier \"" + precedence_directive_name + "\"");
+                precedence_directive_id->GetFiLoc(),
+                "undeclared precedence directive id \"" + precedence_directive_name + "\"");
             return 0;
         }
         else
@@ -460,12 +460,12 @@ void StateMachine::GeneratePrecedenceMap ()
     {
         PrecedenceDirective const *precedence_directive = *it;
         assert(precedence_directive != NULL);
-        // make sure each directive's identifier isn't already in the map
-        string const &precedence_directive_name = precedence_directive->GetIdentifier()->GetText();
+        // make sure each directive's id isn't already in the map
+        string const &precedence_directive_name = precedence_directive->GetId()->GetText();
         if (m_precedence_map.find(precedence_directive_name) != m_precedence_map.end())
             EmitError(
                 precedence_directive->GetFiLoc(),
-                "duplicate precedence directive identifier \"" + precedence_directive_name + "\" "
+                "duplicate precedence directive id \"" + precedence_directive_name + "\" "
                 "(first encountered at " +
                 m_precedence_map[precedence_directive_name]->GetFiLoc().GetAsString() + ")");
         else
@@ -483,7 +483,7 @@ void StateMachine::GenerateNonterminalMap ()
     {
         Nonterminal *nonterminal = *it;
         assert(nonterminal != NULL);
-        string const &nonterminal_name = nonterminal->GetIdentifier()->GetText();
+        string const &nonterminal_name = nonterminal->GetId()->GetText();
         if (m_nonterminal_map.find(nonterminal_name) != m_nonterminal_map.end())
             EmitError(
                 nonterminal->GetFiLoc(),
@@ -501,18 +501,18 @@ void StateMachine::GenerateTerminalMap ()
     // of the input (be it file input or string input or whatever).
     {
         string end_name("END_");
-        TokenIdentifierIdentifier *end_terminal_identifier =
-            new TokenIdentifierIdentifier(end_name, FiLoc::ms_invalid);
+        TokenIdId *end_terminal_id =
+            new TokenIdId(end_name, FiLoc::ms_invalid);
         m_terminal_map[end_name] =
-            new Terminal(end_terminal_identifier, NULL, true);
+            new Terminal(end_terminal_id, NULL, true);
     }
 
     // there is always a special %error terminal which is used in error handling
     {
         string error_name("%error");
-        TokenIdentifierIdentifier *error_terminal_identifier =
-            new TokenIdentifierIdentifier(error_name, FiLoc::ms_invalid);
-        m_error_terminal = new Terminal(error_terminal_identifier, NULL, true);
+        TokenIdId *error_terminal_id =
+            new TokenIdId(error_name, FiLoc::ms_invalid);
+        m_error_terminal = new Terminal(error_terminal_id, NULL, true);
         m_terminal_map[error_name] = m_error_terminal;
 
     }
@@ -528,25 +528,25 @@ void StateMachine::GenerateTerminalMap ()
         assert(token_directive != NULL);
         AstCommon::String const *assigned_variable_type = token_directive->GetAssignedType();
 
-        for (TokenIdentifierList::const_iterator
-                 token_it = token_directive->GetTokenIdentifierBegin(),
-                 token_it_end = token_directive->GetTokenIdentifierEnd();
+        for (TokenIdList::const_iterator
+                 token_it = token_directive->GetTokenIdBegin(),
+                 token_it_end = token_directive->GetTokenIdEnd();
              token_it != token_it_end;
              ++token_it)
         {
-            TokenIdentifier const *token_identifier = *token_it;
-            assert(token_identifier != NULL);
-            string const &terminal_name = token_identifier->GetText();
+            TokenId const *token_id = *token_it;
+            assert(token_id != NULL);
+            string const &terminal_name = token_id->GetText();
 
             if (m_terminal_map.find(terminal_name) != m_terminal_map.end())
                 EmitError(
-                    token_identifier->GetFiLoc(),
+                    token_id->GetFiLoc(),
                     "duplicate token name \"" + terminal_name + "\" "
                     "(first encountered at " +
                     m_terminal_map[terminal_name]->GetFiLoc().GetAsString() + ")");
             else
                 m_terminal_map[terminal_name] =
-                    new Terminal(token_identifier, assigned_variable_type, false);
+                    new Terminal(token_id, assigned_variable_type, false);
         }
     }
 }
@@ -591,7 +591,7 @@ void StateMachine::GenerateReductionRuleVectorForNonterminal (
             RuleToken const *rule_token = rule->GetRuleToken(rule_token_index);
             assert(rule_token != NULL);
             bool this_rule_token_is_error_token =
-                rule_token->GetTokenIdentifier()->GetText() == "%error";
+                rule_token->GetTokenId()->GetText() == "%error";
             if (this_rule_token_is_error_token && last_rule_token_was_error_token)
                 EmitError(rule_token->GetFiLoc(), "may not have two %error tokens in a row");
             last_rule_token_was_error_token = this_rule_token_is_error_token;
@@ -603,21 +603,21 @@ void StateMachine::GenerateReductionRuleVectorForNonterminal (
 
 void StateMachine::GenerateStatesFromTheStartNonterminal ()
 {
-    // generate the state identifier for state 0 (the starting state),
+    // generate the state id for state 0 (the starting state),
     // using the first phase for each of the start nonterminal's rules.
     Nonterminal const *start_nonterminal = m_grammar->GetStartNonterminal();
     assert(start_nonterminal != NULL);
-    StateIdentifier starting_state_identifier;
+    StateId starting_state_id;
     for (Uint32 rule_index = 0, rule_count = m_rule_vector.size();
          rule_index < rule_count &&
          m_rule_vector[rule_index]->GetOwnerNonterminal() == start_nonterminal;
          ++rule_index)
     {
-        starting_state_identifier.insert(RulePhase(rule_index, 0));
+        starting_state_id.insert(RulePhase(rule_index, 0));
     }
     // generate all the states in the order in which they were identified.
     assert(m_transition_generation_queue.empty());
-    m_transition_generation_queue.push_back(starting_state_identifier);
+    m_transition_generation_queue.push_back(starting_state_id);
     while (!m_transition_generation_queue.empty())
     {
         GenerateState(*m_transition_generation_queue.begin());
@@ -625,18 +625,18 @@ void StateMachine::GenerateStatesFromTheStartNonterminal ()
     }
 }
 
-void StateMachine::GenerateState (StateIdentifier const &state_identifier)
+void StateMachine::GenerateState (StateId const &state_id)
 {
-    assert(!state_identifier.empty());
+    assert(!state_id.empty());
 
     // check if the state exists already.  if so, just return.
-    if (m_state_map.find(state_identifier) != m_state_map.end())
+    if (m_state_map.find(state_id) != m_state_map.end())
         return;
 
     // create the state and add it to the state map
     State *state = new State(m_state_vector.size());
-    state->SetStateIdentifier(state_identifier);
-    m_state_map[state_identifier] = state;
+    state->SetStateId(state_id);
+    m_state_map[state_id] = state;
     m_state_vector.push_back(state);
 
     // determine which terminals and nonterminals this state can transition
@@ -645,13 +645,13 @@ void StateMachine::GenerateState (StateIdentifier const &state_identifier)
     map<Terminal *, Transition> terminal_transition_map;
     map<Nonterminal *, Transition> nonterminal_transition_map;
     Transition default_transition;
-    for (StateIdentifier::const_iterator it = state->GetStateIdentifier().begin(),
-                                         it_end = state->GetStateIdentifier().end();
+    for (StateId::const_iterator it = state->GetStateId().begin(),
+                                         it_end = state->GetStateId().end();
          it != it_end;
          ++it)
     {
         RulePhase const &rule_phase = *it;
-        GetStateTransitionIdentifiersFromRulePhase(
+        GetStateTransitionIdsFromRulePhase(
             rule_phase,
             &terminal_transition_map,
             &nonterminal_transition_map,
@@ -665,12 +665,12 @@ void StateMachine::GenerateState (StateIdentifier const &state_identifier)
         &terminal_transition_map);
     ResolveReduceReduceAndErrorConflicts(
         state,
-        state_identifier,
+        state_id,
         &terminal_transition_map,
         &nonterminal_transition_map,
         &default_transition);
     ResolveShiftReduceConflicts(
-        state_identifier,
+        state_id,
         &terminal_transition_map,
         &nonterminal_transition_map,
         &default_transition);
@@ -693,8 +693,8 @@ void StateMachine::AddErrorCollapsingTransitions (
 
     // if %error exists to the left of any of this state's rule phases,
     // add an %error terminal transition action (to throw it away)
-    for (StateIdentifier::const_iterator it = state->GetStateIdentifier().begin(),
-                                         it_end = state->GetStateIdentifier().end();
+    for (StateId::const_iterator it = state->GetStateId().begin(),
+                                         it_end = state->GetStateId().end();
          it != it_end;
          ++it)
     {
@@ -704,7 +704,7 @@ void StateMachine::AddErrorCollapsingTransitions (
         {
             RuleToken const *rule_token = GetRuleTokenToLeft(rule_phase);
             assert(rule_token != NULL);
-            if (rule_token->GetTokenIdentifier()->GetText() == "%error")
+            if (rule_token->GetTokenId()->GetText() == "%error")
             {
                 (*terminal_transition_map)[m_error_terminal].SetTransitionAction(
                     TA_THROW_AWAY_LOOKAHEAD_TOKEN);
@@ -715,26 +715,26 @@ void StateMachine::AddErrorCollapsingTransitions (
 
 void StateMachine::ResolveReduceReduceAndErrorConflicts (
     State *state,
-    StateIdentifier const &state_identifier,
+    StateId const &state_id,
     map<Terminal *, Transition> *const terminal_transition_map,
     map<Nonterminal *, Transition> *const nonterminal_transition_map,
     Transition *const default_transition)
 {
     assert(state != NULL);
-    assert(!state_identifier.empty());
+    assert(!state_id.empty());
     assert(terminal_transition_map != NULL);
     assert(nonterminal_transition_map != NULL);
     assert(default_transition != NULL);
 
     bool state_accepts_error_token =
-        default_transition->GetTransitionIdentifier().size() > 0 &&
+        default_transition->GetTransitionId().size() > 0 &&
         terminal_transition_map->find(m_error_terminal) != terminal_transition_map->end();
     bool add_reduce_lookahead_transitions =
-        default_transition->GetTransitionIdentifier().size() > 1 ||
+        default_transition->GetTransitionId().size() > 1 ||
         state_accepts_error_token;
 
-    // if there is more than one rule phase in the default state identifier,
-    // or any of the terminal state identifiers, there are reduce/reduce
+    // if there is more than one rule phase in the default state id,
+    // or any of the terminal state ids, there are reduce/reduce
     // conflicts, so look for terminals further ahead in appropriate rules
     // to see how the conflict can be resolved.
     //
@@ -744,9 +744,9 @@ void StateMachine::ResolveReduceReduceAndErrorConflicts (
     if (add_reduce_lookahead_transitions)
     {
         map<Terminal *, set<RulePhase> > resolution_rule_phase_map;
-        for (StateIdentifier::const_iterator
-                it = default_transition->GetTransitionIdentifier().begin(),
-                it_end = default_transition->GetTransitionIdentifier().end();
+        for (StateId::const_iterator
+                it = default_transition->GetTransitionId().begin(),
+                it_end = default_transition->GetTransitionId().end();
              it != it_end;
              ++it)
         {
@@ -772,7 +772,7 @@ void StateMachine::ResolveReduceReduceAndErrorConflicts (
                 map<Terminal *, Transition> rule_phase_terminal_transition_map;
                 map<Nonterminal *, Transition> dummy_nonterminal_transition_map;
                 Transition dummy_default_transition;
-                GetStateTransitionIdentifiersFromRulePhase(
+                GetStateTransitionIdsFromRulePhase(
                     matched_rule_phase,
                     &rule_phase_terminal_transition_map,
                     &dummy_nonterminal_transition_map,
@@ -791,8 +791,8 @@ void StateMachine::ResolveReduceReduceAndErrorConflicts (
             }
         }
 
-        StateIdentifier &default_transition_identifier =
-            default_transition->GetTransitionIdentifier();
+        StateId &default_transition_id =
+            default_transition->GetTransitionId();
         Transition eliminated_default_transition;
         eliminated_default_transition.SetTransitionAction(TA_REDUCE_USING_RULE);
         for (map<Terminal *, set<RulePhase> >::iterator
@@ -817,7 +817,7 @@ void StateMachine::ResolveReduceReduceAndErrorConflicts (
                  ++rule_phase_it)
             {
                 RulePhase const &conflicted_rule = *rule_phase_it;
-                default_transition_identifier.erase(conflicted_rule);
+                default_transition_id.erase(conflicted_rule);
                 eliminated_default_transition.AddRulePhase(conflicted_rule);
             }
             rule_phase_set.insert(first_rule_phase);
@@ -848,10 +848,10 @@ void StateMachine::ResolveReduceReduceAndErrorConflicts (
             // still more than one default transition rule, or if this state
             // accepts an error token (which would be a shift/reduce conflict
             // due to both default and %error being catch-alls).
-            if (default_transition->GetTransitionIdentifier().size() > 1 ||
+            if (default_transition->GetTransitionId().size() > 1 ||
                 state_accepts_error_token)
             {
-                default_transition->GetTransitionIdentifier().erase(first_rule_phase);
+                default_transition->GetTransitionId().erase(first_rule_phase);
             }
         }
 
@@ -864,26 +864,26 @@ void StateMachine::ResolveReduceReduceAndErrorConflicts (
 }
 
 void StateMachine::ResolveShiftReduceConflicts (
-    StateIdentifier const &state_identifier,
+    StateId const &state_id,
     map<Terminal *, Transition> *const terminal_transition_map,
     map<Nonterminal *, Transition> *const nonterminal_transition_map,
     Transition *const default_transition)
 {
-    assert(!state_identifier.empty());
+    assert(!state_id.empty());
     assert(terminal_transition_map != NULL);
     assert(nonterminal_transition_map != NULL);
     assert(default_transition != NULL);
 
     // check for shift/reduce conflicts (which can only happen if
     // there is a default state transition).
-    if (!default_transition->GetTransitionIdentifier().empty())
+    if (!default_transition->GetTransitionId().empty())
     {
         // this assertion exists because if there was more than one rule in
         // the default action (reduce/reduce conflict), it had to have been
         // resolved by now.
-        assert(default_transition->GetTransitionIdentifier().size() == 1);
+        assert(default_transition->GetTransitionId().size() == 1);
         RulePhase const &default_rule_phase =
-            *default_transition->GetTransitionIdentifier().begin();
+            *default_transition->GetTransitionId().begin();
 
         bool skip_rest;
         for (map<Terminal *, Transition>::iterator
@@ -895,10 +895,10 @@ void StateMachine::ResolveShiftReduceConflicts (
             skip_rest = false;
 
             Transition &terminal_transition = it->second;
-            StateIdentifier &terminal_state_identifier =
-                terminal_transition.GetTransitionIdentifier();
+            StateId &terminal_state_id =
+                terminal_transition.GetTransitionId();
             RulePhase const &first_terminal_rule_phase =
-                *terminal_state_identifier.begin();
+                *terminal_state_id.begin();
             assert(terminal_transition.GetIsNontrivial());
 
             // if there are more than one rule phases for this terminal, we
@@ -908,10 +908,10 @@ void StateMachine::ResolveShiftReduceConflicts (
                 GetRulePrecedence(first_terminal_rule_phase.m_rule_index);
             Uint32 default_rule_precedence =
                 GetRulePrecedence(default_rule_phase.m_rule_index);
-            if (terminal_state_identifier.size() > 1)
+            if (terminal_state_id.size() > 1)
             {
-                for (StateIdentifier::const_iterator rule_phase_it = terminal_state_identifier.begin(),
-                                                  rule_phase_it_end = terminal_state_identifier.end();
+                for (StateId::const_iterator rule_phase_it = terminal_state_id.begin(),
+                                                  rule_phase_it_end = terminal_state_id.end();
                      rule_phase_it != rule_phase_it_end;
                      ++rule_phase_it)
                 {
@@ -946,7 +946,7 @@ void StateMachine::ResolveShiftReduceConflicts (
             // if this terminal's rules have lower precedences than the
             // default rule, eliminate it (eliminate the terminal completely).
             if (first_terminal_rule_precedence < default_rule_precedence)
-                terminal_state_identifier.clear();
+                terminal_state_id.clear();
             // if the precedences are equal, then rely on associativity to resolve
             // the shift/reduce conflict -- but associativity can only resolve
             // conflicts between binary operations.
@@ -958,8 +958,8 @@ void StateMachine::ResolveShiftReduceConflicts (
                     GetRuleAssociativity(first_terminal_rule_phase.m_rule_index);
                 // if the terminal's rules don't have all the same associativity,
                 // generate an error
-                for (StateIdentifier::const_iterator rule_phase_it = terminal_state_identifier.begin(),
-                                                  rule_phase_it_end = terminal_state_identifier.end();
+                for (StateId::const_iterator rule_phase_it = terminal_state_id.begin(),
+                                                  rule_phase_it_end = terminal_state_id.end();
                      rule_phase_it != rule_phase_it_end;
                      ++rule_phase_it)
                 {
@@ -986,7 +986,7 @@ void StateMachine::ResolveShiftReduceConflicts (
 
                 // if left-assoc, the default action should be taken (reduce).
                 if (first_rule_associativity == A_LEFT)
-                    terminal_state_identifier.clear();
+                    terminal_state_id.clear();
                 // if right-assoc, the terminal action should be taken (shift)
                 else if (first_rule_associativity == A_RIGHT)
                 {
@@ -1043,11 +1043,11 @@ void StateMachine::AddTransitions (
         {
             ++terminal_transition_count;
             state->SetTerminalTransition(terminal, transition);
-            if (!transition.GetTransitionIdentifier().empty() &&
+            if (!transition.GetTransitionId().empty() &&
                 transition.GetTransitionAction() != TA_REDUCE_USING_RULE &&
                 transition.GetTransitionAction() != TA_REDUCE_AND_ACCEPT_USING_RULE)
             {
-                m_transition_generation_queue.push_back(transition.GetTransitionIdentifier());
+                m_transition_generation_queue.push_back(transition.GetTransitionId());
             }
         }
     }
@@ -1056,14 +1056,14 @@ void StateMachine::AddTransitions (
     m_state_transition_count += terminal_transition_count;
 
     // add the default state transition
-    if (!default_transition->GetTransitionIdentifier().empty())
+    if (!default_transition->GetTransitionId().empty())
     {
         state->SetDefaultTransitionOffset(m_state_transition_count++);
         state->SetDefaultTransition(*default_transition);
         if (default_transition->GetTransitionAction() != TA_REDUCE_USING_RULE &&
             default_transition->GetTransitionAction() != TA_REDUCE_AND_ACCEPT_USING_RULE)
         {
-            m_transition_generation_queue.push_back(default_transition->GetTransitionIdentifier());
+            m_transition_generation_queue.push_back(default_transition->GetTransitionId());
         }
     }
 
@@ -1078,11 +1078,11 @@ void StateMachine::AddTransitions (
         Transition const &transition = it->second;
         assert(nonterminal != NULL);
 
-        if (!transition.GetTransitionIdentifier().empty())
+        if (!transition.GetTransitionId().empty())
         {
             ++nonterminal_transition_count;
             state->SetNonterminalTransition(it->first, it->second);
-            m_transition_generation_queue.push_back(transition.GetTransitionIdentifier());
+            m_transition_generation_queue.push_back(transition.GetTransitionId());
         }
     }
     if (nonterminal_transition_count > 0)
@@ -1209,23 +1209,23 @@ void StateMachine::GeneratePreprocessor ()
         {
             Terminal const *terminal = it->second;
             assert(terminal != NULL);
-            if (terminal->GetTokenIdentifier()->GetAstType() == AT_TOKEN_IDENTIFIER_IDENTIFIER)
+            if (terminal->GetTokenId()->GetAstType() == AT_TOKEN_ID_ID)
             {
-                string token_implementation_file_identifier =
-                    terminal->GetImplementationFileIdentifier();
-                assert(!token_implementation_file_identifier.empty());
-                if (token_implementation_file_identifier != end_name &&
-                    token_implementation_file_identifier != error_name)
+                string token_implementation_file_id =
+                    terminal->GetImplementationFileId();
+                assert(!token_implementation_file_id.empty());
+                if (token_implementation_file_id != end_name &&
+                    token_implementation_file_id != error_name)
                 {
                     if (!first_has_been_written)
                     {
-                        declaration_buffer << "            " << token_implementation_file_identifier << " = 0x100,\n";
+                        declaration_buffer << "            " << token_implementation_file_id << " = 0x100,\n";
                         first_has_been_written = true;
                     }
                     else
-                        declaration_buffer << "            " << token_implementation_file_identifier << ",\n";
+                        declaration_buffer << "            " << token_implementation_file_id << ",\n";
 
-                    strings_buffer << "        \"" << terminal->GetTokenIdentifier()->GetText() << "\",\n";
+                    strings_buffer << "        \"" << terminal->GetTokenId()->GetText() << "\",\n";
                 }
             }
         }
@@ -1256,8 +1256,8 @@ void StateMachine::GeneratePreprocessor ()
         {
             Nonterminal const *nonterminal = it->second;
             assert(nonterminal != NULL);
-            declaration_buffer << "            " << nonterminal->GetImplementationFileIdentifier() << ",\n";
-            strings_buffer << "        \"" << nonterminal->GetIdentifier()->GetText() << "\",\n";
+            declaration_buffer << "            " << nonterminal->GetImplementationFileId() << ",\n";
+            strings_buffer << "        \"" << nonterminal->GetId()->GetText() << "\",\n";
         }
 
         declaration_buffer << "\n"
@@ -1301,7 +1301,7 @@ void StateMachine::GeneratePreprocessor ()
             Rule const *rule = m_rule_vector[rule_index];
             assert(rule != NULL);
             buffer << "// ";
-            rule->PrettyPrintWithAssignedIdentifiers(buffer);
+            rule->PrettyPrintWithAssignedIds(buffer);
             buffer << "\n";
 
             buffer << base_assigned_type << " " << class_name << "::ReductionRuleHandler"
@@ -1310,19 +1310,19 @@ void StateMachine::GeneratePreprocessor ()
 
             if (rule->GetCodeBlock() != NULL)
             {
-                // declare the assigned variable identifiers
+                // declare the assigned variable ids
                 for (Uint32 rule_token_index = 0, rule_token_count = rule->GetRuleTokenCount();
                      rule_token_index < rule_token_count;
                      ++rule_token_index)
                 {
                     RuleToken const *rule_token = rule->GetRuleToken(rule_token_index);
                     assert(rule_token != NULL);
-                    if (rule_token->GetAssignedIdentifier() != NULL)
+                    if (rule_token->GetAssignedId() != NULL)
                         buffer << "    assert(" << rule_token_index << " < m_reduction_rule_token_count);\n"
-                               << "    " << GetAssignedType(rule_token->GetTokenIdentifier()->GetText())
-                               << " " << rule_token->GetAssignedIdentifier()->GetText() << " = "
+                               << "    " << GetAssignedType(rule_token->GetTokenId()->GetText())
+                               << " " << rule_token->GetAssignedId()->GetText() << " = "
                                << m_preprocessor.GetReplacementValue(Preprocessor::CUSTOM_CAST) << "< "
-                               << GetAssignedType(rule_token->GetTokenIdentifier()->GetText())
+                               << GetAssignedType(rule_token->GetTokenId()->GetText())
                                << " >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + "
                                << rule_token_index << "]);\n";
                 }
@@ -1366,7 +1366,7 @@ void StateMachine::GeneratePreprocessor ()
             Nonterminal const *owner_nonterminal = rule->GetOwnerNonterminal();
             assert(owner_nonterminal != NULL);
             buffer << "    {" << setw(30)
-                   << ("Token::" + owner_nonterminal->GetImplementationFileIdentifier())
+                   << ("Token::" + owner_nonterminal->GetImplementationFileId())
                    << ", " << setw(2) << rule->GetRuleTokenCount() << ", &"
                    << class_name << "::ReductionRuleHandler" << setw(4)
                    << setfill('0') << rule_index << setfill(' ') << ", \"";

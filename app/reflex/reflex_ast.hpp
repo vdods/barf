@@ -56,18 +56,18 @@ string const &GetAstTypeString (AstType ast_type);
 
 struct StartDirective : public AstCommon::Directive
 {
-    AstCommon::Identifier const *const m_start_state_identifier;
+    AstCommon::Id const *const m_start_state_id;
 
-    StartDirective (AstCommon::Identifier const *start_state_identifier)
+    StartDirective (AstCommon::Id const *start_state_id)
         :
-        AstCommon::Directive("%start", start_state_identifier->GetFiLoc(), AT_START_DIRECTIVE),
-        m_start_state_identifier(start_state_identifier)
+        AstCommon::Directive("%start", start_state_id->GetFiLoc(), AT_START_DIRECTIVE),
+        m_start_state_id(start_state_id)
     {
-        assert(m_start_state_identifier != NULL);
+        assert(m_start_state_id != NULL);
     }
     virtual ~StartDirective ()
     {
-        delete m_start_state_identifier;
+        delete m_start_state_id;
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -100,7 +100,7 @@ struct Rule : public AstCommon::Ast
 
     void GenerateNfa (Graph &graph, Uint32 start_index, Uint32 end_index) const;
     void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_language_identifier,
+        string const &target_language_id,
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -113,23 +113,23 @@ struct RuleList : public AstCommon::AstList<Rule>
 
 struct ScannerState : public AstCommon::Ast
 {
-    AstCommon::Identifier const *const m_scanner_state_identifier;
+    AstCommon::Id const *const m_scanner_state_id;
     RuleList const *const m_rule_list;
 
     ScannerState (
-        AstCommon::Identifier const *scanner_state_identifier,
+        AstCommon::Id const *scanner_state_id,
         RuleList *rule_list)
         :
-        AstCommon::Ast(scanner_state_identifier->GetFiLoc(), AT_SCANNER_STATE),
-        m_scanner_state_identifier(scanner_state_identifier),
+        AstCommon::Ast(scanner_state_id->GetFiLoc(), AT_SCANNER_STATE),
+        m_scanner_state_id(scanner_state_id),
         m_rule_list(rule_list)
     {
-        assert(m_scanner_state_identifier != NULL);
+        assert(m_scanner_state_id != NULL);
         assert(m_rule_list != NULL);
     }
     virtual ~ScannerState ()
     {
-        delete m_scanner_state_identifier;
+        delete m_scanner_state_id;
         delete m_rule_list;
     }
 
@@ -140,7 +140,7 @@ struct ScannerState : public AstCommon::Ast
         vector<Uint32> &start_state_index_array,
         Uint32 &next_accept_handler_index) const;
     void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_language_identifier,
+        string const &target_language_id,
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -192,7 +192,7 @@ public:
     void GenerateAutomatonSymbols (
         Preprocessor::SymbolTable &symbol_table) const;
     void GenerateTargetLanguageDependentSymbols (
-        string const &target_language_identifier,
+        string const &target_language_id,
         Preprocessor::SymbolTable &symbol_table) const;
     // this is the non-virtual, top-level Print method, not
     // to be confused with AstCommon::Ast::Print.

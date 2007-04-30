@@ -23,42 +23,42 @@ class Terminal
 public:
 
     Terminal (
-        TokenIdentifier const *token_identifier,
+        TokenId const *token_id,
         AstCommon::String const *assigned_type,
         bool this_must_delete_members)
         :
-        m_token_identifier(token_identifier),
+        m_token_id(token_id),
         m_assigned_type(assigned_type),
         m_this_must_delete_members(this_must_delete_members),
-        m_filoc(token_identifier->GetFiLoc())
+        m_filoc(token_id->GetFiLoc())
     {
-        assert(m_token_identifier != NULL);
+        assert(m_token_id != NULL);
         // m_assigned_type may be NULL
     }
     ~Terminal ()
     {
         if (m_this_must_delete_members)
         {
-            delete m_token_identifier;
+            delete m_token_id;
             delete m_assigned_type;
         }
     }
 
-    string GetImplementationFileIdentifier () const
+    string GetImplementationFileId () const
     {
-        assert(m_token_identifier != NULL);
-        if (m_token_identifier->GetText() == "%error")
+        assert(m_token_id != NULL);
+        if (m_token_id->GetText() == "%error")
             return "ERROR_";
         else
-            return m_token_identifier->GetText();
+            return m_token_id->GetText();
     }
-    inline TokenIdentifier const *GetTokenIdentifier () const { return m_token_identifier; }
+    inline TokenId const *GetTokenId () const { return m_token_id; }
     inline AstCommon::String const *GetAssignedType () const { return m_assigned_type; }
     inline FiLoc const &GetFiLoc () const { return m_filoc; }
 
 private:
 
-    TokenIdentifier const *const m_token_identifier;
+    TokenId const *const m_token_id;
     AstCommon::String const *const m_assigned_type;
     bool const m_this_must_delete_members;
     FiLoc const m_filoc;

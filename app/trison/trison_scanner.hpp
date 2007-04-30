@@ -43,7 +43,7 @@ public:
 
 private:
 
-    Parser::Token::Type ScanIdentifier (AstCommon::Ast **scanned_token);
+    Parser::Token::Type ScanId (AstCommon::Ast **scanned_token);
     Parser::Token::Type ScanOperator (AstCommon::Ast **scanned_token);
     Parser::Token::Type ScanDirective (AstCommon::Ast **scanned_token);
     Parser::Token::Type ScanStrictCodeBlock (AstCommon::Ast **scanned_token);

@@ -435,7 +435,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
         "ERROR",
         "FATAL_ERROR",
         "FOR_EACH",
-        "IDENTIFIER",
+        "ID",
         "IF",
         "INCLUDE",
         "INTEGER",
@@ -696,38 +696,38 @@ AstCommon::Ast * Parser::ReductionRuleHandler0013 ()
     return NULL;
 }
 
-// rule 14: code <- UNDEFINE '(' IDENTIFIER:identifier ')'    
+// rule 14: code <- UNDEFINE '(' ID:id ')'    
 AstCommon::Ast * Parser::ReductionRuleHandler0014 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 209 "barf_preprocessor_parser.trison"
- return new Undefine(identifier); 
+ return new Undefine(id); 
 #line 708 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 15: code <- DECLARE_ARRAY '(' IDENTIFIER:identifier ')'    
+// rule 15: code <- DECLARE_ARRAY '(' ID:id ')'    
 AstCommon::Ast * Parser::ReductionRuleHandler0015 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 212 "barf_preprocessor_parser.trison"
- return new DeclareArray(identifier); 
+ return new DeclareArray(id); 
 #line 720 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 16: code <- DECLARE_MAP '(' IDENTIFIER:identifier ')'    
+// rule 16: code <- DECLARE_MAP '(' ID:id ')'    
 AstCommon::Ast * Parser::ReductionRuleHandler0016 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 215 "barf_preprocessor_parser.trison"
- return new DeclareMap(identifier); 
+ return new DeclareMap(id); 
 #line 732 "barf_preprocessor_parser.cpp"
     return NULL;
 }
@@ -964,78 +964,78 @@ AstCommon::Ast * Parser::ReductionRuleHandler0036 ()
     return NULL;
 }
 
-// rule 37: define_scalar <- START_CODE DEFINE '(' IDENTIFIER:identifier ')' END_CODE    
+// rule 37: define_scalar <- START_CODE DEFINE '(' ID:id ')' END_CODE    
 AstCommon::Ast * Parser::ReductionRuleHandler0037 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 303 "barf_preprocessor_parser.trison"
- return new Define(identifier); 
+ return new Define(id); 
 #line 976 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 38: define_scalar <- CODE_LINE DEFINE '(' IDENTIFIER:identifier ')' CODE_NEWLINE    
+// rule 38: define_scalar <- CODE_LINE DEFINE '(' ID:id ')' CODE_NEWLINE    
 AstCommon::Ast * Parser::ReductionRuleHandler0038 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 306 "barf_preprocessor_parser.trison"
- return new Define(identifier); 
+ return new Define(id); 
 #line 988 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 39: define_array_element <- START_CODE DEFINE '(' IDENTIFIER:identifier '[' ']' ')' END_CODE    
+// rule 39: define_array_element <- START_CODE DEFINE '(' ID:id '[' ']' ')' END_CODE    
 AstCommon::Ast * Parser::ReductionRuleHandler0039 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 312 "barf_preprocessor_parser.trison"
- return new DefineArrayElement(identifier); 
+ return new DefineArrayElement(id); 
 #line 1000 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 40: define_array_element <- CODE_LINE DEFINE '(' IDENTIFIER:identifier '[' ']' ')' CODE_NEWLINE    
+// rule 40: define_array_element <- CODE_LINE DEFINE '(' ID:id '[' ']' ')' CODE_NEWLINE    
 AstCommon::Ast * Parser::ReductionRuleHandler0040 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 315 "barf_preprocessor_parser.trison"
- return new DefineArrayElement(identifier); 
+ return new DefineArrayElement(id); 
 #line 1012 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 41: define_map_element <- START_CODE DEFINE '(' IDENTIFIER:identifier '[' STRING:key ']' ')' END_CODE    
+// rule 41: define_map_element <- START_CODE DEFINE '(' ID:id '[' STRING:key ']' ')' END_CODE    
 AstCommon::Ast * Parser::ReductionRuleHandler0041 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Text * key = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 321 "barf_preprocessor_parser.trison"
- return new DefineMapElement(identifier, key); 
+ return new DefineMapElement(id, key); 
 #line 1026 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 42: define_map_element <- CODE_LINE DEFINE '(' IDENTIFIER:identifier '[' STRING:key ']' ')' CODE_NEWLINE    
+// rule 42: define_map_element <- CODE_LINE DEFINE '(' ID:id '[' STRING:key ']' ')' CODE_NEWLINE    
 AstCommon::Ast * Parser::ReductionRuleHandler0042 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Text * key = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 324 "barf_preprocessor_parser.trison"
- return new DefineMapElement(identifier, key); 
+ return new DefineMapElement(id, key); 
 #line 1040 "barf_preprocessor_parser.cpp"
     return NULL;
 }
@@ -1052,30 +1052,30 @@ AstCommon::Ast * Parser::ReductionRuleHandler0044 ()
     return NULL;
 }
 
-// rule 45: loop <- START_CODE LOOP '(' IDENTIFIER:iterator_identifier ',' expression:iteration_count_expression ')' END_CODE    
+// rule 45: loop <- START_CODE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' END_CODE    
 AstCommon::Ast * Parser::ReductionRuleHandler0045 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * iterator_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * iterator_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Expression * iteration_count_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 337 "barf_preprocessor_parser.trison"
- return new Loop(iterator_identifier, iteration_count_expression); 
+ return new Loop(iterator_id, iteration_count_expression); 
 #line 1066 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 46: loop <- CODE_LINE LOOP '(' IDENTIFIER:iterator_identifier ',' expression:iteration_count_expression ')' CODE_NEWLINE    
+// rule 46: loop <- CODE_LINE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' CODE_NEWLINE    
 AstCommon::Ast * Parser::ReductionRuleHandler0046 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * iterator_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * iterator_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Expression * iteration_count_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 340 "barf_preprocessor_parser.trison"
- return new Loop(iterator_identifier, iteration_count_expression); 
+ return new Loop(iterator_id, iteration_count_expression); 
 #line 1080 "barf_preprocessor_parser.cpp"
     return NULL;
 }
@@ -1092,30 +1092,30 @@ AstCommon::Ast * Parser::ReductionRuleHandler0048 ()
     return NULL;
 }
 
-// rule 49: for_each <- START_CODE FOR_EACH '(' IDENTIFIER:key_identifier ',' IDENTIFIER:map_identifier ')' END_CODE    
+// rule 49: for_each <- START_CODE FOR_EACH '(' ID:key_id ',' ID:map_id ')' END_CODE    
 AstCommon::Ast * Parser::ReductionRuleHandler0049 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * key_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * key_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
-    AstCommon::Identifier * map_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
+    AstCommon::Id * map_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 353 "barf_preprocessor_parser.trison"
- return new ForEach(key_identifier, map_identifier); 
+ return new ForEach(key_id, map_id); 
 #line 1106 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 50: for_each <- CODE_LINE FOR_EACH '(' IDENTIFIER:key_identifier ',' IDENTIFIER:map_identifier ')' CODE_NEWLINE    
+// rule 50: for_each <- CODE_LINE FOR_EACH '(' ID:key_id ',' ID:map_id ')' CODE_NEWLINE    
 AstCommon::Ast * Parser::ReductionRuleHandler0050 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Identifier * key_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::Id * key_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
-    AstCommon::Identifier * map_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
+    AstCommon::Id * map_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 356 "barf_preprocessor_parser.trison"
- return new ForEach(key_identifier, map_identifier); 
+ return new ForEach(key_id, map_id); 
 #line 1120 "barf_preprocessor_parser.cpp"
     return NULL;
 }
@@ -1156,14 +1156,14 @@ AstCommon::Ast * Parser::ReductionRuleHandler0054 ()
     return NULL;
 }
 
-// rule 55: expression <- SIZEOF '(' IDENTIFIER:identifier ')'    
+// rule 55: expression <- SIZEOF '(' ID:id ')'    
 AstCommon::Ast * Parser::ReductionRuleHandler0055 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 375 "barf_preprocessor_parser.trison"
- return new Sizeof(identifier); 
+ return new Sizeof(id); 
 #line 1168 "barf_preprocessor_parser.cpp"
     return NULL;
 }
@@ -1204,80 +1204,80 @@ AstCommon::Ast * Parser::ReductionRuleHandler0058 ()
     return NULL;
 }
 
-// rule 59: expression <- IS_DEFINED '(' IDENTIFIER:identifier ')'    
+// rule 59: expression <- IS_DEFINED '(' ID:id ')'    
 AstCommon::Ast * Parser::ReductionRuleHandler0059 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 387 "barf_preprocessor_parser.trison"
- return new IsDefined(identifier, NULL); 
+ return new IsDefined(id, NULL); 
 #line 1216 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 60: expression <- IS_DEFINED '(' IDENTIFIER:identifier '[' expression:element_index_expression ']' ')'    
+// rule 60: expression <- IS_DEFINED '(' ID:id '[' expression:element_index_expression ']' ')'    
 AstCommon::Ast * Parser::ReductionRuleHandler0060 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
     assert(4 < m_reduction_rule_token_count);
     Expression * element_index_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
 
 #line 390 "barf_preprocessor_parser.trison"
- return new IsDefined(identifier, element_index_expression); 
+ return new IsDefined(id, element_index_expression); 
 #line 1230 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 61: expression <- IDENTIFIER:identifier    
+// rule 61: expression <- ID:id    
 AstCommon::Ast * Parser::ReductionRuleHandler0061 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 393 "barf_preprocessor_parser.trison"
- return new Dereference(identifier, NULL, DEREFERENCE_ALWAYS); 
+ return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
 #line 1242 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 62: expression <- IDENTIFIER:identifier '[' expression:element_index_expression ']'    
+// rule 62: expression <- ID:id '[' expression:element_index_expression ']'    
 AstCommon::Ast * Parser::ReductionRuleHandler0062 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
     Expression * element_index_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 396 "barf_preprocessor_parser.trison"
- return new Dereference(identifier, element_index_expression, DEREFERENCE_ALWAYS); 
+ return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); 
 #line 1256 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 63: expression <- IDENTIFIER:identifier '?'    
+// rule 63: expression <- ID:id '?'    
 AstCommon::Ast * Parser::ReductionRuleHandler0063 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 399 "barf_preprocessor_parser.trison"
- return new Dereference(identifier, NULL, DEREFERENCE_IFF_DEFINED); 
+ return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
 #line 1268 "barf_preprocessor_parser.cpp"
     return NULL;
 }
 
-// rule 64: expression <- IDENTIFIER:identifier '[' expression:element_index_expression ']' '?'    
+// rule 64: expression <- ID:id '[' expression:element_index_expression ']' '?'    
 AstCommon::Ast * Parser::ReductionRuleHandler0064 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
     Expression * element_index_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 402 "barf_preprocessor_parser.trison"
- return new Dereference(identifier, element_index_expression, DEREFERENCE_IFF_DEFINED); 
+ return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); 
 #line 1282 "barf_preprocessor_parser.cpp"
     return NULL;
 }
@@ -1536,9 +1536,9 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {                 Token::code__,  0, &Parser::ReductionRuleHandler0011, "rule 11: code <-     "},
     {                 Token::code__,  1, &Parser::ReductionRuleHandler0012, "rule 12: code <- expression    "},
     {                 Token::code__,  3, &Parser::ReductionRuleHandler0013, "rule 13: code <- DUMP_SYMBOL_TABLE '(' ')'    "},
-    {                 Token::code__,  4, &Parser::ReductionRuleHandler0014, "rule 14: code <- UNDEFINE '(' IDENTIFIER ')'    "},
-    {                 Token::code__,  4, &Parser::ReductionRuleHandler0015, "rule 15: code <- DECLARE_ARRAY '(' IDENTIFIER ')'    "},
-    {                 Token::code__,  4, &Parser::ReductionRuleHandler0016, "rule 16: code <- DECLARE_MAP '(' IDENTIFIER ')'    "},
+    {                 Token::code__,  4, &Parser::ReductionRuleHandler0014, "rule 14: code <- UNDEFINE '(' ID ')'    "},
+    {                 Token::code__,  4, &Parser::ReductionRuleHandler0015, "rule 15: code <- DECLARE_ARRAY '(' ID ')'    "},
+    {                 Token::code__,  4, &Parser::ReductionRuleHandler0016, "rule 16: code <- DECLARE_MAP '(' ID ')'    "},
     {                 Token::code__,  4, &Parser::ReductionRuleHandler0017, "rule 17: code <- INCLUDE '(' expression ')'    "},
     {                 Token::code__,  4, &Parser::ReductionRuleHandler0018, "rule 18: code <- SANDBOX_INCLUDE '(' expression ')'    "},
     {                 Token::code__,  4, &Parser::ReductionRuleHandler0019, "rule 19: code <- WARNING '(' expression ')'    "},
@@ -1559,34 +1559,34 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {               Token::define__,  1, &Parser::ReductionRuleHandler0034, "rule 34: define <- define_scalar    "},
     {               Token::define__,  1, &Parser::ReductionRuleHandler0035, "rule 35: define <- define_array_element    "},
     {               Token::define__,  1, &Parser::ReductionRuleHandler0036, "rule 36: define <- define_map_element    "},
-    {        Token::define_scalar__,  6, &Parser::ReductionRuleHandler0037, "rule 37: define_scalar <- START_CODE DEFINE '(' IDENTIFIER ')' END_CODE    "},
-    {        Token::define_scalar__,  6, &Parser::ReductionRuleHandler0038, "rule 38: define_scalar <- CODE_LINE DEFINE '(' IDENTIFIER ')' CODE_NEWLINE    "},
-    { Token::define_array_element__,  8, &Parser::ReductionRuleHandler0039, "rule 39: define_array_element <- START_CODE DEFINE '(' IDENTIFIER '[' ']' ')' END_CODE    "},
-    { Token::define_array_element__,  8, &Parser::ReductionRuleHandler0040, "rule 40: define_array_element <- CODE_LINE DEFINE '(' IDENTIFIER '[' ']' ')' CODE_NEWLINE    "},
-    {   Token::define_map_element__,  9, &Parser::ReductionRuleHandler0041, "rule 41: define_map_element <- START_CODE DEFINE '(' IDENTIFIER '[' STRING ']' ')' END_CODE    "},
-    {   Token::define_map_element__,  9, &Parser::ReductionRuleHandler0042, "rule 42: define_map_element <- CODE_LINE DEFINE '(' IDENTIFIER '[' STRING ']' ')' CODE_NEWLINE    "},
+    {        Token::define_scalar__,  6, &Parser::ReductionRuleHandler0037, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE    "},
+    {        Token::define_scalar__,  6, &Parser::ReductionRuleHandler0038, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE    "},
+    { Token::define_array_element__,  8, &Parser::ReductionRuleHandler0039, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE    "},
+    { Token::define_array_element__,  8, &Parser::ReductionRuleHandler0040, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE    "},
+    {   Token::define_map_element__,  9, &Parser::ReductionRuleHandler0041, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING ']' ')' END_CODE    "},
+    {   Token::define_map_element__,  9, &Parser::ReductionRuleHandler0042, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING ']' ')' CODE_NEWLINE    "},
     {           Token::end_define__,  3, &Parser::ReductionRuleHandler0043, "rule 43: end_define <- START_CODE END_DEFINE END_CODE    "},
     {           Token::end_define__,  3, &Parser::ReductionRuleHandler0044, "rule 44: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE    "},
-    {                 Token::loop__,  8, &Parser::ReductionRuleHandler0045, "rule 45: loop <- START_CODE LOOP '(' IDENTIFIER ',' expression ')' END_CODE    "},
-    {                 Token::loop__,  8, &Parser::ReductionRuleHandler0046, "rule 46: loop <- CODE_LINE LOOP '(' IDENTIFIER ',' expression ')' CODE_NEWLINE    "},
+    {                 Token::loop__,  8, &Parser::ReductionRuleHandler0045, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE    "},
+    {                 Token::loop__,  8, &Parser::ReductionRuleHandler0046, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE    "},
     {             Token::end_loop__,  3, &Parser::ReductionRuleHandler0047, "rule 47: end_loop <- START_CODE END_LOOP END_CODE    "},
     {             Token::end_loop__,  3, &Parser::ReductionRuleHandler0048, "rule 48: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE    "},
-    {             Token::for_each__,  8, &Parser::ReductionRuleHandler0049, "rule 49: for_each <- START_CODE FOR_EACH '(' IDENTIFIER ',' IDENTIFIER ')' END_CODE    "},
-    {             Token::for_each__,  8, &Parser::ReductionRuleHandler0050, "rule 50: for_each <- CODE_LINE FOR_EACH '(' IDENTIFIER ',' IDENTIFIER ')' CODE_NEWLINE    "},
+    {             Token::for_each__,  8, &Parser::ReductionRuleHandler0049, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE    "},
+    {             Token::for_each__,  8, &Parser::ReductionRuleHandler0050, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE    "},
     {         Token::end_for_each__,  3, &Parser::ReductionRuleHandler0051, "rule 51: end_for_each <- START_CODE END_FOR_EACH END_CODE    "},
     {         Token::end_for_each__,  3, &Parser::ReductionRuleHandler0052, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE    "},
     {           Token::expression__,  1, &Parser::ReductionRuleHandler0053, "rule 53: expression <- STRING    "},
     {           Token::expression__,  1, &Parser::ReductionRuleHandler0054, "rule 54: expression <- INTEGER    "},
-    {           Token::expression__,  4, &Parser::ReductionRuleHandler0055, "rule 55: expression <- SIZEOF '(' IDENTIFIER ')'    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0055, "rule 55: expression <- SIZEOF '(' ID ')'    "},
     {           Token::expression__,  4, &Parser::ReductionRuleHandler0056, "rule 56: expression <- KEYWORD_INT '(' expression ')'    "},
     {           Token::expression__,  4, &Parser::ReductionRuleHandler0057, "rule 57: expression <- KEYWORD_STRING '(' expression ')'    "},
     {           Token::expression__,  4, &Parser::ReductionRuleHandler0058, "rule 58: expression <- STRING_LENGTH '(' expression ')'    "},
-    {           Token::expression__,  4, &Parser::ReductionRuleHandler0059, "rule 59: expression <- IS_DEFINED '(' IDENTIFIER ')'    "},
-    {           Token::expression__,  7, &Parser::ReductionRuleHandler0060, "rule 60: expression <- IS_DEFINED '(' IDENTIFIER '[' expression ']' ')'    "},
-    {           Token::expression__,  1, &Parser::ReductionRuleHandler0061, "rule 61: expression <- IDENTIFIER    "},
-    {           Token::expression__,  4, &Parser::ReductionRuleHandler0062, "rule 62: expression <- IDENTIFIER '[' expression ']'    "},
-    {           Token::expression__,  2, &Parser::ReductionRuleHandler0063, "rule 63: expression <- IDENTIFIER '?'    "},
-    {           Token::expression__,  5, &Parser::ReductionRuleHandler0064, "rule 64: expression <- IDENTIFIER '[' expression ']' '?'    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0059, "rule 59: expression <- IS_DEFINED '(' ID ')'    "},
+    {           Token::expression__,  7, &Parser::ReductionRuleHandler0060, "rule 60: expression <- IS_DEFINED '(' ID '[' expression ']' ')'    "},
+    {           Token::expression__,  1, &Parser::ReductionRuleHandler0061, "rule 61: expression <- ID    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0062, "rule 62: expression <- ID '[' expression ']'    "},
+    {           Token::expression__,  2, &Parser::ReductionRuleHandler0063, "rule 63: expression <- ID '?'    "},
+    {           Token::expression__,  5, &Parser::ReductionRuleHandler0064, "rule 64: expression <- ID '[' expression ']' '?'    "},
     {           Token::expression__,  3, &Parser::ReductionRuleHandler0065, "rule 65: expression <- expression '.' expression    %left %prec CONCATENATION"},
     {           Token::expression__,  4, &Parser::ReductionRuleHandler0066, "rule 66: expression <- expression '|' '|' expression     %prec LOGICAL_OR"},
     {           Token::expression__,  4, &Parser::ReductionRuleHandler0067, "rule 67: expression <- expression '&' '&' expression     %prec LOGICAL_AND"},
@@ -1925,7 +1925,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state    4
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     {               Token::UNDEFINE, {        TA_SHIFT_AND_PUSH_STATE,   18}},
@@ -1959,7 +1959,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state    5
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   41}},
     {               Token::UNDEFINE, {        TA_SHIFT_AND_PUSH_STATE,   18}},
@@ -2194,7 +2194,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   36
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2212,7 +2212,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   37
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2230,7 +2230,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   38
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2384,7 +2384,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   51
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2414,7 +2414,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   54
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2432,43 +2432,43 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   55
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  110}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  110}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   56
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  111}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  111}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   57
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  112}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  112}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   58
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  113}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  113}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   59
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  114}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  114}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   60
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  115}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  115}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   61
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2486,7 +2486,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   62
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2504,7 +2504,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   63
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2522,7 +2522,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   64
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2540,7 +2540,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   65
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2558,19 +2558,19 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   66
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  121}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  121}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   67
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  122}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  122}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   68
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2588,7 +2588,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   69
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2606,7 +2606,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   70
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2660,7 +2660,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   75
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2678,7 +2678,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   76
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2696,7 +2696,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   77
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2714,7 +2714,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   78
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2732,7 +2732,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   79
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2750,7 +2750,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   80
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2792,7 +2792,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   85
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2811,7 +2811,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   86
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2830,7 +2830,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   87
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -2848,19 +2848,19 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   88
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  142}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  142}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   89
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  143}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  143}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   90
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  144}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  144}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   91
@@ -2872,7 +2872,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   92
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     {                   Token::ELSE, {        TA_SHIFT_AND_PUSH_STATE,  145}},
@@ -2909,7 +2909,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   93
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   41}},
     {                   Token::ELSE, {        TA_SHIFT_AND_PUSH_STATE,  148}},
@@ -2978,7 +2978,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   98
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     {               Token::UNDEFINE, {        TA_SHIFT_AND_PUSH_STATE,   18}},
@@ -3013,7 +3013,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   99
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   41}},
     {               Token::UNDEFINE, {        TA_SHIFT_AND_PUSH_STATE,   18}},
@@ -3054,7 +3054,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  101
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     {               Token::UNDEFINE, {        TA_SHIFT_AND_PUSH_STATE,   18}},
@@ -3089,7 +3089,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  102
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   41}},
     {               Token::UNDEFINE, {        TA_SHIFT_AND_PUSH_STATE,   18}},
@@ -3130,7 +3130,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  104
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     {               Token::UNDEFINE, {        TA_SHIFT_AND_PUSH_STATE,   18}},
@@ -3165,7 +3165,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  105
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   41}},
     {               Token::UNDEFINE, {        TA_SHIFT_AND_PUSH_STATE,   18}},
@@ -3498,7 +3498,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  133
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -3516,7 +3516,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  134
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -3534,7 +3534,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  135
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -3552,7 +3552,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  136
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -3570,7 +3570,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  137
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -3601,7 +3601,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  139
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -3825,7 +3825,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  166
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -3843,7 +3843,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  167
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  212}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  212}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  168
@@ -3891,7 +3891,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  175
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -4047,7 +4047,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  188
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -4065,7 +4065,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  189
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,  219}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,  219}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  190
@@ -4077,7 +4077,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  191
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -4107,7 +4107,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  194
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::SIZEOF, {        TA_SHIFT_AND_PUSH_STATE,   29}},
     {             Token::IS_DEFINED, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     {                Token::INTEGER, {        TA_SHIFT_AND_PUSH_STATE,   31}},
@@ -4131,7 +4131,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  196
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     {                 Token::END_IF, {        TA_SHIFT_AND_PUSH_STATE,  147}},
@@ -4166,7 +4166,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  197
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {             Token::IDENTIFIER, {        TA_SHIFT_AND_PUSH_STATE,   15}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {      Token::DUMP_SYMBOL_TABLE, {        TA_SHIFT_AND_PUSH_STATE,   16}},
     {                     Token::IF, {        TA_SHIFT_AND_PUSH_STATE,   41}},
     {                 Token::END_IF, {        TA_SHIFT_AND_PUSH_STATE,  150}},

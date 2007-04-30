@@ -108,7 +108,7 @@ Conditional::~Conditional ()
 
 DeclareArray::~DeclareArray ()
 {
-    delete m_identifier;
+    delete m_id;
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -117,7 +117,7 @@ DeclareArray::~DeclareArray ()
 
 DeclareMap::~DeclareMap ()
 {
-    delete m_identifier;
+    delete m_id;
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -126,7 +126,7 @@ DeclareMap::~DeclareMap ()
 
 Define::~Define ()
 {
-    delete m_identifier;
+    delete m_id;
     delete m_body;
 }
 
@@ -145,7 +145,7 @@ DefineMapElement::~DefineMapElement ()
 
 Undefine::~Undefine ()
 {
-    delete m_identifier;
+    delete m_id;
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -154,7 +154,7 @@ Undefine::~Undefine ()
 
 Loop::~Loop ()
 {
-    delete m_iterator_identifier;
+    delete m_iterator_id;
     delete m_iteration_count_expression;
     delete m_body;
     delete m_iterator_integer_body;
@@ -166,8 +166,8 @@ Loop::~Loop ()
 
 ForEach::~ForEach ()
 {
-    delete m_key_identifier;
-    delete m_map_identifier;
+    delete m_key_id;
+    delete m_map_id;
     delete m_body;
     delete m_key_text_body;
 }
@@ -238,17 +238,17 @@ string Integer::GetTextValue (SymbolTable &symbol_table) const
 
 Sizeof::~Sizeof ()
 {
-    delete m_identifier;
+    delete m_id;
 }
 
 Sint32 Sizeof::GetIntegerValue (SymbolTable &symbol_table) const
 {
-    Symbol *symbol = symbol_table.GetSymbol(m_identifier->GetText());
+    Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
     if (symbol != NULL)
         return symbol->Sizeof();
     else
     {
-        EmitError(GetFiLoc(), "can not return sizeof undefined macro \"" + m_identifier->GetText() + "\"");
+        EmitError(GetFiLoc(), "can not return sizeof undefined macro \"" + m_id->GetText() + "\"");
         return 0;
     }
 }
@@ -266,7 +266,7 @@ string Sizeof::GetTextValue (SymbolTable &symbol_table) const
 
 Dereference::~Dereference ()
 {
-    delete m_identifier;
+    delete m_id;
     delete m_element_index_expression;
 }
 
@@ -307,11 +307,11 @@ string Dereference::GetTextValue (SymbolTable &symbol_table) const
 
 Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
 {
-    Symbol *symbol = symbol_table.GetSymbol(m_identifier->GetText());
+    Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
     if (symbol == NULL)
     {
         if (m_dereference_type == DEREFERENCE_ALWAYS)
-            EmitError(m_identifier->GetFiLoc(), "undefined macro \"" + m_identifier->GetText() + "\"");
+            EmitError(m_id->GetFiLoc(), "undefined macro \"" + m_id->GetText() + "\"");
         return NULL;
     }
 
@@ -345,7 +345,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
         if (dereferenced_body == NULL)
         {
             ostringstream out;
-            out << "macro \"" << m_identifier->GetText() << "\" has no element " << element_index;
+            out << "macro \"" << m_id->GetText() << "\" has no element " << element_index;
             EmitError(GetFiLoc(), out.str());
             return NULL;
         }
@@ -364,7 +364,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
         {
             EmitError(
                 GetFiLoc(),
-                "macro \"" + m_identifier->GetText() + "\" has no such element " + GetStringLiteral(element_key));
+                "macro \"" + m_id->GetText() + "\" has no such element " + GetStringLiteral(element_key));
             return NULL;
         }
     }
@@ -379,7 +379,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
 Sint32 IsDefined::GetIntegerValue (SymbolTable &symbol_table) const
 {
     if (m_element_index_expression == NULL)
-        return (symbol_table.GetSymbol(m_identifier->GetText()) != NULL) ? 1 : 0;
+        return (symbol_table.GetSymbol(m_id->GetText()) != NULL) ? 1 : 0;
     else
         return (GetDereferencedBody(symbol_table) != NULL) ? 1 : 0;
 }

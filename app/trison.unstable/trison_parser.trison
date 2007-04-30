@@ -23,7 +23,7 @@ namespace Barf {
 namespace AstCommon {
 
 class Ast;
-class IdentifierMap;
+class IdMap;
 class IntegerMap;
 
 } // end of namespace AstCommon
@@ -125,7 +125,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:            return Parser::Token::DUMB_CODE_BLOCK;
         case CommonLang::Scanner::Token::END_OF_FILE:                return Parser::Token::END_;
         case CommonLang::Scanner::Token::END_PREAMBLE:               return Parser::Token::END_PREAMBLE;
-        case CommonLang::Scanner::Token::IDENTIFIER:                 return Parser::Token::IDENTIFIER;
+        case CommonLang::Scanner::Token::ID:                 return Parser::Token::ID;
         case CommonLang::Scanner::Token::NEWLINE:                    return Parser::Token::NEWLINE;
         case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:          return Parser::Token::STRICT_CODE_BLOCK;
         case CommonLang::Scanner::Token::STRING_LITERAL:             return Parser::Token::STRING_LITERAL;
@@ -135,7 +135,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:
         case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:
-        case CommonLang::Scanner::Token::DIRECTIVE_IDENTIFIER:
+        case CommonLang::Scanner::Token::DIRECTIVE_ID:
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
         case CommonLang::Scanner::Token::DIRECTIVE_STATE:
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
@@ -175,7 +175,7 @@ Parser::Token::Type Parser::Scan ()
 %token DIRECTIVE_TYPE %type "AstCommon::ThrowAway *"
 %token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
 %token END_PREAMBLE %type "AstCommon::ThrowAway *"
-%token IDENTIFIER %type "AstCommon::Identifier *"
+%token ID %type "AstCommon::Id *"
 %token NEWLINE
 %token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
 %token STRING_LITERAL %type "AstCommon::String *"
@@ -196,7 +196,7 @@ root %type "Representation *"
     language_directives
     token_directives:token_map
     precedence_directives:precedence_map
-    start_directive:start_nonterminal_identifier
+    start_directive:start_nonterminal_id
     END_PREAMBLE:throwaway
     nonterminals:nonterminal_map
     {
@@ -212,12 +212,12 @@ root %type "Representation *"
         // set the TargetLanguageMap's primary source path
         target_language_map->SetSourcePath(m_scanner.GetInputName());
         // make sure the %start directive value specifies a real scanner state
-        if (start_nonterminal_identifier != NULL &&
-            nonterminal_map->GetElement(start_nonterminal_identifier->GetText()) == NULL)
+        if (start_nonterminal_id != NULL &&
+            nonterminal_map->GetElement(start_nonterminal_id->GetText()) == NULL)
         {
             EmitError(
-                start_nonterminal_identifier->GetFiLoc(),
-                "undeclared nonterminal \"" + start_nonterminal_identifier->GetText() + "\"");
+                start_nonterminal_id->GetFiLoc(),
+                "undeclared nonterminal \"" + start_nonterminal_id->GetText() + "\"");
         }
 
         Representation *representation =
@@ -226,12 +226,12 @@ root %type "Representation *"
                 token_map,
                 precedence_map,
                 m_precedence_list,
-                start_nonterminal_identifier->GetText(),
+                start_nonterminal_id->GetText(),
                 throwaway->GetFiLoc(),
                 nonterminal_map,
                 m_nonterminal_list);
         delete throwaway;
-        delete start_nonterminal_identifier;
+        delete start_nonterminal_id;
         return representation;
     }
 ;
@@ -242,7 +242,7 @@ root %type "Representation *"
 
 target_languages_directive %type "CommonLang::TargetLanguageMap *"
 :
-    DIRECTIVE_TARGET_LANGUAGES:throwaway target_language_identifiers:target_language_map at_least_one_newline
+    DIRECTIVE_TARGET_LANGUAGES:throwaway target_language_ids:target_language_map at_least_one_newline
     {
         assert(m_target_language_map == NULL);
         m_target_language_map = target_language_map;
@@ -266,13 +266,13 @@ target_languages_directive %type "CommonLang::TargetLanguageMap *"
     }
 ;
 
-target_language_identifiers %type "CommonLang::TargetLanguageMap *"
+target_language_ids %type "CommonLang::TargetLanguageMap *"
 :
-    target_language_identifiers:target_language_map IDENTIFIER:target_language_identifier
+    target_language_ids:target_language_map ID:target_language_id
     {
-        CommonLang::TargetLanguage *target_language = new CommonLang::TargetLanguage(target_language_identifier->GetText());
+        CommonLang::TargetLanguage *target_language = new CommonLang::TargetLanguage(target_language_id->GetText());
         target_language->EnableCodeGeneration();
-        target_language_map->Add(target_language_identifier->GetText(), target_language);
+        target_language_map->Add(target_language_id->GetText(), target_language);
         return target_language_map;
     }
 |
@@ -307,26 +307,26 @@ language_directives
 
 language_directive %type "CommonLang::LanguageDirective *"
 :
-    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive language_directive_param:param at_least_one_newline
+    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id '.' ID:language_directive language_directive_param:param at_least_one_newline
     {
         delete throwaway;
-        return new CommonLang::LanguageDirective(language_identifier, language_directive, param);
+        return new CommonLang::LanguageDirective(language_id, language_directive, param);
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive %error at_least_one_newline
+    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id '.' ID:language_directive %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %language." + language_id->GetText() + "." + language_directive->GetText());
         delete throwaway;
-        delete language_identifier;
+        delete language_id;
         delete language_directive;
         return NULL;
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier %error at_least_one_newline
+    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %language." + language_identifier->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %language." + language_id->GetText());
         delete throwaway;
-        delete language_identifier;
+        delete language_id;
         return NULL;
     }
 |
@@ -340,7 +340,7 @@ language_directive %type "CommonLang::LanguageDirective *"
 
 language_directive_param %type "AstCommon::TextBase *"
 :
-    IDENTIFIER:value            { return value; }
+    ID:value            { return value; }
 |   STRING_LITERAL:value        { return value; }
 |   STRICT_CODE_BLOCK:value     { return value; }
 |   DUMB_CODE_BLOCK:value       { return value; }
@@ -450,74 +450,74 @@ precedence_directives %type "PrecedenceMap *"
 
 precedence_directive %type "PrecedenceMap *"
 :
-    DIRECTIVE_PREC:throwaway IDENTIFIER:identifier at_least_one_newline
+    DIRECTIVE_PREC:throwaway ID:id at_least_one_newline
     {
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
         Precedence *precedence =
             new Precedence(
-                identifier->GetText(),
+                id->GetText(),
                 A_NONASSOC,
-                identifier->GetFiLoc(),
+                id->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
+        m_precedence_map->Add(precedence->m_precedence_id, precedence);
         delete throwaway;
-        delete identifier;
+        delete id;
         return m_precedence_map;
     }
 |
-    DIRECTIVE_PREC:throwaway DIRECTIVE_LEFT:throwaway2 IDENTIFIER:identifier at_least_one_newline
+    DIRECTIVE_PREC:throwaway DIRECTIVE_LEFT:throwaway2 ID:id at_least_one_newline
     {
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
         Precedence *precedence =
             new Precedence(
-                identifier->GetText(),
+                id->GetText(),
                 A_LEFT,
-                identifier->GetFiLoc(),
+                id->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
+        m_precedence_map->Add(precedence->m_precedence_id, precedence);
         delete throwaway;
         delete throwaway2;
-        delete identifier;
+        delete id;
         return m_precedence_map;
     }
 |
-    DIRECTIVE_PREC:throwaway DIRECTIVE_NONASSOC:throwaway2 IDENTIFIER:identifier at_least_one_newline
+    DIRECTIVE_PREC:throwaway DIRECTIVE_NONASSOC:throwaway2 ID:id at_least_one_newline
     {
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
         Precedence *precedence =
             new Precedence(
-                identifier->GetText(),
+                id->GetText(),
                 A_NONASSOC,
-                identifier->GetFiLoc(),
+                id->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
+        m_precedence_map->Add(precedence->m_precedence_id, precedence);
         delete throwaway;
         delete throwaway2;
-        delete identifier;
+        delete id;
         return m_precedence_map;
     }
 |
-    DIRECTIVE_PREC:throwaway DIRECTIVE_RIGHT:throwaway2 IDENTIFIER:identifier at_least_one_newline
+    DIRECTIVE_PREC:throwaway DIRECTIVE_RIGHT:throwaway2 ID:id at_least_one_newline
     {
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
         Precedence *precedence =
             new Precedence(
-                identifier->GetText(),
+                id->GetText(),
                 A_RIGHT,
-                identifier->GetFiLoc(),
+                id->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
+        m_precedence_map->Add(precedence->m_precedence_id, precedence);
         delete throwaway;
         delete throwaway2;
-        delete identifier;
+        delete id;
         return m_precedence_map;
     }
 ;
@@ -526,12 +526,12 @@ precedence_directive %type "PrecedenceMap *"
 // start directive rule
 // ///////////////////////////////////////////////////////////////////////////
 
-start_directive %type "AstCommon::Identifier *"
+start_directive %type "AstCommon::Id *"
 :
-    DIRECTIVE_START:throwaway IDENTIFIER:identifier at_least_one_newline
+    DIRECTIVE_START:throwaway ID:id at_least_one_newline
     {
         delete throwaway;
-        return identifier;
+        return id;
     }
 ;
 
@@ -547,7 +547,7 @@ nonterminals %type "NonterminalMap *"
         assert(m_nonterminal_list != NULL);
         if (nonterminal != NULL)
         {
-            nonterminal_map->Add(nonterminal->m_identifier, nonterminal);
+            nonterminal_map->Add(nonterminal->m_id, nonterminal);
             m_nonterminal_list->Append(nonterminal);
         }
         return nonterminal_map;
@@ -578,32 +578,32 @@ nonterminal %type "Nonterminal *"
 
 nonterminal_specification %type "Nonterminal *"
 :
-    IDENTIFIER:identifier DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
+    ID:id DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
     {
         assert(m_token_map != NULL);
-        if (m_token_map->GetElement(identifier->GetText()) != NULL)
-            EmitError(identifier->GetFiLoc(), "identifier collision with %token " + identifier->GetText());
+        if (m_token_map->GetElement(id->GetText()) != NULL)
+            EmitError(id->GetFiLoc(), "id collision with %token " + id->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
-                identifier->GetText(),
-                identifier->GetFiLoc(),
+                id->GetText(),
+                id->GetFiLoc(),
                 assigned_type->GetText());
         delete throwaway;
-        delete identifier;
+        delete id;
         delete assigned_type;
         return nonterminal;
     }
 |
-    IDENTIFIER:identifier
+    ID:id
     {
         assert(m_token_map != NULL);
-        if (m_token_map->GetElement(identifier->GetText()) != NULL)
-            EmitError(identifier->GetFiLoc(), "identifier collision with %token " + identifier->GetText());
+        if (m_token_map->GetElement(id->GetText()) != NULL)
+            EmitError(id->GetFiLoc(), "id collision with %token " + id->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
-                identifier->GetText(),
-                identifier->GetFiLoc());
-        delete identifier;
+                id->GetText(),
+                id->GetFiLoc());
+        delete id;
         return nonterminal;
     }
 |
@@ -613,17 +613,17 @@ nonterminal_specification %type "Nonterminal *"
         return NULL;
     }
 |
-    IDENTIFIER:identifier %error
+    ID:id %error
     {
-        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal directive");
-        delete identifier;
+        EmitError(id->GetFiLoc(), "syntax error in nonterminal directive");
+        delete id;
         return NULL;
     }
 |
-    IDENTIFIER:identifier DIRECTIVE_TYPE:throwaway %error
+    ID:id DIRECTIVE_TYPE:throwaway %error
     {
-        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
-        delete identifier;
+        EmitError(id->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
+        delete id;
         delete throwaway;
         return NULL;
     }
@@ -662,11 +662,11 @@ rule_specification %type "Rule *"
 :
     rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive
     {
-        string const &rule_precedence_identifier =
+        string const &rule_precedence_id =
             rule_precedence_directive != NULL ?
             rule_precedence_directive->GetText() :
             "DEFAULT_";
-        Rule *rule = new Rule(rule_token_list, rule_precedence_identifier);
+        Rule *rule = new Rule(rule_token_list, rule_precedence_id);
         delete rule_precedence_directive;
         return rule;
     }
@@ -677,7 +677,7 @@ rule_handlers %type "CommonLang::RuleHandlerMap *"
     rule_handlers:rule_handler_map rule_handler:rule_handler
     {
         if (rule_handler != NULL)
-            rule_handler_map->Add(rule_handler->m_language_identifier->GetText(), rule_handler);
+            rule_handler_map->Add(rule_handler->m_language_id->GetText(), rule_handler);
         return rule_handler_map;
     }
 |
@@ -689,21 +689,21 @@ rule_handlers %type "CommonLang::RuleHandlerMap *"
 
 rule_handler %type "CommonLang::RuleHandler *"
 :
-    DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier any_type_of_code_block:code_block
+    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id any_type_of_code_block:code_block
     {
         delete throwaway;
         assert(m_target_language_map != NULL);
-        if (m_target_language_map->GetElement(language_identifier->GetText()) == NULL)
+        if (m_target_language_map->GetElement(language_id->GetText()) == NULL)
             EmitWarning(
-                language_identifier->GetFiLoc(),
-                "undeclared target language \"" + language_identifier->GetText() + "\"");
-        return new CommonLang::RuleHandler(language_identifier, code_block);
+                language_id->GetFiLoc(),
+                "undeclared target language \"" + language_id->GetText() + "\"");
+        return new CommonLang::RuleHandler(language_id, code_block);
     }
 |
     DIRECTIVE_LANGUAGE:throwaway %error any_type_of_code_block:code_block
     {
         assert(m_target_language_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in language identifier after directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in language id after directive %language");
         delete throwaway;
         delete code_block;
         return NULL;
@@ -742,14 +742,14 @@ rule_token_list %type "RuleTokenList *"
 
 rule_token %type "RuleToken *"
 :
-    token:token ':' IDENTIFIER:assigned_identifier
+    token:token ':' ID:assigned_id
     {
         RuleToken *rule_token =
             token != NULL ?
-            new RuleToken(token->GetSourceText(), token->GetFiLoc(), assigned_identifier->GetText()) :
+            new RuleToken(token->GetSourceText(), token->GetFiLoc(), assigned_id->GetText()) :
             NULL;
         delete token;
-        delete assigned_identifier;
+        delete assigned_id;
         return rule_token;
     }
 |
@@ -764,12 +764,12 @@ rule_token %type "RuleToken *"
     }
 ;
 
-rule_precedence_directive %type "AstCommon::Identifier *"
+rule_precedence_directive %type "AstCommon::Id *"
 :
-    DIRECTIVE_PREC:throwaway IDENTIFIER:identifier
+    DIRECTIVE_PREC:throwaway ID:id
     {
         delete throwaway;
-        return identifier;
+        return id;
     }
 |
     // empty reduction rule
@@ -798,7 +798,7 @@ at_least_one_newline
 
 token %type "Trison::Token *"
 :
-    IDENTIFIER:id        { return new Trison::Token(id); }
+    ID:id        { return new Trison::Token(id); }
 |
     CHARACTER_LITERAL:ch { return new Trison::Token(ch); }
 ;

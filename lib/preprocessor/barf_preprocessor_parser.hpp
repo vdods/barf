@@ -50,7 +50,7 @@ public:
             ERROR,
             FATAL_ERROR,
             FOR_EACH,
-            IDENTIFIER,
+            ID,
             IF,
             INCLUDE,
             INTEGER,

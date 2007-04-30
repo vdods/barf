@@ -61,14 +61,14 @@ Body
     Executable[]
 
 Define
-    AstCommon::Identifier (macro identifier)
+    AstCommon::Id (macro id)
     Body (macro body)
 
 Undefine
-    AstCommon::Identifier (macro identifier)
+    AstCommon::Id (macro id)
 
 Loop
-    AstCommon::Identifier (iterator identifier)
+    AstCommon::Id (iterator id)
     Expression (iteration count expression)
     Body (loop body)
 
@@ -76,10 +76,10 @@ Include
     Expression (include filename expression)
 
 Sizeof
-    AstCommon::Identifier (operand identifier)
+    AstCommon::Id (operand id)
 
 Dereference
-    AstCommon::Identifier (operand identifier)
+    AstCommon::Id (operand id)
     Expression (element index expression)
 
 */
@@ -275,12 +275,12 @@ class DeclareArray : public Directive
 {
 public:
 
-    DeclareArray (AstCommon::Identifier const *identifier)
+    DeclareArray (AstCommon::Id const *id)
         :
-        Directive(identifier->GetFiLoc(), AT_DECLARE_ARRAY),
-        m_identifier(identifier)
+        Directive(id->GetFiLoc(), AT_DECLARE_ARRAY),
+        m_id(id)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
     }
     virtual ~DeclareArray ();
 
@@ -289,19 +289,19 @@ public:
 
 private:
 
-    AstCommon::Identifier const *const m_identifier;
+    AstCommon::Id const *const m_id;
 }; // end of class DeclareArray
 
 class DeclareMap : public Directive
 {
 public:
 
-    DeclareMap (AstCommon::Identifier const *identifier)
+    DeclareMap (AstCommon::Id const *id)
         :
-        Directive(identifier->GetFiLoc(), AT_DECLARE_ARRAY),
-        m_identifier(identifier)
+        Directive(id->GetFiLoc(), AT_DECLARE_ARRAY),
+        m_id(id)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
     }
     virtual ~DeclareMap ();
 
@@ -310,20 +310,20 @@ public:
 
 private:
 
-    AstCommon::Identifier const *const m_identifier;
+    AstCommon::Id const *const m_id;
 }; // end of class DeclareMap
 
 class Define : public Directive
 {
 public:
 
-    Define (AstCommon::Identifier *identifier)
+    Define (AstCommon::Id *id)
         :
-        Directive(identifier->GetFiLoc(), AT_DEFINE),
-        m_identifier(identifier),
+        Directive(id->GetFiLoc(), AT_DEFINE),
+        m_id(id),
         m_body(NULL)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
     }
     virtual ~Define ();
 
@@ -339,16 +339,16 @@ public:
 
 protected:
 
-    Define (AstCommon::Identifier *identifier, AstType ast_type)
+    Define (AstCommon::Id *id, AstType ast_type)
         :
-        Directive(identifier->GetFiLoc(), ast_type),
-        m_identifier(identifier),
+        Directive(id->GetFiLoc(), ast_type),
+        m_id(id),
         m_body(NULL)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
     }
 
-    AstCommon::Identifier *const m_identifier;
+    AstCommon::Id *const m_id;
     Body *m_body;
 }; // end of class Define
 
@@ -356,9 +356,9 @@ class DefineArrayElement : public Define
 {
 public:
 
-    DefineArrayElement (AstCommon::Identifier *identifier)
+    DefineArrayElement (AstCommon::Id *id)
         :
-        Define(identifier, AT_DEFINE_ARRAY_ELEMENT)
+        Define(id, AT_DEFINE_ARRAY_ELEMENT)
     { }
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
@@ -368,9 +368,9 @@ class DefineMapElement : public Define
 {
 public:
 
-    DefineMapElement (AstCommon::Identifier *identifier, Text const *key)
+    DefineMapElement (AstCommon::Id *id, Text const *key)
         :
-        Define(identifier, AT_DEFINE_ARRAY_ELEMENT),
+        Define(id, AT_DEFINE_ARRAY_ELEMENT),
         m_key(key)
     {
         assert(m_key != NULL);
@@ -389,12 +389,12 @@ class Undefine : public Directive
 {
 public:
 
-    Undefine (AstCommon::Identifier *identifier)
+    Undefine (AstCommon::Id *id)
         :
-        Directive(identifier->GetFiLoc(), AT_UNDEFINE),
-        m_identifier(identifier)
+        Directive(id->GetFiLoc(), AT_UNDEFINE),
+        m_id(id)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
     }
     virtual ~Undefine ();
 
@@ -403,7 +403,7 @@ public:
 
 private:
 
-    AstCommon::Identifier *const m_identifier;
+    AstCommon::Id *const m_id;
 }; // end of class Undefine
 
 class Loop : public Directive
@@ -411,17 +411,17 @@ class Loop : public Directive
 public:
 
     Loop (
-        AstCommon::Identifier *iterator_identifier,
+        AstCommon::Id *iterator_id,
         Expression *iteration_count_expression)
         :
-        Directive(iterator_identifier->GetFiLoc(), AT_LOOP),
-        m_iterator_identifier(iterator_identifier),
+        Directive(iterator_id->GetFiLoc(), AT_LOOP),
+        m_iterator_id(iterator_id),
         m_iteration_count_expression(iteration_count_expression),
         m_body(NULL),
         m_iterator_integer_body(NULL),
         m_iterator_integer(NULL)
     {
-        assert(m_iterator_identifier != NULL);
+        assert(m_iterator_id != NULL);
         assert(m_iteration_count_expression != NULL);
     }
     virtual ~Loop ();
@@ -438,7 +438,7 @@ public:
 
 private:
 
-    AstCommon::Identifier *const m_iterator_identifier;
+    AstCommon::Id *const m_iterator_id;
     Expression *const m_iteration_count_expression;
     Body *m_body;
 
@@ -453,18 +453,18 @@ class ForEach : public Directive
 public:
 
     ForEach (
-        AstCommon::Identifier *key_identifier,
-        AstCommon::Identifier *map_identifier)
+        AstCommon::Id *key_id,
+        AstCommon::Id *map_id)
         :
-        Directive(key_identifier->GetFiLoc(), AT_FOR_EACH),
-        m_key_identifier(key_identifier),
-        m_map_identifier(map_identifier),
+        Directive(key_id->GetFiLoc(), AT_FOR_EACH),
+        m_key_id(key_id),
+        m_map_id(map_id),
         m_body(NULL),
         m_key_text_body(NULL),
         m_key_text(NULL)
     {
-        assert(m_key_identifier != NULL);
-        assert(m_map_identifier != NULL);
+        assert(m_key_id != NULL);
+        assert(m_map_id != NULL);
     }
     virtual ~ForEach ();
 
@@ -480,8 +480,8 @@ public:
 
 private:
 
-    AstCommon::Identifier *const m_key_identifier;
-    AstCommon::Identifier *const m_map_identifier;
+    AstCommon::Id *const m_key_id;
+    AstCommon::Id *const m_map_id;
     Body *m_body;
 
     // helper used in Execute() -- delete
@@ -606,12 +606,12 @@ class Sizeof : public Expression
 {
 public:
 
-    Sizeof (AstCommon::Identifier *identifier)
+    Sizeof (AstCommon::Id *id)
         :
-        Expression(identifier->GetFiLoc(), AT_SIZEOF),
-        m_identifier(identifier)
+        Expression(id->GetFiLoc(), AT_SIZEOF),
+        m_id(id)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
     }
     virtual ~Sizeof ();
 
@@ -625,21 +625,21 @@ public:
 
 private:
 
-    AstCommon::Identifier *const m_identifier;
+    AstCommon::Id *const m_id;
 }; // end of class Sizeof
 
 class Dereference : public Expression
 {
 public:
 
-    Dereference (AstCommon::Identifier *identifier, Expression *element_index_expression, DereferenceType dereference_type)
+    Dereference (AstCommon::Id *id, Expression *element_index_expression, DereferenceType dereference_type)
         :
-        Expression(identifier->GetFiLoc(), AT_DEREFERENCE),
-        m_identifier(identifier),
+        Expression(id->GetFiLoc(), AT_DEREFERENCE),
+        m_id(id),
         m_element_index_expression(element_index_expression),
         m_dereference_type(dereference_type)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
         // m_element_index_expression can be NULL
         assert(m_dereference_type == DEREFERENCE_IFF_DEFINED || m_dereference_type == DEREFERENCE_ALWAYS);
     }
@@ -655,20 +655,20 @@ public:
 
 protected:
 
-    Dereference (AstCommon::Identifier *identifier, Expression *element_index_expression, DereferenceType dereference_type, AstType ast_type)
+    Dereference (AstCommon::Id *id, Expression *element_index_expression, DereferenceType dereference_type, AstType ast_type)
         :
-        Expression(identifier->GetFiLoc(), ast_type),
-        m_identifier(identifier),
+        Expression(id->GetFiLoc(), ast_type),
+        m_id(id),
         m_element_index_expression(element_index_expression),
         m_dereference_type(dereference_type)
     {
-        assert(m_identifier != NULL);
+        assert(m_id != NULL);
         // m_element_index_expression can be NULL
     }
 
     Body const *GetDereferencedBody (SymbolTable &symbol_table) const;
 
-    AstCommon::Identifier *const m_identifier;
+    AstCommon::Id *const m_id;
     Expression *const m_element_index_expression;
     DereferenceType const m_dereference_type;
 }; // end of class Dereference
@@ -677,9 +677,9 @@ class IsDefined : public Dereference
 {
 public:
 
-    IsDefined (AstCommon::Identifier *identifier, Expression *element_index_expression)
+    IsDefined (AstCommon::Id *id, Expression *element_index_expression)
         :
-        Dereference(identifier, element_index_expression, DEREFERENCE_ALWAYS, AT_IS_DEFINED)
+        Dereference(id, element_index_expression, DEREFERENCE_ALWAYS, AT_IS_DEFINED)
     { }
 
     virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }

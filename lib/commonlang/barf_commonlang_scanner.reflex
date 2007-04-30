@@ -51,7 +51,7 @@ namespace CommonLang {
             DIRECTIVE_DEFAULT,
             DIRECTIVE_DUMB_CODE_BLOCK,
             DIRECTIVE_ERROR,
-            DIRECTIVE_IDENTIFIER,
+            DIRECTIVE_ID,
             DIRECTIVE_LANGUAGE,
             DIRECTIVE_LEFT,
             DIRECTIVE_MACRO,
@@ -69,7 +69,7 @@ namespace CommonLang {
             DUMB_CODE_BLOCK,
             END_OF_FILE,
             END_PREAMBLE,
-            IDENTIFIER,
+            ID,
             NEWLINE,
             REGEX,
             STRICT_CODE_BLOCK,
@@ -140,7 +140,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DIRECTIVE_DEFAULT",
         "DIRECTIVE_DUMB_CODE_BLOCK",
         "DIRECTIVE_ERROR",
-        "DIRECTIVE_IDENTIFIER",
+        "DIRECTIVE_ID",
         "DIRECTIVE_LANGUAGE",
         "DIRECTIVE_LEFT",
         "DIRECTIVE_MACRO",
@@ -158,7 +158,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DUMB_CODE_BLOCK",
         "END_OF_FILE",
         "END_PREAMBLE",
-        "IDENTIFIER",
+        "ID",
         "NEWLINE",
         "REGEX",
         "STRICT_CODE_BLOCK",
@@ -207,7 +207,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%default") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DEFAULT; }
     if (accepted_string == "%dumb_code_block") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DUMB_CODE_BLOCK; }
     if (accepted_string == "%error") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ERROR; }
-    if (accepted_string == "%identifier") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_IDENTIFIER; }
+    if (accepted_string == "%identifier") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ID; }
     if (accepted_string == "%language") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_LANGUAGE; }
     if (accepted_string == "%left") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_LEFT; }
     if (accepted_string == "%macro") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_MACRO; }
@@ -291,8 +291,8 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 // everything that doesn't need to be escaped in a string literal
 %macro STRING_NORMAL_CHAR   ([^[:cntrl:]"\\]|\t|\n)
 
-// identifier (same as C-style, but can't start or end with an underscore)
-%macro IDENTIFIER           ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
+// id (same as C-style, but can't start or end with an underscore)
+%macro ID           ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
 
 // all operators that should be returned by ascii value
 %macro OPERATOR             ([.:;|])
@@ -359,9 +359,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SetScannerState(State::STRICT_CODE_BLOCK);
     }
 |
-    (%{IDENTIFIER}) // a directive
+    (%{ID}) // a directive
     %language.cpp {
-        SPEW("MAIN - (%{IDENTIFIER}) = " << GetStringLiteral(accepted_string));
+        SPEW("MAIN - (%{ID}) = " << GetStringLiteral(accepted_string));
         return Scanner::ParseDirective(accepted_string, token);
     }
 |
@@ -373,11 +373,11 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         return Token::END_PREAMBLE;
     }
 |
-    ({IDENTIFIER})
+    ({ID})
     %language.cpp {
-        SPEW("MAIN - ({IDENTIFIER}) = " << GetStringLiteral(accepted_string));
-        *token = new AstCommon::Identifier(accepted_string, GetFiLoc());
-        return Token::IDENTIFIER;
+        SPEW("MAIN - ({ID}) = " << GetStringLiteral(accepted_string));
+        *token = new AstCommon::Id(accepted_string, GetFiLoc());
+        return Token::ID;
     }
 |
     ({OPERATOR})

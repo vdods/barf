@@ -24,12 +24,12 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_SIGNED_INTEGER",
         "AT_UNSIGNED_INTEGER",
         "AT_STRING",
-        "AT_IDENTIFIER",
+        "AT_ID",
         "AT_DUMB_CODE_BLOCK",
         "AT_STRICT_CODE_BLOCK",
         "AT_DIRECTIVE",
-        "AT_IDENTIFIER_LIST",
-        "AT_IDENTIFIER_MAP",
+        "AT_ID_LIST",
+        "AT_ID_MAP",
         "AT_DIRECTIVE_LIST"
     };
 
@@ -85,7 +85,7 @@ TextBase::~TextBase ()
 string TextBase::GetDirectiveTypeString (AstType ast_type)
 {
     if (ast_type == AT_STRING) return "%string";
-    if (ast_type == AT_IDENTIFIER) return "%identifier";
+    if (ast_type == AT_ID) return "%identifier";
     if (ast_type == AT_DUMB_CODE_BLOCK) return "%dumb_code_block";
     if (ast_type == AT_STRICT_CODE_BLOCK) return "%strict_code_block";
 
@@ -98,7 +98,7 @@ void TextBase::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent
     stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetStringLiteral(GetText()) << endl;
 }
 
-void Identifier::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void Id::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetText() << endl;
 }
