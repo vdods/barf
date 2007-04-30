@@ -20,9 +20,9 @@ SearchPath::SearchPath ()
 {
     // TODO: config.h-specified path
 
-    char const *data_path = getenv("BARF_DATA_PATH");
-    if (data_path != NULL)
-        AddPath(data_path, "set by BARF_DATA_PATH environment variable");
+    char const *search_path = getenv("BARF_SEARCH_PATH");
+    if (search_path != NULL)
+        AddPath(search_path, "set by BARF_SEARCH_PATH environment variable");
 }
 
 string SearchPath::GetAsString () const

@@ -107,7 +107,7 @@ public:
     void DontAssertOnError ();
 #endif
     // input options
-    void IncludeDataPath (string const &data_path);
+    void IncludeSearchPath (string const &search_path);
     // output options
     void SetOutputBasename (string const &output_basename);
     void SetOutputDir (string const &output_dir);

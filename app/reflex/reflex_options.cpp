@@ -60,11 +60,11 @@ CommandLineOption const Options::ms_option[] =
     // input behavior options
     CommandLineOption(
         'I',
-        "include-data-path",
-        &OptionsBase::IncludeDataPath,
+        "include-search-path",
+        &OptionsBase::IncludeSearchPath,
         "    Adds another entry to the search path for data files (e.g. langspec and\n"
         "    codespec files) with higher search priority than the existing entries.\n"
-        "    By default the search path is the value specified by the BARF_DATA_PATH\n"
+        "    By default the search path is the value specified by the BARF_SEARCH_PATH\n"
         "    enviroment variable.  If no valid directories are specified, the search\n"
         "    path will default to the current working directory."),
     // output behavior options header

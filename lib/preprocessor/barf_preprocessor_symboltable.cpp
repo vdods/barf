@@ -113,12 +113,8 @@ SymbolTable::~SymbolTable ()
 Symbol *SymbolTable::GetSymbol (string const &identifier)
 {
     assert(!identifier.empty());
-
-    SymbolMap::iterator it = m_symbol_map.find(identifier);
-    if (it != m_symbol_map.end())
-        return it->second;
-    else
-        return NULL;
+    SymbolMap::iterator it;
+    return Contains(m_symbol_map, identifier, it) ? it->second : NULL;
 }
 
 ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &identifier, FileLocation const &file_location)
@@ -201,18 +197,15 @@ MapSymbol *SymbolTable::DefineMapSymbol (string const &identifier, FileLocation 
 void SymbolTable::UndefineSymbol (string const &identifier, FileLocation const &file_location)
 {
     assert(!identifier.empty());
-
-    if (GetSymbol(identifier) == NULL)
+    SymbolMap::iterator it;
+    if (Contains(m_symbol_map, identifier, it))
     {
-        EmitWarning(file_location, "macro \"" + identifier + "\" is not currently defined");
-        return;
+        assert(it->second != NULL);
+        delete it->second;
+        m_symbol_map.erase(it);
     }
-
-    SymbolMap::iterator it = m_symbol_map.find(identifier);
-    assert(it != m_symbol_map.end());
-    assert(it->second != NULL);
-    delete it->second;
-    m_symbol_map.erase(it);
+    else
+        EmitWarning(file_location, "macro \"" + identifier + "\" is not currently defined");
 }
 
 void SymbolTable::Print (ostream &stream) const

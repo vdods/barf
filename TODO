@@ -13,9 +13,8 @@
 - move DIRECTORY_SLASH_* into config.h (?)
 - rename OutputDir to OutputDirectory once the other options have been
   deprecated
-- use Contains() everywhere
 - add _barf_version to preprocessor shit?
-- change BARF_DATA_PATH to BARF_SEARCH_PATH (and make all else consistent) ?
+- config.h-specified search path
 - use Sc, Dc and Dsc instead of static_cast, dynamic_cast and DStaticCast
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the

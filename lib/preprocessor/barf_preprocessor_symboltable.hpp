@@ -124,8 +124,8 @@ public:
     BodyMap::const_iterator GetEnd () const { return m_body_map.end(); }
     Body const *GetMapElement (string const &key) const
     {
-        BodyMap::const_iterator it = m_body_map.find(key);
-        return (it != m_body_map.end()) ? it->second : NULL;
+        BodyMap::const_iterator it;
+        return Contains(m_body_map, key, it) ? it->second : NULL;
     }
 
     void SetMapElement (string const &key, Body const *element)

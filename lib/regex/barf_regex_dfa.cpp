@@ -212,8 +212,8 @@ Uint32 GetDfaStateIndex (GraphContext &graph_context, DfaState const &dfa_state,
     assert(!closed_dfa_state.empty());
 
     // if the requested state is already in the map, return the index
-    DfaStateMap::iterator it = graph_context.m_dfa_state_map.find(closed_dfa_state);
-    if (it != graph_context.m_dfa_state_map.end())
+    DfaStateMap::iterator it;
+    if (Contains(graph_context.m_dfa_state_map, closed_dfa_state, it))
         return it->second;
 
     // add the requested state to the state map so that any requests for it
@@ -239,10 +239,10 @@ Uint32 GetDfaStateIndex (GraphContext &graph_context, DfaState const &dfa_state,
         // mapped to key Conditional(0, 0).  in this case, no conditional
         // transitions have to be made from this state -- we can proceed directly
         // with input-atom transitions.
-        TargetStateMap::const_iterator target_it = target_state_map.find(Conditional(0, 0));
-        if ((target_state_map.size() == 1 || disallow_transition_closure)
+        TargetStateMap::const_iterator target_it;
+        if (Contains(target_state_map, Conditional(0, 0), target_it)
             &&
-            target_it != target_state_map.end())
+            (target_state_map.size() == 1 || disallow_transition_closure))
         {
             DfaState const &closed_dfa_state = target_it->second;
             // map of transition atoms onto transitioned-to DFA states

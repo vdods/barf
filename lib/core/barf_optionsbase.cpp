@@ -54,9 +54,9 @@ void OptionsBase::DontAssertOnError ()
 }
 #endif
 
-void OptionsBase::IncludeDataPath (string const &data_path)
+void OptionsBase::IncludeSearchPath (string const &search_path)
 {
-    m_search_path.AddPath(data_path, "set by commandline option");
+    m_search_path.AddPath(search_path, "set by commandline option");
 }
 
 void OptionsBase::SetOutputBasename (string const &output_basename)
