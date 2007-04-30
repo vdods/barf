@@ -47,7 +47,7 @@ private:
 
 inline Trison::Options *GetOptions ()
 {
-    return DStaticCast<Trison::Options *>(g_options);
+    return Dsc<Trison::Options *>(g_options);
 }
 
 #endif // !defined(_TRISON_OPTIONS_HPP_)

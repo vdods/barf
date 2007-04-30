@@ -90,7 +90,7 @@ Parser::Token::Type Parser::Scan ()
 
 %parser_base_assigned_type "AstCommon::Ast *"
 %parser_base_assigned_type_sentinel "NULL"
-%parser_custom_cast "DStaticCast"
+%parser_custom_cast "Dsc"
 
 %token ':' ';' '|'
 %token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"

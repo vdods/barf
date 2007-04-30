@@ -54,7 +54,7 @@ int main (int argc, char **argv)
                 EmitError(FileLocation(GetOptions()->GetInputFilename()), "general reflex parse error");
             else
             {
-                representation = DStaticCast<Reflex::Representation *>(parser.GetAcceptedToken());
+                representation = Dsc<Reflex::Representation *>(parser.GetAcceptedToken());
                 assert(representation != NULL);
                 if (GetOptions()->GetShowSyntaxTree())
                     representation->Print(cerr);

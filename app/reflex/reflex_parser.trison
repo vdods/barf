@@ -151,7 +151,7 @@ Parser::Token::Type Parser::Scan ()
 
 %parser_base_assigned_type "AstCommon::Ast *"
 %parser_base_assigned_type_sentinel "NULL"
-%parser_custom_cast "DStaticCast"
+%parser_custom_cast "Dsc"
 
 %token BAD_TOKEN
 %token DIRECTIVE_LANGUAGE %type "AstCommon::ThrowAway *"
@@ -338,7 +338,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
             if (parser.Parse(regular_expression_map) == Regex::Parser::PRC_SUCCESS)
                 regular_expression_map->Add(
                     macro_identifier->GetText(),
-                    DStaticCast<Regex::RegularExpression *>(parser.GetAcceptedToken()));
+                    Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken()));
             else
                 EmitError(throwaway->GetFileLocation(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
         } catch (string const &exception) {
@@ -480,7 +480,7 @@ rule %type "Rule *"
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
                 if (parser.Parse(m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
-                    regex = DStaticCast<Regex::RegularExpression *>(parser.GetAcceptedToken());
+                    regex = Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken());
                 else
                 {
                     EmitError(

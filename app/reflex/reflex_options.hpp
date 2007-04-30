@@ -37,7 +37,7 @@ private:
 
 inline Reflex::Options *GetOptions ()
 {
-    return DStaticCast<Reflex::Options *>(g_options);
+    return Dsc<Reflex::Options *>(g_options);
 }
 
 #endif // !defined(_REFLEX_OPTIONS_HPP_)

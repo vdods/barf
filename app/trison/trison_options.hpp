@@ -70,7 +70,7 @@ private:
 
 inline Options *GetOptions ()
 {
-    return DStaticCast<Options *>(g_options);
+    return Dsc<Options *>(g_options);
 }
 
 } // end of namespace Trison

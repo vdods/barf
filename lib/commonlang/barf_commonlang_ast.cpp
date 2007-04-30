@@ -103,7 +103,7 @@ void TargetLanguage::ParseLangSpec (string const &tool_prefix, LangSpec::Parser 
             EmitError(FileLocation(m_lang_spec.m_source_path), "general langspec parse error");
         else
         {
-            m_lang_spec.m_specification = DStaticCast<LangSpec::Specification *>(parser.GetAcceptedToken());
+            m_lang_spec.m_specification = Dsc<LangSpec::Specification *>(parser.GetAcceptedToken());
             assert(m_lang_spec.m_specification != NULL);
             if (g_options->GetShowLangSpecSyntaxTree())
                 m_lang_spec.m_specification->Print(cerr);
@@ -141,7 +141,7 @@ void TargetLanguage::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Pa
             else
             {
                 Preprocessor::Body *codespec_body =
-                    DStaticCast<Preprocessor::Body *>(parser.GetAcceptedToken());
+                    Dsc<Preprocessor::Body *>(parser.GetAcceptedToken());
                 assert(codespec_body != NULL);
                 m_code_spec_list.push_back(ParsedCodeSpec(add_codespec, codespec_body, code_spec_filename));
                 if (g_options->GetShowPreprocessorSyntaxTree())

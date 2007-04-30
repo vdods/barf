@@ -54,7 +54,7 @@ public:
     inline explicit Bsp (U *p)
     {
         cerr << __PRETTY_FUNCTION__ << endl;
-        m_real_pointer = DStaticCast<T *>(p);
+        m_real_pointer = Dsc<T *>(p);
         if (m_real_pointer != NULL)
             m_ref_count = new Uint32(1);
         else
@@ -81,7 +81,7 @@ public:
     {
         cerr << __PRETTY_FUNCTION__ << endl;
         Release();
-        m_real_pointer = DStaticCast<T *>(bsp.m_real_pointer);
+        m_real_pointer = Dsc<T *>(bsp.m_real_pointer);
         m_ref_count = bsp.m_ref_count;
         if (m_real_pointer != NULL)
             ++*m_ref_count;
@@ -175,7 +175,7 @@ public:
     inline explicit Isp (U *p)
     {
         cerr << __PRETTY_FUNCTION__ << endl;
-        m_real_pointer = DStaticCast<T *>(p);
+        m_real_pointer = Dsc<T *>(p);
         assert(m_real_pointer == NULL || m_real_pointer->m_ref_count == 1);
     }
 
@@ -198,7 +198,7 @@ public:
     {
         cerr << __PRETTY_FUNCTION__ << endl;
         Release();
-        m_real_pointer = DStaticCast<T *>(bsp.m_real_pointer);
+        m_real_pointer = Dsc<T *>(bsp.m_real_pointer);
         if (m_real_pointer != NULL)
             ++m_real_pointer->m_ref_count;
     }

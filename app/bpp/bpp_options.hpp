@@ -48,7 +48,7 @@ private:
 
 inline Bpp::Options *GetOptions ()
 {
-    return DStaticCast<Bpp::Options *>(g_options);
+    return Dsc<Bpp::Options *>(g_options);
 }
 
 #endif // !defined(_BPP_OPTIONS_HPP_)

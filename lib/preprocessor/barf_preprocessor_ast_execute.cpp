@@ -84,7 +84,7 @@ void DefineArrayElement::Execute (Textifier &textifier, SymbolTable &symbol_tabl
     Body *evaluated_body = new Body();
     evaluated_body->Append(new Text(out.str(), FileLocation::ms_invalid));
 
-    ArraySymbol *array_symbol = DStaticCast<ArraySymbol *>(symbol);
+    ArraySymbol *array_symbol = Dsc<ArraySymbol *>(symbol);
     if (array_symbol == NULL)
         array_symbol = symbol_table.DefineArraySymbol(m_identifier->GetText(), m_identifier->GetFileLocation());
     array_symbol->AppendArrayElement(evaluated_body);
@@ -107,7 +107,7 @@ void DefineMapElement::Execute (Textifier &textifier, SymbolTable &symbol_table)
     Body *evaluated_body = new Body();
     evaluated_body->Append(new Text(out.str(), FileLocation::ms_invalid));
 
-    MapSymbol *map_symbol = DStaticCast<MapSymbol *>(symbol);
+    MapSymbol *map_symbol = Dsc<MapSymbol *>(symbol);
     if (map_symbol == NULL)
         map_symbol = symbol_table.DefineMapSymbol(m_identifier->GetText(), m_identifier->GetFileLocation());
     map_symbol->SetMapElement(m_key->GetText(), evaluated_body);
@@ -178,7 +178,7 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
             EmitError(m_map_identifier->GetFileLocation(), "macro \"" + m_map_identifier->GetText() + "\" is not a map");
             return;
         }
-        map_symbol = DStaticCast<MapSymbol *>(symbol);
+        map_symbol = Dsc<MapSymbol *>(symbol);
     }
 
     if (m_key_text_body == NULL)

@@ -61,7 +61,7 @@ int main (int argc, char **argv)
                 EmitError(FileLocation(GetOptions()->GetInputFilename()), "general trison parse error");
             else
             {
-                representation = DStaticCast<Trison::Representation *>(parser.GetAcceptedToken());
+                representation = Dsc<Trison::Representation *>(parser.GetAcceptedToken());
                 assert(representation != NULL);
                 if (GetOptions()->GetShowSyntaxTree())
                     representation->Print(cerr);

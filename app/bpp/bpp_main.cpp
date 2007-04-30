@@ -80,7 +80,7 @@ int main (int argc, char **argv)
             return 5;
 
         Preprocessor::Body const *body =
-            DStaticCast<Preprocessor::Body const *>(parser.GetAcceptedToken());
+            Dsc<Preprocessor::Body const *>(parser.GetAcceptedToken());
         assert(body != NULL);
 
         if (GetOptions()->GetShowSyntaxTree())

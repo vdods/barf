@@ -490,7 +490,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0000 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
 {
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * target_language = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * target_language = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 174 "barf_langspec_parser.trison"
 
@@ -509,9 +509,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0002 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * language_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * language_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 191 "barf_langspec_parser.trison"
 
@@ -544,11 +544,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0005 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0006 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::String * filename = DStaticCast< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::String * filename = Dsc< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * filename_directive_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Identifier * filename_directive_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 213 "barf_langspec_parser.trison"
 
@@ -571,11 +571,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0006 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0007 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * directive_to_add_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * directive_to_add_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(2 < m_reduction_rule_token_count);
-    ParamType * param_type = DStaticCast< ParamType * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    ParamType * param_type = Dsc< ParamType * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 230 "barf_langspec_parser.trison"
 
@@ -595,15 +595,15 @@ AstCommon::Ast * Parser::ReductionRuleHandler0007 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0008 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway1 = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway1 = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * directive_to_add_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * directive_to_add_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(2 < m_reduction_rule_token_count);
-    ParamType * param_type = DStaticCast< ParamType * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    ParamType * param_type = Dsc< ParamType * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway2 = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::ThrowAway * throwaway2 = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(4 < m_reduction_rule_token_count);
-    AstCommon::TextBase * default_value = DStaticCast< AstCommon::TextBase * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
+    AstCommon::TextBase * default_value = Dsc< AstCommon::TextBase * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
 
 #line 241 "barf_langspec_parser.trison"
 
@@ -634,11 +634,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0008 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0009 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * directive_to_add_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * directive_to_add_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(2 < m_reduction_rule_token_count);
-    ParamType * param_type = DStaticCast< ParamType * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    ParamType * param_type = Dsc< ParamType * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 263 "barf_langspec_parser.trison"
 
@@ -670,7 +670,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Ast * throwaway = DStaticCast< AstCommon::Ast * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Ast * throwaway = Dsc< AstCommon::Ast * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 282 "barf_langspec_parser.trison"
 
@@ -685,7 +685,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0012 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Ast * throwaway = DStaticCast< AstCommon::Ast * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Ast * throwaway = Dsc< AstCommon::Ast * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 288 "barf_langspec_parser.trison"
 
@@ -700,7 +700,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0012 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0013 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Ast * throwaway = DStaticCast< AstCommon::Ast * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Ast * throwaway = Dsc< AstCommon::Ast * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 294 "barf_langspec_parser.trison"
 
@@ -715,7 +715,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0013 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0014 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Ast * throwaway = DStaticCast< AstCommon::Ast * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Ast * throwaway = Dsc< AstCommon::Ast * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 300 "barf_langspec_parser.trison"
 
@@ -730,7 +730,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0014 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0015 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * value = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Identifier * value = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 308 "barf_langspec_parser.trison"
  return value; 
@@ -742,7 +742,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0015 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0016 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::String * value = DStaticCast< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::String * value = Dsc< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 309 "barf_langspec_parser.trison"
  return value; 
@@ -754,7 +754,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0016 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0017 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::DumbCodeBlock * value = DStaticCast< AstCommon::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::DumbCodeBlock * value = Dsc< AstCommon::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 310 "barf_langspec_parser.trison"
  return value; 
@@ -766,7 +766,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0017 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0018 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::StrictCodeBlock * value = DStaticCast< AstCommon::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::StrictCodeBlock * value = Dsc< AstCommon::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 311 "barf_langspec_parser.trison"
  return value; 

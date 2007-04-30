@@ -512,25 +512,25 @@ Grammar::Grammar (
         {
             case AT_PARSER_DIRECTIVE:
                 parser_directive_set->AddDirective(
-                    DStaticCast<ParserDirective *>(directive));
+                    Dsc<ParserDirective *>(directive));
                 break;
 
             case AT_TOKEN_DIRECTIVE:
                 token_directive_list->Append(
-                    DStaticCast<TokenDirective *>(directive));
+                    Dsc<TokenDirective *>(directive));
                 break;
 
             case AT_PRECEDENCE_DIRECTIVE:
             {
                 PrecedenceDirective *precedence_directive =
-                    DStaticCast<PrecedenceDirective *>(directive);
+                    Dsc<PrecedenceDirective *>(directive);
                 precedence_directive->SetPrecedenceLevel(precedence_directive_list->size() + 1);
                 precedence_directive_list->Append(precedence_directive);
                 break;
             }
 
             case AT_START_DIRECTIVE:
-                start_directive = DStaticCast<StartDirective *>(directive);
+                start_directive = Dsc<StartDirective *>(directive);
                 break;
 
             default:

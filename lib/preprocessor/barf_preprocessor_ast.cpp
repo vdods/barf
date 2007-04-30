@@ -323,7 +323,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
             EmitError(GetFileLocation(), "trying to dereference a scalar macro as an array or map");
             return NULL;
         }
-        dereferenced_body = DStaticCast<ScalarSymbol *>(symbol)->GetScalarBody();
+        dereferenced_body = Dsc<ScalarSymbol *>(symbol)->GetScalarBody();
         assert(dereferenced_body != NULL);
     }
     else if (symbol->GetIsArraySymbol())
@@ -341,7 +341,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
             EmitError(GetFileLocation(), out.str());
             return 0;
         }
-        dereferenced_body = DStaticCast<ArraySymbol *>(symbol)->GetArrayElement(Uint32(element_index));
+        dereferenced_body = Dsc<ArraySymbol *>(symbol)->GetArrayElement(Uint32(element_index));
         if (dereferenced_body == NULL)
         {
             ostringstream out;
@@ -359,7 +359,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
             return NULL;
         }
         string element_key = m_element_index_expression->GetTextValue(symbol_table);
-        dereferenced_body = DStaticCast<MapSymbol *>(symbol)->GetMapElement(element_key);
+        dereferenced_body = Dsc<MapSymbol *>(symbol)->GetMapElement(element_key);
         if (dereferenced_body == NULL)
         {
             EmitError(

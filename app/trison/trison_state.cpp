@@ -179,7 +179,7 @@ void State::PrintTransitions (ostream &stream, bool is_last_state, StateMachine 
         else
         {
             TokenIdentifierCharacter const *token_identifier_character =
-                DStaticCast<TokenIdentifierCharacter const *>(token_identifier);
+                Dsc<TokenIdentifierCharacter const *>(token_identifier);
             string token_string("Token::Type(");
             token_string += GetCharacterLiteral(token_identifier_character->GetCharacter());
             token_string += ')';

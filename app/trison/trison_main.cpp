@@ -66,7 +66,7 @@ int main (int argc, char **argv)
 
         Parser::ParserReturnCode parser_return_code = parser.Parse();
 
-        Grammar *parsed_grammar = DStaticCast<Grammar *>(parser.GetAcceptedToken());
+        Grammar *parsed_grammar = Dsc<Grammar *>(parser.GetAcceptedToken());
         assert(parsed_grammar != NULL);
 
         if (g_errors_encountered || parser_return_code != Parser::PRC_SUCCESS)

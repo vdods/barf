@@ -113,7 +113,7 @@ public:
         bool GetHasData () const { return m_data != NULL; }
         Data const &GetData () const { assert(GetHasData()); return *m_data; }
         template <typename DataType>
-        DataType const &GetDataAs () const { assert(GetHasData()); return *DStaticCast<DataType const *>(m_data); }
+        DataType const &GetDataAs () const { assert(GetHasData()); return *Dsc<DataType const *>(m_data); }
         Uint32 GetTransitionCount () const { return m_transition_set.size(); }
         TransitionSet::const_iterator GetTransitionSetBegin () const { return m_transition_set.begin(); }
         TransitionSet::const_iterator GetTransitionSetEnd () const { return m_transition_set.end(); }

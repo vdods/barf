@@ -253,7 +253,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("BLOCK_COMMENT - (\\*/) = " << GetStringLiteral(accepted_string));
         if (*token != NULL)
-            DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+            Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         SetScannerState(m_return_state);
     
 #line 260 "barf_commonlang_scanner.cpp"
@@ -268,7 +268,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("BLOCK_COMMENT - ([^*]+|\\*) = " << GetStringLiteral(accepted_string));
         if (*token != NULL)
-            DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+            Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         IncrementLineNumber(GetNewlineCount(accepted_string));
     
 #line 275 "barf_commonlang_scanner.cpp"
@@ -455,7 +455,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
         SetScannerState(State::STRICT_CODE_BLOCK);
     
 #line 462 "barf_commonlang_scanner.cpp"
@@ -504,7 +504,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("DUMB_CODE_BLOCK - ([^%]+) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
     
 #line 510 "barf_commonlang_scanner.cpp"
 
@@ -746,7 +746,7 @@ Scanner::Token::Type Scanner::Scan (
             return Token::REGEX;
         }
         --m_regex_paren_level;
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
     
 #line 752 "barf_commonlang_scanner.cpp"
 
@@ -761,7 +761,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("REGULAR_EXPRESSION - (\\() = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         ++m_regex_paren_level;
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
     
 #line 767 "barf_commonlang_scanner.cpp"
 
@@ -775,7 +775,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("REGULAR_EXPRESSION - (\\[) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
         m_regex_bracket_level = 0;
         SetScannerState(State::REGULAR_EXPRESSION_BRACKET_EXPRESSION);
     
@@ -792,7 +792,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("REGULAR_EXPRESSION - (([^()\\[\\]{}\\\\)|\\\\{ANYTHING})+) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
     
 #line 798 "barf_commonlang_scanner.cpp"
 
@@ -823,7 +823,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\]) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
         if (m_regex_bracket_level == 0)
             SetScannerState(State::REGULAR_EXPRESSION);
         else
@@ -841,7 +841,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\[) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
         ++m_regex_bracket_level;
     
 #line 848 "barf_commonlang_scanner.cpp"
@@ -857,7 +857,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (([^\\[\\]\\\\]|\\\\{ANYTHING})+) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
     
 #line 863 "barf_commonlang_scanner.cpp"
 
@@ -894,7 +894,7 @@ Scanner::Token::Type Scanner::Scan (
             return Token::STRICT_CODE_BLOCK;
         }
         --m_code_block_bracket_level;
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
     
 #line 900 "barf_commonlang_scanner.cpp"
 
@@ -908,7 +908,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRICT_CODE_BLOCK - (\\{) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         ++m_code_block_bracket_level;
     
 #line 915 "barf_commonlang_scanner.cpp"
@@ -923,7 +923,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRICT_CODE_BLOCK - (') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         SetScannerState(State::CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     
 #line 930 "barf_commonlang_scanner.cpp"
@@ -938,7 +938,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRICT_CODE_BLOCK - (\") = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         SetScannerState(State::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     
 #line 945 "barf_commonlang_scanner.cpp"
@@ -953,7 +953,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRICT_CODE_BLOCK - (/[*]) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         m_return_state = State::STRICT_CODE_BLOCK;
         SetScannerState(State::BLOCK_COMMENT);
     
@@ -969,7 +969,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRICT_CODE_BLOCK - (//.*) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
     
 #line 975 "barf_commonlang_scanner.cpp"
 
@@ -984,7 +984,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("STRICT_CODE_BLOCK - ([^{}'\"/]+|.) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
     
 #line 990 "barf_commonlang_scanner.cpp"
 
@@ -1021,7 +1021,7 @@ Scanner::Token::Type Scanner::Scan (
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
             EmitError(GetFileLocation(), "octal character literal value out of range (" + accepted_string + ")");
-        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+        Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
     
 #line 1027 "barf_commonlang_scanner.cpp"
 
@@ -1041,7 +1041,7 @@ Scanner::Token::Type Scanner::Scan (
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
             EmitError(GetFileLocation(), "hexadecimal character literal value out of range (" + accepted_string + ")");
-        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+        Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
     
 #line 1047 "barf_commonlang_scanner.cpp"
 
@@ -1057,7 +1057,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(GetEscapedChar(Uint8(accepted_string[1])));
+        Dsc<AstCommon::String *>(*token)->AppendCharacter(GetEscapedChar(Uint8(accepted_string[1])));
     
 #line 1063 "barf_commonlang_scanner.cpp"
 
@@ -1072,7 +1072,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("STRING_LITERAL_GUTS - ({STRING_NORMAL_CHAR}+) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::TextBase *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::TextBase *>(*token)->AppendText(accepted_string);
     
 #line 1078 "barf_commonlang_scanner.cpp"
 
@@ -1132,7 +1132,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^\"\\\\]|\\\\{ANYTHING})*\") = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
         IncrementLineNumber(GetNewlineCount(accepted_string));
         SetScannerState(State::STRICT_CODE_BLOCK);
     

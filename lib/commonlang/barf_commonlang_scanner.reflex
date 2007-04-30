@@ -420,7 +420,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("BLOCK_COMMENT - (\\*/) = " << GetStringLiteral(accepted_string));
         if (*token != NULL)
-            DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+            Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         SetScannerState(m_return_state);
     }
 |
@@ -428,7 +428,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("BLOCK_COMMENT - ([^*]+|\\*) = " << GetStringLiteral(accepted_string));
         if (*token != NULL)
-            DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+            Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         IncrementLineNumber(GetNewlineCount(accepted_string));
     }
 |
@@ -552,7 +552,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
             EmitError(GetFileLocation(), "octal character literal value out of range (" + accepted_string + ")");
-        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+        Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
     }
 |
     ({HEX_CHAR})
@@ -565,7 +565,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
             EmitError(GetFileLocation(), "hexadecimal character literal value out of range (" + accepted_string + ")");
-        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
+        Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
     }
 |
     ({STRING_ESC_CHAR})
@@ -574,7 +574,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        DStaticCast<AstCommon::String *>(*token)->AppendCharacter(GetEscapedChar(Uint8(accepted_string[1])));
+        Dsc<AstCommon::String *>(*token)->AppendCharacter(GetEscapedChar(Uint8(accepted_string[1])));
     }
 |
     ({STRING_NORMAL_CHAR}+)
@@ -582,7 +582,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("STRING_LITERAL_GUTS - ({STRING_NORMAL_CHAR}+) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::TextBase *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::TextBase *>(*token)->AppendText(accepted_string);
     }
 |
     (") // the closing quote for the string literal
@@ -623,7 +623,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
             return Token::REGEX;
         }
         --m_regex_paren_level;
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
     }
 |
     (\() // opening delimeter for a sub-expression
@@ -631,14 +631,14 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("REGULAR_EXPRESSION - (\\() = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         ++m_regex_paren_level;
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
     }
 |
     (\[) // opening delimiter for a bracket expression
     %language.cpp {
         SPEW("REGULAR_EXPRESSION - (\\[) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
         m_regex_bracket_level = 0;
         SetScannerState(State::REGULAR_EXPRESSION_BRACKET_EXPRESSION);
     }
@@ -648,7 +648,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("REGULAR_EXPRESSION - (([^()\\[\\]{}\\\\)|\\\\{ANYTHING})+) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
     }
 |
     (\\?\z) // end of file (which may be preceded by a backslash)
@@ -668,7 +668,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\]) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
         if (m_regex_bracket_level == 0)
             SetScannerState(State::REGULAR_EXPRESSION);
         else
@@ -679,7 +679,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\[) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
         ++m_regex_bracket_level;
     }
 |
@@ -688,7 +688,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (([^\\[\\]\\\\]|\\\\{ANYTHING})+) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::String *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::String *>(*token)->AppendText(accepted_string);
     }
 |
     (\\?\z) // end of file (which may be preceded by a backslash)
@@ -717,7 +717,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("DUMB_CODE_BLOCK - ([^%]+) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
     }
 |
     (\z)
@@ -743,14 +743,14 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
             return Token::STRICT_CODE_BLOCK;
         }
         --m_code_block_bracket_level;
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
     }
 |
     (\{) // opening delimiter for a code block
     %language.cpp {
         SPEW("STRICT_CODE_BLOCK - (\\{) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         ++m_code_block_bracket_level;
     }
 |
@@ -758,7 +758,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("STRICT_CODE_BLOCK - (') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         SetScannerState(State::CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     }
 |
@@ -766,7 +766,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("STRICT_CODE_BLOCK - (\") = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         SetScannerState(State::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     }
 |
@@ -774,7 +774,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("STRICT_CODE_BLOCK - (/[*]) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
         m_return_state = State::STRICT_CODE_BLOCK;
         SetScannerState(State::BLOCK_COMMENT);
     }
@@ -783,7 +783,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("STRICT_CODE_BLOCK - (//.*) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
     }
 |
     ([^{}'"/]+|.) // any non-delimiter char or just any single char
@@ -791,7 +791,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("STRICT_CODE_BLOCK - ([^{}'\"/]+|.) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::CodeBlock *>(*token)->AppendText(accepted_string);
     }
 |
     (\z) // end of file
@@ -812,7 +812,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("CHARACTER_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        DStaticCast<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
         SetScannerState(State::STRICT_CODE_BLOCK);
     }
 |
@@ -834,7 +834,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %language.cpp {
         SPEW("STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^\"\\\\]|\\\\{ANYTHING})*\") = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        DStaticCast<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
+        Dsc<AstCommon::StrictCodeBlock *>(*token)->AppendText(accepted_string);
         IncrementLineNumber(GetNewlineCount(accepted_string));
         SetScannerState(State::STRICT_CODE_BLOCK);
     }

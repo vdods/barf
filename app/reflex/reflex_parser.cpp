@@ -495,15 +495,15 @@ AstCommon::Ast * Parser::ReductionRuleHandler0000 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
 {
     assert(1 < m_reduction_rule_token_count);
-    CommonLang::TargetLanguageMap * target_language_map = DStaticCast< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    CommonLang::TargetLanguageMap * target_language_map = Dsc< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(3 < m_reduction_rule_token_count);
-    Regex::RegularExpressionMap * regular_expression_map = DStaticCast< Regex::RegularExpressionMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Regex::RegularExpressionMap * regular_expression_map = Dsc< Regex::RegularExpressionMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(4 < m_reduction_rule_token_count);
-    StartDirective * start_directive = DStaticCast< StartDirective * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
+    StartDirective * start_directive = Dsc< StartDirective * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
     assert(5 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
     assert(6 < m_reduction_rule_token_count);
-    ScannerStateMap * scanner_state_map = DStaticCast< ScannerStateMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 6]);
+    ScannerStateMap * scanner_state_map = Dsc< ScannerStateMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 6]);
 
 #line 188 "reflex_parser.trison"
 
@@ -539,9 +539,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0002 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    CommonLang::TargetLanguageMap * target_language_map = DStaticCast< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    CommonLang::TargetLanguageMap * target_language_map = Dsc< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 222 "reflex_parser.trison"
 
@@ -572,7 +572,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0003 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0004 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 237 "reflex_parser.trison"
 
@@ -589,9 +589,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0004 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0005 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    CommonLang::TargetLanguageMap * target_language_map = DStaticCast< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    CommonLang::TargetLanguageMap * target_language_map = Dsc< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * target_language_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * target_language_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 248 "reflex_parser.trison"
 
@@ -621,7 +621,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0006 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0007 ()
 {
     assert(1 < m_reduction_rule_token_count);
-    CommonLang::LanguageDirective * language_directive = DStaticCast< CommonLang::LanguageDirective * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    CommonLang::LanguageDirective * language_directive = Dsc< CommonLang::LanguageDirective * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 269 "reflex_parser.trison"
 
@@ -652,13 +652,13 @@ AstCommon::Ast * Parser::ReductionRuleHandler0008 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0009 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * language_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Identifier * language_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
     assert(4 < m_reduction_rule_token_count);
-    AstCommon::Identifier * language_directive = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
+    AstCommon::Identifier * language_directive = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
     assert(5 < m_reduction_rule_token_count);
-    AstCommon::TextBase * param = DStaticCast< AstCommon::TextBase * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
+    AstCommon::TextBase * param = Dsc< AstCommon::TextBase * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 287 "reflex_parser.trison"
 
@@ -673,11 +673,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0009 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * language_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Identifier * language_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
     assert(4 < m_reduction_rule_token_count);
-    AstCommon::Identifier * language_directive = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
+    AstCommon::Identifier * language_directive = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
 
 #line 293 "reflex_parser.trison"
 
@@ -695,9 +695,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * language_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Identifier * language_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 302 "reflex_parser.trison"
 
@@ -714,7 +714,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0012 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 310 "reflex_parser.trison"
 
@@ -730,7 +730,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0012 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0013 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Identifier * value = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::Identifier * value = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 319 "reflex_parser.trison"
  return value; 
@@ -742,7 +742,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0013 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0014 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::String * value = DStaticCast< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::String * value = Dsc< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 320 "reflex_parser.trison"
  return value; 
@@ -754,7 +754,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0014 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0015 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::StrictCodeBlock * value = DStaticCast< AstCommon::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::StrictCodeBlock * value = Dsc< AstCommon::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 321 "reflex_parser.trison"
  return value; 
@@ -766,7 +766,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0015 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0016 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::DumbCodeBlock * value = DStaticCast< AstCommon::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::DumbCodeBlock * value = Dsc< AstCommon::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 322 "reflex_parser.trison"
  return value; 
@@ -788,13 +788,13 @@ AstCommon::Ast * Parser::ReductionRuleHandler0017 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0018 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    Regex::RegularExpressionMap * regular_expression_map = DStaticCast< Regex::RegularExpressionMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    Regex::RegularExpressionMap * regular_expression_map = Dsc< Regex::RegularExpressionMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * macro_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Identifier * macro_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::String * macro_regex_string = DStaticCast< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::String * macro_regex_string = Dsc< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 333 "reflex_parser.trison"
 
@@ -805,7 +805,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0018 ()
             if (parser.Parse(regular_expression_map) == Regex::Parser::PRC_SUCCESS)
                 regular_expression_map->Add(
                     macro_identifier->GetText(),
-                    DStaticCast<Regex::RegularExpression *>(parser.GetAcceptedToken()));
+                    Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken()));
             else
                 EmitError(throwaway->GetFileLocation(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
         } catch (string const &exception) {
@@ -839,11 +839,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0019 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0020 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    Regex::RegularExpressionMap * regular_expression_map = DStaticCast< Regex::RegularExpressionMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    Regex::RegularExpressionMap * regular_expression_map = Dsc< Regex::RegularExpressionMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * macro_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Identifier * macro_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 362 "reflex_parser.trison"
 
@@ -860,9 +860,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0020 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0021 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    Regex::RegularExpressionMap * regular_expression_map = DStaticCast< Regex::RegularExpressionMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    Regex::RegularExpressionMap * regular_expression_map = Dsc< Regex::RegularExpressionMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 370 "reflex_parser.trison"
 
@@ -878,9 +878,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0021 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0022 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * start_state_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * start_state_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 384 "reflex_parser.trison"
 
@@ -895,7 +895,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0022 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0023 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 390 "reflex_parser.trison"
 
@@ -911,9 +911,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0023 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0024 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    ScannerStateMap * scanner_state_map = DStaticCast< ScannerStateMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    ScannerStateMap * scanner_state_map = Dsc< ScannerStateMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    ScannerState * scanner_state = DStaticCast< ScannerState * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    ScannerState * scanner_state = Dsc< ScannerState * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 404 "reflex_parser.trison"
 
@@ -941,11 +941,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0025 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0026 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * scanner_state_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * scanner_state_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(3 < m_reduction_rule_token_count);
-    RuleList * rule_list = DStaticCast< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    RuleList * rule_list = Dsc< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 419 "reflex_parser.trison"
 
@@ -960,9 +960,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0026 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0027 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::Identifier * scanner_state_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::Identifier * scanner_state_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 425 "reflex_parser.trison"
 
@@ -978,9 +978,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0027 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0028 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(3 < m_reduction_rule_token_count);
-    RuleList * rule_list = DStaticCast< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    RuleList * rule_list = Dsc< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 432 "reflex_parser.trison"
 
@@ -997,7 +997,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0028 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0029 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    RuleList * rule_list = DStaticCast< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    RuleList * rule_list = Dsc< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 443 "reflex_parser.trison"
 
@@ -1023,9 +1023,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0030 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0031 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    RuleList * rule_list = DStaticCast< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    RuleList * rule_list = Dsc< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
-    Rule * rule = DStaticCast< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Rule * rule = Dsc< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 456 "reflex_parser.trison"
 
@@ -1040,7 +1040,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0031 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0032 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    Rule * rule = DStaticCast< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    Rule * rule = Dsc< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 462 "reflex_parser.trison"
 
@@ -1056,9 +1056,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0032 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0033 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::String * regex_string = DStaticCast< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::String * regex_string = Dsc< AstCommon::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    CommonLang::RuleHandlerMap * rule_handler_map = DStaticCast< CommonLang::RuleHandlerMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    CommonLang::RuleHandlerMap * rule_handler_map = Dsc< CommonLang::RuleHandlerMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 472 "reflex_parser.trison"
 
@@ -1072,7 +1072,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0033 ()
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
                 if (parser.Parse(m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
-                    regex = DStaticCast<Regex::RegularExpression *>(parser.GetAcceptedToken());
+                    regex = Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken());
                 else
                 {
                     EmitError(
@@ -1124,9 +1124,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0033 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0034 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    CommonLang::RuleHandlerMap * rule_handler_map = DStaticCast< CommonLang::RuleHandlerMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    CommonLang::RuleHandlerMap * rule_handler_map = Dsc< CommonLang::RuleHandlerMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    CommonLang::RuleHandler * rule_handler = DStaticCast< CommonLang::RuleHandler * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    CommonLang::RuleHandler * rule_handler = Dsc< CommonLang::RuleHandler * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 532 "reflex_parser.trison"
 
@@ -1154,11 +1154,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0035 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0036 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Identifier * language_identifier = DStaticCast< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::Identifier * language_identifier = Dsc< AstCommon::Identifier * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::CodeBlock * code_block = DStaticCast< AstCommon::CodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    AstCommon::CodeBlock * code_block = Dsc< AstCommon::CodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 547 "reflex_parser.trison"
 
@@ -1178,9 +1178,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0036 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0037 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::CodeBlock * code_block = DStaticCast< AstCommon::CodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    AstCommon::CodeBlock * code_block = Dsc< AstCommon::CodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 558 "reflex_parser.trison"
 
@@ -1198,7 +1198,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0037 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0038 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::ThrowAway * throwaway = DStaticCast< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::ThrowAway * throwaway = Dsc< AstCommon::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 567 "reflex_parser.trison"
 
@@ -1215,7 +1215,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0038 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0039 ()
 {
     assert(1 < m_reduction_rule_token_count);
-    AstCommon::CodeBlock * code_block = DStaticCast< AstCommon::CodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    AstCommon::CodeBlock * code_block = Dsc< AstCommon::CodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 575 "reflex_parser.trison"
 
@@ -1232,7 +1232,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0039 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0040 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::DumbCodeBlock * dumb_code_block = DStaticCast< AstCommon::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::DumbCodeBlock * dumb_code_block = Dsc< AstCommon::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 589 "reflex_parser.trison"
  return dumb_code_block; 
@@ -1244,7 +1244,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0040 ()
 AstCommon::Ast * Parser::ReductionRuleHandler0041 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::StrictCodeBlock * strict_code_block = DStaticCast< AstCommon::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    AstCommon::StrictCodeBlock * strict_code_block = Dsc< AstCommon::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 591 "reflex_parser.trison"
  return strict_code_block; 
