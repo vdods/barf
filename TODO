@@ -14,13 +14,14 @@
 - rename OutputDir to OutputDirectory once the other options have been
   deprecated
 - add _barf_version to preprocessor shit?
+- add langspec versions -- so you can have multiple coexisting versions of
+  the same target but at different versions.
 - config.h-specified search path
-- use Sc, Dc and Dsc instead of static_cast, dynamic_cast and DStaticCast
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
-- rename stuff to be shorter?  e.g. FileLocation -> FiLoc, Identifier -> Id
-  Character -> Char, String -> Str, etc.
+- rename stuff to be shorter?  e.g. Identifier -> Id, Character -> Char, 
+  String -> Str, etc.
 - move all AST usage to smart pointers to ease-ify stuff and to escape the
   woes of memory leaks (not like it matters that much in this context) --
   or do comprehensive deleting of stuff (which would probably set a better

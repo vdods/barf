@@ -87,7 +87,7 @@ void TargetLanguage::Add (LanguageDirective *language_directive)
     if (m_is_enabled_for_code_generation)
         Add(language_directive->m_directive_identifier->GetText(), language_directive);
     else
-        EmitWarning(language_directive->GetFileLocation(), "undeclared target language \"" + language_directive->m_language_identifier->GetText() + "\"");
+        EmitWarning(language_directive->GetFiLoc(), "undeclared target language \"" + language_directive->m_language_identifier->GetText() + "\"");
 }
 
 void TargetLanguage::ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser) const
@@ -96,11 +96,11 @@ void TargetLanguage::ParseLangSpec (string const &tool_prefix, LangSpec::Parser 
         string filename(tool_prefix + '.' + m_language_identifier + ".langspec");
         m_lang_spec.m_source_path = g_options->GetFilePath(filename);
         if (m_lang_spec.m_source_path.empty())
-            EmitError(FileLocation(g_options->GetInputFilename()), "file \"" + filename + "\" not found in search path " + g_options->GetSearchPathString());
+            EmitError(FiLoc(g_options->GetInputFilename()), "file \"" + filename + "\" not found in search path " + g_options->GetSearchPathString());
         else if (!parser.OpenFile(m_lang_spec.m_source_path))
-            EmitError(FileLocation(g_options->GetInputFilename()), "unable to open file \"" + m_lang_spec.m_source_path + "\" for reading");
+            EmitError(FiLoc(g_options->GetInputFilename()), "unable to open file \"" + m_lang_spec.m_source_path + "\" for reading");
         else if (parser.Parse() != LangSpec::Parser::PRC_SUCCESS)
-            EmitError(FileLocation(m_lang_spec.m_source_path), "general langspec parse error");
+            EmitError(FiLoc(m_lang_spec.m_source_path), "general langspec parse error");
         else
         {
             m_lang_spec.m_specification = Dsc<LangSpec::Specification *>(parser.GetAcceptedToken());
@@ -133,11 +133,11 @@ void TargetLanguage::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Pa
             string filename(tool_prefix + '.' + m_language_identifier + '.' + add_codespec->m_filename->GetText() + ".codespec");
             string code_spec_filename(g_options->GetFilePath(filename));
             if (code_spec_filename.empty())
-                EmitError(FileLocation(m_lang_spec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetSearchPathString());
+                EmitError(FiLoc(m_lang_spec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetSearchPathString());
             else if (!parser.OpenFile(code_spec_filename))
-                EmitError(FileLocation(m_lang_spec.m_source_path), "unable to open file \"" + code_spec_filename + "\" for reading");
+                EmitError(FiLoc(m_lang_spec.m_source_path), "unable to open file \"" + code_spec_filename + "\" for reading");
             else if (parser.Parse() != Preprocessor::Parser::PRC_SUCCESS)
-                EmitError(FileLocation(code_spec_filename), "general preprocessor parse error");
+                EmitError(FiLoc(code_spec_filename), "general preprocessor parse error");
             else
             {
                 Preprocessor::Body *codespec_body =
@@ -166,7 +166,7 @@ void TargetLanguage::GenerateCode (Preprocessor::SymbolTable const &symbol_table
 
     target_language_symbol_table.DefineScalarSymbolAsText(
         "_creation_timestamp",
-        FileLocation::ms_invalid,
+        FiLoc::ms_invalid,
         GetCurrentDateAndTimeString());
 
     for (ParsedCodeSpecList::const_iterator it = m_code_spec_list.begin(),
@@ -181,18 +181,18 @@ void TargetLanguage::GenerateCode (Preprocessor::SymbolTable const &symbol_table
         ofstream stream;
         stream.open(filename.c_str());
         if (!stream.is_open())
-            EmitError(FileLocation(g_options->GetInputFilename()), "could not open file \"" + filename + "\" for writing");
+            EmitError(FiLoc(g_options->GetInputFilename()), "could not open file \"" + filename + "\" for writing");
         else
         {
             Preprocessor::SymbolTable code_spec_symbol_table(target_language_symbol_table);
 
             code_spec_symbol_table.DefineScalarSymbolAsText(
                 "_codespec_directory",
-                FileLocation::ms_invalid,
+                FiLoc::ms_invalid,
                 GetDirectoryPortion(code_spec.m_source_path));
             code_spec_symbol_table.DefineScalarSymbolAsText(
                 "_codespec_filename",
-                FileLocation::ms_invalid,
+                FiLoc::ms_invalid,
                 GetFilenamePortion(code_spec.m_source_path));
 
             try {
@@ -235,7 +235,7 @@ void TargetLanguage::CheckAgainstLangSpec (LangSpec::Specification const &specif
         assert(language_directive != NULL);
         if (specification.m_add_directive_map->GetElement(language_directive->m_directive_identifier->GetText()) == NULL)
             EmitError(
-                language_directive->GetFileLocation(),
+                language_directive->GetFiLoc(),
                 "directive " + language_directive->GetDirectiveString() +
                 " does not exist in langspec for " + m_language_identifier);
     }
@@ -248,28 +248,28 @@ void TargetLanguage::CheckAgainstAddDirective (
     if (language_directive == NULL)
     {
         if (add_directive.GetIsRequired())
-            EmitError(FileLocation(g_options->GetInputFilename()), "missing required directive %language." + m_language_identifier + "." + add_directive.m_directive_to_add_identifier->GetText());
+            EmitError(FiLoc(g_options->GetInputFilename()), "missing required directive %language." + m_language_identifier + "." + add_directive.m_directive_to_add_identifier->GetText());
     }
     else if (add_directive.m_param_type == AstCommon::AT_NONE)
     {
         if (language_directive->m_directive_value != NULL)
-            EmitError(language_directive->GetFileLocation(), "superfluous parameter given for directive %language." + language_directive->m_language_identifier->GetText() + "." + add_directive.m_directive_to_add_identifier->GetText() + " which does not accept a parameter");
+            EmitError(language_directive->GetFiLoc(), "superfluous parameter given for directive %language." + language_directive->m_language_identifier->GetText() + "." + add_directive.m_directive_to_add_identifier->GetText() + " which does not accept a parameter");
     }
     else if (language_directive->m_directive_value->GetAstType() != add_directive.m_param_type)
     {
-        EmitError(language_directive->GetFileLocation(), "directive %language." + language_directive->m_language_identifier->GetText() + "." + add_directive.m_directive_to_add_identifier->GetText() + " expects " + LangSpec::ParamType::GetParamTypeString(add_directive.m_param_type) + ", got " + LangSpec::ParamType::GetParamTypeString(language_directive->m_directive_value->GetAstType()));
+        EmitError(language_directive->GetFiLoc(), "directive %language." + language_directive->m_language_identifier->GetText() + "." + add_directive.m_directive_to_add_identifier->GetText() + " expects " + LangSpec::ParamType::GetParamTypeString(add_directive.m_param_type) + ", got " + LangSpec::ParamType::GetParamTypeString(language_directive->m_directive_value->GetAstType()));
     }
 }
 
 void TargetLanguage::GenerateTargetLanguageSymbols (Preprocessor::SymbolTable &symbol_table) const
 {
-    symbol_table.DefineScalarSymbolAsText("_source_directory", FileLocation::ms_invalid, GetDirectoryPortion(m_source_path));
-    symbol_table.DefineScalarSymbolAsText("_source_filename", FileLocation::ms_invalid, GetFilenamePortion(m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_source_directory", FiLoc::ms_invalid, GetDirectoryPortion(m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_source_filename", FiLoc::ms_invalid, GetFilenamePortion(m_source_path));
 
-    symbol_table.DefineScalarSymbolAsText("_langspec_directory", FileLocation::ms_invalid, GetDirectoryPortion(m_lang_spec.m_source_path));
-    symbol_table.DefineScalarSymbolAsText("_langspec_filename", FileLocation::ms_invalid, GetFilenamePortion(m_lang_spec.m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_langspec_directory", FiLoc::ms_invalid, GetDirectoryPortion(m_lang_spec.m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_langspec_filename", FiLoc::ms_invalid, GetFilenamePortion(m_lang_spec.m_source_path));
 
-    symbol_table.DefineScalarSymbolAsText("_output_directory", FileLocation::ms_invalid, g_options->GetOutputDir());
+    symbol_table.DefineScalarSymbolAsText("_output_directory", FiLoc::ms_invalid, g_options->GetOutputDir());
 
     // define symbols for each of the specified language directives
     for (const_iterator it = begin(),
@@ -282,18 +282,18 @@ void TargetLanguage::GenerateTargetLanguageSymbols (Preprocessor::SymbolTable &s
         Preprocessor::ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol(
                 language_directive->m_directive_identifier->GetText(),
-                language_directive->GetFileLocation());
+                language_directive->GetFiLoc());
 
         if (language_directive->m_directive_value != NULL)
         {
-            FileLocation const &source_file_location =
+            FiLoc const &source_filoc =
                 language_directive->m_directive_value->GetIsCodeBlock() ?
-                language_directive->m_directive_value->GetFileLocation() :
-                FileLocation::ms_invalid;
-            symbol->SetScalarBody(new Preprocessor::Body(language_directive->m_directive_value->GetText(), source_file_location));
+                language_directive->m_directive_value->GetFiLoc() :
+                FiLoc::ms_invalid;
+            symbol->SetScalarBody(new Preprocessor::Body(language_directive->m_directive_value->GetText(), source_filoc));
         }
         else
-            symbol->SetScalarBody(new Preprocessor::Body(gs_empty_string, FileLocation::ms_invalid));
+            symbol->SetScalarBody(new Preprocessor::Body(gs_empty_string, FiLoc::ms_invalid));
     }
 
     // define symbols for unspecified language directives which have
@@ -311,8 +311,8 @@ void TargetLanguage::GenerateTargetLanguageSymbols (Preprocessor::SymbolTable &s
             Preprocessor::ScalarSymbol *symbol =
                 symbol_table.DefineScalarSymbol(
                     directive_identifier,
-                    FileLocation::ms_invalid);
-            symbol->SetScalarBody(new Preprocessor::Body(add_directive->GetDefaultValue()->GetText(), FileLocation::ms_invalid));
+                    FiLoc::ms_invalid);
+            symbol->SetScalarBody(new Preprocessor::Body(add_directive->GetDefaultValue()->GetText(), FiLoc::ms_invalid));
         }
     }
 }

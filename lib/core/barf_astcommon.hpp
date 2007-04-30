@@ -17,7 +17,7 @@
 #include <map>
 #include <vector>
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 #include "barf_message.hpp"
 #include "barf_util.hpp"
 
@@ -52,14 +52,14 @@ class Ast
 {
 public:
 
-    Ast (FileLocation const &file_location, AstType ast_type)
+    Ast (FiLoc const &filoc, AstType ast_type)
         :
-        m_file_location(file_location),
+        m_filoc(filoc),
         m_ast_type(ast_type)
     { }
     virtual ~Ast () { }
 
-    inline FileLocation const &GetFileLocation () const { return m_file_location; }
+    inline FiLoc const &GetFiLoc () const { return m_filoc; }
     inline AstType GetAstType () const { return m_ast_type; }
 
     virtual bool GetIsCodeBlock () const { return false; }
@@ -68,15 +68,15 @@ public:
 
 protected:
 
-    inline void SetFileLocation (FileLocation const &file_location)
+    inline void SetFiLoc (FiLoc const &filoc)
     {
-        assert(file_location.GetHasLineNumber());
-        m_file_location = file_location;
+        assert(filoc.GetHasLineNumber());
+        m_filoc = filoc;
     }
 
 private:
 
-    FileLocation m_file_location;
+    FiLoc m_filoc;
     AstType const m_ast_type;
 }; // end of class Ast
 
@@ -129,15 +129,15 @@ struct AstList : public Ast, public List<ElementType>
 
     AstList (AstType ast_type)
         :
-        Ast(FileLocation::ms_invalid, ast_type),
+        Ast(FiLoc::ms_invalid, ast_type),
         List<ElementType>()
     { }
-    AstList (FileLocation const &file_location, AstType ast_type)
+    AstList (FiLoc const &filoc, AstType ast_type)
         :
-        Ast(file_location, ast_type),
+        Ast(filoc, ast_type),
         List<ElementType>()
     {
-        assert(file_location.GetHasLineNumber());
+        assert(filoc.GetHasLineNumber());
     }
 
     virtual void Append (ElementType *element)
@@ -146,8 +146,8 @@ struct AstList : public Ast, public List<ElementType>
         List<ElementType>::Append(element);
         // if this list doesn't yet have a valid file location, and
         // the appending element does, use it as the list's file location
-        if (!GetFileLocation().GetHasLineNumber() && element->GetFileLocation().GetHasLineNumber())
-            SetFileLocation(element->GetFileLocation());
+        if (!GetFiLoc().GetHasLineNumber() && element->GetFiLoc().GetHasLineNumber())
+            SetFiLoc(element->GetFiLoc());
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const
@@ -191,7 +191,7 @@ struct Map : private map<string, ElementType *>
         assert(element != NULL);
         iterator it = find(key);
         if (it != end())
-            EmitError(element->GetFileLocation(), "key \"" + key + "\" previously specified at " + it->second->GetFileLocation().GetAsString());
+            EmitError(element->GetFiLoc(), "key \"" + key + "\" previously specified at " + it->second->GetFiLoc().GetAsString());
         else
             map<string, ElementType *>::operator[](key) = element;
     }
@@ -212,15 +212,15 @@ struct AstMap : public Ast, public Map<ElementType>
 
     AstMap (AstType ast_type)
         :
-        Ast(FileLocation::ms_invalid, ast_type),
+        Ast(FiLoc::ms_invalid, ast_type),
         Map<ElementType>()
     { }
-    AstMap (FileLocation const &file_location, AstType ast_type)
+    AstMap (FiLoc const &filoc, AstType ast_type)
         :
-        Ast(file_location, ast_type),
+        Ast(filoc, ast_type),
         Map<ElementType>()
     {
-        assert(file_location.GetHasLineNumber());
+        assert(filoc.GetHasLineNumber());
     }
 
     virtual void Add (string const &key, ElementType *element)
@@ -229,8 +229,8 @@ struct AstMap : public Ast, public Map<ElementType>
         Map<ElementType>::Add(key, element);
         // if this map doesn't yet have a valid file location, and
         // the appending element does, use it as the map's file location
-        if (!GetFileLocation().GetHasLineNumber() && element->GetFileLocation().GetHasLineNumber())
-            SetFileLocation(element->GetFileLocation());
+        if (!GetFiLoc().GetHasLineNumber() && element->GetFiLoc().GetHasLineNumber())
+            SetFiLoc(element->GetFiLoc());
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const
@@ -249,11 +249,11 @@ struct AstMap : public Ast, public Map<ElementType>
 
 struct ThrowAway : public Ast
 {
-    ThrowAway (FileLocation const &file_location)
+    ThrowAway (FiLoc const &filoc)
         :
-        Ast(file_location, AT_THROW_AWAY)
+        Ast(filoc, AT_THROW_AWAY)
     {
-        assert(file_location.GetIsValid());
+        assert(filoc.GetIsValid());
     }
 }; // end of struct ThrowAway
 
@@ -261,9 +261,9 @@ class Character : public Ast
 {
 public:
 
-    Character (Uint8 character, FileLocation const &file_location)
+    Character (Uint8 character, FiLoc const &filoc)
         :
-        Ast(file_location, AT_CHARACTER),
+        Ast(filoc, AT_CHARACTER),
         m_character(character)
     { }
 
@@ -275,9 +275,9 @@ public:
 
 protected:
 
-    Character (Uint8 character, FileLocation const &file_location, AstType ast_type)
+    Character (Uint8 character, FiLoc const &filoc, AstType ast_type)
         :
-        Ast(file_location, ast_type),
+        Ast(filoc, ast_type),
         m_character(character)
     { }
 
@@ -288,9 +288,9 @@ class SignedInteger : public Ast
 {
 public:
 
-    SignedInteger (Sint32 value, FileLocation const &file_location)
+    SignedInteger (Sint32 value, FiLoc const &filoc)
         :
-        Ast(file_location, AT_SIGNED_INTEGER),
+        Ast(filoc, AT_SIGNED_INTEGER),
         m_value(value)
     { }
 
@@ -310,9 +310,9 @@ class UnsignedInteger : public Ast
 {
 public:
 
-    UnsignedInteger (Uint32 value, FileLocation const &file_location)
+    UnsignedInteger (Uint32 value, FiLoc const &filoc)
         :
-        Ast(file_location, AT_UNSIGNED_INTEGER),
+        Ast(filoc, AT_UNSIGNED_INTEGER),
         m_value(value)
     { }
 
@@ -332,13 +332,13 @@ class TextBase : public Ast
 {
 public:
 
-    TextBase (FileLocation const &file_location, AstType ast_type)
+    TextBase (FiLoc const &filoc, AstType ast_type)
         :
-        Ast(file_location, ast_type)
+        Ast(filoc, ast_type)
     { }
-    TextBase (string const &text, FileLocation const &file_location, AstType ast_type)
+    TextBase (string const &text, FiLoc const &filoc, AstType ast_type)
         :
-        Ast(file_location, ast_type),
+        Ast(filoc, ast_type),
         m_text(text)
     { }
     virtual ~TextBase () = 0;
@@ -359,13 +359,13 @@ protected:
 
 struct String : public TextBase
 {
-    String (FileLocation const &file_location)
+    String (FiLoc const &filoc)
         :
-        TextBase(file_location, AT_STRING)
+        TextBase(filoc, AT_STRING)
     { }
-    String (string const &str, FileLocation const &file_location)
+    String (string const &str, FiLoc const &filoc)
         :
-        TextBase(str, file_location, AT_STRING)
+        TextBase(str, filoc, AT_STRING)
     { }
 
     inline string GetStringLiteral () const { return Barf::GetStringLiteral(GetText()); }
@@ -373,9 +373,9 @@ struct String : public TextBase
 
 struct Identifier : public TextBase
 {
-    Identifier (string const &identifier_text, FileLocation const &file_location)
+    Identifier (string const &identifier_text, FiLoc const &filoc)
         :
-        TextBase(identifier_text, file_location, AT_IDENTIFIER)
+        TextBase(identifier_text, filoc, AT_IDENTIFIER)
     {
         assert(!GetText().empty());
     }
@@ -385,9 +385,9 @@ struct Identifier : public TextBase
 
 struct CodeBlock : public TextBase
 {
-    CodeBlock (FileLocation const &file_location, AstType ast_type)
+    CodeBlock (FiLoc const &filoc, AstType ast_type)
         :
-        TextBase(file_location, ast_type)
+        TextBase(filoc, ast_type)
     { }
     virtual ~CodeBlock () = 0;
 
@@ -403,12 +403,12 @@ struct CodeBlock : public TextBase
 
 struct DumbCodeBlock : public CodeBlock
 {
-    DumbCodeBlock (FileLocation const &file_location) : CodeBlock(file_location, AT_DUMB_CODE_BLOCK) { }
+    DumbCodeBlock (FiLoc const &filoc) : CodeBlock(filoc, AT_DUMB_CODE_BLOCK) { }
 }; // end of struct DumbCodeBlock
 
 struct StrictCodeBlock : public CodeBlock
 {
-    StrictCodeBlock (FileLocation const &file_location) : CodeBlock(file_location, AT_STRICT_CODE_BLOCK) { }
+    StrictCodeBlock (FiLoc const &filoc) : CodeBlock(filoc, AT_STRICT_CODE_BLOCK) { }
 }; // end of struct StrictCodeBlock
 
 class Directive : public TextBase
@@ -417,9 +417,9 @@ public:
 
     Directive (
         string const &directive_identifier,
-        FileLocation const &file_location)
+        FiLoc const &filoc)
         :
-        TextBase(directive_identifier, file_location, AT_DIRECTIVE)
+        TextBase(directive_identifier, filoc, AT_DIRECTIVE)
     { }
 
     virtual string GetDirectiveString () const { return GetText(); }
@@ -429,10 +429,10 @@ protected:
 
     Directive (
         string const &directive_identifier,
-        FileLocation const &file_location,
+        FiLoc const &filoc,
         AstType ast_type)
         :
-        TextBase(directive_identifier, file_location, ast_type)
+        TextBase(directive_identifier, filoc, ast_type)
     { }
 }; // end of class Directive
 

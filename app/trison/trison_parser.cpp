@@ -19,7 +19,7 @@
 namespace Trison {
 
 #undef FL
-#define FL FileLocation(m_scanner->GetInputFilename(), m_scanner->GetLineNumber())
+#define FL FiLoc(m_scanner->GetInputFilename(), m_scanner->GetLineNumber())
 
 #line 25 "trison_parser.cpp"
 
@@ -511,7 +511,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
         Grammar *grammar =
             new Grammar(
                 directive_list,
-                end_preamble->GetFileLocation(),
+                end_preamble->GetFiLoc(),
                 nonterminal_list);
         delete end_preamble;
         return grammar;
@@ -583,7 +583,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0005 ()
             ostringstream out;
             out << ParserDirective::GetString(parser_directive->GetParserDirectiveType())
                 << " does not accept %{ %} code blocks -- use { }";
-            EmitError(parser_directive->GetFileLocation(), out.str());
+            EmitError(parser_directive->GetFiLoc(), out.str());
             return NULL;
         }
 
@@ -672,7 +672,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
 
 #line 197 "trison_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "syntax error in %token directive");
+        EmitError(throwaway->GetFiLoc(), "syntax error in %token directive");
 
         delete throwaway;
         return new TokenDirective(new TokenIdentifierList(), NULL);
@@ -693,9 +693,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
 
 #line 205 "trison_parser.trison"
 
-        EmitError(throwaway2->GetFileLocation(), "syntax error in %type directive");
+        EmitError(throwaway2->GetFiLoc(), "syntax error in %type directive");
 
-        AstCommon::String *dummy_string = new AstCommon::String(throwaway2->GetFileLocation());
+        AstCommon::String *dummy_string = new AstCommon::String(throwaway2->GetFiLoc());
         delete throwaway1;
         delete throwaway2;
         return new TokenDirective(token_identifier_list, dummy_string);
@@ -729,9 +729,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0013 ()
 
 #line 221 "trison_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "syntax error in %prec directive");
+        EmitError(throwaway->GetFiLoc(), "syntax error in %prec directive");
 
-        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFileLocation());
+        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFiLoc());
         delete throwaway;
         return new PrecedenceDirective(dummy_identifier);
     
@@ -764,9 +764,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0015 ()
 
 #line 236 "trison_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "syntax error in %start directive");
+        EmitError(throwaway->GetFiLoc(), "syntax error in %start directive");
 
-        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFileLocation());
+        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFiLoc());
         delete throwaway;
         return new StartDirective(dummy_identifier);
     
@@ -782,7 +782,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0016 ()
 
 #line 245 "trison_parser.trison"
 
-        EmitError(value->GetFileLocation(), "syntax error in directive");
+        EmitError(value->GetFiLoc(), "syntax error in directive");
 
         return NULL;
     
@@ -798,7 +798,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0017 ()
 
 #line 252 "trison_parser.trison"
 
-        EmitError(value->GetFileLocation(), "syntax error in directive");
+        EmitError(value->GetFiLoc(), "syntax error in directive");
 
         return NULL;
     
@@ -814,7 +814,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0018 ()
 
 #line 259 "trison_parser.trison"
 
-        EmitError(value->GetFileLocation(), "syntax error in directive");
+        EmitError(value->GetFiLoc(), "syntax error in directive");
 
         return NULL;
     
@@ -878,7 +878,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0022 ()
 #line 292 "trison_parser.trison"
 
         TokenIdentifierIdentifier *token_identifier_identifier =
-            new TokenIdentifierIdentifier(identifier->GetText(), identifier->GetFileLocation());
+            new TokenIdentifierIdentifier(identifier->GetText(), identifier->GetFiLoc());
         delete identifier;
         return token_identifier_identifier;
     
@@ -1041,7 +1041,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0035 ()
 
 #line 372 "trison_parser.trison"
 
-        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal directive");
+        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal directive");
 
         return new Nonterminal(identifier, NULL);
     
@@ -1059,7 +1059,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0036 ()
 
 #line 379 "trison_parser.trison"
 
-        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal %type directive; was expecting a string");
+        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
 
         delete throwaway;
         return new Nonterminal(identifier, NULL);
@@ -1143,7 +1143,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0041 ()
 #line 417 "trison_parser.trison"
 
         EmitError(
-            code_block->GetFileLocation(),
+            code_block->GetFiLoc(),
             "rules do not accept %{ %} code blocks -- use { } instead");
 
         rule_specification->SetCodeBlock(code_block);

@@ -17,7 +17,7 @@
 namespace Trison {
 
 #undef FL
-#define FL FileLocation(m_input_filename, m_line_number)
+#define FL FiLoc(m_input_filename, m_line_number)
 
 Scanner::Scanner ()
 {
@@ -285,7 +285,7 @@ Parser::Token::Type Scanner::ScanStrictCodeBlock (AstCommon::Ast **const scanned
     {
         assert(bracket_level == 0);
         m_input >> c;
-        *scanned_token = new AstCommon::StrictCodeBlock(FileLocation(m_input_filename, starting_line_number));
+        *scanned_token = new AstCommon::StrictCodeBlock(FiLoc(m_input_filename, starting_line_number));
         static_cast<AstCommon::CodeBlock *>(*scanned_token)->AppendText(m_text);
         return Parser::Token::STRICT_CODE_BLOCK;
     }
@@ -327,7 +327,7 @@ Parser::Token::Type Scanner::ScanDumbCodeBlock (AstCommon::Ast **const scanned_t
 
             if (c == '}')
             {
-                *scanned_token = new AstCommon::DumbCodeBlock(FileLocation(m_input_filename, starting_line_number));
+                *scanned_token = new AstCommon::DumbCodeBlock(FiLoc(m_input_filename, starting_line_number));
                 static_cast<AstCommon::CodeBlock *>(*scanned_token)->AppendText(m_text);
                 return Parser::Token::DUMB_CODE_BLOCK;
             }
@@ -398,7 +398,7 @@ Parser::Token::Type Scanner::ScanStringLiteral (AstCommon::Ast **const scanned_t
     if (c == '"')
     {
         m_input >> c;
-        *scanned_token = new AstCommon::String(FileLocation(m_input_filename, starting_line_number));
+        *scanned_token = new AstCommon::String(FiLoc(m_input_filename, starting_line_number));
         static_cast<AstCommon::String *>(*scanned_token)->AppendText(m_text);
         return Parser::Token::STRING;
     }

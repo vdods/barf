@@ -156,9 +156,9 @@ class ExecutableAst : public AstCommon::Ast, public Executable
 {
 public:
 
-    ExecutableAst (FileLocation const &file_location, AstType ast_type)
+    ExecutableAst (FiLoc const &filoc, AstType ast_type)
         :
-        AstCommon::Ast(file_location, ast_type),
+        AstCommon::Ast(filoc, ast_type),
         Executable()
     { }
 }; // end of class ExecutableAst
@@ -175,8 +175,8 @@ class Body : public ExecutableAstList, public Executable
 public:
 
     Body () : ExecutableAstList(AT_BODY), Executable() { }
-    Body (string const &body_text, FileLocation const &source_file_location);
-    Body (Sint32 body_integer, FileLocation const &source_file_location);
+    Body (string const &body_text, FiLoc const &source_filoc);
+    Body (Sint32 body_integer, FiLoc const &source_filoc);
 
     bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const;
 
@@ -200,9 +200,9 @@ class Directive : public ExecutableAst
 {
 public:
 
-    Directive (FileLocation const &file_location, AstType ast_type)
+    Directive (FiLoc const &filoc, AstType ast_type)
         :
-        ExecutableAst(file_location, ast_type)
+        ExecutableAst(filoc, ast_type)
     { }
 
     // is there any reason for this class to exist?
@@ -214,9 +214,9 @@ class Expression : public ExecutableAst
 {
 public:
 
-    Expression (FileLocation const &file_location, AstType ast_type)
+    Expression (FiLoc const &filoc, AstType ast_type)
         :
-        ExecutableAst(file_location, ast_type)
+        ExecutableAst(filoc, ast_type)
     { }
 
     virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const = 0;
@@ -231,7 +231,7 @@ public:
 
     Conditional (Expression const *if_expression)
         :
-        ExecutableAst(if_expression->GetFileLocation(), AT_CONDITIONAL),
+        ExecutableAst(if_expression->GetFiLoc(), AT_CONDITIONAL),
         m_if_expression(if_expression),
         m_if_body(NULL),
         m_else_body(NULL)
@@ -266,7 +266,7 @@ class DumpSymbolTable : public ExecutableAst
 {
 public:
 
-    DumpSymbolTable () : ExecutableAst(FileLocation::ms_invalid, AT_DUMP_SYMBOL_TABLE) { }
+    DumpSymbolTable () : ExecutableAst(FiLoc::ms_invalid, AT_DUMP_SYMBOL_TABLE) { }
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
 }; // end of class DumpSymbolTable
@@ -277,7 +277,7 @@ public:
 
     DeclareArray (AstCommon::Identifier const *identifier)
         :
-        Directive(identifier->GetFileLocation(), AT_DECLARE_ARRAY),
+        Directive(identifier->GetFiLoc(), AT_DECLARE_ARRAY),
         m_identifier(identifier)
     {
         assert(m_identifier != NULL);
@@ -298,7 +298,7 @@ public:
 
     DeclareMap (AstCommon::Identifier const *identifier)
         :
-        Directive(identifier->GetFileLocation(), AT_DECLARE_ARRAY),
+        Directive(identifier->GetFiLoc(), AT_DECLARE_ARRAY),
         m_identifier(identifier)
     {
         assert(m_identifier != NULL);
@@ -319,7 +319,7 @@ public:
 
     Define (AstCommon::Identifier *identifier)
         :
-        Directive(identifier->GetFileLocation(), AT_DEFINE),
+        Directive(identifier->GetFiLoc(), AT_DEFINE),
         m_identifier(identifier),
         m_body(NULL)
     {
@@ -341,7 +341,7 @@ protected:
 
     Define (AstCommon::Identifier *identifier, AstType ast_type)
         :
-        Directive(identifier->GetFileLocation(), ast_type),
+        Directive(identifier->GetFiLoc(), ast_type),
         m_identifier(identifier),
         m_body(NULL)
     {
@@ -391,7 +391,7 @@ public:
 
     Undefine (AstCommon::Identifier *identifier)
         :
-        Directive(identifier->GetFileLocation(), AT_UNDEFINE),
+        Directive(identifier->GetFiLoc(), AT_UNDEFINE),
         m_identifier(identifier)
     {
         assert(m_identifier != NULL);
@@ -414,7 +414,7 @@ public:
         AstCommon::Identifier *iterator_identifier,
         Expression *iteration_count_expression)
         :
-        Directive(iterator_identifier->GetFileLocation(), AT_LOOP),
+        Directive(iterator_identifier->GetFiLoc(), AT_LOOP),
         m_iterator_identifier(iterator_identifier),
         m_iteration_count_expression(iteration_count_expression),
         m_body(NULL),
@@ -456,7 +456,7 @@ public:
         AstCommon::Identifier *key_identifier,
         AstCommon::Identifier *map_identifier)
         :
-        Directive(key_identifier->GetFileLocation(), AT_FOR_EACH),
+        Directive(key_identifier->GetFiLoc(), AT_FOR_EACH),
         m_key_identifier(key_identifier),
         m_map_identifier(map_identifier),
         m_body(NULL),
@@ -496,7 +496,7 @@ public:
 
     Include (Expression *include_filename_expression, bool is_sandboxed)
         :
-        Directive(include_filename_expression->GetFileLocation(), AT_INCLUDE),
+        Directive(include_filename_expression->GetFiLoc(), AT_INCLUDE),
         m_is_sandboxed(is_sandboxed),
         m_include_filename_expression(include_filename_expression),
         m_include_body_root(NULL)
@@ -530,7 +530,7 @@ public:
 
     Message (Expression *message_expression, Criticality criticality)
         :
-        Directive(message_expression->GetFileLocation(), AT_MESSAGE),
+        Directive(message_expression->GetFiLoc(), AT_MESSAGE),
         m_message_expression(message_expression),
         m_criticality(criticality)
     {
@@ -554,9 +554,9 @@ class Text : public Expression
 public:
 
     // the text passed to this constructor should not contain any macro code
-    Text (string const &text, FileLocation const &file_location)
+    Text (string const &text, FiLoc const &filoc)
         :
-        Expression(file_location, AT_TEXT),
+        Expression(filoc, AT_TEXT),
         m_text(text)
     { }
 
@@ -580,9 +580,9 @@ class Integer : public Expression
 {
 public:
 
-    Integer (Sint32 value, FileLocation const &file_location)
+    Integer (Sint32 value, FiLoc const &filoc)
         :
-        Expression(file_location, AT_INTEGER),
+        Expression(filoc, AT_INTEGER),
         m_value(value)
     { }
 
@@ -608,7 +608,7 @@ public:
 
     Sizeof (AstCommon::Identifier *identifier)
         :
-        Expression(identifier->GetFileLocation(), AT_SIZEOF),
+        Expression(identifier->GetFiLoc(), AT_SIZEOF),
         m_identifier(identifier)
     {
         assert(m_identifier != NULL);
@@ -634,7 +634,7 @@ public:
 
     Dereference (AstCommon::Identifier *identifier, Expression *element_index_expression, DereferenceType dereference_type)
         :
-        Expression(identifier->GetFileLocation(), AT_DEREFERENCE),
+        Expression(identifier->GetFiLoc(), AT_DEREFERENCE),
         m_identifier(identifier),
         m_element_index_expression(element_index_expression),
         m_dereference_type(dereference_type)
@@ -657,7 +657,7 @@ protected:
 
     Dereference (AstCommon::Identifier *identifier, Expression *element_index_expression, DereferenceType dereference_type, AstType ast_type)
         :
-        Expression(identifier->GetFileLocation(), ast_type),
+        Expression(identifier->GetFiLoc(), ast_type),
         m_identifier(identifier),
         m_element_index_expression(element_index_expression),
         m_dereference_type(dereference_type)
@@ -723,7 +723,7 @@ public:
         Operator op,
         Expression const *right_expression)
         :
-        Expression(left_expression->GetFileLocation(), AT_OPERATION),
+        Expression(left_expression->GetFiLoc(), AT_OPERATION),
         m_op(op),
         m_left(left_expression),
         m_right(right_expression)
@@ -734,7 +734,7 @@ public:
         Operator op,
         Expression const *right_expression)
         :
-        Expression(right_expression->GetFileLocation(), AT_OPERATION),
+        Expression(right_expression->GetFiLoc(), AT_OPERATION),
         m_op(op),
         m_left(NULL),
         m_right(right_expression)

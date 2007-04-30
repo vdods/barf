@@ -54,7 +54,7 @@ struct Token : public AstCommon::Ast
 
     Token (AstCommon::Identifier const *identifier)
         :
-        AstCommon::Ast(identifier->GetFileLocation(), AT_TOKEN),
+        AstCommon::Ast(identifier->GetFiLoc(), AT_TOKEN),
         m_identifier(identifier),
         m_character(NULL)
     {
@@ -62,7 +62,7 @@ struct Token : public AstCommon::Ast
     }
     Token (AstCommon::Character const *character)
         :
-        AstCommon::Ast(character->GetFileLocation(), AT_TOKEN),
+        AstCommon::Ast(character->GetFiLoc(), AT_TOKEN),
         m_identifier(NULL),
         m_character(character)
     {
@@ -104,9 +104,9 @@ struct RuleToken : public AstCommon::Ast
     string const m_token_identifier;
     string const m_assigned_identifier;
 
-    RuleToken (string const &token_identifier, FileLocation const &file_location, string const &assigned_identifier = gs_empty_string)
+    RuleToken (string const &token_identifier, FiLoc const &filoc, string const &assigned_identifier = gs_empty_string)
         :
-        AstCommon::Ast(file_location, AT_RULE_TOKEN),
+        AstCommon::Ast(filoc, AT_RULE_TOKEN),
         m_token_identifier(token_identifier),
         m_assigned_identifier(assigned_identifier)
     {
@@ -130,7 +130,7 @@ struct Rule : public AstCommon::Ast
 
     Rule (RuleTokenList const *rule_token_list, string const &rule_precedence_identifier)
         :
-        AstCommon::Ast(rule_token_list->GetFileLocation(), AT_RULE),
+        AstCommon::Ast(rule_token_list->GetFiLoc(), AT_RULE),
         m_owner_nonterminal(NULL),
         m_rule_token_list(rule_token_list),
         m_rule_precedence_identifier(rule_precedence_identifier),
@@ -170,10 +170,10 @@ struct Nonterminal : public AstCommon::Ast
 
     Nonterminal (
         string const &identifier,
-        FileLocation const &file_location,
+        FiLoc const &filoc,
         string const &assigned_type = gs_empty_string)
         :
-        AstCommon::Ast(file_location, AT_NONTERMINAL),
+        AstCommon::Ast(filoc, AT_NONTERMINAL),
         m_identifier(identifier),
         m_assigned_type(assigned_type),
         m_rule_list(NULL),
@@ -235,10 +235,10 @@ struct Precedence : public AstCommon::Ast
     Precedence (
         string const &precedence_identifier,
         Associativity precedence_associativity,
-        FileLocation const &file_location,
+        FiLoc const &filoc,
         Sint32 precedence_level = DEFAULT_PRECEDENCE_LEVEL)
         :
-        AstCommon::Ast(file_location, AT_PRECEDENCE),
+        AstCommon::Ast(filoc, AT_PRECEDENCE),
         m_precedence_identifier(precedence_identifier),
         m_precedence_associativity(precedence_associativity),
         m_precedence_level(precedence_level)
@@ -279,11 +279,11 @@ struct Representation : public AstCommon::Ast
         PrecedenceMap const *precedence_map,
         PrecedenceList const *precedence_list,
         string const &start_nonterminal_identifier,
-        FileLocation const &file_location,
+        FiLoc const &filoc,
         NonterminalMap const *nonterminal_map,
         NonterminalList const *nonterminal_list)
         :
-        AstCommon::Ast(file_location, AT_REPRESENTATION),
+        AstCommon::Ast(filoc, AT_REPRESENTATION),
         m_target_language_map(target_language_map),
         m_token_map(token_map),
         m_precedence_map(precedence_map),

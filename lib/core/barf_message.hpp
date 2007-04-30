@@ -13,7 +13,7 @@
 
 #include "barf.hpp"
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 
 // the application must define in the global namespace the following symbol(s):
 extern bool g_errors_encountered;
@@ -21,13 +21,13 @@ extern bool g_errors_encountered;
 namespace Barf {
 
 void EmitWarning (string const &message);
-void EmitWarning (FileLocation const &file_location, string const &message);
+void EmitWarning (FiLoc const &filoc, string const &message);
 
 void EmitError (string const &message);
-void EmitError (FileLocation const &file_location, string const &message);
+void EmitError (FiLoc const &filoc, string const &message);
 
 void EmitFatalError (string const &message);
-void EmitFatalError (FileLocation const &file_location, string const &message);
+void EmitFatalError (FiLoc const &filoc, string const &message);
 
 } // end of namespace Barf
 

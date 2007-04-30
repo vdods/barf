@@ -44,7 +44,7 @@ struct TokenMap;
 %}
 
 %parser_class_methods_and_members{
-    inline FileLocation const &GetFileLocation () const { return m_scanner.GetFileLocation(); }
+    inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
     void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
@@ -143,7 +143,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFileLocation(), "unrecognized token encountered in langspec");
+            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in langspec");
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;
@@ -216,7 +216,7 @@ root %type "Representation *"
             nonterminal_map->GetElement(start_nonterminal_identifier->GetText()) == NULL)
         {
             EmitError(
-                start_nonterminal_identifier->GetFileLocation(),
+                start_nonterminal_identifier->GetFiLoc(),
                 "undeclared nonterminal \"" + start_nonterminal_identifier->GetText() + "\"");
         }
 
@@ -227,7 +227,7 @@ root %type "Representation *"
                 precedence_map,
                 m_precedence_list,
                 start_nonterminal_identifier->GetText(),
-                throwaway->GetFileLocation(),
+                throwaway->GetFiLoc(),
                 nonterminal_map,
                 m_nonterminal_list);
         delete throwaway;
@@ -260,7 +260,7 @@ target_languages_directive %type "CommonLang::TargetLanguageMap *"
     DIRECTIVE_TARGET_LANGUAGES:throwaway %error at_least_one_newline
     {
         assert(m_target_language_map == NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %target_languages");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %target_languages");
         m_target_language_map = new CommonLang::TargetLanguageMap();
         return m_target_language_map;
     }
@@ -315,7 +315,7 @@ language_directive %type "CommonLang::LanguageDirective *"
 |
     DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier '.' IDENTIFIER:language_directive %error at_least_one_newline
     {
-        EmitError(throwaway->GetFileLocation(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
         delete throwaway;
         delete language_identifier;
         delete language_directive;
@@ -324,7 +324,7 @@ language_directive %type "CommonLang::LanguageDirective *"
 |
     DIRECTIVE_LANGUAGE:throwaway '.' IDENTIFIER:language_identifier %error at_least_one_newline
     {
-        EmitError(throwaway->GetFileLocation(), "parse error in directive name for directive %language." + language_identifier->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %language." + language_identifier->GetText());
         delete throwaway;
         delete language_identifier;
         return NULL;
@@ -332,7 +332,7 @@ language_directive %type "CommonLang::LanguageDirective *"
 |
     DIRECTIVE_LANGUAGE:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFileLocation(), "parse error in language name for directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in language name for directive %language");
         delete throwaway;
         return NULL;
     }
@@ -439,7 +439,7 @@ precedence_directives %type "PrecedenceMap *"
     {
         assert(m_precedence_list == NULL);
         assert(m_precedence_map == NULL);
-        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FileLocation::ms_invalid, 0);
+        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FiLoc::ms_invalid, 0);
         m_precedence_list = new PrecedenceList();
         m_precedence_list->Append(precedence);
         m_precedence_map = new PrecedenceMap();
@@ -458,7 +458,7 @@ precedence_directive %type "PrecedenceMap *"
             new Precedence(
                 identifier->GetText(),
                 A_NONASSOC,
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
@@ -475,7 +475,7 @@ precedence_directive %type "PrecedenceMap *"
             new Precedence(
                 identifier->GetText(),
                 A_LEFT,
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
@@ -493,7 +493,7 @@ precedence_directive %type "PrecedenceMap *"
             new Precedence(
                 identifier->GetText(),
                 A_NONASSOC,
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
@@ -511,7 +511,7 @@ precedence_directive %type "PrecedenceMap *"
             new Precedence(
                 identifier->GetText(),
                 A_RIGHT,
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
@@ -571,7 +571,7 @@ nonterminal %type "Nonterminal *"
 |
     %error ';'
     {
-        EmitError(GetFileLocation(), "syntax error in nonterminal definition");
+        EmitError(GetFiLoc(), "syntax error in nonterminal definition");
         return NULL;
     }
 ;
@@ -582,11 +582,11 @@ nonterminal_specification %type "Nonterminal *"
     {
         assert(m_token_map != NULL);
         if (m_token_map->GetElement(identifier->GetText()) != NULL)
-            EmitError(identifier->GetFileLocation(), "identifier collision with %token " + identifier->GetText());
+            EmitError(identifier->GetFiLoc(), "identifier collision with %token " + identifier->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 identifier->GetText(),
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 assigned_type->GetText());
         delete throwaway;
         delete identifier;
@@ -598,31 +598,31 @@ nonterminal_specification %type "Nonterminal *"
     {
         assert(m_token_map != NULL);
         if (m_token_map->GetElement(identifier->GetText()) != NULL)
-            EmitError(identifier->GetFileLocation(), "identifier collision with %token " + identifier->GetText());
+            EmitError(identifier->GetFiLoc(), "identifier collision with %token " + identifier->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 identifier->GetText(),
-                identifier->GetFileLocation());
+                identifier->GetFiLoc());
         delete identifier;
         return nonterminal;
     }
 |
     %error
     {
-        EmitError(GetFileLocation(), "syntax error while parsing nonterminal specification");
+        EmitError(GetFiLoc(), "syntax error while parsing nonterminal specification");
         return NULL;
     }
 |
     IDENTIFIER:identifier %error
     {
-        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal directive");
+        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal directive");
         delete identifier;
         return NULL;
     }
 |
     IDENTIFIER:identifier DIRECTIVE_TYPE:throwaway %error
     {
-        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal %type directive; was expecting a string");
+        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
         delete identifier;
         delete throwaway;
         return NULL;
@@ -695,7 +695,7 @@ rule_handler %type "CommonLang::RuleHandler *"
         assert(m_target_language_map != NULL);
         if (m_target_language_map->GetElement(language_identifier->GetText()) == NULL)
             EmitWarning(
-                language_identifier->GetFileLocation(),
+                language_identifier->GetFiLoc(),
                 "undeclared target language \"" + language_identifier->GetText() + "\"");
         return new CommonLang::RuleHandler(language_identifier, code_block);
     }
@@ -703,7 +703,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     DIRECTIVE_LANGUAGE:throwaway %error any_type_of_code_block:code_block
     {
         assert(m_target_language_map != NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in language identifier after directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in language identifier after directive %language");
         delete throwaway;
         delete code_block;
         return NULL;
@@ -712,7 +712,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     DIRECTIVE_LANGUAGE:throwaway %error
     {
         assert(m_target_language_map != NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %language");
         delete throwaway;
         return NULL;
     }
@@ -720,7 +720,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     %error any_type_of_code_block:code_block
     {
         assert(m_target_language_map != NULL);
-        EmitError(code_block->GetFileLocation(), "missing directive %language before rule handler code block");
+        EmitError(code_block->GetFiLoc(), "missing directive %language before rule handler code block");
         delete code_block;
         return NULL;
     }
@@ -746,7 +746,7 @@ rule_token %type "RuleToken *"
     {
         RuleToken *rule_token =
             token != NULL ?
-            new RuleToken(token->GetSourceText(), token->GetFileLocation(), assigned_identifier->GetText()) :
+            new RuleToken(token->GetSourceText(), token->GetFiLoc(), assigned_identifier->GetText()) :
             NULL;
         delete token;
         delete assigned_identifier;
@@ -757,7 +757,7 @@ rule_token %type "RuleToken *"
     {
         RuleToken *rule_token =
             token != NULL ?
-            new RuleToken(token->GetSourceText(), token->GetFileLocation()) :
+            new RuleToken(token->GetSourceText(), token->GetFiLoc()) :
             NULL;
         delete token;
         return rule_token;

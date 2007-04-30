@@ -120,7 +120,7 @@ public:
 
 #line 45 "reflex_parser.trison"
 
-    FileLocation const &GetFileLocation () const { return m_scanner.GetFileLocation(); }
+    FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
     void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }

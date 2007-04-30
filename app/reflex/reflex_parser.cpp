@@ -517,7 +517,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
             scanner_state_map->GetElement(start_directive->m_start_state_identifier->GetText()) == NULL)
         {
             EmitError(
-                start_directive->GetFileLocation(),
+                start_directive->GetFiLoc(),
                 "undeclared state \"" + start_directive->m_start_state_identifier->GetText() + "\"");
         }
 
@@ -526,7 +526,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
                 target_language_map,
                 regular_expression_map,
                 start_directive,
-                throwaway->GetFileLocation(),
+                throwaway->GetFiLoc(),
                 scanner_state_map);
         delete throwaway;
         return representation;
@@ -577,7 +577,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0004 ()
 #line 237 "reflex_parser.trison"
 
         assert(m_target_language_map == NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %target_languages");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %target_languages");
         m_target_language_map = new CommonLang::TargetLanguageMap();
         return m_target_language_map;
     
@@ -681,7 +681,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
 
 #line 293 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
         delete throwaway;
         delete language_identifier;
         delete language_directive;
@@ -701,7 +701,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
 
 #line 302 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in directive name for directive %language." + language_identifier->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %language." + language_identifier->GetText());
         delete throwaway;
         delete language_identifier;
         return NULL;
@@ -718,7 +718,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0012 ()
 
 #line 310 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in language name for directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in language name for directive %language");
         delete throwaway;
         return NULL;
     
@@ -807,9 +807,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0018 ()
                     macro_identifier->GetText(),
                     Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken()));
             else
-                EmitError(throwaway->GetFileLocation(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
+                EmitError(throwaway->GetFiLoc(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
         } catch (string const &exception) {
-            EmitError(throwaway->GetFileLocation(), exception + " in regular expression (" + macro_regex_string->GetText() + ")");
+            EmitError(throwaway->GetFiLoc(), exception + " in regular expression (" + macro_regex_string->GetText() + ")");
         }
         delete throwaway;
         delete macro_identifier;
@@ -847,7 +847,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0020 ()
 
 #line 362 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %macro " + macro_identifier->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %macro " + macro_identifier->GetText());
         delete throwaway;
         delete macro_identifier;
         return regular_expression_map;
@@ -866,7 +866,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0021 ()
 
 #line 370 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %macro");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %macro");
         delete throwaway;
         return regular_expression_map;
     
@@ -899,7 +899,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0023 ()
 
 #line 390 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %start");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %start");
         delete throwaway;
         return NULL;
     
@@ -966,7 +966,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0027 ()
 
 #line 425 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in scanner state rule list");
+        EmitError(throwaway->GetFiLoc(), "parse error in scanner state rule list");
         delete throwaway;
         return new ScannerState(scanner_state_identifier, new RuleList());
     
@@ -984,7 +984,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0028 ()
 
 #line 432 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in scanner state identifier");
+        EmitError(throwaway->GetFiLoc(), "parse error in scanner state identifier");
         delete throwaway;
         delete rule_list;
         return NULL;
@@ -1076,13 +1076,13 @@ AstCommon::Ast * Parser::ReductionRuleHandler0033 ()
                 else
                 {
                     EmitError(
-                        regex_string->GetFileLocation(),
+                        regex_string->GetFiLoc(),
                         "parse error in regular expression (" + regex_string->GetText() + ")");
                     regex = new Regex::RegularExpression();
                 }
             } catch (string const &exception) {
                 EmitError(
-                    regex_string->GetFileLocation(),
+                    regex_string->GetFiLoc(),
                     exception + " in regular expression (" + regex_string->GetText() + ")");
                 regex = new Regex::RegularExpression();
             }
@@ -1100,14 +1100,14 @@ AstCommon::Ast * Parser::ReductionRuleHandler0033 ()
             if (rule_handler_map->GetElement(target_language_identifier) == NULL)
             {
                 EmitWarning(
-                    regex_string->GetFileLocation(),
+                    regex_string->GetFiLoc(),
                     "missing rule handler for target language \"" + target_language_identifier + "\"");
                 // add a blank code block for the rule handler's missing target language
                 rule_handler_map->Add(
                     target_language_identifier,
                     new CommonLang::RuleHandler(
-                        new AstCommon::Identifier(target_language_identifier, FileLocation::ms_invalid),
-                        new AstCommon::StrictCodeBlock(FileLocation::ms_invalid)));
+                        new AstCommon::Identifier(target_language_identifier, FiLoc::ms_invalid),
+                        new AstCommon::StrictCodeBlock(FiLoc::ms_invalid)));
                 assert(rule_handler_map->GetElement(target_language_identifier) != NULL);
             }
         }
@@ -1166,7 +1166,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0036 ()
         assert(m_target_language_map != NULL);
         if (m_target_language_map->GetElement(language_identifier->GetText()) == NULL)
             EmitWarning(
-                language_identifier->GetFileLocation(),
+                language_identifier->GetFiLoc(),
                 "undeclared target language \"" + language_identifier->GetText() + "\"");
         return new CommonLang::RuleHandler(language_identifier, code_block);
     
@@ -1185,7 +1185,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0037 ()
 #line 558 "reflex_parser.trison"
 
         assert(m_target_language_map != NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in language identifier after directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in language identifier after directive %language");
         delete throwaway;
         delete code_block;
         return NULL;
@@ -1203,7 +1203,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0038 ()
 #line 567 "reflex_parser.trison"
 
         assert(m_target_language_map != NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %language");
         delete throwaway;
         return NULL;
     
@@ -1220,7 +1220,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0039 ()
 #line 575 "reflex_parser.trison"
 
         assert(m_target_language_map != NULL);
-        EmitError(code_block->GetFileLocation(), "missing directive %language before rule handler code block");
+        EmitError(code_block->GetFiLoc(), "missing directive %language before rule handler code block");
         delete code_block;
         return NULL;
     
@@ -2103,7 +2103,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFileLocation(), "unrecognized token encountered in langspec");
+            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in langspec");
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;

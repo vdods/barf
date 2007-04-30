@@ -62,8 +62,8 @@ string Preprocessor::ProcessString (string const &string_to_process, string cons
                      GetReturningLineDirectiveTag())
             {
                 assert(GetOptions()->GetWithLineDirectives());
-                FileLocation file_location(filename, line+2);
-                string line_directive("\n" + file_location.GetLineDirectiveString() + "\n");
+                FiLoc filoc(filename, line+2);
+                string line_directive("\n" + filoc.GetLineDirectiveString() + "\n");
                 assert(line_directive[line_directive.length() - 1] == '\n');
                 line_directive.erase(line_directive.length() - 1, 1);
                 processed_string.replace(pos, GetReturningLineDirectiveTag().length(), line_directive);

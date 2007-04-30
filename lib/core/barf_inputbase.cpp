@@ -15,7 +15,7 @@ namespace Barf {
 InputBase::InputBase ()
     :
     m_input_stream(NULL),
-    m_file_location(FileLocation::ms_invalid)
+    m_filoc(FiLoc::ms_invalid)
 { }
 
 InputBase::~InputBase ()
@@ -48,8 +48,8 @@ bool InputBase::OpenFile (string const &input_filename)
 
     m_input_stream = &m_ifstream;
     m_input_stream->unsetf(ios_base::skipws);
-    m_file_location.SetFilename(input_filename);
-    m_file_location.SetLineNumber(1);
+    m_filoc.SetFilename(input_filename);
+    m_filoc.SetLineNumber(1);
 
     return true;
 }
@@ -63,8 +63,8 @@ void InputBase::OpenString (string const &input_string, string const &input_name
 
     m_input_stream = &m_istringstream;
     m_input_stream->unsetf(ios_base::skipws);
-    m_file_location.SetFilename(input_name);
-    m_file_location.SetLineNumber(use_line_numbers ? 1 : 0);
+    m_filoc.SetFilename(input_name);
+    m_filoc.SetLineNumber(use_line_numbers ? 1 : 0);
 }
 
 void InputBase::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
@@ -75,8 +75,8 @@ void InputBase::OpenUsingStream (istream *input_stream, string const &input_name
 
     m_input_stream = input_stream;
     m_input_stream->unsetf(ios_base::skipws);
-    m_file_location.SetFilename(input_name);
-    m_file_location.SetLineNumber(use_line_numbers ? 1 : 0);
+    m_filoc.SetFilename(input_name);
+    m_filoc.SetLineNumber(use_line_numbers ? 1 : 0);
 }
 
 bool InputBase::Close ()
@@ -89,22 +89,22 @@ bool InputBase::Close ()
         else if (m_input_stream == &m_ifstream)
             m_ifstream.close();
         m_input_stream = NULL;
-        m_file_location.SetFilename("");
-        m_file_location.SetLineNumber(0);
+        m_filoc.SetFilename("");
+        m_filoc.SetLineNumber(0);
         return true;
     }
     else
     {
         assert(!GetIsOpen());
-        assert(!m_file_location.GetIsValid());
+        assert(!m_filoc.GetIsValid());
         return false;
     }
 }
 
 void InputBase::IncrementLineNumber (Uint32 by_value)
 {
-    if (m_file_location.GetLineNumber() > 0)
-        m_file_location.IncrementLineNumber(by_value);
+    if (m_filoc.GetLineNumber() > 0)
+        m_filoc.IncrementLineNumber(by_value);
 }
 
 } // end of namespace Barf

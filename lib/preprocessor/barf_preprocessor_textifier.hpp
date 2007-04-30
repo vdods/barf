@@ -15,7 +15,7 @@
 
 #include <ostream>
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 
 namespace Barf {
 namespace Preprocessor {
@@ -30,17 +30,17 @@ public:
     Textifier (ostream &output_stream, string const &output_filename)
         :
         m_output_stream(output_stream),
-        m_output_file_location(output_filename, 1),
+        m_output_filoc(output_filename, 1),
         m_generates_line_directives(true)
     { }
     Textifier (ostream &output_stream)
         :
         m_output_stream(output_stream),
-        m_output_file_location(FileLocation::ms_invalid),
+        m_output_filoc(FiLoc::ms_invalid),
         m_generates_line_directives(false)
     { }
 
-    FileLocation const &GetOutputFileLocation () const { return m_output_file_location; }
+    FiLoc const &GetOutputFiLoc () const { return m_output_filoc; }
     bool GetGeneratesLineDirectives () const { return m_generates_line_directives; }
 
     void SetGeneratesLineDirectives (bool generates_line_directives)
@@ -56,7 +56,7 @@ public:
 private:
 
     ostream &m_output_stream;
-    FileLocation m_output_file_location;
+    FiLoc m_output_filoc;
     bool m_generates_line_directives;
 }; // end of class Textifier
 

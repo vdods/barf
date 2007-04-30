@@ -72,7 +72,7 @@ int main (int argc, char **argv)
 
         if (parser.Parse() != Preprocessor::Parser::PRC_SUCCESS)
         {
-            EmitError(FileLocation(GetOptions()->GetInputFilename()), "general preprocessor parse error");
+            EmitError(FiLoc(GetOptions()->GetInputFilename()), "general preprocessor parse error");
             return 4;
         }
 

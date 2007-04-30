@@ -68,7 +68,7 @@ string const &GetAstTypeString (AstType ast_type);
 
 struct Atom : public AstCommon::Ast
 {
-    Atom (AstType ast_type) : AstCommon::Ast(FileLocation::ms_invalid, ast_type) { }
+    Atom (AstType ast_type) : AstCommon::Ast(FiLoc::ms_invalid, ast_type) { }
 }; // end of class Atom
 
 struct Bound : public AstCommon::Ast
@@ -84,7 +84,7 @@ struct Bound : public AstCommon::Ast
 
     Bound (Sint16 lower_bound, Sint16 upper_bound)
         :
-        AstCommon::Ast(FileLocation::ms_invalid, AT_BOUND),
+        AstCommon::Ast(FiLoc::ms_invalid, AT_BOUND),
         m_lower_bound(lower_bound),
         m_upper_bound(upper_bound)
     {
@@ -106,7 +106,7 @@ struct Piece : public AstCommon::Ast
 {
     Piece (Atom *atom, Bound *bound)
         :
-        AstCommon::Ast(FileLocation::ms_invalid, AT_PIECE),
+        AstCommon::Ast(FiLoc::ms_invalid, AT_PIECE),
         m_atom(atom),
         m_bound(bound)
     {

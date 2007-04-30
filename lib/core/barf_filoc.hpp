@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// barf_filelocation.hpp by Victor Dods, created 2006/02/11
+// barf_filoc.hpp by Victor Dods, created 2006/02/11
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,27 +8,27 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_FILELOCATION_HPP_)
-#define _BARF_FILELOCATION_HPP_
+#if !defined(_BARF_FILOC_HPP_)
+#define _BARF_FILOC_HPP_
 
 #include "barf.hpp"
 
 namespace Barf {
 
-class FileLocation
+class FiLoc
 {
 public:
 
-    static FileLocation const ms_invalid;
+    static FiLoc const ms_invalid;
 
-    FileLocation (string const &filename)
+    FiLoc (string const &filename)
         :
         m_filename(filename),
         m_line_number(0)
     {
         assert(!m_filename.empty());
     }
-    FileLocation (string const &filename, Uint32 line)
+    FiLoc (string const &filename, Uint32 line)
         :
         m_filename(filename),
         m_line_number(line)
@@ -47,12 +47,12 @@ public:
     }
     inline string const &GetFilename () const
     {
-        assert(this != &ms_invalid && "can't use FileLocation::ms_invalid in this manner");
+        assert(this != &ms_invalid && "can't use FiLoc::ms_invalid in this manner");
         return m_filename;
     }
     inline Uint32 GetLineNumber () const
     {
-        assert(this != &ms_invalid && "can't use FileLocation::ms_invalid in this manner");
+        assert(this != &ms_invalid && "can't use FiLoc::ms_invalid in this manner");
         return m_line_number;
     }
     string GetAsString () const;
@@ -72,7 +72,7 @@ public:
 private:
 
     // for use only by the constructor of ms_invalid
-    FileLocation ()
+    FiLoc ()
         :
         m_filename(),
         m_line_number(0)
@@ -80,8 +80,8 @@ private:
 
     string m_filename;
     Uint32 m_line_number;
-}; // end of class FileLocation
+}; // end of class FiLoc
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_FILELOCATION_HPP_)
+#endif // !defined(_BARF_FILOC_HPP_)

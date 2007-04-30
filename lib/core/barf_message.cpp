@@ -25,12 +25,12 @@ void EmitWarning (string const &message)
         cerr << "warning: " << message << endl;
 }
 
-void EmitWarning (FileLocation const &file_location, string const &message)
+void EmitWarning (FiLoc const &filoc, string const &message)
 {
     if (g_options != NULL && g_options->GetTreatWarningsAsErrors())
-        EmitError(file_location, message);
+        EmitError(filoc, message);
     else
-        cerr << file_location.GetAsString() << ": warning: " << message << endl;
+        cerr << filoc.GetAsString() << ": warning: " << message << endl;
 }
 
 void EmitError (string const &message)
@@ -48,18 +48,18 @@ void EmitError (string const &message)
     }
 }
 
-void EmitError (FileLocation const &file_location, string const &message)
+void EmitError (FiLoc const &filoc, string const &message)
 {
     g_errors_encountered = true;
     if (g_options != NULL && g_options->GetHaltOnFirstError())
-        EmitFatalError(file_location, message);
+        EmitFatalError(filoc, message);
     else
     {
 #if DEBUG
         if (g_options != NULL && g_options->GetAssertOnError())
             assert(false && "you have requested to assert on error, human, and here it is");
 #endif
-        cerr << file_location.GetAsString() << ": error: " << message << endl;
+        cerr << filoc.GetAsString() << ": error: " << message << endl;
     }
 }
 
@@ -73,14 +73,14 @@ void EmitFatalError (string const &message)
     THROW_STRING("fatal: " << message);
 }
 
-void EmitFatalError (FileLocation const &file_location, string const &message)
+void EmitFatalError (FiLoc const &filoc, string const &message)
 {
     g_errors_encountered = true;
 #if DEBUG
     if (g_options != NULL && g_options->GetAssertOnError())
         assert(false && "you have requested to assert on error, human, and here it is");
 #endif
-    THROW_STRING(file_location.GetAsString() << ": fatal: " << message);
+    THROW_STRING(filoc.GetAsString() << ": fatal: " << message);
 }
 
 } // end of namespace Barf

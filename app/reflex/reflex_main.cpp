@@ -51,7 +51,7 @@ int main (int argc, char **argv)
             if (!parser.OpenFile(GetOptions()->GetInputFilename()))
                 EmitError("file not found: \"" + GetOptions()->GetInputFilename() + "\"");
             else if (parser.Parse() != Reflex::Parser::PRC_SUCCESS)
-                EmitError(FileLocation(GetOptions()->GetInputFilename()), "general reflex parse error");
+                EmitError(FiLoc(GetOptions()->GetInputFilename()), "general reflex parse error");
             else
             {
                 representation = Dsc<Reflex::Representation *>(parser.GetAcceptedToken());

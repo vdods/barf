@@ -105,10 +105,10 @@ void Rule::PopulateAcceptHandlerCodeArraySymbol (
         accept_handler_code_symbol->AppendArrayElement(
             new Preprocessor::Body(
                 rule_handler_code_block->GetText(),
-                rule_handler_code_block->GetFileLocation()));
+                rule_handler_code_block->GetFiLoc()));
     }
     else
-        accept_handler_code_symbol->AppendArrayElement(new Preprocessor::Body("", FileLocation::ms_invalid));
+        accept_handler_code_symbol->AppendArrayElement(new Preprocessor::Body("", FiLoc::ms_invalid));
 }
 
 void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -294,11 +294,11 @@ void Representation::GenerateAutomatonSymbols (
     // _start -- value of %start -- the name of the default start nonterminal
     {
         Preprocessor::ScalarSymbol *symbol =
-            symbol_table.DefineScalarSymbol("_start", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_start", FiLoc::ms_invalid);
         symbol->SetScalarBody(
             new Preprocessor::Body(
                 m_start_nonterminal_identifier,
-                FileLocation::ms_invalid));
+                FiLoc::ms_invalid));
     }
 
     // _terminal_index_list[terminal count] -- list of terminal token values
@@ -313,24 +313,24 @@ void Representation::GenerateAutomatonSymbols (
     // _nonterminal_name_list[nonterminal count] -- list of nonterminal token names
     {
         Preprocessor::ArraySymbol *terminal_index_list_symbol =
-            symbol_table.DefineArraySymbol("_terminal_index_list", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_terminal_index_list", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *terminal_name_list_symbol =
-            symbol_table.DefineArraySymbol("_terminal_name_list", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_terminal_name_list", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nonterminal_index_list_symbol =
-            symbol_table.DefineArraySymbol("_nonterminal_index_list", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nonterminal_index_list", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nonterminal_name_list_symbol =
-            symbol_table.DefineArraySymbol("_nonterminal_name_list", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nonterminal_name_list", FiLoc::ms_invalid);
 
         Uint32 token_index = 0x100;
 
         terminal_index_list_symbol->AppendArrayElement(
             new Preprocessor::Body(
                 Sint32(token_index++),
-                FileLocation::ms_invalid));
+                FiLoc::ms_invalid));
         terminal_name_list_symbol->AppendArrayElement(
             new Preprocessor::Body(
                 "END_",
-                FileLocation::ms_invalid));
+                FiLoc::ms_invalid));
 
         for (TokenMap::const_iterator it = m_token_map->begin(), it_end = m_token_map->end();
              it != it_end;
@@ -343,18 +343,18 @@ void Representation::GenerateAutomatonSymbols (
                 terminal_index_list_symbol->AppendArrayElement(
                     new Preprocessor::Body(
                         Sint32(token_index++),
-                        FileLocation::ms_invalid));
+                        FiLoc::ms_invalid));
                 terminal_name_list_symbol->AppendArrayElement(
                     new Preprocessor::Body(
                         token->GetSourceText(),
-                        FileLocation::ms_invalid));
+                        FiLoc::ms_invalid));
             }
         }
 
         nonterminal_index_list_symbol->AppendArrayElement(
-            new Preprocessor::Body(0, FileLocation::ms_invalid));
+            new Preprocessor::Body(0, FiLoc::ms_invalid));
         nonterminal_name_list_symbol->AppendArrayElement(
-            new Preprocessor::Body("none_", FileLocation::ms_invalid));
+            new Preprocessor::Body("none_", FiLoc::ms_invalid));
 
         for (NonterminalMap::const_iterator it = m_nonterminal_map->begin(), it_end = m_nonterminal_map->end();
              it != it_end;
@@ -365,18 +365,18 @@ void Representation::GenerateAutomatonSymbols (
             nonterminal_index_list_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(token_index++),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             nonterminal_name_list_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     nonterminal->m_identifier,
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
         }
     }
 
     // _npda_initial_node_index[nonterminal name] -- maps nonterminal name => node index
     {
         Preprocessor::MapSymbol *npda_initial_node_index_symbol =
-            symbol_table.DefineMapSymbol("_npda_initial_node_index", FileLocation::ms_invalid);
+            symbol_table.DefineMapSymbol("_npda_initial_node_index", FiLoc::ms_invalid);
         for (NonterminalMap::const_iterator it = m_nonterminal_map->begin(),
                                             it_end = m_nonterminal_map->end();
              it != it_end;
@@ -389,7 +389,7 @@ void Representation::GenerateAutomatonSymbols (
                 nonterminal_name,
                 new Preprocessor::Body(
                     Sint32(nonterminal->GetNpdaGraphStartState()),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
         }
     }
 
@@ -413,14 +413,14 @@ void Representation::GenerateAutomatonSymbols (
     // %right.
     {
         Preprocessor::ScalarSymbol *npda_precedence_count_symbol =
-            symbol_table.DefineScalarSymbol("_npda_precedence_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_npda_precedence_count", FiLoc::ms_invalid);
         npda_precedence_count_symbol->SetScalarBody(
             new Preprocessor::Body(
                 Sint32(m_precedence_list->size()),
-                FileLocation::ms_invalid));
+                FiLoc::ms_invalid));
 
         Preprocessor::MapSymbol *npda_precedence_index_symbol =
-            symbol_table.DefineMapSymbol("_npda_precedence_index", FileLocation::ms_invalid);
+            symbol_table.DefineMapSymbol("_npda_precedence_index", FiLoc::ms_invalid);
         for (PrecedenceMap::const_iterator it = m_precedence_map->begin(),
                                            it_end = m_precedence_map->end();
              it != it_end;
@@ -434,17 +434,17 @@ void Representation::GenerateAutomatonSymbols (
                 precedence_identifier,
                 new Preprocessor::Body(
                     precedence.m_precedence_level,
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
         }
 
         Preprocessor::ArraySymbol *npda_precedence_name_symbol =
-            symbol_table.DefineArraySymbol("_npda_precedence_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_precedence_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_precedence_level_symbol =
-            symbol_table.DefineArraySymbol("_npda_precedence_level", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_precedence_level", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_precedence_associativity_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_precedence_associativity_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_precedence_associativity_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_precedence_associativity_name_symbol =
-            symbol_table.DefineArraySymbol("_npda_precedence_associativity_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_precedence_associativity_name", FiLoc::ms_invalid);
         for (PrecedenceList::const_iterator it = m_precedence_list->begin(),
                                             it_end = m_precedence_list->end();
              it != it_end;
@@ -455,19 +455,19 @@ void Representation::GenerateAutomatonSymbols (
             npda_precedence_name_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     precedence.m_precedence_identifier,
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_precedence_level_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     precedence.m_precedence_level,
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_precedence_associativity_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(precedence.m_precedence_associativity),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_precedence_associativity_name_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     precedence.m_precedence_associativity == A_LEFT ? "LEFT" : (precedence.m_precedence_associativity == A_NONASSOC ? "NONASSOC" : "RIGHT"),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
         }
     }
 
@@ -492,24 +492,24 @@ void Representation::GenerateAutomatonSymbols (
     // this rule (e.g. "exp <- exp '+' exp")
     {
         Preprocessor::ScalarSymbol *rule_count_symbol =
-            symbol_table.DefineScalarSymbol("_rule_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_rule_count", FiLoc::ms_invalid);
         rule_count_symbol->SetScalarBody(
             new Preprocessor::Body(
                 Sint32(GetRuleCount()),
-                FileLocation::ms_invalid));
+                FiLoc::ms_invalid));
 
         Preprocessor::ArraySymbol *npda_rule_reduction_nonterminal_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_rule_reduction_nonterminal_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_rule_reduction_nonterminal_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_rule_reduction_nonterminal_name_symbol =
-            symbol_table.DefineArraySymbol("_npda_rule_reduction_nonterminal_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_rule_reduction_nonterminal_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_rule_precedence_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_rule_precedence_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_rule_precedence_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_rule_precedence_name_symbol =
-            symbol_table.DefineArraySymbol("_npda_rule_precedence_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_rule_precedence_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_rule_token_count_symbol =
-            symbol_table.DefineArraySymbol("_npda_rule_token_count", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_rule_token_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_rule_description_symbol =
-            symbol_table.DefineArraySymbol("_npda_rule_description", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_rule_description", FiLoc::ms_invalid);
 
         for (Uint32 i = 0; i < GetRuleCount(); ++i)
         {
@@ -518,43 +518,43 @@ void Representation::GenerateAutomatonSymbols (
             npda_rule_reduction_nonterminal_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(GetTokenIndex(rule.m_owner_nonterminal->m_identifier)),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_rule_reduction_nonterminal_name_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     rule.m_owner_nonterminal->m_identifier,
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
 
             Precedence const *rule_precedence = m_precedence_map->GetElement(rule.m_rule_precedence_identifier);
             assert(rule_precedence != NULL);
             npda_rule_precedence_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(rule_precedence->m_precedence_level),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_rule_precedence_name_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     rule.m_rule_precedence_identifier,
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
 
             npda_rule_token_count_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(rule.m_rule_token_list->size()),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
 
             npda_rule_description_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     GetStringLiteral(rule.GetAsText()),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
         }
     }
 
     // _npda_node_count -- the number of nodes in the nondeterministic pushdown automaton (NPDA)
     {
         Preprocessor::ScalarSymbol *npda_node_count_symbol =
-            symbol_table.DefineScalarSymbol("_npda_node_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_npda_node_count", FiLoc::ms_invalid);
         npda_node_count_symbol->SetScalarBody(
             new Preprocessor::Body(
                 Sint32(m_npda_graph.GetNodeCount()),
-                FileLocation::ms_invalid));
+                FiLoc::ms_invalid));
     }
 
     // _npda_node_rule_index[_npda_node_count] -- the index of the rule which this state
@@ -603,35 +603,35 @@ void Representation::GenerateAutomatonSymbols (
     // not applicable.
     {
         Preprocessor::ArraySymbol *npda_node_rule_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_rule_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_rule_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_node_rule_stage_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_rule_stage", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_rule_stage", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_node_description_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_description", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_description", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_node_nonterminal_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_nonterminal_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_nonterminal_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_node_nonterminal_name_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_nonterminal_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_nonterminal_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_node_is_return_state_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_is_return_state", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_is_return_state", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_node_is_epsilon_closure_state_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_is_epsilon_closure_state", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_is_epsilon_closure_state", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_node_transition_offset_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_transition_offset", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_transition_offset", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_node_transition_count_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_transition_count", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_node_transition_count", FiLoc::ms_invalid);
         Preprocessor::ScalarSymbol *npda_transition_count_symbol =
-            symbol_table.DefineScalarSymbol("_npda_transition_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_npda_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_type_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_transition_type_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_transition_type_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_type_name_symbol =
-            symbol_table.DefineArraySymbol("_npda_transition_type_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_transition_type_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_data_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_transition_data_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_transition_data_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_data_name_symbol =
-            symbol_table.DefineArraySymbol("_npda_transition_data_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_transition_data_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_target_node_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_transition_target_node_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_npda_transition_target_node_index", FiLoc::ms_invalid);
 
         Sint32 total_transition_count = 0;
 
@@ -652,23 +652,23 @@ void Representation::GenerateAutomatonSymbols (
                 npda_transition_type_index_symbol->AppendArrayElement(
                     new Preprocessor::Body(
                         Sint32(transition.Type()),
-                        FileLocation::ms_invalid));
+                        FiLoc::ms_invalid));
                 npda_transition_type_name_symbol->AppendArrayElement(
                     new Preprocessor::Body(
                         GetTransitionTypeString(transition.Type()),
-                        FileLocation::ms_invalid));
+                        FiLoc::ms_invalid));
                 npda_transition_data_index_symbol->AppendArrayElement(
                     new Preprocessor::Body(
                         Sint32(transition.Data0()),
-                        FileLocation::ms_invalid));
+                        FiLoc::ms_invalid));
                 npda_transition_data_name_symbol->AppendArrayElement(
                     new Preprocessor::Body(
                         transition.Label(),
-                        FileLocation::ms_invalid));
+                        FiLoc::ms_invalid));
                 npda_transition_target_node_index_symbol->AppendArrayElement(
                     new Preprocessor::Body(
                         Sint32(transition.TargetIndex()),
-                        FileLocation::ms_invalid));
+                        FiLoc::ms_invalid));
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);
                 ++node_transition_count;
@@ -682,45 +682,45 @@ void Representation::GenerateAutomatonSymbols (
             npda_node_rule_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     rule != NULL ? Sint32(rule->GetAcceptStateIndex()) : GetRuleCount(),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_node_rule_stage_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     rule != NULL ? Sint32(node_data.GetRuleStage()) : 0,
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_node_description_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     GetStringLiteral(node_data.GetDescription()),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_node_nonterminal_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(nonterminal != NULL ? GetTokenIndex(nonterminal->m_identifier) : 0),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_node_nonterminal_name_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     nonterminal != NULL ? nonterminal->m_identifier : "none_",
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_node_is_return_state_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(node_data.IsReturnState() ? 1 : 0),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_node_is_epsilon_closure_state_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(node_data.IsEpsilonClosureState() ? 1 : 0),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_node_transition_offset_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(node_transition_offset),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
             npda_node_transition_count_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(node_transition_count),
-                    FileLocation::ms_invalid));
+                    FiLoc::ms_invalid));
         }
 
         npda_transition_count_symbol->SetScalarBody(
             new Preprocessor::Body(
                 Sint32(total_transition_count),
-                FileLocation::ms_invalid));
+                FiLoc::ms_invalid));
     }
 }
 
@@ -731,7 +731,7 @@ void Representation::GenerateTargetLanguageDependentSymbols (
     // _accept_handler_code[_rule_count] -- specifies code for all accept handlers.
     {
         Preprocessor::ArraySymbol *accept_handler_code_symbol =
-            symbol_table.DefineArraySymbol("_accept_handler_code", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_accept_handler_code", FiLoc::ms_invalid);
 
         for (NonterminalMap::const_iterator it = m_nonterminal_map->begin(),
                                             it_end = m_nonterminal_map->end();

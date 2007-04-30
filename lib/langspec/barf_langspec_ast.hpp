@@ -83,7 +83,7 @@ struct AddCodeSpec : public AstCommon::Directive
 
     AddCodeSpec (AstCommon::String const *filename, AstCommon::Identifier const *filename_directive_identifier)
         :
-        AstCommon::Directive("%add_codespec", filename->GetFileLocation(), AT_ADD_CODESPEC),
+        AstCommon::Directive("%add_codespec", filename->GetFiLoc(), AT_ADD_CODESPEC),
         m_filename(filename),
         m_filename_directive_identifier(filename_directive_identifier)
     {
@@ -106,7 +106,7 @@ struct AddDirective : public AstCommon::Directive
 
     AddDirective (AstCommon::Identifier const *directive_to_add_identifier, AstType param_type, string const &directive_identifier)
         :
-        AstCommon::Directive(directive_identifier, directive_to_add_identifier->GetFileLocation(), AT_ADD_DIRECTIVE),
+        AstCommon::Directive(directive_identifier, directive_to_add_identifier->GetFiLoc(), AT_ADD_DIRECTIVE),
         m_directive_to_add_identifier(directive_to_add_identifier),
         m_param_type(param_type)
     {
@@ -158,7 +158,7 @@ struct ParamType : public AstCommon::Ast
 
     ParamType (AstType param_type)
         :
-        AstCommon::Ast(FileLocation::ms_invalid, AT_PARAM_TYPE),
+        AstCommon::Ast(FiLoc::ms_invalid, AT_PARAM_TYPE),
         m_param_type(param_type)
     {
         assert(m_param_type == AstCommon::AT_IDENTIFIER ||
@@ -182,7 +182,7 @@ struct Specification : public AstCommon::Ast
         AddCodeSpecList const *add_codespec_list,
         AddDirectiveMap const *add_directive_map)
         :
-        AstCommon::Ast(target_language_identifier->GetFileLocation(), AT_SPECIFICATION),
+        AstCommon::Ast(target_language_identifier->GetFiLoc(), AT_SPECIFICATION),
         m_target_language_identifier(target_language_identifier),
         m_add_codespec_list(add_codespec_list),
         m_add_directive_map(add_directive_map)

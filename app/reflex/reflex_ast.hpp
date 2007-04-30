@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "barf_commonlang_ast.hpp"
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 #include "barf_graph.hpp"
 #include "barf_regex_ast.hpp"
 #include "barf_util.hpp"
@@ -60,7 +60,7 @@ struct StartDirective : public AstCommon::Directive
 
     StartDirective (AstCommon::Identifier const *start_state_identifier)
         :
-        AstCommon::Directive("%start", start_state_identifier->GetFileLocation(), AT_START_DIRECTIVE),
+        AstCommon::Directive("%start", start_state_identifier->GetFiLoc(), AT_START_DIRECTIVE),
         m_start_state_identifier(start_state_identifier)
     {
         assert(m_start_state_identifier != NULL);
@@ -84,7 +84,7 @@ struct Rule : public AstCommon::Ast
         Regex::RegularExpression const *rule_regex,
         CommonLang::RuleHandlerMap const *rule_handler_map)
         :
-        AstCommon::Ast(rule_regex->GetFileLocation(), AT_RULE),
+        AstCommon::Ast(rule_regex->GetFiLoc(), AT_RULE),
         m_rule_regex_string(rule_regex_string),
         m_rule_regex(rule_regex),
         m_rule_handler_map(rule_handler_map)
@@ -120,7 +120,7 @@ struct ScannerState : public AstCommon::Ast
         AstCommon::Identifier const *scanner_state_identifier,
         RuleList *rule_list)
         :
-        AstCommon::Ast(scanner_state_identifier->GetFileLocation(), AT_SCANNER_STATE),
+        AstCommon::Ast(scanner_state_identifier->GetFiLoc(), AT_SCANNER_STATE),
         m_scanner_state_identifier(scanner_state_identifier),
         m_rule_list(rule_list)
     {
@@ -164,10 +164,10 @@ public:
         CommonLang::TargetLanguageMap const *target_language_map,
         Regex::RegularExpressionMap *regex_macro_map,
         StartDirective const *start_directive,
-        FileLocation const &end_preamble_file_location,
+        FiLoc const &end_preamble_filoc,
         ScannerStateMap const *scanner_state_map)
         :
-        AstCommon::Ast(target_language_map->GetFileLocation(), AT_REPRESENTATION),
+        AstCommon::Ast(target_language_map->GetFiLoc(), AT_REPRESENTATION),
         m_target_language_map(target_language_map),
         m_regex_macro_map(regex_macro_map),
         m_start_directive(start_directive),

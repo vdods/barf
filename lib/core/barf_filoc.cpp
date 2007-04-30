@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// barf_filelocation.hpp by Victor Dods, created 2006/02/11
+// barf_filoc.hpp by Victor Dods, created 2006/02/11
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,7 +8,7 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 
 #include <sstream>
 
@@ -16,11 +16,11 @@
 
 namespace Barf {
 
-FileLocation const FileLocation::ms_invalid;
+FiLoc const FiLoc::ms_invalid;
 
-string FileLocation::GetAsString () const
+string FiLoc::GetAsString () const
 {
-    assert(this != &ms_invalid && "can't use FileLocation::ms_invalid in this manner");
+    assert(this != &ms_invalid && "can't use FiLoc::ms_invalid in this manner");
     assert(GetIsValid());
 
     ostringstream out;
@@ -30,9 +30,9 @@ string FileLocation::GetAsString () const
     return out.str();
 }
 
-string FileLocation::GetLineDirectiveString () const
+string FiLoc::GetLineDirectiveString () const
 {
-    assert(this != &ms_invalid && "do not use this on a FileLocation without a line number");
+    assert(this != &ms_invalid && "do not use this on a FiLoc without a line number");
     assert(GetIsValid());
 
     ostringstream out;
@@ -40,9 +40,9 @@ string FileLocation::GetLineDirectiveString () const
     return out.str();
 }
 
-void FileLocation::IncrementLineNumber (Uint32 by_value)
+void FiLoc::IncrementLineNumber (Uint32 by_value)
 {
-    assert(m_line_number > 0 && "don't use this on non-line-number-using FileLocations");
+    assert(m_line_number > 0 && "don't use this on non-line-number-using FiLocs");
     m_line_number += by_value;
 }
 

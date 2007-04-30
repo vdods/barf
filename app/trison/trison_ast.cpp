@@ -382,19 +382,19 @@ void ParserDirectiveSet::AddDirective (
     {
         // throw an error upon duplicate parser directives
         EmitError(
-            parser_directive->GetFileLocation(),
+            parser_directive->GetFiLoc(),
             "duplicate parser directive \"" +
             ParserDirective::GetString(parser_directive_type) +
             "\" (first encountered at " +
-            m_parser_directive[parser_directive_type]->GetFileLocation().GetAsString() +
+            m_parser_directive[parser_directive_type]->GetFiLoc().GetAsString() +
             ")");
         delete parser_directive;
     }
     else
     {
         // if the file location isn't set, use the one from the parser directive
-        if (!GetFileLocation().GetHasLineNumber())
-            SetFileLocation(parser_directive->GetFileLocation());
+        if (!GetFiLoc().GetHasLineNumber())
+            SetFiLoc(parser_directive->GetFiLoc());
         // store the parser directive
         m_parser_directive[parser_directive_type] = parser_directive;
     }
@@ -405,16 +405,16 @@ void ParserDirectiveSet::CheckDependencies ()
     // check for required parser directives
 
     if (m_parser_directive[PDT_CLASS_NAME] == NULL)
-        EmitError(FileLocation(g_options->GetInputFilename()), "required directive %parser_class_name is missing");
+        EmitError(FiLoc(g_options->GetInputFilename()), "required directive %parser_class_name is missing");
 
     // check for other directive dependencies
 
     if (m_parser_directive[PDT_PARSE_METHOD_ACCESS] == NULL)
     {
-        AstCommon::String *value = new AstCommon::String(FileLocation::ms_invalid);
+        AstCommon::String *value = new AstCommon::String(FiLoc::ms_invalid);
         value->AppendText("public:");
         ParserDirective *parser_directive =
-            new ParserDirective("%parser_parse_method_access", FileLocation::ms_invalid);
+            new ParserDirective("%parser_parse_method_access", FiLoc::ms_invalid);
         parser_directive->SetValue(value);
         m_parser_directive[PDT_PARSE_METHOD_ACCESS] = parser_directive;
     }
@@ -424,7 +424,7 @@ void ParserDirectiveSet::CheckDependencies ()
         if (text != "public:" && text != "protected:" && text != "private:")
         {
             EmitError(
-                GetDirectiveFileLocation(PDT_PARSE_METHOD_ACCESS),
+                GetDirectiveFiLoc(PDT_PARSE_METHOD_ACCESS),
                 "%parser_parse_method_access must be one of \"public:\", "
                 "\"protected:\" or \"private:\" (if unspecified, \"public:\" is used)");
         }
@@ -433,7 +433,7 @@ void ParserDirectiveSet::CheckDependencies ()
     if (m_parser_directive[PDT_BASE_ASSIGNED_TYPE_SENTINEL] != NULL)
         if (m_parser_directive[PDT_BASE_ASSIGNED_TYPE] == NULL)
             EmitError(
-                FileLocation(g_options->GetInputFilename()),
+                FiLoc(g_options->GetInputFilename()),
                 "%parser_base_assigned_type must be specified if "
                 "%parser_base_assigned_type_sentinel is");
 }
@@ -445,8 +445,8 @@ void ParserDirectiveSet::FillInMissingOptionalDirectivesWithDefaults ()
         assert(m_parser_directive[PDT_BASE_ASSIGNED_TYPE_SENTINEL] == NULL);
 
         ParserDirective *parser_directive =
-            new ParserDirective("%parser_base_assigned_type", FileLocation::ms_invalid);
-        AstCommon::String *directive_string = new AstCommon::String(FileLocation::ms_invalid);
+            new ParserDirective("%parser_base_assigned_type", FiLoc::ms_invalid);
+        AstCommon::String *directive_string = new AstCommon::String(FiLoc::ms_invalid);
         directive_string->AppendText("int");
         parser_directive->SetValue(directive_string);
 
@@ -458,8 +458,8 @@ void ParserDirectiveSet::FillInMissingOptionalDirectivesWithDefaults ()
         assert(m_parser_directive[PDT_BASE_ASSIGNED_TYPE] != NULL);
 
         ParserDirective *parser_directive =
-            new ParserDirective("%parser_base_assigned_type_sentinel", FileLocation::ms_invalid);
-        AstCommon::String *directive_string = new AstCommon::String(FileLocation::ms_invalid);
+            new ParserDirective("%parser_base_assigned_type_sentinel", FiLoc::ms_invalid);
+        AstCommon::String *directive_string = new AstCommon::String(FiLoc::ms_invalid);
         directive_string->AppendText(
             "static_cast<" +
             m_parser_directive[PDT_BASE_ASSIGNED_TYPE]->GetValue()->GetText() +
@@ -480,10 +480,10 @@ void ParserDirectiveSet::Print (ostream &stream, StringifyAstType Stringify, Uin
 
 Grammar::Grammar (
     AstCommon::DirectiveList *directive_list,
-    FileLocation const &end_preamble_file_location,
+    FiLoc const &end_preamble_filoc,
     NonterminalList *nonterminal_list)
     :
-    AstCommon::Ast(FileLocation::ms_invalid, AT_GRAMMAR),
+    AstCommon::Ast(FiLoc::ms_invalid, AT_GRAMMAR),
     m_nonterminal_list(nonterminal_list)
 {
     assert(m_nonterminal_list != NULL);
@@ -550,11 +550,11 @@ Grammar::Grammar (
 
     // create m_start_nonterminal from start_directive
     if (start_directive == NULL)
-        EmitError(end_preamble_file_location, "missing %start directive");
+        EmitError(end_preamble_filoc, "missing %start directive");
     else
     {
         AstCommon::Identifier *start_nonterminal_identifier =
-            new AstCommon::Identifier("%start", FileLocation::ms_invalid);
+            new AstCommon::Identifier("%start", FiLoc::ms_invalid);
         m_start_nonterminal =
             new Nonterminal(start_nonterminal_identifier, NULL);
 
@@ -562,14 +562,14 @@ Grammar::Grammar (
         {
             string const &start_nonterminal_name = start_directive->GetStartNonterminalIdentifier()->GetText();
             TokenIdentifierIdentifier *first_rule_token_identifier =
-                new TokenIdentifierIdentifier(start_nonterminal_name, FileLocation::ms_invalid);
+                new TokenIdentifierIdentifier(start_nonterminal_name, FiLoc::ms_invalid);
             RuleToken *first_rule_token =
                 new RuleToken(first_rule_token_identifier, NULL);
             start_nonterminal_rule_token_list->Append(first_rule_token);
         }
         {
             TokenIdentifierIdentifier *second_rule_token_identifier =
-                new TokenIdentifierIdentifier("END_", FileLocation::ms_invalid);
+                new TokenIdentifierIdentifier("END_", FiLoc::ms_invalid);
             RuleToken *second_rule_token =
                 new RuleToken(second_rule_token_identifier, NULL);
             start_nonterminal_rule_token_list->Append(second_rule_token);
@@ -578,7 +578,7 @@ Grammar::Grammar (
         Rule *start_nonterminal_rule =
             new Rule(start_nonterminal_rule_token_list, A_LEFT, NULL);
 
-        AstCommon::CodeBlock *start_nonterminal_rule_code_block = new AstCommon::StrictCodeBlock(FileLocation::ms_invalid);
+        AstCommon::CodeBlock *start_nonterminal_rule_code_block = new AstCommon::StrictCodeBlock(FiLoc::ms_invalid);
         start_nonterminal_rule_code_block->AppendText(
             "    assert(0 < m_reduction_rule_token_count);\n"
             "    return m_token_stack[m_token_stack.size() - m_reduction_rule_token_count];\n");

@@ -64,7 +64,7 @@ public:
         AstCommon::Identifier const *directive_identifier,
         AstCommon::TextBase const *directive_value)
         :
-        Directive("%language", language_identifier->GetFileLocation(), AT_LANGUAGE_DIRECTIVE),
+        Directive("%language", language_identifier->GetFiLoc(), AT_LANGUAGE_DIRECTIVE),
         m_language_identifier(language_identifier),
         m_directive_identifier(directive_identifier),
         m_directive_value(directive_value)
@@ -175,8 +175,8 @@ struct RuleHandler : public AstCommon::Ast
         :
         AstCommon::Ast(
             (language_identifier != NULL) ?
-            language_identifier->GetFileLocation() :
-            rule_handler_code_block->GetFileLocation(),
+            language_identifier->GetFiLoc() :
+            rule_handler_code_block->GetFiLoc(),
             AT_RULE_HANDLER),
         m_language_identifier(language_identifier),
         m_rule_handler_code_block(rule_handler_code_block)

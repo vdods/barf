@@ -43,13 +43,13 @@ void DumpSymbolTable::Execute (Textifier &textifier, SymbolTable &symbol_table) 
 
 void DeclareArray::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    ArraySymbol *symbol = symbol_table.DefineArraySymbol(m_identifier->GetText(), m_identifier->GetFileLocation());
+    ArraySymbol *symbol = symbol_table.DefineArraySymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
     assert(symbol->GetArrayElementCount() == 0);
 }
 
 void DeclareMap::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    MapSymbol *symbol = symbol_table.DefineMapSymbol(m_identifier->GetText(), m_identifier->GetFileLocation());
+    MapSymbol *symbol = symbol_table.DefineMapSymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
     assert(symbol->GetMapElementCount() == 0);
 }
 
@@ -61,9 +61,9 @@ void Define::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     Textifier sandboxed_textifier(out);
     m_body->Execute(sandboxed_textifier, symbol_table);
     Body *evaluated_body = new Body();
-    evaluated_body->Append(new Text(out.str(), FileLocation::ms_invalid));
+    evaluated_body->Append(new Text(out.str(), FiLoc::ms_invalid));
 
-    ScalarSymbol *symbol = symbol_table.DefineScalarSymbol(m_identifier->GetText(), m_identifier->GetFileLocation());
+    ScalarSymbol *symbol = symbol_table.DefineScalarSymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
     symbol->SetScalarBody(evaluated_body);
 }
 
@@ -74,7 +74,7 @@ void DefineArrayElement::Execute (Textifier &textifier, SymbolTable &symbol_tabl
     Symbol *symbol = symbol_table.GetSymbol(m_identifier->GetText());
     if (symbol != NULL && !symbol->GetIsArraySymbol())
     {
-        EmitError(m_identifier->GetFileLocation(), "macro \"" + m_identifier->GetText() + "\" is not an array");
+        EmitError(m_identifier->GetFiLoc(), "macro \"" + m_identifier->GetText() + "\" is not an array");
         return;
     }
 
@@ -82,11 +82,11 @@ void DefineArrayElement::Execute (Textifier &textifier, SymbolTable &symbol_tabl
     Textifier sandboxed_textifier(out);
     m_body->Execute(sandboxed_textifier, symbol_table);
     Body *evaluated_body = new Body();
-    evaluated_body->Append(new Text(out.str(), FileLocation::ms_invalid));
+    evaluated_body->Append(new Text(out.str(), FiLoc::ms_invalid));
 
     ArraySymbol *array_symbol = Dsc<ArraySymbol *>(symbol);
     if (array_symbol == NULL)
-        array_symbol = symbol_table.DefineArraySymbol(m_identifier->GetText(), m_identifier->GetFileLocation());
+        array_symbol = symbol_table.DefineArraySymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
     array_symbol->AppendArrayElement(evaluated_body);
 }
 
@@ -97,7 +97,7 @@ void DefineMapElement::Execute (Textifier &textifier, SymbolTable &symbol_table)
     Symbol *symbol = symbol_table.GetSymbol(m_identifier->GetText());
     if (symbol != NULL && !symbol->GetIsMapSymbol())
     {
-        EmitError(m_identifier->GetFileLocation(), "macro \"" + m_identifier->GetText() + "\" is not a map");
+        EmitError(m_identifier->GetFiLoc(), "macro \"" + m_identifier->GetText() + "\" is not a map");
         return;
     }
 
@@ -105,17 +105,17 @@ void DefineMapElement::Execute (Textifier &textifier, SymbolTable &symbol_table)
     Textifier sandboxed_textifier(out);
     m_body->Execute(sandboxed_textifier, symbol_table);
     Body *evaluated_body = new Body();
-    evaluated_body->Append(new Text(out.str(), FileLocation::ms_invalid));
+    evaluated_body->Append(new Text(out.str(), FiLoc::ms_invalid));
 
     MapSymbol *map_symbol = Dsc<MapSymbol *>(symbol);
     if (map_symbol == NULL)
-        map_symbol = symbol_table.DefineMapSymbol(m_identifier->GetText(), m_identifier->GetFileLocation());
+        map_symbol = symbol_table.DefineMapSymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
     map_symbol->SetMapElement(m_key->GetText(), evaluated_body);
 }
 
 void Undefine::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    symbol_table.UndefineSymbol(m_identifier->GetText(), m_identifier->GetFileLocation());
+    symbol_table.UndefineSymbol(m_identifier->GetText(), m_identifier->GetFiLoc());
 }
 
 void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
@@ -127,7 +127,7 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         assert(m_iterator_integer == NULL);
 
         m_iterator_integer_body = new Body();
-        m_iterator_integer = new Integer(0, FileLocation::ms_invalid);
+        m_iterator_integer = new Integer(0, FiLoc::ms_invalid);
         m_iterator_integer_body->Append(m_iterator_integer);
     }
 
@@ -138,7 +138,7 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol(
                 m_iterator_identifier->GetText(),
-                m_iterator_identifier->GetFileLocation());
+                m_iterator_identifier->GetFiLoc());
         symbol->SetScalarBody(m_iterator_integer_body);
     }
 
@@ -147,7 +147,7 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     {
         ostringstream out;
         out << "negative value (" << iteration_count << ") invalid for loop iteration count";
-        EmitError(GetFileLocation(), out.str());
+        EmitError(GetFiLoc(), out.str());
         return;
     }
     for (m_iterator_integer->SetValue(0);
@@ -158,7 +158,7 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     }
     symbol_table.UndefineSymbol(
         m_iterator_identifier->GetText(),
-        m_iterator_identifier->GetFileLocation());
+        m_iterator_identifier->GetFiLoc());
 }
 
 void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
@@ -170,12 +170,12 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         Symbol *symbol = symbol_table.GetSymbol(m_map_identifier->GetText());
         if (symbol == NULL)
         {
-            EmitError(m_map_identifier->GetFileLocation(), "undefined macro \"" + m_map_identifier->GetText() + "\"");
+            EmitError(m_map_identifier->GetFiLoc(), "undefined macro \"" + m_map_identifier->GetText() + "\"");
             return;
         }
         if (!symbol->GetIsMapSymbol())
         {
-            EmitError(m_map_identifier->GetFileLocation(), "macro \"" + m_map_identifier->GetText() + "\" is not a map");
+            EmitError(m_map_identifier->GetFiLoc(), "macro \"" + m_map_identifier->GetText() + "\" is not a map");
             return;
         }
         map_symbol = Dsc<MapSymbol *>(symbol);
@@ -186,7 +186,7 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         assert(m_key_text == NULL);
 
         m_key_text_body = new Body();
-        m_key_text = new Text("", FileLocation::ms_invalid);
+        m_key_text = new Text("", FiLoc::ms_invalid);
         m_key_text_body->Append(m_key_text);
     }
 
@@ -197,7 +197,7 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol(
                 m_key_identifier->GetText(),
-                m_key_identifier->GetFileLocation());
+                m_key_identifier->GetFiLoc());
         symbol->SetScalarBody(m_key_text_body);
     }
 
@@ -211,7 +211,7 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     }
     symbol_table.UndefineSymbol(
         m_key_identifier->GetText(),
-        m_key_identifier->GetFileLocation());
+        m_key_identifier->GetFiLoc());
 }
 
 void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
@@ -222,12 +222,12 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         string filename(m_include_filename_expression->GetTextValue(symbol_table));
         if (!parser.OpenFile(filename))
         {
-            EmitError(GetFileLocation(), "file \"" + filename + "\" not found");
+            EmitError(GetFiLoc(), "file \"" + filename + "\" not found");
             return;
         }
         if (parser.Parse() != Parser::PRC_SUCCESS)
         {
-            EmitError(GetFileLocation(), "parse error in include file \"" + filename + "\"");
+            EmitError(GetFiLoc(), "parse error in include file \"" + filename + "\"");
             return;
         }
 
@@ -251,15 +251,15 @@ void Message::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     switch (m_criticality)
     {
         case WARNING:
-            EmitWarning(GetFileLocation(), message_text);
+            EmitWarning(GetFiLoc(), message_text);
             break;
 
         case ERROR:
-            EmitError(GetFileLocation(), message_text);
+            EmitError(GetFiLoc(), message_text);
             break;
 
         case FATAL_ERROR:
-            EmitFatalError(GetFileLocation(), message_text);
+            EmitFatalError(GetFiLoc(), message_text);
             break;
 
         default:

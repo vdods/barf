@@ -102,7 +102,7 @@ public:
 
 #line 34 "barf_langspec_parser.trison"
 
-    inline FileLocation const &GetFileLocation () const { return m_scanner.GetFileLocation(); }
+    inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
     bool OpenFile (string const &input_filename);
 

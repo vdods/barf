@@ -117,14 +117,14 @@ Symbol *SymbolTable::GetSymbol (string const &identifier)
     return Contains(m_symbol_map, identifier, it) ? it->second : NULL;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &identifier, FileLocation const &file_location)
+ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &identifier, FiLoc const &filoc)
 {
     assert(!identifier.empty());
 
     if (GetSymbol(identifier) != NULL)
     {
-        EmitWarning(file_location, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, file_location);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
+        UndefineSymbol(identifier, filoc);
     }
 
     ScalarSymbol *symbol = new ScalarSymbol(identifier);
@@ -132,46 +132,46 @@ ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &identifier, FileLoc
     return symbol;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbolAsText (string const &identifier, FileLocation const &file_location, string const &text)
+ScalarSymbol *SymbolTable::DefineScalarSymbolAsText (string const &identifier, FiLoc const &filoc, string const &text)
 {
     assert(!identifier.empty());
 
     if (GetSymbol(identifier) != NULL)
     {
-        EmitWarning(file_location, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, file_location);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
+        UndefineSymbol(identifier, filoc);
     }
 
     ScalarSymbol *symbol = new ScalarSymbol(identifier);
     m_symbol_map[identifier] = symbol;
-    symbol->SetScalarBody(new Body(text, FileLocation::ms_invalid));
+    symbol->SetScalarBody(new Body(text, FiLoc::ms_invalid));
     return symbol;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbolAsInteger (string const &identifier, FileLocation const &file_location, Sint32 integer)
+ScalarSymbol *SymbolTable::DefineScalarSymbolAsInteger (string const &identifier, FiLoc const &filoc, Sint32 integer)
 {
     assert(!identifier.empty());
 
     if (GetSymbol(identifier) != NULL)
     {
-        EmitWarning(file_location, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, file_location);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
+        UndefineSymbol(identifier, filoc);
     }
 
     ScalarSymbol *symbol = new ScalarSymbol(identifier);
     m_symbol_map[identifier] = symbol;
-    symbol->SetScalarBody(new Body(integer, FileLocation::ms_invalid));
+    symbol->SetScalarBody(new Body(integer, FiLoc::ms_invalid));
     return symbol;
 }
 
-ArraySymbol *SymbolTable::DefineArraySymbol (string const &identifier, FileLocation const &file_location)
+ArraySymbol *SymbolTable::DefineArraySymbol (string const &identifier, FiLoc const &filoc)
 {
     assert(!identifier.empty());
 
     if (GetSymbol(identifier) != NULL)
     {
-        EmitWarning(file_location, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, file_location);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
+        UndefineSymbol(identifier, filoc);
     }
 
     ArraySymbol *symbol = new ArraySymbol(identifier);
@@ -179,14 +179,14 @@ ArraySymbol *SymbolTable::DefineArraySymbol (string const &identifier, FileLocat
     return symbol;
 }
 
-MapSymbol *SymbolTable::DefineMapSymbol (string const &identifier, FileLocation const &file_location)
+MapSymbol *SymbolTable::DefineMapSymbol (string const &identifier, FiLoc const &filoc)
 {
     assert(!identifier.empty());
 
     if (GetSymbol(identifier) != NULL)
     {
-        EmitWarning(file_location, "redefinition of previously defined macro \"" + identifier + "\"");
-        UndefineSymbol(identifier, file_location);
+        EmitWarning(filoc, "redefinition of previously defined macro \"" + identifier + "\"");
+        UndefineSymbol(identifier, filoc);
     }
 
     MapSymbol *symbol = new MapSymbol(identifier);
@@ -194,7 +194,7 @@ MapSymbol *SymbolTable::DefineMapSymbol (string const &identifier, FileLocation 
     return symbol;
 }
 
-void SymbolTable::UndefineSymbol (string const &identifier, FileLocation const &file_location)
+void SymbolTable::UndefineSymbol (string const &identifier, FiLoc const &filoc)
 {
     assert(!identifier.empty());
     SymbolMap::iterator it;
@@ -205,7 +205,7 @@ void SymbolTable::UndefineSymbol (string const &identifier, FileLocation const &
         m_symbol_map.erase(it);
     }
     else
-        EmitWarning(file_location, "macro \"" + identifier + "\" is not currently defined");
+        EmitWarning(filoc, "macro \"" + identifier + "\" is not currently defined");
 }
 
 void SymbolTable::Print (ostream &stream) const

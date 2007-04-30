@@ -56,7 +56,7 @@ private:
 namespace Trison {
 
 #undef FL
-#define FL FileLocation(m_scanner->GetInputFilename(), m_scanner->GetLineNumber())
+#define FL FiLoc(m_scanner->GetInputFilename(), m_scanner->GetLineNumber())
 %}
 
 %parser_constructor_actions{
@@ -123,7 +123,7 @@ root %type "Grammar *"
         Grammar *grammar =
             new Grammar(
                 directive_list,
-                end_preamble->GetFileLocation(),
+                end_preamble->GetFiLoc(),
                 nonterminal_list);
         delete end_preamble;
         return grammar;
@@ -161,7 +161,7 @@ directive %type "AstCommon::Directive *"
             ostringstream out;
             out << ParserDirective::GetString(parser_directive->GetParserDirectiveType())
                 << " does not accept %{ %} code blocks -- use { }";
-            EmitError(parser_directive->GetFileLocation(), out.str());
+            EmitError(parser_directive->GetFiLoc(), out.str());
             return NULL;
         }
 
@@ -195,7 +195,7 @@ directive %type "AstCommon::Directive *"
 |
     DIRECTIVE_TOKEN:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFileLocation(), "syntax error in %token directive");
+        EmitError(throwaway->GetFiLoc(), "syntax error in %token directive");
 
         delete throwaway;
         return new TokenDirective(new TokenIdentifierList(), NULL);
@@ -203,9 +203,9 @@ directive %type "AstCommon::Directive *"
 |
     DIRECTIVE_TOKEN:throwaway1 token_identifier_list:token_identifier_list TYPE:throwaway2 %error at_least_one_newline
     {
-        EmitError(throwaway2->GetFileLocation(), "syntax error in %type directive");
+        EmitError(throwaway2->GetFiLoc(), "syntax error in %type directive");
 
-        AstCommon::String *dummy_string = new AstCommon::String(throwaway2->GetFileLocation());
+        AstCommon::String *dummy_string = new AstCommon::String(throwaway2->GetFiLoc());
         delete throwaway1;
         delete throwaway2;
         return new TokenDirective(token_identifier_list, dummy_string);
@@ -219,9 +219,9 @@ directive %type "AstCommon::Directive *"
 |
     PREC:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFileLocation(), "syntax error in %prec directive");
+        EmitError(throwaway->GetFiLoc(), "syntax error in %prec directive");
 
-        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFileLocation());
+        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFiLoc());
         delete throwaway;
         return new PrecedenceDirective(dummy_identifier);
     }
@@ -234,30 +234,30 @@ directive %type "AstCommon::Directive *"
 |
     START:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFileLocation(), "syntax error in %start directive");
+        EmitError(throwaway->GetFiLoc(), "syntax error in %start directive");
 
-        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFileLocation());
+        AstCommon::Identifier *dummy_identifier = new AstCommon::Identifier("ERROR", throwaway->GetFiLoc());
         delete throwaway;
         return new StartDirective(dummy_identifier);
     }
 |
     %error STRICT_CODE_BLOCK:value at_least_one_newline
     {
-        EmitError(value->GetFileLocation(), "syntax error in directive");
+        EmitError(value->GetFiLoc(), "syntax error in directive");
 
         return NULL;
     }
 |
     %error DUMB_CODE_BLOCK:value at_least_one_newline
     {
-        EmitError(value->GetFileLocation(), "syntax error in directive");
+        EmitError(value->GetFiLoc(), "syntax error in directive");
 
         return NULL;
     }
 |
     %error STRING:value at_least_one_newline
     {
-        EmitError(value->GetFileLocation(), "syntax error in directive");
+        EmitError(value->GetFiLoc(), "syntax error in directive");
 
         return NULL;
     }
@@ -291,7 +291,7 @@ token_identifier %type "TokenIdentifier *"
     IDENTIFIER:identifier
     {
         TokenIdentifierIdentifier *token_identifier_identifier =
-            new TokenIdentifierIdentifier(identifier->GetText(), identifier->GetFileLocation());
+            new TokenIdentifierIdentifier(identifier->GetText(), identifier->GetFiLoc());
         delete identifier;
         return token_identifier_identifier;
     }
@@ -370,14 +370,14 @@ nonterminal_specification %type "Nonterminal *"
 |
     IDENTIFIER:identifier %error
     {
-        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal directive");
+        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal directive");
 
         return new Nonterminal(identifier, NULL);
     }
 |
     IDENTIFIER:identifier TYPE:throwaway %error
     {
-        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal %type directive; was expecting a string");
+        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
 
         delete throwaway;
         return new Nonterminal(identifier, NULL);
@@ -416,7 +416,7 @@ rule %type "Rule *"
     rule_specification:rule_specification DUMB_CODE_BLOCK:code_block
     {
         EmitError(
-            code_block->GetFileLocation(),
+            code_block->GetFiLoc(),
             "rules do not accept %{ %} code blocks -- use { } instead");
 
         rule_specification->SetCodeBlock(code_block);

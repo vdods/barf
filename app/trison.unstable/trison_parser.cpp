@@ -545,7 +545,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
             nonterminal_map->GetElement(start_nonterminal_identifier->GetText()) == NULL)
         {
             EmitError(
-                start_nonterminal_identifier->GetFileLocation(),
+                start_nonterminal_identifier->GetFiLoc(),
                 "undeclared nonterminal \"" + start_nonterminal_identifier->GetText() + "\"");
         }
 
@@ -556,7 +556,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
                 precedence_map,
                 m_precedence_list,
                 start_nonterminal_identifier->GetText(),
-                throwaway->GetFileLocation(),
+                throwaway->GetFiLoc(),
                 nonterminal_map,
                 m_nonterminal_list);
         delete throwaway;
@@ -609,7 +609,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0004 ()
 #line 261 "trison_parser.trison"
 
         assert(m_target_language_map == NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %target_languages");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %target_languages");
         m_target_language_map = new CommonLang::TargetLanguageMap();
         return m_target_language_map;
     
@@ -713,7 +713,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
 
 #line 317 "trison_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %language." + language_identifier->GetText() + "." + language_directive->GetText());
         delete throwaway;
         delete language_identifier;
         delete language_directive;
@@ -733,7 +733,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
 
 #line 326 "trison_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in directive name for directive %language." + language_identifier->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %language." + language_identifier->GetText());
         delete throwaway;
         delete language_identifier;
         return NULL;
@@ -750,7 +750,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0012 ()
 
 #line 334 "trison_parser.trison"
 
-        EmitError(throwaway->GetFileLocation(), "parse error in language name for directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in language name for directive %language");
         delete throwaway;
         return NULL;
     
@@ -966,7 +966,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0026 ()
 
         assert(m_precedence_list == NULL);
         assert(m_precedence_map == NULL);
-        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FileLocation::ms_invalid, 0);
+        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FiLoc::ms_invalid, 0);
         m_precedence_list = new PrecedenceList();
         m_precedence_list->Append(precedence);
         m_precedence_map = new PrecedenceMap();
@@ -993,7 +993,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0027 ()
             new Precedence(
                 identifier->GetText(),
                 A_NONASSOC,
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
@@ -1023,7 +1023,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0028 ()
             new Precedence(
                 identifier->GetText(),
                 A_LEFT,
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
@@ -1054,7 +1054,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0029 ()
             new Precedence(
                 identifier->GetText(),
                 A_NONASSOC,
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
@@ -1085,7 +1085,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0030 ()
             new Precedence(
                 identifier->GetText(),
                 A_RIGHT,
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_identifier, precedence);
@@ -1175,7 +1175,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0035 ()
 
 #line 573 "trison_parser.trison"
 
-        EmitError(GetFileLocation(), "syntax error in nonterminal definition");
+        EmitError(GetFiLoc(), "syntax error in nonterminal definition");
         return NULL;
     
 #line 1182 "trison_parser.cpp"
@@ -1196,11 +1196,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0036 ()
 
         assert(m_token_map != NULL);
         if (m_token_map->GetElement(identifier->GetText()) != NULL)
-            EmitError(identifier->GetFileLocation(), "identifier collision with %token " + identifier->GetText());
+            EmitError(identifier->GetFiLoc(), "identifier collision with %token " + identifier->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 identifier->GetText(),
-                identifier->GetFileLocation(),
+                identifier->GetFiLoc(),
                 assigned_type->GetText());
         delete throwaway;
         delete identifier;
@@ -1221,11 +1221,11 @@ AstCommon::Ast * Parser::ReductionRuleHandler0037 ()
 
         assert(m_token_map != NULL);
         if (m_token_map->GetElement(identifier->GetText()) != NULL)
-            EmitError(identifier->GetFileLocation(), "identifier collision with %token " + identifier->GetText());
+            EmitError(identifier->GetFiLoc(), "identifier collision with %token " + identifier->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 identifier->GetText(),
-                identifier->GetFileLocation());
+                identifier->GetFiLoc());
         delete identifier;
         return nonterminal;
     
@@ -1239,7 +1239,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0038 ()
 
 #line 611 "trison_parser.trison"
 
-        EmitError(GetFileLocation(), "syntax error while parsing nonterminal specification");
+        EmitError(GetFiLoc(), "syntax error while parsing nonterminal specification");
         return NULL;
     
 #line 1246 "trison_parser.cpp"
@@ -1254,7 +1254,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0039 ()
 
 #line 617 "trison_parser.trison"
 
-        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal directive");
+        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal directive");
         delete identifier;
         return NULL;
     
@@ -1272,7 +1272,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0040 ()
 
 #line 624 "trison_parser.trison"
 
-        EmitError(identifier->GetFileLocation(), "syntax error in nonterminal %type directive; was expecting a string");
+        EmitError(identifier->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
         delete identifier;
         delete throwaway;
         return NULL;
@@ -1399,7 +1399,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0047 ()
         assert(m_target_language_map != NULL);
         if (m_target_language_map->GetElement(language_identifier->GetText()) == NULL)
             EmitWarning(
-                language_identifier->GetFileLocation(),
+                language_identifier->GetFiLoc(),
                 "undeclared target language \"" + language_identifier->GetText() + "\"");
         return new CommonLang::RuleHandler(language_identifier, code_block);
     
@@ -1418,7 +1418,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0048 ()
 #line 704 "trison_parser.trison"
 
         assert(m_target_language_map != NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in language identifier after directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in language identifier after directive %language");
         delete throwaway;
         delete code_block;
         return NULL;
@@ -1436,7 +1436,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0049 ()
 #line 713 "trison_parser.trison"
 
         assert(m_target_language_map != NULL);
-        EmitError(throwaway->GetFileLocation(), "parse error in directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %language");
         delete throwaway;
         return NULL;
     
@@ -1453,7 +1453,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0050 ()
 #line 721 "trison_parser.trison"
 
         assert(m_target_language_map != NULL);
-        EmitError(code_block->GetFileLocation(), "missing directive %language before rule handler code block");
+        EmitError(code_block->GetFiLoc(), "missing directive %language before rule handler code block");
         delete code_block;
         return NULL;
     
@@ -1502,7 +1502,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0053 ()
 
         RuleToken *rule_token =
             token != NULL ?
-            new RuleToken(token->GetSourceText(), token->GetFileLocation(), assigned_identifier->GetText()) :
+            new RuleToken(token->GetSourceText(), token->GetFiLoc(), assigned_identifier->GetText()) :
             NULL;
         delete token;
         delete assigned_identifier;
@@ -1522,7 +1522,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0054 ()
 
         RuleToken *rule_token =
             token != NULL ?
-            new RuleToken(token->GetSourceText(), token->GetFileLocation()) :
+            new RuleToken(token->GetSourceText(), token->GetFiLoc()) :
             NULL;
         delete token;
         return rule_token;
@@ -2659,7 +2659,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFileLocation(), "unrecognized token encountered in langspec");
+            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in langspec");
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;

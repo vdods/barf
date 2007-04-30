@@ -556,9 +556,9 @@ AstCommon::Ast * Parser::ReductionRuleHandler0006 ()
         assert(m_add_directive_map != NULL);
         AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_identifier->GetText());
         if (add_directive == NULL)
-            EmitError(throwaway->GetFileLocation(), "undeclared directive identifier \"" + filename_directive_identifier->GetText() + "\" in add_codespec directive");
+            EmitError(throwaway->GetFiLoc(), "undeclared directive identifier \"" + filename_directive_identifier->GetText() + "\" in add_codespec directive");
         if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != AstCommon::AT_STRING)
-            EmitError(throwaway->GetFileLocation(), "directive identifier \"" + filename_directive_identifier->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
+            EmitError(throwaway->GetFiLoc(), "directive identifier \"" + filename_directive_identifier->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
         m_add_codespec_list->Append(new AddCodeSpec(filename, filename_directive_identifier));
         delete throwaway;
         return NULL;
@@ -617,7 +617,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0008 ()
             directive);
         if (param_type->m_param_type != default_value->GetAstType())
             EmitError(
-                throwaway1->GetFileLocation(),
+                throwaway1->GetFiLoc(),
                 "type mismatch for default value for directive " + directive->GetDirectiveString() +
                 "; was expecting type " + AstCommon::TextBase::GetDirectiveTypeString(param_type->m_param_type) +
                 " but got type " + AstCommon::TextBase::GetDirectiveTypeString(default_value->GetAstType()));
@@ -1209,7 +1209,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::END_PREAMBLE:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFileLocation(), "unrecognized token encountered in langspec");
+            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in langspec");
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;

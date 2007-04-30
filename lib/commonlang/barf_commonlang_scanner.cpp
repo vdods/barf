@@ -98,29 +98,29 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     assert(token != NULL);
     assert(*token == NULL);
 
-    if (accepted_string == "%add_codespec") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_ADD_CODESPEC; }
-    if (accepted_string == "%add_optional_directive") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE; }
-    if (accepted_string == "%add_required_directive") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE; }
-    if (accepted_string == "%default") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_DEFAULT; }
-    if (accepted_string == "%dumb_code_block") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_DUMB_CODE_BLOCK; }
-    if (accepted_string == "%error") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_ERROR; }
-    if (accepted_string == "%identifier") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_IDENTIFIER; }
-    if (accepted_string == "%language") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_LANGUAGE; }
-    if (accepted_string == "%left") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_LEFT; }
-    if (accepted_string == "%macro") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_MACRO; }
-    if (accepted_string == "%nonassoc") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_NONASSOC; }
-    if (accepted_string == "%prec") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_PREC; }
-    if (accepted_string == "%right") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_RIGHT; }
-    if (accepted_string == "%start") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_START; }
-    if (accepted_string == "%state") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_STATE; }
-    if (accepted_string == "%strict_code_block") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
-    if (accepted_string == "%string") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_STRING; }
-    if (accepted_string == "%target_language") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_TARGET_LANGUAGE; }
-    if (accepted_string == "%target_languages") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_TARGET_LANGUAGES; }
-    if (accepted_string == "%token") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_TOKEN; }
-    if (accepted_string == "%type") { *token = new AstCommon::ThrowAway(GetFileLocation()); return Token::DIRECTIVE_TYPE; }
+    if (accepted_string == "%add_codespec") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_CODESPEC; }
+    if (accepted_string == "%add_optional_directive") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE; }
+    if (accepted_string == "%add_required_directive") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE; }
+    if (accepted_string == "%default") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DEFAULT; }
+    if (accepted_string == "%dumb_code_block") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DUMB_CODE_BLOCK; }
+    if (accepted_string == "%error") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ERROR; }
+    if (accepted_string == "%identifier") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_IDENTIFIER; }
+    if (accepted_string == "%language") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_LANGUAGE; }
+    if (accepted_string == "%left") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_LEFT; }
+    if (accepted_string == "%macro") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_MACRO; }
+    if (accepted_string == "%nonassoc") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_NONASSOC; }
+    if (accepted_string == "%prec") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_PREC; }
+    if (accepted_string == "%right") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_RIGHT; }
+    if (accepted_string == "%start") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_START; }
+    if (accepted_string == "%state") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE; }
+    if (accepted_string == "%strict_code_block") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
+    if (accepted_string == "%string") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRING; }
+    if (accepted_string == "%target_language") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET_LANGUAGE; }
+    if (accepted_string == "%target_languages") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET_LANGUAGES; }
+    if (accepted_string == "%token") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TOKEN; }
+    if (accepted_string == "%type") { *token = new AstCommon::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TYPE; }
 
-    EmitError(GetFileLocation(), "invalid directive \"" + accepted_string + "\"");
+    EmitError(GetFiLoc(), "invalid directive \"" + accepted_string + "\"");
     return Token::BAD_TOKEN;
 }
 
@@ -228,7 +228,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 254 "barf_commonlang_scanner.reflex"
 
-    EmitError(GetFileLocation(), "unrecognized character " + GetCharacterLiteral(rejected_atom));
+    EmitError(GetFiLoc(), "unrecognized character " + GetCharacterLiteral(rejected_atom));
 
 #line 234 "barf_commonlang_scanner.cpp"
 
@@ -282,7 +282,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 436 "barf_commonlang_scanner.reflex"
 
         SPEW("BLOCK_COMMENT - (\\z) = " << GetStringLiteral(accepted_string));
-        EmitWarning(GetFileLocation(), "unterminated block comment");
+        EmitWarning(GetFiLoc(), "unterminated block comment");
         return Token::END_OF_FILE;
     
 #line 289 "barf_commonlang_scanner.cpp"
@@ -311,7 +311,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 519 "barf_commonlang_scanner.reflex"
 
         SPEW("CHARACTER_LITERAL_END - (\\\\?\\z) - accepted_string = " << GetStringLiteral(accepted_string));
-        EmitError(GetFileLocation(), "unterminated character literal");
+        EmitError(GetFiLoc(), "unterminated character literal");
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -329,7 +329,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 530 "barf_commonlang_scanner.reflex"
 
         SPEW("CHARACTER_LITERAL_END - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFileLocation(), "malformed character literal");
+        EmitError(GetFiLoc(), "malformed character literal");
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
         assert(*token != NULL);
@@ -354,8 +354,8 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[1] == '0');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
-            EmitError(GetFileLocation(), "octal character literal value out of range (" + accepted_string + ")");
-        *token = new AstCommon::Character(Uint8(value), GetFileLocation());
+            EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
+        *token = new AstCommon::Character(Uint8(value), GetFiLoc());
         SetScannerState(State::CHARACTER_LITERAL_END);
     
 #line 362 "barf_commonlang_scanner.cpp"
@@ -374,8 +374,8 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
-            EmitError(GetFileLocation(), "hexadecimal character literal value out of range (" + accepted_string + ")");
-        *token = new AstCommon::Character(Uint8(value), GetFileLocation());
+            EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
+        *token = new AstCommon::Character(Uint8(value), GetFiLoc());
         SetScannerState(State::CHARACTER_LITERAL_END);
     
 #line 382 "barf_commonlang_scanner.cpp"
@@ -391,7 +391,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("CHARACTER_LITERAL_GUTS - ({CHAR_ESC_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        AstCommon::Character *character = new AstCommon::Character(Uint8(accepted_string[1]), GetFileLocation());
+        AstCommon::Character *character = new AstCommon::Character(Uint8(accepted_string[1]), GetFiLoc());
         character->Escape();
         *token = character;
         SetScannerState(State::CHARACTER_LITERAL_END);
@@ -408,7 +408,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("CHARACTER_LITERAL_GUTS - ({CHAR_NORMAL_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() == 1);
-        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFileLocation());
+        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFiLoc());
         SetScannerState(State::CHARACTER_LITERAL_END);
     
 #line 415 "barf_commonlang_scanner.cpp"
@@ -422,7 +422,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 491 "barf_commonlang_scanner.reflex"
 
         SPEW("CHARACTER_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFileLocation(), "unterminated character literal");
+        EmitError(GetFiLoc(), "unterminated character literal");
         return Token::END_OF_FILE;
     
 #line 429 "barf_commonlang_scanner.cpp"
@@ -436,10 +436,10 @@ Scanner::Token::Type Scanner::Scan (
 #line 498 "barf_commonlang_scanner.reflex"
 
         SPEW("CHARACTER_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFileLocation(), "unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in character literal");
+        EmitError(GetFiLoc(), "unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in character literal");
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
-        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFileLocation());
+        *token = new AstCommon::Character(Uint8(accepted_string[0]), GetFiLoc());
         SetScannerState(State::CHARACTER_LITERAL_END);
     
 #line 446 "barf_commonlang_scanner.cpp"
@@ -472,7 +472,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFileLocation(), "unterminated character literal in { } style code block");
+        EmitError(GetFiLoc(), "unterminated character literal in { } style code block");
         IncrementLineNumber(GetNewlineCount(accepted_string));
         return Token::END_OF_FILE;
     
@@ -520,7 +520,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFileLocation(), "unterminated %{ %} style code block");
+        EmitError(GetFiLoc(), "unterminated %{ %} style code block");
         return Token::END_OF_FILE;
     
 #line 527 "barf_commonlang_scanner.cpp"
@@ -573,7 +573,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 335 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (\") = " << GetStringLiteral(accepted_string));
-        *token = new AstCommon::String(GetFileLocation());
+        *token = new AstCommon::String(GetFiLoc());
         SetScannerState(State::STRING_LITERAL_GUTS);
     
 #line 580 "barf_commonlang_scanner.cpp"
@@ -587,7 +587,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 342 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (\\() = " << GetStringLiteral(accepted_string));
-        *token = new AstCommon::String(GetFileLocation());
+        *token = new AstCommon::String(GetFiLoc());
         SetScannerState(State::REGULAR_EXPRESSION);
     
 #line 594 "barf_commonlang_scanner.cpp"
@@ -601,7 +601,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 349 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (%\\{) = " << GetStringLiteral(accepted_string));
-        *token = new AstCommon::DumbCodeBlock(GetFileLocation());
+        *token = new AstCommon::DumbCodeBlock(GetFiLoc());
         SetScannerState(State::DUMB_CODE_BLOCK);
     
 #line 608 "barf_commonlang_scanner.cpp"
@@ -615,7 +615,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 356 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (\\{) = " << GetStringLiteral(accepted_string));
-        *token = new AstCommon::StrictCodeBlock(GetFileLocation());
+        *token = new AstCommon::StrictCodeBlock(GetFiLoc());
         SetScannerState(State::STRICT_CODE_BLOCK);
     
 #line 622 "barf_commonlang_scanner.cpp"
@@ -642,7 +642,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 369 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (%%) = " << GetStringLiteral(accepted_string));
-        *token = new AstCommon::ThrowAway(GetFileLocation());
+        *token = new AstCommon::ThrowAway(GetFiLoc());
         m_is_in_preamble = false;
         return Token::END_PREAMBLE;
     
@@ -657,7 +657,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 377 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - ({IDENTIFIER}) = " << GetStringLiteral(accepted_string));
-        *token = new AstCommon::Identifier(accepted_string, GetFileLocation());
+        *token = new AstCommon::Identifier(accepted_string, GetFiLoc());
         return Token::IDENTIFIER;
     
 #line 664 "barf_commonlang_scanner.cpp"
@@ -725,7 +725,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 410 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (.) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFileLocation(), "unexpected character " + GetCharacterLiteral(accepted_string[0]));
+        EmitError(GetFiLoc(), "unexpected character " + GetCharacterLiteral(accepted_string[0]));
         return Token::BAD_TOKEN;
     
 #line 732 "barf_commonlang_scanner.cpp"
@@ -808,7 +808,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFileLocation(), "unterminated regular expression");
+        EmitError(GetFiLoc(), "unterminated regular expression");
         return Token::END_OF_FILE;
     
 #line 815 "barf_commonlang_scanner.cpp"
@@ -873,7 +873,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFileLocation(), "unterminated bracket expression inside regular expression");
+        EmitError(GetFiLoc(), "unterminated bracket expression inside regular expression");
         return Token::END_OF_FILE;
     
 #line 880 "barf_commonlang_scanner.cpp"
@@ -1000,7 +1000,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFileLocation(), "unterminated { } style code block");
+        EmitError(GetFiLoc(), "unterminated { } style code block");
         return Token::END_OF_FILE;
     
 #line 1007 "barf_commonlang_scanner.cpp"
@@ -1020,7 +1020,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[1] == '0');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
-            EmitError(GetFileLocation(), "octal character literal value out of range (" + accepted_string + ")");
+            EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
         Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
     
 #line 1027 "barf_commonlang_scanner.cpp"
@@ -1040,7 +1040,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
-            EmitError(GetFileLocation(), "hexadecimal character literal value out of range (" + accepted_string + ")");
+            EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
         Dsc<AstCommon::String *>(*token)->AppendCharacter(Uint8(value));
     
 #line 1047 "barf_commonlang_scanner.cpp"
@@ -1100,7 +1100,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 597 "barf_commonlang_scanner.reflex"
 
         SPEW("STRING_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFileLocation(), "unterminated string literal");
+        EmitError(GetFiLoc(), "unterminated string literal");
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -1118,7 +1118,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        EmitError(GetFileLocation(), "ignoring unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in string literal");
+        EmitError(GetFiLoc(), "ignoring unexpected character " + GetCharacterLiteral(accepted_string[0]) + " in string literal");
     
 #line 1124 "barf_commonlang_scanner.cpp"
 
@@ -1150,7 +1150,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFileLocation(), "unterminated string literal in { } style code block");
+        EmitError(GetFiLoc(), "unterminated string literal in { } style code block");
         IncrementLineNumber(GetNewlineCount(accepted_string));
         return Token::END_OF_FILE;
     

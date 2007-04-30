@@ -260,7 +260,7 @@ void StateMachine::GetStateTransitionIdentifiersFromRulePhase (
     // otherwise, this is an unidentified token identifier
     else
         EmitError(
-            rule_token->GetTokenIdentifier()->GetFileLocation(),
+            rule_token->GetTokenIdentifier()->GetFiLoc(),
             "undeclared token \"" + token_name + "\"");
 }
 
@@ -366,7 +366,7 @@ Uint32 StateMachine::GetRulePrecedence (Uint32 rule_index) const
         if (it == m_precedence_map.end())
         {
             EmitError(
-                precedence_directive_identifier->GetFileLocation(),
+                precedence_directive_identifier->GetFiLoc(),
                 "undeclared precedence directive identifier \"" + precedence_directive_name + "\"");
             return 0;
         }
@@ -464,10 +464,10 @@ void StateMachine::GeneratePrecedenceMap ()
         string const &precedence_directive_name = precedence_directive->GetIdentifier()->GetText();
         if (m_precedence_map.find(precedence_directive_name) != m_precedence_map.end())
             EmitError(
-                precedence_directive->GetFileLocation(),
+                precedence_directive->GetFiLoc(),
                 "duplicate precedence directive identifier \"" + precedence_directive_name + "\" "
                 "(first encountered at " +
-                m_precedence_map[precedence_directive_name]->GetFileLocation().GetAsString() + ")");
+                m_precedence_map[precedence_directive_name]->GetFiLoc().GetAsString() + ")");
         else
             m_precedence_map[precedence_directive_name] = precedence_directive;
     }
@@ -486,10 +486,10 @@ void StateMachine::GenerateNonterminalMap ()
         string const &nonterminal_name = nonterminal->GetIdentifier()->GetText();
         if (m_nonterminal_map.find(nonterminal_name) != m_nonterminal_map.end())
             EmitError(
-                nonterminal->GetFileLocation(),
+                nonterminal->GetFiLoc(),
                 "duplicate nonterminal name \"" + nonterminal_name + "\" "
                 "(first encountered at " +
-                m_nonterminal_map[nonterminal_name]->GetFileLocation().GetAsString() + ")");
+                m_nonterminal_map[nonterminal_name]->GetFiLoc().GetAsString() + ")");
         else
             m_nonterminal_map[nonterminal_name] = nonterminal;
     }
@@ -502,7 +502,7 @@ void StateMachine::GenerateTerminalMap ()
     {
         string end_name("END_");
         TokenIdentifierIdentifier *end_terminal_identifier =
-            new TokenIdentifierIdentifier(end_name, FileLocation::ms_invalid);
+            new TokenIdentifierIdentifier(end_name, FiLoc::ms_invalid);
         m_terminal_map[end_name] =
             new Terminal(end_terminal_identifier, NULL, true);
     }
@@ -511,7 +511,7 @@ void StateMachine::GenerateTerminalMap ()
     {
         string error_name("%error");
         TokenIdentifierIdentifier *error_terminal_identifier =
-            new TokenIdentifierIdentifier(error_name, FileLocation::ms_invalid);
+            new TokenIdentifierIdentifier(error_name, FiLoc::ms_invalid);
         m_error_terminal = new Terminal(error_terminal_identifier, NULL, true);
         m_terminal_map[error_name] = m_error_terminal;
 
@@ -540,10 +540,10 @@ void StateMachine::GenerateTerminalMap ()
 
             if (m_terminal_map.find(terminal_name) != m_terminal_map.end())
                 EmitError(
-                    token_identifier->GetFileLocation(),
+                    token_identifier->GetFiLoc(),
                     "duplicate token name \"" + terminal_name + "\" "
                     "(first encountered at " +
-                    m_terminal_map[terminal_name]->GetFileLocation().GetAsString() + ")");
+                    m_terminal_map[terminal_name]->GetFiLoc().GetAsString() + ")");
             else
                 m_terminal_map[terminal_name] =
                     new Terminal(token_identifier, assigned_variable_type, false);
@@ -593,7 +593,7 @@ void StateMachine::GenerateReductionRuleVectorForNonterminal (
             bool this_rule_token_is_error_token =
                 rule_token->GetTokenIdentifier()->GetText() == "%error";
             if (this_rule_token_is_error_token && last_rule_token_was_error_token)
-                EmitError(rule_token->GetFileLocation(), "may not have two %error tokens in a row");
+                EmitError(rule_token->GetFiLoc(), "may not have two %error tokens in a row");
             last_rule_token_was_error_token = this_rule_token_is_error_token;
         }
 
@@ -930,7 +930,7 @@ void StateMachine::ResolveShiftReduceConflicts (
                                << first_terminal_rule_phase.m_rule_index << ", "
                                << default_rule_phase.m_rule_index << " and "
                                << current_rule_index;
-                        EmitError(FileLocation(GetOptions()->GetInputFilename()), buffer.str());
+                        EmitError(FiLoc(GetOptions()->GetInputFilename()), buffer.str());
                         skip_rest = true;
                     }
                 }
@@ -973,7 +973,7 @@ void StateMachine::ResolveShiftReduceConflicts (
                         buffer << "conflict in rule associativity between rules "
                                << first_terminal_rule_phase.m_rule_index << " and "
                                << default_rule_phase.m_rule_index;
-                        EmitError(FileLocation(GetOptions()->GetInputFilename()), buffer.str());
+                        EmitError(FiLoc(GetOptions()->GetInputFilename()), buffer.str());
                         skip_rest = true;
                     }
                 }
@@ -1004,7 +1004,7 @@ void StateMachine::ResolveShiftReduceConflicts (
                         buffer << "nesting of %nonassoc between rules "
                             << first_terminal_rule_phase.m_rule_index << " and "
                             << default_rule_phase.m_rule_index;
-                        EmitError(FileLocation(GetOptions()->GetInputFilename()), buffer.str());
+                        EmitError(FiLoc(GetOptions()->GetInputFilename()), buffer.str());
                     }
                     // otherwise, use the terminal's action, which requires
                     // no effort on our part.
@@ -1137,11 +1137,11 @@ void StateMachine::GeneratePreprocessor ()
         string line_directive;
         string returning_line_directive;
         if (GetParserDirectiveShouldHaveLineDirective(parser_directive_type) &&
-            parser_directive_set->GetDirectiveFileLocation(parser_directive_type).GetHasLineNumber() &&
+            parser_directive_set->GetDirectiveFiLoc(parser_directive_type).GetHasLineNumber() &&
             GetOptions()->GetWithLineDirectives())
         {
             line_directive = "\n";
-            line_directive += parser_directive_set->GetDirectiveFileLocation(parser_directive_type).GetLineDirectiveString();
+            line_directive += parser_directive_set->GetDirectiveFiLoc(parser_directive_type).GetLineDirectiveString();
             line_directive += '\n';
             returning_line_directive = Preprocessor::GetReturningLineDirectiveTag();
         }
@@ -1329,11 +1329,11 @@ void StateMachine::GeneratePreprocessor ()
 
                 string line_directive;
                 string returning_line_directive;
-                if (rule->GetCodeBlock()->GetFileLocation().GetHasLineNumber() &&
+                if (rule->GetCodeBlock()->GetFiLoc().GetHasLineNumber() &&
                     GetOptions()->GetWithLineDirectives())
                 {
                     line_directive = "\n";
-                    line_directive += rule->GetCodeBlock()->GetFileLocation().GetLineDirectiveString();
+                    line_directive += rule->GetCodeBlock()->GetFiLoc().GetLineDirectiveString();
                     line_directive += '\n';
                     returning_line_directive = Preprocessor::GetReturningLineDirectiveTag();
                 }

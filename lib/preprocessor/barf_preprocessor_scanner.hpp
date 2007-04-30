@@ -16,7 +16,7 @@
 #include <fstream>
 #include <vector>
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 #include "barf_inputbase.hpp"
 #include "barf_preprocessor_parser.hpp"
 
@@ -37,7 +37,7 @@ public:
     ~Scanner ();
 
     using InputBase::GetIsOpen;
-    using InputBase::GetFileLocation;
+    using InputBase::GetFiLoc;
 
     inline string const &GetStartCodeDelimiter () const { return m_start_code_delimiter; }
     inline string const &GetEndCodeDelimiter () const { return m_end_code_delimiter; }

@@ -93,7 +93,7 @@ public:
 #line 32 "barf_regex_parser.trison"
 
     using InputBase::GetIsOpen;
-    using InputBase::GetFileLocation;
+    using InputBase::GetFiLoc;
     using InputBase::GetInputName;
 
     using InputBase::OpenFile;

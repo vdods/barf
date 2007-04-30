@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "barf_astcommon.hpp"
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 #include "barf_util.hpp"
 #include "trison_enums.hpp"
 #include "trison_rulephase.hpp"
@@ -166,7 +166,7 @@ class RuleTokenList : public AstCommon::AstList<RuleToken>
 public:
 
     RuleTokenList () : AstCommon::AstList<RuleToken>(AT_RULE_TOKEN_LIST) { }
-    RuleTokenList (FileLocation const &file_location) : AstCommon::AstList<RuleToken>(file_location, AT_RULE_TOKEN_LIST) { }
+    RuleTokenList (FiLoc const &filoc) : AstCommon::AstList<RuleToken>(filoc, AT_RULE_TOKEN_LIST) { }
 }; // end of class RuleTokenList
 
 class TokenIdentifier : public AstCommon::TextBase
@@ -174,17 +174,17 @@ class TokenIdentifier : public AstCommon::TextBase
 public:
 
     TokenIdentifier (
-        FileLocation const &file_location,
+        FiLoc const &filoc,
         AstType ast_type)
         :
-        AstCommon::TextBase(file_location, ast_type)
+        AstCommon::TextBase(filoc, ast_type)
     { }
     TokenIdentifier (
         string const &identifier_text,
-        FileLocation const &file_location,
+        FiLoc const &filoc,
         AstType ast_type)
         :
-        AstCommon::TextBase(identifier_text, file_location, ast_type)
+        AstCommon::TextBase(identifier_text, filoc, ast_type)
     { }
     virtual ~TokenIdentifier () = 0;
 }; // end of class TokenIdentifier
@@ -195,11 +195,11 @@ public:
 
     TokenIdentifierIdentifier (
         string const &identifier_text,
-        FileLocation const &file_location)
+        FiLoc const &filoc)
         :
         TokenIdentifier(
             identifier_text,
-            file_location,
+            filoc,
             AT_TOKEN_IDENTIFIER_IDENTIFIER)
     { }
 
@@ -212,11 +212,11 @@ public:
 
     TokenIdentifierCharacter (
         char identifier_character,
-        FileLocation const &file_location)
+        FiLoc const &filoc)
         :
         TokenIdentifier(
             GetCharacterLiteral(identifier_character),
-            file_location,
+            filoc,
             AT_TOKEN_IDENTIFIER_CHARACTER),
         m_identifier_character(identifier_character)
     { }
@@ -238,7 +238,7 @@ public:
         TokenIdentifier const *token_identifier,
         AstCommon::Identifier const *assigned_identifier)
         :
-        AstCommon::Ast(token_identifier->GetFileLocation(), AT_RULE_TOKEN),
+        AstCommon::Ast(token_identifier->GetFiLoc(), AT_RULE_TOKEN),
         m_token_identifier(token_identifier),
         m_assigned_identifier(assigned_identifier)
     {
@@ -273,7 +273,7 @@ public:
         Associativity associativity,
         AstCommon::Identifier const *precedence_directive_identifier)
         :
-        AstCommon::Ast(rule_token_list->GetFileLocation(), AT_RULE),
+        AstCommon::Ast(rule_token_list->GetFiLoc(), AT_RULE),
         m_rule_token_list(rule_token_list),
         m_associativity(associativity),
         m_precedence_directive_identifier(precedence_directive_identifier)
@@ -349,7 +349,7 @@ public:
         AstCommon::Identifier const *identifier,
         AstCommon::String const *assigned_variable_type)
         :
-        AstCommon::Ast(identifier->GetFileLocation(), AT_NONTERMINAL),
+        AstCommon::Ast(identifier->GetFiLoc(), AT_NONTERMINAL),
         m_identifier(identifier),
         m_assigned_variable_type(assigned_variable_type)
     {
@@ -400,7 +400,7 @@ public:
 
     PrecedenceDirective (AstCommon::Identifier const *identifier)
         :
-        AstCommon::Directive("%prec", identifier->GetFileLocation(), AT_PRECEDENCE_DIRECTIVE),
+        AstCommon::Directive("%prec", identifier->GetFiLoc(), AT_PRECEDENCE_DIRECTIVE),
         m_identifier(identifier),
         m_precedence_level(0)
     {
@@ -435,7 +435,7 @@ public:
         TokenIdentifierList const *token_identifier_list,
         AstCommon::String const *assigned_type)
         :
-        AstCommon::Directive("%token", token_identifier_list->GetFileLocation(), AT_TOKEN_DIRECTIVE),
+        AstCommon::Directive("%token", token_identifier_list->GetFiLoc(), AT_TOKEN_DIRECTIVE),
         m_token_identifier_list(token_identifier_list),
         m_assigned_type(assigned_type)
     {
@@ -466,9 +466,9 @@ public:
 
     ParserDirective (
         string const &directive_text,
-        FileLocation const &file_location)
+        FiLoc const &filoc)
         :
-        AstCommon::Directive(directive_text, file_location, AT_PARSER_DIRECTIVE),
+        AstCommon::Directive(directive_text, filoc, AT_PARSER_DIRECTIVE),
         m_parser_directive_type(GetParserDirectiveType(directive_text))
     {
         assert(m_parser_directive_type < PDT_COUNT);
@@ -510,7 +510,7 @@ public:
 
     StartDirective (AstCommon::Identifier const *start_nonterminal_identifier)
         :
-        AstCommon::Directive("%start", start_nonterminal_identifier->GetFileLocation(), AT_START_DIRECTIVE),
+        AstCommon::Directive("%start", start_nonterminal_identifier->GetFiLoc(), AT_START_DIRECTIVE),
         m_start_nonterminal_identifier(start_nonterminal_identifier)
     {
         assert(m_start_nonterminal_identifier != NULL);
@@ -535,7 +535,7 @@ public:
 
     ParserDirectiveSet ()
         :
-        AstCommon::Ast(FileLocation::ms_invalid, AT_PARSER_DIRECTIVE_SET)
+        AstCommon::Ast(FiLoc::ms_invalid, AT_PARSER_DIRECTIVE_SET)
     {
         for (Uint32 i = 0; i < PDT_COUNT; ++i)
             m_parser_directive[i] = NULL;
@@ -551,13 +551,13 @@ public:
         assert(parser_directive_type < PDT_COUNT);
         return m_parser_directive[parser_directive_type] != NULL;
     }
-    inline FileLocation const &GetDirectiveFileLocation (ParserDirectiveType parser_directive_type) const
+    inline FiLoc const &GetDirectiveFiLoc (ParserDirectiveType parser_directive_type) const
     {
         assert(parser_directive_type < PDT_COUNT);
         if (m_parser_directive[parser_directive_type] != NULL)
-            return m_parser_directive[parser_directive_type]->GetFileLocation();
+            return m_parser_directive[parser_directive_type]->GetFiLoc();
         else
-            return FileLocation::ms_invalid;
+            return FiLoc::ms_invalid;
     }
     inline string const &GetDirectiveValueText (ParserDirectiveType parser_directive_type) const
     {
@@ -586,7 +586,7 @@ public:
 
     Grammar (
         AstCommon::DirectiveList *directive_list,
-        FileLocation const &end_preamble_file_location,
+        FiLoc const &end_preamble_filoc,
         NonterminalList *nonterminal_list);
     virtual ~Grammar ();
 

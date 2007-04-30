@@ -16,7 +16,7 @@
 #include <map>
 #include <vector>
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 
 namespace Barf {
 namespace Preprocessor {
@@ -158,12 +158,12 @@ public:
 
     Symbol *GetSymbol (string const &identifier);
 
-    ScalarSymbol *DefineScalarSymbol (string const &identifier, FileLocation const &file_location);
-    ScalarSymbol *DefineScalarSymbolAsText (string const &identifier, FileLocation const &file_location, string const &text);
-    ScalarSymbol *DefineScalarSymbolAsInteger (string const &identifier, FileLocation const &file_location, Sint32 integer);
-    ArraySymbol *DefineArraySymbol (string const &identifier, FileLocation const &file_location);
-    MapSymbol *DefineMapSymbol (string const &identifier, FileLocation const &file_location);
-    void UndefineSymbol (string const &identifier, FileLocation const &file_location);
+    ScalarSymbol *DefineScalarSymbol (string const &identifier, FiLoc const &filoc);
+    ScalarSymbol *DefineScalarSymbolAsText (string const &identifier, FiLoc const &filoc, string const &text);
+    ScalarSymbol *DefineScalarSymbolAsInteger (string const &identifier, FiLoc const &filoc, Sint32 integer);
+    ArraySymbol *DefineArraySymbol (string const &identifier, FiLoc const &filoc);
+    MapSymbol *DefineMapSymbol (string const &identifier, FiLoc const &filoc);
+    void UndefineSymbol (string const &identifier, FiLoc const &filoc);
 
     void Print (ostream &stream) const;
 

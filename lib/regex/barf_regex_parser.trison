@@ -31,7 +31,7 @@ namespace Regex {
 
 %parser_class_methods_and_members{
     using InputBase::GetIsOpen;
-    using InputBase::GetFileLocation;
+    using InputBase::GetFiLoc;
     using InputBase::GetInputName;
 
     using InputBase::OpenFile;
@@ -637,7 +637,7 @@ identifier %type "AstCommon::Identifier *"
     {
         string temp;
         temp += alpha->GetCharacter();
-        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FileLocation::ms_invalid);
+        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FiLoc::ms_invalid);
         delete alpha;
         return identifier;
     }
@@ -646,7 +646,7 @@ identifier %type "AstCommon::Identifier *"
     {
         string temp;
         temp += ch->GetCharacter();
-        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FileLocation::ms_invalid);
+        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FiLoc::ms_invalid);
         delete ch;
         return identifier;
     }
@@ -665,7 +665,7 @@ integer %type "AstCommon::SignedInteger *"
 |
     DIGIT:digit
     {
-        AstCommon::SignedInteger *integer = new AstCommon::SignedInteger(digit->GetCharacter() - '0', FileLocation::ms_invalid);
+        AstCommon::SignedInteger *integer = new AstCommon::SignedInteger(digit->GetCharacter() - '0', FiLoc::ms_invalid);
         delete digit;
         return integer;
     }

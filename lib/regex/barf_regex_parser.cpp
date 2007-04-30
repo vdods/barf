@@ -1457,7 +1457,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0078 ()
 
         string temp;
         temp += alpha->GetCharacter();
-        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FileLocation::ms_invalid);
+        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FiLoc::ms_invalid);
         delete alpha;
         return identifier;
     
@@ -1475,7 +1475,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0079 ()
 
         string temp;
         temp += ch->GetCharacter();
-        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FileLocation::ms_invalid);
+        AstCommon::Identifier *identifier = new AstCommon::Identifier(temp, FiLoc::ms_invalid);
         delete ch;
         return identifier;
     
@@ -1511,7 +1511,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0081 ()
 
 #line 667 "barf_regex_parser.trison"
 
-        AstCommon::SignedInteger *integer = new AstCommon::SignedInteger(digit->GetCharacter() - '0', FileLocation::ms_invalid);
+        AstCommon::SignedInteger *integer = new AstCommon::SignedInteger(digit->GetCharacter() - '0', FiLoc::ms_invalid);
         delete digit;
         return integer;
     

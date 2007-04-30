@@ -193,7 +193,7 @@ lib_libbarf_core_la_SOURCES = \
     lib/core/barf_commandlineparser.cpp \
     lib/core/barf_compiletimeasserts.cpp \
     lib/core/barf_enums.cpp \
-    lib/core/barf_filelocation.cpp \
+    lib/core/barf_filoc.cpp \
     lib/core/barf_graph.cpp \
     lib/core/barf_inputbase.cpp \
     lib/core/barf_message.cpp \
@@ -582,7 +582,7 @@ noinst_HEADERS = \
 	lib/core/barf_commandlineparser.hpp \
 	lib/core/barf_compiletimeasserts.hpp \
 	lib/core/barf_enums.hpp \
-	lib/core/barf_filelocation.hpp \
+	lib/core/barf_filoc.hpp \
 	lib/core/barf_graph.hpp \
 	lib/core/barf_inputbase.hpp \
 	lib/core/barf_message.hpp \

@@ -19,10 +19,10 @@ namespace Preprocessor {
 
 void Textifier::TextifyBody (Body const &body, SymbolTable &symbol_table)
 {
-    if (m_generates_line_directives && body.GetFileLocation().GetIsValid())
+    if (m_generates_line_directives && body.GetFiLoc().GetIsValid())
     {
-        m_output_file_location.IncrementLineNumber(2);
-        string line_directive(body.GetFileLocation().GetLineDirectiveString());
+        m_output_filoc.IncrementLineNumber(2);
+        string line_directive(body.GetFiLoc().GetLineDirectiveString());
         m_output_stream << '\n' << line_directive << '\n';
     }
 
@@ -34,18 +34,18 @@ void Textifier::TextifyBody (Body const &body, SymbolTable &symbol_table)
         m_generates_line_directives = saved_generates_line_directives;
     }
 
-    if (m_generates_line_directives && body.GetFileLocation().GetIsValid())
+    if (m_generates_line_directives && body.GetFiLoc().GetIsValid())
     {
-        m_output_file_location.IncrementLineNumber(2);
-        string line_directive(m_output_file_location.GetLineDirectiveString());
+        m_output_filoc.IncrementLineNumber(2);
+        string line_directive(m_output_filoc.GetLineDirectiveString());
         m_output_stream << '\n' << line_directive << '\n';
     }
 }
 
 Textifier &Textifier::operator << (string const &text)
 {
-    if (m_output_file_location.GetIsValid())
-        m_output_file_location.IncrementLineNumber(GetNewlineCount(text));
+    if (m_output_filoc.GetIsValid())
+        m_output_filoc.IncrementLineNumber(GetNewlineCount(text));
     m_output_stream << text;
     return *this;
 }

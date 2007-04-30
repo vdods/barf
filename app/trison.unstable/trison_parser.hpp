@@ -136,7 +136,7 @@ public:
 
 #line 46 "trison_parser.trison"
 
-    inline FileLocation const &GetFileLocation () const { return m_scanner.GetFileLocation(); }
+    inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
     void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }

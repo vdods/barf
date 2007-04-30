@@ -148,7 +148,7 @@ Parser::Token::Type Scanner::ScanBody (AstCommon::Ast **scanned_token)
     else
     {
         string matched_text(m_text.substr(m_current_position, end_of_text_position-m_current_position));
-        *scanned_token = new Text(matched_text, GetFileLocation());
+        *scanned_token = new Text(matched_text, GetFiLoc());
         IncrementLineNumber(GetNewlineCount(matched_text));
         m_current_position = end_of_text_position;
         return Parser::Token::TEXT;
@@ -255,7 +255,7 @@ Parser::Token::Type Scanner::ScanCode (AstCommon::Ast **scanned_token)
         if (identifier == "error") return Parser::Token::ERROR;
         if (identifier == "fatal_error") return Parser::Token::FATAL_ERROR;
 
-        *scanned_token = new AstCommon::Identifier(identifier, GetFileLocation());
+        *scanned_token = new AstCommon::Identifier(identifier, GetFiLoc());
         return Parser::Token::IDENTIFIER;
     }
     else if (IsDigit(m_text[m_current_position]))
@@ -267,7 +267,7 @@ Parser::Token::Type Scanner::ScanCode (AstCommon::Ast **scanned_token)
         Sint32 value = 0;
         istringstream in(integer_text);
         in >> value;
-        *scanned_token = new Integer(value, GetFileLocation());
+        *scanned_token = new Integer(value, GetFiLoc());
         return Parser::Token::INTEGER;
     }
     else if (m_text[m_current_position] == '\"')
@@ -282,7 +282,7 @@ Parser::Token::Type Scanner::ScanCode (AstCommon::Ast **scanned_token)
 
         if (m_current_position >= m_text.length())
         {
-            EmitError(GetFileLocation(), "unterminated string literal");
+            EmitError(GetFiLoc(), "unterminated string literal");
             return Parser::Token::END_;
         }
         else
@@ -295,7 +295,7 @@ Parser::Token::Type Scanner::ScanCode (AstCommon::Ast **scanned_token)
                 string_start,
                 min(m_current_position, m_text.length())-string_start));
         ++m_current_position;
-        *scanned_token = new Text(GetEscapedString(string_literal), GetFileLocation());
+        *scanned_token = new Text(GetEscapedString(string_literal), GetFiLoc());
         IncrementLineNumber(GetNewlineCount(string_literal));
         return Parser::Token::STRING;
     }

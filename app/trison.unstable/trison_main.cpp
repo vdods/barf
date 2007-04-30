@@ -58,7 +58,7 @@ int main (int argc, char **argv)
             if (!parser.OpenFile(GetOptions()->GetInputFilename()))
                 EmitError("file not found: \"" + GetOptions()->GetInputFilename() + "\"");
             else if (parser.Parse() != Trison::Parser::PRC_SUCCESS)
-                EmitError(FileLocation(GetOptions()->GetInputFilename()), "general trison parse error");
+                EmitError(FiLoc(GetOptions()->GetInputFilename()), "general trison parse error");
             else
             {
                 representation = Dsc<Trison::Representation *>(parser.GetAcceptedToken());

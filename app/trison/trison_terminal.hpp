@@ -13,7 +13,7 @@
 
 #include "trison.hpp"
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 #include "trison_ast.hpp"
 
 namespace Trison {
@@ -30,7 +30,7 @@ public:
         m_token_identifier(token_identifier),
         m_assigned_type(assigned_type),
         m_this_must_delete_members(this_must_delete_members),
-        m_file_location(token_identifier->GetFileLocation())
+        m_filoc(token_identifier->GetFiLoc())
     {
         assert(m_token_identifier != NULL);
         // m_assigned_type may be NULL
@@ -54,14 +54,14 @@ public:
     }
     inline TokenIdentifier const *GetTokenIdentifier () const { return m_token_identifier; }
     inline AstCommon::String const *GetAssignedType () const { return m_assigned_type; }
-    inline FileLocation const &GetFileLocation () const { return m_file_location; }
+    inline FiLoc const &GetFiLoc () const { return m_filoc; }
 
 private:
 
     TokenIdentifier const *const m_token_identifier;
     AstCommon::String const *const m_assigned_type;
     bool const m_this_must_delete_members;
-    FileLocation const m_file_location;
+    FiLoc const m_filoc;
 }; // end of class Terminal
 
 } // end of namespace Trison

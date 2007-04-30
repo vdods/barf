@@ -48,20 +48,6 @@ namespace Barf {
 // useful little ready-made empty string
 extern string const gs_empty_string;
 
-// shorthand for static_cast
-template <typename CastToType, typename CastFromType>
-inline CastToType Sc (CastFromType cast_from)
-{
-    return static_cast<CastToType>(cast_from);
-}
-
-// shorthand for dynamic_cast
-template <typename CastToType, typename CastFromType>
-inline CastToType Dc (CastFromType cast_from)
-{
-    return dynamic_cast<CastToType>(cast_from);
-}
-
 // this should be used as a "safe" static_cast -- in debug mode, it asserts
 // on the validity of the dynamic_cast result if the pointer isn't NULL to
 // begin with.  in release mode, it just uses static_cast.
