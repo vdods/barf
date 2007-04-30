@@ -218,6 +218,8 @@ add_codespec
             EmitError(throwaway->GetFiLoc(), "undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive");
         if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != Ast::AT_STRING)
             EmitError(throwaway->GetFiLoc(), "directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
+        if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
+            EmitError(throwaway->GetFiLoc(), "filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters");
         m_add_codespec_list->Append(new AddCodeSpec(filename, filename_directive_id));
         delete throwaway;
         return NULL;

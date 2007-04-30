@@ -184,6 +184,11 @@ void GenerateNpda (
 {
     Token const *terminal = graph_context.m_representation.m_token_map->GetElement(rule_token.m_token_id);
     Nonterminal const *nonterminal = graph_context.m_representation.m_nonterminal_map->GetElement(rule_token.m_token_id);
+    if (terminal == NULL && nonterminal == NULL)
+    {
+        EmitError(rule_token.GetFiLoc(), "undeclared token \"" + rule_token.m_token_id + "\"");
+        return;
+    }
     assert(terminal != NULL && nonterminal == NULL || terminal == NULL && nonterminal != NULL);
     if (terminal != NULL)
         GenerateNpda(*terminal, graph_context, start_index, end_index);
