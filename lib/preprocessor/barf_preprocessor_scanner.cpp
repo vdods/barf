@@ -82,7 +82,7 @@ bool Scanner::Close ()
     return close_succeeded;
 }
 
-Parser::Token::Type Scanner::Scan (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::Scan (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -120,7 +120,7 @@ void Scanner::HandleClosed ()
     m_text.clear();
 }
 
-Parser::Token::Type Scanner::ScanBody (AstCommon::Ast **scanned_token)
+Parser::Token::Type Scanner::ScanBody (Ast::Base **scanned_token)
 {
     assert(m_state == READING_BODY);
     assert(m_bracket_level == 0);
@@ -155,7 +155,7 @@ Parser::Token::Type Scanner::ScanBody (AstCommon::Ast **scanned_token)
     }
 }
 
-Parser::Token::Type Scanner::ScanCode (AstCommon::Ast **scanned_token)
+Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
 {
     assert(m_state == READING_CODE);
 
@@ -255,7 +255,7 @@ Parser::Token::Type Scanner::ScanCode (AstCommon::Ast **scanned_token)
         if (id == "error") return Parser::Token::ERROR;
         if (id == "fatal_error") return Parser::Token::FATAL_ERROR;
 
-        *scanned_token = new AstCommon::Id(id, GetFiLoc());
+        *scanned_token = new Ast::Id(id, GetFiLoc());
         return Parser::Token::ID;
     }
     else if (IsDigit(m_text[m_current_position]))

@@ -357,7 +357,7 @@ Associativity StateMachine::GetRuleAssociativity (Uint32 rule_index) const
 Uint32 StateMachine::GetRulePrecedence (Uint32 rule_index) const
 {
     assert(rule_index < m_rule_vector.size());
-    AstCommon::Id const *precedence_directive_id =
+    Ast::Id const *precedence_directive_id =
         m_rule_vector[rule_index]->GetPrecedenceDirectiveId();
     if (precedence_directive_id != NULL)
     {
@@ -398,7 +398,7 @@ string const &StateMachine::GetAssignedType (string const &token_name) const
     {
         Terminal const *terminal = terminal_it->second;
         assert(terminal != NULL);
-        AstCommon::String const *assigned_type = terminal->GetAssignedType();
+        Ast::String const *assigned_type = terminal->GetAssignedType();
         if (assigned_type != NULL)
             return assigned_type->GetText();
         else
@@ -408,7 +408,7 @@ string const &StateMachine::GetAssignedType (string const &token_name) const
     {
         Nonterminal const *nonterminal = nonterminal_it->second;
         assert(nonterminal != NULL);
-        AstCommon::String const *assigned_variable_type = nonterminal->GetAssignedVariableType();
+        Ast::String const *assigned_variable_type = nonterminal->GetAssignedVariableType();
         if (assigned_variable_type != NULL)
             return assigned_variable_type->GetText();
         else
@@ -526,7 +526,7 @@ void StateMachine::GenerateTerminalMap ()
     {
         TokenDirective const *token_directive = *it;
         assert(token_directive != NULL);
-        AstCommon::String const *assigned_variable_type = token_directive->GetAssignedType();
+        Ast::String const *assigned_variable_type = token_directive->GetAssignedType();
 
         for (TokenIdList::const_iterator
                  token_it = token_directive->GetTokenIdBegin(),

@@ -15,7 +15,7 @@
 
 #include <vector>
 
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 #include "barf_preprocessor_symboltable.hpp"
 
 namespace Barf {
@@ -36,7 +36,7 @@ Executable (abstract)
 ExecutableAstList, Executable
     Body
 
-AstCommon::Ast, Executable
+Ast::Base, Executable
     ExecutableAst (abstract)
         Directive (abstract)
             DeclareArray
@@ -61,14 +61,14 @@ Body
     Executable[]
 
 Define
-    AstCommon::Id (macro id)
+    Ast::Id (macro id)
     Body (macro body)
 
 Undefine
-    AstCommon::Id (macro id)
+    Ast::Id (macro id)
 
 Loop
-    AstCommon::Id (iterator id)
+    Ast::Id (iterator id)
     Expression (iteration count expression)
     Body (loop body)
 
@@ -76,10 +76,10 @@ Include
     Expression (include filename expression)
 
 Sizeof
-    AstCommon::Id (operand id)
+    Ast::Id (operand id)
 
 Dereference
-    AstCommon::Id (operand id)
+    Ast::Id (operand id)
     Expression (element index expression)
 
 */
@@ -115,7 +115,7 @@ string const &GetDereferenceTypeString (DereferenceType dereference_type);
 
 enum
 {
-    AT_BODY = AstCommon::AT_START_CUSTOM_TYPES_HERE_,
+    AT_BODY = Ast::AT_START_CUSTOM_TYPES_HERE_,
     AT_BODY_LIST,
     AT_CONDITIONAL,
     AT_DECLARE_ARRAY,
@@ -152,22 +152,22 @@ public:
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const = 0;
 }; // end of class Executable
 
-class ExecutableAst : public AstCommon::Ast, public Executable
+class ExecutableAst : public Ast::Base, public Executable
 {
 public:
 
     ExecutableAst (FiLoc const &filoc, AstType ast_type)
         :
-        AstCommon::Ast(filoc, ast_type),
+        Ast::Base(filoc, ast_type),
         Executable()
     { }
 }; // end of class ExecutableAst
 
-class ExecutableAstList : public AstCommon::AstList<ExecutableAst>
+class ExecutableAstList : public Ast::AstList<ExecutableAst>
 {
 public:
 
-    ExecutableAstList (AstType ast_type) : AstCommon::AstList<ExecutableAst>(ast_type) { }
+    ExecutableAstList (AstType ast_type) : Ast::AstList<ExecutableAst>(ast_type) { }
 }; // end of class ExecutableAstList
 
 class Body : public ExecutableAstList, public Executable
@@ -183,17 +183,17 @@ public:
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
 
     // this is the non-virtual, top-level Print method, not
-    // to be confused with AstCommon::Ast::Print.
+    // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     using ExecutableAstList::Print;
 }; // end of class Body
 
-class BodyList : public AstCommon::AstList<Body>
+class BodyList : public Ast::AstList<Body>
 {
 public:
 
-    BodyList () : AstCommon::AstList<Body>(AT_BODY_LIST) { }
+    BodyList () : Ast::AstList<Body>(AT_BODY_LIST) { }
 }; // end of class BodyList
 
 class Directive : public ExecutableAst
@@ -275,7 +275,7 @@ class DeclareArray : public Directive
 {
 public:
 
-    DeclareArray (AstCommon::Id const *id)
+    DeclareArray (Ast::Id const *id)
         :
         Directive(id->GetFiLoc(), AT_DECLARE_ARRAY),
         m_id(id)
@@ -289,14 +289,14 @@ public:
 
 private:
 
-    AstCommon::Id const *const m_id;
+    Ast::Id const *const m_id;
 }; // end of class DeclareArray
 
 class DeclareMap : public Directive
 {
 public:
 
-    DeclareMap (AstCommon::Id const *id)
+    DeclareMap (Ast::Id const *id)
         :
         Directive(id->GetFiLoc(), AT_DECLARE_ARRAY),
         m_id(id)
@@ -310,14 +310,14 @@ public:
 
 private:
 
-    AstCommon::Id const *const m_id;
+    Ast::Id const *const m_id;
 }; // end of class DeclareMap
 
 class Define : public Directive
 {
 public:
 
-    Define (AstCommon::Id *id)
+    Define (Ast::Id *id)
         :
         Directive(id->GetFiLoc(), AT_DEFINE),
         m_id(id),
@@ -339,7 +339,7 @@ public:
 
 protected:
 
-    Define (AstCommon::Id *id, AstType ast_type)
+    Define (Ast::Id *id, AstType ast_type)
         :
         Directive(id->GetFiLoc(), ast_type),
         m_id(id),
@@ -348,7 +348,7 @@ protected:
         assert(m_id != NULL);
     }
 
-    AstCommon::Id *const m_id;
+    Ast::Id *const m_id;
     Body *m_body;
 }; // end of class Define
 
@@ -356,7 +356,7 @@ class DefineArrayElement : public Define
 {
 public:
 
-    DefineArrayElement (AstCommon::Id *id)
+    DefineArrayElement (Ast::Id *id)
         :
         Define(id, AT_DEFINE_ARRAY_ELEMENT)
     { }
@@ -368,7 +368,7 @@ class DefineMapElement : public Define
 {
 public:
 
-    DefineMapElement (AstCommon::Id *id, Text const *key)
+    DefineMapElement (Ast::Id *id, Text const *key)
         :
         Define(id, AT_DEFINE_ARRAY_ELEMENT),
         m_key(key)
@@ -389,7 +389,7 @@ class Undefine : public Directive
 {
 public:
 
-    Undefine (AstCommon::Id *id)
+    Undefine (Ast::Id *id)
         :
         Directive(id->GetFiLoc(), AT_UNDEFINE),
         m_id(id)
@@ -403,7 +403,7 @@ public:
 
 private:
 
-    AstCommon::Id *const m_id;
+    Ast::Id *const m_id;
 }; // end of class Undefine
 
 class Loop : public Directive
@@ -411,7 +411,7 @@ class Loop : public Directive
 public:
 
     Loop (
-        AstCommon::Id *iterator_id,
+        Ast::Id *iterator_id,
         Expression *iteration_count_expression)
         :
         Directive(iterator_id->GetFiLoc(), AT_LOOP),
@@ -438,7 +438,7 @@ public:
 
 private:
 
-    AstCommon::Id *const m_iterator_id;
+    Ast::Id *const m_iterator_id;
     Expression *const m_iteration_count_expression;
     Body *m_body;
 
@@ -453,8 +453,8 @@ class ForEach : public Directive
 public:
 
     ForEach (
-        AstCommon::Id *key_id,
-        AstCommon::Id *map_id)
+        Ast::Id *key_id,
+        Ast::Id *map_id)
         :
         Directive(key_id->GetFiLoc(), AT_FOR_EACH),
         m_key_id(key_id),
@@ -480,8 +480,8 @@ public:
 
 private:
 
-    AstCommon::Id *const m_key_id;
-    AstCommon::Id *const m_map_id;
+    Ast::Id *const m_key_id;
+    Ast::Id *const m_map_id;
     Body *m_body;
 
     // helper used in Execute() -- delete
@@ -606,7 +606,7 @@ class Sizeof : public Expression
 {
 public:
 
-    Sizeof (AstCommon::Id *id)
+    Sizeof (Ast::Id *id)
         :
         Expression(id->GetFiLoc(), AT_SIZEOF),
         m_id(id)
@@ -625,14 +625,14 @@ public:
 
 private:
 
-    AstCommon::Id *const m_id;
+    Ast::Id *const m_id;
 }; // end of class Sizeof
 
 class Dereference : public Expression
 {
 public:
 
-    Dereference (AstCommon::Id *id, Expression *element_index_expression, DereferenceType dereference_type)
+    Dereference (Ast::Id *id, Expression *element_index_expression, DereferenceType dereference_type)
         :
         Expression(id->GetFiLoc(), AT_DEREFERENCE),
         m_id(id),
@@ -655,7 +655,7 @@ public:
 
 protected:
 
-    Dereference (AstCommon::Id *id, Expression *element_index_expression, DereferenceType dereference_type, AstType ast_type)
+    Dereference (Ast::Id *id, Expression *element_index_expression, DereferenceType dereference_type, AstType ast_type)
         :
         Expression(id->GetFiLoc(), ast_type),
         m_id(id),
@@ -668,7 +668,7 @@ protected:
 
     Body const *GetDereferencedBody (SymbolTable &symbol_table) const;
 
-    AstCommon::Id *const m_id;
+    Ast::Id *const m_id;
     Expression *const m_element_index_expression;
     DereferenceType const m_dereference_type;
 }; // end of class Dereference
@@ -677,7 +677,7 @@ class IsDefined : public Dereference
 {
 public:
 
-    IsDefined (AstCommon::Id *id, Expression *element_index_expression)
+    IsDefined (Ast::Id *id, Expression *element_index_expression)
         :
         Dereference(id, element_index_expression, DEREFERENCE_ALWAYS, AT_IS_DEFINED)
     { }

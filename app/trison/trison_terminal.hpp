@@ -24,7 +24,7 @@ public:
 
     Terminal (
         TokenId const *token_id,
-        AstCommon::String const *assigned_type,
+        Ast::String const *assigned_type,
         bool this_must_delete_members)
         :
         m_token_id(token_id),
@@ -53,13 +53,13 @@ public:
             return m_token_id->GetText();
     }
     inline TokenId const *GetTokenId () const { return m_token_id; }
-    inline AstCommon::String const *GetAssignedType () const { return m_assigned_type; }
+    inline Ast::String const *GetAssignedType () const { return m_assigned_type; }
     inline FiLoc const &GetFiLoc () const { return m_filoc; }
 
 private:
 
     TokenId const *const m_token_id;
-    AstCommon::String const *const m_assigned_type;
+    Ast::String const *const m_assigned_type;
     bool const m_this_must_delete_members;
     FiLoc const m_filoc;
 }; // end of class Terminal

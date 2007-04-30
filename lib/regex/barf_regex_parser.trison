@@ -262,7 +262,7 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Barf
 %}
 
-%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type "Ast::Base *"
 %parser_base_assigned_type_sentinel "NULL"
 %parser_custom_cast "Dsc"
 
@@ -607,7 +607,7 @@ bracket_expression_normal_char %type "Char *"
 |   '}'         { return new Char('}'); }
 ;
 
-id %type "AstCommon::Id *"
+id %type "Ast::Id *"
 :
     id:id ALPHA:alpha
     {
@@ -637,7 +637,7 @@ id %type "AstCommon::Id *"
     {
         string temp;
         temp += alpha->GetChar();
-        AstCommon::Id *id = new AstCommon::Id(temp, FiLoc::ms_invalid);
+        Ast::Id *id = new Ast::Id(temp, FiLoc::ms_invalid);
         delete alpha;
         return id;
     }
@@ -646,13 +646,13 @@ id %type "AstCommon::Id *"
     {
         string temp;
         temp += ch->GetChar();
-        AstCommon::Id *id = new AstCommon::Id(temp, FiLoc::ms_invalid);
+        Ast::Id *id = new Ast::Id(temp, FiLoc::ms_invalid);
         delete ch;
         return id;
     }
 ;
 
-integer %type "AstCommon::SignedInteger *"
+integer %type "Ast::SignedInteger *"
 :
     integer:integer DIGIT:digit
     {
@@ -665,7 +665,7 @@ integer %type "AstCommon::SignedInteger *"
 |
     DIGIT:digit
     {
-        AstCommon::SignedInteger *integer = new AstCommon::SignedInteger(digit->GetChar() - '0', FiLoc::ms_invalid);
+        Ast::SignedInteger *integer = new Ast::SignedInteger(digit->GetChar() - '0', FiLoc::ms_invalid);
         delete digit;
         return integer;
     }

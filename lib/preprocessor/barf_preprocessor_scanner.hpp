@@ -21,11 +21,11 @@
 #include "barf_preprocessor_parser.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 
 namespace Preprocessor {
 
@@ -53,7 +53,7 @@ public:
 
     bool Close ();
 
-    Parser::Token::Type Scan (AstCommon::Ast **scanned_token);
+    Parser::Token::Type Scan (Ast::Base **scanned_token);
 
 protected:
 
@@ -82,8 +82,8 @@ private:
         }
     }
 
-    Parser::Token::Type ScanBody (AstCommon::Ast **scanned_token);
-    Parser::Token::Type ScanCode (AstCommon::Ast **scanned_token);
+    Parser::Token::Type ScanBody (Ast::Base **scanned_token);
+    Parser::Token::Type ScanCode (Ast::Base **scanned_token);
 
     enum State
     {

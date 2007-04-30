@@ -20,13 +20,13 @@
 #include "trison_message.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 class IdMap;
 class IntegerMap;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 
 namespace CommonLang {
 
@@ -157,28 +157,28 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Trison
 %}
 
-%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type "Ast::Base *"
 %parser_base_assigned_type_sentinel "NULL"
 %parser_custom_cast "Dsc"
 
 %token BAD_TOKEN
-%token CHAR_LITERAL %type "AstCommon::Char *"
-%token DIRECTIVE_ERROR %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_LANGUAGE %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_LEFT %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_NONASSOC %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_PREC %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_RIGHT %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_START %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_TARGET_LANGUAGES %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_TOKEN %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_TYPE %type "AstCommon::ThrowAway *"
-%token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
-%token END_PREAMBLE %type "AstCommon::ThrowAway *"
-%token ID %type "AstCommon::Id *"
+%token CHAR_LITERAL %type "Ast::Char *"
+%token DIRECTIVE_ERROR %type "Ast::ThrowAway *"
+%token DIRECTIVE_LANGUAGE %type "Ast::ThrowAway *"
+%token DIRECTIVE_LEFT %type "Ast::ThrowAway *"
+%token DIRECTIVE_NONASSOC %type "Ast::ThrowAway *"
+%token DIRECTIVE_PREC %type "Ast::ThrowAway *"
+%token DIRECTIVE_RIGHT %type "Ast::ThrowAway *"
+%token DIRECTIVE_START %type "Ast::ThrowAway *"
+%token DIRECTIVE_TARGET_LANGUAGES %type "Ast::ThrowAway *"
+%token DIRECTIVE_TOKEN %type "Ast::ThrowAway *"
+%token DIRECTIVE_TYPE %type "Ast::ThrowAway *"
+%token DUMB_CODE_BLOCK %type "Ast::DumbCodeBlock *"
+%token END_PREAMBLE %type "Ast::ThrowAway *"
+%token ID %type "Ast::Id *"
 %token NEWLINE
-%token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
-%token STRING_LITERAL %type "AstCommon::String *"
+%token STRICT_CODE_BLOCK %type "Ast::StrictCodeBlock *"
+%token STRING_LITERAL %type "Ast::String *"
 %token '.' ':' ';' '|'
 
 %start root
@@ -338,7 +338,7 @@ language_directive %type "CommonLang::LanguageDirective *"
     }
 ;
 
-language_directive_param %type "AstCommon::TextBase *"
+language_directive_param %type "Ast::TextBase *"
 :
     ID:value            { return value; }
 |   STRING_LITERAL:value        { return value; }
@@ -407,7 +407,7 @@ tokens %type "TokenList *"
     }
 ;
 
-token_type_spec %type "AstCommon::String *"
+token_type_spec %type "Ast::String *"
 :
     DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
     {
@@ -526,7 +526,7 @@ precedence_directive %type "PrecedenceMap *"
 // start directive rule
 // ///////////////////////////////////////////////////////////////////////////
 
-start_directive %type "AstCommon::Id *"
+start_directive %type "Ast::Id *"
 :
     DIRECTIVE_START:throwaway ID:id at_least_one_newline
     {
@@ -764,7 +764,7 @@ rule_token %type "RuleToken *"
     }
 ;
 
-rule_precedence_directive %type "AstCommon::Id *"
+rule_precedence_directive %type "Ast::Id *"
 :
     DIRECTIVE_PREC:throwaway ID:id
     {
@@ -803,7 +803,7 @@ token %type "Trison::Token *"
     CHAR_LITERAL:ch { return new Trison::Token(ch); }
 ;
 
-any_type_of_code_block %type "AstCommon::CodeBlock *"
+any_type_of_code_block %type "Ast::CodeBlock *"
 :
     DUMB_CODE_BLOCK:dumb_code_block { return dumb_code_block; }
 |

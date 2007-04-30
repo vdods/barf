@@ -18,11 +18,11 @@
 #include "trison_parser.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 } // end of namespace Barf
 
 namespace Trison {
@@ -39,17 +39,17 @@ public:
 
     bool Open (string const &input_filename);
     void Close ();
-    Parser::Token::Type Scan (AstCommon::Ast **scanned_token);
+    Parser::Token::Type Scan (Ast::Base **scanned_token);
 
 private:
 
-    Parser::Token::Type ScanId (AstCommon::Ast **scanned_token);
-    Parser::Token::Type ScanOperator (AstCommon::Ast **scanned_token);
-    Parser::Token::Type ScanDirective (AstCommon::Ast **scanned_token);
-    Parser::Token::Type ScanStrictCodeBlock (AstCommon::Ast **scanned_token);
-    Parser::Token::Type ScanDumbCodeBlock (AstCommon::Ast **scanned_token);
-    Parser::Token::Type ScanStringLiteral (AstCommon::Ast **scanned_token);
-    Parser::Token::Type ScanCharLiteral (AstCommon::Ast **scanned_token);
+    Parser::Token::Type ScanId (Ast::Base **scanned_token);
+    Parser::Token::Type ScanOperator (Ast::Base **scanned_token);
+    Parser::Token::Type ScanDirective (Ast::Base **scanned_token);
+    Parser::Token::Type ScanStrictCodeBlock (Ast::Base **scanned_token);
+    Parser::Token::Type ScanDumbCodeBlock (Ast::Base **scanned_token);
+    Parser::Token::Type ScanStringLiteral (Ast::Base **scanned_token);
+    Parser::Token::Type ScanCharLiteral (Ast::Base **scanned_token);
 
     void ScanStringLiteralInsideCodeBlock ();
     void ScanCharLiteralInsideCodeBlock ();

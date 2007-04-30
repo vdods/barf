@@ -17,11 +17,11 @@
 #include "barf_preprocessor.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 
 namespace Preprocessor {
 
@@ -96,14 +96,14 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Barf
 %}
 
-%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type "Ast::Base *"
 %parser_base_assigned_type_sentinel "NULL"
 %parser_custom_cast "Dsc"
 
 %token TEXT %type "Text *"
 %token START_CODE END_CODE
 %token CODE_LINE CODE_NEWLINE
-%token ID %type "AstCommon::Id *"
+%token ID %type "Ast::Id *"
 %token DUMP_SYMBOL_TABLE
 %token IF ELSE ELSE_IF END_IF
 %token UNDEFINE

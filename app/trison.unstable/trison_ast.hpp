@@ -13,7 +13,7 @@
 
 #include "trison.hpp"
 
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 #include "barf_commonlang_ast.hpp"
 #include "barf_graph.hpp"
 #include "barf_preprocessor_symboltable.hpp"
@@ -47,22 +47,22 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-struct Token : public AstCommon::Ast
+struct Token : public Ast::Base
 {
-    AstCommon::Id const *const m_id;
-    AstCommon::Char const *const m_char;
+    Ast::Id const *const m_id;
+    Ast::Char const *const m_char;
 
-    Token (AstCommon::Id const *id)
+    Token (Ast::Id const *id)
         :
-        AstCommon::Ast(id->GetFiLoc(), AT_TOKEN),
+        Ast::Base(id->GetFiLoc(), AT_TOKEN),
         m_id(id),
         m_char(NULL)
     {
         assert(m_id != NULL);
     }
-    Token (AstCommon::Char const *ch)
+    Token (Ast::Char const *ch)
         :
-        AstCommon::Ast(ch->GetFiLoc(), AT_TOKEN),
+        Ast::Base(ch->GetFiLoc(), AT_TOKEN),
         m_id(NULL),
         m_char(ch)
     {
@@ -89,24 +89,24 @@ private:
     string m_assigned_type;
 }; // end of struct Token
 
-struct TokenList : public AstCommon::AstList<Token>
+struct TokenList : public Ast::AstList<Token>
 {
-    TokenList () : AstCommon::AstList<Token>(AT_TOKEN_LIST) { }
+    TokenList () : Ast::AstList<Token>(AT_TOKEN_LIST) { }
 }; // end of struct TokenList
 
-struct TokenMap : public AstCommon::AstMap<Token>
+struct TokenMap : public Ast::AstMap<Token>
 {
-    TokenMap () : AstCommon::AstMap<Token>(AT_TOKEN_MAP) { }
+    TokenMap () : Ast::AstMap<Token>(AT_TOKEN_MAP) { }
 }; // end of struct TokenMap
 
-struct RuleToken : public AstCommon::Ast
+struct RuleToken : public Ast::Base
 {
     string const m_token_id;
     string const m_assigned_id;
 
     RuleToken (string const &token_id, FiLoc const &filoc, string const &assigned_id = gs_empty_string)
         :
-        AstCommon::Ast(filoc, AT_RULE_TOKEN),
+        Ast::Base(filoc, AT_RULE_TOKEN),
         m_token_id(token_id),
         m_assigned_id(assigned_id)
     {
@@ -116,12 +116,12 @@ struct RuleToken : public AstCommon::Ast
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct RuleToken
 
-struct RuleTokenList : public AstCommon::AstList<RuleToken>
+struct RuleTokenList : public Ast::AstList<RuleToken>
 {
-    RuleTokenList () : AstCommon::AstList<RuleToken>(AT_RULE_TOKEN_LIST) { }
+    RuleTokenList () : Ast::AstList<RuleToken>(AT_RULE_TOKEN_LIST) { }
 }; // end of struct RuleTokenList
 
-struct Rule : public AstCommon::Ast
+struct Rule : public Ast::Base
 {
     Nonterminal const *m_owner_nonterminal;
     RuleTokenList const *const m_rule_token_list;
@@ -130,7 +130,7 @@ struct Rule : public AstCommon::Ast
 
     Rule (RuleTokenList const *rule_token_list, string const &rule_precedence_id)
         :
-        AstCommon::Ast(rule_token_list->GetFiLoc(), AT_RULE),
+        Ast::Base(rule_token_list->GetFiLoc(), AT_RULE),
         m_owner_nonterminal(NULL),
         m_rule_token_list(rule_token_list),
         m_rule_precedence_id(rule_precedence_id),
@@ -157,12 +157,12 @@ private:
     mutable Uint32 m_accept_state_index;
 }; // end of struct Rule
 
-struct RuleList : public AstCommon::AstList<Rule>
+struct RuleList : public Ast::AstList<Rule>
 {
-    RuleList () : AstCommon::AstList<Rule>(AT_RULE_LIST) { }
+    RuleList () : Ast::AstList<Rule>(AT_RULE_LIST) { }
 }; // end of struct RuleList
 
-struct Nonterminal : public AstCommon::Ast
+struct Nonterminal : public Ast::Base
 {
     string const m_id;
     string const m_assigned_type;
@@ -173,7 +173,7 @@ struct Nonterminal : public AstCommon::Ast
         FiLoc const &filoc,
         string const &assigned_type = gs_empty_string)
         :
-        AstCommon::Ast(filoc, AT_NONTERMINAL),
+        Ast::Base(filoc, AT_NONTERMINAL),
         m_id(id),
         m_assigned_type(assigned_type),
         m_rule_list(NULL),
@@ -209,19 +209,19 @@ private:
     mutable Uint32 m_npda_graph_return_state;
 }; // end of struct Nonterminal
 
-struct NonterminalList : public AstCommon::AstList<Nonterminal>
+struct NonterminalList : public Ast::AstList<Nonterminal>
 {
-    NonterminalList () : AstCommon::AstList<Nonterminal>(AT_NONTERMINAL_LIST) { }
+    NonterminalList () : Ast::AstList<Nonterminal>(AT_NONTERMINAL_LIST) { }
 
     Uint32 GetRuleCount () const;
 }; // end of struct NonterminalList
 
-struct NonterminalMap : public AstCommon::AstMap<Nonterminal>
+struct NonterminalMap : public Ast::AstMap<Nonterminal>
 {
-    NonterminalMap () : AstCommon::AstMap<Nonterminal>(AT_NONTERMINAL_MAP) { }
+    NonterminalMap () : Ast::AstMap<Nonterminal>(AT_NONTERMINAL_MAP) { }
 }; // end of struct NonterminalMap
 
-struct Precedence : public AstCommon::Ast
+struct Precedence : public Ast::Base
 {
     enum
     {
@@ -238,7 +238,7 @@ struct Precedence : public AstCommon::Ast
         FiLoc const &filoc,
         Sint32 precedence_level = DEFAULT_PRECEDENCE_LEVEL)
         :
-        AstCommon::Ast(filoc, AT_PRECEDENCE),
+        Ast::Base(filoc, AT_PRECEDENCE),
         m_precedence_id(precedence_id),
         m_precedence_associativity(precedence_associativity),
         m_precedence_level(precedence_level)
@@ -253,17 +253,17 @@ struct Precedence : public AstCommon::Ast
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct Precedence
 
-struct PrecedenceMap : public AstCommon::AstMap<Precedence>
+struct PrecedenceMap : public Ast::AstMap<Precedence>
 {
-    PrecedenceMap () : AstCommon::AstMap<Precedence>(AT_PRECEDENCE_MAP) { }
+    PrecedenceMap () : Ast::AstMap<Precedence>(AT_PRECEDENCE_MAP) { }
 }; // end of struct PrecedenceMap
 
-struct PrecedenceList : public AstCommon::AstList<Precedence>
+struct PrecedenceList : public Ast::AstList<Precedence>
 {
-    PrecedenceList () : AstCommon::AstList<Precedence>(AT_PRECEDENCE_LIST) { }
+    PrecedenceList () : Ast::AstList<Precedence>(AT_PRECEDENCE_LIST) { }
 }; // end of struct PrecedenceList
 
-struct Representation : public AstCommon::Ast
+struct Representation : public Ast::Base
 {
     CommonLang::TargetLanguageMap const *const m_target_language_map;
     TokenMap const *const m_token_map;
@@ -283,7 +283,7 @@ struct Representation : public AstCommon::Ast
         NonterminalMap const *nonterminal_map,
         NonterminalList const *nonterminal_list)
         :
-        AstCommon::Ast(filoc, AT_REPRESENTATION),
+        Ast::Base(filoc, AT_REPRESENTATION),
         m_target_language_map(target_language_map),
         m_token_map(token_map),
         m_precedence_map(precedence_map),
@@ -316,7 +316,7 @@ struct Representation : public AstCommon::Ast
         Preprocessor::SymbolTable &symbol_table) const;
     void AssignRuleIndices ();
     // this is the non-virtual, top-level Print method, not
-    // to be confused with AstCommon::Ast::Print.
+    // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;

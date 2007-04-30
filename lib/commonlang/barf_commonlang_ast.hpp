@@ -15,7 +15,7 @@
 
 #include <vector>
 
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 
 namespace Barf {
 
@@ -40,7 +40,7 @@ namespace CommonLang {
 
 enum
 {
-    AT_LANGUAGE_DIRECTIVE = AstCommon::AT_START_CUSTOM_TYPES_HERE_,
+    AT_LANGUAGE_DIRECTIVE = Ast::AT_START_CUSTOM_TYPES_HERE_,
     AT_TARGET_LANGUAGE,
     AT_TARGET_LANGUAGE_MAP,
     AT_RULE_HANDLER,
@@ -51,18 +51,18 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-class LanguageDirective : public AstCommon::Directive
+class LanguageDirective : public Ast::Directive
 {
 public:
 
-    AstCommon::Id const *const m_language_id;
-    AstCommon::Id const *const m_directive_id;
-    AstCommon::TextBase const *const m_directive_value;
+    Ast::Id const *const m_language_id;
+    Ast::Id const *const m_directive_id;
+    Ast::TextBase const *const m_directive_value;
 
     LanguageDirective (
-        AstCommon::Id const *language_id,
-        AstCommon::Id const *directive_id,
-        AstCommon::TextBase const *directive_value)
+        Ast::Id const *language_id,
+        Ast::Id const *directive_id,
+        Ast::TextBase const *directive_value)
         :
         Directive("%language", language_id->GetFiLoc(), AT_LANGUAGE_DIRECTIVE),
         m_language_id(language_id),
@@ -78,7 +78,7 @@ public:
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class LanguageDirective
 
-class TargetLanguage : public AstCommon::AstMap<LanguageDirective>
+class TargetLanguage : public Ast::AstMap<LanguageDirective>
 {
 public:
 
@@ -147,12 +147,12 @@ private:
     mutable ParsedLangSpec m_lang_spec;
     mutable ParsedCodeSpecList m_code_spec_list;
 
-    using AstCommon::AstMap<LanguageDirective>::Add;
+    using Ast::AstMap<LanguageDirective>::Add;
 }; // end of class TargetLanguage
 
-struct TargetLanguageMap : public AstCommon::AstMap<TargetLanguage>
+struct TargetLanguageMap : public Ast::AstMap<TargetLanguage>
 {
-    TargetLanguageMap () : AstCommon::AstMap<TargetLanguage>(AT_TARGET_LANGUAGE_MAP) { }
+    TargetLanguageMap () : Ast::AstMap<TargetLanguage>(AT_TARGET_LANGUAGE_MAP) { }
 
     // sets the path of the primary source file on each TargetLanguage
     void SetSourcePath (string const &source_path);
@@ -161,19 +161,19 @@ struct TargetLanguageMap : public AstCommon::AstMap<TargetLanguage>
     // adding the LanguageDirective.
     void AddLanguageDirective (LanguageDirective *language_directive);
 
-    using AstCommon::AstMap<TargetLanguage>::Add;
+    using Ast::AstMap<TargetLanguage>::Add;
 }; // end of struct TargetLanguageMap
 
-struct RuleHandler : public AstCommon::Ast
+struct RuleHandler : public Ast::Base
 {
-    AstCommon::Id const *const m_language_id;
-    AstCommon::CodeBlock const *const m_rule_handler_code_block;
+    Ast::Id const *const m_language_id;
+    Ast::CodeBlock const *const m_rule_handler_code_block;
 
     RuleHandler (
-        AstCommon::Id const *language_id,
-        AstCommon::CodeBlock const *rule_handler_code_block)
+        Ast::Id const *language_id,
+        Ast::CodeBlock const *rule_handler_code_block)
         :
-        AstCommon::Ast(
+        Ast::Base(
             (language_id != NULL) ?
             language_id->GetFiLoc() :
             rule_handler_code_block->GetFiLoc(),
@@ -188,9 +188,9 @@ struct RuleHandler : public AstCommon::Ast
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct RuleHandler
 
-struct RuleHandlerMap : public AstCommon::AstMap<RuleHandler>
+struct RuleHandlerMap : public Ast::AstMap<RuleHandler>
 {
-    RuleHandlerMap () : AstCommon::AstMap<RuleHandler>(AT_RULE_HANDLER_MAP) { }
+    RuleHandlerMap () : Ast::AstMap<RuleHandler>(AT_RULE_HANDLER_MAP) { }
 }; // end of struct RuleHandlerMap
 
 } // end of namespace CommonLang

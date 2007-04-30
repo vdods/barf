@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// barf_astcommon.hpp by Victor Dods, created 2006/10/22
+// barf_ast.hpp by Victor Dods, created 2006/10/22
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_ASTCOMMON_HPP_)
-#define _BARF_ASTCOMMON_HPP_
+#if !defined(_BARF_AST_HPP_)
+#define _BARF_AST_HPP_
 
 #include "barf.hpp"
 
@@ -22,9 +22,9 @@
 #include "barf_util.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-// when the parser subsystem is defining its own concrete Ast subclasses, it
+// when the parser subsystem is defining its own concrete Base subclasses, it
 // should start its enum values at AT_START_CUSTOM_TYPES_HERE_.
 enum
 {
@@ -48,16 +48,16 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-class Ast
+class Base
 {
 public:
 
-    Ast (FiLoc const &filoc, AstType ast_type)
+    Base (FiLoc const &filoc, AstType ast_type)
         :
         m_filoc(filoc),
         m_ast_type(ast_type)
     { }
-    virtual ~Ast () { }
+    virtual ~Base () { }
 
     inline FiLoc const &GetFiLoc () const { return m_filoc; }
     inline AstType GetAstType () const { return m_ast_type; }
@@ -78,7 +78,7 @@ private:
 
     FiLoc m_filoc;
     AstType const m_ast_type;
-}; // end of class Ast
+}; // end of class Base
 
 template <typename ElementType>
 struct List : private vector<ElementType *>
@@ -116,7 +116,7 @@ struct List : private vector<ElementType *>
 }; // end of class List<ElementType>
 
 template <typename ElementType>
-struct AstList : public Ast, public List<ElementType>
+struct AstList : public Base, public List<ElementType>
 {
     typedef typename List<ElementType>::iterator iterator;
     typedef typename List<ElementType>::const_iterator const_iterator;
@@ -129,12 +129,12 @@ struct AstList : public Ast, public List<ElementType>
 
     AstList (AstType ast_type)
         :
-        Ast(FiLoc::ms_invalid, ast_type),
+        Base(FiLoc::ms_invalid, ast_type),
         List<ElementType>()
     { }
     AstList (FiLoc const &filoc, AstType ast_type)
         :
-        Ast(filoc, ast_type),
+        Base(filoc, ast_type),
         List<ElementType>()
     {
         assert(filoc.GetHasLineNumber());
@@ -153,7 +153,7 @@ struct AstList : public Ast, public List<ElementType>
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const
     {
         stream << Tabs(indent_level) << Stringify(GetAstType()) << " (" << size() << " elements)" << endl;
-        for_each(begin(), end(), PrintAst<Ast>(stream, Stringify, indent_level+1));
+        for_each(begin(), end(), PrintAst<Base>(stream, Stringify, indent_level+1));
     }
 }; // end of struct AstList<ElementType>
 
@@ -198,7 +198,7 @@ struct Map : private map<string, ElementType *>
 }; // end of class Map<ElementType>
 
 template <typename ElementType>
-struct AstMap : public Ast, public Map<ElementType>
+struct AstMap : public Base, public Map<ElementType>
 {
     typedef typename Map<ElementType>::iterator iterator;
     typedef typename Map<ElementType>::const_iterator const_iterator;
@@ -212,12 +212,12 @@ struct AstMap : public Ast, public Map<ElementType>
 
     AstMap (AstType ast_type)
         :
-        Ast(FiLoc::ms_invalid, ast_type),
+        Base(FiLoc::ms_invalid, ast_type),
         Map<ElementType>()
     { }
     AstMap (FiLoc const &filoc, AstType ast_type)
         :
-        Ast(filoc, ast_type),
+        Base(filoc, ast_type),
         Map<ElementType>()
     {
         assert(filoc.GetHasLineNumber());
@@ -247,23 +247,23 @@ struct AstMap : public Ast, public Map<ElementType>
     }
 }; // end of struct AstMap<ElementType>
 
-struct ThrowAway : public Ast
+struct ThrowAway : public Base
 {
     ThrowAway (FiLoc const &filoc)
         :
-        Ast(filoc, AT_THROW_AWAY)
+        Base(filoc, AT_THROW_AWAY)
     {
         assert(filoc.GetIsValid());
     }
 }; // end of struct ThrowAway
 
-class Char : public Ast
+class Char : public Base
 {
 public:
 
     Char (Uint8 ch, FiLoc const &filoc)
         :
-        Ast(filoc, AT_CHAR),
+        Base(filoc, AT_CHAR),
         m_char(ch)
     { }
 
@@ -277,20 +277,20 @@ protected:
 
     Char (Uint8 ch, FiLoc const &filoc, AstType ast_type)
         :
-        Ast(filoc, ast_type),
+        Base(filoc, ast_type),
         m_char(ch)
     { }
 
     Uint8 m_char;
 }; // end of class Char
 
-class SignedInteger : public Ast
+class SignedInteger : public Base
 {
 public:
 
     SignedInteger (Sint32 value, FiLoc const &filoc)
         :
-        Ast(filoc, AT_SIGNED_INTEGER),
+        Base(filoc, AT_SIGNED_INTEGER),
         m_value(value)
     { }
 
@@ -306,13 +306,13 @@ private:
     Sint32 m_value;
 }; // end of class SignedInteger
 
-class UnsignedInteger : public Ast
+class UnsignedInteger : public Base
 {
 public:
 
     UnsignedInteger (Uint32 value, FiLoc const &filoc)
         :
-        Ast(filoc, AT_UNSIGNED_INTEGER),
+        Base(filoc, AT_UNSIGNED_INTEGER),
         m_value(value)
     { }
 
@@ -328,17 +328,17 @@ private:
     Uint32 m_value;
 }; // end of class UnsignedInteger
 
-class TextBase : public Ast
+class TextBase : public Base
 {
 public:
 
     TextBase (FiLoc const &filoc, AstType ast_type)
         :
-        Ast(filoc, ast_type)
+        Base(filoc, ast_type)
     { }
     TextBase (string const &text, FiLoc const &filoc, AstType ast_type)
         :
-        Ast(filoc, ast_type),
+        Base(filoc, ast_type),
         m_text(text)
     { }
     virtual ~TextBase () = 0;
@@ -393,11 +393,11 @@ struct CodeBlock : public TextBase
 
     virtual bool GetIsCodeBlock () const { return true; }
 
-    // just use Ast's default print, because we don't want
+    // just use Base's default print, because we don't want
     // to print out the entire contents of the CodeBlock.
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const
     {
-        Ast::Print(stream, Stringify, indent_level);
+        Base::Print(stream, Stringify, indent_level);
     }
 }; // end of struct CodeBlock
 
@@ -451,7 +451,7 @@ struct DirectiveList : public AstList<Directive>
     DirectiveList () : AstList<Directive>(AT_DIRECTIVE_LIST) { }
 }; // end of struct DirectiveList
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 } // end of namespace Barf
 
-#endif // !defined(_BARF_ASTCOMMON_HPP_)
+#endif // !defined(_BARF_AST_HPP_)

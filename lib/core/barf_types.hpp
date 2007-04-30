@@ -43,7 +43,7 @@ typedef unsigned int Uint32;
 #define UINT32_UPPER_BOUND Uint32(0xFFFFFFFF)
 
 // i think it's probably pretty safe to assume there will not be more than
-// 2^16 different concrete Ast subclasses (including applications' subclasses).
+// 2^16 different concrete Ast::Base subclasses (including applications' subclasses).
 typedef Uint16 AstType;
 // this type is used for specifying a function which can turn an
 // AstType value into a human-readable string.

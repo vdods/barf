@@ -54,13 +54,13 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-struct StartDirective : public AstCommon::Directive
+struct StartDirective : public Ast::Directive
 {
-    AstCommon::Id const *const m_start_state_id;
+    Ast::Id const *const m_start_state_id;
 
-    StartDirective (AstCommon::Id const *start_state_id)
+    StartDirective (Ast::Id const *start_state_id)
         :
-        AstCommon::Directive("%start", start_state_id->GetFiLoc(), AT_START_DIRECTIVE),
+        Ast::Directive("%start", start_state_id->GetFiLoc(), AT_START_DIRECTIVE),
         m_start_state_id(start_state_id)
     {
         assert(m_start_state_id != NULL);
@@ -73,7 +73,7 @@ struct StartDirective : public AstCommon::Directive
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class StartDirective
 
-struct Rule : public AstCommon::Ast
+struct Rule : public Ast::Base
 {
     string const m_rule_regex_string;
     Regex::RegularExpression const *const m_rule_regex;
@@ -84,7 +84,7 @@ struct Rule : public AstCommon::Ast
         Regex::RegularExpression const *rule_regex,
         CommonLang::RuleHandlerMap const *rule_handler_map)
         :
-        AstCommon::Ast(rule_regex->GetFiLoc(), AT_RULE),
+        Ast::Base(rule_regex->GetFiLoc(), AT_RULE),
         m_rule_regex_string(rule_regex_string),
         m_rule_regex(rule_regex),
         m_rule_handler_map(rule_handler_map)
@@ -106,21 +106,21 @@ struct Rule : public AstCommon::Ast
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class Rule
 
-struct RuleList : public AstCommon::AstList<Rule>
+struct RuleList : public Ast::AstList<Rule>
 {
-    RuleList () : AstCommon::AstList<Rule>(AT_RULE_LIST) { }
+    RuleList () : Ast::AstList<Rule>(AT_RULE_LIST) { }
 };
 
-struct ScannerState : public AstCommon::Ast
+struct ScannerState : public Ast::Base
 {
-    AstCommon::Id const *const m_scanner_state_id;
+    Ast::Id const *const m_scanner_state_id;
     RuleList const *const m_rule_list;
 
     ScannerState (
-        AstCommon::Id const *scanner_state_id,
+        Ast::Id const *scanner_state_id,
         RuleList *rule_list)
         :
-        AstCommon::Ast(scanner_state_id->GetFiLoc(), AT_SCANNER_STATE),
+        Ast::Base(scanner_state_id->GetFiLoc(), AT_SCANNER_STATE),
         m_scanner_state_id(scanner_state_id),
         m_rule_list(rule_list)
     {
@@ -146,12 +146,12 @@ struct ScannerState : public AstCommon::Ast
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class ScannerState
 
-struct ScannerStateMap : public AstCommon::AstMap<ScannerState>
+struct ScannerStateMap : public Ast::AstMap<ScannerState>
 {
-    ScannerStateMap () : AstCommon::AstMap<ScannerState>(AT_SCANNER_STATE_MAP) { }
+    ScannerStateMap () : Ast::AstMap<ScannerState>(AT_SCANNER_STATE_MAP) { }
 };
 
-class Representation : public AstCommon::Ast
+class Representation : public Ast::Base
 {
 public:
 
@@ -167,7 +167,7 @@ public:
         FiLoc const &end_preamble_filoc,
         ScannerStateMap const *scanner_state_map)
         :
-        AstCommon::Ast(target_language_map->GetFiLoc(), AT_REPRESENTATION),
+        Ast::Base(target_language_map->GetFiLoc(), AT_REPRESENTATION),
         m_target_language_map(target_language_map),
         m_regex_macro_map(regex_macro_map),
         m_start_directive(start_directive),
@@ -195,7 +195,7 @@ public:
         string const &target_language_id,
         Preprocessor::SymbolTable &symbol_table) const;
     // this is the non-virtual, top-level Print method, not
-    // to be confused with AstCommon::Ast::Print.
+    // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;

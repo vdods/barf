@@ -17,7 +17,7 @@ namespace Regex {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-AstCommon::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AT_COUNT-Ast::AT_START_CUSTOM_TYPES_HERE_] =
     {
         "AT_BOUND",
         "AT_BRACKET_CHAR_SET",
@@ -29,10 +29,10 @@ string const &GetAstTypeString (AstType ast_type)
     };
 
     assert(ast_type < AT_COUNT);
-    if (ast_type < AstCommon::AT_START_CUSTOM_TYPES_HERE_)
-        return AstCommon::GetAstTypeString(ast_type);
+    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+        return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-AstCommon::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -283,7 +283,7 @@ void RegularExpression::Print (ostream &stream, Uint32 indent_level) const
 void RegularExpression::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    for_each(begin(), end(), PrintAst<Ast>(stream, Stringify, indent_level+1));
+    for_each(begin(), end(), PrintAst<Base>(stream, Stringify, indent_level+1));
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -292,7 +292,7 @@ void RegularExpression::Print (ostream &stream, StringifyAstType Stringify, Uint
 
 void RegularExpressionMap::Print (ostream &stream, Uint32 indent_level) const
 {
-    AstCommon::AstMap<RegularExpression>::Print(stream, GetAstTypeString, indent_level);
+    Ast::AstMap<RegularExpression>::Print(stream, GetAstTypeString, indent_level);
 }
 
 } // end of namespace Regex

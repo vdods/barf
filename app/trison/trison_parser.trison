@@ -19,11 +19,11 @@
 #include "trison_message.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 } // end of namespace Barf
 
 namespace Trison {
@@ -88,26 +88,26 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Trison
 %}
 
-%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type "Ast::Base *"
 %parser_base_assigned_type_sentinel "NULL"
 %parser_custom_cast "Dsc"
 
 %token ':' ';' '|'
-%token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
-%token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
-%token ID %type "AstCommon::Id *"
+%token STRICT_CODE_BLOCK %type "Ast::StrictCodeBlock *"
+%token DUMB_CODE_BLOCK %type "Ast::DumbCodeBlock *"
+%token ID %type "Ast::Id *"
 %token DIRECTIVE_PARSER_WITH_PARAMETER %type "ParserDirective *"
 %token DIRECTIVE_PARSER_WITHOUT_PARAMETER %type "ParserDirective *"
-%token STRING %type "AstCommon::String *"
-%token DIRECTIVE_ERROR %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_TOKEN %type "AstCommon::ThrowAway *"
-%token END_PREAMBLE %type "AstCommon::ThrowAway *"
-%token LEFT %type "AstCommon::ThrowAway *"
-%token NONASSOC %type "AstCommon::ThrowAway *"
-%token PREC %type "AstCommon::ThrowAway *"
-%token RIGHT %type "AstCommon::ThrowAway *"
-%token START %type "AstCommon::ThrowAway *"
-%token TYPE %type "AstCommon::ThrowAway *"
+%token STRING %type "Ast::String *"
+%token DIRECTIVE_ERROR %type "Ast::ThrowAway *"
+%token DIRECTIVE_TOKEN %type "Ast::ThrowAway *"
+%token END_PREAMBLE %type "Ast::ThrowAway *"
+%token LEFT %type "Ast::ThrowAway *"
+%token NONASSOC %type "Ast::ThrowAway *"
+%token PREC %type "Ast::ThrowAway *"
+%token RIGHT %type "Ast::ThrowAway *"
+%token START %type "Ast::ThrowAway *"
+%token TYPE %type "Ast::ThrowAway *"
 %token TOKEN_ID_CHAR %type "TokenIdChar *"
 %token BAD_TOKEN
 %token NEWLINE
@@ -130,7 +130,7 @@ root %type "Grammar *"
     }
 ;
 
-directive_list %type "AstCommon::DirectiveList *"
+directive_list %type "Ast::DirectiveList *"
 :
     directive_list:directive_list directive:directive
     {
@@ -141,11 +141,11 @@ directive_list %type "AstCommon::DirectiveList *"
 |
     at_least_zero_newlines
     {
-        return new AstCommon::DirectiveList();
+        return new Ast::DirectiveList();
     }
 ;
 
-directive %type "AstCommon::Directive *"
+directive %type "Ast::Directive *"
 :
     DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRICT_CODE_BLOCK:value at_least_one_newline
     {
@@ -205,7 +205,7 @@ directive %type "AstCommon::Directive *"
     {
         EmitError(throwaway2->GetFiLoc(), "syntax error in %type directive");
 
-        AstCommon::String *dummy_string = new AstCommon::String(throwaway2->GetFiLoc());
+        Ast::String *dummy_string = new Ast::String(throwaway2->GetFiLoc());
         delete throwaway1;
         delete throwaway2;
         return new TokenDirective(token_id_list, dummy_string);
@@ -221,7 +221,7 @@ directive %type "AstCommon::Directive *"
     {
         EmitError(throwaway->GetFiLoc(), "syntax error in %prec directive");
 
-        AstCommon::Id *dummy_id = new AstCommon::Id("ERROR", throwaway->GetFiLoc());
+        Ast::Id *dummy_id = new Ast::Id("ERROR", throwaway->GetFiLoc());
         delete throwaway;
         return new PrecedenceDirective(dummy_id);
     }
@@ -236,7 +236,7 @@ directive %type "AstCommon::Directive *"
     {
         EmitError(throwaway->GetFiLoc(), "syntax error in %start directive");
 
-        AstCommon::Id *dummy_id = new AstCommon::Id("ERROR", throwaway->GetFiLoc());
+        Ast::Id *dummy_id = new Ast::Id("ERROR", throwaway->GetFiLoc());
         delete throwaway;
         return new StartDirective(dummy_id);
     }
@@ -487,7 +487,7 @@ rule_token %type "RuleToken *"
     }
 ;
 
-rule_precedence_directive %type "AstCommon::Id *"
+rule_precedence_directive %type "Ast::Id *"
 :
     PREC:throwaway ID:id
     {

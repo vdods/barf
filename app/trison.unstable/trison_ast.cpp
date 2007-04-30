@@ -55,7 +55,7 @@ void Token::SetAssignedType (string const &assigned_type)
 
 void Token::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     if (m_id != NULL)
         m_id->Print(stream, Stringify, indent_level+1);
     else
@@ -64,7 +64,7 @@ void Token::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_le
 
 void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "token id: " << m_token_id << endl;
     if (!m_assigned_id.empty())
         stream << Tabs(indent_level+1) << "assigned id: " << m_assigned_id << endl;
@@ -101,7 +101,7 @@ void Rule::PopulateAcceptHandlerCodeArraySymbol (
     CommonLang::RuleHandler const *rule_handler = m_rule_handler_map->GetElement(target_language_id);
     if (rule_handler != NULL)
     {
-        AstCommon::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
+        Ast::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
         assert(rule_handler_code_block != NULL);
         accept_handler_code_symbol->AppendArrayElement(
             new Preprocessor::Body(
@@ -114,7 +114,7 @@ void Rule::PopulateAcceptHandlerCodeArraySymbol (
 
 void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "precedence: " << m_rule_precedence_id << endl;
     m_rule_token_list->Print(stream, Stringify, indent_level+1);
     m_rule_handler_map->Print(stream, Stringify, indent_level+1);
@@ -166,7 +166,7 @@ void Nonterminal::PopulateAcceptHandlerCodeArraySymbol (
 
 void Nonterminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "id: " << m_id << endl;
     if (!m_assigned_type.empty())
         stream << Tabs(indent_level+1) << "assigned type: " << GetStringLiteral(m_assigned_type) << endl;
@@ -187,7 +187,7 @@ Uint32 NonterminalList::GetRuleCount () const
 
 void Precedence::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "precedence id: " << m_precedence_id << endl;
     stream << Tabs(indent_level+1) << "precedence associativity: " << m_precedence_associativity << endl;
     stream << Tabs(indent_level+1) << "precedence level: " << m_precedence_level << endl;
@@ -765,7 +765,7 @@ void Representation::Print (ostream &stream, Uint32 indent_level) const
 
 void Representation::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     m_target_language_map->Print(stream, Stringify, indent_level+1);
     m_token_map->Print(stream, Stringify, indent_level+1);
     m_precedence_map->Print(stream, Stringify, indent_level+1);

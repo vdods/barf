@@ -27,7 +27,7 @@ namespace CommonLang {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[CommonLang::AT_START_CUSTOM_TYPES_HERE_-AstCommon::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[CommonLang::AT_START_CUSTOM_TYPES_HERE_-Ast::AT_START_CUSTOM_TYPES_HERE_] =
     {
         "AT_LANGUAGE_DIRECTIVE",
         "AT_TARGET_LANGUAGE",
@@ -37,10 +37,10 @@ string const &GetAstTypeString (AstType ast_type)
     };
 
     assert(ast_type < CommonLang::AT_START_CUSTOM_TYPES_HERE_);
-    if (ast_type < AstCommon::AT_START_CUSTOM_TYPES_HERE_)
-        return AstCommon::GetAstTypeString(ast_type);
+    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+        return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-AstCommon::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ void LanguageDirective::Print (ostream &stream, StringifyAstType Stringify, Uint
 
 TargetLanguage::TargetLanguage (string const &language_id)
     :
-    AstCommon::AstMap<LanguageDirective>(AT_TARGET_LANGUAGE),
+    Ast::AstMap<LanguageDirective>(AT_TARGET_LANGUAGE),
     m_language_id(language_id),
     m_is_enabled_for_code_generation(false)
 {
@@ -250,7 +250,7 @@ void TargetLanguage::CheckAgainstAddDirective (
         if (add_directive.GetIsRequired())
             EmitError(FiLoc(g_options->GetInputFilename()), "missing required directive %language." + m_language_id + "." + add_directive.m_directive_to_add_id->GetText());
     }
-    else if (add_directive.m_param_type == AstCommon::AT_NONE)
+    else if (add_directive.m_param_type == Ast::AT_NONE)
     {
         if (language_directive->m_directive_value != NULL)
             EmitError(language_directive->GetFiLoc(), "superfluous parameter given for directive %language." + language_directive->m_language_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " which does not accept a parameter");

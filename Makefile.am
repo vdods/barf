@@ -189,7 +189,7 @@ lib_libbarf_core_la_CPPFLAGS = \
     -I$(top_srcdir)/lib/core
 lib_libbarf_core_la_SOURCES = \
     lib/core/barf.cpp \
-    lib/core/barf_astcommon.cpp \
+    lib/core/barf_ast.cpp \
     lib/core/barf_commandlineparser.cpp \
     lib/core/barf_compiletimeasserts.cpp \
     lib/core/barf_enums.cpp \
@@ -578,7 +578,7 @@ noinst_HEADERS = \
 	lib/commonlang/barf_commonlang_scanner.hpp \
 	\
 	lib/core/barf.hpp \
-	lib/core/barf_astcommon.hpp \
+	lib/core/barf_ast.hpp \
 	lib/core/barf_commandlineparser.hpp \
 	lib/core/barf_compiletimeasserts.hpp \
 	lib/core/barf_enums.hpp \

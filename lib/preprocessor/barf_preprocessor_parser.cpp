@@ -395,7 +395,7 @@ void Parser::ScanANewLookaheadToken ()
     DEBUG_SPEW_1("*** scanned a new lookahead token -- type " << m_lookahead_token_type << std::endl);
 }
 
-void Parser::ThrowAwayToken (AstCommon::Ast * token)
+void Parser::ThrowAwayToken (Ast::Base * token)
 {
 
 #line 66 "barf_preprocessor_parser.trison"
@@ -502,7 +502,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 // ///////////////////////////////////////////////////////////////////////////
 
 // rule 0: %start <- body END_    
-AstCommon::Ast * Parser::ReductionRuleHandler0000 ()
+Ast::Base * Parser::ReductionRuleHandler0000 ()
 {
     assert(0 < m_reduction_rule_token_count);
     return m_token_stack[m_token_stack.size() - m_reduction_rule_token_count];
@@ -511,7 +511,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0000 ()
 }
 
 // rule 1: body <-     
-AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
+Ast::Base * Parser::ReductionRuleHandler0001 ()
 {
 
 #line 143 "barf_preprocessor_parser.trison"
@@ -523,7 +523,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0001 ()
 }
 
 // rule 2: body <- TEXT:text    
-AstCommon::Ast * Parser::ReductionRuleHandler0002 ()
+Ast::Base * Parser::ReductionRuleHandler0002 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Text * text = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -539,7 +539,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0002 ()
 }
 
 // rule 3: body <- body:body executable:executable    
-AstCommon::Ast * Parser::ReductionRuleHandler0003 ()
+Ast::Base * Parser::ReductionRuleHandler0003 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Body * body = Dsc< Body * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -557,7 +557,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0003 ()
 }
 
 // rule 4: body <- body:body executable:executable TEXT:text    
-AstCommon::Ast * Parser::ReductionRuleHandler0004 ()
+Ast::Base * Parser::ReductionRuleHandler0004 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Body * body = Dsc< Body * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -578,7 +578,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0004 ()
 }
 
 // rule 5: executable <- START_CODE code:code END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0005 ()
+Ast::Base * Parser::ReductionRuleHandler0005 ()
 {
     assert(1 < m_reduction_rule_token_count);
     ExecutableAst * code = Dsc< ExecutableAst * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
@@ -590,7 +590,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0005 ()
 }
 
 // rule 6: executable <- CODE_LINE code:code CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0006 ()
+Ast::Base * Parser::ReductionRuleHandler0006 ()
 {
     assert(1 < m_reduction_rule_token_count);
     ExecutableAst * code = Dsc< ExecutableAst * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
@@ -602,7 +602,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0006 ()
 }
 
 // rule 7: executable <- conditional_series:conditional    
-AstCommon::Ast * Parser::ReductionRuleHandler0007 ()
+Ast::Base * Parser::ReductionRuleHandler0007 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Conditional * conditional = Dsc< Conditional * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -614,7 +614,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0007 ()
 }
 
 // rule 8: executable <- define:define body:body end_define    
-AstCommon::Ast * Parser::ReductionRuleHandler0008 ()
+Ast::Base * Parser::ReductionRuleHandler0008 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -631,7 +631,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0008 ()
 }
 
 // rule 9: executable <- loop:loop body:body end_loop    
-AstCommon::Ast * Parser::ReductionRuleHandler0009 ()
+Ast::Base * Parser::ReductionRuleHandler0009 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Loop * loop = Dsc< Loop * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -648,7 +648,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0009 ()
 }
 
 // rule 10: executable <- for_each:for_each body:body end_for_each    
-AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
+Ast::Base * Parser::ReductionRuleHandler0010 ()
 {
     assert(0 < m_reduction_rule_token_count);
     ForEach * for_each = Dsc< ForEach * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -665,7 +665,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0010 ()
 }
 
 // rule 11: code <-     
-AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
+Ast::Base * Parser::ReductionRuleHandler0011 ()
 {
 
 #line 200 "barf_preprocessor_parser.trison"
@@ -675,7 +675,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0011 ()
 }
 
 // rule 12: code <- expression:expression    
-AstCommon::Ast * Parser::ReductionRuleHandler0012 ()
+Ast::Base * Parser::ReductionRuleHandler0012 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -687,7 +687,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0012 ()
 }
 
 // rule 13: code <- DUMP_SYMBOL_TABLE '(' ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0013 ()
+Ast::Base * Parser::ReductionRuleHandler0013 ()
 {
 
 #line 206 "barf_preprocessor_parser.trison"
@@ -697,10 +697,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0013 ()
 }
 
 // rule 14: code <- UNDEFINE '(' ID:id ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0014 ()
+Ast::Base * Parser::ReductionRuleHandler0014 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 209 "barf_preprocessor_parser.trison"
  return new Undefine(id); 
@@ -709,10 +709,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0014 ()
 }
 
 // rule 15: code <- DECLARE_ARRAY '(' ID:id ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0015 ()
+Ast::Base * Parser::ReductionRuleHandler0015 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 212 "barf_preprocessor_parser.trison"
  return new DeclareArray(id); 
@@ -721,10 +721,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0015 ()
 }
 
 // rule 16: code <- DECLARE_MAP '(' ID:id ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0016 ()
+Ast::Base * Parser::ReductionRuleHandler0016 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 215 "barf_preprocessor_parser.trison"
  return new DeclareMap(id); 
@@ -733,7 +733,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0016 ()
 }
 
 // rule 17: code <- INCLUDE '(' expression:include_filename_expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0017 ()
+Ast::Base * Parser::ReductionRuleHandler0017 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * include_filename_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
@@ -745,7 +745,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0017 ()
 }
 
 // rule 18: code <- SANDBOX_INCLUDE '(' expression:include_filename_expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0018 ()
+Ast::Base * Parser::ReductionRuleHandler0018 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * include_filename_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
@@ -757,7 +757,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0018 ()
 }
 
 // rule 19: code <- WARNING '(' expression:message_expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0019 ()
+Ast::Base * Parser::ReductionRuleHandler0019 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * message_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
@@ -769,7 +769,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0019 ()
 }
 
 // rule 20: code <- ERROR '(' expression:message_expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0020 ()
+Ast::Base * Parser::ReductionRuleHandler0020 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * message_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
@@ -781,7 +781,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0020 ()
 }
 
 // rule 21: code <- FATAL_ERROR '(' expression:message_expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0021 ()
+Ast::Base * Parser::ReductionRuleHandler0021 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * message_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
@@ -793,7 +793,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0021 ()
 }
 
 // rule 22: conditional_series <- if_statement:conditional body:if_body conditional_series_end:else_body    
-AstCommon::Ast * Parser::ReductionRuleHandler0022 ()
+Ast::Base * Parser::ReductionRuleHandler0022 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Conditional * conditional = Dsc< Conditional * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -813,7 +813,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0022 ()
 }
 
 // rule 23: conditional_series_end <- end_if    
-AstCommon::Ast * Parser::ReductionRuleHandler0023 ()
+Ast::Base * Parser::ReductionRuleHandler0023 ()
 {
 
 #line 245 "barf_preprocessor_parser.trison"
@@ -823,7 +823,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0023 ()
 }
 
 // rule 24: conditional_series_end <- else_statement body:body end_if    
-AstCommon::Ast * Parser::ReductionRuleHandler0024 ()
+Ast::Base * Parser::ReductionRuleHandler0024 ()
 {
     assert(1 < m_reduction_rule_token_count);
     Body * body = Dsc< Body * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
@@ -835,7 +835,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0024 ()
 }
 
 // rule 25: conditional_series_end <- else_if_statement:conditional body:if_body conditional_series_end:else_body    
-AstCommon::Ast * Parser::ReductionRuleHandler0025 ()
+Ast::Base * Parser::ReductionRuleHandler0025 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Conditional * conditional = Dsc< Conditional * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -857,7 +857,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0025 ()
 }
 
 // rule 26: if_statement <- START_CODE IF '(' expression:expression ')' END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0026 ()
+Ast::Base * Parser::ReductionRuleHandler0026 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
@@ -869,7 +869,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0026 ()
 }
 
 // rule 27: if_statement <- CODE_LINE IF '(' expression:expression ')' CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0027 ()
+Ast::Base * Parser::ReductionRuleHandler0027 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
@@ -881,19 +881,19 @@ AstCommon::Ast * Parser::ReductionRuleHandler0027 ()
 }
 
 // rule 28: else_statement <- START_CODE ELSE END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0028 ()
+Ast::Base * Parser::ReductionRuleHandler0028 ()
 {
     return NULL;
 }
 
 // rule 29: else_statement <- CODE_LINE ELSE CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0029 ()
+Ast::Base * Parser::ReductionRuleHandler0029 ()
 {
     return NULL;
 }
 
 // rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression:expression ')' END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0030 ()
+Ast::Base * Parser::ReductionRuleHandler0030 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
@@ -905,7 +905,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0030 ()
 }
 
 // rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression:expression ')' CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0031 ()
+Ast::Base * Parser::ReductionRuleHandler0031 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
@@ -917,19 +917,19 @@ AstCommon::Ast * Parser::ReductionRuleHandler0031 ()
 }
 
 // rule 32: end_if <- START_CODE END_IF END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0032 ()
+Ast::Base * Parser::ReductionRuleHandler0032 ()
 {
     return NULL;
 }
 
 // rule 33: end_if <- CODE_LINE END_IF CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0033 ()
+Ast::Base * Parser::ReductionRuleHandler0033 ()
 {
     return NULL;
 }
 
 // rule 34: define <- define_scalar:define    
-AstCommon::Ast * Parser::ReductionRuleHandler0034 ()
+Ast::Base * Parser::ReductionRuleHandler0034 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -941,7 +941,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0034 ()
 }
 
 // rule 35: define <- define_array_element:define    
-AstCommon::Ast * Parser::ReductionRuleHandler0035 ()
+Ast::Base * Parser::ReductionRuleHandler0035 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -953,7 +953,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0035 ()
 }
 
 // rule 36: define <- define_map_element:define    
-AstCommon::Ast * Parser::ReductionRuleHandler0036 ()
+Ast::Base * Parser::ReductionRuleHandler0036 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -965,10 +965,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0036 ()
 }
 
 // rule 37: define_scalar <- START_CODE DEFINE '(' ID:id ')' END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0037 ()
+Ast::Base * Parser::ReductionRuleHandler0037 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 303 "barf_preprocessor_parser.trison"
  return new Define(id); 
@@ -977,10 +977,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0037 ()
 }
 
 // rule 38: define_scalar <- CODE_LINE DEFINE '(' ID:id ')' CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0038 ()
+Ast::Base * Parser::ReductionRuleHandler0038 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 306 "barf_preprocessor_parser.trison"
  return new Define(id); 
@@ -989,10 +989,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0038 ()
 }
 
 // rule 39: define_array_element <- START_CODE DEFINE '(' ID:id '[' ']' ')' END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0039 ()
+Ast::Base * Parser::ReductionRuleHandler0039 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 312 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
@@ -1001,10 +1001,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0039 ()
 }
 
 // rule 40: define_array_element <- CODE_LINE DEFINE '(' ID:id '[' ']' ')' CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0040 ()
+Ast::Base * Parser::ReductionRuleHandler0040 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 315 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
@@ -1013,10 +1013,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0040 ()
 }
 
 // rule 41: define_map_element <- START_CODE DEFINE '(' ID:id '[' STRING:key ']' ')' END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0041 ()
+Ast::Base * Parser::ReductionRuleHandler0041 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Text * key = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
@@ -1027,10 +1027,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0041 ()
 }
 
 // rule 42: define_map_element <- CODE_LINE DEFINE '(' ID:id '[' STRING:key ']' ')' CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0042 ()
+Ast::Base * Parser::ReductionRuleHandler0042 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Text * key = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
@@ -1041,22 +1041,22 @@ AstCommon::Ast * Parser::ReductionRuleHandler0042 ()
 }
 
 // rule 43: end_define <- START_CODE END_DEFINE END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0043 ()
+Ast::Base * Parser::ReductionRuleHandler0043 ()
 {
     return NULL;
 }
 
 // rule 44: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0044 ()
+Ast::Base * Parser::ReductionRuleHandler0044 ()
 {
     return NULL;
 }
 
 // rule 45: loop <- START_CODE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0045 ()
+Ast::Base * Parser::ReductionRuleHandler0045 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * iterator_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * iterator_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Expression * iteration_count_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
@@ -1067,10 +1067,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0045 ()
 }
 
 // rule 46: loop <- CODE_LINE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0046 ()
+Ast::Base * Parser::ReductionRuleHandler0046 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * iterator_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * iterator_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Expression * iteration_count_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
@@ -1081,24 +1081,24 @@ AstCommon::Ast * Parser::ReductionRuleHandler0046 ()
 }
 
 // rule 47: end_loop <- START_CODE END_LOOP END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0047 ()
+Ast::Base * Parser::ReductionRuleHandler0047 ()
 {
     return NULL;
 }
 
 // rule 48: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0048 ()
+Ast::Base * Parser::ReductionRuleHandler0048 ()
 {
     return NULL;
 }
 
 // rule 49: for_each <- START_CODE FOR_EACH '(' ID:key_id ',' ID:map_id ')' END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0049 ()
+Ast::Base * Parser::ReductionRuleHandler0049 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * key_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * key_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
-    AstCommon::Id * map_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
+    Ast::Id * map_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 353 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
@@ -1107,12 +1107,12 @@ AstCommon::Ast * Parser::ReductionRuleHandler0049 ()
 }
 
 // rule 50: for_each <- CODE_LINE FOR_EACH '(' ID:key_id ',' ID:map_id ')' CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0050 ()
+Ast::Base * Parser::ReductionRuleHandler0050 ()
 {
     assert(3 < m_reduction_rule_token_count);
-    AstCommon::Id * key_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    Ast::Id * key_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
-    AstCommon::Id * map_id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
+    Ast::Id * map_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
 #line 356 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
@@ -1121,19 +1121,19 @@ AstCommon::Ast * Parser::ReductionRuleHandler0050 ()
 }
 
 // rule 51: end_for_each <- START_CODE END_FOR_EACH END_CODE    
-AstCommon::Ast * Parser::ReductionRuleHandler0051 ()
+Ast::Base * Parser::ReductionRuleHandler0051 ()
 {
     return NULL;
 }
 
 // rule 52: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE    
-AstCommon::Ast * Parser::ReductionRuleHandler0052 ()
+Ast::Base * Parser::ReductionRuleHandler0052 ()
 {
     return NULL;
 }
 
 // rule 53: expression <- STRING:str    
-AstCommon::Ast * Parser::ReductionRuleHandler0053 ()
+Ast::Base * Parser::ReductionRuleHandler0053 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Text * str = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1145,7 +1145,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0053 ()
 }
 
 // rule 54: expression <- INTEGER:integer    
-AstCommon::Ast * Parser::ReductionRuleHandler0054 ()
+Ast::Base * Parser::ReductionRuleHandler0054 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Integer * integer = Dsc< Integer * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1157,10 +1157,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0054 ()
 }
 
 // rule 55: expression <- SIZEOF '(' ID:id ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0055 ()
+Ast::Base * Parser::ReductionRuleHandler0055 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 375 "barf_preprocessor_parser.trison"
  return new Sizeof(id); 
@@ -1169,7 +1169,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0055 ()
 }
 
 // rule 56: expression <- KEYWORD_INT '(' expression:expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0056 ()
+Ast::Base * Parser::ReductionRuleHandler0056 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
@@ -1181,7 +1181,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0056 ()
 }
 
 // rule 57: expression <- KEYWORD_STRING '(' expression:expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0057 ()
+Ast::Base * Parser::ReductionRuleHandler0057 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
@@ -1193,7 +1193,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0057 ()
 }
 
 // rule 58: expression <- STRING_LENGTH '(' expression:expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0058 ()
+Ast::Base * Parser::ReductionRuleHandler0058 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
@@ -1205,10 +1205,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0058 ()
 }
 
 // rule 59: expression <- IS_DEFINED '(' ID:id ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0059 ()
+Ast::Base * Parser::ReductionRuleHandler0059 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 387 "barf_preprocessor_parser.trison"
  return new IsDefined(id, NULL); 
@@ -1217,10 +1217,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0059 ()
 }
 
 // rule 60: expression <- IS_DEFINED '(' ID:id '[' expression:element_index_expression ']' ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0060 ()
+Ast::Base * Parser::ReductionRuleHandler0060 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
     assert(4 < m_reduction_rule_token_count);
     Expression * element_index_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
 
@@ -1231,10 +1231,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0060 ()
 }
 
 // rule 61: expression <- ID:id    
-AstCommon::Ast * Parser::ReductionRuleHandler0061 ()
+Ast::Base * Parser::ReductionRuleHandler0061 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 393 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
@@ -1243,10 +1243,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0061 ()
 }
 
 // rule 62: expression <- ID:id '[' expression:element_index_expression ']'    
-AstCommon::Ast * Parser::ReductionRuleHandler0062 ()
+Ast::Base * Parser::ReductionRuleHandler0062 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
     Expression * element_index_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
@@ -1257,10 +1257,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0062 ()
 }
 
 // rule 63: expression <- ID:id '?'    
-AstCommon::Ast * Parser::ReductionRuleHandler0063 ()
+Ast::Base * Parser::ReductionRuleHandler0063 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 399 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
@@ -1269,10 +1269,10 @@ AstCommon::Ast * Parser::ReductionRuleHandler0063 ()
 }
 
 // rule 64: expression <- ID:id '[' expression:element_index_expression ']' '?'    
-AstCommon::Ast * Parser::ReductionRuleHandler0064 ()
+Ast::Base * Parser::ReductionRuleHandler0064 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    AstCommon::Id * id = Dsc< AstCommon::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
     Expression * element_index_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
@@ -1283,7 +1283,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0064 ()
 }
 
 // rule 65: expression <- expression:left '.' expression:right    %left %prec CONCATENATION
-AstCommon::Ast * Parser::ReductionRuleHandler0065 ()
+Ast::Base * Parser::ReductionRuleHandler0065 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1297,7 +1297,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0065 ()
 }
 
 // rule 66: expression <- expression:left '|' '|' expression:right     %prec LOGICAL_OR
-AstCommon::Ast * Parser::ReductionRuleHandler0066 ()
+Ast::Base * Parser::ReductionRuleHandler0066 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1311,7 +1311,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0066 ()
 }
 
 // rule 67: expression <- expression:left '&' '&' expression:right     %prec LOGICAL_AND
-AstCommon::Ast * Parser::ReductionRuleHandler0067 ()
+Ast::Base * Parser::ReductionRuleHandler0067 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1325,7 +1325,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0067 ()
 }
 
 // rule 68: expression <- expression:left '=' '=' expression:right     %prec EQUALITY
-AstCommon::Ast * Parser::ReductionRuleHandler0068 ()
+Ast::Base * Parser::ReductionRuleHandler0068 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1339,7 +1339,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0068 ()
 }
 
 // rule 69: expression <- expression:left '!' '=' expression:right     %prec EQUALITY
-AstCommon::Ast * Parser::ReductionRuleHandler0069 ()
+Ast::Base * Parser::ReductionRuleHandler0069 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1353,7 +1353,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0069 ()
 }
 
 // rule 70: expression <- expression:left '<' expression:right    %left %prec COMPARISON
-AstCommon::Ast * Parser::ReductionRuleHandler0070 ()
+Ast::Base * Parser::ReductionRuleHandler0070 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1367,7 +1367,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0070 ()
 }
 
 // rule 71: expression <- expression:left '<' '=' expression:right     %prec COMPARISON
-AstCommon::Ast * Parser::ReductionRuleHandler0071 ()
+Ast::Base * Parser::ReductionRuleHandler0071 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1381,7 +1381,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0071 ()
 }
 
 // rule 72: expression <- expression:left '>' expression:right    %left %prec COMPARISON
-AstCommon::Ast * Parser::ReductionRuleHandler0072 ()
+Ast::Base * Parser::ReductionRuleHandler0072 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1395,7 +1395,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0072 ()
 }
 
 // rule 73: expression <- expression:left '>' '=' expression:right     %prec COMPARISON
-AstCommon::Ast * Parser::ReductionRuleHandler0073 ()
+Ast::Base * Parser::ReductionRuleHandler0073 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1409,7 +1409,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0073 ()
 }
 
 // rule 74: expression <- expression:left '+' expression:right    %left %prec ADDITION
-AstCommon::Ast * Parser::ReductionRuleHandler0074 ()
+Ast::Base * Parser::ReductionRuleHandler0074 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1423,7 +1423,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0074 ()
 }
 
 // rule 75: expression <- expression:left '-' expression:right    %left %prec ADDITION
-AstCommon::Ast * Parser::ReductionRuleHandler0075 ()
+Ast::Base * Parser::ReductionRuleHandler0075 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1437,7 +1437,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0075 ()
 }
 
 // rule 76: expression <- expression:left '*' expression:right    %left %prec MULTIPLICATION
-AstCommon::Ast * Parser::ReductionRuleHandler0076 ()
+Ast::Base * Parser::ReductionRuleHandler0076 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1451,7 +1451,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0076 ()
 }
 
 // rule 77: expression <- expression:left '/' expression:right    %left %prec MULTIPLICATION
-AstCommon::Ast * Parser::ReductionRuleHandler0077 ()
+Ast::Base * Parser::ReductionRuleHandler0077 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1465,7 +1465,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0077 ()
 }
 
 // rule 78: expression <- expression:left '%' expression:right    %left %prec MULTIPLICATION
-AstCommon::Ast * Parser::ReductionRuleHandler0078 ()
+Ast::Base * Parser::ReductionRuleHandler0078 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Expression * left = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -1479,7 +1479,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0078 ()
 }
 
 // rule 79: expression <- '-' expression:expression     %prec UNARY
-AstCommon::Ast * Parser::ReductionRuleHandler0079 ()
+Ast::Base * Parser::ReductionRuleHandler0079 ()
 {
     assert(1 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
@@ -1491,7 +1491,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0079 ()
 }
 
 // rule 80: expression <- '!' expression:expression     %prec UNARY
-AstCommon::Ast * Parser::ReductionRuleHandler0080 ()
+Ast::Base * Parser::ReductionRuleHandler0080 ()
 {
     assert(1 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
@@ -1503,7 +1503,7 @@ AstCommon::Ast * Parser::ReductionRuleHandler0080 ()
 }
 
 // rule 81: expression <- '(' expression:expression ')'    
-AstCommon::Ast * Parser::ReductionRuleHandler0081 ()
+Ast::Base * Parser::ReductionRuleHandler0081 ()
 {
     assert(1 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);

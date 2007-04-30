@@ -13,7 +13,7 @@
 
 #include "barf_langspec.hpp"
 
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 
 namespace Barf {
 namespace LangSpec {
@@ -24,9 +24,9 @@ namespace LangSpec {
 // class hierarchy
 // ///////////////////////////////////////////////////////////////////////////
 
-AstCommon::Ast (abstract)
+Ast::Base (abstract)
     Specification
-    AstCommon::Directive
+    Ast::Directive
         AddDirective
         AddCodeSpec
     ParamSpec
@@ -39,9 +39,9 @@ AstCommon::Ast (abstract)
 
 Specification
     Id (%target_language)
-    AstCommon::CodeBlock (%run_before_code_generation)
-    AstCommon::DirectiveList
-        AstCommon::Directive[]
+    Ast::CodeBlock (%run_before_code_generation)
+    Ast::DirectiveList
+        Ast::Directive[]
 
 AddDirective
     std::string (directive id)
@@ -50,7 +50,7 @@ AddDirective
         Bound
 
 AddCodeSpec
-    AstCommon::String (filename)
+    Ast::String (filename)
 
 ParamType
     AstType (param type)
@@ -63,7 +63,7 @@ Bound
 
 enum
 {
-    AT_ADD_CODESPEC = AstCommon::AT_START_CUSTOM_TYPES_HERE_,
+    AT_ADD_CODESPEC = Ast::AT_START_CUSTOM_TYPES_HERE_,
     AT_ADD_CODESPEC_LIST,
     AT_ADD_DIRECTIVE,
     AT_ADD_DIRECTIVE_MAP,
@@ -76,14 +76,14 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-struct AddCodeSpec : public AstCommon::Directive
+struct AddCodeSpec : public Ast::Directive
 {
-    AstCommon::String const *const m_filename;
-    AstCommon::Id const *const m_filename_directive_id;
+    Ast::String const *const m_filename;
+    Ast::Id const *const m_filename_directive_id;
 
-    AddCodeSpec (AstCommon::String const *filename, AstCommon::Id const *filename_directive_id)
+    AddCodeSpec (Ast::String const *filename, Ast::Id const *filename_directive_id)
         :
-        AstCommon::Directive("%add_codespec", filename->GetFiLoc(), AT_ADD_CODESPEC),
+        Ast::Directive("%add_codespec", filename->GetFiLoc(), AT_ADD_CODESPEC),
         m_filename(filename),
         m_filename_directive_id(filename_directive_id)
     {
@@ -94,44 +94,44 @@ struct AddCodeSpec : public AstCommon::Directive
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class AddCodeSpec
 
-struct AddCodeSpecList : public AstCommon::AstList<AddCodeSpec>
+struct AddCodeSpecList : public Ast::AstList<AddCodeSpec>
 {
-    AddCodeSpecList () : AstCommon::AstList<AddCodeSpec>(AT_ADD_CODESPEC_LIST) { }
+    AddCodeSpecList () : Ast::AstList<AddCodeSpec>(AT_ADD_CODESPEC_LIST) { }
 }; // end of class AddCodeSpecList
 
-struct AddDirective : public AstCommon::Directive
+struct AddDirective : public Ast::Directive
 {
-    AstCommon::Id const *const m_directive_to_add_id;
+    Ast::Id const *const m_directive_to_add_id;
     AstType const m_param_type;
 
-    AddDirective (AstCommon::Id const *directive_to_add_id, AstType param_type, string const &directive_id)
+    AddDirective (Ast::Id const *directive_to_add_id, AstType param_type, string const &directive_id)
         :
-        AstCommon::Directive(directive_id, directive_to_add_id->GetFiLoc(), AT_ADD_DIRECTIVE),
+        Ast::Directive(directive_id, directive_to_add_id->GetFiLoc(), AT_ADD_DIRECTIVE),
         m_directive_to_add_id(directive_to_add_id),
         m_param_type(param_type)
     {
         assert(m_directive_to_add_id != NULL);
-        assert(m_param_type == AstCommon::AT_ID ||
-               m_param_type == AstCommon::AT_STRING ||
-               m_param_type == AstCommon::AT_DUMB_CODE_BLOCK ||
-               m_param_type == AstCommon::AT_STRICT_CODE_BLOCK ||
-               m_param_type == AstCommon::AT_NONE);
+        assert(m_param_type == Ast::AT_ID ||
+               m_param_type == Ast::AT_STRING ||
+               m_param_type == Ast::AT_DUMB_CODE_BLOCK ||
+               m_param_type == Ast::AT_STRICT_CODE_BLOCK ||
+               m_param_type == Ast::AT_NONE);
     }
 
     virtual bool GetIsRequired () const { return false; }
-    virtual AstCommon::TextBase const *GetDefaultValue () const { return NULL; }
+    virtual Ast::TextBase const *GetDefaultValue () const { return NULL; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class AddDirective
 
-struct AddDirectiveMap : public AstCommon::AstMap<AddDirective>
+struct AddDirectiveMap : public Ast::AstMap<AddDirective>
 {
-    AddDirectiveMap () : AstCommon::AstMap<AddDirective>(AT_ADD_DIRECTIVE_MAP) { }
+    AddDirectiveMap () : Ast::AstMap<AddDirective>(AT_ADD_DIRECTIVE_MAP) { }
 }; // end of class AddDirectiveMap
 
 struct AddRequiredDirective : public AddDirective
 {
-    AddRequiredDirective (AstCommon::Id *directive_to_add_id, AstType param_type)
+    AddRequiredDirective (Ast::Id *directive_to_add_id, AstType param_type)
         :
         AddDirective(directive_to_add_id, param_type, "%add_required_directive")
     { }
@@ -141,48 +141,48 @@ struct AddRequiredDirective : public AddDirective
 
 struct AddOptionalDirective : public AddDirective
 {
-    AstCommon::TextBase const *const m_default_value;
+    Ast::TextBase const *const m_default_value;
 
-    AddOptionalDirective (AstCommon::Id *directive_to_add_id, AstType param_type, AstCommon::TextBase const *default_value)
+    AddOptionalDirective (Ast::Id *directive_to_add_id, AstType param_type, Ast::TextBase const *default_value)
         :
         AddDirective(directive_to_add_id, param_type, "%add_optional_directive"),
         m_default_value(default_value)
     { }
 
-    virtual AstCommon::TextBase const *GetDefaultValue () const { return m_default_value; }
+    virtual Ast::TextBase const *GetDefaultValue () const { return m_default_value; }
 }; // end of class AddOptionalDirective
 
-struct ParamType : public AstCommon::Ast
+struct ParamType : public Ast::Base
 {
     AstType const m_param_type;
 
     ParamType (AstType param_type)
         :
-        AstCommon::Ast(FiLoc::ms_invalid, AT_PARAM_TYPE),
+        Ast::Base(FiLoc::ms_invalid, AT_PARAM_TYPE),
         m_param_type(param_type)
     {
-        assert(m_param_type == AstCommon::AT_ID ||
-               m_param_type == AstCommon::AT_STRING ||
-               m_param_type == AstCommon::AT_DUMB_CODE_BLOCK ||
-               m_param_type == AstCommon::AT_STRICT_CODE_BLOCK ||
-               m_param_type == AstCommon::AT_NONE);
+        assert(m_param_type == Ast::AT_ID ||
+               m_param_type == Ast::AT_STRING ||
+               m_param_type == Ast::AT_DUMB_CODE_BLOCK ||
+               m_param_type == Ast::AT_STRICT_CODE_BLOCK ||
+               m_param_type == Ast::AT_NONE);
     }
 
     static string const &GetParamTypeString (AstType ast_type);
 }; // end of class ParamType
 
-struct Specification : public AstCommon::Ast
+struct Specification : public Ast::Base
 {
-    AstCommon::Id const *const m_target_language_id;
+    Ast::Id const *const m_target_language_id;
     AddCodeSpecList const *const m_add_codespec_list;
     AddDirectiveMap const *const m_add_directive_map;
 
     Specification (
-        AstCommon::Id const *target_language_id,
+        Ast::Id const *target_language_id,
         AddCodeSpecList const *add_codespec_list,
         AddDirectiveMap const *add_directive_map)
         :
-        AstCommon::Ast(target_language_id->GetFiLoc(), AT_SPECIFICATION),
+        Ast::Base(target_language_id->GetFiLoc(), AT_SPECIFICATION),
         m_target_language_id(target_language_id),
         m_add_codespec_list(add_codespec_list),
         m_add_directive_map(add_directive_map)
@@ -193,15 +193,15 @@ struct Specification : public AstCommon::Ast
     }
 
     // this is the non-virtual, top-level Print method, not
-    // to be confused with AstCommon::Ast::Print.
+    // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class Specification
 
-struct SpecificationMap : public AstCommon::AstMap<Specification>
+struct SpecificationMap : public Ast::AstMap<Specification>
 {
-    SpecificationMap () : AstCommon::AstMap<Specification>(AT_SPECIFICATION_MAP) { }
+    SpecificationMap () : Ast::AstMap<Specification>(AT_SPECIFICATION_MAP) { }
 }; // end of class SpecificationMap
 
 } // end of namespace LangSpec

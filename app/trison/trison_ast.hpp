@@ -15,7 +15,7 @@
 
 #include <vector>
 
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 #include "barf_filoc.hpp"
 #include "barf_util.hpp"
 #include "trison_enums.hpp"
@@ -41,7 +41,7 @@ class TokenIdId;
 // class hierarchy
 // ///////////////////////////////////////////////////////////////////////////
 
-AstCommon::Ast (abstract)
+Ast::Base (abstract)
     Grammar
     DirectiveList (actually AstList<Directive>)
     ParserDirectiveSet
@@ -59,7 +59,7 @@ AstCommon::Ast (abstract)
     Rule
     RuleTokenList (actually AstList<RuleToken>)
     RuleToken
-    AstCommon::TextBase (abstract)
+    Ast::TextBase (abstract)
         TokenId (abstract)
             TokenIdId
             TokenIdChar
@@ -72,7 +72,7 @@ Grammar
     ParserDirectiveSet // options to customize the generated parser class
         ParserDirective[]
             ParserDirectiveType
-            AstCommon::TextBase // the directive's value (if any)
+            Ast::TextBase // the directive's value (if any)
     TokenDirectiveList // list of token declarations
         TokenDirective[]
             TokenIdList
@@ -83,22 +83,22 @@ Grammar
     StartDirective // stores the start nonterminal id
     NonterminalList // the list of other nonterminals (may be empty)
         Nonterminal[]
-            AstCommon::Id // the name of the nonterminal
-            AstCommon::String // the optional assigned variable type
+            Ast::Id // the name of the nonterminal
+            Ast::String // the optional assigned variable type
             RuleList // list of rules that the nonterminal can reduce with
                 Rule[]
                     TokenId // optional precedence token id
-                    AstCommon::CodeBlock // optional code for when the rule is reduced
+                    Ast::CodeBlock // optional code for when the rule is reduced
                     RuleTokenList // stores the rule tokens necessary to match
                         RuleToken[] // pairs a token/nonterminal id with a variable id
                             TokenId // the rule token id
-                            AstCommon::Id // optional id to assign to the rule token
+                            Ast::Id // optional id to assign to the rule token
 
 */
 
 enum
 {
-    AT_GRAMMAR = AstCommon::AT_START_CUSTOM_TYPES_HERE_,
+    AT_GRAMMAR = Ast::AT_START_CUSTOM_TYPES_HERE_,
     AT_DIRECTIVE_LIST,
     AT_PARSER_DIRECTIVE_SET,
     AT_TOKEN_DIRECTIVE,
@@ -126,50 +126,50 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-class TokenDirectiveList : public AstCommon::AstList<TokenDirective>
+class TokenDirectiveList : public Ast::AstList<TokenDirective>
 {
 public:
 
-    TokenDirectiveList () : AstCommon::AstList<TokenDirective>(AT_TOKEN_DIRECTIVE_LIST) { }
+    TokenDirectiveList () : Ast::AstList<TokenDirective>(AT_TOKEN_DIRECTIVE_LIST) { }
 }; // end of class TokenDirectiveList
 
-class TokenIdList : public AstCommon::AstList<TokenId>
+class TokenIdList : public Ast::AstList<TokenId>
 {
 public:
 
-    TokenIdList () : AstCommon::AstList<TokenId>(AT_TOKEN_ID_LIST) { }
+    TokenIdList () : Ast::AstList<TokenId>(AT_TOKEN_ID_LIST) { }
 }; // end of class TokenIdList
 
-class PrecedenceDirectiveList : public AstCommon::AstList<PrecedenceDirective>
+class PrecedenceDirectiveList : public Ast::AstList<PrecedenceDirective>
 {
 public:
 
-    PrecedenceDirectiveList () : AstCommon::AstList<PrecedenceDirective>(AT_PRECEDENCE_DIRECTIVE_LIST) { }
+    PrecedenceDirectiveList () : Ast::AstList<PrecedenceDirective>(AT_PRECEDENCE_DIRECTIVE_LIST) { }
 }; // end of class PrecedenceDirectiveList
 
-class NonterminalList : public AstCommon::AstList<Nonterminal>
+class NonterminalList : public Ast::AstList<Nonterminal>
 {
 public:
 
-    NonterminalList () : AstCommon::AstList<Nonterminal>(AT_NONTERMINAL_LIST) { }
+    NonterminalList () : Ast::AstList<Nonterminal>(AT_NONTERMINAL_LIST) { }
 }; // end of class NonterminalList
 
-class RuleList : public AstCommon::AstList<Rule>
+class RuleList : public Ast::AstList<Rule>
 {
 public:
 
-    RuleList () : AstCommon::AstList<Rule>(AT_RULE_LIST) { }
+    RuleList () : Ast::AstList<Rule>(AT_RULE_LIST) { }
 }; // end of class RuleList
 
-class RuleTokenList : public AstCommon::AstList<RuleToken>
+class RuleTokenList : public Ast::AstList<RuleToken>
 {
 public:
 
-    RuleTokenList () : AstCommon::AstList<RuleToken>(AT_RULE_TOKEN_LIST) { }
-    RuleTokenList (FiLoc const &filoc) : AstCommon::AstList<RuleToken>(filoc, AT_RULE_TOKEN_LIST) { }
+    RuleTokenList () : Ast::AstList<RuleToken>(AT_RULE_TOKEN_LIST) { }
+    RuleTokenList (FiLoc const &filoc) : Ast::AstList<RuleToken>(filoc, AT_RULE_TOKEN_LIST) { }
 }; // end of class RuleTokenList
 
-class TokenId : public AstCommon::TextBase
+class TokenId : public Ast::TextBase
 {
 public:
 
@@ -177,14 +177,14 @@ public:
         FiLoc const &filoc,
         AstType ast_type)
         :
-        AstCommon::TextBase(filoc, ast_type)
+        Ast::TextBase(filoc, ast_type)
     { }
     TokenId (
         string const &id_text,
         FiLoc const &filoc,
         AstType ast_type)
         :
-        AstCommon::TextBase(id_text, filoc, ast_type)
+        Ast::TextBase(id_text, filoc, ast_type)
     { }
     virtual ~TokenId () = 0;
 }; // end of class TokenId
@@ -230,15 +230,15 @@ private:
     char const m_id_char;
 }; // end of class TokenIdChar
 
-class RuleToken : public AstCommon::Ast
+class RuleToken : public Ast::Base
 {
 public:
 
     RuleToken (
         TokenId const *token_id,
-        AstCommon::Id const *assigned_id)
+        Ast::Id const *assigned_id)
         :
-        AstCommon::Ast(token_id->GetFiLoc(), AT_RULE_TOKEN),
+        Ast::Base(token_id->GetFiLoc(), AT_RULE_TOKEN),
         m_token_id(token_id),
         m_assigned_id(assigned_id)
     {
@@ -252,7 +252,7 @@ public:
     }
 
     inline TokenId const *GetTokenId () const { return m_token_id; }
-    inline AstCommon::Id const *GetAssignedId () const { return m_assigned_id; }
+    inline Ast::Id const *GetAssignedId () const { return m_assigned_id; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
     void PrettyPrint (ostream &stream) const;
@@ -261,19 +261,19 @@ public:
 private:
 
     TokenId const *const m_token_id;
-    AstCommon::Id const *const m_assigned_id;
+    Ast::Id const *const m_assigned_id;
 }; // end of class RuleToken
 
-class Rule : public AstCommon::Ast
+class Rule : public Ast::Base
 {
 public:
 
     Rule (
         RuleTokenList const *rule_token_list,
         Associativity associativity,
-        AstCommon::Id const *precedence_directive_id)
+        Ast::Id const *precedence_directive_id)
         :
-        AstCommon::Ast(rule_token_list->GetFiLoc(), AT_RULE),
+        Ast::Base(rule_token_list->GetFiLoc(), AT_RULE),
         m_rule_token_list(rule_token_list),
         m_associativity(associativity),
         m_precedence_directive_id(precedence_directive_id)
@@ -292,8 +292,8 @@ public:
     }
 
     inline Associativity GetAssociativity () const { return m_associativity; }
-    inline AstCommon::Id const *GetPrecedenceDirectiveId () const { return m_precedence_directive_id; }
-    inline AstCommon::CodeBlock const *GetCodeBlock () const { return m_code_block; }
+    inline Ast::Id const *GetPrecedenceDirectiveId () const { return m_precedence_directive_id; }
+    inline Ast::CodeBlock const *GetCodeBlock () const { return m_code_block; }
     inline Nonterminal *GetOwnerNonterminal () const
     {
         assert(m_owner_nonterminal != NULL);
@@ -317,7 +317,7 @@ public:
     }
     bool GetIsABinaryOperation () const;
 
-    inline void SetCodeBlock (AstCommon::CodeBlock const *code_block) { m_code_block = code_block; }
+    inline void SetCodeBlock (Ast::CodeBlock const *code_block) { m_code_block = code_block; }
     inline void SetOwnerNonterminal (Nonterminal *owner_nonterminal)
     {
         assert(owner_nonterminal != NULL);
@@ -335,21 +335,21 @@ private:
 
     RuleTokenList const *const m_rule_token_list;
     Associativity const m_associativity;
-    AstCommon::Id const *const m_precedence_directive_id;
-    AstCommon::CodeBlock const *m_code_block;
+    Ast::Id const *const m_precedence_directive_id;
+    Ast::CodeBlock const *m_code_block;
     Nonterminal *m_owner_nonterminal;
     Uint32 m_index;
 }; // end of class Rule
 
-class Nonterminal : public AstCommon::Ast
+class Nonterminal : public Ast::Base
 {
 public:
 
     Nonterminal (
-        AstCommon::Id const *id,
-        AstCommon::String const *assigned_variable_type)
+        Ast::Id const *id,
+        Ast::String const *assigned_variable_type)
         :
-        AstCommon::Ast(id->GetFiLoc(), AT_NONTERMINAL),
+        Ast::Base(id->GetFiLoc(), AT_NONTERMINAL),
         m_id(id),
         m_assigned_variable_type(assigned_variable_type)
     {
@@ -365,8 +365,8 @@ public:
     }
 
     string GetImplementationFileId () const;
-    inline AstCommon::Id const *GetId () const { return m_id; }
-    inline AstCommon::String const *GetAssignedVariableType () const { return m_assigned_variable_type; }
+    inline Ast::Id const *GetId () const { return m_id; }
+    inline Ast::String const *GetAssignedVariableType () const { return m_assigned_variable_type; }
     inline RuleList::const_iterator GetRuleListBegin () const { return m_rule_list->begin(); }
     inline RuleList::const_iterator GetRuleListEnd () const { return m_rule_list->end(); }
 
@@ -389,18 +389,18 @@ public:
 
 private:
 
-    AstCommon::Id const *const m_id;
-    AstCommon::String const *const m_assigned_variable_type;
+    Ast::Id const *const m_id;
+    Ast::String const *const m_assigned_variable_type;
     RuleList const *m_rule_list;
 }; // end of class Nonterminal
 
-class PrecedenceDirective : public AstCommon::Directive
+class PrecedenceDirective : public Ast::Directive
 {
 public:
 
-    PrecedenceDirective (AstCommon::Id const *id)
+    PrecedenceDirective (Ast::Id const *id)
         :
-        AstCommon::Directive("%prec", id->GetFiLoc(), AT_PRECEDENCE_DIRECTIVE),
+        Ast::Directive("%prec", id->GetFiLoc(), AT_PRECEDENCE_DIRECTIVE),
         m_id(id),
         m_precedence_level(0)
     {
@@ -411,7 +411,7 @@ public:
         delete m_id;
     }
 
-    inline AstCommon::Id const *GetId () const { return m_id; }
+    inline Ast::Id const *GetId () const { return m_id; }
     inline Uint32 GetPrecedenceLevel () const { return m_precedence_level; }
 
     inline void SetPrecedenceLevel (Uint32 precedence_level)
@@ -423,19 +423,19 @@ public:
 
 private:
 
-    AstCommon::Id const *const m_id;
+    Ast::Id const *const m_id;
     Uint32 m_precedence_level;
 }; // end of class PrecedenceDirective
 
-class TokenDirective : public AstCommon::Directive
+class TokenDirective : public Ast::Directive
 {
 public:
 
     TokenDirective (
         TokenIdList const *token_id_list,
-        AstCommon::String const *assigned_type)
+        Ast::String const *assigned_type)
         :
-        AstCommon::Directive("%token", token_id_list->GetFiLoc(), AT_TOKEN_DIRECTIVE),
+        Ast::Directive("%token", token_id_list->GetFiLoc(), AT_TOKEN_DIRECTIVE),
         m_token_id_list(token_id_list),
         m_assigned_type(assigned_type)
     {
@@ -450,17 +450,17 @@ public:
 
     inline TokenIdList::const_iterator GetTokenIdBegin () const { return m_token_id_list->begin(); }
     inline TokenIdList::const_iterator GetTokenIdEnd () const { return m_token_id_list->end(); }
-    inline AstCommon::String const *GetAssignedType () const { return m_assigned_type; }
+    inline Ast::String const *GetAssignedType () const { return m_assigned_type; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
     TokenIdList const *const m_token_id_list;
-    AstCommon::String const *const m_assigned_type;
+    Ast::String const *const m_assigned_type;
 }; // end of class TokenDirective
 
-class ParserDirective : public AstCommon::Directive
+class ParserDirective : public Ast::Directive
 {
 public:
 
@@ -468,7 +468,7 @@ public:
         string const &directive_text,
         FiLoc const &filoc)
         :
-        AstCommon::Directive(directive_text, filoc, AT_PARSER_DIRECTIVE),
+        Ast::Directive(directive_text, filoc, AT_PARSER_DIRECTIVE),
         m_parser_directive_type(GetParserDirectiveType(directive_text))
     {
         assert(m_parser_directive_type < PDT_COUNT);
@@ -487,9 +487,9 @@ public:
         ParserDirectiveType parser_directive_type);
 
     inline ParserDirectiveType GetParserDirectiveType () const { return m_parser_directive_type; }
-    inline AstCommon::TextBase const *GetValue () const { return m_value; }
+    inline Ast::TextBase const *GetValue () const { return m_value; }
 
-    inline void SetValue (AstCommon::TextBase const *value)
+    inline void SetValue (Ast::TextBase const *value)
     {
         assert(value != NULL);
         assert(m_value == NULL);
@@ -501,16 +501,16 @@ public:
 private:
 
     ParserDirectiveType const m_parser_directive_type;
-    AstCommon::TextBase const *m_value;
+    Ast::TextBase const *m_value;
 }; // end of class ParserDirective
 
-class StartDirective : public AstCommon::Directive
+class StartDirective : public Ast::Directive
 {
 public:
 
-    StartDirective (AstCommon::Id const *start_nonterminal_id)
+    StartDirective (Ast::Id const *start_nonterminal_id)
         :
-        AstCommon::Directive("%start", start_nonterminal_id->GetFiLoc(), AT_START_DIRECTIVE),
+        Ast::Directive("%start", start_nonterminal_id->GetFiLoc(), AT_START_DIRECTIVE),
         m_start_nonterminal_id(start_nonterminal_id)
     {
         assert(m_start_nonterminal_id != NULL);
@@ -520,22 +520,22 @@ public:
         delete m_start_nonterminal_id;
     }
 
-    inline AstCommon::Id const *GetStartNonterminalId () const { return m_start_nonterminal_id; }
+    inline Ast::Id const *GetStartNonterminalId () const { return m_start_nonterminal_id; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    AstCommon::Id const *const m_start_nonterminal_id;
+    Ast::Id const *const m_start_nonterminal_id;
 }; // end of class StartDirective
 
-class ParserDirectiveSet : public AstCommon::Ast
+class ParserDirectiveSet : public Ast::Base
 {
 public:
 
     ParserDirectiveSet ()
         :
-        AstCommon::Ast(FiLoc::ms_invalid, AT_PARSER_DIRECTIVE_SET)
+        Ast::Base(FiLoc::ms_invalid, AT_PARSER_DIRECTIVE_SET)
     {
         for (Uint32 i = 0; i < PDT_COUNT; ++i)
             m_parser_directive[i] = NULL;
@@ -580,12 +580,12 @@ private:
     ParserDirective const *m_parser_directive[PDT_COUNT];
 }; // end of class ParserDirectiveSet
 
-class Grammar : public AstCommon::Ast
+class Grammar : public Ast::Base
 {
 public:
 
     Grammar (
-        AstCommon::DirectiveList *directive_list,
+        Ast::DirectiveList *directive_list,
         FiLoc const &end_preamble_filoc,
         NonterminalList *nonterminal_list);
     virtual ~Grammar ();
@@ -597,7 +597,7 @@ public:
     inline NonterminalList *GetNonterminalList () const { return m_nonterminal_list; }
 
     // this is the non-virtual, top-level Print method, not
-    // to be confused with AstCommon::Ast::Print.
+    // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;

@@ -27,17 +27,16 @@
   or do comprehensive deleting of stuff (which would probably set a better
   example for people who read the source code of the parsers/scanners).
 - get rid of AST hierarchy overviews once doxygen docs are to some decent state
-- use AstCommon::Directive::GetDirectiveString in error messages instead of
+- use Ast::Directive::GetDirectiveString in error messages instead of
   creating the error messages by hand -- make all directives derive from
-  AstCommon::Directive
+  Ast::Directive
 - add "execution debug spew" mode for each program, which says what it's doing,
   e.g. opening files, doing type checking, env vars its using, etc
 - file locations should be "2d range" -- a starting line/column and an ending
   line/column.  nonterminal expressions can then be the union of the file
   locations of their component parts.  this technique will be useful later in
   compiler design for debugging info.
-- coolify the compile time assert
-- in AST printing (e.g. -Vprint-ast, use 2/4 spaces instead of tabs)
+- add metaprogramming stuff for integer types and compile time asserts
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -58,13 +57,12 @@
 // core
 // ///////////////////////////////////////////////////////////////////////////
 
-- rename AstCommon::Ast to Ast::Base
 - typedef Graph::Node::Index as a struct or an enum with a value
   UINT32_UPPER_BOUND (to force it to be unsigned) and use that everywhere for
   node index values.
 - in util's GetEscapedString, make it read overflowed hex chars
 - move trison's conflict messages into barf_message.h/cpp
-- add "-i" "--print-include-data-path" option to OptionsBase
+- add "-i" "--print-include-search-path" option to OptionsBase
 - make a GraphNodeIndex vector type in barf_graph.h (replacing the ad-hoc
   vector<Uint32> used all over the place)
 
@@ -158,7 +156,7 @@
 - get rid of STL usage in C++ codespecs (separate target)
 - add option which prints the targets available in the current search path
 - add codespec macro of the regex for each rule
-- get rid of StartDirective (just use an AstCommon::Identifier)
+- get rid of StartDirective (just use an Ast::Identifier)
 - use smallest integer type to store state and transition indices, etc.
 - see if the state machine stuff (in the generated scanner) can go in a
   base class, using private members, so that the user can't screw things up

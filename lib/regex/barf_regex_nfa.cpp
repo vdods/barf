@@ -98,7 +98,7 @@ void GenerateNfa (Branch const &branch, Graph &graph, Uint32 start_index, Uint32
     // normal iteration for everything else
     else
     {
-        AstCommon::AstList<Piece>::const_iterator it;
+        Ast::AstList<Piece>::const_iterator it;
         Uint32 local_start_index;
         Uint32 local_end_index;
         for (it = branch.begin(),
@@ -130,7 +130,7 @@ void GenerateNfa (RegularExpression const &regular_expression, Graph &graph, Uin
         Uint32 branching_state_index = graph.AddNode(new NodeData(NOT_START_NODE, NOT_ACCEPT_NODE));
         graph.AddTransition(start_index, EpsilonTransition(branching_state_index));
 
-        for (AstCommon::List<Branch>::const_iterator it = regular_expression.begin(),
+        for (Ast::List<Branch>::const_iterator it = regular_expression.begin(),
                                                      it_end = regular_expression.end();
              it != it_end;
              ++it)

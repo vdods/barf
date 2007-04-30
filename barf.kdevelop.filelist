@@ -96,8 +96,8 @@ lib/commonlang/barf_commonlang_scanner.hpp
 lib/commonlang/barf_commonlang_scanner.reflex
 lib/core/barf.cpp
 lib/core/barf.hpp
-lib/core/barf_astcommon.cpp
-lib/core/barf_astcommon.hpp
+lib/core/barf_ast.cpp
+lib/core/barf_ast.hpp
 lib/core/barf_commandlineparser.cpp
 lib/core/barf_commandlineparser.hpp
 lib/core/barf_compiletimeasserts.cpp

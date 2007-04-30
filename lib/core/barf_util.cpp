@@ -101,7 +101,7 @@ string GetHexCharLiteral (Uint8 const c, bool with_quotes)
 
 ostream &operator << (ostream &stream, Tabs const &tabs)
 {
-    string tab_string(tabs.m_count, '\t');
+    string tab_string(2*tabs.m_count, ' ');
     stream << tab_string;
     return stream;
 }

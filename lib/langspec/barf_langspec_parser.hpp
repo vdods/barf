@@ -13,11 +13,11 @@
 #include "barf_commonlang_scanner.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 
 namespace LangSpec {
 
@@ -79,7 +79,7 @@ public:
     Parser ();
     ~Parser ();
 
-    inline AstCommon::Ast * const &GetAcceptedToken () const { return m_reduction_token; }
+    inline Ast::Base * const &GetAcceptedToken () const { return m_reduction_token; }
     inline void ClearAcceptedToken () { m_reduction_token = NULL; }
 
     inline unsigned int GetDebugSpewLevel () const { return m_debug_spew_level; }
@@ -139,7 +139,7 @@ private:
 
     struct ReductionRule
     {
-        typedef AstCommon::Ast * (Parser::*ReductionRuleHandler)();
+        typedef Ast::Base * (Parser::*ReductionRuleHandler)();
 
         Token::Type m_non_terminal_to_reduce_to;
         unsigned int m_number_of_tokens_to_reduce_by;
@@ -187,7 +187,7 @@ private:
         GetNewLookaheadToken();
         return m_lookahead_token_type;
     }
-    inline AstCommon::Ast * const &GetLookaheadToken ()
+    inline Ast::Base * const &GetLookaheadToken ()
     {
         GetNewLookaheadToken();
         return m_lookahead_token;
@@ -205,11 +205,11 @@ private:
     void PrintTokenStack () const;
     void PrintStateTransition (unsigned int state_transition_number) const;
     void ScanANewLookaheadToken ();
-    void ThrowAwayToken (AstCommon::Ast * token);
+    void ThrowAwayToken (Ast::Base * token);
     void ThrowAwayTokenStack ();
 
     typedef std::vector<StateNumber> StateStack;
-    typedef std::vector< AstCommon::Ast * > TokenStack;
+    typedef std::vector< Ast::Base * > TokenStack;
 
     unsigned int m_debug_spew_level;
 
@@ -217,7 +217,7 @@ private:
     TokenStack m_token_stack;
 
     Token::Type m_lookahead_token_type;
-    AstCommon::Ast * m_lookahead_token;
+    Ast::Base * m_lookahead_token;
     bool m_is_new_lookahead_token_required;
 
     Token::Type m_saved_lookahead_token_type;
@@ -227,7 +227,7 @@ private:
     bool m_is_returning_with_non_terminal;
     Token::Type m_returning_with_this_non_terminal;
 
-    AstCommon::Ast * m_reduction_token;
+    Ast::Base * m_reduction_token;
     unsigned int m_reduction_rule_token_count;
 
     static State const ms_state[];
@@ -237,29 +237,29 @@ private:
     static StateTransition const ms_state_transition[];
     static unsigned int const ms_state_transition_count;
 
-    AstCommon::Ast * ReductionRuleHandler0000 ();
-    AstCommon::Ast * ReductionRuleHandler0001 ();
-    AstCommon::Ast * ReductionRuleHandler0002 ();
-    AstCommon::Ast * ReductionRuleHandler0003 ();
-    AstCommon::Ast * ReductionRuleHandler0004 ();
-    AstCommon::Ast * ReductionRuleHandler0005 ();
-    AstCommon::Ast * ReductionRuleHandler0006 ();
-    AstCommon::Ast * ReductionRuleHandler0007 ();
-    AstCommon::Ast * ReductionRuleHandler0008 ();
-    AstCommon::Ast * ReductionRuleHandler0009 ();
-    AstCommon::Ast * ReductionRuleHandler0010 ();
-    AstCommon::Ast * ReductionRuleHandler0011 ();
-    AstCommon::Ast * ReductionRuleHandler0012 ();
-    AstCommon::Ast * ReductionRuleHandler0013 ();
-    AstCommon::Ast * ReductionRuleHandler0014 ();
-    AstCommon::Ast * ReductionRuleHandler0015 ();
-    AstCommon::Ast * ReductionRuleHandler0016 ();
-    AstCommon::Ast * ReductionRuleHandler0017 ();
-    AstCommon::Ast * ReductionRuleHandler0018 ();
-    AstCommon::Ast * ReductionRuleHandler0019 ();
-    AstCommon::Ast * ReductionRuleHandler0020 ();
-    AstCommon::Ast * ReductionRuleHandler0021 ();
-    AstCommon::Ast * ReductionRuleHandler0022 ();
+    Ast::Base * ReductionRuleHandler0000 ();
+    Ast::Base * ReductionRuleHandler0001 ();
+    Ast::Base * ReductionRuleHandler0002 ();
+    Ast::Base * ReductionRuleHandler0003 ();
+    Ast::Base * ReductionRuleHandler0004 ();
+    Ast::Base * ReductionRuleHandler0005 ();
+    Ast::Base * ReductionRuleHandler0006 ();
+    Ast::Base * ReductionRuleHandler0007 ();
+    Ast::Base * ReductionRuleHandler0008 ();
+    Ast::Base * ReductionRuleHandler0009 ();
+    Ast::Base * ReductionRuleHandler0010 ();
+    Ast::Base * ReductionRuleHandler0011 ();
+    Ast::Base * ReductionRuleHandler0012 ();
+    Ast::Base * ReductionRuleHandler0013 ();
+    Ast::Base * ReductionRuleHandler0014 ();
+    Ast::Base * ReductionRuleHandler0015 ();
+    Ast::Base * ReductionRuleHandler0016 ();
+    Ast::Base * ReductionRuleHandler0017 ();
+    Ast::Base * ReductionRuleHandler0018 ();
+    Ast::Base * ReductionRuleHandler0019 ();
+    Ast::Base * ReductionRuleHandler0020 ();
+    Ast::Base * ReductionRuleHandler0021 ();
+    Ast::Base * ReductionRuleHandler0022 ();
 
 }; // end of class Parser
 

@@ -35,7 +35,7 @@ string const &GetAstTypeString (AstType ast_type)
 
 void StartDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Directive::Print(stream, Stringify, indent_level);
+    Ast::Directive::Print(stream, Stringify, indent_level);
     m_start_state_id->Print(stream, Stringify, indent_level+1);
 }
 

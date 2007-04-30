@@ -31,7 +31,7 @@ string const &GetDereferenceTypeString (DereferenceType dereference_type)
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-AstCommon::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AT_COUNT-Ast::AT_START_CUSTOM_TYPES_HERE_] =
     {
         "AT_BODY",
         "AT_BODY_LIST",
@@ -58,10 +58,10 @@ string const &GetAstTypeString (AstType ast_type)
     };
 
     assert(ast_type < AT_COUNT);
-    if (ast_type < AstCommon::AT_START_CUSTOM_TYPES_HERE_)
-        return AstCommon::GetAstTypeString(ast_type);
+    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+        return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-AstCommon::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
 }
 
 // ///////////////////////////////////////////////////////////////////////////

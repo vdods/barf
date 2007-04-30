@@ -23,7 +23,7 @@ namespace Preprocessor {
 
 class Body;
 
-// NOTE: Symbol and SymbolTable are not allowed to delete Ast pointers.
+// NOTE: Symbol and SymbolTable are not allowed to delete Base pointers.
 
 // ///////////////////////////////////////////////////////////////////////////
 // Symbol

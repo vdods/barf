@@ -19,11 +19,11 @@
 #include "barf_commonlang_scanner.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 
 namespace LangSpec {
 
@@ -53,7 +53,7 @@ private:
 %}
 
 %parser_implementation_file_top%{
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 #include "barf_langspec_ast.hpp"
 
 namespace Barf {
@@ -138,25 +138,25 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Barf
 %}
 
-%parser_base_assigned_type "AstCommon::Ast *"
+%parser_base_assigned_type "Ast::Base *"
 %parser_base_assigned_type_sentinel "NULL"
 %parser_custom_cast "Dsc"
 
 %token BAD_TOKEN
-%token DIRECTIVE_ADD_CODESPEC %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_ADD_OPTIONAL_DIRECTIVE %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_ADD_REQUIRED_DIRECTIVE %type "AstCommon::ThrowAway *"
-%token DIRECTIVE_DEFAULT %type "AstCommon::ThrowAway *"
+%token DIRECTIVE_ADD_CODESPEC %type "Ast::ThrowAway *"
+%token DIRECTIVE_ADD_OPTIONAL_DIRECTIVE %type "Ast::ThrowAway *"
+%token DIRECTIVE_ADD_REQUIRED_DIRECTIVE %type "Ast::ThrowAway *"
+%token DIRECTIVE_DEFAULT %type "Ast::ThrowAway *"
 %token DIRECTIVE_DUMB_CODE_BLOCK
 %token DIRECTIVE_ID
 %token DIRECTIVE_STRICT_CODE_BLOCK
 %token DIRECTIVE_STRING
-%token DIRECTIVE_TARGET_LANGUAGE %type "AstCommon::ThrowAway *"
-%token DUMB_CODE_BLOCK %type "AstCommon::DumbCodeBlock *"
-%token ID %type "AstCommon::Id *"
+%token DIRECTIVE_TARGET_LANGUAGE %type "Ast::ThrowAway *"
+%token DUMB_CODE_BLOCK %type "Ast::DumbCodeBlock *"
+%token ID %type "Ast::Id *"
 %token NEWLINE
-%token STRICT_CODE_BLOCK %type "AstCommon::StrictCodeBlock *"
-%token STRING_LITERAL %type "AstCommon::String *"
+%token STRICT_CODE_BLOCK %type "Ast::StrictCodeBlock *"
+%token STRING_LITERAL %type "Ast::String *"
 
 %start root
 
@@ -185,7 +185,7 @@ root %type "Specification *"
 // target language rules
 // ///////////////////////////////////////////////////////////////////////////
 
-target_language %type "AstCommon::Id *"
+target_language %type "Ast::Id *"
 :
     DIRECTIVE_TARGET_LANGUAGE:throwaway ID:language_id at_least_one_newline
     {
@@ -216,7 +216,7 @@ add_codespec
         AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_id->GetText());
         if (add_directive == NULL)
             EmitError(throwaway->GetFiLoc(), "undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive");
-        if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != AstCommon::AT_STRING)
+        if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != Ast::AT_STRING)
             EmitError(throwaway->GetFiLoc(), "directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
         m_add_codespec_list->Append(new AddCodeSpec(filename, filename_directive_id));
         delete throwaway;
@@ -251,8 +251,8 @@ add_directive %type "AddDirective *"
             EmitError(
                 throwaway1->GetFiLoc(),
                 "type mismatch for default value for directive " + directive->GetDirectiveString() +
-                "; was expecting type " + AstCommon::TextBase::GetDirectiveTypeString(param_type->m_param_type) +
-                " but got type " + AstCommon::TextBase::GetDirectiveTypeString(default_value->GetAstType()));
+                "; was expecting type " + Ast::TextBase::GetDirectiveTypeString(param_type->m_param_type) +
+                " but got type " + Ast::TextBase::GetDirectiveTypeString(default_value->GetAstType()));
         delete throwaway1;
         delete param_type;
         delete throwaway2;
@@ -275,35 +275,35 @@ param_spec %type "ParamType *"
 :
     // empty reduction rule
     {
-        return new ParamType(AstCommon::AT_NONE);
+        return new ParamType(Ast::AT_NONE);
     }
 |
     DIRECTIVE_ID:throwaway
     {
         delete throwaway;
-        return new ParamType(AstCommon::AT_ID);
+        return new ParamType(Ast::AT_ID);
     }
 |
     DIRECTIVE_STRING:throwaway
     {
         delete throwaway;
-        return new ParamType(AstCommon::AT_STRING);
+        return new ParamType(Ast::AT_STRING);
     }
 |
     DIRECTIVE_DUMB_CODE_BLOCK:throwaway
     {
         delete throwaway;
-        return new ParamType(AstCommon::AT_DUMB_CODE_BLOCK);
+        return new ParamType(Ast::AT_DUMB_CODE_BLOCK);
     }
 |
     DIRECTIVE_STRICT_CODE_BLOCK:throwaway
     {
         delete throwaway;
-        return new ParamType(AstCommon::AT_STRICT_CODE_BLOCK);
+        return new ParamType(Ast::AT_STRICT_CODE_BLOCK);
     }
 ;
 
-default_value %type "AstCommon::TextBase *"
+default_value %type "Ast::TextBase *"
 :
     ID:value        { return value; }
 |   STRING_LITERAL:value    { return value; }

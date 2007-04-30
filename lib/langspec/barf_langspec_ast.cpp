@@ -17,7 +17,7 @@ namespace LangSpec {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-AstCommon::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AT_COUNT-Ast::AT_START_CUSTOM_TYPES_HERE_] =
     {
         "AT_ADD_CODESPEC",
         "AT_ADD_CODESPEC_LIST",
@@ -29,10 +29,10 @@ string const &GetAstTypeString (AstType ast_type)
     };
 
     assert(ast_type < AT_COUNT);
-    if (ast_type < AstCommon::AT_START_CUSTOM_TYPES_HERE_)
-        return AstCommon::GetAstTypeString(ast_type);
+    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+        return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-AstCommon::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
 }
 
 void Specification::Print (ostream &stream, Uint32 indent_level) const
@@ -42,7 +42,7 @@ void Specification::Print (ostream &stream, Uint32 indent_level) const
 
 void Specification::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "target language: " << m_target_language_id->GetText() << endl;
     m_add_directive_map->Print(stream, Stringify, indent_level+1);
     m_add_codespec_list->Print(stream, Stringify, indent_level+1);
@@ -50,7 +50,7 @@ void Specification::Print (ostream &stream, StringifyAstType Stringify, Uint32 i
 
 void AddDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << (GetIsRequired() ? "required" : "optional") << endl;
     m_directive_to_add_id->Print(stream, Stringify, indent_level+1);
     stream << Tabs(indent_level+1) << ParamType::GetParamTypeString(m_param_type) << endl;
@@ -58,7 +58,7 @@ void AddDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 in
 
 void AddCodeSpec::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     m_filename->Print(stream, Stringify, indent_level+1);
     m_filename_directive_id->Print(stream, Stringify, indent_level+1);
 }
@@ -72,10 +72,10 @@ string const &ParamType::GetParamTypeString (AstType ast_type)
 
     switch (ast_type)
     {
-        case AstCommon::AT_ID:        return s_id;
-        case AstCommon::AT_STRING:            return s_string;
-        case AstCommon::AT_DUMB_CODE_BLOCK:   return s_dumb_code_block;
-        case AstCommon::AT_STRICT_CODE_BLOCK: return s_strict_code_block;
+        case Ast::AT_ID:        return s_id;
+        case Ast::AT_STRING:            return s_string;
+        case Ast::AT_DUMB_CODE_BLOCK:   return s_dumb_code_block;
+        case Ast::AT_STRICT_CODE_BLOCK: return s_strict_code_block;
         default:                              return gs_empty_string;
     }
 }

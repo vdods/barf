@@ -37,7 +37,7 @@ void Rule::PopulateAcceptHandlerCodeArraySymbol (
     assert(accept_handler_code_symbol != NULL);
     CommonLang::RuleHandler const *rule_handler = m_rule_handler_map->GetElement(target_language_id);
     assert(rule_handler != NULL);
-    AstCommon::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
+    Ast::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
     assert(rule_handler_code_block != NULL);
     accept_handler_code_symbol->AppendArrayElement(
         new Preprocessor::Body(

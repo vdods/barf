@@ -11,11 +11,11 @@
 #include "barf_preprocessor.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 
 namespace Preprocessor {
 
@@ -104,7 +104,7 @@ public:
     Parser ();
     ~Parser ();
 
-    inline AstCommon::Ast * const &GetAcceptedToken () const { return m_reduction_token; }
+    inline Ast::Base * const &GetAcceptedToken () const { return m_reduction_token; }
     inline void ClearAcceptedToken () { m_reduction_token = NULL; }
 
     inline unsigned int GetDebugSpewLevel () const { return m_debug_spew_level; }
@@ -162,7 +162,7 @@ private:
 
     struct ReductionRule
     {
-        typedef AstCommon::Ast * (Parser::*ReductionRuleHandler)();
+        typedef Ast::Base * (Parser::*ReductionRuleHandler)();
 
         Token::Type m_non_terminal_to_reduce_to;
         unsigned int m_number_of_tokens_to_reduce_by;
@@ -210,7 +210,7 @@ private:
         GetNewLookaheadToken();
         return m_lookahead_token_type;
     }
-    inline AstCommon::Ast * const &GetLookaheadToken ()
+    inline Ast::Base * const &GetLookaheadToken ()
     {
         GetNewLookaheadToken();
         return m_lookahead_token;
@@ -228,11 +228,11 @@ private:
     void PrintTokenStack () const;
     void PrintStateTransition (unsigned int state_transition_number) const;
     void ScanANewLookaheadToken ();
-    void ThrowAwayToken (AstCommon::Ast * token);
+    void ThrowAwayToken (Ast::Base * token);
     void ThrowAwayTokenStack ();
 
     typedef std::vector<StateNumber> StateStack;
-    typedef std::vector< AstCommon::Ast * > TokenStack;
+    typedef std::vector< Ast::Base * > TokenStack;
 
     unsigned int m_debug_spew_level;
 
@@ -240,7 +240,7 @@ private:
     TokenStack m_token_stack;
 
     Token::Type m_lookahead_token_type;
-    AstCommon::Ast * m_lookahead_token;
+    Ast::Base * m_lookahead_token;
     bool m_is_new_lookahead_token_required;
 
     Token::Type m_saved_lookahead_token_type;
@@ -250,7 +250,7 @@ private:
     bool m_is_returning_with_non_terminal;
     Token::Type m_returning_with_this_non_terminal;
 
-    AstCommon::Ast * m_reduction_token;
+    Ast::Base * m_reduction_token;
     unsigned int m_reduction_rule_token_count;
 
     static State const ms_state[];
@@ -260,88 +260,88 @@ private:
     static StateTransition const ms_state_transition[];
     static unsigned int const ms_state_transition_count;
 
-    AstCommon::Ast * ReductionRuleHandler0000 ();
-    AstCommon::Ast * ReductionRuleHandler0001 ();
-    AstCommon::Ast * ReductionRuleHandler0002 ();
-    AstCommon::Ast * ReductionRuleHandler0003 ();
-    AstCommon::Ast * ReductionRuleHandler0004 ();
-    AstCommon::Ast * ReductionRuleHandler0005 ();
-    AstCommon::Ast * ReductionRuleHandler0006 ();
-    AstCommon::Ast * ReductionRuleHandler0007 ();
-    AstCommon::Ast * ReductionRuleHandler0008 ();
-    AstCommon::Ast * ReductionRuleHandler0009 ();
-    AstCommon::Ast * ReductionRuleHandler0010 ();
-    AstCommon::Ast * ReductionRuleHandler0011 ();
-    AstCommon::Ast * ReductionRuleHandler0012 ();
-    AstCommon::Ast * ReductionRuleHandler0013 ();
-    AstCommon::Ast * ReductionRuleHandler0014 ();
-    AstCommon::Ast * ReductionRuleHandler0015 ();
-    AstCommon::Ast * ReductionRuleHandler0016 ();
-    AstCommon::Ast * ReductionRuleHandler0017 ();
-    AstCommon::Ast * ReductionRuleHandler0018 ();
-    AstCommon::Ast * ReductionRuleHandler0019 ();
-    AstCommon::Ast * ReductionRuleHandler0020 ();
-    AstCommon::Ast * ReductionRuleHandler0021 ();
-    AstCommon::Ast * ReductionRuleHandler0022 ();
-    AstCommon::Ast * ReductionRuleHandler0023 ();
-    AstCommon::Ast * ReductionRuleHandler0024 ();
-    AstCommon::Ast * ReductionRuleHandler0025 ();
-    AstCommon::Ast * ReductionRuleHandler0026 ();
-    AstCommon::Ast * ReductionRuleHandler0027 ();
-    AstCommon::Ast * ReductionRuleHandler0028 ();
-    AstCommon::Ast * ReductionRuleHandler0029 ();
-    AstCommon::Ast * ReductionRuleHandler0030 ();
-    AstCommon::Ast * ReductionRuleHandler0031 ();
-    AstCommon::Ast * ReductionRuleHandler0032 ();
-    AstCommon::Ast * ReductionRuleHandler0033 ();
-    AstCommon::Ast * ReductionRuleHandler0034 ();
-    AstCommon::Ast * ReductionRuleHandler0035 ();
-    AstCommon::Ast * ReductionRuleHandler0036 ();
-    AstCommon::Ast * ReductionRuleHandler0037 ();
-    AstCommon::Ast * ReductionRuleHandler0038 ();
-    AstCommon::Ast * ReductionRuleHandler0039 ();
-    AstCommon::Ast * ReductionRuleHandler0040 ();
-    AstCommon::Ast * ReductionRuleHandler0041 ();
-    AstCommon::Ast * ReductionRuleHandler0042 ();
-    AstCommon::Ast * ReductionRuleHandler0043 ();
-    AstCommon::Ast * ReductionRuleHandler0044 ();
-    AstCommon::Ast * ReductionRuleHandler0045 ();
-    AstCommon::Ast * ReductionRuleHandler0046 ();
-    AstCommon::Ast * ReductionRuleHandler0047 ();
-    AstCommon::Ast * ReductionRuleHandler0048 ();
-    AstCommon::Ast * ReductionRuleHandler0049 ();
-    AstCommon::Ast * ReductionRuleHandler0050 ();
-    AstCommon::Ast * ReductionRuleHandler0051 ();
-    AstCommon::Ast * ReductionRuleHandler0052 ();
-    AstCommon::Ast * ReductionRuleHandler0053 ();
-    AstCommon::Ast * ReductionRuleHandler0054 ();
-    AstCommon::Ast * ReductionRuleHandler0055 ();
-    AstCommon::Ast * ReductionRuleHandler0056 ();
-    AstCommon::Ast * ReductionRuleHandler0057 ();
-    AstCommon::Ast * ReductionRuleHandler0058 ();
-    AstCommon::Ast * ReductionRuleHandler0059 ();
-    AstCommon::Ast * ReductionRuleHandler0060 ();
-    AstCommon::Ast * ReductionRuleHandler0061 ();
-    AstCommon::Ast * ReductionRuleHandler0062 ();
-    AstCommon::Ast * ReductionRuleHandler0063 ();
-    AstCommon::Ast * ReductionRuleHandler0064 ();
-    AstCommon::Ast * ReductionRuleHandler0065 ();
-    AstCommon::Ast * ReductionRuleHandler0066 ();
-    AstCommon::Ast * ReductionRuleHandler0067 ();
-    AstCommon::Ast * ReductionRuleHandler0068 ();
-    AstCommon::Ast * ReductionRuleHandler0069 ();
-    AstCommon::Ast * ReductionRuleHandler0070 ();
-    AstCommon::Ast * ReductionRuleHandler0071 ();
-    AstCommon::Ast * ReductionRuleHandler0072 ();
-    AstCommon::Ast * ReductionRuleHandler0073 ();
-    AstCommon::Ast * ReductionRuleHandler0074 ();
-    AstCommon::Ast * ReductionRuleHandler0075 ();
-    AstCommon::Ast * ReductionRuleHandler0076 ();
-    AstCommon::Ast * ReductionRuleHandler0077 ();
-    AstCommon::Ast * ReductionRuleHandler0078 ();
-    AstCommon::Ast * ReductionRuleHandler0079 ();
-    AstCommon::Ast * ReductionRuleHandler0080 ();
-    AstCommon::Ast * ReductionRuleHandler0081 ();
+    Ast::Base * ReductionRuleHandler0000 ();
+    Ast::Base * ReductionRuleHandler0001 ();
+    Ast::Base * ReductionRuleHandler0002 ();
+    Ast::Base * ReductionRuleHandler0003 ();
+    Ast::Base * ReductionRuleHandler0004 ();
+    Ast::Base * ReductionRuleHandler0005 ();
+    Ast::Base * ReductionRuleHandler0006 ();
+    Ast::Base * ReductionRuleHandler0007 ();
+    Ast::Base * ReductionRuleHandler0008 ();
+    Ast::Base * ReductionRuleHandler0009 ();
+    Ast::Base * ReductionRuleHandler0010 ();
+    Ast::Base * ReductionRuleHandler0011 ();
+    Ast::Base * ReductionRuleHandler0012 ();
+    Ast::Base * ReductionRuleHandler0013 ();
+    Ast::Base * ReductionRuleHandler0014 ();
+    Ast::Base * ReductionRuleHandler0015 ();
+    Ast::Base * ReductionRuleHandler0016 ();
+    Ast::Base * ReductionRuleHandler0017 ();
+    Ast::Base * ReductionRuleHandler0018 ();
+    Ast::Base * ReductionRuleHandler0019 ();
+    Ast::Base * ReductionRuleHandler0020 ();
+    Ast::Base * ReductionRuleHandler0021 ();
+    Ast::Base * ReductionRuleHandler0022 ();
+    Ast::Base * ReductionRuleHandler0023 ();
+    Ast::Base * ReductionRuleHandler0024 ();
+    Ast::Base * ReductionRuleHandler0025 ();
+    Ast::Base * ReductionRuleHandler0026 ();
+    Ast::Base * ReductionRuleHandler0027 ();
+    Ast::Base * ReductionRuleHandler0028 ();
+    Ast::Base * ReductionRuleHandler0029 ();
+    Ast::Base * ReductionRuleHandler0030 ();
+    Ast::Base * ReductionRuleHandler0031 ();
+    Ast::Base * ReductionRuleHandler0032 ();
+    Ast::Base * ReductionRuleHandler0033 ();
+    Ast::Base * ReductionRuleHandler0034 ();
+    Ast::Base * ReductionRuleHandler0035 ();
+    Ast::Base * ReductionRuleHandler0036 ();
+    Ast::Base * ReductionRuleHandler0037 ();
+    Ast::Base * ReductionRuleHandler0038 ();
+    Ast::Base * ReductionRuleHandler0039 ();
+    Ast::Base * ReductionRuleHandler0040 ();
+    Ast::Base * ReductionRuleHandler0041 ();
+    Ast::Base * ReductionRuleHandler0042 ();
+    Ast::Base * ReductionRuleHandler0043 ();
+    Ast::Base * ReductionRuleHandler0044 ();
+    Ast::Base * ReductionRuleHandler0045 ();
+    Ast::Base * ReductionRuleHandler0046 ();
+    Ast::Base * ReductionRuleHandler0047 ();
+    Ast::Base * ReductionRuleHandler0048 ();
+    Ast::Base * ReductionRuleHandler0049 ();
+    Ast::Base * ReductionRuleHandler0050 ();
+    Ast::Base * ReductionRuleHandler0051 ();
+    Ast::Base * ReductionRuleHandler0052 ();
+    Ast::Base * ReductionRuleHandler0053 ();
+    Ast::Base * ReductionRuleHandler0054 ();
+    Ast::Base * ReductionRuleHandler0055 ();
+    Ast::Base * ReductionRuleHandler0056 ();
+    Ast::Base * ReductionRuleHandler0057 ();
+    Ast::Base * ReductionRuleHandler0058 ();
+    Ast::Base * ReductionRuleHandler0059 ();
+    Ast::Base * ReductionRuleHandler0060 ();
+    Ast::Base * ReductionRuleHandler0061 ();
+    Ast::Base * ReductionRuleHandler0062 ();
+    Ast::Base * ReductionRuleHandler0063 ();
+    Ast::Base * ReductionRuleHandler0064 ();
+    Ast::Base * ReductionRuleHandler0065 ();
+    Ast::Base * ReductionRuleHandler0066 ();
+    Ast::Base * ReductionRuleHandler0067 ();
+    Ast::Base * ReductionRuleHandler0068 ();
+    Ast::Base * ReductionRuleHandler0069 ();
+    Ast::Base * ReductionRuleHandler0070 ();
+    Ast::Base * ReductionRuleHandler0071 ();
+    Ast::Base * ReductionRuleHandler0072 ();
+    Ast::Base * ReductionRuleHandler0073 ();
+    Ast::Base * ReductionRuleHandler0074 ();
+    Ast::Base * ReductionRuleHandler0075 ();
+    Ast::Base * ReductionRuleHandler0076 ();
+    Ast::Base * ReductionRuleHandler0077 ();
+    Ast::Base * ReductionRuleHandler0078 ();
+    Ast::Base * ReductionRuleHandler0079 ();
+    Ast::Base * ReductionRuleHandler0080 ();
+    Ast::Base * ReductionRuleHandler0081 ();
 
 }; // end of class Parser
 

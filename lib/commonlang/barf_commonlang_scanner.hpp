@@ -495,11 +495,11 @@ private:
 #include "barf_inputbase.hpp"
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
-class Ast;
+class Base;
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 
 namespace CommonLang {
 
@@ -593,7 +593,7 @@ public:
 
     Scanner::Token::Type Scan (
 #line 82 "barf_commonlang_scanner.reflex"
- AstCommon::Ast **token 
+ Ast::Base **token 
 #line 598 "barf_commonlang_scanner.hpp"
 );
 
@@ -630,7 +630,7 @@ public:
 
 private:
 
-    Token::Type ParseDirective (string const &accepted_string, AstCommon::Ast **token);
+    Token::Type ParseDirective (string const &accepted_string, Ast::Base **token);
 
     bool m_is_in_preamble;
     Uint32 m_regex_paren_level;

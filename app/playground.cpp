@@ -10,7 +10,7 @@
 
 #include "barf.hpp"
 
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 #include "barf_commonlang_scanner.hpp"
 #include "barf_optionsbase.hpp"
 
@@ -28,11 +28,11 @@ int main (int argc, char **argv)
     CommonLang::Scanner::Token::Type scanner_token_type;
     do
     {
-        AstCommon::Ast *token = NULL;
+        Ast::Base *token = NULL;
         scanner_token_type = scanner.Scan(&token);
         cout << "*** scanner.Scan() returned " << scanner_token_type << endl;
         if (token != NULL)
-            token->Print(cout, AstCommon::GetAstTypeString, 1);
+            token->Print(cout, Ast::GetAstTypeString, 1);
         delete token;
     }
     while (scanner_token_type != CommonLang::Scanner::Token::END_OF_FILE &&

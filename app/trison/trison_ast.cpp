@@ -20,7 +20,7 @@ namespace Trison {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-AstCommon::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AT_COUNT-Ast::AT_START_CUSTOM_TYPES_HERE_] =
     {
         "AT_GRAMMAR",
         "AT_DIRECTIVE_LIST",
@@ -47,10 +47,10 @@ string const &GetAstTypeString (AstType ast_type)
     };
 
     assert(ast_type < AT_COUNT);
-    if (ast_type < AstCommon::AT_START_CUSTOM_TYPES_HERE_)
-        return AstCommon::GetAstTypeString(ast_type);
+    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+        return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-AstCommon::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
 }
 
 TokenId::~TokenId ()
@@ -411,7 +411,7 @@ void ParserDirectiveSet::CheckDependencies ()
 
     if (m_parser_directive[PDT_PARSE_METHOD_ACCESS] == NULL)
     {
-        AstCommon::String *value = new AstCommon::String(FiLoc::ms_invalid);
+        Ast::String *value = new Ast::String(FiLoc::ms_invalid);
         value->AppendText("public:");
         ParserDirective *parser_directive =
             new ParserDirective("%parser_parse_method_access", FiLoc::ms_invalid);
@@ -446,7 +446,7 @@ void ParserDirectiveSet::FillInMissingOptionalDirectivesWithDefaults ()
 
         ParserDirective *parser_directive =
             new ParserDirective("%parser_base_assigned_type", FiLoc::ms_invalid);
-        AstCommon::String *directive_string = new AstCommon::String(FiLoc::ms_invalid);
+        Ast::String *directive_string = new Ast::String(FiLoc::ms_invalid);
         directive_string->AppendText("int");
         parser_directive->SetValue(directive_string);
 
@@ -459,7 +459,7 @@ void ParserDirectiveSet::FillInMissingOptionalDirectivesWithDefaults ()
 
         ParserDirective *parser_directive =
             new ParserDirective("%parser_base_assigned_type_sentinel", FiLoc::ms_invalid);
-        AstCommon::String *directive_string = new AstCommon::String(FiLoc::ms_invalid);
+        Ast::String *directive_string = new Ast::String(FiLoc::ms_invalid);
         directive_string->AppendText(
             "static_cast<" +
             m_parser_directive[PDT_BASE_ASSIGNED_TYPE]->GetValue()->GetText() +
@@ -479,11 +479,11 @@ void ParserDirectiveSet::Print (ostream &stream, StringifyAstType Stringify, Uin
 }
 
 Grammar::Grammar (
-    AstCommon::DirectiveList *directive_list,
+    Ast::DirectiveList *directive_list,
     FiLoc const &end_preamble_filoc,
     NonterminalList *nonterminal_list)
     :
-    AstCommon::Ast(FiLoc::ms_invalid, AT_GRAMMAR),
+    Ast::Base(FiLoc::ms_invalid, AT_GRAMMAR),
     m_nonterminal_list(nonterminal_list)
 {
     assert(m_nonterminal_list != NULL);
@@ -501,12 +501,12 @@ Grammar::Grammar (
     StartDirective *start_directive = NULL;
 
     // traverse the directive list sorting each out into the proper container
-    for (AstCommon::DirectiveList::iterator it = directive_list->begin(),
+    for (Ast::DirectiveList::iterator it = directive_list->begin(),
                                             it_end = directive_list->end();
          it != it_end;
          ++it)
     {
-        AstCommon::Directive *directive = *it;
+        Ast::Directive *directive = *it;
         assert(directive != NULL);
         switch (directive->GetAstType())
         {
@@ -553,8 +553,8 @@ Grammar::Grammar (
         EmitError(end_preamble_filoc, "missing %start directive");
     else
     {
-        AstCommon::Id *start_nonterminal_id =
-            new AstCommon::Id("%start", FiLoc::ms_invalid);
+        Ast::Id *start_nonterminal_id =
+            new Ast::Id("%start", FiLoc::ms_invalid);
         m_start_nonterminal =
             new Nonterminal(start_nonterminal_id, NULL);
 
@@ -578,7 +578,7 @@ Grammar::Grammar (
         Rule *start_nonterminal_rule =
             new Rule(start_nonterminal_rule_token_list, A_LEFT, NULL);
 
-        AstCommon::CodeBlock *start_nonterminal_rule_code_block = new AstCommon::StrictCodeBlock(FiLoc::ms_invalid);
+        Ast::CodeBlock *start_nonterminal_rule_code_block = new Ast::StrictCodeBlock(FiLoc::ms_invalid);
         start_nonterminal_rule_code_block->AppendText(
             "    assert(0 < m_reduction_rule_token_count);\n"
             "    return m_token_stack[m_token_stack.size() - m_reduction_rule_token_count];\n");

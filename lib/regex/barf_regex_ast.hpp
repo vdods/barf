@@ -16,7 +16,7 @@
 #include <bitset>
 #include <vector>
 
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 #include "barf_graph.hpp"
 #include "barf_util.hpp"
 
@@ -29,7 +29,7 @@ namespace Regex {
 // class hierarchy
 // ///////////////////////////////////////////////////////////////////////////
 
-AstCommon::Ast (abstract)
+Ast::Base (abstract)
     Branch
     Piece
     Atom (abstract)
@@ -53,7 +53,7 @@ RegularExpression
 
 enum
 {
-    AT_BOUND = AstCommon::AT_START_CUSTOM_TYPES_HERE_,
+    AT_BOUND = Ast::AT_START_CUSTOM_TYPES_HERE_,
     AT_BRACKET_CHAR_SET,
     AT_BRANCH,
     AT_CHAR,
@@ -66,12 +66,12 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-struct Atom : public AstCommon::Ast
+struct Atom : public Ast::Base
 {
-    Atom (AstType ast_type) : AstCommon::Ast(FiLoc::ms_invalid, ast_type) { }
+    Atom (AstType ast_type) : Ast::Base(FiLoc::ms_invalid, ast_type) { }
 }; // end of class Atom
 
-struct Bound : public AstCommon::Ast
+struct Bound : public Ast::Base
 {
     Sint16 const m_lower_bound;
     Sint16 const m_upper_bound;
@@ -84,7 +84,7 @@ struct Bound : public AstCommon::Ast
 
     Bound (Sint16 lower_bound, Sint16 upper_bound)
         :
-        AstCommon::Ast(FiLoc::ms_invalid, AT_BOUND),
+        Ast::Base(FiLoc::ms_invalid, AT_BOUND),
         m_lower_bound(lower_bound),
         m_upper_bound(upper_bound)
     {
@@ -102,11 +102,11 @@ struct Bound : public AstCommon::Ast
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class Bound
 
-struct Piece : public AstCommon::Ast
+struct Piece : public Ast::Base
 {
     Piece (Atom *atom, Bound *bound)
         :
-        AstCommon::Ast(FiLoc::ms_invalid, AT_PIECE),
+        Ast::Base(FiLoc::ms_invalid, AT_PIECE),
         m_atom(atom),
         m_bound(bound)
     {
@@ -127,11 +127,11 @@ private:
     Bound *m_bound;
 }; // end of class Piece
 
-struct Branch : public AstCommon::AstList<Piece>
+struct Branch : public Ast::AstList<Piece>
 {
     Branch ()
         :
-        AstCommon::AstList<Piece>(AT_BRANCH),
+        Ast::AstList<Piece>(AT_BRANCH),
         m_last_modification_was_atom_addition(false)
     { }
 
@@ -205,23 +205,23 @@ private:
     CharSet m_char_set;
 }; // end of BracketCharSet
 
-struct RegularExpression : public Atom, public AstCommon::List<Branch>
+struct RegularExpression : public Atom, public Ast::List<Branch>
 {
-    RegularExpression () : Atom(AT_REGULAR_EXPRESSION), AstCommon::List<Branch>() { }
+    RegularExpression () : Atom(AT_REGULAR_EXPRESSION), Ast::List<Branch>() { }
 
     // this is the non-virtual, top-level Print method, not
-    // to be confused with AstCommon::Ast::Print.
+    // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class RegularExpression
 
-struct RegularExpressionMap : public AstCommon::AstMap<RegularExpression>
+struct RegularExpressionMap : public Ast::AstMap<RegularExpression>
 {
-    RegularExpressionMap () : AstCommon::AstMap<RegularExpression>(AT_REGULAR_EXPRESSION_MAP) { }
+    RegularExpressionMap () : Ast::AstMap<RegularExpression>(AT_REGULAR_EXPRESSION_MAP) { }
 
     // this is the non-virtual, top-level Print method, not
-    // to be confused with AstCommon::Ast::Print.
+    // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 }; // end of class RegularExpressionMap
 

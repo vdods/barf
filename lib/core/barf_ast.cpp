@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// barf_astcommon.cpp by Victor Dods, created 2006/10/22
+// barf_ast.cpp by Victor Dods, created 2006/10/22
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,12 +8,12 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#include "barf_astcommon.hpp"
+#include "barf_ast.hpp"
 
 #include <sstream>
 
 namespace Barf {
-namespace AstCommon {
+namespace Ast {
 
 string const &GetAstTypeString (AstType ast_type)
 {
@@ -37,7 +37,7 @@ string const &GetAstTypeString (AstType ast_type)
     return s_ast_type_string[ast_type];
 }
 
-void Ast::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void Base::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
 }
@@ -112,5 +112,5 @@ void Directive::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
     stream << Tabs(indent_level) << Stringify(GetAstType()) << " (" << GetText() << ')' << endl;
 }
 
-} // end of namespace AstCommon
+} // end of namespace Ast
 } // end of namespace Barf

@@ -52,7 +52,7 @@ void Scanner::Close ()
     m_line_number = 0;
 }
 
-Parser::Token::Type Scanner::Scan (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::Scan (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -105,7 +105,7 @@ Parser::Token::Type Scanner::Scan (AstCommon::Ast **const scanned_token)
     }
 }
 
-Parser::Token::Type Scanner::ScanId (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanId (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -126,11 +126,11 @@ Parser::Token::Type Scanner::ScanId (AstCommon::Ast **const scanned_token)
     if (*m_text.rbegin() == '_')
         EmitError(FL, "ids can not end with an underscore (\"" + m_text + "\")");
 
-    *scanned_token = new AstCommon::Id(m_text, FL);
+    *scanned_token = new Ast::Id(m_text, FL);
     return Parser::Token::ID;
 }
 
-Parser::Token::Type Scanner::ScanOperator (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanOperator (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -139,7 +139,7 @@ Parser::Token::Type Scanner::ScanOperator (AstCommon::Ast **const scanned_token)
     return Parser::Token::Type(m_text[0]);
 }
 
-Parser::Token::Type Scanner::ScanDirective (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanDirective (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -159,7 +159,7 @@ Parser::Token::Type Scanner::ScanDirective (AstCommon::Ast **const scanned_token
     {
         m_input >> c;
         m_text += c;
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         m_in_preamble = false;
         return Parser::Token::END_PREAMBLE;
     }
@@ -183,49 +183,49 @@ Parser::Token::Type Scanner::ScanDirective (AstCommon::Ast **const scanned_token
     }
     else if (m_text == "%token")
     {
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         return Parser::Token::DIRECTIVE_TOKEN;
     }
     else if (m_text == "%left")
     {
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         return Parser::Token::LEFT;
     }
     else if (m_text == "%right")
     {
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         return Parser::Token::RIGHT;
     }
     else if (m_text == "%nonassoc")
     {
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         return Parser::Token::NONASSOC;
     }
     else if (m_text == "%prec")
     {
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         return Parser::Token::PREC;
     }
     else if (m_text == "%start")
     {
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         return Parser::Token::START;
     }
     else if (m_text == "%type")
     {
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         return Parser::Token::TYPE;
     }
     else if (m_text == "%error")
     {
-        *scanned_token = new AstCommon::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(FL);
         return Parser::Token::DIRECTIVE_ERROR;
     }
 
     return Parser::Token::BAD_TOKEN;
 }
 
-Parser::Token::Type Scanner::ScanStrictCodeBlock (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanStrictCodeBlock (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -285,8 +285,8 @@ Parser::Token::Type Scanner::ScanStrictCodeBlock (AstCommon::Ast **const scanned
     {
         assert(bracket_level == 0);
         m_input >> c;
-        *scanned_token = new AstCommon::StrictCodeBlock(FiLoc(m_input_filename, starting_line_number));
-        static_cast<AstCommon::CodeBlock *>(*scanned_token)->AppendText(m_text);
+        *scanned_token = new Ast::StrictCodeBlock(FiLoc(m_input_filename, starting_line_number));
+        static_cast<Ast::CodeBlock *>(*scanned_token)->AppendText(m_text);
         return Parser::Token::STRICT_CODE_BLOCK;
     }
     else
@@ -297,7 +297,7 @@ Parser::Token::Type Scanner::ScanStrictCodeBlock (AstCommon::Ast **const scanned
     }
 }
 
-Parser::Token::Type Scanner::ScanDumbCodeBlock (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanDumbCodeBlock (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -327,8 +327,8 @@ Parser::Token::Type Scanner::ScanDumbCodeBlock (AstCommon::Ast **const scanned_t
 
             if (c == '}')
             {
-                *scanned_token = new AstCommon::DumbCodeBlock(FiLoc(m_input_filename, starting_line_number));
-                static_cast<AstCommon::CodeBlock *>(*scanned_token)->AppendText(m_text);
+                *scanned_token = new Ast::DumbCodeBlock(FiLoc(m_input_filename, starting_line_number));
+                static_cast<Ast::CodeBlock *>(*scanned_token)->AppendText(m_text);
                 return Parser::Token::DUMB_CODE_BLOCK;
             }
             else
@@ -349,7 +349,7 @@ Parser::Token::Type Scanner::ScanDumbCodeBlock (AstCommon::Ast **const scanned_t
     return Parser::Token::BAD_TOKEN;
 }
 
-Parser::Token::Type Scanner::ScanStringLiteral (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanStringLiteral (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
@@ -398,8 +398,8 @@ Parser::Token::Type Scanner::ScanStringLiteral (AstCommon::Ast **const scanned_t
     if (c == '"')
     {
         m_input >> c;
-        *scanned_token = new AstCommon::String(FiLoc(m_input_filename, starting_line_number));
-        static_cast<AstCommon::String *>(*scanned_token)->AppendText(m_text);
+        *scanned_token = new Ast::String(FiLoc(m_input_filename, starting_line_number));
+        static_cast<Ast::String *>(*scanned_token)->AppendText(m_text);
         return Parser::Token::STRING;
     }
     else
@@ -410,7 +410,7 @@ Parser::Token::Type Scanner::ScanStringLiteral (AstCommon::Ast **const scanned_t
     }
 }
 
-Parser::Token::Type Scanner::ScanCharLiteral (AstCommon::Ast **const scanned_token)
+Parser::Token::Type Scanner::ScanCharLiteral (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);

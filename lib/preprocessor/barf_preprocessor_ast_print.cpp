@@ -16,7 +16,7 @@ namespace Barf {
 namespace Preprocessor {
 
 // this is the non-virtual, top-level Print method, not
-// to be confused with AstCommon::Ast::Print.
+// to be confused with Ast::Base::Print.
 void Body::Print (ostream &stream, Uint32 indent_level) const
 {
     Print(stream, GetAstTypeString, indent_level);
@@ -26,7 +26,7 @@ void Conditional::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
 {
     assert(m_if_body != NULL);
 
-    AstCommon::Ast::Print(stream, Stringify, indent_level);
+    Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "if expression:" << endl;
     m_if_expression->Print(stream, Stringify, indent_level+2);
     stream << Tabs(indent_level+1) << "if body:" << endl;
