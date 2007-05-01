@@ -1,8 +1,8 @@
 %targets cpp
 
-%language.cpp.class_name Scanner
+%target.cpp.class_name Scanner
 
-%language.cpp.top_of_header_file %{
+%target.cpp.top_of_header_file %{
 #include <iostream>
 #include <string>
 
@@ -23,22 +23,22 @@ enum TokenType
 ostream &operator << (ostream &stream, TokenType token_type);
 %}
 
-%language.cpp.top_of_class_methods_and_members {
+%target.cpp.top_of_class_methods_and_members {
 private:
 
     string m_accumulator;
 }
 
-%language.cpp.bottom_of_header_file %{
+%target.cpp.bottom_of_header_file %{
 #endif // !defined(_AWESOMESCANNER_HPP_)
 %}
 
-%language.cpp.end_of_scan_method_actions {
+%target.cpp.end_of_scan_method_actions {
     assert(false && "you didn't handle EOF properly");
     return TT_END_OF_FILE;
 }
 
-%language.cpp.top_of_implementation_file %{
+%target.cpp.top_of_implementation_file %{
 ostream &operator << (ostream &stream, TokenType token_type)
 {
     static string const s_token_type_string[TT_COUNT] =
@@ -52,7 +52,7 @@ ostream &operator << (ostream &stream, TokenType token_type)
 }
 %}
 
-%language.cpp.bottom_of_implementation_file %{
+%target.cpp.bottom_of_implementation_file %{
 int main (int argc, char **argv)
 {
     cin.unsetf(ios_base::skipws);
@@ -70,10 +70,10 @@ int main (int argc, char **argv)
 }
 %}
 
-%language.cpp.return_type "TokenType"
-%language.cpp.return_true_iff_input_is_at_end { return cin.eof(); }
-%language.cpp.return_next_input_char { return cin.get(); }
-%language.cpp.reset_for_new_input_actions { m_accumulator.clear(); }
+%target.cpp.return_type "TokenType"
+%target.cpp.return_true_iff_input_is_at_end { return cin.eof(); }
+%target.cpp.return_next_input_char { return cin.get(); }
+%target.cpp.reset_for_new_input_actions { m_accumulator.clear(); }
 
 // everything that doesn't need to be escaped in a string literal
 %macro STRING_NORMAL_CHAR   ([^[:cntrl:]"\\]|\t|\n)
@@ -87,33 +87,33 @@ int main (int argc, char **argv)
 %state MAIN
 :
     (")
-    %language.cpp {
+    %target.cpp {
         cerr << "starting to scan string literal" << endl;
         assert(m_accumulator.empty());
-        TransitionToState(State::SCANNING_STRING_LITERAL);
+        SetScannerState(State::SCANNING_STRING_LITERAL);
     }
 |
     (//.*$)
-    %language.cpp {
+    %target.cpp {
         cerr << "scanned a line comment" << endl;
     }
 |
     (/\*)
-    %language.cpp {
+    %target.cpp {
         cerr << "starting to scan block comment" << endl;
-        TransitionToState(State::SCANNING_BLOCK_COMMENT);
+        SetScannerState(State::SCANNING_BLOCK_COMMENT);
     }
 |
-    ([ \t\n]+) %language.cpp { }
+    ([ \t\n]+) %target.cpp { }
 |
     (\z)
-    %language.cpp {
+    %target.cpp {
         cerr << "end of file" << endl;
         return TT_END_OF_FILE;
     }
 |
     (.)
-    %language.cpp {
+    %target.cpp {
         cerr << "unrecognized char " << int(accepted_text[0]) << endl;
         return TT_BAD_TOKEN;
     }
@@ -122,25 +122,25 @@ int main (int argc, char **argv)
 %state SCANNING_STRING_LITERAL
 :
     (")
-    %language.cpp {
+    %target.cpp {
         cerr << "ending string literal -- \"" << m_accumulator << "\"" << endl;
         m_accumulator.clear();
-        TransitionToState(State::MAIN);
+        SetScannerState(State::MAIN);
         return TT_STRING_LITERAL;
     }
 |
-    ({STRING_NORMAL_CHAR}) %language.cpp { m_accumulator += accepted_text; }
+    ({STRING_NORMAL_CHAR}) %target.cpp { m_accumulator += accepted_text; }
 |
-    ({STRING_ESC_CHAR}) %language.cpp { m_accumulator += accepted_text; }
+    ({STRING_ESC_CHAR}) %target.cpp { m_accumulator += accepted_text; }
 |
     (\z)
-    %language.cpp {
+    %target.cpp {
         cerr << "unterminated string literal" << endl;
         return TT_END_OF_FILE;
     }
 |
     (.)
-    %language.cpp {
+    %target.cpp {
         cerr << "unrecognized char " << int(accepted_text[0]) << endl;
         return TT_BAD_TOKEN;
     }
@@ -149,16 +149,16 @@ int main (int argc, char **argv)
 %state SCANNING_BLOCK_COMMENT
 :
     (\*/)
-    %language.cpp {
+    %target.cpp {
         cerr << "ending block comment" << endl;
-        TransitionToState(State::MAIN);
+        SetScannerState(State::MAIN);
     }
 |
     (\z)
-    %language.cpp {
+    %target.cpp {
         cerr << "unterminated block comment" << endl;
         return TT_END_OF_FILE;
     }
 |
-    (.) %language.cpp { }
+    (.) %target.cpp { }
 ;

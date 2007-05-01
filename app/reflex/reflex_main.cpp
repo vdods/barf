@@ -71,7 +71,7 @@ int main (int argc, char **argv)
                 return 4;
         }
 
-        // for each language in the primary source, parse the corresponding
+        // for each target in the primary source, parse the corresponding
         // langspec source, checking for required directives, doing everything
         // possible to check short of running the run-before-code-gen code.
         {

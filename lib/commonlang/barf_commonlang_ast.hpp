@@ -40,60 +40,60 @@ namespace CommonLang {
 
 enum
 {
-    AT_LANGUAGE_DIRECTIVE = Ast::AT_START_CUSTOM_TYPES_HERE_,
-    AT_TARGET,
-    AT_TARGET_MAP,
-    AT_RULE_HANDLER,
+    AT_RULE_HANDLER = Ast::AT_START_CUSTOM_TYPES_HERE_,
     AT_RULE_HANDLER_MAP,
+    AT_TARGET,
+    AT_TARGET_DIRECTIVE,
+    AT_TARGET_MAP,
 
     AT_START_CUSTOM_TYPES_HERE_
 };
 
 string const &GetAstTypeString (AstType ast_type);
 
-class LanguageDirective : public Ast::Directive
+class TargetDirective : public Ast::Directive
 {
 public:
 
-    Ast::Id const *const m_language_id;
+    Ast::Id const *const m_target_id;
     Ast::Id const *const m_directive_id;
     Ast::TextBase const *const m_directive_value;
 
-    LanguageDirective (
-        Ast::Id const *language_id,
+    TargetDirective (
+        Ast::Id const *target_id,
         Ast::Id const *directive_id,
         Ast::TextBase const *directive_value)
         :
-        Directive("%language", language_id->GetFiLoc(), AT_LANGUAGE_DIRECTIVE),
-        m_language_id(language_id),
+        Directive("%target", target_id->GetFiLoc(), AT_TARGET_DIRECTIVE),
+        m_target_id(target_id),
         m_directive_id(directive_id),
         m_directive_value(directive_value)
     {
-        assert(m_language_id != NULL);
+        assert(m_target_id != NULL);
         assert(m_directive_id != NULL);
         // m_directive_value can be NULL
     }
 
     virtual string GetDirectiveString () const;
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class LanguageDirective
+}; // end of class TargetDirective
 
-class Target : public Ast::AstMap<LanguageDirective>
+class Target : public Ast::AstMap<TargetDirective>
 {
 public:
 
-    string const m_language_id;
+    string const m_target_id;
 
-    Target (string const &language_id);
+    Target (string const &target_id);
 
     // this is called on a Target which appears in %targets
     // and will enable specific error checking required for later code generation
     void EnableCodeGeneration () { m_is_enabled_for_code_generation = true; }
     // sets the primary source path which was used to generate this target
     void SetSourcePath (string const &source_path);
-    // attempts to add a language directive, but will warn and not add if this
+    // attempts to add a target directive, but will warn and not add if this
     // target is not enabled for code generation.
-    void Add (LanguageDirective *language_directive);
+    void Add (TargetDirective *target_directive);
     // parses the langspec file corresponding to this target.
     void ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser) const;
     // parses all the codespecs specified in m_lang_spec and adds the
@@ -104,13 +104,13 @@ public:
 
 private:
 
-    // checks the language directives against the given LangSpec::Specification.
+    // checks the target directives against the given LangSpec::Specification.
     void CheckAgainstLangSpec (LangSpec::Specification const &specification) const;
-    // checks a LangSpec::AddDirective against a LanguageDirective
+    // checks a LangSpec::AddDirective against a TargetDirective
     void CheckAgainstAddDirective (
         LangSpec::AddDirective const &add_directive,
-        LanguageDirective const *language_directive) const;
-    // adds language directives -- specific to this target
+        TargetDirective const *target_directive) const;
+    // adds target directives -- specific to this target
     void GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) const;
 
     struct ParsedLangSpec
@@ -147,7 +147,7 @@ private:
     mutable ParsedLangSpec m_lang_spec;
     mutable ParsedCodeSpecList m_code_spec_list;
 
-    using Ast::AstMap<LanguageDirective>::Add;
+    using Ast::AstMap<TargetDirective>::Add;
 }; // end of class Target
 
 struct TargetMap : public Ast::AstMap<Target>
@@ -156,32 +156,32 @@ struct TargetMap : public Ast::AstMap<Target>
 
     // sets the path of the primary source file on each Target
     void SetSourcePath (string const &source_path);
-    // adds the given LanguageDirective to the corresponding Target if
+    // adds the given TargetDirective to the corresponding Target if
     // the Target exists, otherwise it creates the Target before
-    // adding the LanguageDirective.
-    void AddLanguageDirective (LanguageDirective *language_directive);
+    // adding the TargetDirective.
+    void AddTargetDirective (TargetDirective *target_directive);
 
     using Ast::AstMap<Target>::Add;
 }; // end of struct TargetMap
 
 struct RuleHandler : public Ast::Base
 {
-    Ast::Id const *const m_language_id;
+    Ast::Id const *const m_target_id;
     Ast::CodeBlock const *const m_rule_handler_code_block;
 
     RuleHandler (
-        Ast::Id const *language_id,
+        Ast::Id const *target_id,
         Ast::CodeBlock const *rule_handler_code_block)
         :
         Ast::Base(
-            (language_id != NULL) ?
-            language_id->GetFiLoc() :
+            (target_id != NULL) ?
+            target_id->GetFiLoc() :
             rule_handler_code_block->GetFiLoc(),
             AT_RULE_HANDLER),
-        m_language_id(language_id),
+        m_target_id(target_id),
         m_rule_handler_code_block(rule_handler_code_block)
     {
-        assert(m_language_id != NULL);
+        assert(m_target_id != NULL);
         assert(m_rule_handler_code_block != NULL);
     }
 

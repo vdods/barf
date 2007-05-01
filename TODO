@@ -54,9 +54,9 @@
 // commonlang
 // ///////////////////////////////////////////////////////////////////////////
 
-- language directives (including rule handlers) should accept multiple targets
+- target directives (including rule handlers) should accept multiple targets
   like
-  %language.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
+  %target.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
 
 // ///////////////////////////////////////////////////////////////////////////
 // core
@@ -75,9 +75,10 @@
 // langspec
 // ///////////////////////////////////////////////////////////////////////////
 
+- rename to targetspec
 - allow using the value of previously declared directive ids as default values
-- confirm that the declared name matches the filename
-- rename %language into %target (and friends)
+- confirm that the declared name matches the filename -- or, should the 
+  langspec's %target directive be removed (it is redundant) -- probably remove
 - add new "add_optional_codespec" directive which requires the directive
   id of an add_optional_directive, for optional output files (like
   baseclasses which could be common to multiple parsers/scanners), then change
@@ -159,7 +160,8 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - add option for line directives referencing codespecs
-- maybe rename scanner states to "modes"
+- rename scanner states to "modes", so there's no confusion between 
+  that and FA states
 - add thing that checks for EOF-handling in each scanner state?
 - get rid of STL usage in C++ codespecs (separate target)
 - add option which prints the targets available in the current search path
@@ -190,7 +192,7 @@
   can happen
 - you shouldn't have to specify %token 'X' for ascii chars.  you should
   just be able to use them
-- specifying any %language.xxx directive seems to add the target; stop this
+- specifying any %target.xxx directive seems to add the target; stop this
 - rename _accept_handler_code to _rule_code (or something), and generally
   consistencize the nomenclature of the NPDA preprocessor symbols in general
 - add option for line directives referencing codespecs

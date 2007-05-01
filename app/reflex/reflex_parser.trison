@@ -101,21 +101,21 @@ Parser::Token::Type Parser::Scan ()
         return Parser::Token::Type(scanner_token_type);
     switch (scanner_token_type)
     {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:            return Parser::Token::END_;
-        case CommonLang::Scanner::Token::BAD_TOKEN:                  return Parser::Token::BAD_TOKEN;
-        case CommonLang::Scanner::Token::DIRECTIVE_LANGUAGE:         return Parser::Token::DIRECTIVE_LANGUAGE;
-        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:            return Parser::Token::DIRECTIVE_MACRO;
-        case CommonLang::Scanner::Token::DIRECTIVE_START:            return Parser::Token::DIRECTIVE_START;
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE:            return Parser::Token::DIRECTIVE_STATE;
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:   return Parser::Token::END_;
+        case CommonLang::Scanner::Token::BAD_TOKEN:         return Parser::Token::BAD_TOKEN;
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:   return Parser::Token::DIRECTIVE_MACRO;
+        case CommonLang::Scanner::Token::DIRECTIVE_START:   return Parser::Token::DIRECTIVE_START;
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE:   return Parser::Token::DIRECTIVE_STATE;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:  return Parser::Token::DIRECTIVE_TARGET;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS: return Parser::Token::DIRECTIVE_TARGETS;
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:            return Parser::Token::DUMB_CODE_BLOCK;
-        case CommonLang::Scanner::Token::END_OF_FILE:                return Parser::Token::END_;
-        case CommonLang::Scanner::Token::END_PREAMBLE:               return Parser::Token::END_PREAMBLE;
-        case CommonLang::Scanner::Token::ID:                 return Parser::Token::ID;
-        case CommonLang::Scanner::Token::NEWLINE:                    return Parser::Token::NEWLINE;
-        case CommonLang::Scanner::Token::REGEX:                      return Parser::Token::REGEX;
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:          return Parser::Token::STRICT_CODE_BLOCK;
-        case CommonLang::Scanner::Token::STRING_LITERAL:             return Parser::Token::STRING_LITERAL;
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:   return Parser::Token::DUMB_CODE_BLOCK;
+        case CommonLang::Scanner::Token::END_OF_FILE:       return Parser::Token::END_;
+        case CommonLang::Scanner::Token::END_PREAMBLE:      return Parser::Token::END_PREAMBLE;
+        case CommonLang::Scanner::Token::ID:                return Parser::Token::ID;
+        case CommonLang::Scanner::Token::NEWLINE:           return Parser::Token::NEWLINE;
+        case CommonLang::Scanner::Token::REGEX:             return Parser::Token::REGEX;
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK: return Parser::Token::STRICT_CODE_BLOCK;
+        case CommonLang::Scanner::Token::STRING_LITERAL:    return Parser::Token::STRING_LITERAL;
 
         case CommonLang::Scanner::Token::CHAR_LITERAL:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
@@ -131,7 +131,6 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:
         case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
             assert(m_lookahead_token != NULL);
@@ -154,10 +153,10 @@ Parser::Token::Type Parser::Scan ()
 %parser_custom_cast "Dsc"
 
 %token BAD_TOKEN
-%token DIRECTIVE_LANGUAGE %type "Ast::ThrowAway *"
 %token DIRECTIVE_MACRO %type "Ast::ThrowAway *"
 %token DIRECTIVE_START %type "Ast::ThrowAway *"
 %token DIRECTIVE_STATE %type "Ast::ThrowAway *"
+%token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGETS %type "Ast::ThrowAway *"
 %token DUMB_CODE_BLOCK %type "Ast::DumbCodeBlock *"
 %token END_PREAMBLE %type "Ast::ThrowAway *"
@@ -180,7 +179,7 @@ root %type "Representation *"
 :
     at_least_zero_newlines
     targets_directive:target_map
-    language_directives
+    target_directives
     macro_directives:regular_expression_map
     start_directive:start_directive
     END_PREAMBLE:throwaway
@@ -213,7 +212,7 @@ root %type "Representation *"
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
-// target directive rules
+// targets directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
 targets_directive %type "CommonLang::TargetMap *"
@@ -260,16 +259,16 @@ target_ids %type "CommonLang::TargetMap *"
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
-// language directive rules
+// target directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-language_directives
+target_directives
 :
-    language_directives language_directive:language_directive
+    target_directives target_directive:target_directive
     {
         assert(m_target_map != NULL);
-        if (language_directive != NULL)
-            m_target_map->AddLanguageDirective(language_directive);
+        if (target_directive != NULL)
+            m_target_map->AddTargetDirective(target_directive);
         return NULL;
     }
 |
@@ -281,40 +280,40 @@ language_directives
     }
 ;
 
-language_directive %type "CommonLang::LanguageDirective *"
+target_directive %type "CommonLang::TargetDirective *"
 :
-    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id '.' ID:language_directive language_directive_param:param at_least_one_newline
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive target_directive_param:param at_least_one_newline
     {
         delete throwaway;
-        return new CommonLang::LanguageDirective(language_id, language_directive, param);
+        return new CommonLang::TargetDirective(target_id, target_directive, param);
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id '.' ID:language_directive %error at_least_one_newline
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %language." + language_id->GetText() + "." + language_directive->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText());
         delete throwaway;
-        delete language_id;
-        delete language_directive;
+        delete target_id;
+        delete target_directive;
         return NULL;
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id %error at_least_one_newline
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %language." + language_id->GetText());
+        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %target." + target_id->GetText());
         delete throwaway;
-        delete language_id;
+        delete target_id;
         return NULL;
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway %error at_least_one_newline
+    DIRECTIVE_TARGET:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in language name for directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in target name for directive %target");
         delete throwaway;
         return NULL;
     }
 ;
 
-language_directive_param %type "Ast::TextBase *"
+target_directive_param %type "Ast::TextBase *"
 :
     ID:value            { return value; }
 |   STRING_LITERAL:value        { return value; }
@@ -531,7 +530,7 @@ rule_handlers %type "CommonLang::RuleHandlerMap *"
     rule_handlers:rule_handler_map rule_handler:rule_handler
     {
         if (rule_handler != NULL)
-            rule_handler_map->Add(rule_handler->m_language_id->GetText(), rule_handler);
+            rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
     }
 |
@@ -543,30 +542,30 @@ rule_handlers %type "CommonLang::RuleHandlerMap *"
 
 rule_handler %type "CommonLang::RuleHandler *"
 :
-    DIRECTIVE_LANGUAGE:throwaway '.' ID:language_id any_type_of_code_block:code_block
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id any_type_of_code_block:code_block
     {
         delete throwaway;
         assert(m_target_map != NULL);
-        if (m_target_map->GetElement(language_id->GetText()) == NULL)
+        if (m_target_map->GetElement(target_id->GetText()) == NULL)
             EmitWarning(
-                language_id->GetFiLoc(),
-                "undeclared target \"" + language_id->GetText() + "\"");
-        return new CommonLang::RuleHandler(language_id, code_block);
+                target_id->GetFiLoc(),
+                "undeclared target \"" + target_id->GetText() + "\"");
+        return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway %error any_type_of_code_block:code_block
+    DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
     {
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in language id after directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in target id after directive %target");
         delete throwaway;
         delete code_block;
         return NULL;
     }
 |
-    DIRECTIVE_LANGUAGE:throwaway %error
+    DIRECTIVE_TARGET:throwaway %error
     {
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %language");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %target");
         delete throwaway;
         return NULL;
     }
@@ -574,7 +573,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     %error any_type_of_code_block:code_block
     {
         assert(m_target_map != NULL);
-        EmitError(code_block->GetFiLoc(), "missing directive %language before rule handler code block");
+        EmitError(code_block->GetFiLoc(), "missing directive %target before rule handler code block");
         delete code_block;
         return NULL;
     }

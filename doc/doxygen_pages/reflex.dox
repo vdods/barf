@@ -21,7 +21,7 @@ A primary source file is divided into two parts -- the preamble and the scanner 
 Everything at the top of the file, above the %% delimiter, is the preamble.  The preamble is where certain meta-properties are declared via directives:
     <ul>
     <li>Target(s) -- indicates that scanners will be generated for each of the given targets, with each language corresponding to a "langspec" file in the data directory.  This directive is optional; if omitted, <tt>reflex</tt> will process the specified scanner and internally generate the corresponding state machine, emitting warnings and errors if necessary, but will not generate any source code.  For example, @verbatim %targets cpp @endverbatim
-    <li>Target-specific directives -- as mentioned earlier, each target an associated <tt>reflex.*.langspec</tt> (e.g. <tt>reflex.cpp.langspec</tt> for the <tt>cpp</tt> target) which defines what language-specific directives are available, which ones are required to be supplied in the <tt>.reflex</tt> source, as well as the parameter type for each.  For example, the <tt>ccp</tt> target only requires the <tt>class_name</tt> directive be specified; this would be done as @verbatim %language.cpp.class_name AwesomeScanner @endverbatim
+    <li>Target-specific directives -- as mentioned earlier, each target an associated <tt>reflex.*.langspec</tt> (e.g. <tt>reflex.cpp.langspec</tt> for the <tt>cpp</tt> target) which defines what language-specific directives are available, which ones are required to be supplied in the <tt>.reflex</tt> source, as well as the parameter type for each.  For example, the <tt>ccp</tt> target only requires the <tt>class_name</tt> directive be specified; this would be done as @verbatim %target.cpp.class_name AwesomeScanner @endverbatim
     <li>Regular expression macros -- are simple macro definitions for convenient in later <tt>\%macro</tt> directives or in scanner regexes.  For example, @verbatim %macro DIGIT ([0-9]) @endverbatim
     <li>Starting state -- is the single required preamble directive.  It specifies the name of the default starting state, choosing from those defined after the preamble.  For example, @verbatim %start MAIN @endverbatim
     </ul>
@@ -39,10 +39,10 @@ The following is an example primary source file which uses the <tt>cpp</tt> targ
 @verbatim
 %targets cpp
 
-%language.cpp.class_name AwesomeScanner
-%language.cpp.header_filename "awesome.hpp"
-%language.cpp.implementation_filename "awesome.cpp"
-%language.cpp.bottom_of_implementation_file %{
+%target.cpp.class_name AwesomeScanner
+%target.cpp.header_filename "awesome.hpp"
+%target.cpp.implementation_filename "awesome.cpp"
+%target.cpp.bottom_of_implementation_file %{
 int main (int argc, char **argv)
 {
     AwesomeScanner scanner;
@@ -61,24 +61,24 @@ int main (int argc, char **argv)
 
 %state MAIN
 :
-    ({INTEGER}) %language.cpp { std::cout << "integer" << std::endl; }
+    ({INTEGER}) %target.cpp { std::cout << "integer" << std::endl; }
 |
-    ([\t\n ]) %language.cpp { std::cout << "whitespace" << std::endl; }
+    ([\t\n ]) %target.cpp { std::cout << "whitespace" << std::endl; }
 |
-    ([*+]) %language.cpp { std::cout << "operator" << std::endl; }
+    ([*+]) %target.cpp { std::cout << "operator" << std::endl; }
 |
-    (\z) %language.cpp { std::cout << "EOF" << std::endl; return; }
+    (\z) %target.cpp { std::cout << "EOF" << std::endl; return; }
 |
-    (/[*]) %language.cpp { TransitionToState(State::BLOCK_COMMENT); }
+    (/[*]) %target.cpp { SetScannerState(State::BLOCK_COMMENT); }
 ;
 
 %state BLOCK_COMMENT
 :
-    ([*]/) %language.cpp { std::cout << "block comment" << std::endl; TransitionToState(State::MAIN); }
+    ([*]/) %target.cpp { std::cout << "block comment" << std::endl; SetScannerState(State::MAIN); }
 |
-    ([^*]+|[*]) %language.cpp { }
+    ([^*]+|[*]) %target.cpp { }
 |
-    (\z) %language.cpp { std::cout << "unterminated block comment" << std::endl; TransitionToState(State::MAIN); }
+    (\z) %target.cpp { std::cout << "unterminated block comment" << std::endl; SetScannerState(State::MAIN); }
 ;
 @endverbatim
 
@@ -96,7 +96,7 @@ The langspec file will also require that the filename(s) of the output file(s) b
 A langspec directive value is specified in the following manner.
 
 @verbatim
-%language.target_name.directive_name directive_value
+%target.target_name.directive_name directive_value
 @endverbatim
 
 Where <tt>target_name</tt> is the name of the target (e.g. <tt>cpp</tt>), <tt>directive_name</tt> is the langspec-specified identifier for the particular directive, and <tt>directive_value</tt> is the value for the directive, of a type specified by the langspec (see @ref langspec_and_codespec for details on these types).  These directives go in the preamble of the primary source, so they are sensitive to newlines; there must not be a newline anywhere between the opening <tt>\%</tt> and the beginning of <tt>directive_value</tt>.
@@ -104,7 +104,7 @@ Where <tt>target_name</tt> is the name of the target (e.g. <tt>cpp</tt>), <tt>di
 In addition to adding the directive values required by the langspec, you must also add code handlers for all regex rules, using the following form.
 
 @verbatim
-    (whatever regex) %language.XXX { code goes here }
+    (whatever regex) %target.XXX { code goes here }
 @endverbatim
 
 These declarations are in the body of the primary source, so are not newline-sensitive.  If rule handler code isn't present for each target for each regex, error messages will be emitted.

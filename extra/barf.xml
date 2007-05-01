@@ -5,26 +5,25 @@
 
     <highlighting>
         <list name="keywords">
-            <item>targets</item>
-            <item>language</item>
+            <item>add_codespec</item>
+            <item>add_optional_directive</item>
+            <item>add_required_directive</item>
+            <item>default</item>
+            <item>dumb_code_block</item>
+            <item>error</item>
+            <item>identifier</item>
+            <item>left</item>
             <item>macro</item>
+            <item>nonassoc</item>
+            <item>prec</item>
+            <item>right</item>
             <item>start</item>
             <item>state</item>
-            <item>token</item>
-            <item>prec</item>
-            <item>left</item>
-            <item>right</item>
-            <item>nonassoc</item>
-            <item>error</item>
-            <item>target</item>
-            <item>add_required_directive</item>
-            <item>add_optional_directive</item>
-            <item>add_codespec</item>
-            <item>string</item>
-            <item>identifier</item>
-            <item>dumb_code_block</item>
             <item>strict_code_block</item>
-            <item>default</item>
+            <item>string</item>
+            <item>target</item>
+            <item>targets</item>
+            <item>token</item>
         </list>
 
         <contexts>

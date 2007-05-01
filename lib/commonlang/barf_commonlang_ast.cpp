@@ -29,11 +29,11 @@ string const &GetAstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[CommonLang::AT_START_CUSTOM_TYPES_HERE_-Ast::AT_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_LANGUAGE_DIRECTIVE",
-        "AT_TARGET",
-        "AT_TARGET_MAP",
         "AT_RULE_HANDLER",
-        "AT_RULE_HANDLER_MAP"
+        "AT_RULE_HANDLER_MAP",
+        "AT_TARGET",
+        "AT_TARGET_DIRECTIVE",
+        "AT_TARGET_MAP"
     };
 
     assert(ast_type < CommonLang::AT_START_CUSTOM_TYPES_HERE_);
@@ -47,17 +47,17 @@ string const &GetAstTypeString (AstType ast_type)
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-string LanguageDirective::GetDirectiveString () const
+string TargetDirective::GetDirectiveString () const
 {
-    assert(m_language_id != NULL);
+    assert(m_target_id != NULL);
     assert(m_directive_id != NULL);
-    return GetText() + "." + m_language_id->GetText() + "." + m_directive_id->GetText();
+    return GetText() + "." + m_target_id->GetText() + "." + m_directive_id->GetText();
 }
 
-void LanguageDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void TargetDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Directive::Print(stream, Stringify, indent_level);
-    m_language_id->Print(stream, Stringify, indent_level+1);
+    m_target_id->Print(stream, Stringify, indent_level+1);
     m_directive_id->Print(stream, Stringify, indent_level+1);
     if (m_directive_value != NULL)
         m_directive_value->Print(stream, Stringify, indent_level+1);
@@ -67,13 +67,13 @@ void LanguageDirective::Print (ostream &stream, StringifyAstType Stringify, Uint
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-Target::Target (string const &language_id)
+Target::Target (string const &target_id)
     :
-    Ast::AstMap<LanguageDirective>(AT_TARGET),
-    m_language_id(language_id),
+    Ast::AstMap<TargetDirective>(AT_TARGET),
+    m_target_id(target_id),
     m_is_enabled_for_code_generation(false)
 {
-    assert(!m_language_id.empty());
+    assert(!m_target_id.empty());
 }
 
 void Target::SetSourcePath (string const &source_path)
@@ -82,18 +82,18 @@ void Target::SetSourcePath (string const &source_path)
     m_source_path = source_path;
 }
 
-void Target::Add (LanguageDirective *language_directive)
+void Target::Add (TargetDirective *target_directive)
 {
     if (m_is_enabled_for_code_generation)
-        Add(language_directive->m_directive_id->GetText(), language_directive);
+        Add(target_directive->m_directive_id->GetText(), target_directive);
     else
-        EmitWarning(language_directive->GetFiLoc(), "undeclared target \"" + language_directive->m_language_id->GetText() + "\"");
+        EmitWarning(target_directive->GetFiLoc(), "undeclared target \"" + target_directive->m_target_id->GetText() + "\"");
 }
 
 void Target::ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser) const
 {
     try {
-        string filename(tool_prefix + '.' + m_language_id + ".langspec");
+        string filename(tool_prefix + '.' + m_target_id + ".langspec");
         m_lang_spec.m_source_path = g_options->GetFilePath(filename);
         if (m_lang_spec.m_source_path.empty())
             EmitError(FiLoc(g_options->GetInputFilename()), "file \"" + filename + "\" not found in search path " + g_options->GetSearchPathString());
@@ -130,7 +130,7 @@ void Target::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Parser &pa
         assert(add_codespec != NULL);
 
         try {
-            string filename(tool_prefix + '.' + m_language_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
+            string filename(tool_prefix + '.' + m_target_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
             string code_spec_filename(g_options->GetFilePath(filename));
             if (code_spec_filename.empty())
                 EmitError(FiLoc(m_lang_spec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetSearchPathString());
@@ -157,7 +157,7 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
 {
     if (!m_is_enabled_for_code_generation)
     {
-        EmitWarning("skipping code generation for target " + m_language_id);
+        EmitWarning("skipping code generation for target " + m_target_id);
         return;
     }
 
@@ -219,45 +219,45 @@ void Target::CheckAgainstLangSpec (LangSpec::Specification const &specification)
         {
             LangSpec::AddDirective const *add_directive = it->second;
             assert(add_directive != NULL);
-            LanguageDirective const *language_directive =
+            TargetDirective const *target_directive =
                 GetElement(add_directive->m_directive_to_add_id->GetText());
-            CheckAgainstAddDirective(*add_directive, language_directive);
+            CheckAgainstAddDirective(*add_directive, target_directive);
         }
     }
 
-    // check that all the language directives are validly specified in the langspec
+    // check that all the target directives are validly specified in the langspec
     for (const_iterator it = begin(),
                         it_end = end();
          it != it_end;
          ++it)
     {
-        LanguageDirective const *language_directive = it->second;
-        assert(language_directive != NULL);
-        if (specification.m_add_directive_map->GetElement(language_directive->m_directive_id->GetText()) == NULL)
+        TargetDirective const *target_directive = it->second;
+        assert(target_directive != NULL);
+        if (specification.m_add_directive_map->GetElement(target_directive->m_directive_id->GetText()) == NULL)
             EmitError(
-                language_directive->GetFiLoc(),
-                "directive " + language_directive->GetDirectiveString() +
-                " does not exist in langspec for " + m_language_id);
+                target_directive->GetFiLoc(),
+                "directive " + target_directive->GetDirectiveString() +
+                " does not exist in langspec for " + m_target_id);
     }
 }
 
 void Target::CheckAgainstAddDirective (
     LangSpec::AddDirective const &add_directive,
-    LanguageDirective const *language_directive) const
+    TargetDirective const *target_directive) const
 {
-    if (language_directive == NULL)
+    if (target_directive == NULL)
     {
         if (add_directive.GetIsRequired())
-            EmitError(FiLoc(g_options->GetInputFilename()), "missing required directive %language." + m_language_id + "." + add_directive.m_directive_to_add_id->GetText());
+            EmitError(FiLoc(g_options->GetInputFilename()), "missing required directive %target." + m_target_id + "." + add_directive.m_directive_to_add_id->GetText());
     }
     else if (add_directive.m_param_type == Ast::AT_NONE)
     {
-        if (language_directive->m_directive_value != NULL)
-            EmitError(language_directive->GetFiLoc(), "superfluous parameter given for directive %language." + language_directive->m_language_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " which does not accept a parameter");
+        if (target_directive->m_directive_value != NULL)
+            EmitError(target_directive->GetFiLoc(), "superfluous parameter given for directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " which does not accept a parameter");
     }
-    else if (language_directive->m_directive_value->GetAstType() != add_directive.m_param_type)
+    else if (target_directive->m_directive_value->GetAstType() != add_directive.m_param_type)
     {
-        EmitError(language_directive->GetFiLoc(), "directive %language." + language_directive->m_language_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " expects " + LangSpec::ParamType::GetParamTypeString(add_directive.m_param_type) + ", got " + LangSpec::ParamType::GetParamTypeString(language_directive->m_directive_value->GetAstType()));
+        EmitError(target_directive->GetFiLoc(), "directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " expects " + LangSpec::ParamType::GetParamTypeString(add_directive.m_param_type) + ", got " + LangSpec::ParamType::GetParamTypeString(target_directive->m_directive_value->GetAstType()));
     }
 }
 
@@ -271,32 +271,32 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
 
     symbol_table.DefineScalarSymbolAsText("_output_directory", FiLoc::ms_invalid, g_options->GetOutputDir());
 
-    // define symbols for each of the specified language directives
+    // define symbols for each of the specified target directives
     for (const_iterator it = begin(),
                         it_end = end();
          it != it_end;
          ++it)
     {
-        LanguageDirective const *language_directive = it->second;
-        assert(language_directive != NULL);
+        TargetDirective const *target_directive = it->second;
+        assert(target_directive != NULL);
         Preprocessor::ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol(
-                language_directive->m_directive_id->GetText(),
-                language_directive->GetFiLoc());
+                target_directive->m_directive_id->GetText(),
+                target_directive->GetFiLoc());
 
-        if (language_directive->m_directive_value != NULL)
+        if (target_directive->m_directive_value != NULL)
         {
             FiLoc const &source_filoc =
-                language_directive->m_directive_value->GetIsCodeBlock() ?
-                language_directive->m_directive_value->GetFiLoc() :
+                target_directive->m_directive_value->GetIsCodeBlock() ?
+                target_directive->m_directive_value->GetFiLoc() :
                 FiLoc::ms_invalid;
-            symbol->SetScalarBody(new Preprocessor::Body(language_directive->m_directive_value->GetText(), source_filoc));
+            symbol->SetScalarBody(new Preprocessor::Body(target_directive->m_directive_value->GetText(), source_filoc));
         }
         else
             symbol->SetScalarBody(new Preprocessor::Body(gs_empty_string, FiLoc::ms_invalid));
     }
 
-    // define symbols for unspecified language directives which have
+    // define symbols for unspecified target directives which have
     // default values in the langspec
     for (LangSpec::AddDirectiveMap::const_iterator it = m_lang_spec.m_specification->m_add_directive_map->begin(),
                                                    it_end = m_lang_spec.m_specification->m_add_directive_map->end();
@@ -332,17 +332,17 @@ void TargetMap::SetSourcePath (string const &source_path)
     }
 }
 
-void TargetMap::AddLanguageDirective (LanguageDirective *language_directive)
+void TargetMap::AddTargetDirective (TargetDirective *target_directive)
 {
-    assert(language_directive != NULL);
-    Target *target = GetElement(language_directive->m_language_id->GetText());
+    assert(target_directive != NULL);
+    Target *target = GetElement(target_directive->m_target_id->GetText());
     if (target == NULL)
     {
-        target = new Target(language_directive->m_language_id->GetText());
-        Add(language_directive->m_language_id->GetText(), target);
+        target = new Target(target_directive->m_target_id->GetText());
+        Add(target_directive->m_target_id->GetText(), target);
     }
     assert(target != NULL);
-    target->Add(language_directive);
+    target->Add(target_directive);
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -352,8 +352,8 @@ void TargetMap::AddLanguageDirective (LanguageDirective *language_directive)
 void RuleHandler::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    if (m_language_id != NULL)
-        m_language_id->Print(stream, Stringify, indent_level+1);
+    if (m_target_id != NULL)
+        m_target_id->Print(stream, Stringify, indent_level+1);
     m_rule_handler_code_block->Print(stream, Stringify, indent_level+1);
 }
 

@@ -48,10 +48,10 @@ public:
         {
             // user-defined terminal, non-single-character tokens
             BAD_TOKEN = 0x100,
-            DIRECTIVE_LANGUAGE,
             DIRECTIVE_MACRO,
             DIRECTIVE_START,
             DIRECTIVE_STATE,
+            DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
             DUMB_CODE_BLOCK,
             END_PREAMBLE,
@@ -68,9 +68,6 @@ public:
             any_type_of_code_block__,
             at_least_one_newline__,
             at_least_zero_newlines__,
-            language_directive__,
-            language_directive_param__,
-            language_directives__,
             macro_directives__,
             root__,
             rule__,
@@ -81,6 +78,9 @@ public:
             scanner_state_rules__,
             scanner_states__,
             start_directive__,
+            target_directive__,
+            target_directive_param__,
+            target_directives__,
             target_ids__,
             targets_directive__,
 
