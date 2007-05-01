@@ -8,7 +8,7 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-%target_languages cpp
+%targets cpp
 
 // ///////////////////////////////////////////////////////////////////////////
 // cpp scanner header-file-related directives
@@ -62,8 +62,8 @@ namespace CommonLang {
             DIRECTIVE_STATE,
             DIRECTIVE_STRICT_CODE_BLOCK,
             DIRECTIVE_STRING,
-            DIRECTIVE_TARGET_LANGUAGE,
-            DIRECTIVE_TARGET_LANGUAGES,
+            DIRECTIVE_TARGET,
+            DIRECTIVE_TARGETS,
             DIRECTIVE_TOKEN,
             DIRECTIVE_TYPE,
             DUMB_CODE_BLOCK,
@@ -151,8 +151,8 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DIRECTIVE_STATE",
         "DIRECTIVE_STRICT_CODE_BLOCK",
         "DIRECTIVE_STRING",
-        "DIRECTIVE_TARGET_LANGUAGE",
-        "DIRECTIVE_TARGET_LANGUAGES",
+        "DIRECTIVE_TARGET",
+        "DIRECTIVE_TARGETS",
         "DIRECTIVE_TOKEN",
         "DIRECTIVE_TYPE",
         "DUMB_CODE_BLOCK",
@@ -218,8 +218,8 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%state") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE; }
     if (accepted_string == "%strict_code_block") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
     if (accepted_string == "%string") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRING; }
-    if (accepted_string == "%target_language") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET_LANGUAGE; }
-    if (accepted_string == "%target_languages") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET_LANGUAGES; }
+    if (accepted_string == "%target") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET; }
+    if (accepted_string == "%targets") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGETS; }
     if (accepted_string == "%token") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TOKEN; }
     if (accepted_string == "%type") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TYPE; }
 

@@ -5,7 +5,7 @@
 
     <highlighting>
         <list name="keywords">
-            <item>target_languages</item>
+            <item>targets</item>
             <item>language</item>
             <item>macro</item>
             <item>start</item>
@@ -16,7 +16,7 @@
             <item>right</item>
             <item>nonassoc</item>
             <item>error</item>
-            <item>target_language</item>
+            <item>target</item>
             <item>add_required_directive</item>
             <item>add_optional_directive</item>
             <item>add_codespec</item>

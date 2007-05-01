@@ -4,7 +4,7 @@
 
 <strong>NOTE: BARF is still under development and is not yet feature-complete.  It is prone to design/API changes without warning, so don't expect to not have to change stuff if you start using it this early.</strong>
 
-The primary tools, <tt>reflex</tt> and <tt>trison</tt> aren't "yet another" incarnation/clone of <tt>flex</tt> and <tt>bison</tt>.  The critical feature is that neither are bound to a particular target language.  The two tools are simply engines for generating abstract state machines.  The generation of code for a specific target language is done via preprocessor and is governed by set of specification files.  See @ref langspec_and_codespec for more information.
+The primary tools, <tt>reflex</tt> and <tt>trison</tt> aren't "yet another" incarnation/clone of <tt>flex</tt> and <tt>bison</tt>.  The critical feature is that neither are bound to a particular target (e.g. C++ only or Java only).  The two tools are simply engines for generating abstract state machines.  The generation of code for a specific target is done via preprocessor and is governed by set of specification files.  See @ref langspec_and_codespec for more information.
 
 Currently included tools are:
 <ul>

@@ -10,7 +10,7 @@
 
 // This is a trison langspec file for a C++ LALR(k) parser class using a
 // nondeterministic pushdown automaton (NPDA).
-%target_language cpp
+%target cpp
 
 // The value of this directive specifies the filename to use when generating
 // the header file (it is used by the below add_codespec directive).

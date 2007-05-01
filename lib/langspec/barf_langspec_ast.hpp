@@ -38,7 +38,7 @@ Ast::Base (abstract)
 // ///////////////////////////////////////////////////////////////////////////
 
 Specification
-    Id (%target_language)
+    Id (%target)
     Ast::CodeBlock (%run_before_code_generation)
     Ast::DirectiveList
         Ast::Directive[]
@@ -173,21 +173,21 @@ struct ParamType : public Ast::Base
 
 struct Specification : public Ast::Base
 {
-    Ast::Id const *const m_target_language_id;
+    Ast::Id const *const m_target_id;
     AddCodeSpecList const *const m_add_codespec_list;
     AddDirectiveMap const *const m_add_directive_map;
 
     Specification (
-        Ast::Id const *target_language_id,
+        Ast::Id const *target_id,
         AddCodeSpecList const *add_codespec_list,
         AddDirectiveMap const *add_directive_map)
         :
-        Ast::Base(target_language_id->GetFiLoc(), AT_SPECIFICATION),
-        m_target_language_id(target_language_id),
+        Ast::Base(target_id->GetFiLoc(), AT_SPECIFICATION),
+        m_target_id(target_id),
         m_add_codespec_list(add_codespec_list),
         m_add_directive_map(add_directive_map)
     {
-        assert(m_target_language_id != NULL);
+        assert(m_target_id != NULL);
         assert(m_add_directive_map != NULL);
         assert(m_add_codespec_list != NULL);
     }

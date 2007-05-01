@@ -79,59 +79,59 @@ int main (int argc, char **argv)
             if (GetOptions()->GetShowLangSpecParsingSpew())
                 parser.SetDebugSpewLevel(2);
 
-            for (CommonLang::TargetLanguageMap::const_iterator it = representation->m_target_language_map->begin(),
-                                                               it_end = representation->m_target_language_map->end();
+            for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
+                                                       it_end = representation->m_target_map->end();
                  it != it_end;
                  ++it)
             {
-                CommonLang::TargetLanguage const *target_language = it->second;
-                assert(target_language != NULL);
-                target_language->ParseLangSpec("reflex", parser);
+                CommonLang::Target const *target = it->second;
+                assert(target != NULL);
+                target->ParseLangSpec("reflex", parser);
             }
         }
         if (g_errors_encountered)
             return 5;
 
-        // for each codespec in every target language, parse the
+        // for each codespec in every target, parse the
         // codespec and make all checks possible at this time.
         {
             Preprocessor::Parser parser;
             if (GetOptions()->GetShowPreprocessorParsingSpew())
                 parser.SetDebugSpewLevel(2);
 
-            for (CommonLang::TargetLanguageMap::const_iterator it = representation->m_target_language_map->begin(),
-                                                               it_end = representation->m_target_language_map->end();
+            for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
+                                                       it_end = representation->m_target_map->end();
                  it != it_end;
                  ++it)
             {
-                CommonLang::TargetLanguage const *target_language = it->second;
-                assert(target_language != NULL);
-                target_language->ParseCodeSpecs("reflex", parser);
+                CommonLang::Target const *target = it->second;
+                assert(target != NULL);
+                target->ParseCodeSpecs("reflex", parser);
             }
         }
         if (g_errors_encountered)
             return 6;
 
-        // for each target language, fill in an empty Preprocessor::SymbolTable
+        // for each target, fill in an empty Preprocessor::SymbolTable
         // with the macros to be used by the codespecs, and execute each codespec,
         // each with its own copy of the symbol table.
         {
             Preprocessor::SymbolTable global_symbol_table;
             representation->GenerateAutomatonSymbols(global_symbol_table);
 
-            for (CommonLang::TargetLanguageMap::const_iterator it = representation->m_target_language_map->begin(),
-                                                               it_end = representation->m_target_language_map->end();
+            for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
+                                                       it_end = representation->m_target_map->end();
                  it != it_end;
                  ++it)
             {
-                string const &target_language_id = it->first;
-                CommonLang::TargetLanguage const *target_language = it->second;
-                assert(target_language != NULL);
+                string const &target_id = it->first;
+                CommonLang::Target const *target = it->second;
+                assert(target != NULL);
 
                 Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
 
-                representation->GenerateTargetLanguageDependentSymbols(target_language_id, local_symbol_table);
-                target_language->GenerateCode(local_symbol_table);
+                representation->GenerateTargetDependentSymbols(target_id, local_symbol_table);
+                target->GenerateCode(local_symbol_table);
             }
         }
         if (g_errors_encountered)

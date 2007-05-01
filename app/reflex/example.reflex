@@ -1,4 +1,4 @@
-%target_languages cpp
+%targets cpp
 
 %language.cpp.class_name Scanner
 

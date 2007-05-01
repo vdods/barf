@@ -22,7 +22,7 @@ class Base;
 
 namespace CommonLang {
 
-class TargetLanguageMap;
+class TargetMap;
 
 } // end of namespace CommonLang
 
@@ -52,7 +52,7 @@ public:
             DIRECTIVE_MACRO,
             DIRECTIVE_START,
             DIRECTIVE_STATE,
-            DIRECTIVE_TARGET_LANGUAGES,
+            DIRECTIVE_TARGETS,
             DUMB_CODE_BLOCK,
             END_PREAMBLE,
             ID,
@@ -81,8 +81,8 @@ public:
             scanner_state_rules__,
             scanner_states__,
             start_directive__,
-            target_language_ids__,
-            target_languages_directive__,
+            target_ids__,
+            targets_directive__,
 
             // special start nonterminal
             START_,
@@ -132,7 +132,7 @@ private:
     Token::Type Scan ();
 
     CommonLang::Scanner m_scanner;
-    CommonLang::TargetLanguageMap *m_target_language_map;
+    CommonLang::TargetMap *m_target_map;
     Regex::RegularExpressionMap *m_regex_macro_map;
 
 #line 139 "reflex_parser.hpp"

@@ -30,8 +30,8 @@ string const &GetAstTypeString (AstType ast_type)
     static string const s_ast_type_string[CommonLang::AT_START_CUSTOM_TYPES_HERE_-Ast::AT_START_CUSTOM_TYPES_HERE_] =
     {
         "AT_LANGUAGE_DIRECTIVE",
-        "AT_TARGET_LANGUAGE",
-        "AT_TARGET_LANGUAGE_MAP",
+        "AT_TARGET",
+        "AT_TARGET_MAP",
         "AT_RULE_HANDLER",
         "AT_RULE_HANDLER_MAP"
     };
@@ -67,30 +67,30 @@ void LanguageDirective::Print (ostream &stream, StringifyAstType Stringify, Uint
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-TargetLanguage::TargetLanguage (string const &language_id)
+Target::Target (string const &language_id)
     :
-    Ast::AstMap<LanguageDirective>(AT_TARGET_LANGUAGE),
+    Ast::AstMap<LanguageDirective>(AT_TARGET),
     m_language_id(language_id),
     m_is_enabled_for_code_generation(false)
 {
     assert(!m_language_id.empty());
 }
 
-void TargetLanguage::SetSourcePath (string const &source_path)
+void Target::SetSourcePath (string const &source_path)
 {
     assert(!source_path.empty());
     m_source_path = source_path;
 }
 
-void TargetLanguage::Add (LanguageDirective *language_directive)
+void Target::Add (LanguageDirective *language_directive)
 {
     if (m_is_enabled_for_code_generation)
         Add(language_directive->m_directive_id->GetText(), language_directive);
     else
-        EmitWarning(language_directive->GetFiLoc(), "undeclared target language \"" + language_directive->m_language_id->GetText() + "\"");
+        EmitWarning(language_directive->GetFiLoc(), "undeclared target \"" + language_directive->m_language_id->GetText() + "\"");
 }
 
-void TargetLanguage::ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser) const
+void Target::ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser) const
 {
     try {
         string filename(tool_prefix + '.' + m_language_id + ".langspec");
@@ -115,7 +115,7 @@ void TargetLanguage::ParseLangSpec (string const &tool_prefix, LangSpec::Parser 
     }
 }
 
-void TargetLanguage::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Parser &parser) const
+void Target::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Parser &parser) const
 {
     assert(!m_lang_spec.m_source_path.empty());
     assert(m_lang_spec.m_specification != NULL);
@@ -153,18 +153,18 @@ void TargetLanguage::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Pa
     }
 }
 
-void TargetLanguage::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
+void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
 {
     if (!m_is_enabled_for_code_generation)
     {
-        EmitWarning("skipping code generation for target language " + m_language_id);
+        EmitWarning("skipping code generation for target " + m_language_id);
         return;
     }
 
-    Preprocessor::SymbolTable target_language_symbol_table(symbol_table);
-    GenerateTargetLanguageSymbols(target_language_symbol_table);
+    Preprocessor::SymbolTable target_symbol_table(symbol_table);
+    GenerateTargetSymbols(target_symbol_table);
 
-    target_language_symbol_table.DefineScalarSymbolAsText(
+    target_symbol_table.DefineScalarSymbolAsText(
         "_creation_timestamp",
         FiLoc::ms_invalid,
         GetCurrentDateAndTimeString());
@@ -184,7 +184,7 @@ void TargetLanguage::GenerateCode (Preprocessor::SymbolTable const &symbol_table
             EmitError(FiLoc(g_options->GetInputFilename()), "could not open file \"" + filename + "\" for writing");
         else
         {
-            Preprocessor::SymbolTable code_spec_symbol_table(target_language_symbol_table);
+            Preprocessor::SymbolTable code_spec_symbol_table(target_symbol_table);
 
             code_spec_symbol_table.DefineScalarSymbolAsText(
                 "_codespec_directory",
@@ -207,7 +207,7 @@ void TargetLanguage::GenerateCode (Preprocessor::SymbolTable const &symbol_table
     }
 }
 
-void TargetLanguage::CheckAgainstLangSpec (LangSpec::Specification const &specification) const
+void Target::CheckAgainstLangSpec (LangSpec::Specification const &specification) const
 {
     // if checks are enabled, check that all the required directives are present
     if (m_is_enabled_for_code_generation)
@@ -241,7 +241,7 @@ void TargetLanguage::CheckAgainstLangSpec (LangSpec::Specification const &specif
     }
 }
 
-void TargetLanguage::CheckAgainstAddDirective (
+void Target::CheckAgainstAddDirective (
     LangSpec::AddDirective const &add_directive,
     LanguageDirective const *language_directive) const
 {
@@ -261,7 +261,7 @@ void TargetLanguage::CheckAgainstAddDirective (
     }
 }
 
-void TargetLanguage::GenerateTargetLanguageSymbols (Preprocessor::SymbolTable &symbol_table) const
+void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) const
 {
     symbol_table.DefineScalarSymbolAsText("_source_directory", FiLoc::ms_invalid, GetDirectoryPortion(m_source_path));
     symbol_table.DefineScalarSymbolAsText("_source_filename", FiLoc::ms_invalid, GetFilenamePortion(m_source_path));
@@ -321,28 +321,28 @@ void TargetLanguage::GenerateTargetLanguageSymbols (Preprocessor::SymbolTable &s
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-void TargetLanguageMap::SetSourcePath (string const &source_path)
+void TargetMap::SetSourcePath (string const &source_path)
 {
     assert(!source_path.empty());
     for (iterator it = begin(), it_end = end(); it != it_end; ++it)
     {
-        TargetLanguage *target_language = it->second;
-        assert(target_language != NULL);
-        target_language->SetSourcePath(source_path);
+        Target *target = it->second;
+        assert(target != NULL);
+        target->SetSourcePath(source_path);
     }
 }
 
-void TargetLanguageMap::AddLanguageDirective (LanguageDirective *language_directive)
+void TargetMap::AddLanguageDirective (LanguageDirective *language_directive)
 {
     assert(language_directive != NULL);
-    TargetLanguage *target_language = GetElement(language_directive->m_language_id->GetText());
-    if (target_language == NULL)
+    Target *target = GetElement(language_directive->m_language_id->GetText());
+    if (target == NULL)
     {
-        target_language = new TargetLanguage(language_directive->m_language_id->GetText());
-        Add(language_directive->m_language_id->GetText(), target_language);
+        target = new Target(language_directive->m_language_id->GetText());
+        Add(language_directive->m_language_id->GetText(), target);
     }
-    assert(target_language != NULL);
-    target_language->Add(language_directive);
+    assert(target != NULL);
+    target->Add(language_directive);
 }
 
 // ///////////////////////////////////////////////////////////////////////////

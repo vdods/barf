@@ -10,7 +10,7 @@
 
 // This is a reflex langspec file for a C++ lexical scanner class using a
 // deterministic finite automaton (DFA).
-%target_language cpp
+%target cpp
 
 // The value of this directive specifies the filename to use when generating
 // the header file (it is used by the below add_codespec directive).

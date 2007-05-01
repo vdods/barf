@@ -100,7 +100,7 @@ struct Rule : public Ast::Base
 
     void GenerateNfa (Graph &graph, Uint32 start_index, Uint32 end_index) const;
     void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_language_id,
+        string const &target_id,
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -140,7 +140,7 @@ struct ScannerState : public Ast::Base
         vector<Uint32> &start_state_index_array,
         Uint32 &next_accept_handler_index) const;
     void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_language_id,
+        string const &target_id,
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -155,32 +155,32 @@ class Representation : public Ast::Base
 {
 public:
 
-    CommonLang::TargetLanguageMap const *const m_target_language_map;
+    CommonLang::TargetMap const *const m_target_map;
     Regex::RegularExpressionMap *const m_regex_macro_map; // this could technically go away
     StartDirective const *const m_start_directive;
     ScannerStateMap const *const m_scanner_state_map;
 
     Representation (
-        CommonLang::TargetLanguageMap const *target_language_map,
+        CommonLang::TargetMap const *target_map,
         Regex::RegularExpressionMap *regex_macro_map,
         StartDirective const *start_directive,
         FiLoc const &end_preamble_filoc,
         ScannerStateMap const *scanner_state_map)
         :
-        Ast::Base(target_language_map->GetFiLoc(), AT_REPRESENTATION),
-        m_target_language_map(target_language_map),
+        Ast::Base(target_map->GetFiLoc(), AT_REPRESENTATION),
+        m_target_map(target_map),
         m_regex_macro_map(regex_macro_map),
         m_start_directive(start_directive),
         m_scanner_state_map(scanner_state_map),
         m_next_accept_handler_index(0)
     {
-        assert(m_target_language_map != NULL);
+        assert(m_target_map != NULL);
         assert(m_regex_macro_map != NULL);
         // m_start_directive can be NULL if an error happened
         assert(m_scanner_state_map != NULL);
     }
 
-    CommonLang::TargetLanguageMap const &GetTargetLanguageMap () const { return *m_target_language_map; }
+    CommonLang::TargetMap const &GetTargetMap () const { return *m_target_map; }
     Uint32 GetAcceptHandlerCount () const;
     Rule const *GetAcceptHandlerRule (Uint32 rule_index) const;
     Graph const &GetNfaGraph () const { return m_nfa_graph; }
@@ -191,8 +191,8 @@ public:
     void PrintDfaGraph (string const &filename, string const &graph_name) const;
     void GenerateAutomatonSymbols (
         Preprocessor::SymbolTable &symbol_table) const;
-    void GenerateTargetLanguageDependentSymbols (
-        string const &target_language_id,
+    void GenerateTargetDependentSymbols (
+        string const &target_id,
         Preprocessor::SymbolTable &symbol_table) const;
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.

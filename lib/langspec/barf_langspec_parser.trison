@@ -99,7 +99,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_ID:              return Parser::Token::DIRECTIVE_ID;
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:       return Parser::Token::DIRECTIVE_STRICT_CODE_BLOCK;
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:                  return Parser::Token::DIRECTIVE_STRING;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:         return Parser::Token::DIRECTIVE_TARGET_LANGUAGE;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:         return Parser::Token::DIRECTIVE_TARGET;
         case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                   return Parser::Token::DUMB_CODE_BLOCK;
         case CommonLang::Scanner::Token::END_OF_FILE:                       return Parser::Token::END_;
         case CommonLang::Scanner::Token::ID:                        return Parser::Token::ID;
@@ -117,7 +117,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
         case CommonLang::Scanner::Token::DIRECTIVE_START:
         case CommonLang::Scanner::Token::DIRECTIVE_STATE:
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGES:
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:
         case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
         case CommonLang::Scanner::Token::END_PREAMBLE:
@@ -151,7 +151,7 @@ Parser::Token::Type Parser::Scan ()
 %token DIRECTIVE_ID
 %token DIRECTIVE_STRICT_CODE_BLOCK
 %token DIRECTIVE_STRING
-%token DIRECTIVE_TARGET_LANGUAGE %type "Ast::ThrowAway *"
+%token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
 %token DUMB_CODE_BLOCK %type "Ast::DumbCodeBlock *"
 %token ID %type "Ast::Id *"
 %token NEWLINE
@@ -169,25 +169,25 @@ Parser::Token::Type Parser::Scan ()
 root %type "Specification *"
 :
     at_least_zero_newlines
-    target_language:target_language
+    target:target
     directives
     {
         assert(m_add_codespec_list != NULL);
         assert(m_add_directive_map != NULL);
         return new Specification(
-            target_language,
+            target,
             m_add_codespec_list,
             m_add_directive_map);
     }
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
-// target language rules
+// target rules
 // ///////////////////////////////////////////////////////////////////////////
 
-target_language %type "Ast::Id *"
+target %type "Ast::Id *"
 :
-    DIRECTIVE_TARGET_LANGUAGE:throwaway ID:language_id at_least_one_newline
+    DIRECTIVE_TARGET:throwaway ID:language_id at_least_one_newline
     {
         delete throwaway;
         return language_id;

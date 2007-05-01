@@ -94,11 +94,11 @@ void Rule::SetAcceptStateIndex (Uint32 accept_state_index) const
 }
 
 void Rule::PopulateAcceptHandlerCodeArraySymbol (
-    string const &target_language_id,
+    string const &target_id,
     Preprocessor::ArraySymbol *accept_handler_code_symbol) const
 {
     assert(accept_handler_code_symbol != NULL);
-    CommonLang::RuleHandler const *rule_handler = m_rule_handler_map->GetElement(target_language_id);
+    CommonLang::RuleHandler const *rule_handler = m_rule_handler_map->GetElement(target_id);
     if (rule_handler != NULL)
     {
         Ast::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
@@ -148,7 +148,7 @@ void Nonterminal::SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda
 }
 
 void Nonterminal::PopulateAcceptHandlerCodeArraySymbol (
-    string const &target_language_id,
+    string const &target_id,
     Preprocessor::ArraySymbol *accept_handler_code_symbol) const
 {
     assert(accept_handler_code_symbol != NULL);
@@ -160,7 +160,7 @@ void Nonterminal::PopulateAcceptHandlerCodeArraySymbol (
     {
         Rule const *rule = *it;
         assert(rule != NULL);
-        rule->PopulateAcceptHandlerCodeArraySymbol(target_language_id, accept_handler_code_symbol);
+        rule->PopulateAcceptHandlerCodeArraySymbol(target_id, accept_handler_code_symbol);
     }
 }
 
@@ -725,8 +725,8 @@ void Representation::GenerateAutomatonSymbols (
     }
 }
 
-void Representation::GenerateTargetLanguageDependentSymbols (
-    string const &target_language_id,
+void Representation::GenerateTargetDependentSymbols (
+    string const &target_id,
     Preprocessor::SymbolTable &symbol_table) const
 {
     // _accept_handler_code[_rule_count] -- specifies code for all accept handlers.
@@ -742,7 +742,7 @@ void Representation::GenerateTargetLanguageDependentSymbols (
             Nonterminal const *nonterminal = it->second;
             assert(nonterminal != NULL);
             nonterminal->PopulateAcceptHandlerCodeArraySymbol(
-                target_language_id,
+                target_id,
                 accept_handler_code_symbol);
         }
     }
@@ -766,7 +766,7 @@ void Representation::Print (ostream &stream, Uint32 indent_level) const
 void Representation::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
-    m_target_language_map->Print(stream, Stringify, indent_level+1);
+    m_target_map->Print(stream, Stringify, indent_level+1);
     m_token_map->Print(stream, Stringify, indent_level+1);
     m_precedence_map->Print(stream, Stringify, indent_level+1);
     stream << Tabs(indent_level+1) << "start nonterminal: " << m_start_nonterminal_id << endl;

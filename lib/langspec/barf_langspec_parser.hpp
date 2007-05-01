@@ -45,7 +45,7 @@ public:
             DIRECTIVE_ID,
             DIRECTIVE_STRICT_CODE_BLOCK,
             DIRECTIVE_STRING,
-            DIRECTIVE_TARGET_LANGUAGE,
+            DIRECTIVE_TARGET,
             DUMB_CODE_BLOCK,
             ID,
             NEWLINE,
@@ -64,7 +64,7 @@ public:
             directives__,
             param_spec__,
             root__,
-            target_language__,
+            target__,
 
             // special start nonterminal
             START_,

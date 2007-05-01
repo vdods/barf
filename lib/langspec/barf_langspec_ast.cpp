@@ -43,7 +43,7 @@ void Specification::Print (ostream &stream, Uint32 indent_level) const
 void Specification::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
-    stream << Tabs(indent_level+1) << "target language: " << m_target_language_id->GetText() << endl;
+    stream << Tabs(indent_level+1) << "target: " << m_target_id->GetText() << endl;
     m_add_directive_map->Print(stream, Stringify, indent_level+1);
     m_add_codespec_list->Print(stream, Stringify, indent_level+1);
 }

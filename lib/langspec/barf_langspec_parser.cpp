@@ -431,7 +431,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
         "DIRECTIVE_ID",
         "DIRECTIVE_STRICT_CODE_BLOCK",
         "DIRECTIVE_STRING",
-        "DIRECTIVE_TARGET_LANGUAGE",
+        "DIRECTIVE_TARGET",
         "DUMB_CODE_BLOCK",
         "ID",
         "NEWLINE",
@@ -447,7 +447,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
         "directives",
         "param_spec",
         "root",
-        "target_language",
+        "target",
         "START_",
 
         "%error",
@@ -486,18 +486,18 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
     return NULL;
 }
 
-// rule 1: root <- at_least_zero_newlines target_language:target_language directives    
+// rule 1: root <- at_least_zero_newlines target:target directives    
 Ast::Base * Parser::ReductionRuleHandler0001 ()
 {
     assert(1 < m_reduction_rule_token_count);
-    Ast::Id * target_language = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    Ast::Id * target = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 174 "barf_langspec_parser.trison"
 
         assert(m_add_codespec_list != NULL);
         assert(m_add_directive_map != NULL);
         return new Specification(
-            target_language,
+            target,
             m_add_codespec_list,
             m_add_directive_map);
     
@@ -505,7 +505,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
     return NULL;
 }
 
-// rule 2: target_language <- DIRECTIVE_TARGET_LANGUAGE:throwaway ID:language_id at_least_one_newline    
+// rule 2: target <- DIRECTIVE_TARGET:throwaway ID:language_id at_least_one_newline    
 Ast::Base * Parser::ReductionRuleHandler0002 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -809,8 +809,8 @@ Ast::Base * Parser::ReductionRuleHandler0022 ()
 Parser::ReductionRule const Parser::ms_reduction_rule[] =
 {
     {                 Token::START_,  2, &Parser::ReductionRuleHandler0000, "rule 0: %start <- root END_    "},
-    {                 Token::root__,  3, &Parser::ReductionRuleHandler0001, "rule 1: root <- at_least_zero_newlines target_language directives    "},
-    {      Token::target_language__,  3, &Parser::ReductionRuleHandler0002, "rule 2: target_language <- DIRECTIVE_TARGET_LANGUAGE ID at_least_one_newline    "},
+    {                 Token::root__,  3, &Parser::ReductionRuleHandler0001, "rule 1: root <- at_least_zero_newlines target directives    "},
+    {               Token::target__,  3, &Parser::ReductionRuleHandler0002, "rule 2: target <- DIRECTIVE_TARGET ID at_least_one_newline    "},
     {           Token::directives__,  3, &Parser::ReductionRuleHandler0003, "rule 3: directives <- directives add_codespec at_least_one_newline    "},
     {           Token::directives__,  3, &Parser::ReductionRuleHandler0004, "rule 4: directives <- directives add_directive at_least_one_newline    "},
     {           Token::directives__,  0, &Parser::ReductionRuleHandler0005, "rule 5: directives <-     "},
@@ -916,10 +916,10 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state    2
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {Token::DIRECTIVE_TARGET_LANGUAGE, {        TA_SHIFT_AND_PUSH_STATE,    4}},
+    {       Token::DIRECTIVE_TARGET, {        TA_SHIFT_AND_PUSH_STATE,    4}},
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,    5}},
     // nonterminal transitions
-    {      Token::target_language__, {                  TA_PUSH_STATE,    6}},
+    {               Token::target__, {                  TA_PUSH_STATE,    6}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state    3
@@ -1187,7 +1187,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_ID:              return Parser::Token::DIRECTIVE_ID;
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:       return Parser::Token::DIRECTIVE_STRICT_CODE_BLOCK;
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:                  return Parser::Token::DIRECTIVE_STRING;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:         return Parser::Token::DIRECTIVE_TARGET_LANGUAGE;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:         return Parser::Token::DIRECTIVE_TARGET;
         case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                   return Parser::Token::DUMB_CODE_BLOCK;
         case CommonLang::Scanner::Token::END_OF_FILE:                       return Parser::Token::END_;
         case CommonLang::Scanner::Token::ID:                        return Parser::Token::ID;
@@ -1205,7 +1205,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
         case CommonLang::Scanner::Token::DIRECTIVE_START:
         case CommonLang::Scanner::Token::DIRECTIVE_STATE:
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGES:
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:
         case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
         case CommonLang::Scanner::Token::END_PREAMBLE:

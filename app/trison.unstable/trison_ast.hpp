@@ -147,7 +147,7 @@ struct Rule : public Ast::Base
     void SetAcceptStateIndex (Uint32 accept_state_index) const;
 
     void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_language_id,
+        string const &target_id,
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -194,7 +194,7 @@ struct Nonterminal : public Ast::Base
     void SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda_graph_head_state, Uint32 npda_graph_return_state) const;
 
     void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_language_id,
+        string const &target_id,
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -265,7 +265,7 @@ struct PrecedenceList : public Ast::AstList<Precedence>
 
 struct Representation : public Ast::Base
 {
-    CommonLang::TargetLanguageMap const *const m_target_language_map;
+    CommonLang::TargetMap const *const m_target_map;
     TokenMap const *const m_token_map;
     PrecedenceMap const *const m_precedence_map;
     PrecedenceList const *const m_precedence_list;
@@ -274,7 +274,7 @@ struct Representation : public Ast::Base
     NonterminalList const *const m_nonterminal_list;
 
     Representation (
-        CommonLang::TargetLanguageMap const *target_language_map,
+        CommonLang::TargetMap const *target_map,
         TokenMap const *token_map,
         PrecedenceMap const *precedence_map,
         PrecedenceList const *precedence_list,
@@ -284,7 +284,7 @@ struct Representation : public Ast::Base
         NonterminalList const *nonterminal_list)
         :
         Ast::Base(filoc, AT_REPRESENTATION),
-        m_target_language_map(target_language_map),
+        m_target_map(target_map),
         m_token_map(token_map),
         m_precedence_map(precedence_map),
         m_precedence_list(precedence_list),
@@ -292,7 +292,7 @@ struct Representation : public Ast::Base
         m_nonterminal_map(nonterminal_map),
         m_nonterminal_list(nonterminal_list)
     {
-        assert(m_target_language_map != NULL);
+        assert(m_target_map != NULL);
         assert(m_token_map != NULL);
         assert(m_precedence_map != NULL);
         assert(m_precedence_list != NULL);
@@ -311,8 +311,8 @@ struct Representation : public Ast::Base
     void PrintDpdaGraph (string const &filename, string const &graph_name) const;
     void GenerateAutomatonSymbols (
         Preprocessor::SymbolTable &symbol_table) const;
-    void GenerateTargetLanguageDependentSymbols (
-        string const &target_language_id,
+    void GenerateTargetDependentSymbols (
+        string const &target_id,
         Preprocessor::SymbolTable &symbol_table) const;
     void AssignRuleIndices ();
     // this is the non-virtual, top-level Print method, not

@@ -88,6 +88,7 @@ doc/doxygen_pages/references.dox
 doc/doxygen_pages/reflex.dox
 doc/doxygen_pages/reflex_guts.dox
 doc/doxygen_pages/regexes_in_barf.dox
+extra/barf.xml
 lib/commonlang/barf_commonlang.hpp
 lib/commonlang/barf_commonlang_ast.cpp
 lib/commonlang/barf_commonlang_ast.hpp

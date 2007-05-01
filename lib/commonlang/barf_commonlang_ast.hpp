@@ -41,8 +41,8 @@ namespace CommonLang {
 enum
 {
     AT_LANGUAGE_DIRECTIVE = Ast::AT_START_CUSTOM_TYPES_HERE_,
-    AT_TARGET_LANGUAGE,
-    AT_TARGET_LANGUAGE_MAP,
+    AT_TARGET,
+    AT_TARGET_MAP,
     AT_RULE_HANDLER,
     AT_RULE_HANDLER_MAP,
 
@@ -78,23 +78,23 @@ public:
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class LanguageDirective
 
-class TargetLanguage : public Ast::AstMap<LanguageDirective>
+class Target : public Ast::AstMap<LanguageDirective>
 {
 public:
 
     string const m_language_id;
 
-    TargetLanguage (string const &language_id);
+    Target (string const &language_id);
 
-    // this is called on a TargetLanguage which appears in %target_languages
+    // this is called on a Target which appears in %targets
     // and will enable specific error checking required for later code generation
     void EnableCodeGeneration () { m_is_enabled_for_code_generation = true; }
-    // sets the primary source path which was used to generate this target language
+    // sets the primary source path which was used to generate this target
     void SetSourcePath (string const &source_path);
     // attempts to add a language directive, but will warn and not add if this
-    // target language is not enabled for code generation.
+    // target is not enabled for code generation.
     void Add (LanguageDirective *language_directive);
-    // parses the langspec file corresponding to this target language.
+    // parses the langspec file corresponding to this target.
     void ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser) const;
     // parses all the codespecs specified in m_lang_spec and adds the
     // parsed Preprocessor::Body instances to m_codespec_body_list.
@@ -110,14 +110,14 @@ private:
     void CheckAgainstAddDirective (
         LangSpec::AddDirective const &add_directive,
         LanguageDirective const *language_directive) const;
-    // adds language directives -- specific to this target language
-    void GenerateTargetLanguageSymbols (Preprocessor::SymbolTable &symbol_table) const;
+    // adds language directives -- specific to this target
+    void GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) const;
 
     struct ParsedLangSpec
     {
         LangSpec::Specification const *m_specification;
         string m_source_path;
-    }; // end of struct TargetLanguage::ParsedLangSpec
+    }; // end of struct Target::ParsedLangSpec
 
     struct ParsedCodeSpec
     {
@@ -138,7 +138,7 @@ private:
             assert(m_codespec_body != NULL);
             assert(!m_source_path.empty());
         }
-    }; // end of struct TargetLanguage::ParsedCodeSpec
+    }; // end of struct Target::ParsedCodeSpec
 
     typedef vector<ParsedCodeSpec> ParsedCodeSpecList;
 
@@ -148,21 +148,21 @@ private:
     mutable ParsedCodeSpecList m_code_spec_list;
 
     using Ast::AstMap<LanguageDirective>::Add;
-}; // end of class TargetLanguage
+}; // end of class Target
 
-struct TargetLanguageMap : public Ast::AstMap<TargetLanguage>
+struct TargetMap : public Ast::AstMap<Target>
 {
-    TargetLanguageMap () : Ast::AstMap<TargetLanguage>(AT_TARGET_LANGUAGE_MAP) { }
+    TargetMap () : Ast::AstMap<Target>(AT_TARGET_MAP) { }
 
-    // sets the path of the primary source file on each TargetLanguage
+    // sets the path of the primary source file on each Target
     void SetSourcePath (string const &source_path);
-    // adds the given LanguageDirective to the corresponding TargetLanguage if
-    // the TargetLanguage exists, otherwise it creates the TargetLanguage before
+    // adds the given LanguageDirective to the corresponding Target if
+    // the Target exists, otherwise it creates the Target before
     // adding the LanguageDirective.
     void AddLanguageDirective (LanguageDirective *language_directive);
 
-    using Ast::AstMap<TargetLanguage>::Add;
-}; // end of struct TargetLanguageMap
+    using Ast::AstMap<Target>::Add;
+}; // end of struct TargetMap
 
 struct RuleHandler : public Ast::Base
 {

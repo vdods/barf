@@ -24,7 +24,7 @@ class IntegerMap;
 
 namespace CommonLang {
 
-class TargetLanguageMap;
+class TargetMap;
 
 } // end of namespace CommonLang
 } // end of namespace Barf
@@ -57,7 +57,7 @@ public:
             DIRECTIVE_PREC,
             DIRECTIVE_RIGHT,
             DIRECTIVE_START,
-            DIRECTIVE_TARGET_LANGUAGES,
+            DIRECTIVE_TARGETS,
             DIRECTIVE_TOKEN,
             DIRECTIVE_TYPE,
             DUMB_CODE_BLOCK,
@@ -92,8 +92,8 @@ public:
             rule_token_list__,
             rules__,
             start_directive__,
-            target_language_ids__,
-            target_languages_directive__,
+            target_ids__,
+            targets_directive__,
             token__,
             token_directive__,
             token_directives__,
@@ -148,7 +148,7 @@ private:
     Token::Type Scan ();
 
     CommonLang::Scanner m_scanner;
-    CommonLang::TargetLanguageMap *m_target_language_map;
+    CommonLang::TargetMap *m_target_map;
     TokenMap *m_token_map;
     PrecedenceList *m_precedence_list;
     PrecedenceMap *m_precedence_map;

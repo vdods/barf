@@ -38,6 +38,10 @@
   locations of their component parts.  this technique will be useful later in
   compiler design for debugging info.
 - add metaprogramming stuff for integer types and compile time asserts
+- make all AST classes dumb storage containers with external, non-member
+  functions which operate on them (unless it's more practical to use member
+  functions in a particular case).  this will make the separation of systems
+  clearer.
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -73,7 +77,7 @@
 
 - allow using the value of previously declared directive ids as default values
 - confirm that the declared name matches the filename
-- eventually rename TargetLanguage into Target (%language -> %target ?)
+- rename %language into %target (and friends)
 - add new "add_optional_codespec" directive which requires the directive
   id of an add_optional_directive, for optional output files (like
   baseclasses which could be common to multiple parsers/scanners), then change

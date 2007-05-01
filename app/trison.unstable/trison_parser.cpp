@@ -77,7 +77,7 @@ Parser::ParserReturnCode Parser::Parse ()
 
 #line 90 "trison_parser.trison"
 
-    m_target_language_map = NULL;
+    m_target_map = NULL;
     m_token_map = NULL;
     m_precedence_list = NULL;
     m_precedence_map = NULL;
@@ -434,7 +434,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
         "DIRECTIVE_PREC",
         "DIRECTIVE_RIGHT",
         "DIRECTIVE_START",
-        "DIRECTIVE_TARGET_LANGUAGES",
+        "DIRECTIVE_TARGETS",
         "DIRECTIVE_TOKEN",
         "DIRECTIVE_TYPE",
         "DUMB_CODE_BLOCK",
@@ -466,8 +466,8 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
         "rule_token_list",
         "rules",
         "start_directive",
-        "target_language_ids",
-        "target_languages_directive",
+        "target_ids",
+        "targets_directive",
         "token",
         "token_directive",
         "token_directives",
@@ -511,11 +511,11 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
     return NULL;
 }
 
-// rule 1: root <- at_least_zero_newlines target_languages_directive:target_language_map language_directives token_directives:token_map precedence_directives:precedence_map start_directive:start_nonterminal_id END_PREAMBLE:throwaway nonterminals:nonterminal_map    
+// rule 1: root <- at_least_zero_newlines targets_directive:target_map language_directives token_directives:token_map precedence_directives:precedence_map start_directive:start_nonterminal_id END_PREAMBLE:throwaway nonterminals:nonterminal_map    
 Ast::Base * Parser::ReductionRuleHandler0001 ()
 {
     assert(1 < m_reduction_rule_token_count);
-    CommonLang::TargetLanguageMap * target_language_map = Dsc< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    CommonLang::TargetMap * target_map = Dsc< CommonLang::TargetMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(3 < m_reduction_rule_token_count);
     TokenMap * token_map = Dsc< TokenMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(4 < m_reduction_rule_token_count);
@@ -529,8 +529,8 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
 
 #line 202 "trison_parser.trison"
 
-        assert(m_target_language_map != NULL);
-        assert(target_language_map == m_target_language_map);
+        assert(m_target_map != NULL);
+        assert(target_map == m_target_map);
         assert(m_token_map != NULL);
         assert(token_map == m_token_map);
         assert(m_precedence_list != NULL);
@@ -538,8 +538,8 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
         assert(m_precedence_map == precedence_map);
         assert(m_nonterminal_list != NULL);
 
-        // set the TargetLanguageMap's primary source path
-        target_language_map->SetSourcePath(m_scanner.GetInputName());
+        // set the TargetMap's primary source path
+        target_map->SetSourcePath(m_scanner.GetInputName());
         // make sure the %start directive value specifies a real scanner state
         if (start_nonterminal_id != NULL &&
             nonterminal_map->GetElement(start_nonterminal_id->GetText()) == NULL)
@@ -551,7 +551,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
 
         Representation *representation =
             new Representation(
-                target_language_map,
+                target_map,
                 token_map,
                 precedence_map,
                 m_precedence_list,
@@ -567,40 +567,40 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
     return NULL;
 }
 
-// rule 2: target_languages_directive <- DIRECTIVE_TARGET_LANGUAGES:throwaway target_language_ids:target_language_map at_least_one_newline    
+// rule 2: targets_directive <- DIRECTIVE_TARGETS:throwaway target_ids:target_map at_least_one_newline    
 Ast::Base * Parser::ReductionRuleHandler0002 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    CommonLang::TargetLanguageMap * target_language_map = Dsc< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    CommonLang::TargetMap * target_map = Dsc< CommonLang::TargetMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 246 "trison_parser.trison"
 
-        assert(m_target_language_map == NULL);
-        m_target_language_map = target_language_map;
+        assert(m_target_map == NULL);
+        m_target_map = target_map;
         delete throwaway;
-        return target_language_map;
+        return target_map;
     
 #line 586 "trison_parser.cpp"
     return NULL;
 }
 
-// rule 3: target_languages_directive <-     
+// rule 3: targets_directive <-     
 Ast::Base * Parser::ReductionRuleHandler0003 ()
 {
 
 #line 254 "trison_parser.trison"
 
-        assert(m_target_language_map == NULL);
-        m_target_language_map = new CommonLang::TargetLanguageMap();
-        return m_target_language_map;
+        assert(m_target_map == NULL);
+        m_target_map = new CommonLang::TargetMap();
+        return m_target_map;
     
 #line 600 "trison_parser.cpp"
     return NULL;
 }
 
-// rule 4: target_languages_directive <- DIRECTIVE_TARGET_LANGUAGES:throwaway %error at_least_one_newline    
+// rule 4: targets_directive <- DIRECTIVE_TARGETS:throwaway %error at_least_one_newline    
 Ast::Base * Parser::ReductionRuleHandler0004 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -608,42 +608,42 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
 
 #line 261 "trison_parser.trison"
 
-        assert(m_target_language_map == NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %target_languages");
-        m_target_language_map = new CommonLang::TargetLanguageMap();
-        return m_target_language_map;
+        assert(m_target_map == NULL);
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %targets");
+        m_target_map = new CommonLang::TargetMap();
+        return m_target_map;
     
 #line 617 "trison_parser.cpp"
     return NULL;
 }
 
-// rule 5: target_language_ids <- target_language_ids:target_language_map ID:target_language_id    
+// rule 5: target_ids <- target_ids:target_map ID:target_id    
 Ast::Base * Parser::ReductionRuleHandler0005 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    CommonLang::TargetLanguageMap * target_language_map = Dsc< CommonLang::TargetLanguageMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    CommonLang::TargetMap * target_map = Dsc< CommonLang::TargetMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    Ast::Id * target_language_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    Ast::Id * target_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 272 "trison_parser.trison"
 
-        CommonLang::TargetLanguage *target_language = new CommonLang::TargetLanguage(target_language_id->GetText());
-        target_language->EnableCodeGeneration();
-        target_language_map->Add(target_language_id->GetText(), target_language);
-        return target_language_map;
+        CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
+        target->EnableCodeGeneration();
+        target_map->Add(target_id->GetText(), target);
+        return target_map;
     
 #line 636 "trison_parser.cpp"
     return NULL;
 }
 
-// rule 6: target_language_ids <-     
+// rule 6: target_ids <-     
 Ast::Base * Parser::ReductionRuleHandler0006 ()
 {
 
 #line 280 "trison_parser.trison"
 
-        assert(m_target_language_map == NULL);
-        return new CommonLang::TargetLanguageMap();
+        assert(m_target_map == NULL);
+        return new CommonLang::TargetMap();
     
 #line 649 "trison_parser.cpp"
     return NULL;
@@ -657,9 +657,9 @@ Ast::Base * Parser::ReductionRuleHandler0007 ()
 
 #line 293 "trison_parser.trison"
 
-        assert(m_target_language_map != NULL);
+        assert(m_target_map != NULL);
         if (language_directive != NULL)
-            m_target_language_map->AddLanguageDirective(language_directive);
+            m_target_map->AddLanguageDirective(language_directive);
         return NULL;
     
 #line 666 "trison_parser.cpp"
@@ -672,8 +672,8 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
 
 #line 301 "trison_parser.trison"
 
-        if (m_target_language_map == NULL)
-            m_target_language_map = new CommonLang::TargetLanguageMap();
+        if (m_target_map == NULL)
+            m_target_map = new CommonLang::TargetMap();
         return NULL;
     
 #line 680 "trison_parser.cpp"
@@ -1396,11 +1396,11 @@ Ast::Base * Parser::ReductionRuleHandler0047 ()
 #line 693 "trison_parser.trison"
 
         delete throwaway;
-        assert(m_target_language_map != NULL);
-        if (m_target_language_map->GetElement(language_id->GetText()) == NULL)
+        assert(m_target_map != NULL);
+        if (m_target_map->GetElement(language_id->GetText()) == NULL)
             EmitWarning(
                 language_id->GetFiLoc(),
-                "undeclared target language \"" + language_id->GetText() + "\"");
+                "undeclared target \"" + language_id->GetText() + "\"");
         return new CommonLang::RuleHandler(language_id, code_block);
     
 #line 1407 "trison_parser.cpp"
@@ -1417,7 +1417,7 @@ Ast::Base * Parser::ReductionRuleHandler0048 ()
 
 #line 704 "trison_parser.trison"
 
-        assert(m_target_language_map != NULL);
+        assert(m_target_map != NULL);
         EmitError(throwaway->GetFiLoc(), "parse error in language id after directive %language");
         delete throwaway;
         delete code_block;
@@ -1435,7 +1435,7 @@ Ast::Base * Parser::ReductionRuleHandler0049 ()
 
 #line 713 "trison_parser.trison"
 
-        assert(m_target_language_map != NULL);
+        assert(m_target_map != NULL);
         EmitError(throwaway->GetFiLoc(), "parse error in directive %language");
         delete throwaway;
         return NULL;
@@ -1452,7 +1452,7 @@ Ast::Base * Parser::ReductionRuleHandler0050 ()
 
 #line 721 "trison_parser.trison"
 
-        assert(m_target_language_map != NULL);
+        assert(m_target_map != NULL);
         EmitError(code_block->GetFiLoc(), "missing directive %language before rule handler code block");
         delete code_block;
         return NULL;
@@ -1641,12 +1641,12 @@ Ast::Base * Parser::ReductionRuleHandler0064 ()
 Parser::ReductionRule const Parser::ms_reduction_rule[] =
 {
     {                 Token::START_,  2, &Parser::ReductionRuleHandler0000, "rule 0: %start <- root END_    "},
-    {                 Token::root__,  8, &Parser::ReductionRuleHandler0001, "rule 1: root <- at_least_zero_newlines target_languages_directive language_directives token_directives precedence_directives start_directive END_PREAMBLE nonterminals    "},
-    {Token::target_languages_directive__,  3, &Parser::ReductionRuleHandler0002, "rule 2: target_languages_directive <- DIRECTIVE_TARGET_LANGUAGES target_language_ids at_least_one_newline    "},
-    {Token::target_languages_directive__,  0, &Parser::ReductionRuleHandler0003, "rule 3: target_languages_directive <-     "},
-    {Token::target_languages_directive__,  3, &Parser::ReductionRuleHandler0004, "rule 4: target_languages_directive <- DIRECTIVE_TARGET_LANGUAGES %error at_least_one_newline    "},
-    {  Token::target_language_ids__,  2, &Parser::ReductionRuleHandler0005, "rule 5: target_language_ids <- target_language_ids ID    "},
-    {  Token::target_language_ids__,  0, &Parser::ReductionRuleHandler0006, "rule 6: target_language_ids <-     "},
+    {                 Token::root__,  8, &Parser::ReductionRuleHandler0001, "rule 1: root <- at_least_zero_newlines targets_directive language_directives token_directives precedence_directives start_directive END_PREAMBLE nonterminals    "},
+    {    Token::targets_directive__,  3, &Parser::ReductionRuleHandler0002, "rule 2: targets_directive <- DIRECTIVE_TARGETS target_ids at_least_one_newline    "},
+    {    Token::targets_directive__,  0, &Parser::ReductionRuleHandler0003, "rule 3: targets_directive <-     "},
+    {    Token::targets_directive__,  3, &Parser::ReductionRuleHandler0004, "rule 4: targets_directive <- DIRECTIVE_TARGETS %error at_least_one_newline    "},
+    {           Token::target_ids__,  2, &Parser::ReductionRuleHandler0005, "rule 5: target_ids <- target_ids ID    "},
+    {           Token::target_ids__,  0, &Parser::ReductionRuleHandler0006, "rule 6: target_ids <-     "},
     {  Token::language_directives__,  2, &Parser::ReductionRuleHandler0007, "rule 7: language_directives <- language_directives language_directive    "},
     {  Token::language_directives__,  0, &Parser::ReductionRuleHandler0008, "rule 8: language_directives <-     "},
     {   Token::language_directive__,  7, &Parser::ReductionRuleHandler0009, "rule 9: language_directive <- DIRECTIVE_LANGUAGE '.' ID '.' ID language_directive_param at_least_one_newline    "},
@@ -1856,12 +1856,12 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state    2
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {Token::DIRECTIVE_TARGET_LANGUAGES, {        TA_SHIFT_AND_PUSH_STATE,    4}},
+    {      Token::DIRECTIVE_TARGETS, {        TA_SHIFT_AND_PUSH_STATE,    4}},
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,    5}},
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    3}},
     // nonterminal transitions
-    {Token::target_languages_directive__, {                  TA_PUSH_STATE,    6}},
+    {    Token::targets_directive__, {                  TA_PUSH_STATE,    6}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state    3
@@ -1877,7 +1877,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {                     Token::ID, {           TA_REDUCE_USING_RULE,    6}},
     {                Token::NEWLINE, {           TA_REDUCE_USING_RULE,    6}},
     // nonterminal transitions
-    {  Token::target_language_ids__, {                  TA_PUSH_STATE,    8}},
+    {           Token::target_ids__, {                  TA_PUSH_STATE,    8}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state    5
@@ -2635,7 +2635,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:             return Parser::Token::DIRECTIVE_PREC;
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:            return Parser::Token::DIRECTIVE_RIGHT;
         case CommonLang::Scanner::Token::DIRECTIVE_START:            return Parser::Token::DIRECTIVE_START;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGES: return Parser::Token::DIRECTIVE_TARGET_LANGUAGES;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS: return Parser::Token::DIRECTIVE_TARGETS;
         case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:            return Parser::Token::DIRECTIVE_TOKEN;
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:             return Parser::Token::DIRECTIVE_TYPE;
         case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:            return Parser::Token::DUMB_CODE_BLOCK;
@@ -2656,7 +2656,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_STATE:
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET_LANGUAGE:
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
             EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in langspec");
