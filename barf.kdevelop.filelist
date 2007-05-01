@@ -73,12 +73,6 @@ app/trison.unstable/trison_options.hpp
 app/trison.unstable/trison_parser.cpp
 app/trison.unstable/trison_parser.hpp
 app/trison.unstable/trison_parser.trison
-data/reflex.cpp.header.codespec
-data/reflex.cpp.implementation.codespec
-data/reflex.cpp.langspec
-data/trison.cpp.header.codespec
-data/trison.cpp.implementation.codespec
-data/trison.cpp.langspec
 doc/doxygen_pages/acknowledgements.dox
 doc/doxygen_pages/generic_regexes.dox
 doc/doxygen_pages/langspec_and_codespec.dox
@@ -156,4 +150,10 @@ lib/regex/barf_regex_nfa.hpp
 lib/regex/barf_regex_parser.cpp
 lib/regex/barf_regex_parser.hpp
 lib/regex/barf_regex_parser.trison
+targets/reflex.cpp.header.codespec
+targets/reflex.cpp.implementation.codespec
+targets/reflex.cpp.langspec
+targets/trison.cpp.header.codespec
+targets/trison.cpp.implementation.codespec
+targets/trison.cpp.langspec
 

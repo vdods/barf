@@ -54,9 +54,9 @@ void OptionsBase::DontAssertOnError ()
 }
 #endif
 
-void OptionsBase::IncludeSearchPath (string const &search_path)
+void OptionsBase::IncludeTargetsSearchPath (string const &search_path)
 {
-    m_search_path.AddPath(search_path, "set by commandline option");
+    m_targets_search_path.AddPath(search_path, "set by commandline option");
 }
 
 void OptionsBase::SetOutputBasename (string const &output_basename)
@@ -170,8 +170,8 @@ void OptionsBase::Parse (int argc, char const *const *argv)
 {
     CommandLineParser::Parse(argc, argv);
 
-    if (m_search_path.GetIsEmpty())
-        m_search_path.AddPath(string(".") + DIRECTORY_SLASH_CHAR, "set as default data path");
+    if (m_targets_search_path.GetIsEmpty())
+        m_targets_search_path.AddPath(string(".") + DIRECTORY_SLASH_CHAR, "set as default data path");
 }
 
 } // end of namespace Barf

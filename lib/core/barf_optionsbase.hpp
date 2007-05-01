@@ -74,8 +74,8 @@ public:
     inline bool GetAssertOnError () const { return m_assert_on_error; }
 #endif
     // input options
-    inline string GetSearchPathString () const { return m_search_path.GetAsString(); }
-    inline string GetFilePath (string const &filename) const { return m_search_path.GetFilePath(filename); }
+    inline string GetTargetsSearchPathString () const { return m_targets_search_path.GetAsString(); }
+    inline string GetFilePath (string const &filename) const { return m_targets_search_path.GetFilePath(filename); }
     // output options
     inline string const &GetOutputDirectory () const { return m_output_directory; } // TODO: deprecate
     inline string const &GetOutputFilenameBase () const { return m_output_filename_base; } // TODO: deprecate
@@ -107,7 +107,7 @@ public:
     void DontAssertOnError ();
 #endif
     // input options
-    void IncludeSearchPath (string const &search_path);
+    void IncludeTargetsSearchPath (string const &search_path);
     // output options
     void SetOutputBasename (string const &output_basename);
     void SetOutputDir (string const &output_dir);
@@ -152,7 +152,7 @@ protected:
     bool m_assert_on_error;
 #endif
     // input option values
-    SearchPath m_search_path;
+    SearchPath m_targets_search_path;
     // output option values
     string m_output_directory;
     string m_output_filename_base;

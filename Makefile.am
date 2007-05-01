@@ -129,12 +129,6 @@ EXTRA_DIST = \
     LICENSE \
     README \
     TODO \
-    data/reflex.cpp.header.codespec \
-    data/reflex.cpp.implementation.codespec \
-    data/reflex.cpp.langspec \
-    data/trison.cpp.header.codespec \
-    data/trison.cpp.implementation.codespec \
-    data/trison.cpp.langspec \
     doc/doxygen_pages/acknowledgements.dox \
     doc/doxygen_pages/generic_regexes.dox \
     doc/doxygen_pages/langspec_and_codespec.dox \
@@ -144,9 +138,15 @@ EXTRA_DIST = \
     doc/doxygen_pages/reflex.dox \
     doc/doxygen_pages/reflex_guts.dox \
     doc/doxygen_pages/regexes_in_barf.dox \
-    extra/barf.xml
+    extra/barf.xml \
+    targets/reflex.cpp.header.codespec \
+    targets/reflex.cpp.implementation.codespec \
+    targets/reflex.cpp.langspec \
+    targets/trison.cpp.header.codespec \
+    targets/trison.cpp.implementation.codespec \
+    targets/trison.cpp.langspec
 
-DATA_PATH = $(top_srcdir)/data
+TARGETS_PATH = $(top_srcdir)/targets
 
 ##############################################################################
 # general flags
@@ -243,13 +243,13 @@ if STABLE_REFLEX_EXISTS
 barf-commonlang-scanner: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(DATA_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
+	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
 
 barf-commonlang-scanner-force: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(DATA_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
+	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
 
 barf-commonlang-scanner-release: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(DATA_PATH) --warnings-as-errors --without-line-directives --output-directory $(top_srcdir)/lib/commonlang/
+	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-search-path $(TARGETS_PATH) --warnings-as-errors --without-line-directives --output-directory $(top_srcdir)/lib/commonlang/
 else # !STABLE_REFLEX_EXISTS
 barf-commonlang-scanner barf-commonlang-scanner-force barf-commonlang-scanner-release:
 	@echo "!!!"

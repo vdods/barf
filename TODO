@@ -4,16 +4,14 @@
 
 - descriptions should be indicate "finite-automata-based scanners" and
   "pushdown-automata-based parsers"
-- rename "data" directory to "targets"
 - error when any output file is the same as an input file
 - shorten the enabled_verbosity names (and rename scanning/parsing spew to
   scanner/parser)
 - add dot graph generation for ASTs
 - add recursive block comments into barf_commonlang_scanner.reflex (think
   about how this will interact with other-languaged code blocks)
-- move DIRECTORY_SLASH_* into config.h (?)
 - rename OutputDir to OutputDirectory once the other options have been
-  deprecated
+  deprecated (this looks like it will happen once old trison is deprecated)
 - add _barf_version to preprocessor shit?
 - add langspec versions -- so you can have multiple coexisting versions of
   the same target but at different versions.
@@ -115,6 +113,8 @@
   everywhere
 - in symbol table dump, don't print out the AT_BODY part, only the AT_TEXT or
   AT_INTEGER or whatever.
+- add boolean property for wether or not a particular symbol was referenced
+  during preprocessing.
 
 // ///////////////////////////////////////////////////////////////////////////
 // regex
@@ -159,7 +159,8 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
-- add option for line directives referencing codespecs
+- add option for line directives referencing codespecs (the default should be
+  to refer to codespecs, for easier development)
 - rename scanner states to "modes", so there's no confusion between 
   that and FA states
 - add thing that checks for EOF-handling in each scanner state?
@@ -172,13 +173,12 @@
 - the rule handler code block type should be specifiable by the langspec
 - add -D option for defining crap in the preprocessor stage -- before and
   after the .reflex source is read
-- use %default_start_state instead of %start
-- see if the AST classes can be made more structurey, with all the significant
-  code moved to external functions
+- use %default_start_state instead of %start (actually %default_start_mode)
 - warn about langspec directive values that weren't referenced in the
   code generation (preprocessor) stage
 - add "push accepted string back into buffer" API to the generated scanner -- 
-  should it be push any string?
+  should it be allowed push any string?  maybe not, since it will have to have
+  the previous char.  but maybe that's ok.
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -191,7 +191,7 @@
   child set changes, the precedence set is updated, and then conflict resolution
   can happen
 - you shouldn't have to specify %token 'X' for ascii chars.  you should
-  just be able to use them
+  just be able to use them (or maybe add as option)
 - specifying any %target.xxx directive seems to add the target; stop this
 - rename _accept_handler_code to _rule_code (or something), and generally
   consistencize the nomenclature of the NPDA preprocessor symbols in general
