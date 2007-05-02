@@ -98,7 +98,7 @@ private:
     Uint32 m_regex_paren_level;
     Uint32 m_regex_bracket_level;
     Uint32 m_code_block_bracket_level;
-    State::Name m_return_state;
+    Mode::Name m_return_state;
 }
 %target.cpp.bottom_of_header_file %{
 ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
@@ -212,7 +212,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%prec") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_PREC; }
     if (accepted_string == "%right") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_RIGHT; }
     if (accepted_string == "%start") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_START; }
-    if (accepted_string == "%state") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE; }
+    if (accepted_string == "%scanner_mode") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE; }
     if (accepted_string == "%strict_code_block") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
     if (accepted_string == "%string") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRING; }
     if (accepted_string == "%target") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET; }
@@ -305,16 +305,16 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 %%
 
 // ///////////////////////////////////////////////////////////////////////////
-// scanner states and constituent regex rules
+// scanner modes and constituent regex rules
 // ///////////////////////////////////////////////////////////////////////////
 
-%state MAIN
+%scanner_mode MAIN
 :
     (/\*) // opening delimiter for a block comment
     %target.cpp {
         SPEW("MAIN - (/\\*) = " << GetStringLiteral(accepted_string));
-        m_return_state = State::MAIN;
-        SetScannerState(State::BLOCK_COMMENT);
+        m_return_state = Mode::MAIN;
+        ScannerMode(Mode::BLOCK_COMMENT);
     }
 |
     (//.*) // line comment (not including the newline)
@@ -325,35 +325,35 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     (') // opening quote for a char literal
     %target.cpp {
         SPEW("MAIN - (') = " << GetStringLiteral(accepted_string));
-        SetScannerState(State::CHAR_LITERAL_GUTS);
+        ScannerMode(Mode::CHAR_LITERAL_GUTS);
     }
 |
     (") // opening quote for a string literal
     %target.cpp {
         SPEW("MAIN - (\") = " << GetStringLiteral(accepted_string));
         *token = new Ast::String(GetFiLoc());
-        SetScannerState(State::STRING_LITERAL_GUTS);
+        ScannerMode(Mode::STRING_LITERAL_GUTS);
     }
 |
     (\() // opening delimiter for a regular expression
     %target.cpp {
         SPEW("MAIN - (\\() = " << GetStringLiteral(accepted_string));
         *token = new Ast::String(GetFiLoc());
-        SetScannerState(State::REGULAR_EXPRESSION);
+        ScannerMode(Mode::REGULAR_EXPRESSION);
     }
 |
     (%\{) // opening delimiter for a dumb code block
     %target.cpp {
         SPEW("MAIN - (%\\{) = " << GetStringLiteral(accepted_string));
         *token = new Ast::DumbCodeBlock(GetFiLoc());
-        SetScannerState(State::DUMB_CODE_BLOCK);
+        ScannerMode(Mode::DUMB_CODE_BLOCK);
     }
 |
     (\{) // opening delimiter for a strict code block
     %target.cpp {
         SPEW("MAIN - (\\{) = " << GetStringLiteral(accepted_string));
         *token = new Ast::StrictCodeBlock(GetFiLoc());
-        SetScannerState(State::STRICT_CODE_BLOCK);
+        ScannerMode(Mode::STRICT_CODE_BLOCK);
     }
 |
     (%{ID}) // a directive
@@ -411,14 +411,14 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state BLOCK_COMMENT
+%scanner_mode BLOCK_COMMENT
 :
     (\*/) // closing delimiter for a block comment
     %target.cpp {
         SPEW("BLOCK_COMMENT - (\\*/) = " << GetStringLiteral(accepted_string));
         if (*token != NULL)
             Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
-        SetScannerState(m_return_state);
+        ScannerMode(m_return_state);
     }
 |
     ([^*]+|\*)
@@ -437,7 +437,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state CHAR_LITERAL_GUTS
+%scanner_mode CHAR_LITERAL_GUTS
 :
     ({OCT_CHAR})
     %target.cpp {
@@ -449,7 +449,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         if (value >= 0x100)
             EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
         *token = new Ast::Char(Uint8(value), GetFiLoc());
-        SetScannerState(State::CHAR_LITERAL_END);
+        ScannerMode(Mode::CHAR_LITERAL_END);
     }
 |
     ({HEX_CHAR})
@@ -462,7 +462,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         if (value >= 0x100)
             EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
         *token = new Ast::Char(Uint8(value), GetFiLoc());
-        SetScannerState(State::CHAR_LITERAL_END);
+        ScannerMode(Mode::CHAR_LITERAL_END);
     }
 |
     ({CHAR_ESC_CHAR})
@@ -473,7 +473,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Ast::Char *ch = new Ast::Char(Uint8(accepted_string[1]), GetFiLoc());
         ch->Escape();
         *token = ch;
-        SetScannerState(State::CHAR_LITERAL_END);
+        ScannerMode(Mode::CHAR_LITERAL_END);
     }
 |
     ({CHAR_NORMAL_CHAR})
@@ -481,7 +481,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("CHAR_LITERAL_GUTS - ({CHAR_NORMAL_CHAR}) = " << GetStringLiteral(accepted_string));
         assert(accepted_string.length() == 1);
         *token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
-        SetScannerState(State::CHAR_LITERAL_END);
+        ScannerMode(Mode::CHAR_LITERAL_END);
     }
 |
     (\\?\z) // end of file (which may be preceded by a backslash)
@@ -498,17 +498,17 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
         *token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
-        SetScannerState(State::CHAR_LITERAL_END);
+        ScannerMode(Mode::CHAR_LITERAL_END);
     }
 ;
 
-%state CHAR_LITERAL_END
+%scanner_mode CHAR_LITERAL_END
 :
     (') // closing single-quote
     %target.cpp {
         SPEW("CHAR_LITERAL_END - (') - accepted_string = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        SetScannerState(State::MAIN);
+        ScannerMode(Mode::MAIN);
         return Token::CHAR_LITERAL;
     }
 |
@@ -519,7 +519,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        SetScannerState(State::MAIN);
+        ScannerMode(Mode::MAIN);
         return Token::END_OF_FILE;
     }
 |
@@ -532,12 +532,12 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        SetScannerState(State::MAIN);
+        ScannerMode(Mode::MAIN);
         return Token::BAD_TOKEN;
     }
 ;
 
-%state STRING_LITERAL_GUTS
+%scanner_mode STRING_LITERAL_GUTS
 :
     ({OCT_CHAR})
     %target.cpp {
@@ -586,7 +586,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %target.cpp {
         SPEW("STRING_LITERAL_GUTS - (\") = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        SetScannerState(State::MAIN);
+        ScannerMode(Mode::MAIN);
         return Token::STRING_LITERAL;
     }
 |
@@ -608,7 +608,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state REGULAR_EXPRESSION
+%scanner_mode REGULAR_EXPRESSION
 :
     (\)) // closing delimiter for a regular expression
     %target.cpp {
@@ -616,7 +616,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         if (m_regex_paren_level == 0)
         {
-            SetScannerState(State::MAIN);
+            ScannerMode(Mode::MAIN);
             return Token::REGEX;
         }
         --m_regex_paren_level;
@@ -637,7 +637,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
         m_regex_bracket_level = 0;
-        SetScannerState(State::REGULAR_EXPRESSION_BRACKET_EXPRESSION);
+        ScannerMode(Mode::REGULAR_EXPRESSION_BRACKET_EXPRESSION);
     }
 |
     (([^()\[\]\\]|\\{ANYTHING})+) // any not-()[]-or-backslash, or any escaped char
@@ -659,7 +659,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state REGULAR_EXPRESSION_BRACKET_EXPRESSION
+%scanner_mode REGULAR_EXPRESSION_BRACKET_EXPRESSION
 :
     (\]) // closing delimiter for bracket expression (or char class)
     %target.cpp {
@@ -667,7 +667,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
         if (m_regex_bracket_level == 0)
-            SetScannerState(State::REGULAR_EXPRESSION);
+            ScannerMode(Mode::REGULAR_EXPRESSION);
         else
             --m_regex_bracket_level;
     }
@@ -699,13 +699,13 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state DUMB_CODE_BLOCK
+%scanner_mode DUMB_CODE_BLOCK
 :
     (%\}) // closing delimiter for a dumb code block
     %target.cpp {
         SPEW("DUMB_CODE_BLOCK - (%\\}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
-        SetScannerState(State::MAIN);
+        ScannerMode(Mode::MAIN);
         return Token::DUMB_CODE_BLOCK;
     }
 |
@@ -728,7 +728,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state STRICT_CODE_BLOCK
+%scanner_mode STRICT_CODE_BLOCK
 :
     (\}) // closing delimiter for a code block
     %target.cpp {
@@ -736,7 +736,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         if (m_code_block_bracket_level == 0)
         {
-            SetScannerState(State::MAIN);
+            ScannerMode(Mode::MAIN);
             return Token::STRICT_CODE_BLOCK;
         }
         --m_code_block_bracket_level;
@@ -756,7 +756,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("STRICT_CODE_BLOCK - (') = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
-        SetScannerState(State::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK);
+        ScannerMode(Mode::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     }
 |
     (") // opening quote for a string literal
@@ -764,7 +764,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("STRICT_CODE_BLOCK - (\") = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
-        SetScannerState(State::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK);
+        ScannerMode(Mode::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     }
 |
     (/[*]) // opening delimiter for a block comment
@@ -772,8 +772,8 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         SPEW("STRICT_CODE_BLOCK - (/[*]) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
-        m_return_state = State::STRICT_CODE_BLOCK;
-        SetScannerState(State::BLOCK_COMMENT);
+        m_return_state = Mode::STRICT_CODE_BLOCK;
+        ScannerMode(Mode::BLOCK_COMMENT);
     }
 |
     (//.*) // line comment (not including the newline)
@@ -802,7 +802,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK
+%scanner_mode CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK
 :
     (([^'\\]|\\{ANYTHING})*') // everything up to and including the first non-escaped single quote
     %target.cpp {
@@ -810,7 +810,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<Ast::StrictCodeBlock *>(*token)->AppendText(accepted_string);
-        SetScannerState(State::STRICT_CODE_BLOCK);
+        ScannerMode(Mode::STRICT_CODE_BLOCK);
     }
 |
     (([^'\\]|\\{ANYTHING})*\\?\z) // everything up to an end of file encountered before the first single quote
@@ -825,7 +825,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     }
 ;
 
-%state STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK
+%scanner_mode STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK
 :
     (([^"\\]|\\{ANYTHING})*") // everything up to and including the first non-escaped double quote
     %target.cpp {
@@ -833,7 +833,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(*token != NULL);
         Dsc<Ast::StrictCodeBlock *>(*token)->AppendText(accepted_string);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        SetScannerState(State::STRICT_CODE_BLOCK);
+        ScannerMode(Mode::STRICT_CODE_BLOCK);
     }
 |
     (([^"\\]|\\{ANYTHING})*\\?\z) // everything up to an end of file encountered before the first double quote

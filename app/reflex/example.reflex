@@ -84,13 +84,13 @@ int main (int argc, char **argv)
 
 %%
 
-%state MAIN
+%scanner_mode MAIN
 :
     (")
     %target.cpp {
         cerr << "starting to scan string literal" << endl;
         assert(m_accumulator.empty());
-        SetScannerState(State::SCANNING_STRING_LITERAL);
+        ScannerMode(Mode::SCANNING_STRING_LITERAL);
     }
 |
     (//.*$)
@@ -101,7 +101,7 @@ int main (int argc, char **argv)
     (/\*)
     %target.cpp {
         cerr << "starting to scan block comment" << endl;
-        SetScannerState(State::SCANNING_BLOCK_COMMENT);
+        ScannerMode(Mode::SCANNING_BLOCK_COMMENT);
     }
 |
     ([ \t\n]+) %target.cpp { }
@@ -119,13 +119,13 @@ int main (int argc, char **argv)
     }
 ;
 
-%state SCANNING_STRING_LITERAL
+%scanner_mode SCANNING_STRING_LITERAL
 :
     (")
     %target.cpp {
         cerr << "ending string literal -- \"" << m_accumulator << "\"" << endl;
         m_accumulator.clear();
-        SetScannerState(State::MAIN);
+        ScannerMode(Mode::MAIN);
         return TT_STRING_LITERAL;
     }
 |
@@ -146,12 +146,12 @@ int main (int argc, char **argv)
     }
 ;
 
-%state SCANNING_BLOCK_COMMENT
+%scanner_mode SCANNING_BLOCK_COMMENT
 :
     (\*/)
     %target.cpp {
         cerr << "ending block comment" << endl;
-        SetScannerState(State::MAIN);
+        ScannerMode(Mode::MAIN);
     }
 |
     (\z)

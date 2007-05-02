@@ -49,7 +49,7 @@ void Rule::PopulateAcceptHandlerCodeArraySymbol (
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-void ScannerState::GenerateNfa (
+void ScannerMode::GenerateNfa (
     Graph &nfa_graph,
     vector<Uint32> &start_state_index_array,
     Uint32 &next_accept_handler_index) const
@@ -59,7 +59,7 @@ void ScannerState::GenerateNfa (
             new Regex::NodeData(
                 Regex::IS_START_NODE,
                 Regex::NOT_ACCEPT_NODE,
-                m_scanner_state_id->GetText()));
+                m_scanner_mode_id->GetText()));
     start_state_index_array.push_back(master_start_state_index);
 
     // each rule is effectively or'ed together (i.e. using regex operator '|')
@@ -75,7 +75,7 @@ void ScannerState::GenerateNfa (
     }
 }
 
-void ScannerState::PopulateAcceptHandlerCodeArraySymbol (
+void ScannerMode::PopulateAcceptHandlerCodeArraySymbol (
     string const &target_id,
     Preprocessor::ArraySymbol *accept_handler_code_symbol) const
 {
@@ -99,14 +99,14 @@ void ScannerState::PopulateAcceptHandlerCodeArraySymbol (
 Uint32 Representation::GetAcceptHandlerCount () const
 {
     Uint32 accept_handler_count = 0;
-    for (ScannerStateMap::const_iterator it = m_scanner_state_map->begin(),
-                                         it_end = m_scanner_state_map->end();
+    for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
+                                         it_end = m_scanner_mode_map->end();
          it != it_end;
          ++it)
     {
-        ScannerState const *scanner_state = it->second;
-        assert(scanner_state != NULL);
-        accept_handler_count += scanner_state->GetAcceptHandlerCount();
+        ScannerMode const *scanner_mode = it->second;
+        assert(scanner_mode != NULL);
+        accept_handler_count += scanner_mode->GetAcceptHandlerCount();
     }
     return accept_handler_count;
 }
@@ -114,17 +114,17 @@ Uint32 Representation::GetAcceptHandlerCount () const
 Rule const *Representation::GetAcceptHandlerRule (Uint32 rule_index) const
 {
     assert(rule_index < GetAcceptHandlerCount());
-    for (ScannerStateMap::const_iterator it = m_scanner_state_map->begin(),
-                                         it_end = m_scanner_state_map->end();
+    for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
+                                         it_end = m_scanner_mode_map->end();
          it != it_end;
          ++it)
     {
-        ScannerState const *scanner_state = it->second;
-        assert(scanner_state != NULL);
-        if (rule_index < scanner_state->GetAcceptHandlerCount())
-            return scanner_state->m_rule_list->GetElement(rule_index);
+        ScannerMode const *scanner_mode = it->second;
+        assert(scanner_mode != NULL);
+        if (rule_index < scanner_mode->GetAcceptHandlerCount())
+            return scanner_mode->m_rule_list->GetElement(rule_index);
         else
-            rule_index -= scanner_state->GetAcceptHandlerCount();
+            rule_index -= scanner_mode->GetAcceptHandlerCount();
     }
     assert(false && "GetAcceptHandlerCount() doesn't match reality");
     return NULL;
@@ -153,21 +153,21 @@ void Representation::GenerateNfaAndDfa () const
                     i));
         }
 
-        for (ScannerStateMap::const_iterator it = m_scanner_state_map->begin(),
-                                             it_end = m_scanner_state_map->end();
+        for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
+                                             it_end = m_scanner_mode_map->end();
              it != it_end;
              ++it)
         {
-            ScannerState const *scanner_state = it->second;
-            assert(scanner_state != NULL);
-            scanner_state->GenerateNfa(
+            ScannerMode const *scanner_mode = it->second;
+            assert(scanner_mode != NULL);
+            scanner_mode->GenerateNfa(
                 m_nfa_graph,
                 m_nfa_start_state,
                 m_next_accept_handler_index);
         }
 
-        assert(m_nfa_graph.GetNodeCount() >= m_scanner_state_map->size());
-        assert(m_nfa_start_state.size() == m_scanner_state_map->size());
+        assert(m_nfa_graph.GetNodeCount() >= m_scanner_mode_map->size());
+        assert(m_nfa_start_state.size() == m_scanner_mode_map->size());
     }
 
     // generate the DFA
@@ -216,7 +216,7 @@ void Representation::GenerateAutomatonSymbols (
     assert(m_nfa_graph.GetNodeCount() > 0);
     assert(m_dfa_graph.GetNodeCount() > 0);
 
-    // _start -- value of %start -- the name of the initial scanner state
+    // _start -- value of %start -- the name of the initial scanner mode
     {
         assert(m_start_directive != NULL);
         Preprocessor::ScalarSymbol *symbol =
@@ -227,22 +227,22 @@ void Representation::GenerateAutomatonSymbols (
                 FiLoc::ms_invalid));
     }
 
-    // _nfa_initial_node_index[scanner state name] -- maps scanner state name => node index
+    // _nfa_initial_node_index[scanner mode name] -- maps scanner mode name => node index
     {
         Preprocessor::MapSymbol *nfa_initial_node_index_symbol =
             symbol_table.DefineMapSymbol("_nfa_initial_node_index", FiLoc::ms_invalid);
         Uint32 state_index = 0;
-        for (ScannerStateMap::const_iterator it = m_scanner_state_map->begin(),
-                                             it_end = m_scanner_state_map->end();
+        for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
+                                             it_end = m_scanner_mode_map->end();
             it != it_end;
             ++it)
         {
-            string const &scanner_state_name = it->first;
-            ScannerState const *scanner_state = it->second;
-            assert(scanner_state != NULL);
+            string const &scanner_mode_name = it->first;
+            ScannerMode const *scanner_mode = it->second;
+            assert(scanner_mode != NULL);
             assert(state_index < m_nfa_start_state.size());
             nfa_initial_node_index_symbol->SetMapElement(
-                scanner_state_name,
+                scanner_mode_name,
                 new Preprocessor::Body(
                     Sint32(m_nfa_start_state[state_index]),
                     FiLoc::ms_invalid));
@@ -362,22 +362,22 @@ void Representation::GenerateAutomatonSymbols (
                 FiLoc::ms_invalid));
     }
 
-    // _dfa_initial_node_index[scanner state name] -- maps scanner state name => node index
+    // _dfa_initial_node_index[scanner mode name] -- maps scanner mode name => node index
     {
         Preprocessor::MapSymbol *dfa_initial_node_index_symbol =
             symbol_table.DefineMapSymbol("_dfa_initial_node_index", FiLoc::ms_invalid);
         Uint32 state_index = 0;
-        for (ScannerStateMap::const_iterator it = m_scanner_state_map->begin(),
-                                             it_end = m_scanner_state_map->end();
+        for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
+                                             it_end = m_scanner_mode_map->end();
             it != it_end;
             ++it)
         {
-            string const &scanner_state_name = it->first;
-            ScannerState const *scanner_state = it->second;
-            assert(scanner_state != NULL);
+            string const &scanner_mode_name = it->first;
+            ScannerMode const *scanner_mode = it->second;
+            assert(scanner_mode != NULL);
             assert(state_index < m_dfa_start_state.size());
             dfa_initial_node_index_symbol->SetMapElement(
-                scanner_state_name,
+                scanner_mode_name,
                 new Preprocessor::Body(
                     Sint32(m_dfa_start_state[state_index]),
                     FiLoc::ms_invalid));
@@ -528,14 +528,14 @@ void Representation::GenerateTargetDependentSymbols (
             new Preprocessor::Body(
                 Sint32(m_next_accept_handler_index),
                 FiLoc::ms_invalid));
-        for (ScannerStateMap::const_iterator it = m_scanner_state_map->begin(),
-                                             it_end = m_scanner_state_map->end();
+        for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
+                                             it_end = m_scanner_mode_map->end();
             it != it_end;
             ++it)
         {
-            ScannerState const *scanner_state = it->second;
-            assert(scanner_state != NULL);
-            scanner_state->PopulateAcceptHandlerCodeArraySymbol(
+            ScannerMode const *scanner_mode = it->second;
+            assert(scanner_mode != NULL);
+            scanner_mode->PopulateAcceptHandlerCodeArraySymbol(
                 target_id,
                 accept_handler_code_symbol);
         }

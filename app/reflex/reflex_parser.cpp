@@ -444,9 +444,9 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
         "rule_handler",
         "rule_handlers",
         "rule_list",
-        "scanner_state",
-        "scanner_state_rules",
-        "scanner_states",
+        "scanner_mode",
+        "scanner_mode_rules",
+        "scanner_modes",
         "start_directive",
         "target_directive",
         "target_directive_param",
@@ -491,7 +491,7 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
     return NULL;
 }
 
-// rule 1: root <- at_least_zero_newlines targets_directive:target_map target_directives macro_directives:regular_expression_map start_directive:start_directive END_PREAMBLE:throwaway scanner_states:scanner_state_map    
+// rule 1: root <- at_least_zero_newlines targets_directive:target_map target_directives macro_directives:regular_expression_map start_directive:start_directive END_PREAMBLE:throwaway scanner_modes:scanner_mode_map    
 Ast::Base * Parser::ReductionRuleHandler0001 ()
 {
     assert(1 < m_reduction_rule_token_count);
@@ -503,7 +503,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
     assert(5 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
     assert(6 < m_reduction_rule_token_count);
-    ScannerStateMap * scanner_state_map = Dsc< ScannerStateMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 6]);
+    ScannerModeMap * scanner_mode_map = Dsc< ScannerModeMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 6]);
 
 #line 187 "reflex_parser.trison"
 
@@ -512,9 +512,9 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
 
         // set the TargetMap's primary source path
         target_map->SetSourcePath(m_scanner.GetInputName());
-        // make sure the %start directive value specifies a real scanner state
+        // make sure the %start directive value specifies a real scanner mode
         if (start_directive != NULL &&
-            scanner_state_map->GetElement(start_directive->m_start_state_id->GetText()) == NULL)
+            scanner_mode_map->GetElement(start_directive->m_start_state_id->GetText()) == NULL)
         {
             EmitError(
                 start_directive->GetFiLoc(),
@@ -527,7 +527,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
                 regular_expression_map,
                 start_directive,
                 throwaway->GetFiLoc(),
-                scanner_state_map);
+                scanner_mode_map);
         delete throwaway;
         return representation;
     
@@ -827,7 +827,7 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
 #line 353 "reflex_parser.trison"
 
         // we save the regex macro map in a member var, so that the reduction
-        // rule handler for the scanner state rules can use it.
+        // rule handler for the scanner mode rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
         return m_regex_macro_map;
     
@@ -907,74 +907,74 @@ Ast::Base * Parser::ReductionRuleHandler0023 ()
     return NULL;
 }
 
-// rule 24: scanner_states <- scanner_states:scanner_state_map scanner_state:scanner_state    
+// rule 24: scanner_modes <- scanner_modes:scanner_mode_map scanner_mode:scanner_mode    
 Ast::Base * Parser::ReductionRuleHandler0024 ()
 {
     assert(0 < m_reduction_rule_token_count);
-    ScannerStateMap * scanner_state_map = Dsc< ScannerStateMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    ScannerModeMap * scanner_mode_map = Dsc< ScannerModeMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    ScannerState * scanner_state = Dsc< ScannerState * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    ScannerMode * scanner_mode = Dsc< ScannerMode * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 403 "reflex_parser.trison"
 
-        if (scanner_state != NULL)
-            scanner_state_map->Add(scanner_state->m_scanner_state_id->GetText(), scanner_state);
-        return scanner_state_map;
+        if (scanner_mode != NULL)
+            scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
+        return scanner_mode_map;
     
 #line 925 "reflex_parser.cpp"
     return NULL;
 }
 
-// rule 25: scanner_states <-     
+// rule 25: scanner_modes <-     
 Ast::Base * Parser::ReductionRuleHandler0025 ()
 {
 
 #line 410 "reflex_parser.trison"
 
-        return new ScannerStateMap();
+        return new ScannerModeMap();
     
 #line 937 "reflex_parser.cpp"
     return NULL;
 }
 
-// rule 26: scanner_state <- DIRECTIVE_STATE:throwaway ID:scanner_state_id ':' scanner_state_rules:rule_list ';'    
+// rule 26: scanner_mode <- DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' scanner_mode_rules:rule_list ';'    
 Ast::Base * Parser::ReductionRuleHandler0026 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    Ast::Id * scanner_state_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    Ast::Id * scanner_mode_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
     assert(3 < m_reduction_rule_token_count);
     RuleList * rule_list = Dsc< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
 #line 418 "reflex_parser.trison"
 
         delete throwaway;
-        return new ScannerState(scanner_state_id, rule_list);
+        return new ScannerMode(scanner_mode_id, rule_list);
     
 #line 956 "reflex_parser.cpp"
     return NULL;
 }
 
-// rule 27: scanner_state <- DIRECTIVE_STATE:throwaway ID:scanner_state_id ':' %error ';'    
+// rule 27: scanner_mode <- DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' %error ';'    
 Ast::Base * Parser::ReductionRuleHandler0027 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
-    Ast::Id * scanner_state_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    Ast::Id * scanner_mode_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 424 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner state rule list");
+        EmitError(throwaway->GetFiLoc(), "parse error in scanner mode rule list");
         delete throwaway;
-        return new ScannerState(scanner_state_id, new RuleList());
+        return new ScannerMode(scanner_mode_id, new RuleList());
     
 #line 974 "reflex_parser.cpp"
     return NULL;
 }
 
-// rule 28: scanner_state <- DIRECTIVE_STATE:throwaway %error ':' scanner_state_rules:rule_list ';'    
+// rule 28: scanner_mode <- DIRECTIVE_STATE:throwaway %error ':' scanner_mode_rules:rule_list ';'    
 Ast::Base * Parser::ReductionRuleHandler0028 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -984,7 +984,7 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
 
 #line 431 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner state id");
+        EmitError(throwaway->GetFiLoc(), "parse error in scanner mode id");
         delete throwaway;
         delete rule_list;
         return NULL;
@@ -993,7 +993,7 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
     return NULL;
 }
 
-// rule 29: scanner_state_rules <- rule_list:rule_list    
+// rule 29: scanner_mode_rules <- rule_list:rule_list    
 Ast::Base * Parser::ReductionRuleHandler0029 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1007,7 +1007,7 @@ Ast::Base * Parser::ReductionRuleHandler0029 ()
     return NULL;
 }
 
-// rule 30: scanner_state_rules <-     
+// rule 30: scanner_mode_rules <-     
 Ast::Base * Parser::ReductionRuleHandler0030 ()
 {
 
@@ -1285,7 +1285,7 @@ Ast::Base * Parser::ReductionRuleHandler0045 ()
 Parser::ReductionRule const Parser::ms_reduction_rule[] =
 {
     {                 Token::START_,  2, &Parser::ReductionRuleHandler0000, "rule 0: %start <- root END_    "},
-    {                 Token::root__,  7, &Parser::ReductionRuleHandler0001, "rule 1: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_directive END_PREAMBLE scanner_states    "},
+    {                 Token::root__,  7, &Parser::ReductionRuleHandler0001, "rule 1: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_directive END_PREAMBLE scanner_modes    "},
     {    Token::targets_directive__,  3, &Parser::ReductionRuleHandler0002, "rule 2: targets_directive <- DIRECTIVE_TARGETS target_ids at_least_one_newline    "},
     {    Token::targets_directive__,  0, &Parser::ReductionRuleHandler0003, "rule 3: targets_directive <-     "},
     {    Token::targets_directive__,  3, &Parser::ReductionRuleHandler0004, "rule 4: targets_directive <- DIRECTIVE_TARGETS %error at_least_one_newline    "},
@@ -1308,13 +1308,13 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {     Token::macro_directives__,  4, &Parser::ReductionRuleHandler0021, "rule 21: macro_directives <- macro_directives DIRECTIVE_MACRO %error at_least_one_newline    "},
     {      Token::start_directive__,  3, &Parser::ReductionRuleHandler0022, "rule 22: start_directive <- DIRECTIVE_START ID at_least_one_newline    "},
     {      Token::start_directive__,  3, &Parser::ReductionRuleHandler0023, "rule 23: start_directive <- DIRECTIVE_START %error at_least_one_newline    "},
-    {       Token::scanner_states__,  2, &Parser::ReductionRuleHandler0024, "rule 24: scanner_states <- scanner_states scanner_state    "},
-    {       Token::scanner_states__,  0, &Parser::ReductionRuleHandler0025, "rule 25: scanner_states <-     "},
-    {        Token::scanner_state__,  5, &Parser::ReductionRuleHandler0026, "rule 26: scanner_state <- DIRECTIVE_STATE ID ':' scanner_state_rules ';'    "},
-    {        Token::scanner_state__,  5, &Parser::ReductionRuleHandler0027, "rule 27: scanner_state <- DIRECTIVE_STATE ID ':' %error ';'    "},
-    {        Token::scanner_state__,  5, &Parser::ReductionRuleHandler0028, "rule 28: scanner_state <- DIRECTIVE_STATE %error ':' scanner_state_rules ';'    "},
-    {  Token::scanner_state_rules__,  1, &Parser::ReductionRuleHandler0029, "rule 29: scanner_state_rules <- rule_list    "},
-    {  Token::scanner_state_rules__,  0, &Parser::ReductionRuleHandler0030, "rule 30: scanner_state_rules <-     "},
+    {        Token::scanner_modes__,  2, &Parser::ReductionRuleHandler0024, "rule 24: scanner_modes <- scanner_modes scanner_mode    "},
+    {        Token::scanner_modes__,  0, &Parser::ReductionRuleHandler0025, "rule 25: scanner_modes <-     "},
+    {         Token::scanner_mode__,  5, &Parser::ReductionRuleHandler0026, "rule 26: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    "},
+    {         Token::scanner_mode__,  5, &Parser::ReductionRuleHandler0027, "rule 27: scanner_mode <- DIRECTIVE_STATE ID ':' %error ';'    "},
+    {         Token::scanner_mode__,  5, &Parser::ReductionRuleHandler0028, "rule 28: scanner_mode <- DIRECTIVE_STATE %error ':' scanner_mode_rules ';'    "},
+    {   Token::scanner_mode_rules__,  1, &Parser::ReductionRuleHandler0029, "rule 29: scanner_mode_rules <- rule_list    "},
+    {   Token::scanner_mode_rules__,  0, &Parser::ReductionRuleHandler0030, "rule 30: scanner_mode_rules <-     "},
     {            Token::rule_list__,  3, &Parser::ReductionRuleHandler0031, "rule 31: rule_list <- rule_list '|' rule    "},
     {            Token::rule_list__,  1, &Parser::ReductionRuleHandler0032, "rule 32: rule_list <- rule    "},
     {                 Token::rule__,  2, &Parser::ReductionRuleHandler0033, "rule 33: rule <- REGEX rule_handlers    "},
@@ -1670,7 +1670,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   25}},
     // nonterminal transitions
-    {       Token::scanner_states__, {                  TA_PUSH_STATE,   37}},
+    {        Token::scanner_modes__, {                  TA_PUSH_STATE,   37}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   30
@@ -1736,7 +1736,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    1}},
     // nonterminal transitions
-    {        Token::scanner_state__, {                  TA_PUSH_STATE,   43}},
+    {         Token::scanner_mode__, {                  TA_PUSH_STATE,   43}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   38
@@ -1866,7 +1866,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   30}},
     // nonterminal transitions
-    {  Token::scanner_state_rules__, {                  TA_PUSH_STATE,   57}},
+    {   Token::scanner_mode_rules__, {                  TA_PUSH_STATE,   57}},
     {            Token::rule_list__, {                  TA_PUSH_STATE,   58}},
     {                 Token::rule__, {                  TA_PUSH_STATE,   59}},
 
@@ -1878,7 +1878,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {                  Token::REGEX, {        TA_SHIFT_AND_PUSH_STATE,   56}},
     {              Token::Type(';'), {           TA_REDUCE_USING_RULE,   30}},
     // nonterminal transitions
-    {  Token::scanner_state_rules__, {                  TA_PUSH_STATE,   61}},
+    {   Token::scanner_mode_rules__, {                  TA_PUSH_STATE,   61}},
     {            Token::rule_list__, {                  TA_PUSH_STATE,   58}},
     {                 Token::rule__, {                  TA_PUSH_STATE,   59}},
 

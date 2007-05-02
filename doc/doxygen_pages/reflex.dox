@@ -11,9 +11,9 @@ $ reflex -h
 @endverbatim
 The help menu describes all commandline options in great detail.  The simplest way to use reflex to compile a <tt>.reflex</tt> source file is to run it as follows.
 @verbatim
-$ reflex -I path/to/data/directory input.reflex -o desired/output/directory/
+$ reflex -I path/to/targets/directory input.reflex -o desired/output/directory/
 @endverbatim
-Slashes should be replaced with backslashes appropriately for different operating systems.  The "data" directory is the directory containing <tt>reflex.*.langspec</tt> and <tt>reflex.*.codespec</tt> files.  In the BARF tarball, this is the <tt>barf/data</tt> directory.  You can also set the environment variable BARF_DATA_PATH to the (absolute) path instead of using the <tt>-I</tt> option.
+Slashes should be replaced with backslashes appropriately for different operating systems.  The "targets" directory is the directory containing <tt>reflex.*.langspec</tt> and <tt>reflex.*.codespec</tt> files.  In the BARF tarball, this is the <tt>barf/targets</tt> directory.  You can also set the environment variable BARF_TARGETS_SEARCH_PATH to the (absolute) path instead of using the <tt>-I</tt> option.
 
 @section reflex_format Format Of The Reflex Source File
 A primary source file is divided into two parts -- the preamble and the scanner specification.
@@ -29,11 +29,11 @@ The preamble is newline-sensitive, so each directive must be on its own line (th
 
 It should be noted that the preamble for both <tt>reflex</tt> and <tt>trison</tt> are nearly identical in format -- the exception being the tool-specific directives such as <tt>\%macro</tt> on the <tt>reflex</tt> side, and XXX (TODO: fill in later) on the <tt>trison</tt> side.
 
-Below the %% delimiter is the scanner state specification.  The format is comprised of one or more scanner states, each containing zero or more regex rules.  Each scanner state is essentially a unique mode of operation which dictates what regex rules can be accepted at any given time.  When the scanner is in a particular scanner state, only the regex rules specified within can be accepted.  The generated scanner code will provide facilities for switching the current scanner state at runtime.
+Below the %% delimiter is the scanner mode specification.  The format is comprised of one or more scanner modes, each containing zero or more regex rules.  Each scanner mode is essentially a unique mode of operation which dictates what regex rules can be accepted at any given time.  When the scanner is in a particular scanner mode, only the regex rules specified within can be accepted.  The generated scanner code will provide facilities for switching the current scanner mode at runtime.
 
-Scanner states are useful in separating modes of operation, such as scanning the body of a string literal, or ignoring everything except the closing delimiter of a block-style comment.
+Scanner modes are useful in separating modes of operation, such as scanning the body of a string literal, or ignoring everything except the closing delimiter of a block-style comment.
 
-Each regex rule in each scanner state must specify, for each target declared in the preamble, a segment of code known as a rule handler.  This code will be executed when the corresponding regex has been successfully matched by the generated scanner.
+Each regex rule in each scanner mode must specify, for each target declared in the preamble, a segment of code known as a rule handler.  This code will be executed when the corresponding regex has been successfully matched by the generated scanner.
 
 The following is an example primary source file which uses the <tt>cpp</tt> target.
 @verbatim
@@ -59,7 +59,7 @@ int main (int argc, char **argv)
 
 %%
 
-%state MAIN
+%scanner_mode MAIN
 :
     ({INTEGER}) %target.cpp { std::cout << "integer" << std::endl; }
 |
@@ -69,16 +69,16 @@ int main (int argc, char **argv)
 |
     (\z) %target.cpp { std::cout << "EOF" << std::endl; return; }
 |
-    (/[*]) %target.cpp { SetScannerState(State::BLOCK_COMMENT); }
+    (/[*]) %target.cpp { ScannerMode(Mode::BLOCK_COMMENT); }
 ;
 
-%state BLOCK_COMMENT
+%scanner_mode BLOCK_COMMENT
 :
-    ([*]/) %target.cpp { std::cout << "block comment" << std::endl; SetScannerState(State::MAIN); }
+    ([*]/) %target.cpp { std::cout << "block comment" << std::endl; ScannerMode(Mode::MAIN); }
 |
     ([^*]+|[*]) %target.cpp { }
 |
-    (\z) %target.cpp { std::cout << "unterminated block comment" << std::endl; SetScannerState(State::MAIN); }
+    (\z) %target.cpp { std::cout << "unterminated block comment" << std::endl; ScannerMode(Mode::MAIN); }
 ;
 @endverbatim
 

@@ -540,7 +540,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
 
         // set the TargetMap's primary source path
         target_map->SetSourcePath(m_scanner.GetInputName());
-        // make sure the %start directive value specifies a real scanner state
+        // make sure the %start directive value specifies a real scanner mode
         if (start_nonterminal_id != NULL &&
             nonterminal_map->GetElement(start_nonterminal_id->GetText()) == NULL)
         {

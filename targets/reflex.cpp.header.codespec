@@ -321,7 +321,11 @@ public:
 
 protected:
 
-    void SetInitialState_ (DfaState_ const *initial_state)
+    DfaState_ const *InitialState_ () const
+    {
+        return m_initial_state_;
+    }
+    void InitialState_ (DfaState_ const *initial_state)
     {
         assert(initial_state != NULL);
         m_initial_state_ = initial_state;
@@ -329,7 +333,7 @@ protected:
     void ResetForNewInput_ (DfaState_ const *initial_state)
     {
         InputBuffer_::ResetForNewInput_();
-        SetInitialState_(initial_state);
+        InitialState_(initial_state);
         m_current_state_ = NULL;
         m_accept_state_ = NULL;
     }
@@ -493,17 +497,17 @@ public:
 
     using Scanner_::IsAtEndOfInput;
 
-    struct State
+    struct Mode
     {
         enum Name
         {
 <*{for_each(key, _dfa_initial_node_index)
             <{key} = <{_dfa_initial_node_index[key]},
 <*{end_for_each
-            // default starting scanner state
+            // default starting scanner mode
             START_ = <{_start}
-        }; // end of enum <{class_name}::State::Name
-    }; // end of struct <{class_name}::State
+        }; // end of enum <{class_name}::Mode::Name
+    }; // end of struct <{class_name}::Mode
 
 <*{if(is_defined(top_of_class))
 <{top_of_class}
@@ -518,7 +522,8 @@ public:
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
 <*{end_if
-    void SetScannerState (State::Name state);
+    Mode::Name ScannerMode () const;
+    void ScannerMode (Mode::Name mode);
 
 <*{if(is_defined(scan_method_access))
 <*{if(!(scan_method_access == "public:" || scan_method_access == "protected:" || scan_method_access == "private:"))

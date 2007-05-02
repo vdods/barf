@@ -318,7 +318,11 @@ public:
 
 protected:
 
-    void SetInitialState_ (DfaState_ const *initial_state)
+    DfaState_ const *InitialState_ () const
+    {
+        return m_initial_state_;
+    }
+    void InitialState_ (DfaState_ const *initial_state)
     {
         assert(initial_state != NULL);
         m_initial_state_ = initial_state;
@@ -326,7 +330,7 @@ protected:
     void ResetForNewInput_ (DfaState_ const *initial_state)
     {
         InputBuffer_::ResetForNewInput_();
-        SetInitialState_(initial_state);
+        InitialState_(initial_state);
         m_current_state_ = NULL;
         m_accept_state_ = NULL;
     }
@@ -503,19 +507,19 @@ class Base;
 
 namespace CommonLang {
 
-#line 507 "barf_commonlang_scanner.hpp"
+#line 511 "barf_commonlang_scanner.hpp"
 
 class Scanner : private ReflexCpp_::Scanner_, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
-#line 512 "barf_commonlang_scanner.hpp"
+#line 516 "barf_commonlang_scanner.hpp"
 
 {
 public:
 
     using Scanner_::IsAtEndOfInput;
 
-    struct State
+    struct Mode
     {
         enum Name
         {
@@ -530,10 +534,10 @@ public:
             STRICT_CODE_BLOCK = 82,
             STRING_LITERAL_GUTS = 93,
             STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK = 108,
-            // default starting scanner state
+            // default starting scanner mode
             START_ = MAIN
-        }; // end of enum Scanner::State::Name
-    }; // end of struct Scanner::State
+        }; // end of enum Scanner::Mode::Name
+    }; // end of struct Scanner::Mode
 
 
 #line 40 "barf_commonlang_scanner.reflex"
@@ -578,7 +582,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 582 "barf_commonlang_scanner.hpp"
+#line 586 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -588,12 +592,13 @@ public:
     bool DebugSpew () const { return m_debug_spew_; }
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
-    void SetScannerState (State::Name state);
+    Mode::Name ScannerMode () const;
+    void ScannerMode (Mode::Name mode);
 
     Scanner::Token::Type Scan (
 #line 81 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
-#line 597 "barf_commonlang_scanner.hpp"
+#line 602 "barf_commonlang_scanner.hpp"
 );
 
 private:
@@ -635,9 +640,9 @@ private:
     Uint32 m_regex_paren_level;
     Uint32 m_regex_bracket_level;
     Uint32 m_code_block_bracket_level;
-    State::Name m_return_state;
+    Mode::Name m_return_state;
 
-#line 641 "barf_commonlang_scanner.hpp"
+#line 646 "barf_commonlang_scanner.hpp"
 
 }; // end of class Scanner
 
@@ -651,4 +656,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(_BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 655 "barf_commonlang_scanner.hpp"
+#line 660 "barf_commonlang_scanner.hpp"

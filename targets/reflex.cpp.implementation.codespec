@@ -47,22 +47,37 @@
 <*{destructor_actions?
 }
 
-void <{class_name}::SetScannerState (State::Name state)
+<{class_name}::Mode::Name <{class_name}::ScannerMode () const
+{
+    assert(InitialState_() != NULL);
+    ReflexCpp_::Size_ initial_node_index = InitialState_() - ms_state_table_;
+    assert(initial_node_index < ms_state_count_);
+    switch (initial_node_index)
+    {
+        default: assert(false && "invalid initial node index -- this should never happen"); return Mode::START_;
+<*{for_each(key, _dfa_initial_node_index)
+        case <{_dfa_initial_node_index[key]}: return Mode::<{key};
+<*{end_for_each
+    }
+}
+
+void <{class_name}::ScannerMode (Mode::Name mode)
 {
     assert(
 <*{for_each(key, _dfa_initial_node_index)
-        state == State::<{key} ||
+        mode == Mode::<{key} ||
 <*{end_for_each
-        (false && "invalid State::Name"));
-    SetInitialState_(ms_state_table_ + state);
+        (false && "invalid Mode::Name"));
+    InitialState_(ms_state_table_ + mode);
 <*{if(is_defined(generate_debug_spew_code))
-    REFLEX_CPP_DEBUG_SPEW_(std::cerr << "*** scanner: transitioning to state ")
+    REFLEX_CPP_DEBUG_SPEW_(std::cerr << "*** scanner: transitioning to mode ")
     if (false) { }
 <*{for_each(key, _dfa_initial_node_index)
-    else if (state == State::<{key}) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "<{key}") }
+    else if (mode == Mode::<{key}) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "<{key}") }
 <*{end_for_each
     REFLEX_CPP_DEBUG_SPEW_(std::cerr << std::endl)
 <*{end_if
+    assert(ScannerMode() == mode);
 }
 
 <{return_type} <{class_name}::Scan (<{if(is_defined(scan_method_definition_parameters))}<{scan_method_definition_parameters}<{else}<{scan_method_parameters?}<{end_if})
@@ -147,7 +162,7 @@ ReflexCpp_::Uint8_ <{class_name}::ReadNextAtom_ ()
 
 void <{class_name}::ResetForNewInput_ ()
 {
-    ReflexCpp_::Scanner_::ResetForNewInput_(ms_state_table_ + State::START_);
+    ReflexCpp_::Scanner_::ResetForNewInput_(ms_state_table_ + Mode::START_);
 
 <*{reset_for_new_input_actions?
 }

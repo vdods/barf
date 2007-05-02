@@ -183,16 +183,16 @@ root %type "Representation *"
     macro_directives:regular_expression_map
     start_directive:start_directive
     END_PREAMBLE:throwaway
-    scanner_states:scanner_state_map
+    scanner_modes:scanner_mode_map
     {
         assert(m_target_map != NULL);
         assert(target_map == m_target_map);
 
         // set the TargetMap's primary source path
         target_map->SetSourcePath(m_scanner.GetInputName());
-        // make sure the %start directive value specifies a real scanner state
+        // make sure the %start directive value specifies a real scanner mode
         if (start_directive != NULL &&
-            scanner_state_map->GetElement(start_directive->m_start_state_id->GetText()) == NULL)
+            scanner_mode_map->GetElement(start_directive->m_start_state_id->GetText()) == NULL)
         {
             EmitError(
                 start_directive->GetFiLoc(),
@@ -205,7 +205,7 @@ root %type "Representation *"
                 regular_expression_map,
                 start_directive,
                 throwaway->GetFiLoc(),
-                scanner_state_map);
+                scanner_mode_map);
         delete throwaway;
         return representation;
     }
@@ -352,7 +352,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
     // empty reduction rule
     {
         // we save the regex macro map in a member var, so that the reduction
-        // rule handler for the scanner state rules can use it.
+        // rule handler for the scanner mode rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
         return m_regex_macro_map;
     }
@@ -394,49 +394,49 @@ start_directive %type "StartDirective *"
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
-// scanner state rules
+// scanner mode rules
 // ///////////////////////////////////////////////////////////////////////////
 
-scanner_states %type "ScannerStateMap *"
+scanner_modes %type "ScannerModeMap *"
 :
-    scanner_states:scanner_state_map scanner_state:scanner_state
+    scanner_modes:scanner_mode_map scanner_mode:scanner_mode
     {
-        if (scanner_state != NULL)
-            scanner_state_map->Add(scanner_state->m_scanner_state_id->GetText(), scanner_state);
-        return scanner_state_map;
+        if (scanner_mode != NULL)
+            scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
+        return scanner_mode_map;
     }
 |
     // empty reduction rule
     {
-        return new ScannerStateMap();
+        return new ScannerModeMap();
     }
 ;
 
-scanner_state %type "ScannerState *"
+scanner_mode %type "ScannerMode *"
 :
-    DIRECTIVE_STATE:throwaway ID:scanner_state_id ':' scanner_state_rules:rule_list ';'
+    DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' scanner_mode_rules:rule_list ';'
     {
         delete throwaway;
-        return new ScannerState(scanner_state_id, rule_list);
+        return new ScannerMode(scanner_mode_id, rule_list);
     }
 |
-    DIRECTIVE_STATE:throwaway ID:scanner_state_id ':' %error ';'
+    DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' %error ';'
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner state rule list");
+        EmitError(throwaway->GetFiLoc(), "parse error in scanner mode rule list");
         delete throwaway;
-        return new ScannerState(scanner_state_id, new RuleList());
+        return new ScannerMode(scanner_mode_id, new RuleList());
     }
 |
-    DIRECTIVE_STATE:throwaway %error ':' scanner_state_rules:rule_list ';'
+    DIRECTIVE_STATE:throwaway %error ':' scanner_mode_rules:rule_list ';'
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner state id");
+        EmitError(throwaway->GetFiLoc(), "parse error in scanner mode id");
         delete throwaway;
         delete rule_list;
         return NULL;
     }
 ;
 
-scanner_state_rules %type "RuleList *"
+scanner_mode_rules %type "RuleList *"
 :
     rule_list:rule_list
     {

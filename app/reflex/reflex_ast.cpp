@@ -21,8 +21,8 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_REPRESENTATION",
         "AT_RULE",
         "AT_RULE_LIST",
-        "AT_SCANNER_STATE",
-        "AT_SCANNER_STATE_MAP",
+        "AT_SCANNER_MODE",
+        "AT_SCANNER_MODE_MAP",
         "AT_START_DIRECTIVE"
     };
 
@@ -39,9 +39,9 @@ void StartDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 
     m_start_state_id->Print(stream, Stringify, indent_level+1);
 }
 
-void ScannerState::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void ScannerMode::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_scanner_state_id->GetText() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_scanner_mode_id->GetText() << endl;
     for (RuleList::const_iterator it = m_rule_list->begin(),
                                  it_end = m_rule_list->end();
          it != it_end;
@@ -72,7 +72,7 @@ void Representation::Print (ostream &stream, StringifyAstType Stringify, Uint32 
     m_regex_macro_map->Print(stream, indent_level+1);
     if (m_start_directive != NULL)
         m_start_directive->Print(stream, Stringify, indent_level+1);
-    m_scanner_state_map->Print(stream, Stringify, indent_level+1);
+    m_scanner_mode_map->Print(stream, Stringify, indent_level+1);
 }
 
 } // end of namespace Reflex

@@ -84,7 +84,7 @@
 // Similar to top_of_class, this facilitates class declarations at the bottom,
 // which may be necessary when declarations from the middle of the generated
 // class are needed.  Again, the default class access level is public.
-// e.g. { State::Name m_saved_state; }
+// e.g. { Mode::Name m_saved_scanner_mode; }
 %add_optional_directive bottom_of_class                     %strict_code_block
 // This is the analog to top_of_header_file -- its contents go directly at the
 // bottom of the generated header file.  If you opened a namespace from within
@@ -104,7 +104,7 @@
 // e.g. %{ namespace SweetNamespace { %}
 %add_optional_directive top_of_implementation_file          %dumb_code_block
 // If any superclasses or members need explicit construction, do it here.
-// e.g. { AwesomeBase(1, 2, 3), m_saved_state(State::MAIN) }
+// e.g. { AwesomeBase(1, 2, 3), m_saved_scanner_mode(Mode::MAIN) }
 %add_optional_directive superclass_and_member_constructors  %strict_code_block
 // This specifies code for the body of the generated class' constructor.
 // e.g. { std::cout << "constructor being executed" << std::endl; }

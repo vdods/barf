@@ -18,7 +18,7 @@
             <item>prec</item>
             <item>right</item>
             <item>start</item>
-            <item>state</item>
+            <item>scanner_mode</item>
             <item>strict_code_block</item>
             <item>string</item>
             <item>target</item>

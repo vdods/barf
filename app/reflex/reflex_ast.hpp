@@ -45,8 +45,8 @@ enum
     AT_REPRESENTATION = CommonLang::AT_START_CUSTOM_TYPES_HERE_,
     AT_RULE,
     AT_RULE_LIST,
-    AT_SCANNER_STATE,
-    AT_SCANNER_STATE_MAP,
+    AT_SCANNER_MODE,
+    AT_SCANNER_MODE_MAP,
     AT_START_DIRECTIVE, 
 
     AT_COUNT
@@ -111,25 +111,25 @@ struct RuleList : public Ast::AstList<Rule>
     RuleList () : Ast::AstList<Rule>(AT_RULE_LIST) { }
 };
 
-struct ScannerState : public Ast::Base
+struct ScannerMode : public Ast::Base
 {
-    Ast::Id const *const m_scanner_state_id;
+    Ast::Id const *const m_scanner_mode_id;
     RuleList const *const m_rule_list;
 
-    ScannerState (
-        Ast::Id const *scanner_state_id,
+    ScannerMode (
+        Ast::Id const *scanner_mode_id,
         RuleList *rule_list)
         :
-        Ast::Base(scanner_state_id->GetFiLoc(), AT_SCANNER_STATE),
-        m_scanner_state_id(scanner_state_id),
+        Ast::Base(scanner_mode_id->GetFiLoc(), AT_SCANNER_MODE),
+        m_scanner_mode_id(scanner_mode_id),
         m_rule_list(rule_list)
     {
-        assert(m_scanner_state_id != NULL);
+        assert(m_scanner_mode_id != NULL);
         assert(m_rule_list != NULL);
     }
-    virtual ~ScannerState ()
+    virtual ~ScannerMode ()
     {
-        delete m_scanner_state_id;
+        delete m_scanner_mode_id;
         delete m_rule_list;
     }
 
@@ -144,11 +144,11 @@ struct ScannerState : public Ast::Base
         Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class ScannerState
+}; // end of class ScannerMode
 
-struct ScannerStateMap : public Ast::AstMap<ScannerState>
+struct ScannerModeMap : public Ast::AstMap<ScannerMode>
 {
-    ScannerStateMap () : Ast::AstMap<ScannerState>(AT_SCANNER_STATE_MAP) { }
+    ScannerModeMap () : Ast::AstMap<ScannerMode>(AT_SCANNER_MODE_MAP) { }
 };
 
 class Representation : public Ast::Base
@@ -158,26 +158,26 @@ public:
     CommonLang::TargetMap const *const m_target_map;
     Regex::RegularExpressionMap *const m_regex_macro_map; // this could technically go away
     StartDirective const *const m_start_directive;
-    ScannerStateMap const *const m_scanner_state_map;
+    ScannerModeMap const *const m_scanner_mode_map;
 
     Representation (
         CommonLang::TargetMap const *target_map,
         Regex::RegularExpressionMap *regex_macro_map,
         StartDirective const *start_directive,
         FiLoc const &end_preamble_filoc,
-        ScannerStateMap const *scanner_state_map)
+        ScannerModeMap const *scanner_mode_map)
         :
         Ast::Base(target_map->GetFiLoc(), AT_REPRESENTATION),
         m_target_map(target_map),
         m_regex_macro_map(regex_macro_map),
         m_start_directive(start_directive),
-        m_scanner_state_map(scanner_state_map),
+        m_scanner_mode_map(scanner_mode_map),
         m_next_accept_handler_index(0)
     {
         assert(m_target_map != NULL);
         assert(m_regex_macro_map != NULL);
         // m_start_directive can be NULL if an error happened
-        assert(m_scanner_state_map != NULL);
+        assert(m_scanner_mode_map != NULL);
     }
 
     CommonLang::TargetMap const &GetTargetMap () const { return *m_target_map; }
