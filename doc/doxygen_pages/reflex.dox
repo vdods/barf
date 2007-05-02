@@ -23,7 +23,7 @@ Everything at the top of the file, above the %% delimiter, is the preamble.  The
     <li>Target(s) -- indicates that scanners will be generated for each of the given targets, with each language corresponding to a "langspec" file in the data directory.  This directive is optional; if omitted, <tt>reflex</tt> will process the specified scanner and internally generate the corresponding state machine, emitting warnings and errors if necessary, but will not generate any source code.  For example, @verbatim %targets cpp @endverbatim
     <li>Target-specific directives -- as mentioned earlier, each target an associated <tt>reflex.*.langspec</tt> (e.g. <tt>reflex.cpp.langspec</tt> for the <tt>cpp</tt> target) which defines what language-specific directives are available, which ones are required to be supplied in the <tt>.reflex</tt> source, as well as the parameter type for each.  For example, the <tt>ccp</tt> target only requires the <tt>class_name</tt> directive be specified; this would be done as @verbatim %target.cpp.class_name AwesomeScanner @endverbatim
     <li>Regular expression macros -- are simple macro definitions for convenient in later <tt>\%macro</tt> directives or in scanner regexes.  For example, @verbatim %macro DIGIT ([0-9]) @endverbatim
-    <li>Starting state -- is the single required preamble directive.  It specifies the name of the default starting state, choosing from those defined after the preamble.  For example, @verbatim %start MAIN @endverbatim
+    <li>Starting scanner mode -- is the single required preamble directive.  It specifies the name of the scanner mode the generated scanner will start in by default -- though the scanner mode can be changed at runtime via target-specific calls), choosing from those defined after the preamble.  For example, @verbatim %start_in_scanner_mode MAIN @endverbatim
     </ul>
 The preamble is newline-sensitive, so each directive must be on its own line (though there can be an arbitrary number of newlines between directive lines).
 
@@ -55,7 +55,7 @@ int main (int argc, char **argv)
 %macro DIGIT ([0-9])
 %macro INTEGER ({DIGIT}+)
 
-%start MAIN
+%start_in_scanner_mode MAIN
 
 %%
 

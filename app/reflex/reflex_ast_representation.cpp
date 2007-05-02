@@ -216,14 +216,14 @@ void Representation::GenerateAutomatonSymbols (
     assert(m_nfa_graph.GetNodeCount() > 0);
     assert(m_dfa_graph.GetNodeCount() > 0);
 
-    // _start -- value of %start -- the name of the initial scanner mode
+    // _start_in_scanner_mode -- value of %start_in_scanner_mode -- the name of the initial scanner mode
     {
-        assert(m_start_directive != NULL);
+        assert(m_start_in_scanner_mode_directive != NULL);
         Preprocessor::ScalarSymbol *symbol =
-            symbol_table.DefineScalarSymbol("_start", FiLoc::ms_invalid);
+            symbol_table.DefineScalarSymbol("_start_in_scanner_mode", FiLoc::ms_invalid);
         symbol->SetScalarBody(
             new Preprocessor::Body(
-                m_start_directive->m_start_state_id->GetText(),
+                m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText(),
                 FiLoc::ms_invalid));
     }
 

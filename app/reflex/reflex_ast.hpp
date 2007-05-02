@@ -54,24 +54,24 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-struct StartDirective : public Ast::Directive
+struct StartInScannerModeDirective : public Ast::Directive
 {
-    Ast::Id const *const m_start_state_id;
+    Ast::Id const *const m_scanner_mode_id;
 
-    StartDirective (Ast::Id const *start_state_id)
+    StartInScannerModeDirective (Ast::Id const *scanner_mode_id)
         :
-        Ast::Directive("%start", start_state_id->GetFiLoc(), AT_START_DIRECTIVE),
-        m_start_state_id(start_state_id)
+        Ast::Directive("%start_in_scanner_mode", scanner_mode_id->GetFiLoc(), AT_START_DIRECTIVE),
+        m_scanner_mode_id(scanner_mode_id)
     {
-        assert(m_start_state_id != NULL);
+        assert(m_scanner_mode_id != NULL);
     }
-    virtual ~StartDirective ()
+    virtual ~StartInScannerModeDirective ()
     {
-        delete m_start_state_id;
+        delete m_scanner_mode_id;
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class StartDirective
+}; // end of class StartInScannerModeDirective
 
 struct Rule : public Ast::Base
 {
@@ -157,26 +157,26 @@ public:
 
     CommonLang::TargetMap const *const m_target_map;
     Regex::RegularExpressionMap *const m_regex_macro_map; // this could technically go away
-    StartDirective const *const m_start_directive;
+    StartInScannerModeDirective const *const m_start_in_scanner_mode_directive;
     ScannerModeMap const *const m_scanner_mode_map;
 
     Representation (
         CommonLang::TargetMap const *target_map,
         Regex::RegularExpressionMap *regex_macro_map,
-        StartDirective const *start_directive,
+        StartInScannerModeDirective const *start_in_scanner_mode_directive,
         FiLoc const &end_preamble_filoc,
         ScannerModeMap const *scanner_mode_map)
         :
         Ast::Base(target_map->GetFiLoc(), AT_REPRESENTATION),
         m_target_map(target_map),
         m_regex_macro_map(regex_macro_map),
-        m_start_directive(start_directive),
+        m_start_in_scanner_mode_directive(start_in_scanner_mode_directive),
         m_scanner_mode_map(scanner_mode_map),
         m_next_accept_handler_index(0)
     {
         assert(m_target_map != NULL);
         assert(m_regex_macro_map != NULL);
-        // m_start_directive can be NULL if an error happened
+        // m_start_in_scanner_mode_directive can be NULL if an error happened
         assert(m_scanner_mode_map != NULL);
     }
 

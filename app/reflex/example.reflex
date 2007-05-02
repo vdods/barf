@@ -80,7 +80,7 @@ int main (int argc, char **argv)
 // single-char escape codes for a string literal (e.g. "yo!\n")
 %macro STRING_ESC_CHAR      (\\[[:print:]])
 
-%start MAIN
+%start_in_scanner_mode MAIN
 
 %%
 

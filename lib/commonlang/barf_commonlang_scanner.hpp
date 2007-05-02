@@ -562,6 +562,7 @@ public:
             DIRECTIVE_PREC,
             DIRECTIVE_RIGHT,
             DIRECTIVE_START,
+            DIRECTIVE_START_IN_SCANNER_MODE,
             DIRECTIVE_STATE,
             DIRECTIVE_STRICT_CODE_BLOCK,
             DIRECTIVE_STRING,
@@ -582,7 +583,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 586 "barf_commonlang_scanner.hpp"
+#line 587 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -596,9 +597,9 @@ public:
     void ScannerMode (Mode::Name mode);
 
     Scanner::Token::Type Scan (
-#line 81 "barf_commonlang_scanner.reflex"
+#line 82 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
-#line 602 "barf_commonlang_scanner.hpp"
+#line 603 "barf_commonlang_scanner.hpp"
 );
 
 private:
@@ -620,7 +621,7 @@ private:
 
 public:
 
-#line 82 "barf_commonlang_scanner.reflex"
+#line 83 "barf_commonlang_scanner.reflex"
 
     using InputBase::GetIsOpen;
     using InputBase::GetFiLoc;
@@ -642,12 +643,12 @@ private:
     Uint32 m_code_block_bracket_level;
     Mode::Name m_return_state;
 
-#line 646 "barf_commonlang_scanner.hpp"
+#line 647 "barf_commonlang_scanner.hpp"
 
 }; // end of class Scanner
 
 
-#line 103 "barf_commonlang_scanner.reflex"
+#line 104 "barf_commonlang_scanner.reflex"
 
 ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
@@ -656,4 +657,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(_BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 660 "barf_commonlang_scanner.hpp"
+#line 661 "barf_commonlang_scanner.hpp"

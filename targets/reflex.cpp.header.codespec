@@ -505,7 +505,7 @@ public:
             <{key} = <{_dfa_initial_node_index[key]},
 <*{end_for_each
             // default starting scanner mode
-            START_ = <{_start}
+            START_ = <{_start_in_scanner_mode}
         }; // end of enum <{class_name}::Mode::Name
     }; // end of struct <{class_name}::Mode
 

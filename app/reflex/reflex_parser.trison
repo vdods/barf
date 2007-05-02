@@ -101,21 +101,21 @@ Parser::Token::Type Parser::Scan ()
         return Parser::Token::Type(scanner_token_type);
     switch (scanner_token_type)
     {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:   return Parser::Token::END_;
-        case CommonLang::Scanner::Token::BAD_TOKEN:         return Parser::Token::BAD_TOKEN;
-        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:   return Parser::Token::DIRECTIVE_MACRO;
-        case CommonLang::Scanner::Token::DIRECTIVE_START:   return Parser::Token::DIRECTIVE_START;
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE:   return Parser::Token::DIRECTIVE_STATE;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:  return Parser::Token::DIRECTIVE_TARGET;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS: return Parser::Token::DIRECTIVE_TARGETS;
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:   return Parser::Token::DUMB_CODE_BLOCK;
-        case CommonLang::Scanner::Token::END_OF_FILE:       return Parser::Token::END_;
-        case CommonLang::Scanner::Token::END_PREAMBLE:      return Parser::Token::END_PREAMBLE;
-        case CommonLang::Scanner::Token::ID:                return Parser::Token::ID;
-        case CommonLang::Scanner::Token::NEWLINE:           return Parser::Token::NEWLINE;
-        case CommonLang::Scanner::Token::REGEX:             return Parser::Token::REGEX;
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK: return Parser::Token::STRICT_CODE_BLOCK;
-        case CommonLang::Scanner::Token::STRING_LITERAL:    return Parser::Token::STRING_LITERAL;
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                 return Parser::Token::END_;
+        case CommonLang::Scanner::Token::BAD_TOKEN:                       return Parser::Token::BAD_TOKEN;
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                 return Parser::Token::DIRECTIVE_MACRO;
+        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_SCANNER_MODE: return Parser::Token::DIRECTIVE_START_IN_SCANNER_MODE;
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE:                 return Parser::Token::DIRECTIVE_STATE;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                return Parser::Token::DIRECTIVE_TARGET;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:               return Parser::Token::DIRECTIVE_TARGETS;
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                 return Parser::Token::DUMB_CODE_BLOCK;
+        case CommonLang::Scanner::Token::END_OF_FILE:                     return Parser::Token::END_;
+        case CommonLang::Scanner::Token::END_PREAMBLE:                    return Parser::Token::END_PREAMBLE;
+        case CommonLang::Scanner::Token::ID:                              return Parser::Token::ID;
+        case CommonLang::Scanner::Token::NEWLINE:                         return Parser::Token::NEWLINE;
+        case CommonLang::Scanner::Token::REGEX:                           return Parser::Token::REGEX;
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:               return Parser::Token::STRICT_CODE_BLOCK;
+        case CommonLang::Scanner::Token::STRING_LITERAL:                  return Parser::Token::STRING_LITERAL;
 
         case CommonLang::Scanner::Token::CHAR_LITERAL:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
@@ -129,6 +129,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
+        case CommonLang::Scanner::Token::DIRECTIVE_START:
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
         case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
@@ -154,7 +155,7 @@ Parser::Token::Type Parser::Scan ()
 
 %token BAD_TOKEN
 %token DIRECTIVE_MACRO %type "Ast::ThrowAway *"
-%token DIRECTIVE_START %type "Ast::ThrowAway *"
+%token DIRECTIVE_START_IN_SCANNER_MODE %type "Ast::ThrowAway *"
 %token DIRECTIVE_STATE %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGETS %type "Ast::ThrowAway *"
@@ -181,7 +182,7 @@ root %type "Representation *"
     targets_directive:target_map
     target_directives
     macro_directives:regular_expression_map
-    start_directive:start_directive
+    start_in_scanner_mode_directive:start_in_scanner_mode_directive
     END_PREAMBLE:throwaway
     scanner_modes:scanner_mode_map
     {
@@ -190,20 +191,20 @@ root %type "Representation *"
 
         // set the TargetMap's primary source path
         target_map->SetSourcePath(m_scanner.GetInputName());
-        // make sure the %start directive value specifies a real scanner mode
-        if (start_directive != NULL &&
-            scanner_mode_map->GetElement(start_directive->m_start_state_id->GetText()) == NULL)
+        // make sure the %start_in_scanner_mode directive value specifies a real scanner mode
+        if (start_in_scanner_mode_directive != NULL &&
+            scanner_mode_map->GetElement(start_in_scanner_mode_directive->m_scanner_mode_id->GetText()) == NULL)
         {
             EmitError(
-                start_directive->GetFiLoc(),
-                "undeclared state \"" + start_directive->m_start_state_id->GetText() + "\"");
+                start_in_scanner_mode_directive->GetFiLoc(),
+                "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"");
         }
 
         Representation *representation =
             new Representation(
                 target_map,
                 regular_expression_map,
-                start_directive,
+                start_in_scanner_mode_directive,
                 throwaway->GetFiLoc(),
                 scanner_mode_map);
         delete throwaway;
@@ -377,17 +378,17 @@ macro_directives %type "Regex::RegularExpressionMap *"
 // start directive rule
 // ///////////////////////////////////////////////////////////////////////////
 
-start_directive %type "StartDirective *"
+start_in_scanner_mode_directive %type "StartInScannerModeDirective *"
 :
-    DIRECTIVE_START:throwaway ID:start_state_id at_least_one_newline
+    DIRECTIVE_START_IN_SCANNER_MODE:throwaway ID:scanner_mode_id at_least_one_newline
     {
         delete throwaway;
-        return new StartDirective(start_state_id);
+        return new StartInScannerModeDirective(scanner_mode_id);
     }
 |
-    DIRECTIVE_START:throwaway %error at_least_one_newline
+    DIRECTIVE_START_IN_SCANNER_MODE:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %start");
+        EmitError(throwaway->GetFiLoc(), "parse error in directive %start_in_scanner_mode");
         delete throwaway;
         return NULL;
     }

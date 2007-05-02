@@ -49,7 +49,7 @@ public:
             // user-defined terminal, non-single-character tokens
             BAD_TOKEN = 0x100,
             DIRECTIVE_MACRO,
-            DIRECTIVE_START,
+            DIRECTIVE_START_IN_SCANNER_MODE,
             DIRECTIVE_STATE,
             DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
@@ -77,7 +77,7 @@ public:
             scanner_mode__,
             scanner_mode_rules__,
             scanner_modes__,
-            start_directive__,
+            start_in_scanner_mode_directive__,
             target_directive__,
             target_directive_param__,
             target_directives__,

@@ -165,13 +165,11 @@
 - get rid of STL usage in C++ codespecs (separate target)
 - add option which prints the targets available in the current search path
 - add codespec macro of the regex for each rule
-- get rid of StartDirective (just use an Ast::Identifier)
 - use smallest integer type to store state and transition indices, etc.
 - add _reflex_version to the code generator (_barf_version?)
 - the rule handler code block type should be specifiable by the langspec
 - add -D option for defining crap in the preprocessor stage -- before and
-  after the .reflex source is read
-- use %default_start_state instead of %start (actually %default_start_mode)
+  after the .reflex source is read (e.g. to override the output filenames)
 - warn about langspec directive values that weren't referenced in the
   code generation (preprocessor) stage
 - add "push accepted string back into buffer" API to the generated scanner -- 
@@ -208,12 +206,12 @@
   destructor and at the end of the parse method
 - update the output basename help message
 - add -D option for defining crap in the preprocessor stage -- before and
-  after the .trison source is read
+  after the .trison source is read (e.g. to override the output filenames)
 - make directives parseable in any order?
-- add a directive for what to do with unnamed tokens (they could be non-NULL
-  or whatever).
+- add a directive for what to do with unnamed tokens (because they might need
+  to be thrown away)
 - get rid of trison_message (and move the crap into barf_message)
-- use %default_start_nonterminal instead of %start
+- use %default_nonterminal_to_parse instead of %start
 - warn about langspec directive values that weren't referenced in the
   code generation (preprocessor) stage
 - rename _npda_node_* to _npda_state_*

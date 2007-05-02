@@ -9,6 +9,7 @@
             <item>add_optional_directive</item>
             <item>add_required_directive</item>
             <item>default</item>
+            <item>default_nonterminal_to_parse</item>
             <item>dumb_code_block</item>
             <item>error</item>
             <item>identifier</item>
@@ -17,7 +18,7 @@
             <item>nonassoc</item>
             <item>prec</item>
             <item>right</item>
-            <item>start</item>
+            <item>start_in_scanner_mode</item>
             <item>scanner_mode</item>
             <item>strict_code_block</item>
             <item>string</item>

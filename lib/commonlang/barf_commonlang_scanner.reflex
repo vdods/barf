@@ -58,6 +58,7 @@ namespace CommonLang {
             DIRECTIVE_PREC,
             DIRECTIVE_RIGHT,
             DIRECTIVE_START,
+            DIRECTIVE_START_IN_SCANNER_MODE,
             DIRECTIVE_STATE,
             DIRECTIVE_STRICT_CODE_BLOCK,
             DIRECTIVE_STRING,
@@ -146,6 +147,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DIRECTIVE_PREC",
         "DIRECTIVE_RIGHT",
         "DIRECTIVE_START",
+        "DIRECTIVE_START_IN_SCANNER_MODE",
         "DIRECTIVE_STATE",
         "DIRECTIVE_STRICT_CODE_BLOCK",
         "DIRECTIVE_STRING",
@@ -212,6 +214,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%prec") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_PREC; }
     if (accepted_string == "%right") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_RIGHT; }
     if (accepted_string == "%start") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_START; }
+    if (accepted_string == "%start_in_scanner_mode") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_START_IN_SCANNER_MODE; }
     if (accepted_string == "%scanner_mode") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE; }
     if (accepted_string == "%strict_code_block") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
     if (accepted_string == "%string") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRING; }
@@ -289,7 +292,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 %macro STRING_NORMAL_CHAR   ([^[:cntrl:]"\\]|\t|\n)
 
 // id (same as C-style, but can't start or end with an underscore)
-%macro ID           ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
+%macro ID                   ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
 
 // all operators that should be returned by ascii value
 %macro OPERATOR             ([.:;|])
@@ -300,7 +303,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 // any char
 %macro ANYTHING             (\n|.)
 
-%start MAIN
+%start_in_scanner_mode MAIN
 
 %%
 

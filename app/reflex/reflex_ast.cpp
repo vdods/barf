@@ -33,10 +33,10 @@ string const &GetAstTypeString (AstType ast_type)
         return s_ast_type_string[ast_type-CommonLang::AT_START_CUSTOM_TYPES_HERE_];
 }
 
-void StartDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void StartInScannerModeDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Directive::Print(stream, Stringify, indent_level);
-    m_start_state_id->Print(stream, Stringify, indent_level+1);
+    m_scanner_mode_id->Print(stream, Stringify, indent_level+1);
 }
 
 void ScannerMode::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -70,8 +70,8 @@ void Representation::Print (ostream &stream, StringifyAstType Stringify, Uint32 
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
     m_target_map->Print(stream, Stringify, indent_level+1);
     m_regex_macro_map->Print(stream, indent_level+1);
-    if (m_start_directive != NULL)
-        m_start_directive->Print(stream, Stringify, indent_level+1);
+    if (m_start_in_scanner_mode_directive != NULL)
+        m_start_in_scanner_mode_directive->Print(stream, Stringify, indent_level+1);
     m_scanner_mode_map->Print(stream, Stringify, indent_level+1);
 }
 
