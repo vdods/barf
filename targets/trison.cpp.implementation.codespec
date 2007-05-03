@@ -55,7 +55,7 @@
 <*{end_if
 }
 
-<{class_name}::ParserReturnCode <{class_name}::Parse (StartNonterminal::Name nonterminal_to_parse_)
+<{class_name}::ParserReturnCode <{class_name}::Parse (ParseNonterminal::Name nonterminal_to_parse_)
 {
 <*{if(is_defined(start_of_parse_method_actions))
 <*{start_of_parse_method_actions
@@ -133,7 +133,7 @@ void <{class_name}::ResetForNewInput_ ()
 <*{end_if
 }
 
-<{class_name}::ParserReturnCode <{class_name}::Parse_ (StartNonterminal::Name nonterminal_to_parse_)
+<{class_name}::ParserReturnCode <{class_name}::Parse_ (ParseNonterminal::Name nonterminal_to_parse_)
 {
     ParserReturnCode parser_return_code_ = PRC_SUCCESS;
 

@@ -269,7 +269,7 @@ struct Representation : public Ast::Base
     TokenMap const *const m_token_map;
     PrecedenceMap const *const m_precedence_map;
     PrecedenceList const *const m_precedence_list;
-    string const m_start_nonterminal_id;
+    string const m_default_parse_nonterminal_id;
     NonterminalMap const *const m_nonterminal_map;
     NonterminalList const *const m_nonterminal_list;
 
@@ -278,7 +278,7 @@ struct Representation : public Ast::Base
         TokenMap const *token_map,
         PrecedenceMap const *precedence_map,
         PrecedenceList const *precedence_list,
-        string const &start_nonterminal_id,
+        string const &default_parse_nonterminal_id,
         FiLoc const &filoc,
         NonterminalMap const *nonterminal_map,
         NonterminalList const *nonterminal_list)
@@ -288,7 +288,7 @@ struct Representation : public Ast::Base
         m_token_map(token_map),
         m_precedence_map(precedence_map),
         m_precedence_list(precedence_list),
-        m_start_nonterminal_id(start_nonterminal_id),
+        m_default_parse_nonterminal_id(default_parse_nonterminal_id),
         m_nonterminal_map(nonterminal_map),
         m_nonterminal_list(nonterminal_list)
     {
@@ -296,7 +296,7 @@ struct Representation : public Ast::Base
         assert(m_token_map != NULL);
         assert(m_precedence_map != NULL);
         assert(m_precedence_list != NULL);
-        assert(!m_start_nonterminal_id.empty());
+        assert(!m_default_parse_nonterminal_id.empty());
         assert(m_nonterminal_map != NULL);
         assert(m_nonterminal_list != NULL);
         AssignRuleIndices();

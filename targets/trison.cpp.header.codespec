@@ -1116,17 +1116,17 @@ public:
         }; // end of enum <{class_name}::Nonterminal::Name
     }; // end of struct <{class_name}::Nonterminal
 
-    struct StartNonterminal
+    struct ParseNonterminal
     {
         enum Name
         {
 <*{for_each(key, _npda_initial_node_index)
             <{key} = <{_npda_initial_node_index[key]},
 <*{end_for_each
-            // default starting nonterminal
-            START_ = <{_start}
-        }; // end of enum <{class_name}::StartNonterminal::Name
-    }; // end of struct <{class_name}::StartNonterminal
+            // default parse nonterminal
+            DEFAULT_ = <{_default_parse_nonterminal}
+        }; // end of enum <{class_name}::ParseNonterminal::Name
+    }; // end of struct <{class_name}::ParseNonterminal
 
     struct Token_
     {
@@ -1170,7 +1170,7 @@ public:
 <{parse_method_access}
 
 <*{end_if
-    ParserReturnCode Parse (StartNonterminal::Name nonterminal_to_parse_ = StartNonterminal::<{_start});
+    ParserReturnCode Parse (ParseNonterminal::Name nonterminal_to_parse_ = ParseNonterminal::<{_default_parse_nonterminal});
 
 private:
 
@@ -1193,7 +1193,7 @@ private:
 
 
     // blah
-    ParserReturnCode Parse_ (StartNonterminal::Name nonterminal_to_parse_);
+    ParserReturnCode Parse_ (ParseNonterminal::Name nonterminal_to_parse_);
     Token_ &ShiftLookaheadToken_ ();
     void PerformEpsilonClosure_ ();
     void PerformEpsilonClosure_ (Branch_ &source_branch, StateStack_ &extra_state_stack);

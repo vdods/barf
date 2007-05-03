@@ -211,7 +211,6 @@
 - add a directive for what to do with unnamed tokens (because they might need
   to be thrown away)
 - get rid of trison_message (and move the crap into barf_message)
-- use %default_nonterminal_to_parse instead of %start
 - warn about langspec directive values that weren't referenced in the
   code generation (preprocessor) stage
 - rename _npda_node_* to _npda_state_*

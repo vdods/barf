@@ -427,12 +427,12 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
     {
         "BAD_TOKEN",
         "CHAR_LITERAL",
+        "DIRECTIVE_DEFAULT_PARSE_NONTERMINAL",
         "DIRECTIVE_ERROR",
         "DIRECTIVE_LEFT",
         "DIRECTIVE_NONASSOC",
         "DIRECTIVE_PREC",
         "DIRECTIVE_RIGHT",
-        "DIRECTIVE_START",
         "DIRECTIVE_TARGET",
         "DIRECTIVE_TARGETS",
         "DIRECTIVE_TOKEN",
@@ -511,7 +511,7 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
     return NULL;
 }
 
-// rule 1: root <- at_least_zero_newlines targets_directive:target_map target_directives token_directives:token_map precedence_directives:precedence_map start_directive:start_nonterminal_id END_PREAMBLE:throwaway nonterminals:nonterminal_map    
+// rule 1: root <- at_least_zero_newlines targets_directive:target_map target_directives token_directives:token_map precedence_directives:precedence_map start_directive:default_parse_nonterminal_id END_PREAMBLE:throwaway nonterminals:nonterminal_map    
 Ast::Base * Parser::ReductionRuleHandler0001 ()
 {
     assert(1 < m_reduction_rule_token_count);
@@ -521,7 +521,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
     assert(4 < m_reduction_rule_token_count);
     PrecedenceMap * precedence_map = Dsc< PrecedenceMap * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 4]);
     assert(5 < m_reduction_rule_token_count);
-    Ast::Id * start_nonterminal_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
+    Ast::Id * default_parse_nonterminal_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
     assert(6 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 6]);
     assert(7 < m_reduction_rule_token_count);
@@ -540,13 +540,13 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
 
         // set the TargetMap's primary source path
         target_map->SetSourcePath(m_scanner.GetInputName());
-        // make sure the %start directive value specifies a real scanner mode
-        if (start_nonterminal_id != NULL &&
-            nonterminal_map->GetElement(start_nonterminal_id->GetText()) == NULL)
+        // make sure the %default_parse_nonterminal directive value specifies a real nonterminal
+        if (default_parse_nonterminal_id != NULL &&
+            nonterminal_map->GetElement(default_parse_nonterminal_id->GetText()) == NULL)
         {
             EmitError(
-                start_nonterminal_id->GetFiLoc(),
-                "undeclared nonterminal \"" + start_nonterminal_id->GetText() + "\"");
+                default_parse_nonterminal_id->GetFiLoc(),
+                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"");
         }
 
         Representation *representation =
@@ -555,12 +555,12 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
                 token_map,
                 precedence_map,
                 m_precedence_list,
-                start_nonterminal_id->GetText(),
+                default_parse_nonterminal_id->GetText(),
                 throwaway->GetFiLoc(),
                 nonterminal_map,
                 m_nonterminal_list);
         delete throwaway;
-        delete start_nonterminal_id;
+        delete default_parse_nonterminal_id;
         return representation;
     
 #line 567 "trison_parser.cpp"
@@ -1098,7 +1098,7 @@ Ast::Base * Parser::ReductionRuleHandler0030 ()
     return NULL;
 }
 
-// rule 31: start_directive <- DIRECTIVE_START:throwaway ID:id at_least_one_newline    
+// rule 31: start_directive <- DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:throwaway ID:id at_least_one_newline    
 Ast::Base * Parser::ReductionRuleHandler0031 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1671,7 +1671,7 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     { Token::precedence_directive__,  4, &Parser::ReductionRuleHandler0028, "rule 28: precedence_directive <- DIRECTIVE_PREC DIRECTIVE_LEFT ID at_least_one_newline    "},
     { Token::precedence_directive__,  4, &Parser::ReductionRuleHandler0029, "rule 29: precedence_directive <- DIRECTIVE_PREC DIRECTIVE_NONASSOC ID at_least_one_newline    "},
     { Token::precedence_directive__,  4, &Parser::ReductionRuleHandler0030, "rule 30: precedence_directive <- DIRECTIVE_PREC DIRECTIVE_RIGHT ID at_least_one_newline    "},
-    {      Token::start_directive__,  3, &Parser::ReductionRuleHandler0031, "rule 31: start_directive <- DIRECTIVE_START ID at_least_one_newline    "},
+    {      Token::start_directive__,  3, &Parser::ReductionRuleHandler0031, "rule 31: start_directive <- DIRECTIVE_DEFAULT_PARSE_NONTERMINAL ID at_least_one_newline    "},
     {         Token::nonterminals__,  2, &Parser::ReductionRuleHandler0032, "rule 32: nonterminals <- nonterminals nonterminal    "},
     {         Token::nonterminals__,  0, &Parser::ReductionRuleHandler0033, "rule 33: nonterminals <-     "},
     {          Token::nonterminal__,  4, &Parser::ReductionRuleHandler0034, "rule 34: nonterminal <- nonterminal_specification ':' rules ';'    "},
@@ -1749,8 +1749,8 @@ Parser::State const Parser::ms_state[] =
     {   0,    0,   59,    0,    0}, // state   26
     {  60,    3,   63,   64,    2}, // state   27
     {   0,    0,   66,    0,    0}, // state   28
-    {  67,    4,    0,    0,    0}, // state   29
-    {  71,    1,    0,    0,    0}, // state   30
+    {  67,    1,    0,    0,    0}, // state   29
+    {  68,    4,    0,    0,    0}, // state   30
     {   0,    0,   72,    0,    0}, // state   31
     {  73,    1,    0,    0,    0}, // state   32
     {  74,    2,    0,   76,    1}, // state   33
@@ -1758,20 +1758,20 @@ Parser::State const Parser::ms_state[] =
     {  78,    1,    0,    0,    0}, // state   35
     {  79,    1,    0,   80,    1}, // state   36
     {   0,    0,   81,    0,    0}, // state   37
-    {  82,    1,    0,    0,    0}, // state   38
-    {  83,    1,    0,    0,    0}, // state   39
-    {  84,    1,    0,    0,    0}, // state   40
-    {  85,    1,    0,   86,    1}, // state   41
+    {  82,    1,    0,   83,    1}, // state   38
+    {  84,    1,    0,    0,    0}, // state   39
+    {  85,    1,    0,    0,    0}, // state   40
+    {  86,    1,    0,    0,    0}, // state   41
     {  87,    1,    0,   88,    1}, // state   42
     {   0,    0,   89,   90,    1}, // state   43
     {  91,    1,   92,    0,    0}, // state   44
     {  93,    6,    0,   99,    1}, // state   45
     {   0,    0,  100,    0,    0}, // state   46
     { 101,    1,  102,    0,    0}, // state   47
-    { 103,    1,    0,  104,    1}, // state   48
+    { 103,    1,  104,    0,    0}, // state   48
     { 105,    1,    0,  106,    1}, // state   49
     { 107,    1,    0,  108,    1}, // state   50
-    { 109,    1,  110,    0,    0}, // state   51
+    { 109,    1,    0,  110,    1}, // state   51
     { 111,    1,  112,    0,    0}, // state   52
     { 113,    3,    0,  116,    2}, // state   53
     { 118,    2,    0,  120,    1}, // state   54
@@ -2015,8 +2015,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   22
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {         Token::DIRECTIVE_PREC, {        TA_SHIFT_AND_PUSH_STATE,   29}},
-    {        Token::DIRECTIVE_START, {        TA_SHIFT_AND_PUSH_STATE,   30}},
+    {Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL, {        TA_SHIFT_AND_PUSH_STATE,   29}},
+    {         Token::DIRECTIVE_PREC, {        TA_SHIFT_AND_PUSH_STATE,   30}},
     // nonterminal transitions
     { Token::precedence_directive__, {                  TA_PUSH_STATE,   31}},
     {      Token::start_directive__, {                  TA_PUSH_STATE,   32}},
@@ -2071,15 +2071,15 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   29
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {         Token::DIRECTIVE_LEFT, {        TA_SHIFT_AND_PUSH_STATE,   38}},
-    {     Token::DIRECTIVE_NONASSOC, {        TA_SHIFT_AND_PUSH_STATE,   39}},
-    {        Token::DIRECTIVE_RIGHT, {        TA_SHIFT_AND_PUSH_STATE,   40}},
-    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   41}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   38}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   30
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
+    {         Token::DIRECTIVE_LEFT, {        TA_SHIFT_AND_PUSH_STATE,   39}},
+    {     Token::DIRECTIVE_NONASSOC, {        TA_SHIFT_AND_PUSH_STATE,   40}},
+    {        Token::DIRECTIVE_RIGHT, {        TA_SHIFT_AND_PUSH_STATE,   41}},
     {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   42}},
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -2133,7 +2133,9 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   38
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   48}},
+    {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   10}},
+    // nonterminal transitions
+    { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   48}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   39
@@ -2151,9 +2153,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   41
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   10}},
-    // nonterminal transitions
-    { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   51}},
+    {                     Token::ID, {        TA_SHIFT_AND_PUSH_STATE,   51}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   42
@@ -2210,9 +2210,9 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   48
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   10}},
-    // nonterminal transitions
-    { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   60}},
+    {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   17}},
+    // default transition
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   31}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   49
@@ -2220,7 +2220,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   10}},
     // nonterminal transitions
-    { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   61}},
+    { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   60}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   50
@@ -2228,15 +2228,15 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   10}},
     // nonterminal transitions
-    { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   62}},
+    { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   61}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   51
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   17}},
-    // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   27}},
+    {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   10}},
+    // nonterminal transitions
+    { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   62}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   52
@@ -2244,7 +2244,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   31}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   27}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   53
@@ -2628,12 +2628,12 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::BAD_END_OF_FILE:    return Parser::Token::END_;
         case CommonLang::Scanner::Token::BAD_TOKEN:          return Parser::Token::BAD_TOKEN;
         case CommonLang::Scanner::Token::CHAR_LITERAL:       return Parser::Token::CHAR_LITERAL;
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Parser::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL;
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:    return Parser::Token::DIRECTIVE_ERROR;
         case CommonLang::Scanner::Token::DIRECTIVE_LEFT:     return Parser::Token::DIRECTIVE_LEFT;
         case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC: return Parser::Token::DIRECTIVE_NONASSOC;
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:     return Parser::Token::DIRECTIVE_PREC;
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:    return Parser::Token::DIRECTIVE_RIGHT;
-        case CommonLang::Scanner::Token::DIRECTIVE_START:    return Parser::Token::DIRECTIVE_START;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET:   return Parser::Token::DIRECTIVE_TARGET;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:  return Parser::Token::DIRECTIVE_TARGETS;
         case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:    return Parser::Token::DIRECTIVE_TOKEN;

@@ -50,12 +50,12 @@ public:
             // user-defined terminal, non-single-character tokens
             BAD_TOKEN = 0x100,
             CHAR_LITERAL,
+            DIRECTIVE_DEFAULT_PARSE_NONTERMINAL,
             DIRECTIVE_ERROR,
             DIRECTIVE_LEFT,
             DIRECTIVE_NONASSOC,
             DIRECTIVE_PREC,
             DIRECTIVE_RIGHT,
-            DIRECTIVE_START,
             DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
             DIRECTIVE_TOKEN,

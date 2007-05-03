@@ -112,12 +112,12 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::BAD_END_OF_FILE:    return Parser::Token::END_;
         case CommonLang::Scanner::Token::BAD_TOKEN:          return Parser::Token::BAD_TOKEN;
         case CommonLang::Scanner::Token::CHAR_LITERAL:       return Parser::Token::CHAR_LITERAL;
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Parser::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL;
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:    return Parser::Token::DIRECTIVE_ERROR;
         case CommonLang::Scanner::Token::DIRECTIVE_LEFT:     return Parser::Token::DIRECTIVE_LEFT;
         case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC: return Parser::Token::DIRECTIVE_NONASSOC;
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:     return Parser::Token::DIRECTIVE_PREC;
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:    return Parser::Token::DIRECTIVE_RIGHT;
-        case CommonLang::Scanner::Token::DIRECTIVE_START:    return Parser::Token::DIRECTIVE_START;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET:   return Parser::Token::DIRECTIVE_TARGET;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:  return Parser::Token::DIRECTIVE_TARGETS;
         case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:    return Parser::Token::DIRECTIVE_TOKEN;
@@ -162,12 +162,12 @@ Parser::Token::Type Parser::Scan ()
 
 %token BAD_TOKEN
 %token CHAR_LITERAL %type "Ast::Char *"
+%token DIRECTIVE_DEFAULT_PARSE_NONTERMINAL %type "Ast::ThrowAway *"
 %token DIRECTIVE_ERROR %type "Ast::ThrowAway *"
 %token DIRECTIVE_LEFT %type "Ast::ThrowAway *"
 %token DIRECTIVE_NONASSOC %type "Ast::ThrowAway *"
 %token DIRECTIVE_PREC %type "Ast::ThrowAway *"
 %token DIRECTIVE_RIGHT %type "Ast::ThrowAway *"
-%token DIRECTIVE_START %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGETS %type "Ast::ThrowAway *"
 %token DIRECTIVE_TOKEN %type "Ast::ThrowAway *"
@@ -195,7 +195,7 @@ root %type "Representation *"
     target_directives
     token_directives:token_map
     precedence_directives:precedence_map
-    start_directive:start_nonterminal_id
+    start_directive:default_parse_nonterminal_id
     END_PREAMBLE:throwaway
     nonterminals:nonterminal_map
     {
@@ -210,13 +210,13 @@ root %type "Representation *"
 
         // set the TargetMap's primary source path
         target_map->SetSourcePath(m_scanner.GetInputName());
-        // make sure the %start directive value specifies a real scanner mode
-        if (start_nonterminal_id != NULL &&
-            nonterminal_map->GetElement(start_nonterminal_id->GetText()) == NULL)
+        // make sure the %default_parse_nonterminal directive value specifies a real nonterminal
+        if (default_parse_nonterminal_id != NULL &&
+            nonterminal_map->GetElement(default_parse_nonterminal_id->GetText()) == NULL)
         {
             EmitError(
-                start_nonterminal_id->GetFiLoc(),
-                "undeclared nonterminal \"" + start_nonterminal_id->GetText() + "\"");
+                default_parse_nonterminal_id->GetFiLoc(),
+                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"");
         }
 
         Representation *representation =
@@ -225,12 +225,12 @@ root %type "Representation *"
                 token_map,
                 precedence_map,
                 m_precedence_list,
-                start_nonterminal_id->GetText(),
+                default_parse_nonterminal_id->GetText(),
                 throwaway->GetFiLoc(),
                 nonterminal_map,
                 m_nonterminal_list);
         delete throwaway;
-        delete start_nonterminal_id;
+        delete default_parse_nonterminal_id;
         return representation;
     }
 ;
@@ -527,7 +527,7 @@ precedence_directive %type "PrecedenceMap *"
 
 start_directive %type "Ast::Id *"
 :
-    DIRECTIVE_START:throwaway ID:id at_least_one_newline
+    DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:throwaway ID:id at_least_one_newline
     {
         delete throwaway;
         return id;

@@ -292,13 +292,13 @@ void Representation::GenerateAutomatonSymbols (
     assert(m_npda_graph.GetNodeCount() > 0);
 //     assert(m_dpda_graph.GetNodeCount() > 0);
 
-    // _start -- value of %start -- the name of the default start nonterminal
+    // _default_parse_nonterminal -- value of %default_parse_nonterminal -- the name of the default default parse nonterminal
     {
         Preprocessor::ScalarSymbol *symbol =
-            symbol_table.DefineScalarSymbol("_start", FiLoc::ms_invalid);
+            symbol_table.DefineScalarSymbol("_default_parse_nonterminal", FiLoc::ms_invalid);
         symbol->SetScalarBody(
             new Preprocessor::Body(
-                m_start_nonterminal_id,
+                m_default_parse_nonterminal_id,
                 FiLoc::ms_invalid));
     }
 
@@ -769,7 +769,7 @@ void Representation::Print (ostream &stream, StringifyAstType Stringify, Uint32 
     m_target_map->Print(stream, Stringify, indent_level+1);
     m_token_map->Print(stream, Stringify, indent_level+1);
     m_precedence_map->Print(stream, Stringify, indent_level+1);
-    stream << Tabs(indent_level+1) << "start nonterminal: " << m_start_nonterminal_id << endl;
+    stream << Tabs(indent_level+1) << "default parse nonterminal: " << m_default_parse_nonterminal_id << endl;
     m_nonterminal_list->Print(stream, Stringify, indent_level+1);
 }
 

@@ -9,7 +9,7 @@
             <item>add_optional_directive</item>
             <item>add_required_directive</item>
             <item>default</item>
-            <item>default_nonterminal_to_parse</item>
+            <item>default_parse_nonterminal</item>
             <item>dumb_code_block</item>
             <item>error</item>
             <item>identifier</item>

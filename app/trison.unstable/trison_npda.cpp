@@ -300,11 +300,11 @@ void GenerateNpda (Representation const &representation, Graph &npda_graph)
 {
     assert(npda_graph.GetNodeCount() == 0 && "must start with an empty graph");
 
-    // the entire graph is generated starting with the start nonterminal
-    Nonterminal const *start_nonterminal = representation.m_nonterminal_map->GetElement(representation.m_start_nonterminal_id);
-    assert(start_nonterminal != NULL);
+    // the entire graph is generated starting with the default parse nonterminal
+    Nonterminal const *default_parse_nonterminal = representation.m_nonterminal_map->GetElement(representation.m_default_parse_nonterminal_id);
+    assert(default_parse_nonterminal != NULL);
     GraphContext graph_context(representation, npda_graph);
-    EnsureGeneratedNpda(*start_nonterminal, graph_context);
+    EnsureGeneratedNpda(*default_parse_nonterminal, graph_context);
 
     // TODO: iterate through nonterminals and emit warnings for unused ones
 }
