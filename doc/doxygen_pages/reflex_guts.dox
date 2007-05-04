@@ -266,7 +266,7 @@ digraph apparatus_hierarchy {
 }
 @enddot
 
-Because all of the customized scanner apparati (MapFileScanner, NetworkCommandScanner, and ArithmeticScanner) use AutomatonApparatus and InputApparatus as their base classes, there must be no scanner-specific customization in either.  Specifically, this means that the codespec files which specify the input and automaton apparati must not use any of the scanner-specific codespec macros.  TODO: write stuff gooder.
+Because all of the customized scanner apparati (MapFileScanner, NetworkCommandScanner, and ArithmeticScanner) use AutomatonApparatus and InputApparatus as their base classes, there must be no scanner-specific customization in either.  Specifically, this means that the codespec files which specify the input and automaton apparati must not use any of the scanner-specific codespec macros.  <!-- TODO: write stuff gooder. -->
 
 @subsection reflex_guts_implementing_a_target_definitions Definitions
 First, some concepts will be defined for use in the forthcoming scanner algorithm definition.
@@ -387,7 +387,7 @@ The <strong>automaton apparatus</strong> is an interface which provides certain 
             <li><tt>TT_EPSILON = 3</tt> -- indicates that this is an epsilon-transition and may be exercised without consuming any input.  It is ONLY used in NFAs, and so will NEVER appear in a DFA.
             </ul>
 
-        <li>method: <tt>AcceptsInputAtom (atom input_atom)</tt> returns <tt>boolean</tt> -- indicates if the given input_atom (of the input apparatus' atom type) is accepted by this dfa_transition</tt>
+        <li>method: <tt>AcceptsInputAtom (atom input_atom)</tt> returns <tt>boolean</tt> -- indicates if the given input_atom (of the input apparatus' atom type) is accepted by this dfa_transition.
         <li>method: <tt>AcceptsConditionalFlags (bitfield conditional_flags)</tt> returns <tt>boolean</tt> -- indicates if the given conditional_flags are accepted by this dfa_transition.  Returns true if and only if no relevant bits (the bits set in data_0) differ between conditional_flags and data_1.  The C-language expression to calculate this is:
             @verbatim return ((conditional_flags ^ data_1) & data_0) == 0; @endverbatim
         </ul>
@@ -470,31 +470,41 @@ return invalid state_identifier;
 
 @subsubsection reflex_guts_implementing_a_target_definitions_scanner_apparatus The Scanner Apparatus
 
-TODO: yeah, this section isn't done.
+TODO: this section isn't finished
 
-The <strong>scanner apparatus</strong> is the main interface and is publicly accessible to the user's code.  The API defined here defines the canonical behavior which all implemented <tt>reflex</tt> targets should follow (though there certainly is no absolute requirement to do so).  This conformance is intended to provide consistent and predictable behavior between different targets.
-
-One important difference between the scanner apparatus and the previously defined apparati is the fact that TODO later
+The <strong>scanner apparatus</strong> is the main interface and is publicly accessible to the user's code.  The API defined here defines the canonical behavior which all implemented <tt>reflex</tt> targets should follow (though there certainly is no absolute requirement to do so).  This conformance is intended to provide consistent behavior and semantics between different targets.
 
 Each apparatus, in hiding its subordinate, provides a much cleaner and simpler API.  The scanner apparatus API is the simplest of all.  The previously defined input and FA apparati have been separated out for the following three reasons.
 
     <ul>
-    <li>To formalize the API for each so that each could be implemented and tested separately
-    <li>To allow access-level member/method hiding in languages which support it (e.g. C++ and its public/protected/private access levels)
+    <li>To formalize the API for each so that each could be implemented and tested separately.
+    <li>To allow access-level member/method hiding in languages which support it (e.g. C++ and its public/protected/private access levels).
     <li>To separate the common code from user-customized code, so that code-reuse is possible (e.g. the input and FA apparati could be implemented as unchanging C++ baseclasses used by each instance of user-customized code).  The automaton apparatus is designed to hide the input apparatus.  Similarly, the scanner apparatus is designed to hide the automaton apparatus (from the user).
     </ul>
+
+TODO: describe the "debug spew" and "scanner mode" properties.
 
 The scanner apparatus API follows.
 
     <ul>
-    <li>type: <tt>dfa_state_set</tt> -- A set type whose elements are of type dfa_state.
+    <li>type: <tt>dfa_state_set</tt> -- A set type whose elements are of type dfa_state (see @ref reflex_guts_implementing_a_target_definitions_automaton_apparatus).
+    <li>type: <tt>dfa_transition_set</tt> -- A set type whose elements are of type dfa_transition (see @ref reflex_guts_implementing_a_target_definitions_automaton_apparatus).
+    <li>type: <tt>scanner_mode_name</tt> -- A type which can uniquely identify scanner modes by name.
+    <li>type: <tt>scanner_mode_map</tt> -- A type which maps scanner_mode_name onto dfa_state (see @ref reflex_guts_implementing_a_target_definitions_automaton_apparatus).
+    <li>type: <tt>return_type</tt> -- A user-specified type which defines the return type of the <tt>Scan</tt> method.
 
     <li>member: <tt>automaton</tt> -- of a type satisfying the automaton apparatus.
-    <li>member: <tt>debug_spew</tt> -- of type boolean.  This is only present if
-    <li>member: <tt>states</tt>
+    <li>member: <tt>states</tt> -- of type dfa_state_set.
+    <li>member: <tt>transitions</tt> -- of type dfa_transition_set.
 
-    <li>method: CONSTRUCTOR/INITIALIZER -- one-time and each-time initializations; calls automaton.ResetForNewInput() and sets debug_spew to false.
+    <li>method: <tt>Construct (user-specified parameters)</tt> -- one-time and each-time initializations; calls automaton.Construct(...), sets the "debug spew" property to false, sets the "scanner mode" to the value specified by %start_in_scanner_mode, and calls automaton.ResetForNewInput().
+    <li>method: <tt>Destruct ()</tt> -- one-time cleanup operations; user-customizable.
     <li>method: <tt>IsAtEndOfInput ()</tt> returns <tt>boolean</tt> -- simply returns the value of automaton.input_buffer.IsAtEndOfInput().
+    <li>method: <tt>DebugSpew ()</tt> returns <tt>boolean</tt> -- accessor for the "debug spew" property.
+    <li>method: <tt>DebugSpew (boolean debug_spew)</tt> -- modifier for the "debug spew" property.
+    <li>method: <tt>ScannerMode ()</tt> returns <tt>scanner_mode_name</tt> -- accessor for the "scanner mode" property.
+    <li>method: <tt>ScannerMode (scanner_mode_name)</tt> -- modifier for the "scanner mode" property.
+    <li>method: <tt>Scan ()</tt> returns <tt>return_type</tt> -- the whole reason this fine mess exists in the first place; runs the automaton until the user-specified rule-handler code causes it to return a value.
     </ul>
 
 TODO: more words

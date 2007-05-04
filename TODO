@@ -26,7 +26,6 @@
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
-- rename more stuff to be shorter?
 - get rid of empty xxx_enums.xpp files (once BARF is near complete)
 - move all AST usage to smart pointers to ease-ify stuff and to escape the
   woes of memory leaks (not like it matters that much in this context) --
@@ -60,7 +59,7 @@
 // commonlang
 // ///////////////////////////////////////////////////////////////////////////
 
-- target directives (including rule handlers) should accept multiple targets
+- target directives (including rule handlers) should accept multiple targets ?
   like
   %target.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
 
@@ -68,10 +67,10 @@
 // core
 // ///////////////////////////////////////////////////////////////////////////
 
+- do not read overflowed hex chars -- e.g. "\x1E8BA" should be "\x1E" "8BA"
 - typedef Graph::Node::Index as a struct or an enum with a value
   UINT32_UPPER_BOUND (to force it to be unsigned) and use that everywhere for
   node index values.
-- in util's GetEscapedString, make it read overflowed hex chars
 - move trison's conflict messages into barf_message.h/cpp
 - make a GraphNodeIndex vector type in barf_graph.h (replacing the ad-hoc
   vector<Uint32> used all over the place)
@@ -126,6 +125,7 @@
 // regex
 // ///////////////////////////////////////////////////////////////////////////
 
+- do not read overflowed hex chars -- e.g. "\x1E8BA" should be "\x1E" "8BA"
 - consider getting rid of \a \b \f \r \v and only having \t and \n, so that
   conditionals can use \a \b etc.
 - emit error/warning when a non-printable char is encountered in a regex
@@ -165,6 +165,12 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
+- add "push accepted string back into buffer" API (call it Unaccept) to the 
+  generated scanner -- it should not be able to push any string, because the
+  previous character is required.
+- add targetspec directives for disabling stuff besides debug_spew -- like
+  disabling Unaccept and the accessor methods DebugSpew and ScannerMode
+- c++ target -- ability to set the debug spew ostream
 - add option for line directives referencing codespecs (the default should be
   to refer to codespecs, for easier development)
 - add thing that checks for EOF-handling in each scanner mode?
@@ -184,9 +190,6 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
-- add "push accepted string back into buffer" API to the generated scanner -- 
-  should it be allowed push any string?  maybe not, since it will have to have
-  the previous char.  but maybe that's ok.
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison

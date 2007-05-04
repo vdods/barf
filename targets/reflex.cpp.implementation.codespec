@@ -11,9 +11,9 @@
 
 #include "<{header_filename}"
 
+<*{if(is_defined(generate_debug_spew_code))
 #include <iostream>
 
-<*{if(is_defined(generate_debug_spew_code))
 #define REFLEX_CPP_DEBUG_SPEW_(spew_code) if (DebugSpew()) { spew_code; }
 
 <*{end_if
@@ -21,7 +21,7 @@
 
 <{class_name}::<{class_name} (<{if(is_defined(constructor_definition_parameters))}<{constructor_definition_parameters}<{else}<{constructor_parameters?}<{end_if})
     :
-    ReflexCpp_::Scanner_(
+    ReflexCpp_::Automaton_(
         ms_state_table_,
         ms_state_count_,
         ms_transition_table_,
@@ -162,7 +162,7 @@ ReflexCpp_::Uint8_ <{class_name}::ReadNextAtom_ ()
 
 void <{class_name}::ResetForNewInput_ ()
 {
-    ReflexCpp_::Scanner_::ResetForNewInput_(ms_state_table_ + Mode::START_);
+    ReflexCpp_::Automaton_::ResetForNewInput_(ms_state_table_ + Mode::START_);
 
 <*{reset_for_new_input_actions?
 }
@@ -218,21 +218,21 @@ void <{class_name}::DebugPrintString_ (std::string const &s)
 <*{end_if
 // the order of the states indicates priority (only for accept states).
 // the lower the state's index in this array, the higher its priority.
-ReflexCpp_::Scanner_::DfaState_ const <{class_name}::ms_state_table_[] =
+ReflexCpp_::Automaton_::DfaState_ const <{class_name}::ms_state_table_[] =
 {
 <*{loop(i, _dfa_node_count)
     { <{_dfa_node_accept_handler_index[i]}, <{_dfa_node_transition_count[i]}, ms_transition_table_+<{_dfa_node_transition_offset[i]} }<{if(i < _dfa_node_count-1)},<{end_if}
 <*{end_loop
 };
-ReflexCpp_::Size_ const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::Scanner_::DfaState_);
+ReflexCpp_::Size_ const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::Automaton_::DfaState_);
 
-ReflexCpp_::Scanner_::DfaTransition_ const <{class_name}::ms_transition_table_[] =
+ReflexCpp_::Automaton_::DfaTransition_ const <{class_name}::ms_transition_table_[] =
 {
 <*{loop(i, _dfa_transition_count)
-    { ReflexCpp_::Scanner_::DfaTransition_::<{_dfa_transition_type_name[i]}_, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
+    { ReflexCpp_::Automaton_::DfaTransition_::<{_dfa_transition_type_name[i]}_, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
 <*{end_loop
 };
-ReflexCpp_::Size_ const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(ReflexCpp_::Scanner_::DfaTransition_);
+ReflexCpp_::Size_ const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(ReflexCpp_::Automaton_::DfaTransition_);
 
 ReflexCpp_::Uint32_ const <{class_name}::ms_accept_handler_count_ = <{_accept_handler_count};
 

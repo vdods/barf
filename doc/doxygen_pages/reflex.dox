@@ -37,6 +37,15 @@ Each regex rule in each scanner mode must specify, for each target declared in t
 
 The following is an example primary source file which uses the <tt>cpp</tt> target.
 @verbatim
+// ///////////////////////////////////////////////////////////////////////////
+// This particular example will recognize tokens from the regular language
+// consisting of integers (sequences of decimal digits), whitespace (tabs, 
+// newlines and spaces), operators (plusses and asterisks), and C-style block
+// comments.  There are two scanner modes, one (%scanner_mode MAIN) for 
+// recognizing the first three language elements mentioned, and the second
+// (%scanner_mode BLOCK_COMMENT) for recognizing the last.
+// ///////////////////////////////////////////////////////////////////////////
+
 %targets cpp
 
 %target.cpp.class_name AwesomeScanner
