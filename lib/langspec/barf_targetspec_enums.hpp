@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// barf_langspec.hpp by Victor Dods, created 2006/10/22
+// barf_targetspec_enums.hpp by Victor Dods, created 2006/10/22
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,14 +8,10 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_TARGETSPEC_HPP_)
-#define _BARF_TARGETSPEC_HPP_
+#if !defined(_BARF_TARGETSPEC_ENUMS_HPP_)
+#define _BARF_TARGETSPEC_ENUMS_HPP_
 
-// EVERY HPP AND CPP FILE IN TARGETSPEC SHOULD INCLUDE THIS FILE
-// EVERY HPP AND CPP FILE IN TARGETSPEC SHOULD INCLUDE THIS FILE
-// EVERY HPP AND CPP FILE IN TARGETSPEC SHOULD INCLUDE THIS FILE
-
-#include "barf.hpp"
+#include "barf_targetspec.hpp"
 
 namespace Barf {
 namespace TargetSpec {
@@ -23,4 +19,4 @@ namespace TargetSpec {
 } // end of namespace TargetSpec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_TARGETSPEC_HPP_)
+#endif // !defined(_BARF_TARGETSPEC_ENUMS_HPP_)

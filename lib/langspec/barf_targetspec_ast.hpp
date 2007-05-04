@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// barf_langspec_ast.hpp by Victor Dods, created 2006/10/22
+// barf_targetspec_ast.hpp by Victor Dods, created 2006/10/22
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -11,7 +11,7 @@
 #if !defined(_BARF_TARGETSPEC_AST_HPP_)
 #define _BARF_TARGETSPEC_AST_HPP_
 
-#include "barf_langspec.hpp"
+#include "barf_targetspec.hpp"
 
 #include "barf_ast.hpp"
 

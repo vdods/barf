@@ -3,7 +3,7 @@
 #include <vector>
 
 
-#line 13 "barf_langspec_parser.trison"
+#line 13 "barf_targetspec_parser.trison"
 
 #if !defined(_BARF_TARGETSPEC_PARSER_HPP_)
 #define _BARF_TARGETSPEC_PARSER_HPP_
@@ -24,7 +24,7 @@ namespace TargetSpec {
 struct AddCodeSpecList;
 struct AddDirectiveMap;
 
-#line 28 "barf_langspec_parser.hpp"
+#line 28 "barf_targetspec_parser.hpp"
 
 class Parser
 
@@ -100,7 +100,7 @@ public:
 public:
 
 
-#line 34 "barf_langspec_parser.trison"
+#line 34 "barf_targetspec_parser.trison"
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
@@ -114,7 +114,7 @@ private:
     AddCodeSpecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 
-#line 118 "barf_langspec_parser.hpp"
+#line 118 "barf_targetspec_parser.hpp"
 
 private:
 
@@ -266,11 +266,11 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type);
 
 
-#line 48 "barf_langspec_parser.trison"
+#line 48 "barf_targetspec_parser.trison"
 
 } // end of namespace TargetSpec
 } // end of namespace Barf
 
 #endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 277 "barf_langspec_parser.hpp"
+#line 277 "barf_targetspec_parser.hpp"

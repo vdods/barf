@@ -10,8 +10,8 @@
 
 #include "reflex.hpp"
 
-#include "barf_langspec_ast.hpp"
-#include "barf_langspec_parser.hpp"
+#include "barf_targetspec_ast.hpp"
+#include "barf_targetspec_parser.hpp"
 #include "barf_preprocessor_ast.hpp"
 #include "barf_preprocessor_parser.hpp"
 #include "barf_preprocessor_symboltable.hpp"

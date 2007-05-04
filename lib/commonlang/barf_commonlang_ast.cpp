@@ -13,8 +13,8 @@
 #include <fstream>
 #include <sstream>
 
-#include "barf_langspec_ast.hpp"
-#include "barf_langspec_parser.hpp"
+#include "barf_targetspec_ast.hpp"
+#include "barf_targetspec_parser.hpp"
 #include "barf_message.hpp"
 #include "barf_optionsbase.hpp"
 #include "barf_preprocessor_ast.hpp"

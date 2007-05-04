@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// barf_langspec_ast.cpp by Victor Dods, created 2006/10/22
+// barf_targetspec_ast.cpp by Victor Dods, created 2006/10/22
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,7 +8,7 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#include "barf_langspec_ast.hpp"
+#include "barf_targetspec_ast.hpp"
 
 #include "barf_message.hpp"
 
