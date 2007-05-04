@@ -102,10 +102,10 @@ public:
     // verbosity options
     inline bool GetShowScanningSpew () const { return m_enabled_verbosity & V_SCANNING_SPEW; }
     inline bool GetShowParsingSpew () const { return m_enabled_verbosity & V_PARSING_SPEW; }
-    inline bool GetShowLangSpecParsingSpew () const { return m_enabled_verbosity & V_LANG_SPEC_PARSING_SPEW; }
+    inline bool GetShowTargetSpecParsingSpew () const { return m_enabled_verbosity & V_TARGET_SPEC_PARSING_SPEW; }
     inline bool GetShowPreprocessorParsingSpew () const { return m_enabled_verbosity & V_PREPROCESSOR_PARSING_SPEW; }
     inline bool GetShowSyntaxTree () const { return m_enabled_verbosity & V_SYNTAX_TREE; }
-    inline bool GetShowLangSpecSyntaxTree () const { return m_enabled_verbosity & V_LANG_SPEC_SYNTAX_TREE; }
+    inline bool GetShowTargetSpecSyntaxTree () const { return m_enabled_verbosity & V_TARGET_SPEC_SYNTAX_TREE; }
     inline bool GetShowPreprocessorSyntaxTree () const { return m_enabled_verbosity & V_PREPROCESSOR_SYNTAX_TREE; }
     // help option
     inline bool GetIsHelpRequested () const { return m_is_help_requested; }
@@ -152,10 +152,10 @@ protected:
 
         V_SCANNING_SPEW             = 0x01,
         V_PARSING_SPEW              = 0x02,
-        V_LANG_SPEC_PARSING_SPEW    = 0x04,
+        V_TARGET_SPEC_PARSING_SPEW  = 0x04,
         V_PREPROCESSOR_PARSING_SPEW = 0x08,
         V_SYNTAX_TREE               = 0x10,
-        V_LANG_SPEC_SYNTAX_TREE     = 0x20,
+        V_TARGET_SPEC_SYNTAX_TREE   = 0x20,
         V_PREPROCESSOR_SYNTAX_TREE  = 0x40,
 
         V_ALL                       = 0x7F

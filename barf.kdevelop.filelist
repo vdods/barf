@@ -152,8 +152,8 @@ lib/regex/barf_regex_parser.hpp
 lib/regex/barf_regex_parser.trison
 targets/reflex.cpp.header.codespec
 targets/reflex.cpp.implementation.codespec
-targets/reflex.cpp.langspec
+targets/reflex.cpp.targetspec
 targets/trison.cpp.header.codespec
 targets/trison.cpp.implementation.codespec
-targets/trison.cpp.langspec
+targets/trison.cpp.targetspec
 

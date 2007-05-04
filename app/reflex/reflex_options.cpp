@@ -62,7 +62,7 @@ CommandLineOption const Options::ms_option[] =
         'I',
         "include-targets-search-path",
         &OptionsBase::IncludeTargetsSearchPath,
-        "    Adds another entry to the search path for data files (e.g. langspec and\n"
+        "    Adds another entry to the search path for data files (e.g. targetspec and\n"
         "    codespec files) with higher search priority than the existing entries.\n"
         "    By default the search path is specified by the BARF_TARGETS_SEARCH_PATH\n"
         "    enviroment variable.  If no valid directories are specified, the search\n"
@@ -145,10 +145,10 @@ CommandLineOption const Options::ms_option[] =
         "    Enables the specified verbosity option.  Valid parameters are\n"
         "        \"scanning-spew\" - Show scanner activity debug spew.\n"
         "        \"parsing-spew\" - Show parser activity debug spew.\n"
-        "        \"langspec-parsing-spew\" - Show langspec parser activity debug spew.\n"
+        "        \"targetspec-parsing-spew\" - Show targetspec parser activity debug spew.\n"
         "        \"preprocessor-parsing-spew\" - Show preprocessor parser activity debug spew.\n"
         "        \"print-ast\" - Show the parsed abstract syntax tree.\n"
-        "        \"langspec-print-ast\" - Show the parsed langspec abstract syntax tree.\n"
+        "        \"targetspec-print-ast\" - Show the parsed targetspec abstract syntax tree.\n"
         "        \"preprocessor-print-ast\" - Show the parsed preprocessor abstract syntax tree.\n"
         "        \"all\" - Enable all verbosity options.\n"
         "    All verbosity options are disabled by default.  See also option -v."),

@@ -90,25 +90,25 @@ void Target::Add (TargetDirective *target_directive)
         EmitWarning(target_directive->GetFiLoc(), "undeclared target \"" + target_directive->m_target_id->GetText() + "\"");
 }
 
-void Target::ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser) const
+void Target::ParseTargetSpec (string const &tool_prefix, TargetSpec::Parser &parser) const
 {
     try {
-        string filename(tool_prefix + '.' + m_target_id + ".langspec");
-        m_lang_spec.m_source_path = g_options->GetTargetsSearchPath().GetFilePath(filename);
-        if (m_lang_spec.m_source_path.empty())
+        string filename(tool_prefix + '.' + m_target_id + ".targetspec");
+        m_target_spec.m_source_path = g_options->GetTargetsSearchPath().GetFilePath(filename);
+        if (m_target_spec.m_source_path.empty())
             EmitError(FiLoc(g_options->GetInputFilename()), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
-        else if (!parser.OpenFile(m_lang_spec.m_source_path))
-            EmitError(FiLoc(g_options->GetInputFilename()), "unable to open file \"" + m_lang_spec.m_source_path + "\" for reading");
-        else if (parser.Parse() != LangSpec::Parser::PRC_SUCCESS)
-            EmitError(FiLoc(m_lang_spec.m_source_path), "general langspec parse error");
+        else if (!parser.OpenFile(m_target_spec.m_source_path))
+            EmitError(FiLoc(g_options->GetInputFilename()), "unable to open file \"" + m_target_spec.m_source_path + "\" for reading");
+        else if (parser.Parse() != TargetSpec::Parser::PRC_SUCCESS)
+            EmitError(FiLoc(m_target_spec.m_source_path), "general targetspec parse error");
         else
         {
-            m_lang_spec.m_specification = Dsc<LangSpec::Specification *>(parser.GetAcceptedToken());
-            assert(m_lang_spec.m_specification != NULL);
-            if (g_options->GetShowLangSpecSyntaxTree())
-                m_lang_spec.m_specification->Print(cerr);
+            m_target_spec.m_specification = Dsc<TargetSpec::Specification *>(parser.GetAcceptedToken());
+            assert(m_target_spec.m_specification != NULL);
+            if (g_options->GetShowTargetSpecSyntaxTree())
+                m_target_spec.m_specification->Print(cerr);
             if (!g_errors_encountered)
-                CheckAgainstLangSpec(*m_lang_spec.m_specification);
+                CheckAgainstTargetSpec(*m_target_spec.m_specification);
         }
     } catch (string const &exception) {
         cerr << exception << endl;
@@ -117,25 +117,25 @@ void Target::ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser)
 
 void Target::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Parser &parser) const
 {
-    assert(!m_lang_spec.m_source_path.empty());
-    assert(m_lang_spec.m_specification != NULL);
+    assert(!m_target_spec.m_source_path.empty());
+    assert(m_target_spec.m_specification != NULL);
 
-    for (LangSpec::AddCodeSpecList::const_iterator
-             it = m_lang_spec.m_specification->m_add_codespec_list->begin(),
-             it_end = m_lang_spec.m_specification->m_add_codespec_list->end();
+    for (TargetSpec::AddCodeSpecList::const_iterator
+             it = m_target_spec.m_specification->m_add_codespec_list->begin(),
+             it_end = m_target_spec.m_specification->m_add_codespec_list->end();
          it != it_end;
          ++it)
     {
-        LangSpec::AddCodeSpec const *add_codespec = *it;
+        TargetSpec::AddCodeSpec const *add_codespec = *it;
         assert(add_codespec != NULL);
 
         try {
             string filename(tool_prefix + '.' + m_target_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
             string code_spec_filename(g_options->GetTargetsSearchPath().GetFilePath(filename));
             if (code_spec_filename.empty())
-                EmitError(FiLoc(m_lang_spec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
+                EmitError(FiLoc(m_target_spec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
             else if (!parser.OpenFile(code_spec_filename))
-                EmitError(FiLoc(m_lang_spec.m_source_path), "unable to open file \"" + code_spec_filename + "\" for reading");
+                EmitError(FiLoc(m_target_spec.m_source_path), "unable to open file \"" + code_spec_filename + "\" for reading");
             else if (parser.Parse() != Preprocessor::Parser::PRC_SUCCESS)
                 EmitError(FiLoc(code_spec_filename), "general preprocessor parse error");
             else
@@ -207,17 +207,17 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
     }
 }
 
-void Target::CheckAgainstLangSpec (LangSpec::Specification const &specification) const
+void Target::CheckAgainstTargetSpec (TargetSpec::Specification const &specification) const
 {
     // if checks are enabled, check that all the required directives are present
     if (m_is_enabled_for_code_generation)
     {
-        for (LangSpec::AddDirectiveMap::const_iterator it = specification.m_add_directive_map->begin(),
-                                                       it_end = specification.m_add_directive_map->end();
+        for (TargetSpec::AddDirectiveMap::const_iterator it = specification.m_add_directive_map->begin(),
+                                                         it_end = specification.m_add_directive_map->end();
             it != it_end;
             ++it)
         {
-            LangSpec::AddDirective const *add_directive = it->second;
+            TargetSpec::AddDirective const *add_directive = it->second;
             assert(add_directive != NULL);
             TargetDirective const *target_directive =
                 GetElement(add_directive->m_directive_to_add_id->GetText());
@@ -225,7 +225,7 @@ void Target::CheckAgainstLangSpec (LangSpec::Specification const &specification)
         }
     }
 
-    // check that all the target directives are validly specified in the langspec
+    // check that all the target directives are validly specified in the targetspec
     for (const_iterator it = begin(),
                         it_end = end();
          it != it_end;
@@ -237,12 +237,12 @@ void Target::CheckAgainstLangSpec (LangSpec::Specification const &specification)
             EmitError(
                 target_directive->GetFiLoc(),
                 "directive " + target_directive->GetDirectiveString() +
-                " does not exist in langspec for " + m_target_id);
+                " does not exist in targetspec for " + m_target_id);
     }
 }
 
 void Target::CheckAgainstAddDirective (
-    LangSpec::AddDirective const &add_directive,
+    TargetSpec::AddDirective const &add_directive,
     TargetDirective const *target_directive) const
 {
     if (target_directive == NULL)
@@ -257,7 +257,7 @@ void Target::CheckAgainstAddDirective (
     }
     else if (target_directive->m_directive_value->GetAstType() != add_directive.m_param_type)
     {
-        EmitError(target_directive->GetFiLoc(), "directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " expects " + LangSpec::ParamType::GetParamTypeString(add_directive.m_param_type) + ", got " + LangSpec::ParamType::GetParamTypeString(target_directive->m_directive_value->GetAstType()));
+        EmitError(target_directive->GetFiLoc(), "directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " expects " + TargetSpec::ParamType::GetParamTypeString(add_directive.m_param_type) + ", got " + TargetSpec::ParamType::GetParamTypeString(target_directive->m_directive_value->GetAstType()));
     }
 }
 
@@ -266,8 +266,8 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
     symbol_table.DefineScalarSymbolAsText("_source_directory", FiLoc::ms_invalid, GetDirectoryPortion(m_source_path));
     symbol_table.DefineScalarSymbolAsText("_source_filename", FiLoc::ms_invalid, GetFilenamePortion(m_source_path));
 
-    symbol_table.DefineScalarSymbolAsText("_langspec_directory", FiLoc::ms_invalid, GetDirectoryPortion(m_lang_spec.m_source_path));
-    symbol_table.DefineScalarSymbolAsText("_langspec_filename", FiLoc::ms_invalid, GetFilenamePortion(m_lang_spec.m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_targetspec_directory", FiLoc::ms_invalid, GetDirectoryPortion(m_target_spec.m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_targetspec_filename", FiLoc::ms_invalid, GetFilenamePortion(m_target_spec.m_source_path));
 
     symbol_table.DefineScalarSymbolAsText("_output_directory", FiLoc::ms_invalid, g_options->GetOutputDir());
 
@@ -297,14 +297,14 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
     }
 
     // define symbols for unspecified target directives which have
-    // default values in the langspec
-    for (LangSpec::AddDirectiveMap::const_iterator it = m_lang_spec.m_specification->m_add_directive_map->begin(),
-                                                   it_end = m_lang_spec.m_specification->m_add_directive_map->end();
+    // default values in the targetspec
+    for (TargetSpec::AddDirectiveMap::const_iterator it = m_target_spec.m_specification->m_add_directive_map->begin(),
+                                                     it_end = m_target_spec.m_specification->m_add_directive_map->end();
          it != it_end;
          ++it)
     {
         string const &directive_id = it->first;
-        LangSpec::AddDirective const *add_directive = it->second;
+        TargetSpec::AddDirective const *add_directive = it->second;
         assert(add_directive != NULL);
         if (GetElement(directive_id) == NULL && add_directive->GetDefaultValue() != NULL)
         {

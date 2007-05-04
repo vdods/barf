@@ -122,14 +122,14 @@ void OptionsBase::EnableVerbosity (string const &verbosity_option)
         m_enabled_verbosity |= V_SCANNING_SPEW;
     else if (verbosity_option == "parsing-spew")
         m_enabled_verbosity |= V_PARSING_SPEW;
-    else if (verbosity_option == "langspec-parsing-spew")
-        m_enabled_verbosity |= V_LANG_SPEC_PARSING_SPEW;
+    else if (verbosity_option == "targetspec-parsing-spew")
+        m_enabled_verbosity |= V_TARGET_SPEC_PARSING_SPEW;
     else if (verbosity_option == "preprocessor-parsing-spew")
         m_enabled_verbosity |= V_PREPROCESSOR_PARSING_SPEW;
     else if (verbosity_option == "print-ast")
         m_enabled_verbosity |= V_SYNTAX_TREE;
-    else if (verbosity_option == "langspec-print-ast")
-        m_enabled_verbosity |= V_LANG_SPEC_SYNTAX_TREE;
+    else if (verbosity_option == "targetspec-print-ast")
+        m_enabled_verbosity |= V_TARGET_SPEC_SYNTAX_TREE;
     else if (verbosity_option == "preprocessor-print-ast")
         m_enabled_verbosity |= V_PREPROCESSOR_SYNTAX_TREE;
     else if (verbosity_option == "all")
@@ -144,14 +144,14 @@ void OptionsBase::DisableVerbosity (string const &verbosity_option)
         m_enabled_verbosity &= ~V_SCANNING_SPEW;
     else if (verbosity_option == "parsing-spew")
         m_enabled_verbosity &= ~V_PARSING_SPEW;
-    else if (verbosity_option == "langspec-parsing-spew")
-        m_enabled_verbosity &= ~V_LANG_SPEC_PARSING_SPEW;
+    else if (verbosity_option == "targetspec-parsing-spew")
+        m_enabled_verbosity &= ~V_TARGET_SPEC_PARSING_SPEW;
     else if (verbosity_option == "preprocessor-parsing-spew")
         m_enabled_verbosity &= ~V_PREPROCESSOR_PARSING_SPEW;
     else if (verbosity_option == "print-ast")
         m_enabled_verbosity &= ~V_SYNTAX_TREE;
-    else if (verbosity_option == "langspec-print-ast")
-        m_enabled_verbosity &= ~V_LANG_SPEC_SYNTAX_TREE;
+    else if (verbosity_option == "targetspec-print-ast")
+        m_enabled_verbosity &= ~V_TARGET_SPEC_SYNTAX_TREE;
     else if (verbosity_option == "preprocessor-print-ast")
         m_enabled_verbosity &= ~V_PREPROCESSOR_SYNTAX_TREE;
     else if (verbosity_option == "all")

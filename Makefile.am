@@ -15,7 +15,7 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	libbarf-all \
 	libbarf-commonlang \
 	libbarf-core \
-	libbarf-langspec \
+	libbarf-targetspec \
 	libbarf-preprocessor \
 	libbarf-regex \
 	doc \
@@ -28,9 +28,9 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	barf-commonlang-scanner \
 	barf-commonlang-scanner-force \
 	barf-commonlang-scanner-release \
-	barf-langspec-parser \
-	barf-langspec-parser-force \
-	barf-langspec-parser-release \
+	barf-targetspec-parser \
+	barf-targetspec-parser-force \
+	barf-targetspec-parser-release \
 	barf-preprocessor-parser \
 	barf-preprocessor-parser-force \
 	barf-preprocessor-parser-release \
@@ -47,10 +47,10 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	trison-unstable-parser-force \
 	trison-unstable-parser-release
 
-libbarf-all: libbarf-commonlang libbarf-core libbarf-langspec libbarf-preprocessor libbarf-regex
+libbarf-all: libbarf-commonlang libbarf-core libbarf-targetspec libbarf-preprocessor libbarf-regex
 libbarf-commonlang: lib/libbarf-commonlang.la
 libbarf-core: lib/libbarf-core.la
-libbarf-langspec: lib/libbarf-langspec.la
+libbarf-targetspec: lib/libbarf-targetspec.la
 libbarf-preprocessor: lib/libbarf-preprocessor.la
 libbarf-regex: lib/libbarf-regex.la
 
@@ -88,7 +88,7 @@ clean-all-scanners:
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
 
 force-all-parsers: \
-	barf-langspec-parser-force \
+	barf-targetspec-parser-force \
 	barf-preprocessor-parser-force \
 	barf-regex-parser-force \
 	reflex-parser-force \
@@ -101,7 +101,7 @@ force-all-scanners: \
 noinst_LTLIBRARIES = \
 	lib/libbarf-commonlang.la \
 	lib/libbarf-core.la \
-	lib/libbarf-langspec.la \
+	lib/libbarf-targetspec.la \
 	lib/libbarf-preprocessor.la \
     lib/libbarf-regex.la
 
@@ -141,10 +141,10 @@ EXTRA_DIST = \
     extra/barf.xml \
     targets/reflex.cpp.header.codespec \
     targets/reflex.cpp.implementation.codespec \
-    targets/reflex.cpp.langspec \
+    targets/reflex.cpp.targetspec \
     targets/trison.cpp.header.codespec \
     targets/trison.cpp.implementation.codespec \
-    targets/trison.cpp.langspec
+    targets/trison.cpp.targetspec
 
 TARGETS_PATH = $(top_srcdir)/targets
 
@@ -164,7 +164,7 @@ LDADD = $(LIBOBJS)
 #	preprocessor
 # core depends on
 #	nothing
-# langspec depends on
+# targetspec depends on
 #   commonlang
 # 	core
 # preprocessor depends on
@@ -201,12 +201,12 @@ lib_libbarf_core_la_SOURCES = \
     lib/core/barf_searchpath.cpp \
     lib/core/barf_util.cpp
 
-lib_libbarf_langspec_la_CPPFLAGS = \
+lib_libbarf_targetspec_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \
     -I$(top_srcdir)/lib/commonlang \
     -I$(top_srcdir)/lib/core \
     -I$(top_srcdir)/lib/langspec
-lib_libbarf_langspec_la_SOURCES = \
+lib_libbarf_targetspec_la_SOURCES = \
     lib/langspec/barf_langspec_ast.cpp \
     lib/langspec/barf_langspec_enums.cpp \
     lib/langspec/barf_langspec_parser.cpp \
@@ -259,15 +259,15 @@ barf-commonlang-scanner barf-commonlang-scanner-force barf-commonlang-scanner-re
 endif
 
 if STABLE_TRISON_EXISTS
-barf-langspec-parser: $(top_srcdir)/lib/langspec/barf_langspec_parser.hpp
+barf-targetspec-parser: $(top_srcdir)/lib/langspec/barf_langspec_parser.hpp
 $(top_srcdir)/lib/langspec/barf_langspec_parser.hpp: $(top_srcdir)/lib/langspec/barf_langspec_parser.cpp
 $(top_srcdir)/lib/langspec/barf_langspec_parser.cpp: $(top_srcdir)/lib/langspec/barf_langspec_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/langspec/barf_langspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/langspec/barf_langspec_parser --generate-states-file $(top_srcdir)/lib/langspec/barf_langspec_parser.states
 
-barf-langspec-parser-force: $(top_srcdir)/lib/langspec/barf_langspec_parser.trison $(STABLE_TRISON)
+barf-targetspec-parser-force: $(top_srcdir)/lib/langspec/barf_langspec_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/langspec/barf_langspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/langspec/barf_langspec_parser --generate-states-file $(top_srcdir)/lib/langspec/barf_langspec_parser.states
 
-barf-langspec-parser-release: $(top_srcdir)/lib/langspec/barf_langspec_parser.trison $(STABLE_TRISON)
+barf-targetspec-parser-release: $(top_srcdir)/lib/langspec/barf_langspec_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/langspec/barf_langspec_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/lib/langspec/barf_langspec_parser --generate-states-file $(top_srcdir)/lib/langspec/barf_langspec_parser.states
 
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
@@ -292,9 +292,9 @@ barf-regex-parser-force: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STAB
 barf-regex-parser-release: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
 else # !STABLE_TRISON_EXISTS
-barf-langspec-parser barf-langspec-parser-force barf-langspec-parser-release:
+barf-targetspec-parser barf-targetspec-parser-force barf-targetspec-parser-release:
 	@echo "!!!"
-	@echo "!!! Can't build barf langspec parser without stable trison binary."
+	@echo "!!! Can't build barf targetspec parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 
@@ -345,7 +345,7 @@ playground_CPPFLAGS = \
 
 playground_LDADD = \
     $(LDADD) \
-    $(top_builddir)/lib/libbarf-langspec.la \
+    $(top_builddir)/lib/libbarf-targetspec.la \
     $(top_builddir)/lib/libbarf-commonlang.la \
     $(top_builddir)/lib/libbarf-preprocessor.la \
     $(top_builddir)/lib/libbarf-regex.la \
@@ -369,7 +369,7 @@ reflex_CPPFLAGS = \
 
 reflex_LDADD = \
     $(LDADD) \
-    $(top_builddir)/lib/libbarf-langspec.la \
+    $(top_builddir)/lib/libbarf-targetspec.la \
     $(top_builddir)/lib/libbarf-commonlang.la \
     $(top_builddir)/lib/libbarf-preprocessor.la \
     $(top_builddir)/lib/libbarf-regex.la \
@@ -490,7 +490,7 @@ trison_unstable_CPPFLAGS = \
 trison_unstable_LDADD = \
     $(LDADD) \
     $(top_builddir)/lib/libbarf-commonlang.la \
-    $(top_builddir)/lib/libbarf-langspec.la \
+    $(top_builddir)/lib/libbarf-targetspec.la \
     $(top_builddir)/lib/libbarf-preprocessor.la \
     $(top_builddir)/lib/libbarf-core.la
 

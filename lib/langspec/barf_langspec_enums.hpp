@@ -8,15 +8,15 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_LANGSPEC_ENUMS_HPP_)
-#define _BARF_LANGSPEC_ENUMS_HPP_
+#if !defined(_BARF_TARGETSPEC_ENUMS_HPP_)
+#define _BARF_TARGETSPEC_ENUMS_HPP_
 
 #include "barf_langspec.hpp"
 
 namespace Barf {
-namespace LangSpec {
+namespace TargetSpec {
 
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_LANGSPEC_ENUMS_HPP_)
+#endif // !defined(_BARF_TARGETSPEC_ENUMS_HPP_)

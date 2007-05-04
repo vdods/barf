@@ -5,8 +5,8 @@
 
 #line 13 "barf_langspec_parser.trison"
 
-#if !defined(_BARF_LANGSPEC_PARSER_HPP_)
-#define _BARF_LANGSPEC_PARSER_HPP_
+#if !defined(_BARF_TARGETSPEC_PARSER_HPP_)
+#define _BARF_TARGETSPEC_PARSER_HPP_
 
 #include "barf.hpp"
 
@@ -19,7 +19,7 @@ class Base;
 
 } // end of namespace Ast
 
-namespace LangSpec {
+namespace TargetSpec {
 
 struct AddCodeSpecList;
 struct AddDirectiveMap;
@@ -268,9 +268,9 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #line 48 "barf_langspec_parser.trison"
 
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_LANGSPEC_PARSER_HPP_)
+#endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
 
 #line 277 "barf_langspec_parser.hpp"

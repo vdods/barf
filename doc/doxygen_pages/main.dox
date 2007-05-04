@@ -4,12 +4,12 @@
 
 <strong>NOTE: BARF is still under development and is not yet feature-complete.  It is prone to design/API changes without warning, so don't expect to not have to change stuff if you start using it this early.</strong>
 
-The primary tools, <tt>reflex</tt> and <tt>trison</tt> aren't "yet another" incarnation/clone of <tt>flex</tt> and <tt>bison</tt>.  The critical feature is that neither are bound to a particular target (e.g. C++ only or Java only).  The two tools are simply engines for generating abstract state machines.  The generation of code for a specific target is done via preprocessor and is governed by set of specification files.  See @ref langspec_and_codespec for more information.
+The primary tools, <tt>reflex</tt> and <tt>trison</tt> aren't "yet another" incarnation/clone of <tt>flex</tt> and <tt>bison</tt>.  The critical feature is that neither are bound to a particular target (e.g. C++ only or Java only).  The two tools are simply engines for generating abstract state machines.  The generation of code for a specific target is done via preprocessor and is governed by set of specification files.  See @ref targetspec_and_codespec for more information.
 
 Currently included tools are:
 <ul>
 <li><tt>reflex</tt> -- A lexical scanner generator.  Its scanner rule file format is similar in format to <tt>flex</tt> (states and regexes), so porting a <tt>flex</tt> scanner file to <tt>reflex</tt> should be relatively easy.
-<li><tt>trison</tt> -- An LALR(1) parser generator.  Like <tt>reflex</tt>, its grammar file format is similar to <tt>bison</tt> (Backus-Naur form), so porting a <tt>bison</tt> grammar file to <tt>trison</tt> should be relatively easy.  This original version of <tt>trison</tt> does not use the langspec/codespec paradigm, as it was written before BARF was designed, but was the catalyst for BARF.  The current, generating-only-C++ version will not be documented, and it will be assumed in the documentation that the full nice-ified langspec/codespec version of <tt>trison</tt> is complete.
+<li><tt>trison</tt> -- An LALR(1) parser generator.  Like <tt>reflex</tt>, its grammar file format is similar to <tt>bison</tt> (Backus-Naur form), so porting a <tt>bison</tt> grammar file to <tt>trison</tt> should be relatively easy.  This original version of <tt>trison</tt> does not use the targetspec/codespec paradigm, as it was written before BARF was designed, but was the catalyst for BARF.  The current, generating-only-C++ version will not be documented, and it will be assumed in the documentation that the full nice-ified targetspec/codespec version of <tt>trison</tt> is complete.
 <li><tt>bpp</tt> -- A simple text preprocessor whose guts are used by both <tt>reflex</tt> and <tt>trison</tt>
 </ul>
 
@@ -28,7 +28,7 @@ Currently included tools are:
         <li>Trison
         <li>BPP (Barf Pre Processor)
         </ul>
-    <li>@ref langspec_and_codespec
+    <li>@ref targetspec_and_codespec
     <li>@ref language_theory
         <ul>
         <li>@ref language_theory_definitions

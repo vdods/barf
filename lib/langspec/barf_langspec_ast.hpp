@@ -8,15 +8,15 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_LANGSPEC_AST_HPP_)
-#define _BARF_LANGSPEC_AST_HPP_
+#if !defined(_BARF_TARGETSPEC_AST_HPP_)
+#define _BARF_TARGETSPEC_AST_HPP_
 
 #include "barf_langspec.hpp"
 
 #include "barf_ast.hpp"
 
 namespace Barf {
-namespace LangSpec {
+namespace TargetSpec {
 
 /*
 
@@ -204,7 +204,7 @@ struct SpecificationMap : public Ast::AstMap<Specification>
     SpecificationMap () : Ast::AstMap<Specification>(AT_SPECIFICATION_MAP) { }
 }; // end of class SpecificationMap
 
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_LANGSPEC_AST_HPP_)
+#endif // !defined(_BARF_TARGETSPEC_AST_HPP_)

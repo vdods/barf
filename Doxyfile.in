@@ -84,7 +84,7 @@ FILE_PATTERNS          = *.cpp \
                          *.dox \
                          *.reflex \
                          *.trison \
-                         *.langspec \
+                         *.targetspec \
                          # *.codespec
 RECURSIVE              = yes
 EXCLUDE                =

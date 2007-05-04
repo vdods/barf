@@ -59,7 +59,7 @@ int main (int argc, char **argv)
         Trison::Representation *representation = NULL;
 
         // parse the primary source and check everything possible without
-        // having parsed the langspec sources.
+        // having parsed the targetspec sources.
         {
             Trison::Parser parser;
             if (GetOptions()->GetShowScanningSpew())
@@ -91,11 +91,11 @@ int main (int argc, char **argv)
         }
 
         // for each target in the primary source, parse the corresponding
-        // langspec source, checking for required directives, doing everything
+        // targetspec source, checking for required directives, doing everything
         // possible to check short of running the run-before-code-gen code.
         {
-            LangSpec::Parser parser;
-            if (GetOptions()->GetShowLangSpecParsingSpew())
+            TargetSpec::Parser parser;
+            if (GetOptions()->GetShowTargetSpecParsingSpew())
                 parser.SetDebugSpewLevel(2);
 
             for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
@@ -105,7 +105,7 @@ int main (int argc, char **argv)
             {
                 CommonLang::Target const *target = it->second;
                 assert(target != NULL);
-                target->ParseLangSpec("trison", parser);
+                target->ParseTargetSpec("trison", parser);
             }
         }
         if (g_errors_encountered)

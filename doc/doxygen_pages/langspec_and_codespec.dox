@@ -1,17 +1,17 @@
-/** @page langspec_and_codespec The Langspec And Codespec Paradigm
+/** @page targetspec_and_codespec The Targetspec And Codespec Paradigm
 
 The primary tools, <tt>reflex</tt> and <tt>trison</tt> aren't "yet another" incarnation/clone of <tt>flex</tt> and <tt>bison</tt>.  The critical feature is that neither are bound to a particular target.  The two tools are simply engines for generating abstract state machines.  The generation of code for a specific target is done via preprocessor and is governed by set of specification files.
     <ul>
-    <li>A single "langspec" file indicating the required parameters which must be specified in the primary tool source
-    <li>One or more "codespec" files which use a macro language to inject the state machine tables and langspec-specified parameters into the generated code
+    <li>A single "targetspec" file indicating the required parameters which must be specified in the primary tool source
+    <li>One or more "codespec" files which use a macro language to inject the state machine tables and targetspec-specified parameters into the generated code
     </ul>
-The customization that this paradigm provides is twofold.  The langspec file provides a facility to customize the generated code from the primary tool source.  The codespec file(s) allow any level of customization to be done -- in fact, if one doesn't like a particular target provided (or if the desired target is not provided), one can write their own langspec/codespec files to implement the desired target however one sees fit.
+The customization that this paradigm provides is twofold.  The targetspec file provides a facility to customize the generated code from the primary tool source.  The codespec file(s) allow any level of customization to be done -- in fact, if one doesn't like a particular target provided (or if the desired target is not provided), one can write their own targetspec/codespec files to implement the desired target however one sees fit.
 
-@section langspec_and_codespec_definitions
+@section targetspec_and_codespec_definitions
 TODO: write about parameter types: identifier, string, strict code block, dumb code block, etc
 
-@section langspec_and_codespec_format_of_langspec
+@section targetspec_and_codespec_format_of_targetspec
 
-@section langspec_and_codespec_format_of_codespec
+@section targetspec_and_codespec_format_of_codespec
 
 */

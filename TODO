@@ -2,6 +2,8 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- change "general XXX parse error" into "general XXX parse error -- please
+  report to xxx@yyy.com" so error reporting can be better
 - move anything specific to BARF that is currently in core out of core and
   into a "common" directory (or think of a better name).  this will better
   separate and formalize the dependencies of each system.
@@ -18,7 +20,7 @@
 - rename OutputDir to OutputDirectory once the other options have been
   deprecated (this looks like it will happen once old trison is deprecated)
 - add _barf_version to preprocessor shit?
-- add langspec versions -- so you can have multiple coexisting versions of
+- add targetspec versions -- so you can have multiple coexisting versions of
   the same target but at different versions.
 - config.h-specified search path
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
@@ -75,13 +77,12 @@
   vector<Uint32> used all over the place)
 
 // ///////////////////////////////////////////////////////////////////////////
-// langspec
+// targetspec
 // ///////////////////////////////////////////////////////////////////////////
 
-- rename to targetspec
 - allow using the value of previously declared directive ids as default values
 - confirm that the declared name matches the filename -- or, should the 
-  langspec's %target directive be removed (it is redundant) -- probably remove
+  targetspec's %target directive be removed (it is redundant) -- probably remove
 - add new "add_optional_codespec" directive which requires the directive
   id of an add_optional_directive, for optional output files (like
   baseclasses which could be common to multiple parsers/scanners), then change
@@ -167,7 +168,7 @@
 - add option for line directives referencing codespecs (the default should be
   to refer to codespecs, for easier development)
 - add thing that checks for EOF-handling in each scanner mode?
-- add a no-STL-usage C++ target (?) -- should be configurable by a langspec 
+- add a no-STL-usage C++ target (?) -- should be configurable by a targetspec 
   directive -- currently it only uses std::string and std::deque.  std::string
   will be trivial to replace with null-terminated strings.  replacing std::deque
   will require writing a deque implementation (which is fine, because then it
@@ -176,10 +177,10 @@
 - add codespec macro of the regex for each rule
 - use smallest integer type to store state and transition indices, etc.
 - add _reflex_version to the code generator (_barf_version?)
-- the rule handler code block type should be specifiable by the langspec
+- the rule handler code block type should be specifiable by the targetspec
 - add -D option for defining crap in the preprocessor stage -- before and
   after the .reflex source is read (e.g. to override the output filenames)
-- warn about langspec directive values that weren't referenced in the
+- warn about targetspec directive values that weren't referenced in the
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
@@ -192,7 +193,7 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - figure out how to guarantee branch uniqueness per Action_ branch list in C++ parser.
-- add default values in trison cpp langspec for Scan implementation
+- add default values in trison cpp targetspec for Scan implementation
 - change "%prec %left BLAH" into "%prec.left BLAH" (and maybe prec into precedence)
 - NPDA: each action node in the tree gets a set of precedences.  when a node's
   child set changes, the precedence set is updated, and then conflict resolution
@@ -204,7 +205,7 @@
   consistencize the nomenclature of the NPDA preprocessor symbols in general
 - add option for line directives referencing codespecs
 - get rid of STL usage in C++ codespecs (separate target)
-- the rule handler code block type should be specifiable by the langspec
+- the rule handler code block type should be specifiable by the targetspec
 - add option which prints the targets available in the current search path
 - rename %token to %terminal (and friends)
 - require %nonterminal keyword before nonterminal definition
@@ -222,7 +223,7 @@
 - add a directive for what to do with unnamed tokens (because they might need
   to be thrown away)
 - get rid of trison_message (and move the crap into barf_message)
-- warn about langspec directive values that weren't referenced in the
+- warn about targetspec directive values that weren't referenced in the
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.

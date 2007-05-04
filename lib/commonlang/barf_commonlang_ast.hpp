@@ -19,14 +19,14 @@
 
 namespace Barf {
 
-namespace LangSpec {
+namespace TargetSpec {
 
 class AddCodeSpec;
 class AddDirective;
 class Parser;
 class Specification;
 
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 
 namespace Preprocessor {
 
@@ -94,9 +94,9 @@ public:
     // attempts to add a target directive, but will warn and not add if this
     // target is not enabled for code generation.
     void Add (TargetDirective *target_directive);
-    // parses the langspec file corresponding to this target.
-    void ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser) const;
-    // parses all the codespecs specified in m_lang_spec and adds the
+    // parses the targetspec file corresponding to this target.
+    void ParseTargetSpec (string const &tool_prefix, TargetSpec::Parser &parser) const;
+    // parses all the codespecs specified in m_target_spec and adds the
     // parsed Preprocessor::Body instances to m_codespec_body_list.
     void ParseCodeSpecs (string const &tool_prefix, Preprocessor::Parser &parser) const;
     // iterates through all codespecs and generates code.
@@ -104,29 +104,29 @@ public:
 
 private:
 
-    // checks the target directives against the given LangSpec::Specification.
-    void CheckAgainstLangSpec (LangSpec::Specification const &specification) const;
-    // checks a LangSpec::AddDirective against a TargetDirective
+    // checks the target directives against the given TargetSpec::Specification.
+    void CheckAgainstTargetSpec (TargetSpec::Specification const &specification) const;
+    // checks a TargetSpec::AddDirective against a TargetDirective
     void CheckAgainstAddDirective (
-        LangSpec::AddDirective const &add_directive,
+        TargetSpec::AddDirective const &add_directive,
         TargetDirective const *target_directive) const;
     // adds target directives -- specific to this target
     void GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) const;
 
-    struct ParsedLangSpec
+    struct ParsedTargetSpec
     {
-        LangSpec::Specification const *m_specification;
+        TargetSpec::Specification const *m_specification;
         string m_source_path;
-    }; // end of struct Target::ParsedLangSpec
+    }; // end of struct Target::ParsedTargetSpec
 
     struct ParsedCodeSpec
     {
-        LangSpec::AddCodeSpec const *m_add_codespec;
+        TargetSpec::AddCodeSpec const *m_add_codespec;
         Preprocessor::Body const *m_codespec_body;
         string m_source_path;
 
         ParsedCodeSpec (
-            LangSpec::AddCodeSpec const *add_codespec,
+            TargetSpec::AddCodeSpec const *add_codespec,
             Preprocessor::Body const *codespec_body,
             string const &source_path)
             :
@@ -144,7 +144,7 @@ private:
 
     bool m_is_enabled_for_code_generation;
     string m_source_path;
-    mutable ParsedLangSpec m_lang_spec;
+    mutable ParsedTargetSpec m_target_spec;
     mutable ParsedCodeSpecList m_code_spec_list;
 
     using Ast::AstMap<TargetDirective>::Add;

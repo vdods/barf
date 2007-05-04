@@ -11,8 +11,8 @@
 %parser_class_name "Parser"
 
 %parser_header_file_top%{
-#if !defined(_BARF_LANGSPEC_PARSER_HPP_)
-#define _BARF_LANGSPEC_PARSER_HPP_
+#if !defined(_BARF_TARGETSPEC_PARSER_HPP_)
+#define _BARF_TARGETSPEC_PARSER_HPP_
 
 #include "barf.hpp"
 
@@ -25,7 +25,7 @@ class Base;
 
 } // end of namespace Ast
 
-namespace LangSpec {
+namespace TargetSpec {
 
 struct AddCodeSpecList;
 struct AddDirectiveMap;
@@ -46,10 +46,10 @@ private:
 }
 
 %parser_header_file_bottom%{
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_LANGSPEC_PARSER_HPP_)
+#endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
 %}
 
 %parser_implementation_file_top%{
@@ -57,7 +57,7 @@ private:
 #include "barf_langspec_ast.hpp"
 
 namespace Barf {
-namespace LangSpec {
+namespace TargetSpec {
 %}
 
 %parser_constructor_actions{
@@ -123,7 +123,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::END_PREAMBLE:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in langspec");
+            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in targetspec");
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;
@@ -134,7 +134,7 @@ Parser::Token::Type Parser::Scan ()
     }
 }
 
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 } // end of namespace Barf
 %}
 

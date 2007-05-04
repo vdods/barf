@@ -13,7 +13,7 @@
 #include "barf_message.hpp"
 
 namespace Barf {
-namespace LangSpec {
+namespace TargetSpec {
 
 string const &GetAstTypeString (AstType ast_type)
 {
@@ -80,5 +80,5 @@ string const &ParamType::GetParamTypeString (AstType ast_type)
     }
 }
 
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 } // end of namespace Barf

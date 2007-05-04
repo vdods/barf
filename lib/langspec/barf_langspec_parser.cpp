@@ -15,7 +15,7 @@
 #include "barf_langspec_ast.hpp"
 
 namespace Barf {
-namespace LangSpec {
+namespace TargetSpec {
 
 #line 21 "barf_langspec_parser.cpp"
 
@@ -1211,7 +1211,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::END_PREAMBLE:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in langspec");
+            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in targetspec");
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;
@@ -1222,7 +1222,7 @@ Parser::Token::Type Parser::Scan ()
     }
 }
 
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 } // end of namespace Barf
 
 #line 1229 "barf_langspec_parser.cpp"

@@ -8,19 +8,19 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_LANGSPEC_HPP_)
-#define _BARF_LANGSPEC_HPP_
+#if !defined(_BARF_TARGETSPEC_HPP_)
+#define _BARF_TARGETSPEC_HPP_
 
-// EVERY HPP AND CPP FILE IN LANGSPEC SHOULD INCLUDE THIS FILE
-// EVERY HPP AND CPP FILE IN LANGSPEC SHOULD INCLUDE THIS FILE
-// EVERY HPP AND CPP FILE IN LANGSPEC SHOULD INCLUDE THIS FILE
+// EVERY HPP AND CPP FILE IN TARGETSPEC SHOULD INCLUDE THIS FILE
+// EVERY HPP AND CPP FILE IN TARGETSPEC SHOULD INCLUDE THIS FILE
+// EVERY HPP AND CPP FILE IN TARGETSPEC SHOULD INCLUDE THIS FILE
 
 #include "barf.hpp"
 
 namespace Barf {
-namespace LangSpec {
+namespace TargetSpec {
 
-} // end of namespace LangSpec
+} // end of namespace TargetSpec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_LANGSPEC_HPP_)
+#endif // !defined(_BARF_TARGETSPEC_HPP_)
