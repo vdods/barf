@@ -65,7 +65,7 @@ clean-parser-extras:
 	rm -f $(top_srcdir)/app/trison/trison_parser_header.cpp
 	rm -f $(top_srcdir)/app/trison/trison_parser_implementation.cpp
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.states
-	rm -f $(top_srcdir)/lib/langspec/barf_targetspec_parser.states
+	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.states
 	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.states
 
@@ -76,8 +76,8 @@ clean-all-parsers: clean-parser-extras
 	rm -f $(top_srcdir)/app/trison/trison_parser.hpp
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.cpp
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.hpp
-	rm -f $(top_srcdir)/lib/langspec/barf_targetspec_parser.cpp
-	rm -f $(top_srcdir)/lib/langspec/barf_targetspec_parser.hpp
+	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp
+	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
 	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.cpp
@@ -177,7 +177,7 @@ lib_libbarf_commonlang_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \
     -I$(top_srcdir)/lib/commonlang \
     -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/langspec \
+    -I$(top_srcdir)/lib/targetspec \
     -I$(top_srcdir)/lib/preprocessor
 lib_libbarf_commonlang_la_SOURCES = \
     lib/commonlang/barf_commonlang_ast.cpp \
@@ -205,12 +205,12 @@ lib_libbarf_targetspec_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \
     -I$(top_srcdir)/lib/commonlang \
     -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/langspec
+    -I$(top_srcdir)/lib/targetspec
 lib_libbarf_targetspec_la_SOURCES = \
-    lib/langspec/barf_targetspec_ast.cpp \
-    lib/langspec/barf_targetspec_enums.cpp \
-    lib/langspec/barf_targetspec_parser.cpp \
-    lib/langspec/barf_targetspec_parser.trison
+    lib/targetspec/barf_targetspec_ast.cpp \
+    lib/targetspec/barf_targetspec_enums.cpp \
+    lib/targetspec/barf_targetspec_parser.cpp \
+    lib/targetspec/barf_targetspec_parser.trison
 
 lib_libbarf_preprocessor_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \
@@ -259,16 +259,16 @@ barf-commonlang-scanner barf-commonlang-scanner-force barf-commonlang-scanner-re
 endif
 
 if STABLE_TRISON_EXISTS
-barf-targetspec-parser: $(top_srcdir)/lib/langspec/barf_targetspec_parser.hpp
-$(top_srcdir)/lib/langspec/barf_targetspec_parser.hpp: $(top_srcdir)/lib/langspec/barf_targetspec_parser.cpp
-$(top_srcdir)/lib/langspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/langspec/barf_targetspec_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/lib/langspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/langspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/langspec/barf_targetspec_parser.states
+barf-targetspec-parser: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp
+$(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp
+$(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
+	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 
-barf-targetspec-parser-force: $(top_srcdir)/lib/langspec/barf_targetspec_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/lib/langspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/langspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/langspec/barf_targetspec_parser.states
+barf-targetspec-parser-force: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
+	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 
-barf-targetspec-parser-release: $(top_srcdir)/lib/langspec/barf_targetspec_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/lib/langspec/barf_targetspec_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/lib/langspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/langspec/barf_targetspec_parser.states
+barf-targetspec-parser-release: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
+	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp
@@ -339,7 +339,7 @@ playground_CPPFLAGS = \
 	-I$(top_srcdir)/app \
     -I$(top_srcdir)/lib/commonlang \
     -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/langspec \
+    -I$(top_srcdir)/lib/targetspec \
     -I$(top_srcdir)/lib/preprocessor \
     -I$(top_srcdir)/lib/regex
 
@@ -363,7 +363,7 @@ reflex_CPPFLAGS = \
 	-I$(top_srcdir)/app/reflex \
     -I$(top_srcdir)/lib/commonlang \
     -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/langspec \
+    -I$(top_srcdir)/lib/targetspec \
     -I$(top_srcdir)/lib/preprocessor \
     -I$(top_srcdir)/lib/regex
 
@@ -484,7 +484,7 @@ trison_unstable_CPPFLAGS = \
 	-I$(top_srcdir)/app/trison.unstable \
     -I$(top_srcdir)/lib/commonlang \
     -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/langspec \
+    -I$(top_srcdir)/lib/targetspec \
     -I$(top_srcdir)/lib/preprocessor
 
 trison_unstable_LDADD = \
@@ -592,10 +592,10 @@ noinst_HEADERS = \
 	lib/core/barf_types.hpp \
 	lib/core/barf_util.hpp \
 	\
-	lib/langspec/barf_targetspec.hpp \
-	lib/langspec/barf_targetspec_ast.hpp \
-	lib/langspec/barf_targetspec_enums.hpp \
-	lib/langspec/barf_targetspec_parser.hpp \
+	lib/targetspec/barf_targetspec.hpp \
+	lib/targetspec/barf_targetspec_ast.hpp \
+	lib/targetspec/barf_targetspec_enums.hpp \
+	lib/targetspec/barf_targetspec_parser.hpp \
 	\
 	lib/preprocessor/barf_preprocessor.hpp \
 	lib/preprocessor/barf_preprocessor_ast.hpp \
