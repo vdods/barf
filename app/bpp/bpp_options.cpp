@@ -123,10 +123,7 @@ void Options::EnableVerbosity (string const &verbosity_option)
     else if (verbosity_option == "all")
         m_enabled_verbosity = V_ALL;
     else
-    {
-        cerr << "error: invalid verbosity option argument \"" << verbosity_option << "\"" << endl;
-        m_abort = true;
-    }
+        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_option + "\"");
 }
 
 void Options::DisableVerbosity (string const &verbosity_option)
@@ -138,10 +135,7 @@ void Options::DisableVerbosity (string const &verbosity_option)
     else if (verbosity_option == "all")
         m_enabled_verbosity = V_NONE;
     else
-    {
-        cerr << "error: invalid verbosity option argument \"" << verbosity_option << "\"" << endl;
-        m_abort = true;
-    }
+        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_option + "\"");
 }
 
 void Options::Parse (int const argc, char const *const *const argv)

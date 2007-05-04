@@ -37,10 +37,22 @@ int main (int argc, char **argv)
         g_options = new Trison::Options(argv[0]);
         g_options->Parse(argc, argv);
         if (GetOptions()->GetAbort())
+        {
             return 1;
+        }
         else if (GetOptions()->GetIsHelpRequested())
         {
             GetOptions()->PrintHelpMessage(cerr);
+            return 0;
+        }
+        else if (GetOptions()->GetPrintTargetsSearchPathRequest() == Trison::Options::PTSPR_SHORT)
+        {
+            cout << GetOptions()->GetTargetsSearchPath().GetAsString("\n") << endl;
+            return 0;
+        }
+        else if (GetOptions()->GetPrintTargetsSearchPathRequest() == Trison::Options::PTSPR_VERBOSE)
+        {
+            cout << GetOptions()->GetTargetsSearchPath().GetAsVerboseString("\n") << endl;
             return 0;
         }
 

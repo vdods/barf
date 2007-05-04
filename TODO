@@ -2,6 +2,11 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- move anything specific to BARF that is currently in core out of core and
+  into a "common" directory (or think of a better name).  this will better
+  separate and formalize the dependencies of each system.
+- add optional-argument commandline options, and account for empty-argument
+  required-argument options (e.g. `./reflex -I ""` will assert)
 - descriptions should be indicate "finite-automata-based scanners" and
   "pushdown-automata-based parsers"
 - error when any output file is the same as an input file
@@ -40,6 +45,7 @@
   functions which operate on them (unless it's more practical to use member
   functions in a particular case).  this will make the separation of systems
   clearer.
+- add some path-checking function -- i.e. to check for newlines and other stuff
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -65,7 +71,6 @@
   node index values.
 - in util's GetEscapedString, make it read overflowed hex chars
 - move trison's conflict messages into barf_message.h/cpp
-- add "-i" "--print-include-search-path" option to OptionsBase
 - make a GraphNodeIndex vector type in barf_graph.h (replacing the ad-hoc
   vector<Uint32> used all over the place)
 
@@ -162,8 +167,12 @@
 - add option for line directives referencing codespecs (the default should be
   to refer to codespecs, for easier development)
 - add thing that checks for EOF-handling in each scanner mode?
-- get rid of STL usage in C++ codespecs (separate target)
-- add option which prints the targets available in the current search path
+- add a no-STL-usage C++ target (?) -- should be configurable by a langspec 
+  directive -- currently it only uses std::string and std::deque.  std::string
+  will be trivial to replace with null-terminated strings.  replacing std::deque
+  will require writing a deque implementation (which is fine, because then it
+  can be optimized for characters and copying strings out of it).
+- add option which prints the (reflex) targets available in the current search path
 - add codespec macro of the regex for each rule
 - use smallest integer type to store state and transition indices, etc.
 - add _reflex_version to the code generator (_barf_version?)
@@ -171,7 +180,9 @@
 - add -D option for defining crap in the preprocessor stage -- before and
   after the .reflex source is read (e.g. to override the output filenames)
 - warn about langspec directive values that weren't referenced in the
-  code generation (preprocessor) stage
+  code generation (preprocessor) stage -- ones that don't appear at all in
+  any codespec, not necessarily to indicate they weren't used in one particular
+  case.
 - add "push accepted string back into buffer" API to the generated scanner -- 
   should it be allowed push any string?  maybe not, since it will have to have
   the previous char.  but maybe that's ok.
@@ -212,5 +223,7 @@
   to be thrown away)
 - get rid of trison_message (and move the crap into barf_message)
 - warn about langspec directive values that weren't referenced in the
-  code generation (preprocessor) stage
+  code generation (preprocessor) stage -- ones that don't appear at all in
+  any codespec, not necessarily to indicate they weren't used in one particular
+  case.
 - rename _npda_node_* to _npda_state_*

@@ -16,59 +16,60 @@
 
 namespace Barf {
 
-SearchPath::SearchPath ()
-{
-    // TODO: config.h-specified path
-
-    char const *search_path = getenv("BARF_TARGETS_SEARCH_PATH");
-    if (search_path != NULL)
-        AddPath(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable");
-}
-
-string SearchPath::GetAsString () const
-{
-    assert(!m_path_stack.empty() && "there must be at least one valid path");
-    string path_string;
-    for (PathStack::const_reverse_iterator it = m_path_stack.rbegin(),
-                                           it_end = m_path_stack.rend();
-         it != it_end;
-         ++it)
-    {
-        path_string += '\"';
-        path_string += *it;
-        path_string += '\"';
-        PathStack::const_reverse_iterator next_it = it;
-        ++next_it;
-        if (next_it != it_end)
-            path_string += ", ";
-    }
-    return path_string;
-}
-
 string SearchPath::GetFilePath (string const &filename) const
 {
     assert(!m_path_stack.empty() && "there must be at least one valid path");
-    for (PathStack::const_reverse_iterator it = m_path_stack.rbegin(),
-                                           it_end = m_path_stack.rend();
+    for (PathEntryStack::const_reverse_iterator it = m_path_stack.rbegin(),
+                                                it_end = m_path_stack.rend();
          it != it_end;
          ++it)
     {
-        string file_path(*it + filename);
+        PathEntry const &path_entry = *it;
+        string file_path(path_entry.GetPath() + filename);
         if (GetIsValidFile(file_path))
             return file_path;
     }
     return gs_empty_string;
 }
 
-void SearchPath::AddPath (string path, string const &set_by)
+SearchPath::AddPathReturnCode SearchPath::AddPath (string path, string const &set_by)
 {
-    assert(!path.empty());
+    // don't add empty paths.
+    if (path.empty())
+        return ADD_PATH_FAILURE_EMPTY;
+    
+    // make sure there's a slash at the end of the path.
     if (*path.rbegin() != DIRECTORY_SLASH_CHAR)
         path += DIRECTORY_SLASH_CHAR;
-    if (GetIsValidDirectory(path))
-        m_path_stack.push_back(path);
-    else
-        cerr << "error: invalid data path \"" << path << "\" " << set_by << endl;
+        
+    // only add the path if it actually exists.
+    if (!GetIsValidDirectory(path))
+        return ADD_PATH_FAILURE_INVALID;
+    
+    // add the path to the top of the stack and return success
+    m_path_stack.push_back(PathEntry(path, set_by));
+    return ADD_PATH_SUCCESS;
+}
+
+string SearchPath::GetAsStringPrivate (string const &delimiter, SearchPath::Verbosity verbosity) const
+{
+    string path_string;
+    for (PathEntryStack::const_reverse_iterator it = m_path_stack.rbegin(),
+                                                it_end = m_path_stack.rend();
+         it != it_end;
+         ++it)
+    {
+        PathEntry const &path_entry = *it;
+        path_string += GetStringLiteral(path_entry.GetPath());
+        if (verbosity == VERBOSE)
+            path_string += ' ' + path_entry.GetSetBy();
+        // only add the delimiter if there's another path to iterate over.
+        PathEntryStack::const_reverse_iterator next_it = it;
+        ++next_it;
+        if (next_it != it_end)
+            path_string += delimiter;
+    }
+    return path_string;
 }
 
 } // end of namespace Barf

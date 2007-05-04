@@ -94,9 +94,9 @@ void Target::ParseLangSpec (string const &tool_prefix, LangSpec::Parser &parser)
 {
     try {
         string filename(tool_prefix + '.' + m_target_id + ".langspec");
-        m_lang_spec.m_source_path = g_options->GetFilePath(filename);
+        m_lang_spec.m_source_path = g_options->GetTargetsSearchPath().GetFilePath(filename);
         if (m_lang_spec.m_source_path.empty())
-            EmitError(FiLoc(g_options->GetInputFilename()), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPathString());
+            EmitError(FiLoc(g_options->GetInputFilename()), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
         else if (!parser.OpenFile(m_lang_spec.m_source_path))
             EmitError(FiLoc(g_options->GetInputFilename()), "unable to open file \"" + m_lang_spec.m_source_path + "\" for reading");
         else if (parser.Parse() != LangSpec::Parser::PRC_SUCCESS)
@@ -131,9 +131,9 @@ void Target::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Parser &pa
 
         try {
             string filename(tool_prefix + '.' + m_target_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
-            string code_spec_filename(g_options->GetFilePath(filename));
+            string code_spec_filename(g_options->GetTargetsSearchPath().GetFilePath(filename));
             if (code_spec_filename.empty())
-                EmitError(FiLoc(m_lang_spec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPathString());
+                EmitError(FiLoc(m_lang_spec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
             else if (!parser.OpenFile(code_spec_filename))
                 EmitError(FiLoc(m_lang_spec.m_source_path), "unable to open file \"" + code_spec_filename + "\" for reading");
             else if (parser.Parse() != Preprocessor::Parser::PRC_SUCCESS)

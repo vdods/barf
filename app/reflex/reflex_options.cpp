@@ -67,6 +67,21 @@ CommandLineOption const Options::ms_option[] =
         "    By default the search path is specified by the BARF_TARGETS_SEARCH_PATH\n"
         "    enviroment variable.  If no valid directories are specified, the search\n"
         "    path will default to the current working directory."),
+    CommandLineOption(
+        'p',
+        "print-targets-search-path",
+        &OptionsBase::RequestShortPrintTargetsSearchPath,
+        "    Prints to stdout, from highest priority to lowest, the targets search path\n"
+        "    once all -I options have been processed, then exits.  Each path entry is\n"
+        "    delimited by a newline."),
+    CommandLineOption(
+        'P',
+        "print-verbose-targets-search-path",
+        &OptionsBase::RequestVerbosePrintTargetsSearchPath,
+        "    Prints to stdout, from highest priority to lowest, the targets search path\n"
+        "    once all -I options have been processed, then exits.  Each path entry is\n"
+        "    followed by a description of how each was added.  Each entry is delimited\n"
+        "    by a newline.  This is identical to option -p except for the description."),
     // output behavior options header
     CommandLineOption("Output behavior options"),
     // output behavior options
@@ -170,13 +185,14 @@ void Options::Parse (int const argc, char const *const *const argv)
 {
     OptionsBase::Parse(argc, argv);
 
-    if (!GetIsHelpRequested())
+    // only check for commandline option consistency if no output-and-quit
+    // option was specified (e.g. help or print-targets-search-path)
+    if (!m_abort && 
+        !GetIsHelpRequested() && 
+        GetPrintTargetsSearchPathRequest() == PTSPR_NONE)
     {
         if (GetInputFilename().empty())
-        {
-            cerr << "error: no input filename specified" << endl;
-            m_abort = true;
-        }
+            ReportErrorAndSetAbortFlag("no input filename specified");
     }
 }
 

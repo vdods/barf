@@ -56,7 +56,17 @@ void OptionsBase::DontAssertOnError ()
 
 void OptionsBase::IncludeTargetsSearchPath (string const &search_path)
 {
-    m_targets_search_path.AddPath(search_path, "set by commandline option");
+    AddTargetsSearchPath(search_path, "set by commandline option");
+}
+
+void OptionsBase::RequestShortPrintTargetsSearchPath ()
+{
+    m_print_targets_search_path_request = PTSPR_SHORT;
+}
+
+void OptionsBase::RequestVerbosePrintTargetsSearchPath ()
+{
+    m_print_targets_search_path_request = PTSPR_VERBOSE;
 }
 
 void OptionsBase::SetOutputBasename (string const &output_basename)
@@ -125,10 +135,7 @@ void OptionsBase::EnableVerbosity (string const &verbosity_option)
     else if (verbosity_option == "all")
         m_enabled_verbosity = V_ALL;
     else
-    {
-        cerr << "error: invalid verbosity option argument \"" << verbosity_option << "\"" << endl;
-        m_abort = true;
-    }
+        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_option + "\"");
 }
 
 void OptionsBase::DisableVerbosity (string const &verbosity_option)
@@ -150,10 +157,7 @@ void OptionsBase::DisableVerbosity (string const &verbosity_option)
     else if (verbosity_option == "all")
         m_enabled_verbosity = V_NONE;
     else
-    {
-        cerr << "error: invalid verbosity option argument \"" << verbosity_option << "\"" << endl;
-        m_abort = true;
-    }
+        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_option + "\"");
 }
 
 void OptionsBase::RequestHelp ()
@@ -161,17 +165,36 @@ void OptionsBase::RequestHelp ()
     m_is_help_requested = true;
 }
 
-void OptionsBase::UnrequestHelp ()
-{
-    m_is_help_requested = false;
-}
-
 void OptionsBase::Parse (int argc, char const *const *argv)
 {
     CommandLineParser::Parse(argc, argv);
 
     if (m_targets_search_path.GetIsEmpty())
-        m_targets_search_path.AddPath(string(".") + DIRECTORY_SLASH_CHAR, "set as default data path");
+        m_targets_search_path.AddPath(string(".") + DIRECTORY_SLASH_CHAR, "set as default targets search path");
+}
+
+void OptionsBase::ReportErrorAndSetAbortFlag (string const &error_message)
+{
+    assert(!error_message.empty());
+    cerr << "error: " << error_message << endl;
+    m_abort = true;
+}
+
+void OptionsBase::AddTargetsSearchPath (string const &search_path, string const &set_by)
+{
+    switch (m_targets_search_path.AddPath(search_path, set_by))
+    {
+        case SearchPath::ADD_PATH_SUCCESS:
+            break;
+    
+        case SearchPath::ADD_PATH_FAILURE_EMPTY:
+            ReportErrorAndSetAbortFlag("empty path (" + set_by + ") can't be added to the targets search path");
+            break;
+            
+        case SearchPath::ADD_PATH_FAILURE_INVALID:
+            ReportErrorAndSetAbortFlag("invalid path " + GetStringLiteral(search_path) + ' ' + set_by);
+            break;
+    }
 }
 
 } // end of namespace Barf
