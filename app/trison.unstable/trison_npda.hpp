@@ -23,8 +23,6 @@ struct Rule;
 
 struct NpdaNodeData : public Graph::Node::Data
 {
-    virtual bool IsReturnState () const { return false; }
-    virtual bool IsEpsilonClosureState () const { return false; }
     virtual Nonterminal const *GetAssociatedNonterminal () const { return NULL; }
     virtual Rule const *GetAssociatedRule () const { return NULL; }
     virtual Uint32 GetRuleStage () const { return UINT32_UPPER_BOUND; }

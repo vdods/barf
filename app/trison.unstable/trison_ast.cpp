@@ -376,10 +376,10 @@ void Representation::GenerateAutomatonSymbols (
         }
     }
 
-    // _npda_initial_node_index[nonterminal name] -- maps nonterminal name => node index
+    // _npda_nonterminal_start_state_index[nonterminal name] -- maps nonterminal name => node index
     {
-        Preprocessor::MapSymbol *npda_initial_node_index_symbol =
-            symbol_table.DefineMapSymbol("_npda_initial_node_index", FiLoc::ms_invalid);
+        Preprocessor::MapSymbol *npda_nonterminal_start_state_index_symbol =
+            symbol_table.DefineMapSymbol("_npda_nonterminal_start_state_index", FiLoc::ms_invalid);
         for (NonterminalMap::const_iterator it = m_nonterminal_map->begin(),
                                             it_end = m_nonterminal_map->end();
              it != it_end;
@@ -388,7 +388,7 @@ void Representation::GenerateAutomatonSymbols (
             string const &nonterminal_name = it->first;
             Nonterminal const *nonterminal = it->second;
             assert(nonterminal != NULL);
-            npda_initial_node_index_symbol->SetMapElement(
+            npda_nonterminal_start_state_index_symbol->SetMapElement(
                 nonterminal_name,
                 new Preprocessor::Body(
                     Sint32(nonterminal->GetNpdaGraphStartState()),
@@ -550,38 +550,38 @@ void Representation::GenerateAutomatonSymbols (
         }
     }
 
-    // _npda_node_count -- the number of nodes in the nondeterministic pushdown automaton (NPDA)
+    // _npda_state_count -- the number of nodes in the nondeterministic pushdown automaton (NPDA)
     {
-        Preprocessor::ScalarSymbol *npda_node_count_symbol =
-            symbol_table.DefineScalarSymbol("_npda_node_count", FiLoc::ms_invalid);
-        npda_node_count_symbol->SetScalarBody(
+        Preprocessor::ScalarSymbol *npda_state_count_symbol =
+            symbol_table.DefineScalarSymbol("_npda_state_count", FiLoc::ms_invalid);
+        npda_state_count_symbol->SetScalarBody(
             new Preprocessor::Body(
                 Sint32(m_npda_graph.GetNodeCount()),
                 FiLoc::ms_invalid));
     }
 
-    // _npda_node_rule_index[_npda_node_count] -- the index of the rule which this state
+    // _npda_state_rule_index[_npda_state_count] -- the index of the rule which this state
     // is a part of, or _rule_count if this state is not part of a rule.
     //
-    // _npda_node_rule_stage[_npda_node_count] -- the stage (e.g. 0 indicates no tokens have
+    // _npda_state_rule_stage[_npda_state_count] -- the stage (e.g. 0 indicates no tokens have
     // been accepted, 1 indicates 1 token, etc) of the rule which this state is a
     // part of, or 0 (really is undefined) if this state is not part of a rule.
     //
-    // _npda_node_description[_npda_node_count] -- the description of this node (e.g.
+    // _npda_state_description[_npda_state_count] -- the description of this node (e.g.
     // "start using xxx" for a start state, "return xxx" for a return state,
     // "exp <- exp . '+' exp" if a part of a rule, or "head of xxx" for a nonterminal
     // head state).
     //
-    // _npda_node_nonterminal_index[_rule_count] -- the index of the nonterminal
+    // _npda_state_nonterminal_index[_rule_count] -- the index of the nonterminal
     // which this node is a part of, or 0 if there is no associated nonterminal.
     //
-    // _npda_node_nonterminal_name[_rule_count] -- the name of the nonterminal
+    // _npda_state_nonterminal_name[_rule_count] -- the name of the nonterminal
     // which this node is a part of, or "none_" if there is no associated nonterminal.
     //
-    // _npda_node_transition_offset[_npda_node_count] -- gives the first index of the
+    // _npda_state_transition_offset[_npda_state_count] -- gives the first index of the
     // contiguous set of transitions for this node.
     //
-    // _npda_node_transition_count[_npda_node_count] -- gives the number of transitions for
+    // _npda_state_transition_count[_npda_state_count] -- gives the number of transitions for
     // this node (the number of contiguous transitions which apply to this node).
     //
     // _npda_transition_count -- gives the number of transitions in this NPDA.
@@ -605,24 +605,20 @@ void Representation::GenerateAutomatonSymbols (
     // the node which to transition to if this transition is exercised, or -1 if
     // not applicable.
     {
-        Preprocessor::ArraySymbol *npda_node_rule_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_rule_index", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_node_rule_stage_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_rule_stage", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_node_description_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_description", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_node_nonterminal_index_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_nonterminal_index", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_node_nonterminal_name_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_nonterminal_name", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_node_is_return_state_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_is_return_state", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_node_is_epsilon_closure_state_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_is_epsilon_closure_state", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_node_transition_offset_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_transition_offset", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_node_transition_count_symbol =
-            symbol_table.DefineArraySymbol("_npda_node_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_state_rule_index_symbol =
+            symbol_table.DefineArraySymbol("_npda_state_rule_index", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_state_rule_stage_symbol =
+            symbol_table.DefineArraySymbol("_npda_state_rule_stage", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_state_description_symbol =
+            symbol_table.DefineArraySymbol("_npda_state_description", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_state_nonterminal_index_symbol =
+            symbol_table.DefineArraySymbol("_npda_state_nonterminal_index", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_state_nonterminal_name_symbol =
+            symbol_table.DefineArraySymbol("_npda_state_nonterminal_name", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_state_transition_offset_symbol =
+            symbol_table.DefineArraySymbol("_npda_state_transition_offset", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_state_transition_count_symbol =
+            symbol_table.DefineArraySymbol("_npda_state_transition_count", FiLoc::ms_invalid);
         Preprocessor::ScalarSymbol *npda_transition_count_symbol =
             symbol_table.DefineScalarSymbol("_npda_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_type_index_symbol =
@@ -679,42 +675,34 @@ void Representation::GenerateAutomatonSymbols (
                 ++total_transition_count;
             }
 
-            // figure out all the values for _npda_node_*
+            // figure out all the values for _npda_state_*
             Nonterminal const *nonterminal = node_data.GetAssociatedNonterminal();
             Rule const *rule = node_data.GetAssociatedRule();
-            npda_node_rule_index_symbol->AppendArrayElement(
+            npda_state_rule_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     rule != NULL ? Sint32(rule->GetAcceptStateIndex()) : GetRuleCount(),
                     FiLoc::ms_invalid));
-            npda_node_rule_stage_symbol->AppendArrayElement(
+            npda_state_rule_stage_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     rule != NULL ? Sint32(node_data.GetRuleStage()) : 0,
                     FiLoc::ms_invalid));
-            npda_node_description_symbol->AppendArrayElement(
+            npda_state_description_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     GetStringLiteral(node_data.GetDescription()),
                     FiLoc::ms_invalid));
-            npda_node_nonterminal_index_symbol->AppendArrayElement(
+            npda_state_nonterminal_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(nonterminal != NULL ? GetTokenIndex(nonterminal->GetText()) : 0),
                     FiLoc::ms_invalid));
-            npda_node_nonterminal_name_symbol->AppendArrayElement(
+            npda_state_nonterminal_name_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     nonterminal != NULL ? nonterminal->GetText() : "none_",
                     FiLoc::ms_invalid));
-            npda_node_is_return_state_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(node_data.IsReturnState() ? 1 : 0),
-                    FiLoc::ms_invalid));
-            npda_node_is_epsilon_closure_state_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(node_data.IsEpsilonClosureState() ? 1 : 0),
-                    FiLoc::ms_invalid));
-            npda_node_transition_offset_symbol->AppendArrayElement(
+            npda_state_transition_offset_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(node_transition_offset),
                     FiLoc::ms_invalid));
-            npda_node_transition_count_symbol->AppendArrayElement(
+            npda_state_transition_count_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(node_transition_count),
                     FiLoc::ms_invalid));

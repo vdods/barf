@@ -47,7 +47,6 @@ struct RuleNpdaNodeData : public NpdaNodeData
     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color(0xB6FFAE); }
 
     // NpdaNodeData interface methods
-    virtual bool IsEpsilonClosureState () const { return m_stage == 0; }
     virtual Nonterminal const *GetAssociatedNonterminal () const { return m_rule->m_owner_nonterminal; }
     virtual Rule const *GetAssociatedRule () const { return m_rule; }
     virtual Uint32 GetRuleStage () const { return m_stage; }
@@ -98,7 +97,6 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color(0xAEF5FF); }
 
     // NpdaNodeData interface methods
-    virtual bool IsEpsilonClosureState () const { return true; }
     virtual Nonterminal const *GetAssociatedNonterminal () const { return m_nonterminal; }
     virtual string GetDescription () const { return "head of: " + m_nonterminal->GetText(); }
 }; // end of class NonterminalHeadNpdaNodeData
@@ -129,7 +127,6 @@ struct GenericNpdaNodeData : public NpdaNodeData
     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return m_dot_graph_color; }
 
     // NpdaNodeData interface methods
-    virtual bool IsReturnState () const { return m_is_return_state; }
     virtual string GetDescription () const { return m_text; }
 }; // end of class GenericNpdaNodeData
 

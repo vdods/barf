@@ -1120,8 +1120,8 @@ public:
     {
         enum Name
         {
-<*{for_each(key, _npda_initial_node_index)
-            <{key} = <{_npda_initial_node_index[key]},
+<*{for_each(key, _npda_nonterminal_start_state_index)
+            <{key} = <{_npda_nonterminal_start_state_index[key]},
 <*{end_for_each
             // default parse nonterminal
             DEFAULT_ = <{_default_parse_nonterminal}

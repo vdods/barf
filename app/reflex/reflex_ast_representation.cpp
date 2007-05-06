@@ -250,20 +250,20 @@ void Representation::GenerateAutomatonSymbols (
         }
     }
 
-    // _nfa_node_count -- the number of nodes in the nondeterministic finite automaton (NFA)
+    // _nfa_state_count -- the number of nodes in the nondeterministic finite automaton (NFA)
     {
-        Preprocessor::ScalarSymbol *nfa_node_count_symbol =
-            symbol_table.DefineScalarSymbol("_nfa_node_count", FiLoc::ms_invalid);
-        nfa_node_count_symbol->SetScalarBody(
+        Preprocessor::ScalarSymbol *nfa_state_count_symbol =
+            symbol_table.DefineScalarSymbol("_nfa_state_count", FiLoc::ms_invalid);
+        nfa_state_count_symbol->SetScalarBody(
             new Preprocessor::Body(
                 Sint32(m_nfa_graph.GetNodeCount()),
                 FiLoc::ms_invalid));
     }
 
-    // _nfa_node_transition_offset[_nfa_node_count] -- gives the first index of the
+    // _nfa_state_transition_offset[_nfa_state_count] -- gives the first index of the
     // contiguous set of transitions for this node.
     //
-    // _nfa_node_transition_count[_nfa_node_count] -- gives the number of transitions for
+    // _nfa_state_transition_count[_nfa_state_count] -- gives the number of transitions for
     // this node (the number of contiguous transitions which apply to this node).
     //
     // _nfa_transition_count -- gives the number of transitions in this NFA
@@ -287,10 +287,10 @@ void Representation::GenerateAutomatonSymbols (
     // _nfa_transition_target_node_index[_nfa_transition_count] gives the index of
     // the node which to transition to if this transition is exercised.
     {
-        Preprocessor::ArraySymbol *nfa_node_transition_offset_symbol =
-            symbol_table.DefineArraySymbol("_nfa_node_transition_offset", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *nfa_node_transition_count_symbol =
-            symbol_table.DefineArraySymbol("_nfa_node_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *nfa_state_transition_offset_symbol =
+            symbol_table.DefineArraySymbol("_nfa_state_transition_offset", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *nfa_state_transition_count_symbol =
+            symbol_table.DefineArraySymbol("_nfa_state_transition_count", FiLoc::ms_invalid);
         Preprocessor::ScalarSymbol *nfa_transition_count_symbol =
             symbol_table.DefineScalarSymbol("_nfa_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nfa_transition_type_integer_symbol =
@@ -346,11 +346,11 @@ void Representation::GenerateAutomatonSymbols (
                 ++total_transition_count;
             }
 
-            nfa_node_transition_offset_symbol->AppendArrayElement(
+            nfa_state_transition_offset_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(node_transition_offset),
                     FiLoc::ms_invalid));
-            nfa_node_transition_count_symbol->AppendArrayElement(
+            nfa_state_transition_count_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     Sint32(node_transition_count),
                     FiLoc::ms_invalid));
@@ -385,23 +385,23 @@ void Representation::GenerateAutomatonSymbols (
         }
     }
 
-    // _dfa_node_count -- the number of nodes in the deterministic finite automaton (DFA)
+    // _dfa_state_count -- the number of nodes in the deterministic finite automaton (DFA)
     {
-        Preprocessor::ScalarSymbol *dfa_node_count_symbol =
-            symbol_table.DefineScalarSymbol("_dfa_node_count", FiLoc::ms_invalid);
-        dfa_node_count_symbol->SetScalarBody(
+        Preprocessor::ScalarSymbol *dfa_state_count_symbol =
+            symbol_table.DefineScalarSymbol("_dfa_state_count", FiLoc::ms_invalid);
+        dfa_state_count_symbol->SetScalarBody(
             new Preprocessor::Body(
                 Sint32(m_dfa_graph.GetNodeCount()),
                 FiLoc::ms_invalid));
     }
 
-    // _dfa_node_accept_handler_index[_dfa_node_count] -- gives the accept-handler-index
-    // for this node, or _dfa_node_count if this is not an accept state
+    // _dfa_state_accept_handler_index[_dfa_state_count] -- gives the accept-handler-index
+    // for this node, or _dfa_state_count if this is not an accept state
     //
-    // _dfa_node_transition_offset[_dfa_node_count] -- gives the first index of the
+    // _dfa_state_transition_offset[_dfa_state_count] -- gives the first index of the
     // contiguous set of transitions for this node.
     //
-    // _dfa_node_transition_count[_dfa_node_count] -- gives the number of transitions for
+    // _dfa_state_transition_count[_dfa_state_count] -- gives the number of transitions for
     // this node (the number of contiguous transitions which apply to this node).
     //
     // _dfa_transition_count -- gives the number of transitions in this DFA
@@ -425,12 +425,12 @@ void Representation::GenerateAutomatonSymbols (
     // _dfa_transition_target_node_index[_dfa_transition_count] gives the index of
     // the node which to transition to if this transition is exercised.
     {
-        Preprocessor::ArraySymbol *dfa_node_accept_handler_index_symbol =
-            symbol_table.DefineArraySymbol("_dfa_node_accept_handler_index", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *dfa_node_transition_offset_symbol =
-            symbol_table.DefineArraySymbol("_dfa_node_transition_offset", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *dfa_node_transition_count_symbol =
-            symbol_table.DefineArraySymbol("_dfa_node_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_accept_handler_index_symbol =
+            symbol_table.DefineArraySymbol("_dfa_state_accept_handler_index", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_transition_offset_symbol =
+            symbol_table.DefineArraySymbol("_dfa_state_transition_offset", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_transition_count_symbol =
+            symbol_table.DefineArraySymbol("_dfa_state_transition_count", FiLoc::ms_invalid);
         Preprocessor::ScalarSymbol *dfa_transition_count_symbol =
             symbol_table.DefineScalarSymbol("_dfa_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_transition_type_integer_symbol =
@@ -489,15 +489,15 @@ void Representation::GenerateAutomatonSymbols (
                 ++total_transition_count;
             }
 
-            dfa_node_accept_handler_index_symbol->AppendArrayElement(
+            dfa_state_accept_handler_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     node_accept_handler_index,
                     FiLoc::ms_invalid));
-            dfa_node_transition_offset_symbol->AppendArrayElement(
+            dfa_state_transition_offset_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     node_transition_offset,
                     FiLoc::ms_invalid));
-            dfa_node_transition_count_symbol->AppendArrayElement(
+            dfa_state_transition_count_symbol->AppendArrayElement(
                 new Preprocessor::Body(
                     node_transition_count,
                     FiLoc::ms_invalid));

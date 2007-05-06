@@ -107,7 +107,6 @@ CommandLineOption const Options::ms_option[] =
         "    Do not output a human-readable state machine description text file.\n"
         "    This is the default behavior.  See also option -S."),
     */
-    /*
     CommandLineOption(
         'L',
         "with-line-directives",
@@ -121,8 +120,8 @@ CommandLineOption const Options::ms_option[] =
         &Options::WithoutLineDirectives,
         "    Do not use #line directives in the generated source.  This might be helpful\n"
         "    when the original parser source will not be available during compilation or\n"
-        "    debugging.  See also option -L."),
-    */
+        "    debugging, or if the target language doesn't support #line directives to\n"
+        "    begin with.  See also option -L."),
     CommandLineOption(
         'N',
         "generate-npda-dot-graph",

@@ -620,15 +620,15 @@ TrisonCpp_::Size_ const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms
 
 TrisonCpp_::Npda_::State_ const <{class_name}::ms_state_table_[] =
 {
-<*{loop(i, sizeof(_npda_node_rule_index))
+<*{loop(i, sizeof(_npda_state_rule_index))
     { <*{
-<{if(_npda_node_rule_index[i] < _rule_count)}ms_rule_table_+<{_npda_node_rule_index[i]}<{else}NULL<{end_if}<*{", "
-<{_npda_node_rule_stage[i]}<*{", "
-<{class_name}::Nonterminal::<{_npda_node_nonterminal_name[i]}<*{", "
-<{_npda_node_transition_count[i]}<*{", "
-ms_transition_table_+<{_npda_node_transition_offset[i]}<*{", "
-<*{_npda_node_description[i]
- }<{if(i+1 < sizeof(_npda_node_rule_index))},<{end_if}
+<{if(_npda_state_rule_index[i] < _rule_count)}ms_rule_table_+<{_npda_state_rule_index[i]}<{else}NULL<{end_if}<*{", "
+<{_npda_state_rule_stage[i]}<*{", "
+<{class_name}::Nonterminal::<{_npda_state_nonterminal_name[i]}<*{", "
+<{_npda_state_transition_count[i]}<*{", "
+ms_transition_table_+<{_npda_state_transition_offset[i]}<*{", "
+<*{_npda_state_description[i]
+ }<{if(i+1 < sizeof(_npda_state_rule_index))},<{end_if}
 <*{end_loop
 };
 TrisonCpp_::Size_ const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(TrisonCpp_::Npda_::State_);
@@ -660,7 +660,7 @@ enum
     TABLE_SIZE_ASSERTIONS_ =
         TrisonCpp_::Assert_<<{class_name}::ms_precedence_count_ == <{_npda_precedence_count}>::v_ &&
         TrisonCpp_::Assert_<<{class_name}::ms_rule_count_ == <{_rule_count}>::v_ &&
-        TrisonCpp_::Assert_<<{class_name}::ms_state_count_ == <{_npda_node_count}>::v_ &&
+        TrisonCpp_::Assert_<<{class_name}::ms_state_count_ == <{_npda_state_count}>::v_ &&
         TrisonCpp_::Assert_<<{class_name}::ms_transition_count_ == <{_npda_transition_count}>::v_
 };
 <*{if(is_defined(bottom_of_implementation_file))

@@ -220,8 +220,8 @@ void <{class_name}::DebugPrintString_ (std::string const &s)
 // the lower the state's index in this array, the higher its priority.
 ReflexCpp_::Automaton_::DfaState_ const <{class_name}::ms_state_table_[] =
 {
-<*{loop(i, _dfa_node_count)
-    { <{_dfa_node_accept_handler_index[i]}, <{_dfa_node_transition_count[i]}, ms_transition_table_+<{_dfa_node_transition_offset[i]} }<{if(i < _dfa_node_count-1)},<{end_if}
+<*{loop(i, _dfa_state_count)
+    { <{_dfa_state_accept_handler_index[i]}, <{_dfa_state_transition_count[i]}, ms_transition_table_+<{_dfa_state_transition_offset[i]} }<{if(i < _dfa_state_count-1)},<{end_if}
 <*{end_loop
 };
 ReflexCpp_::Size_ const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::Automaton_::DfaState_);
