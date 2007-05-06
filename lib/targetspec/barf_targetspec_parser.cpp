@@ -1206,7 +1206,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_START_IN_SCANNER_MODE:
         case CommonLang::Scanner::Token::DIRECTIVE_STATE:
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:
-        case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
+        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
         case CommonLang::Scanner::Token::END_PREAMBLE:
         case CommonLang::Scanner::Token::REGEX:

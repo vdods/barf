@@ -40,7 +40,7 @@ namespace Trison {
 struct NonterminalList;
 struct PrecedenceList;
 struct PrecedenceMap;
-struct TokenMap;
+struct TerminalMap;
 %}
 
 %parser_class_methods_and_members{
@@ -57,7 +57,7 @@ private:
 
     CommonLang::Scanner m_scanner;
     CommonLang::TargetMap *m_target_map;
-    TokenMap *m_token_map;
+    TerminalMap *m_terminal_map;
     PrecedenceList *m_precedence_list;
     PrecedenceMap *m_precedence_map;
     NonterminalList *m_nonterminal_list;
@@ -89,7 +89,7 @@ namespace Trison {
 
 %parser_start_of_parse_method_actions{
     m_target_map = NULL;
-    m_token_map = NULL;
+    m_terminal_map = NULL;
     m_precedence_list = NULL;
     m_precedence_map = NULL;
     m_nonterminal_list = NULL;
@@ -120,7 +120,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:    return Parser::Token::DIRECTIVE_RIGHT;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET:   return Parser::Token::DIRECTIVE_TARGET;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:  return Parser::Token::DIRECTIVE_TARGETS;
-        case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:    return Parser::Token::DIRECTIVE_TOKEN;
+        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL: return Parser::Token::DIRECTIVE_TERMINAL;
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:     return Parser::Token::DIRECTIVE_TYPE;
         case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:    return Parser::Token::DUMB_CODE_BLOCK;
         case CommonLang::Scanner::Token::END_OF_FILE:        return Parser::Token::END_;
@@ -170,7 +170,7 @@ Parser::Token::Type Parser::Scan ()
 %token DIRECTIVE_RIGHT %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGETS %type "Ast::ThrowAway *"
-%token DIRECTIVE_TOKEN %type "Ast::ThrowAway *"
+%token DIRECTIVE_TERMINAL %type "Ast::ThrowAway *"
 %token DIRECTIVE_TYPE %type "Ast::ThrowAway *"
 %token DUMB_CODE_BLOCK %type "Ast::DumbCodeBlock *"
 %token END_PREAMBLE %type "Ast::ThrowAway *"
@@ -193,7 +193,7 @@ root %type "Representation *"
     at_least_zero_newlines
     targets_directive:target_map
     target_directives
-    token_directives:token_map
+    terminal_directives:terminal_map
     precedence_directives:precedence_map
     start_directive:default_parse_nonterminal_id
     END_PREAMBLE:throwaway
@@ -201,8 +201,8 @@ root %type "Representation *"
     {
         assert(m_target_map != NULL);
         assert(target_map == m_target_map);
-        assert(m_token_map != NULL);
-        assert(token_map == m_token_map);
+        assert(m_terminal_map != NULL);
+        assert(terminal_map == m_terminal_map);
         assert(m_precedence_list != NULL);
         assert(precedence_map != NULL);
         assert(m_precedence_map == precedence_map);
@@ -222,7 +222,7 @@ root %type "Representation *"
         Representation *representation =
             new Representation(
                 target_map,
-                token_map,
+                terminal_map,
                 precedence_map,
                 m_precedence_list,
                 default_parse_nonterminal_id->GetText(),
@@ -347,66 +347,68 @@ target_directive_param %type "Ast::TextBase *"
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
-// token directive rules
+// terminal directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-token_directives %type "TokenMap *"
+terminal_directives %type "TerminalMap *"
 :
-    token_directives:token_map token_directive
+    terminal_directives:terminal_map terminal_directive
     {
-        assert(token_map == m_token_map);
-        return token_map;
+        assert(terminal_map == m_terminal_map);
+        return terminal_map;
     }
 |
     // empty reduction rule
     {
-        m_token_map = new TokenMap();
-        return m_token_map;
+        m_terminal_map = new TerminalMap();
+        return m_terminal_map;
     }
 ;
 
-token_directive
+terminal_directive
 :
-    DIRECTIVE_TOKEN:throwaway tokens:token_list token_type_spec:assigned_type at_least_one_newline
+    DIRECTIVE_TERMINAL:throwaway terminals:terminal_list terminal_type_spec:assigned_type at_least_one_newline
     {
-        assert(m_token_map != NULL);
-        assert(token_list != NULL);
-        for (TokenList::iterator it = token_list->begin(),
-                                 it_end = token_list->end();
+        assert(m_terminal_map != NULL);
+        assert(terminal_list != NULL);
+        for (TerminalList::iterator it = terminal_list->begin(),
+                                    it_end = terminal_list->end();
              it != it_end;
              ++it)
         {
-            Trison::Token *token = *it;
-            assert(token != NULL);
+            Trison::Terminal *terminal = *it;
+            assert(terminal != NULL);
             if (assigned_type != NULL)
-                token->SetAssignedType(assigned_type->GetText());
-            m_token_map->Add(token->GetSourceText(), token);
+                terminal->SetAssignedType(assigned_type->GetText());
+            m_terminal_map->Add(terminal->GetText(), terminal);
         }
+        terminal_list->clear();
         delete throwaway;
+        delete terminal_list;
         delete assigned_type;
         return NULL;
     }
 ;
 
-tokens %type "TokenList *"
+terminals %type "TerminalList *"
 :
-    tokens:token_list token:token
+    terminals:terminal_list terminal:terminal
     {
-        if (token != NULL)
-            token_list->Append(token);
-        return token_list;
+        if (terminal != NULL)
+            terminal_list->Append(terminal);
+        return terminal_list;
     }
 |
-    token:token
+    terminal:terminal
     {
-        TokenList *token_list = new TokenList();
-        if (token != NULL)
-            token_list->Append(token);
-        return token_list;
+        TerminalList *terminal_list = new TerminalList();
+        if (terminal != NULL)
+            terminal_list->Append(terminal);
+        return terminal_list;
     }
 ;
 
-token_type_spec %type "Ast::String *"
+terminal_type_spec %type "Ast::String *"
 :
     DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
     {
@@ -542,11 +544,11 @@ nonterminals %type "NonterminalMap *"
 :
     nonterminals:nonterminal_map nonterminal:nonterminal
     {
-        assert(m_token_map != NULL);
+        assert(m_terminal_map != NULL);
         assert(m_nonterminal_list != NULL);
         if (nonterminal != NULL)
         {
-            nonterminal_map->Add(nonterminal->m_id, nonterminal);
+            nonterminal_map->Add(nonterminal->GetText(), nonterminal);
             m_nonterminal_list->Append(nonterminal);
         }
         return nonterminal_map;
@@ -579,9 +581,9 @@ nonterminal_specification %type "Nonterminal *"
 :
     ID:id DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
     {
-        assert(m_token_map != NULL);
-        if (m_token_map->GetElement(id->GetText()) != NULL)
-            EmitError(id->GetFiLoc(), "id collision with %token " + id->GetText());
+        assert(m_terminal_map != NULL);
+        if (m_terminal_map->GetElement(id->GetText()) != NULL)
+            EmitError(id->GetFiLoc(), "id collision with %terminal " + id->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
@@ -595,9 +597,9 @@ nonterminal_specification %type "Nonterminal *"
 |
     ID:id
     {
-        assert(m_token_map != NULL);
-        if (m_token_map->GetElement(id->GetText()) != NULL)
-            EmitError(id->GetFiLoc(), "id collision with %token " + id->GetText());
+        assert(m_terminal_map != NULL);
+        if (m_terminal_map->GetElement(id->GetText()) != NULL)
+            EmitError(id->GetFiLoc(), "id collision with %terminal " + id->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
@@ -741,24 +743,24 @@ rule_token_list %type "RuleTokenList *"
 
 rule_token %type "RuleToken *"
 :
-    token:token ':' ID:assigned_id
+    token_id:token_id ':' ID:assigned_id
     {
         RuleToken *rule_token =
-            token != NULL ?
-            new RuleToken(token->GetSourceText(), token->GetFiLoc(), assigned_id->GetText()) :
+            token_id != NULL ?
+            new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id->GetText()) :
             NULL;
-        delete token;
+        delete token_id;
         delete assigned_id;
         return rule_token;
     }
 |
-    token:token
+    token_id:token_id
     {
         RuleToken *rule_token =
-            token != NULL ?
-            new RuleToken(token->GetSourceText(), token->GetFiLoc()) :
+            token_id != NULL ?
+            new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
             NULL;
-        delete token;
+        delete token_id;
         return rule_token;
     }
 ;
@@ -795,11 +797,28 @@ at_least_one_newline
     NEWLINE
 ;
 
-token %type "Trison::Token *"
+token_id %type "TokenId *"
 :
-    ID:id        { return new Trison::Token(id); }
+    ID:id
+    {
+        TokenId *token_id = new TokenId(id->GetText(), id->GetFiLoc());
+        delete id;
+        return token_id;
+    }
 |
-    CHAR_LITERAL:ch { return new Trison::Token(ch); }
+    CHAR_LITERAL:ch
+    {
+        TokenId *token_id = new TokenId(GetCharLiteral(ch->GetChar()), ch->GetFiLoc());
+        delete ch;
+        return token_id;
+    }
+;
+
+terminal %type "Terminal *"
+:
+    ID:id           { return new Terminal(id); }
+|
+    CHAR_LITERAL:ch { return new Terminal(ch); }
 ;
 
 any_type_of_code_block %type "Ast::CodeBlock *"

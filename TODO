@@ -47,6 +47,7 @@
   functions in a particular case).  this will make the separation of systems
   clearer.
 - add some path-checking function -- i.e. to check for newlines and other stuff
+- hide the AST structs' members via accessors
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -80,7 +81,7 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - allow using the value of previously declared directive ids as default values
-- confirm that the declared name matches the filename -- or, should the 
+- confirm that the declared name matches the filename -- or, should the
   targetspec's %target directive be removed (it is redundant) -- probably remove
 - add new "add_optional_codespec" directive which requires the directive
   id of an add_optional_directive, for optional output files (like
@@ -165,7 +166,7 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
-- add "push accepted string back into buffer" API (call it Unaccept) to the 
+- add "push accepted string back into buffer" API (call it Unaccept) to the
   generated scanner -- it should not be able to push any string, because the
   previous character is required.
 - add targetspec directives for disabling stuff besides debug_spew -- like
@@ -174,7 +175,7 @@
 - add option for line directives referencing codespecs (the default should be
   to refer to codespecs, for easier development)
 - add thing that checks for EOF-handling in each scanner mode?
-- add a no-STL-usage C++ target (?) -- should be configurable by a targetspec 
+- add a no-STL-usage C++ target (?) -- should be configurable by a targetspec
   directive -- currently it only uses std::string and std::deque.  std::string
   will be trivial to replace with null-terminated strings.  replacing std::deque
   will require writing a deque implementation (which is fine, because then it
@@ -201,7 +202,7 @@
 - NPDA: each action node in the tree gets a set of precedences.  when a node's
   child set changes, the precedence set is updated, and then conflict resolution
   can happen
-- you shouldn't have to specify %token 'X' for ascii chars.  you should
+- you shouldn't have to specify %terminal 'X' for ascii chars.  you should
   just be able to use them (or maybe add as option)
 - specifying any %target.xxx directive seems to add the target; stop this
 - rename _accept_handler_code to _rule_code (or something), and generally
@@ -210,7 +211,6 @@
 - get rid of STL usage in C++ codespecs (separate target)
 - the rule handler code block type should be specifiable by the targetspec
 - add option which prints the targets available in the current search path
-- rename %token to %terminal (and friends)
 - require %nonterminal keyword before nonterminal definition
 - add %end keyword which matches the builtin terminal END_
 - old trison: END_ shouldn't be acceptable by %error

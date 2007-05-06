@@ -194,7 +194,7 @@ Options::Options (string const &executable_filename)
         executable_filename,
         "Trison - A context-free-grammar-parser generator.\n"
         "Part of the BARF compiler tool suite - written by Victor Dods.",
-        "[options] <input_filename> --output-basename=<basename>")
+        "[options] <input_filename>")
 { }
 
 void Options::GenerateStateMachineFile (string const &state_machine_filename)
@@ -214,7 +214,7 @@ void Options::Parse (int const argc, char const *const *const argv)
     // only check for commandline option consistency if no output-and-quit
     // option was specified (e.g. help or print-targets-search-path)
     if (!m_abort &&
-        !GetIsHelpRequested() && 
+        !GetIsHelpRequested() &&
         GetPrintTargetsSearchPathRequest() == PTSPR_NONE)
     {
         if (GetInputFilename().empty())

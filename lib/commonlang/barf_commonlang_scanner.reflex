@@ -64,7 +64,7 @@ namespace CommonLang {
             DIRECTIVE_STRING,
             DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
-            DIRECTIVE_TOKEN,
+            DIRECTIVE_TERMINAL,
             DIRECTIVE_TYPE,
             DUMB_CODE_BLOCK,
             END_OF_FILE,
@@ -153,7 +153,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DIRECTIVE_STRING",
         "DIRECTIVE_TARGET",
         "DIRECTIVE_TARGETS",
-        "DIRECTIVE_TOKEN",
+        "DIRECTIVE_TERMINAL",
         "DIRECTIVE_TYPE",
         "DUMB_CODE_BLOCK",
         "END_OF_FILE",
@@ -220,7 +220,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%string") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRING; }
     if (accepted_string == "%target") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET; }
     if (accepted_string == "%targets") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGETS; }
-    if (accepted_string == "%token") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TOKEN; }
+    if (accepted_string == "%terminal") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TERMINAL; }
     if (accepted_string == "%type") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TYPE; }
 
     EmitError(GetFiLoc(), "invalid directive \"" + accepted_string + "\"");

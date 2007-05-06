@@ -252,10 +252,10 @@ private:
 }; // end of class ReflexCpp_::InputBuffer_
 
 // /////////////////////////////////////////////////////////////////////////////
-// this baseclass contains all the state machinery for "cpp" reflex target
+// this baseclass contains all the state machinery for "cpp" reflex target.
 // /////////////////////////////////////////////////////////////////////////////
 
-class Scanner_ : protected InputBuffer_
+class Automaton_ : protected InputBuffer_
 {
 public:
 
@@ -265,13 +265,13 @@ public:
         Uint32_ m_accept_handler_index_;
         Size_ m_transition_count_;
         DfaTransition_ const *m_transition_;
-    }; // end of struct ReflexCpp_::Scanner_::DfaState_
+    }; // end of struct ReflexCpp_::Automaton_::DfaState_
     struct DfaTransition_
     {
         enum Type_
         {
             TT_INPUT_ATOM_ = 0, TT_INPUT_ATOM_RANGE_, TT_CONDITIONAL_, TT_EPSILON_
-        }; // end of enum ReflexCpp_::Scanner_::DfaTransition_::Type_
+        }; // end of enum ReflexCpp_::Automaton_::DfaTransition_::Type_
 
         Uint8_ m_transition_type_;
         Uint8_ m_data_0_;
@@ -298,9 +298,9 @@ public:
             // (m_data_0_) and flags (m_data_1_).
             return ((conditional_flags ^ m_data_1_) & m_data_0_) == 0;
         }
-    }; // end of struct ReflexCpp_::Scanner_::DfaTransition_
+    }; // end of struct ReflexCpp_::Automaton_::DfaTransition_
 
-    Scanner_ (
+    Automaton_ (
         DfaState_ const *state_table,
         Size_ state_count,
         DfaTransition_ const *transition_table,
@@ -481,7 +481,7 @@ private:
     DfaState_ const *m_initial_state_;
     DfaState_ const *m_current_state_;
     DfaState_ const *m_accept_state_;
-}; // end of class ReflexCpp_::Scanner_
+}; // end of class ReflexCpp_::Automaton_
 
 } // end of namespace ReflexCpp_
 #endif // !defined(ReflexCpp_namespace_)
@@ -509,7 +509,7 @@ namespace CommonLang {
 
 #line 511 "barf_commonlang_scanner.hpp"
 
-class Scanner : private ReflexCpp_::Scanner_, 
+class Scanner : private ReflexCpp_::Automaton_, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
 #line 516 "barf_commonlang_scanner.hpp"
@@ -517,7 +517,7 @@ class Scanner : private ReflexCpp_::Scanner_,
 {
 public:
 
-    using Scanner_::IsAtEndOfInput;
+    using Automaton_::IsAtEndOfInput;
 
     struct Mode
     {
@@ -568,7 +568,7 @@ public:
             DIRECTIVE_STRING,
             DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
-            DIRECTIVE_TOKEN,
+            DIRECTIVE_TERMINAL,
             DIRECTIVE_TYPE,
             DUMB_CODE_BLOCK,
             END_OF_FILE,
@@ -613,9 +613,9 @@ private:
 
     bool m_debug_spew_;
 
-    static Scanner_::DfaState_ const ms_state_table_[];
+    static Automaton_::DfaState_ const ms_state_table_[];
     static ReflexCpp_::Size_ const ms_state_count_;
-    static Scanner_::DfaTransition_ const ms_transition_table_[];
+    static Automaton_::DfaTransition_ const ms_transition_table_[];
     static ReflexCpp_::Size_ const ms_transition_count_;
     static ReflexCpp_::Uint32_ const ms_accept_handler_count_;
 

@@ -35,9 +35,10 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_RULE_LIST",
         "AT_RULE_TOKEN",
         "AT_RULE_TOKEN_LIST",
-        "AT_TOKEN",
-        "AT_TOKEN_LIST",
-        "AT_TOKEN_MAP"
+        "AT_TERMINAL",
+        "AT_TERMINAL_LIST",
+        "AT_TERMINAL_MAP",
+        "AT_TOKEN_ID"
     };
 
     assert(ast_type < AT_COUNT);
@@ -47,19 +48,17 @@ string const &GetAstTypeString (AstType ast_type)
         return s_ast_type_string[ast_type-CommonLang::AT_START_CUSTOM_TYPES_HERE_];
 }
 
-void Token::SetAssignedType (string const &assigned_type)
+void Terminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    assert(!m_assigned_type.empty());
+    TokenId::Print(stream, Stringify, indent_level);
+    stream << Tabs(indent_level+1) << "assigned type: " << m_assigned_type << endl;
+}
+
+void Terminal::SetAssignedType (string const &assigned_type)
 {
     assert(m_assigned_type.empty() && "already has an assigned type");
     m_assigned_type = assigned_type;
-}
-
-void Token::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
-{
-    Ast::Base::Print(stream, Stringify, indent_level);
-    if (m_id != NULL)
-        m_id->Print(stream, Stringify, indent_level+1);
-    else
-        m_char->Print(stream, Stringify, indent_level+1);
 }
 
 void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -75,7 +74,7 @@ string Rule::GetAsText (Uint32 stage) const
     assert(m_owner_nonterminal != NULL);
 
     ostringstream out;
-    out << m_owner_nonterminal->m_id << " <-";
+    out << m_owner_nonterminal->GetText() << " <-";
     for (Uint32 s = 0; s < min(stage, m_rule_token_list->size()); ++s)
         out << ' ' << m_rule_token_list->GetElement(s)->m_token_id;
     if (stage <= m_rule_token_list->size())
@@ -167,7 +166,7 @@ void Nonterminal::PopulateAcceptHandlerCodeArraySymbol (
 void Nonterminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
-    stream << Tabs(indent_level+1) << "id: " << m_id << endl;
+    stream << Tabs(indent_level+1) << "id: " << GetText() << endl;
     if (!m_assigned_type.empty())
         stream << Tabs(indent_level+1) << "assigned type: " << GetStringLiteral(m_assigned_type) << endl;
     m_rule_list->Print(stream, Stringify, indent_level);
@@ -195,19 +194,22 @@ void Precedence::Print (ostream &stream, StringifyAstType Stringify, Uint32 inde
 
 Uint32 Representation::GetTokenIndex (string const &token_id) const
 {
+    assert(!token_id.empty());
+
     Uint32 index = 0x100;
     if (token_id == "END_")
         return index;
+
     ++index;
-    for (TokenMap::const_iterator it = m_token_map->begin(), it_end = m_token_map->end();
+    for (TerminalMap::const_iterator it = m_terminal_map->begin(), it_end = m_terminal_map->end();
          it != it_end;
          ++it)
     {
-        Token const *token = it->second;
-        assert(token != NULL);
-        if (token_id == token->GetSourceText())
+        Terminal const *terminal = it->second;
+        assert(terminal != NULL);
+        if (token_id == terminal->GetText())
             return index;
-        if (token->GetIsId())
+        if (terminal->m_is_id)
             ++index;
     }
     for (NonterminalMap::const_iterator it = m_nonterminal_map->begin(), it_end = m_nonterminal_map->end();
@@ -216,7 +218,7 @@ Uint32 Representation::GetTokenIndex (string const &token_id) const
     {
         Nonterminal const *nonterminal = it->second;
         assert(nonterminal != NULL);
-        if (token_id == nonterminal->m_id)
+        if (token_id == nonterminal->GetText())
             return index;
         ++index;
     }
@@ -333,13 +335,13 @@ void Representation::GenerateAutomatonSymbols (
                 "END_",
                 FiLoc::ms_invalid));
 
-        for (TokenMap::const_iterator it = m_token_map->begin(), it_end = m_token_map->end();
+        for (TerminalMap::const_iterator it = m_terminal_map->begin(), it_end = m_terminal_map->end();
              it != it_end;
              ++it)
         {
-            Token const *token = it->second;
-            assert(token != NULL);
-            if (token->GetIsId())
+            Terminal const *terminal = it->second;
+            assert(terminal != NULL);
+            if (terminal->m_is_id)
             {
                 terminal_index_list_symbol->AppendArrayElement(
                     new Preprocessor::Body(
@@ -347,7 +349,7 @@ void Representation::GenerateAutomatonSymbols (
                         FiLoc::ms_invalid));
                 terminal_name_list_symbol->AppendArrayElement(
                     new Preprocessor::Body(
-                        token->GetSourceText(),
+                        terminal->GetText(),
                         FiLoc::ms_invalid));
             }
         }
@@ -369,7 +371,7 @@ void Representation::GenerateAutomatonSymbols (
                     FiLoc::ms_invalid));
             nonterminal_name_list_symbol->AppendArrayElement(
                 new Preprocessor::Body(
-                    nonterminal->m_id,
+                    nonterminal->GetText(),
                     FiLoc::ms_invalid));
         }
     }
@@ -518,11 +520,11 @@ void Representation::GenerateAutomatonSymbols (
 
             npda_rule_reduction_nonterminal_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
-                    Sint32(GetTokenIndex(rule.m_owner_nonterminal->m_id)),
+                    Sint32(GetTokenIndex(rule.m_owner_nonterminal->GetText())),
                     FiLoc::ms_invalid));
             npda_rule_reduction_nonterminal_name_symbol->AppendArrayElement(
                 new Preprocessor::Body(
-                    rule.m_owner_nonterminal->m_id,
+                    rule.m_owner_nonterminal->GetText(),
                     FiLoc::ms_invalid));
 
             Precedence const *rule_precedence = m_precedence_map->GetElement(rule.m_rule_precedence_id);
@@ -694,11 +696,11 @@ void Representation::GenerateAutomatonSymbols (
                     FiLoc::ms_invalid));
             npda_node_nonterminal_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
-                    Sint32(nonterminal != NULL ? GetTokenIndex(nonterminal->m_id) : 0),
+                    Sint32(nonterminal != NULL ? GetTokenIndex(nonterminal->GetText()) : 0),
                     FiLoc::ms_invalid));
             npda_node_nonterminal_name_symbol->AppendArrayElement(
                 new Preprocessor::Body(
-                    nonterminal != NULL ? nonterminal->m_id : "none_",
+                    nonterminal != NULL ? nonterminal->GetText() : "none_",
                     FiLoc::ms_invalid));
             npda_node_is_return_state_symbol->AppendArrayElement(
                 new Preprocessor::Body(
@@ -767,7 +769,7 @@ void Representation::Print (ostream &stream, StringifyAstType Stringify, Uint32 
 {
     Ast::Base::Print(stream, Stringify, indent_level);
     m_target_map->Print(stream, Stringify, indent_level+1);
-    m_token_map->Print(stream, Stringify, indent_level+1);
+    m_terminal_map->Print(stream, Stringify, indent_level+1);
     m_precedence_map->Print(stream, Stringify, indent_level+1);
     stream << Tabs(indent_level+1) << "default parse nonterminal: " << m_default_parse_nonterminal_id << endl;
     m_nonterminal_list->Print(stream, Stringify, indent_level+1);

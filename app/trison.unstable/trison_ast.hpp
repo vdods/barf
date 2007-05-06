@@ -38,46 +38,48 @@ enum
     AT_RULE_LIST,
     AT_RULE_TOKEN,
     AT_RULE_TOKEN_LIST,
-    AT_TOKEN,
-    AT_TOKEN_LIST,
-    AT_TOKEN_MAP,
+    AT_TERMINAL,
+    AT_TERMINAL_LIST,
+    AT_TERMINAL_MAP,
+    AT_TOKEN_ID,
 
     AT_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
 
-struct Token : public Ast::Base
+struct TokenId : public Ast::TextBase
 {
-    Ast::Id const *const m_id;
-    Ast::Char const *const m_char;
-
-    Token (Ast::Id const *id)
+    TokenId (string const &text, FiLoc const &filoc, AstType ast_type = AT_TOKEN_ID)
         :
-        Ast::Base(id->GetFiLoc(), AT_TOKEN),
-        m_id(id),
-        m_char(NULL)
+        TextBase(text, filoc, ast_type)
     {
-        assert(m_id != NULL);
+        assert(!text.empty());
     }
-    Token (Ast::Char const *ch)
+}; // end of struct TokenId
+
+struct Terminal : public TokenId
+{
+    bool const m_is_id;
+    Uint8 const m_char;
+
+    Terminal (Ast::Id const *id)
         :
-        Ast::Base(ch->GetFiLoc(), AT_TOKEN),
-        m_id(NULL),
-        m_char(ch)
+        TokenId(id->GetText(), id->GetFiLoc(), AT_TERMINAL),
+        m_is_id(true),
+        m_char('\0')
     {
-        assert(m_char != NULL);
+        delete id;
     }
-    ~Token ()
+    Terminal (Ast::Char const *ch)
+        :
+        TokenId(GetCharLiteral(ch->GetChar()), ch->GetFiLoc(), AT_TERMINAL),
+        m_is_id(false),
+        m_char(ch->GetChar())
     {
-        delete m_id;
-        delete m_char;
+        delete ch;
     }
 
-    bool GetIsId () const { return m_id != NULL; }
-    string GetSourceText () const { return m_id != NULL ? m_id->GetText() : GetCharLiteral(m_char->GetChar()); }
-    string const &GetIdString () const { assert(m_id != NULL); return m_id->GetText(); }
-    Uint8 GetCharChar () const { assert(m_char != NULL); return m_char->GetChar(); }
     string const &GetAssignedType () const { return m_assigned_type; }
 
     void SetAssignedType (string const &assigned_type);
@@ -87,17 +89,17 @@ struct Token : public Ast::Base
 private:
 
     string m_assigned_type;
-}; // end of struct Token
+}; // end of struct Terminal
 
-struct TokenList : public Ast::AstList<Token>
+struct TerminalList : public Ast::AstList<Terminal>
 {
-    TokenList () : Ast::AstList<Token>(AT_TOKEN_LIST) { }
-}; // end of struct TokenList
+    TerminalList () : Ast::AstList<Terminal>(AT_TERMINAL_LIST) { }
+}; // end of struct TerminalList
 
-struct TokenMap : public Ast::AstMap<Token>
+struct TerminalMap : public Ast::AstMap<Terminal>
 {
-    TokenMap () : Ast::AstMap<Token>(AT_TOKEN_MAP) { }
-}; // end of struct TokenMap
+    TerminalMap () : Ast::AstMap<Terminal>(AT_TERMINAL_MAP) { }
+}; // end of struct TerminalMap
 
 struct RuleToken : public Ast::Base
 {
@@ -162,9 +164,8 @@ struct RuleList : public Ast::AstList<Rule>
     RuleList () : Ast::AstList<Rule>(AT_RULE_LIST) { }
 }; // end of struct RuleList
 
-struct Nonterminal : public Ast::Base
+struct Nonterminal : public TokenId
 {
-    string const m_id;
     string const m_assigned_type;
     RuleList const *m_rule_list;
 
@@ -173,15 +174,14 @@ struct Nonterminal : public Ast::Base
         FiLoc const &filoc,
         string const &assigned_type = gs_empty_string)
         :
-        Ast::Base(filoc, AT_NONTERMINAL),
-        m_id(id),
+        TokenId(id, filoc, AT_NONTERMINAL),
         m_assigned_type(assigned_type),
         m_rule_list(NULL),
         m_npda_graph_start_state(UINT32_UPPER_BOUND),
         m_npda_graph_head_state(UINT32_UPPER_BOUND),
         m_npda_graph_return_state(UINT32_UPPER_BOUND)
     {
-        assert(!m_id.empty());
+        assert(!id.empty());
     }
 
     bool GetHasAssignedType () const { return !m_assigned_type.empty(); }
@@ -266,7 +266,7 @@ struct PrecedenceList : public Ast::AstList<Precedence>
 struct Representation : public Ast::Base
 {
     CommonLang::TargetMap const *const m_target_map;
-    TokenMap const *const m_token_map;
+    TerminalMap const *const m_terminal_map;
     PrecedenceMap const *const m_precedence_map;
     PrecedenceList const *const m_precedence_list;
     string const m_default_parse_nonterminal_id;
@@ -275,7 +275,7 @@ struct Representation : public Ast::Base
 
     Representation (
         CommonLang::TargetMap const *target_map,
-        TokenMap const *token_map,
+        TerminalMap const *terminal_map,
         PrecedenceMap const *precedence_map,
         PrecedenceList const *precedence_list,
         string const &default_parse_nonterminal_id,
@@ -285,7 +285,7 @@ struct Representation : public Ast::Base
         :
         Ast::Base(filoc, AT_REPRESENTATION),
         m_target_map(target_map),
-        m_token_map(token_map),
+        m_terminal_map(terminal_map),
         m_precedence_map(precedence_map),
         m_precedence_list(precedence_list),
         m_default_parse_nonterminal_id(default_parse_nonterminal_id),
@@ -293,7 +293,7 @@ struct Representation : public Ast::Base
         m_nonterminal_list(nonterminal_list)
     {
         assert(m_target_map != NULL);
-        assert(m_token_map != NULL);
+        assert(m_terminal_map != NULL);
         assert(m_precedence_map != NULL);
         assert(m_precedence_list != NULL);
         assert(!m_default_parse_nonterminal_id.empty());

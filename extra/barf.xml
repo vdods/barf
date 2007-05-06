@@ -24,7 +24,7 @@
             <item>string</item>
             <item>target</item>
             <item>targets</item>
-            <item>token</item>
+            <item>terminal</item>
         </list>
 
         <contexts>
@@ -52,13 +52,13 @@
                 <DetectChar char="{" attribute="Symbol" context="strict_code_block" beginRegion="Strict Code Block" />
                 <DetectChar char="'" attribute="Char" context="char" />
             </context>
-            
+
             <context name="directive" attribute="Keyword" lineEndContext="#pop">
                 <keyword String="keywords" attribute="Keyword" context="#pop" />
                 <DetectChar char="%" attribute="Symbol" context="body" />
                 <DetectChar char="{" attribute="Symbol" context="dumb_code_block" beginRegion="Dumb Code Block" />
             </context>
-            
+
             <context name="string" attribute="String" lineEndContext="#pop">
                 <DetectSpaces />
                 <DetectChar char="&quot;" attribute="Symbol" context="#pop" />
@@ -79,7 +79,7 @@
                 <DetectSpaces />
                 <RegExpr String=".|\n" attribute="Char" context="#pop" />
             </context>
-            
+
             <context name="dumb_code_block" attribute="Dumb Code Block" lineEndContext="#stay">
                 <DetectSpaces />
                 <Detect2Chars char="%" char1="}" attribute="Symbol" context="#pop" endRegion="Dumb Code Block" />
@@ -94,7 +94,7 @@
                 <DetectChar char="{" attribute="Strict Code Block" context="inner_strict_code_block" />
                 <DetectChar char="}" attribute="Symbol" context="#pop" endRegion="Strict Code Block" />
             </context>
-            
+
             <context name="inner_strict_code_block" attribute="Strict Code Block" lineEndContext="#stay">
                 <DetectSpaces />
                 <DetectChar char="&quot;" attribute="String Inside Strict Code Block" context="string_inside_strict_code_block" />
@@ -104,7 +104,7 @@
                 <DetectChar char="{" attribute="Strict Code Block" context="inner_strict_code_block" />
                 <DetectChar char="}" attribute="Strict Code Block" context="#pop" />
             </context>
-            
+
             <context name="string_inside_strict_code_block" attribute="String Inside Strict Code Block" lineEndContext="#stay">
                 <DetectSpaces />
                 <DetectChar char="\" attribute="String Inside Strict Code Block" context="escaped_char_inside_string_inside_strict_code_block" />
@@ -131,12 +131,12 @@
             <context name="line_comment_inside_strict_code_block" attribute="Comment Inside Strict Code Block" lineEndContext="#pop">
                 <DetectSpaces />
             </context>
-            
+
             <context name="block_comment_inside_strict_code_block" attribute="Comment Inside Strict Code Block" lineEndContext="#stay">
                 <DetectSpaces />
                 <Detect2Chars char="*" char1="/" attribute="Comment Inside Strict Code Block" context="#pop" endRegion="Comment" />
             </context>
-            
+
             <context name="regex" attribute="Regular Expression" lineEndContext="#stay">
                 <DetectChar char=")" attribute="Symbol" context="#pop" />
                 <DetectChar char="(" attribute="Regular Expression" context="regex2" />
@@ -156,12 +156,12 @@
                 <DetectChar char="[" attribute="Regular Expression" context="bracket_ex_inside_regex" />
                 <DetectChar char="\" attribute="Regular Expression" context="escaped_char_inside_regex" />
             </context>
-            
+
             <context name="escaped_char_inside_regex" attribute="Regular Expression" lineEndContext="#stay">
                 <RegExpr String=".|\n" attribute="Regular Expression" context="#pop" />
                 <LineContinue attribute="Regular Expression" context="#pop" />
-            </context>            
-            
+            </context>
+
             <context name="line_comment" attribute="Comment" lineEndContext="#pop" />
 
             <context name="block_comment" attribute="Comment" lineEndContext="#stay">
@@ -170,7 +170,7 @@
             </context>
 
         </contexts>
-    
+
         <itemDatas>
             <itemData name="Normal Text"                        defStyleNum="dsNormal"/>
             <itemData name="Identifier"                         defStyleNum="dsFunction"/>
@@ -197,5 +197,5 @@
         </comments>
         <keywords casesensitive="1" additionalDeliminator="'&quot;" />
     </general>
-  
+
 </language>

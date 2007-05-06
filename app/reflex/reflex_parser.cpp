@@ -2100,7 +2100,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
-        case CommonLang::Scanner::Token::DIRECTIVE_TOKEN:
+        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
             assert(m_lookahead_token != NULL);
             EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in targetspec");

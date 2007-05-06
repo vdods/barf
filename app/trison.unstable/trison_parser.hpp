@@ -34,7 +34,7 @@ namespace Trison {
 struct NonterminalList;
 struct PrecedenceList;
 struct PrecedenceMap;
-struct TokenMap;
+struct TerminalMap;
 
 #line 40 "trison_parser.hpp"
 
@@ -58,7 +58,7 @@ public:
             DIRECTIVE_RIGHT,
             DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
-            DIRECTIVE_TOKEN,
+            DIRECTIVE_TERMINAL,
             DIRECTIVE_TYPE,
             DUMB_CODE_BLOCK,
             END_PREAMBLE,
@@ -94,11 +94,12 @@ public:
             target_directives__,
             target_ids__,
             targets_directive__,
-            token__,
-            token_directive__,
-            token_directives__,
-            token_type_spec__,
-            tokens__,
+            terminal__,
+            terminal_directive__,
+            terminal_directives__,
+            terminal_type_spec__,
+            terminals__,
+            token_id__,
 
             // special start nonterminal
             START_,
@@ -149,12 +150,12 @@ private:
 
     CommonLang::Scanner m_scanner;
     CommonLang::TargetMap *m_target_map;
-    TokenMap *m_token_map;
+    TerminalMap *m_terminal_map;
     PrecedenceList *m_precedence_list;
     PrecedenceMap *m_precedence_map;
     NonterminalList *m_nonterminal_list;
 
-#line 158 "trison_parser.hpp"
+#line 159 "trison_parser.hpp"
 
 private:
 
@@ -342,6 +343,8 @@ private:
     Ast::Base * ReductionRuleHandler0062 ();
     Ast::Base * ReductionRuleHandler0063 ();
     Ast::Base * ReductionRuleHandler0064 ();
+    Ast::Base * ReductionRuleHandler0065 ();
+    Ast::Base * ReductionRuleHandler0066 ();
 
 }; // end of class Parser
 
@@ -354,4 +357,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 358 "trison_parser.hpp"
+#line 361 "trison_parser.hpp"
