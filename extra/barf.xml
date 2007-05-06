@@ -16,6 +16,7 @@
             <item>left</item>
             <item>macro</item>
             <item>nonassoc</item>
+            <item>nonterminal</item>
             <item>prec</item>
             <item>right</item>
             <item>start_in_scanner_mode</item>

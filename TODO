@@ -211,7 +211,6 @@
 - get rid of STL usage in C++ codespecs (separate target)
 - the rule handler code block type should be specifiable by the targetspec
 - add option which prints the targets available in the current search path
-- require %nonterminal keyword before nonterminal definition
 - add %end keyword which matches the builtin terminal END_
 - old trison: END_ shouldn't be acceptable by %error
 - old trison: take out default reduction rule handler return (it blocks the

@@ -109,26 +109,27 @@ Parser::Token::Type Parser::Scan ()
         return Parser::Token::Type(scanner_token_type);
     switch (scanner_token_type)
     {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:    return Parser::Token::END_;
-        case CommonLang::Scanner::Token::BAD_TOKEN:          return Parser::Token::BAD_TOKEN;
-        case CommonLang::Scanner::Token::CHAR_LITERAL:       return Parser::Token::CHAR_LITERAL;
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                     return Parser::Token::END_;
+        case CommonLang::Scanner::Token::BAD_TOKEN:                           return Parser::Token::BAD_TOKEN;
+        case CommonLang::Scanner::Token::CHAR_LITERAL:                        return Parser::Token::CHAR_LITERAL;
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Parser::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL;
-        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:    return Parser::Token::DIRECTIVE_ERROR;
-        case CommonLang::Scanner::Token::DIRECTIVE_LEFT:     return Parser::Token::DIRECTIVE_LEFT;
-        case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC: return Parser::Token::DIRECTIVE_NONASSOC;
-        case CommonLang::Scanner::Token::DIRECTIVE_PREC:     return Parser::Token::DIRECTIVE_PREC;
-        case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:    return Parser::Token::DIRECTIVE_RIGHT;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:   return Parser::Token::DIRECTIVE_TARGET;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:  return Parser::Token::DIRECTIVE_TARGETS;
-        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL: return Parser::Token::DIRECTIVE_TERMINAL;
-        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:     return Parser::Token::DIRECTIVE_TYPE;
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:    return Parser::Token::DUMB_CODE_BLOCK;
-        case CommonLang::Scanner::Token::END_OF_FILE:        return Parser::Token::END_;
-        case CommonLang::Scanner::Token::END_PREAMBLE:       return Parser::Token::END_PREAMBLE;
-        case CommonLang::Scanner::Token::ID:                 return Parser::Token::ID;
-        case CommonLang::Scanner::Token::NEWLINE:            return Parser::Token::NEWLINE;
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:  return Parser::Token::STRICT_CODE_BLOCK;
-        case CommonLang::Scanner::Token::STRING_LITERAL:     return Parser::Token::STRING_LITERAL;
+        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:                     return Parser::Token::DIRECTIVE_ERROR;
+        case CommonLang::Scanner::Token::DIRECTIVE_LEFT:                      return Parser::Token::DIRECTIVE_LEFT;
+        case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:                  return Parser::Token::DIRECTIVE_NONASSOC;
+        case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:               return Parser::Token::DIRECTIVE_NONTERMINAL;
+        case CommonLang::Scanner::Token::DIRECTIVE_PREC:                      return Parser::Token::DIRECTIVE_PREC;
+        case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:                     return Parser::Token::DIRECTIVE_RIGHT;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                    return Parser::Token::DIRECTIVE_TARGET;
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                   return Parser::Token::DIRECTIVE_TARGETS;
+        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:                  return Parser::Token::DIRECTIVE_TERMINAL;
+        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:                      return Parser::Token::DIRECTIVE_TYPE;
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                     return Parser::Token::DUMB_CODE_BLOCK;
+        case CommonLang::Scanner::Token::END_OF_FILE:                         return Parser::Token::END_;
+        case CommonLang::Scanner::Token::END_PREAMBLE:                        return Parser::Token::END_PREAMBLE;
+        case CommonLang::Scanner::Token::ID:                                  return Parser::Token::ID;
+        case CommonLang::Scanner::Token::NEWLINE:                             return Parser::Token::NEWLINE;
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                   return Parser::Token::STRICT_CODE_BLOCK;
+        case CommonLang::Scanner::Token::STRING_LITERAL:                      return Parser::Token::STRING_LITERAL;
 
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
@@ -166,6 +167,7 @@ Parser::Token::Type Parser::Scan ()
 %token DIRECTIVE_ERROR %type "Ast::ThrowAway *"
 %token DIRECTIVE_LEFT %type "Ast::ThrowAway *"
 %token DIRECTIVE_NONASSOC %type "Ast::ThrowAway *"
+%token DIRECTIVE_NONTERMINAL %type "Ast::ThrowAway *"
 %token DIRECTIVE_PREC %type "Ast::ThrowAway *"
 %token DIRECTIVE_RIGHT %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
@@ -579,53 +581,58 @@ nonterminal %type "Nonterminal *"
 
 nonterminal_specification %type "Nonterminal *"
 :
-    ID:id DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
+    DIRECTIVE_NONTERMINAL:throwaway1 ID:id DIRECTIVE_TYPE:throwaway2 STRING_LITERAL:assigned_type
     {
         assert(m_terminal_map != NULL);
         if (m_terminal_map->GetElement(id->GetText()) != NULL)
-            EmitError(id->GetFiLoc(), "id collision with %terminal " + id->GetText());
+            EmitError(id->GetFiLoc(), "id collision with terminal " + id->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
                 id->GetFiLoc(),
                 assigned_type->GetText());
-        delete throwaway;
+        delete throwaway1;
         delete id;
+        delete throwaway2;
         delete assigned_type;
         return nonterminal;
     }
 |
-    ID:id
+    DIRECTIVE_NONTERMINAL:throwaway ID:id
     {
         assert(m_terminal_map != NULL);
         if (m_terminal_map->GetElement(id->GetText()) != NULL)
-            EmitError(id->GetFiLoc(), "id collision with %terminal " + id->GetText());
+            EmitError(id->GetFiLoc(), "id collision with terminal " + id->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
                 id->GetFiLoc());
+        delete throwaway;
         delete id;
         return nonterminal;
     }
 |
-    %error
+    DIRECTIVE_NONTERMINAL:throwaway %error
     {
-        EmitError(GetFiLoc(), "syntax error while parsing nonterminal specification");
+        EmitError(throwaway->GetFiLoc(), "syntax error while parsing nonterminal specification");
+        delete throwaway;
         return NULL;
     }
 |
-    ID:id %error
+    DIRECTIVE_NONTERMINAL:throwaway ID:id %error
     {
-        EmitError(id->GetFiLoc(), "syntax error in nonterminal directive");
+        EmitError(id->GetFiLoc(), "syntax error in %nonterminal directive");
+        delete throwaway;
         delete id;
         return NULL;
     }
 |
-    ID:id DIRECTIVE_TYPE:throwaway %error
+    DIRECTIVE_NONTERMINAL:throwaway1 ID:id DIRECTIVE_TYPE:throwaway2 %error
     {
         EmitError(id->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
+        delete throwaway1;
         delete id;
-        delete throwaway;
+        delete throwaway2;
         return NULL;
     }
 ;

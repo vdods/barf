@@ -113,6 +113,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_LEFT:
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
         case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:
+        case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:
         case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
         case CommonLang::Scanner::Token::DIRECTIVE_START_IN_SCANNER_MODE:

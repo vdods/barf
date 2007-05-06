@@ -54,6 +54,7 @@ public:
             DIRECTIVE_ERROR,
             DIRECTIVE_LEFT,
             DIRECTIVE_NONASSOC,
+            DIRECTIVE_NONTERMINAL,
             DIRECTIVE_PREC,
             DIRECTIVE_RIGHT,
             DIRECTIVE_TARGET,
@@ -155,7 +156,7 @@ private:
     PrecedenceMap *m_precedence_map;
     NonterminalList *m_nonterminal_list;
 
-#line 159 "trison_parser.hpp"
+#line 160 "trison_parser.hpp"
 
 private:
 
@@ -357,4 +358,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 361 "trison_parser.hpp"
+#line 362 "trison_parser.hpp"
