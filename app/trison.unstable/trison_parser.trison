@@ -61,6 +61,7 @@ private:
     PrecedenceList *m_precedence_list;
     PrecedenceMap *m_precedence_map;
     NonterminalList *m_nonterminal_list;
+    Uint32 m_rule_count;
 }
 
 %parser_header_file_bottom%{
@@ -93,6 +94,7 @@ namespace Trison {
     m_precedence_list = NULL;
     m_precedence_map = NULL;
     m_nonterminal_list = NULL;
+    m_rule_count = 0;
 }
 
 %parser_implementation_file_bottom%{
@@ -674,7 +676,7 @@ rule_specification %type "Rule *"
             rule_precedence_directive != NULL ?
             rule_precedence_directive->GetText() :
             "DEFAULT_";
-        Rule *rule = new Rule(rule_token_list, rule_precedence_id);
+        Rule *rule = new Rule(rule_token_list, rule_precedence_id, m_rule_count++);
         delete rule_precedence_directive;
         return rule;
     }

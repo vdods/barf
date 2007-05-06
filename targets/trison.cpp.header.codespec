@@ -1209,7 +1209,7 @@ private:
 
 
 <*{loop(i, _rule_count)
-    TokenData_ AcceptHandler<{i}_ ();
+    TokenData_ RuleCode<{i}_ ();
 <*{end_loop
 
     // TODO: move as much stuff to the base class as possible

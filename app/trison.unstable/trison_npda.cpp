@@ -87,7 +87,6 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
         {
             Rule const *rule = *it;
             assert(rule != NULL);
-            assert(rule->GetHasAcceptStateIndex());
             out.width(max_width);
             out.setf(ios_base::left);
             out << rule->GetAsText(0) << endl;
@@ -203,8 +202,6 @@ void GenerateNpda (
     Uint32 start_index,
     Nonterminal const &owner_nonterminal)
 {
-    assert(rule.GetHasAcceptStateIndex());
-
     // minimal graphing
     {
         // add all the shift transitions
@@ -222,7 +219,7 @@ void GenerateNpda (
         }
 
         // add the reduce transition at the tail of the rule states
-        graph_context.m_graph.AddTransition(start_index, ReduceTransition(rule.GetAcceptStateIndex(), FORMAT(rule.GetAcceptStateIndex())));
+        graph_context.m_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
     }
 /*
     // separate-rule-style graphing
@@ -249,7 +246,7 @@ void GenerateNpda (
         }
 
         // add the reduce transition at the tail of the rule states
-        graph_context.m_graph.AddTransition(start_index, ReduceTransition(rule.GetAcceptStateIndex(), FORMAT(rule.GetAcceptStateIndex())));
+        graph_context.m_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
     }
 */
 }

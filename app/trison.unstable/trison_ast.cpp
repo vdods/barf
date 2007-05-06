@@ -86,29 +86,23 @@ string Rule::GetAsText (Uint32 stage) const
     return out.str();
 }
 
-void Rule::SetAcceptStateIndex (Uint32 accept_state_index) const
-{
-    assert(m_accept_state_index == UINT32_UPPER_BOUND);
-    m_accept_state_index = accept_state_index;
-}
-
-void Rule::PopulateAcceptHandlerCodeArraySymbol (
+void Rule::PopulateRuleCodeArraySymbol (
     string const &target_id,
-    Preprocessor::ArraySymbol *accept_handler_code_symbol) const
+    Preprocessor::ArraySymbol *rule_code_symbol) const
 {
-    assert(accept_handler_code_symbol != NULL);
+    assert(rule_code_symbol != NULL);
     CommonLang::RuleHandler const *rule_handler = m_rule_handler_map->GetElement(target_id);
     if (rule_handler != NULL)
     {
         Ast::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
         assert(rule_handler_code_block != NULL);
-        accept_handler_code_symbol->AppendArrayElement(
+        rule_code_symbol->AppendArrayElement(
             new Preprocessor::Body(
                 rule_handler_code_block->GetText(),
                 rule_handler_code_block->GetFiLoc()));
     }
     else
-        accept_handler_code_symbol->AppendArrayElement(new Preprocessor::Body("", FiLoc::ms_invalid));
+        rule_code_symbol->AppendArrayElement(new Preprocessor::Body("", FiLoc::ms_invalid));
 }
 
 void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -146,11 +140,11 @@ void Nonterminal::SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda
     m_npda_graph_return_state = npda_graph_return_state;
 }
 
-void Nonterminal::PopulateAcceptHandlerCodeArraySymbol (
+void Nonterminal::PopulateRuleCodeArraySymbol (
     string const &target_id,
-    Preprocessor::ArraySymbol *accept_handler_code_symbol) const
+    Preprocessor::ArraySymbol *rule_code_symbol) const
 {
-    assert(accept_handler_code_symbol != NULL);
+    assert(rule_code_symbol != NULL);
 
     for (RuleList::const_iterator it = m_rule_list->begin(),
                                   it_end = m_rule_list->end();
@@ -159,7 +153,7 @@ void Nonterminal::PopulateAcceptHandlerCodeArraySymbol (
     {
         Rule const *rule = *it;
         assert(rule != NULL);
-        rule->PopulateAcceptHandlerCodeArraySymbol(target_id, accept_handler_code_symbol);
+        rule->PopulateRuleCodeArraySymbol(target_id, rule_code_symbol);
     }
 }
 
@@ -474,7 +468,7 @@ void Representation::GenerateAutomatonSymbols (
         }
     }
 
-    // _rule_count -- gives the number of accept handlers.
+    // _rule_count -- gives the total number of rules (from all nonterminals combined).
     //
     // _npda_rule_reduction_nonterminal_index[_rule_count] -- the index of the nonterminal
     // which this rule reduces to.
@@ -680,7 +674,7 @@ void Representation::GenerateAutomatonSymbols (
             Rule const *rule = node_data.GetAssociatedRule();
             npda_state_rule_index_symbol->AppendArrayElement(
                 new Preprocessor::Body(
-                    rule != NULL ? Sint32(rule->GetAcceptStateIndex()) : GetRuleCount(),
+                    rule != NULL ? Sint32(rule->m_rule_index) : GetRuleCount(),
                     FiLoc::ms_invalid));
             npda_state_rule_stage_symbol->AppendArrayElement(
                 new Preprocessor::Body(
@@ -719,10 +713,10 @@ void Representation::GenerateTargetDependentSymbols (
     string const &target_id,
     Preprocessor::SymbolTable &symbol_table) const
 {
-    // _accept_handler_code[_rule_count] -- specifies code for all accept handlers.
+    // _rule_code[_rule_count] -- specifies code for each rule.
     {
-        Preprocessor::ArraySymbol *accept_handler_code_symbol =
-            symbol_table.DefineArraySymbol("_accept_handler_code", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_code_symbol =
+            symbol_table.DefineArraySymbol("_rule_code", FiLoc::ms_invalid);
 
         for (NonterminalMap::const_iterator it = m_nonterminal_map->begin(),
                                             it_end = m_nonterminal_map->end();
@@ -731,20 +725,10 @@ void Representation::GenerateTargetDependentSymbols (
         {
             Nonterminal const *nonterminal = it->second;
             assert(nonterminal != NULL);
-            nonterminal->PopulateAcceptHandlerCodeArraySymbol(
+            nonterminal->PopulateRuleCodeArraySymbol(
                 target_id,
-                accept_handler_code_symbol);
+                rule_code_symbol);
         }
-    }
-}
-
-void Representation::AssignRuleIndices ()
-{
-    for (Uint32 i = 0, s = GetRuleCount(); i < s; ++i)
-    {
-        Rule const *rule = GetRule(i);
-        assert(rule != NULL);
-        rule->SetAcceptStateIndex(i);
     }
 }
 

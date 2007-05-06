@@ -587,9 +587,9 @@ void <{class_name}::PrintParserBranchList_ ()
 }
 
 <*{loop(i, _rule_count)
-<{class_name}::TokenData_ <{class_name}::AcceptHandler<{i}_ ()
+<{class_name}::TokenData_ <{class_name}::RuleCode<{i}_ ()
 {
-<*{_accept_handler_code[i]
+<*{_rule_code[i]
 }
 
 <*{end_loop

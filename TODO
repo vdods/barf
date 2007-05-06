@@ -96,6 +96,7 @@
 // preprocessor
 // ///////////////////////////////////////////////////////////////////////////
 
+- add a printf function
 - add some way to use a different file location for errors/warnings
 - add comments (C++ and C style)
 - make _blah ids not be able to be defined in-file, they're reserved
@@ -191,6 +192,8 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+- clean up the parsing so that it's less about passing crap around and more
+  about using member variables of the parser (assign rule indices on the fly, etc)
 - figure out how to guarantee branch uniqueness per Action_ branch list in C++ parser.
 - add default values in trison cpp targetspec for Scan implementation
 - change "%prec %left BLAH" into "%prec.left BLAH" (and maybe prec into precedence)
@@ -198,8 +201,6 @@
 - you shouldn't have to specify %terminal 'X' for ascii chars.  you should
   just be able to use them (or maybe add as option)
 - specifying any %target.xxx directive seems to add the target; stop this
-- rename _accept_handler_code to _rule_code (or something), and generally
-  consistencize the nomenclature of the NPDA preprocessor symbols in general
 * add option for line directives referencing codespecs (the default should be
   to refer to codespecs, for easier development)
 - get rid of STL usage in C++ codespecs (separate target)

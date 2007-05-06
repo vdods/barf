@@ -129,34 +129,27 @@ struct Rule : public Ast::Base
     RuleTokenList const *const m_rule_token_list;
     string const m_rule_precedence_id;
     CommonLang::RuleHandlerMap const *m_rule_handler_map;
+    Uint32 const m_rule_index;
 
-    Rule (RuleTokenList const *rule_token_list, string const &rule_precedence_id)
+    Rule (RuleTokenList const *rule_token_list, string const &rule_precedence_id, Uint32 rule_index)
         :
         Ast::Base(rule_token_list->GetFiLoc(), AT_RULE),
         m_owner_nonterminal(NULL),
         m_rule_token_list(rule_token_list),
         m_rule_precedence_id(rule_precedence_id),
         m_rule_handler_map(NULL),
-        m_accept_state_index(UINT32_UPPER_BOUND)
+        m_rule_index(rule_index)
     {
         assert(m_rule_token_list != NULL);
     }
 
-    bool GetHasAcceptStateIndex () const { return m_accept_state_index != UINT32_UPPER_BOUND; }
-    Uint32 GetAcceptStateIndex () const { assert(GetHasAcceptStateIndex()); return m_accept_state_index; }
     string GetAsText (Uint32 stage = UINT32_UPPER_BOUND) const;
 
-    void SetAcceptStateIndex (Uint32 accept_state_index) const;
-
-    void PopulateAcceptHandlerCodeArraySymbol (
+    void PopulateRuleCodeArraySymbol (
         string const &target_id,
-        Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
+        Preprocessor::ArraySymbol *rule_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-
-private:
-
-    mutable Uint32 m_accept_state_index;
 }; // end of struct Rule
 
 struct RuleList : public Ast::AstList<Rule>
@@ -193,9 +186,9 @@ struct Nonterminal : public TokenId
     void SetRuleList (RuleList *rule_list);
     void SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda_graph_head_state, Uint32 npda_graph_return_state) const;
 
-    void PopulateAcceptHandlerCodeArraySymbol (
+    void PopulateRuleCodeArraySymbol (
         string const &target_id,
-        Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
+        Preprocessor::ArraySymbol *rule_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
@@ -299,7 +292,6 @@ struct Representation : public Ast::Base
         assert(!m_default_parse_nonterminal_id.empty());
         assert(m_nonterminal_map != NULL);
         assert(m_nonterminal_list != NULL);
-        AssignRuleIndices();
     }
 
     Uint32 GetTokenIndex (string const &token_id) const;

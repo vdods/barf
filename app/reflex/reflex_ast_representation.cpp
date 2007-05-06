@@ -516,7 +516,7 @@ void Representation::GenerateTargetDependentSymbols (
 {
     // _accept_handler_count -- gives the number of accept handlers.
     //
-    // _accept_handler_code[_accept_handler_count+1] -- specifies code
+    // _accept_handler_code[_accept_handler_count] -- specifies code
     // for all accept handlers.
     {
         Preprocessor::ScalarSymbol *accept_handler_count_symbol =
@@ -529,7 +529,7 @@ void Representation::GenerateTargetDependentSymbols (
                 Sint32(m_next_accept_handler_index),
                 FiLoc::ms_invalid));
         for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
-                                             it_end = m_scanner_mode_map->end();
+                                            it_end = m_scanner_mode_map->end();
             it != it_end;
             ++it)
         {

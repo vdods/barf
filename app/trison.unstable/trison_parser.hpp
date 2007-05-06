@@ -155,8 +155,9 @@ private:
     PrecedenceList *m_precedence_list;
     PrecedenceMap *m_precedence_map;
     NonterminalList *m_nonterminal_list;
+    Uint32 m_rule_count;
 
-#line 160 "trison_parser.hpp"
+#line 161 "trison_parser.hpp"
 
 private:
 
@@ -352,10 +353,10 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type);
 
 
-#line 66 "trison_parser.trison"
+#line 67 "trison_parser.trison"
 
 } // end of namespace Trison
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 362 "trison_parser.hpp"
+#line 363 "trison_parser.hpp"
