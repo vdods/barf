@@ -493,7 +493,6 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
     assert(0 < m_reduction_rule_token_count);
     return m_token_stack[m_token_stack.size() - m_reduction_rule_token_count];
 
-    return NULL;
 }
 
 // rule 1: root <- directive_list:directive_list END_PREAMBLE:end_preamble nonterminal_list:nonterminal_list    
@@ -516,8 +515,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
         delete end_preamble;
         return grammar;
     
-#line 520 "trison_parser.cpp"
-    return NULL;
+#line 519 "trison_parser.cpp"
 }
 
 // rule 2: directive_list <- directive_list:directive_list directive:directive    
@@ -534,8 +532,7 @@ Ast::Base * Parser::ReductionRuleHandler0002 ()
             directive_list->Append(directive);
         return directive_list;
     
-#line 538 "trison_parser.cpp"
-    return NULL;
+#line 536 "trison_parser.cpp"
 }
 
 // rule 3: directive_list <- at_least_zero_newlines    
@@ -546,8 +543,7 @@ Ast::Base * Parser::ReductionRuleHandler0003 ()
 
         return new Ast::DirectiveList();
     
-#line 550 "trison_parser.cpp"
-    return NULL;
+#line 547 "trison_parser.cpp"
 }
 
 // rule 4: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRICT_CODE_BLOCK:value at_least_one_newline    
@@ -563,8 +559,7 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
         parser_directive->SetValue(value);
         return parser_directive;
     
-#line 567 "trison_parser.cpp"
-    return NULL;
+#line 563 "trison_parser.cpp"
 }
 
 // rule 5: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive DUMB_CODE_BLOCK:value at_least_one_newline    
@@ -590,8 +585,7 @@ Ast::Base * Parser::ReductionRuleHandler0005 ()
         parser_directive->SetValue(value);
         return parser_directive;
     
-#line 594 "trison_parser.cpp"
-    return NULL;
+#line 589 "trison_parser.cpp"
 }
 
 // rule 6: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRING:value at_least_one_newline    
@@ -607,8 +601,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
         parser_directive->SetValue(value);
         return parser_directive;
     
-#line 611 "trison_parser.cpp"
-    return NULL;
+#line 605 "trison_parser.cpp"
 }
 
 // rule 7: directive <- DIRECTIVE_PARSER_WITHOUT_PARAMETER:parser_directive at_least_one_newline    
@@ -621,8 +614,7 @@ Ast::Base * Parser::ReductionRuleHandler0007 ()
 
         return parser_directive;
     
-#line 625 "trison_parser.cpp"
-    return NULL;
+#line 618 "trison_parser.cpp"
 }
 
 // rule 8: directive <- DIRECTIVE_TOKEN:throwaway token_id_list:token_id_list at_least_one_newline    
@@ -638,8 +630,7 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
         delete throwaway;
         return new TokenDirective(token_id_list, NULL);
     
-#line 642 "trison_parser.cpp"
-    return NULL;
+#line 634 "trison_parser.cpp"
 }
 
 // rule 9: directive <- DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 STRING:assigned_type at_least_one_newline    
@@ -660,8 +651,7 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
         delete throwaway2;
         return new TokenDirective(token_id_list, assigned_type);
     
-#line 664 "trison_parser.cpp"
-    return NULL;
+#line 655 "trison_parser.cpp"
 }
 
 // rule 10: directive <- DIRECTIVE_TOKEN:throwaway %error at_least_one_newline    
@@ -677,8 +667,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
         delete throwaway;
         return new TokenDirective(new TokenIdList(), NULL);
     
-#line 681 "trison_parser.cpp"
-    return NULL;
+#line 671 "trison_parser.cpp"
 }
 
 // rule 11: directive <- DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 %error at_least_one_newline    
@@ -700,8 +689,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
         delete throwaway2;
         return new TokenDirective(token_id_list, dummy_string);
     
-#line 704 "trison_parser.cpp"
-    return NULL;
+#line 693 "trison_parser.cpp"
 }
 
 // rule 12: directive <- PREC:throwaway ID:id at_least_one_newline    
@@ -717,8 +705,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
         delete throwaway;
         return new PrecedenceDirective(id);
     
-#line 721 "trison_parser.cpp"
-    return NULL;
+#line 709 "trison_parser.cpp"
 }
 
 // rule 13: directive <- PREC:throwaway %error at_least_one_newline    
@@ -735,8 +722,7 @@ Ast::Base * Parser::ReductionRuleHandler0013 ()
         delete throwaway;
         return new PrecedenceDirective(dummy_id);
     
-#line 739 "trison_parser.cpp"
-    return NULL;
+#line 726 "trison_parser.cpp"
 }
 
 // rule 14: directive <- START:throwaway ID:id at_least_one_newline    
@@ -752,8 +738,7 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
         delete throwaway;
         return new StartDirective(id);
     
-#line 756 "trison_parser.cpp"
-    return NULL;
+#line 742 "trison_parser.cpp"
 }
 
 // rule 15: directive <- START:throwaway %error at_least_one_newline    
@@ -770,8 +755,7 @@ Ast::Base * Parser::ReductionRuleHandler0015 ()
         delete throwaway;
         return new StartDirective(dummy_id);
     
-#line 774 "trison_parser.cpp"
-    return NULL;
+#line 759 "trison_parser.cpp"
 }
 
 // rule 16: directive <- %error STRICT_CODE_BLOCK:value at_least_one_newline    
@@ -786,8 +770,7 @@ Ast::Base * Parser::ReductionRuleHandler0016 ()
 
         return NULL;
     
-#line 790 "trison_parser.cpp"
-    return NULL;
+#line 774 "trison_parser.cpp"
 }
 
 // rule 17: directive <- %error DUMB_CODE_BLOCK:value at_least_one_newline    
@@ -802,8 +785,7 @@ Ast::Base * Parser::ReductionRuleHandler0017 ()
 
         return NULL;
     
-#line 806 "trison_parser.cpp"
-    return NULL;
+#line 789 "trison_parser.cpp"
 }
 
 // rule 18: directive <- %error STRING:value at_least_one_newline    
@@ -818,8 +800,7 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
 
         return NULL;
     
-#line 822 "trison_parser.cpp"
-    return NULL;
+#line 804 "trison_parser.cpp"
 }
 
 // rule 19: directive <- %error at_least_one_newline    
@@ -832,8 +813,7 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
 
         return NULL;
     
-#line 836 "trison_parser.cpp"
-    return NULL;
+#line 817 "trison_parser.cpp"
 }
 
 // rule 20: token_id_list <- token_id_list:token_id_list token_id:token_id    
@@ -849,8 +829,7 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
         token_id_list->Append(token_id);
         return token_id_list;
     
-#line 853 "trison_parser.cpp"
-    return NULL;
+#line 833 "trison_parser.cpp"
 }
 
 // rule 21: token_id_list <- token_id:token_id    
@@ -865,8 +844,7 @@ Ast::Base * Parser::ReductionRuleHandler0021 ()
         token_id_list->Append(token_id);
         return token_id_list;
     
-#line 869 "trison_parser.cpp"
-    return NULL;
+#line 848 "trison_parser.cpp"
 }
 
 // rule 22: token_id <- ID:id    
@@ -882,8 +860,7 @@ Ast::Base * Parser::ReductionRuleHandler0022 ()
         delete id;
         return token_id_id;
     
-#line 886 "trison_parser.cpp"
-    return NULL;
+#line 864 "trison_parser.cpp"
 }
 
 // rule 23: token_id <- TOKEN_ID_CHAR:token_id_char    
@@ -896,32 +873,43 @@ Ast::Base * Parser::ReductionRuleHandler0023 ()
 
         return token_id_char;
     
-#line 900 "trison_parser.cpp"
-    return NULL;
+#line 877 "trison_parser.cpp"
 }
 
 // rule 24: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0024 ()
 {
-    return NULL;
+
+#line 307 "trison_parser.trison"
+ return NULL; 
+#line 886 "trison_parser.cpp"
 }
 
 // rule 25: at_least_zero_newlines <-     
 Ast::Base * Parser::ReductionRuleHandler0025 ()
 {
-    return NULL;
+
+#line 309 "trison_parser.trison"
+ return NULL; 
+#line 895 "trison_parser.cpp"
 }
 
 // rule 26: at_least_one_newline <- at_least_one_newline NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0026 ()
 {
-    return NULL;
+
+#line 314 "trison_parser.trison"
+ return NULL; 
+#line 904 "trison_parser.cpp"
 }
 
 // rule 27: at_least_one_newline <- NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0027 ()
 {
-    return NULL;
+
+#line 316 "trison_parser.trison"
+ return NULL; 
+#line 913 "trison_parser.cpp"
 }
 
 // rule 28: nonterminal_list <- nonterminal_list:nonterminal_list nonterminal:nonterminal    
@@ -939,8 +927,7 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
             nonterminal_list->Append(nonterminal);
         return nonterminal_list;
     
-#line 943 "trison_parser.cpp"
-    return NULL;
+#line 931 "trison_parser.cpp"
 }
 
 // rule 29: nonterminal_list <-     
@@ -951,8 +938,7 @@ Ast::Base * Parser::ReductionRuleHandler0029 ()
 
         return new NonterminalList();
     
-#line 955 "trison_parser.cpp"
-    return NULL;
+#line 942 "trison_parser.cpp"
 }
 
 // rule 30: nonterminal <- nonterminal_specification:nonterminal_specification ':' rule_list:rule_list ';'    
@@ -968,8 +954,7 @@ Ast::Base * Parser::ReductionRuleHandler0030 ()
         nonterminal_specification->SetRuleList(rule_list);
         return nonterminal_specification;
     
-#line 972 "trison_parser.cpp"
-    return NULL;
+#line 958 "trison_parser.cpp"
 }
 
 // rule 31: nonterminal <- %error ';'    
@@ -982,8 +967,7 @@ Ast::Base * Parser::ReductionRuleHandler0031 ()
 
         return NULL;
     
-#line 986 "trison_parser.cpp"
-    return NULL;
+#line 971 "trison_parser.cpp"
 }
 
 // rule 32: nonterminal_specification <- ID:id TYPE:throwaway STRING:assigned_type    
@@ -1001,8 +985,7 @@ Ast::Base * Parser::ReductionRuleHandler0032 ()
         delete throwaway;
         return new Nonterminal(id, assigned_type);
     
-#line 1005 "trison_parser.cpp"
-    return NULL;
+#line 989 "trison_parser.cpp"
 }
 
 // rule 33: nonterminal_specification <- ID:id    
@@ -1015,8 +998,7 @@ Ast::Base * Parser::ReductionRuleHandler0033 ()
 
         return new Nonterminal(id, NULL);
     
-#line 1019 "trison_parser.cpp"
-    return NULL;
+#line 1002 "trison_parser.cpp"
 }
 
 // rule 34: nonterminal_specification <- %error    
@@ -1029,8 +1011,7 @@ Ast::Base * Parser::ReductionRuleHandler0034 ()
 
         return NULL;
     
-#line 1033 "trison_parser.cpp"
-    return NULL;
+#line 1015 "trison_parser.cpp"
 }
 
 // rule 35: nonterminal_specification <- ID:id %error    
@@ -1045,8 +1026,7 @@ Ast::Base * Parser::ReductionRuleHandler0035 ()
 
         return new Nonterminal(id, NULL);
     
-#line 1049 "trison_parser.cpp"
-    return NULL;
+#line 1030 "trison_parser.cpp"
 }
 
 // rule 36: nonterminal_specification <- ID:id TYPE:throwaway %error    
@@ -1064,8 +1044,7 @@ Ast::Base * Parser::ReductionRuleHandler0036 ()
         delete throwaway;
         return new Nonterminal(id, NULL);
     
-#line 1068 "trison_parser.cpp"
-    return NULL;
+#line 1048 "trison_parser.cpp"
 }
 
 // rule 37: rule_list <- rule_list:rule_list '|' rule:rule    
@@ -1081,8 +1060,7 @@ Ast::Base * Parser::ReductionRuleHandler0037 ()
         rule_list->Append(rule);
         return rule_list;
     
-#line 1085 "trison_parser.cpp"
-    return NULL;
+#line 1064 "trison_parser.cpp"
 }
 
 // rule 38: rule_list <- rule:rule    
@@ -1097,8 +1075,7 @@ Ast::Base * Parser::ReductionRuleHandler0038 ()
         rule_list->Append(rule);
         return rule_list;
     
-#line 1101 "trison_parser.cpp"
-    return NULL;
+#line 1079 "trison_parser.cpp"
 }
 
 // rule 39: rule <- rule_specification:rule_specification STRICT_CODE_BLOCK:code_block    
@@ -1114,8 +1091,7 @@ Ast::Base * Parser::ReductionRuleHandler0039 ()
         rule_specification->SetCodeBlock(code_block);
         return rule_specification;
     
-#line 1118 "trison_parser.cpp"
-    return NULL;
+#line 1095 "trison_parser.cpp"
 }
 
 // rule 40: rule <- rule_specification:rule_specification    
@@ -1128,8 +1104,7 @@ Ast::Base * Parser::ReductionRuleHandler0040 ()
 
         return rule_specification;
     
-#line 1132 "trison_parser.cpp"
-    return NULL;
+#line 1108 "trison_parser.cpp"
 }
 
 // rule 41: rule <- rule_specification:rule_specification DUMB_CODE_BLOCK:code_block    
@@ -1149,8 +1124,7 @@ Ast::Base * Parser::ReductionRuleHandler0041 ()
         rule_specification->SetCodeBlock(code_block);
         return rule_specification;
     
-#line 1153 "trison_parser.cpp"
-    return NULL;
+#line 1128 "trison_parser.cpp"
 }
 
 // rule 42: rule_specification <- rule_token_list:rule_token_list LEFT:throwaway rule_precedence_directive:rule_precedence_directive    
@@ -1168,8 +1142,7 @@ Ast::Base * Parser::ReductionRuleHandler0042 ()
         delete throwaway;
         return new Rule(rule_token_list, A_LEFT, rule_precedence_directive);
     
-#line 1172 "trison_parser.cpp"
-    return NULL;
+#line 1146 "trison_parser.cpp"
 }
 
 // rule 43: rule_specification <- rule_token_list:rule_token_list RIGHT:throwaway rule_precedence_directive:rule_precedence_directive    
@@ -1187,8 +1160,7 @@ Ast::Base * Parser::ReductionRuleHandler0043 ()
         delete throwaway;
         return new Rule(rule_token_list, A_RIGHT, rule_precedence_directive);
     
-#line 1191 "trison_parser.cpp"
-    return NULL;
+#line 1164 "trison_parser.cpp"
 }
 
 // rule 44: rule_specification <- rule_token_list:rule_token_list NONASSOC:throwaway rule_precedence_directive:rule_precedence_directive    
@@ -1206,8 +1178,7 @@ Ast::Base * Parser::ReductionRuleHandler0044 ()
         delete throwaway;
         return new Rule(rule_token_list, A_NONASSOC, rule_precedence_directive);
     
-#line 1210 "trison_parser.cpp"
-    return NULL;
+#line 1182 "trison_parser.cpp"
 }
 
 // rule 45: rule_specification <- rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive    
@@ -1223,8 +1194,7 @@ Ast::Base * Parser::ReductionRuleHandler0045 ()
         // the default associativity when none is specified is LEFT
         return new Rule(rule_token_list, A_LEFT, rule_precedence_directive);
     
-#line 1227 "trison_parser.cpp"
-    return NULL;
+#line 1198 "trison_parser.cpp"
 }
 
 // rule 46: rule_token_list <- rule_token_list:rule_token_list rule_token:rule_token    
@@ -1240,8 +1210,7 @@ Ast::Base * Parser::ReductionRuleHandler0046 ()
         rule_token_list->Append(rule_token);
         return rule_token_list;
     
-#line 1244 "trison_parser.cpp"
-    return NULL;
+#line 1214 "trison_parser.cpp"
 }
 
 // rule 47: rule_token_list <-     
@@ -1255,8 +1224,7 @@ Ast::Base * Parser::ReductionRuleHandler0047 ()
         // location from the first appended list element).
         return new RuleTokenList(FL);
     
-#line 1259 "trison_parser.cpp"
-    return NULL;
+#line 1228 "trison_parser.cpp"
 }
 
 // rule 48: rule_token <- token_id:token_id ':' ID:assigned_id    
@@ -1271,8 +1239,7 @@ Ast::Base * Parser::ReductionRuleHandler0048 ()
 
         return new RuleToken(token_id, assigned_id);
     
-#line 1275 "trison_parser.cpp"
-    return NULL;
+#line 1243 "trison_parser.cpp"
 }
 
 // rule 49: rule_token <- token_id:token_id    
@@ -1285,8 +1252,7 @@ Ast::Base * Parser::ReductionRuleHandler0049 ()
 
         return new RuleToken(token_id, NULL);
     
-#line 1289 "trison_parser.cpp"
-    return NULL;
+#line 1256 "trison_parser.cpp"
 }
 
 // rule 50: rule_token <- DIRECTIVE_ERROR:throwaway    
@@ -1300,8 +1266,7 @@ Ast::Base * Parser::ReductionRuleHandler0050 ()
         delete throwaway;
         return new RuleToken(new TokenIdId("%error", FL), NULL);
     
-#line 1304 "trison_parser.cpp"
-    return NULL;
+#line 1270 "trison_parser.cpp"
 }
 
 // rule 51: rule_precedence_directive <- PREC:throwaway ID:id    
@@ -1317,8 +1282,7 @@ Ast::Base * Parser::ReductionRuleHandler0051 ()
         delete throwaway;
         return id;
     
-#line 1321 "trison_parser.cpp"
-    return NULL;
+#line 1286 "trison_parser.cpp"
 }
 
 // rule 52: rule_precedence_directive <-     
@@ -1329,8 +1293,7 @@ Ast::Base * Parser::ReductionRuleHandler0052 ()
 
         return NULL;
     
-#line 1333 "trison_parser.cpp"
-    return NULL;
+#line 1297 "trison_parser.cpp"
 }
 
 
@@ -2197,5 +2160,5 @@ Parser::Token::Type Parser::Scan ()
 
 } // end of namespace Trison
 
-#line 2201 "trison_parser.cpp"
+#line 2164 "trison_parser.cpp"
 

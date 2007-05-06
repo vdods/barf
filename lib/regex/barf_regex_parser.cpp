@@ -476,7 +476,6 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
     assert(0 < m_reduction_rule_token_count);
     return m_token_stack[m_token_stack.size() - m_reduction_rule_token_count];
 
-    return NULL;
 }
 
 // rule 1: regex <- regex:regex '|' branch:branch    
@@ -492,8 +491,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
         regex->Append(branch);
         return regex;
     
-#line 496 "barf_regex_parser.cpp"
-    return NULL;
+#line 495 "barf_regex_parser.cpp"
 }
 
 // rule 2: regex <- branch:branch    
@@ -508,8 +506,7 @@ Ast::Base * Parser::ReductionRuleHandler0002 ()
         regex->Append(branch);
         return regex;
     
-#line 512 "barf_regex_parser.cpp"
-    return NULL;
+#line 510 "barf_regex_parser.cpp"
 }
 
 // rule 3: branch <- branch_which_didnt_just_accept_an_atom:branch    
@@ -520,8 +517,7 @@ Ast::Base * Parser::ReductionRuleHandler0003 ()
 
 #line 325 "barf_regex_parser.trison"
  return branch; 
-#line 524 "barf_regex_parser.cpp"
-    return NULL;
+#line 521 "barf_regex_parser.cpp"
 }
 
 // rule 4: branch <- branch_which_just_accepted_an_atom:branch    
@@ -532,8 +528,7 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
 
 #line 326 "barf_regex_parser.trison"
  return branch; 
-#line 536 "barf_regex_parser.cpp"
-    return NULL;
+#line 532 "barf_regex_parser.cpp"
 }
 
 // rule 5: branch <-     
@@ -542,8 +537,7 @@ Ast::Base * Parser::ReductionRuleHandler0005 ()
 
 #line 327 "barf_regex_parser.trison"
  return new Branch(); 
-#line 546 "barf_regex_parser.cpp"
-    return NULL;
+#line 541 "barf_regex_parser.cpp"
 }
 
 // rule 6: branch_which_didnt_just_accept_an_atom <- branch_which_just_accepted_an_atom:branch bound:bound    
@@ -559,8 +553,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
         branch->AddBound(bound);
         return branch;
     
-#line 563 "barf_regex_parser.cpp"
-    return NULL;
+#line 557 "barf_regex_parser.cpp"
 }
 
 // rule 7: branch_which_just_accepted_an_atom <- branch_which_just_accepted_an_atom:branch atom:atom    
@@ -576,8 +569,7 @@ Ast::Base * Parser::ReductionRuleHandler0007 ()
         branch->AddAtom(atom);
         return branch;
     
-#line 580 "barf_regex_parser.cpp"
-    return NULL;
+#line 573 "barf_regex_parser.cpp"
 }
 
 // rule 8: branch_which_just_accepted_an_atom <- branch_which_didnt_just_accept_an_atom:branch atom:atom    
@@ -593,8 +585,7 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
         branch->AddAtom(atom);
         return branch;
     
-#line 597 "barf_regex_parser.cpp"
-    return NULL;
+#line 589 "barf_regex_parser.cpp"
 }
 
 // rule 9: branch_which_just_accepted_an_atom <- atom:atom    
@@ -609,8 +600,7 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
         branch->AddAtom(atom);
         return branch;
     
-#line 613 "barf_regex_parser.cpp"
-    return NULL;
+#line 604 "barf_regex_parser.cpp"
 }
 
 // rule 10: atom <- '{' id:macro_name '}'    
@@ -629,8 +619,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
             THROW_STRING("undefined macro \"" + macro_name->GetText() + "\"");
         return macro_regex;
     
-#line 633 "barf_regex_parser.cpp"
-    return NULL;
+#line 623 "barf_regex_parser.cpp"
 }
 
 // rule 11: atom <- '(' regex:regex ')'    
@@ -641,8 +630,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
 
 #line 378 "barf_regex_parser.trison"
  return regex; 
-#line 645 "barf_regex_parser.cpp"
-    return NULL;
+#line 634 "barf_regex_parser.cpp"
 }
 
 // rule 12: atom <- '(' ')'    
@@ -651,8 +639,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
 
 #line 379 "barf_regex_parser.trison"
  return new RegularExpression(); 
-#line 655 "barf_regex_parser.cpp"
-    return NULL;
+#line 643 "barf_regex_parser.cpp"
 }
 
 // rule 13: atom <- '^'    
@@ -661,8 +648,7 @@ Ast::Base * Parser::ReductionRuleHandler0013 ()
 
 #line 380 "barf_regex_parser.trison"
  return new Char('\0', CT_BEGINNING_OF_LINE); 
-#line 665 "barf_regex_parser.cpp"
-    return NULL;
+#line 652 "barf_regex_parser.cpp"
 }
 
 // rule 14: atom <- '$'    
@@ -671,8 +657,7 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
 
 #line 381 "barf_regex_parser.trison"
  return new Char('\0', CT_END_OF_LINE); 
-#line 675 "barf_regex_parser.cpp"
-    return NULL;
+#line 661 "barf_regex_parser.cpp"
 }
 
 // rule 15: atom <- '.'    
@@ -681,8 +666,7 @@ Ast::Base * Parser::ReductionRuleHandler0015 ()
 
 #line 382 "barf_regex_parser.trison"
  return new BracketCharSet('\n', true); 
-#line 685 "barf_regex_parser.cpp"
-    return NULL;
+#line 670 "barf_regex_parser.cpp"
 }
 
 // rule 16: atom <- atom_normal_char:ch    
@@ -693,8 +677,7 @@ Ast::Base * Parser::ReductionRuleHandler0016 ()
 
 #line 383 "barf_regex_parser.trison"
  return ch; 
-#line 697 "barf_regex_parser.cpp"
-    return NULL;
+#line 681 "barf_regex_parser.cpp"
 }
 
 // rule 17: atom <- '\\' atom_normal_char:ch    
@@ -705,8 +688,7 @@ Ast::Base * Parser::ReductionRuleHandler0017 ()
 
 #line 384 "barf_regex_parser.trison"
  ch->Escape(); return ch; 
-#line 709 "barf_regex_parser.cpp"
-    return NULL;
+#line 692 "barf_regex_parser.cpp"
 }
 
 // rule 18: atom <- '\\' atom_control_char:ch    
@@ -717,8 +699,7 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
 
 #line 385 "barf_regex_parser.trison"
  return ch; 
-#line 721 "barf_regex_parser.cpp"
-    return NULL;
+#line 703 "barf_regex_parser.cpp"
 }
 
 // rule 19: atom <- bracket_expression:exp    
@@ -729,8 +710,7 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
 
 #line 386 "barf_regex_parser.trison"
  return exp; 
-#line 733 "barf_regex_parser.cpp"
-    return NULL;
+#line 714 "barf_regex_parser.cpp"
 }
 
 // rule 20: bound <- '*'    
@@ -739,8 +719,7 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
 
 #line 391 "barf_regex_parser.trison"
  return new Bound(0, Bound::NO_UPPER_BOUND); 
-#line 743 "barf_regex_parser.cpp"
-    return NULL;
+#line 723 "barf_regex_parser.cpp"
 }
 
 // rule 21: bound <- '+'    
@@ -749,8 +728,7 @@ Ast::Base * Parser::ReductionRuleHandler0021 ()
 
 #line 393 "barf_regex_parser.trison"
  return new Bound(1, Bound::NO_UPPER_BOUND); 
-#line 753 "barf_regex_parser.cpp"
-    return NULL;
+#line 732 "barf_regex_parser.cpp"
 }
 
 // rule 22: bound <- '?'    
@@ -759,8 +737,7 @@ Ast::Base * Parser::ReductionRuleHandler0022 ()
 
 #line 395 "barf_regex_parser.trison"
  return new Bound(0, 1); 
-#line 763 "barf_regex_parser.cpp"
-    return NULL;
+#line 741 "barf_regex_parser.cpp"
 }
 
 // rule 23: bound <- '{' integer:exact_bound '}'    
@@ -776,8 +753,7 @@ Ast::Base * Parser::ReductionRuleHandler0023 ()
         delete exact_bound;
         return bound;
     
-#line 780 "barf_regex_parser.cpp"
-    return NULL;
+#line 757 "barf_regex_parser.cpp"
 }
 
 // rule 24: bound <- '{' integer:lower_bound ',' '}'    
@@ -791,8 +767,7 @@ Ast::Base * Parser::ReductionRuleHandler0024 ()
         assert(lower_bound->GetValue() >= 0);
         return new Bound(lower_bound->GetValue(), Bound::NO_UPPER_BOUND);
     
-#line 795 "barf_regex_parser.cpp"
-    return NULL;
+#line 771 "barf_regex_parser.cpp"
 }
 
 // rule 25: bound <- '{' integer:lower_bound ',' integer:upper_bound '}'    
@@ -831,8 +806,7 @@ Ast::Base * Parser::ReductionRuleHandler0025 ()
         delete upper_bound;
         return bound;
     
-#line 835 "barf_regex_parser.cpp"
-    return NULL;
+#line 810 "barf_regex_parser.cpp"
 }
 
 // rule 26: bracket_expression <- '[' bracket_char_set:bracket_char_set ']'    
@@ -847,8 +821,7 @@ Ast::Base * Parser::ReductionRuleHandler0026 ()
             THROW_STRING("invalid empty bracket expression");
         return bracket_char_set;
     
-#line 851 "barf_regex_parser.cpp"
-    return NULL;
+#line 825 "barf_regex_parser.cpp"
 }
 
 // rule 27: bracket_expression <- '[' '^' bracket_char_set:bracket_char_set ']'    
@@ -864,8 +837,7 @@ Ast::Base * Parser::ReductionRuleHandler0027 ()
         bracket_char_set->Negate();
         return bracket_char_set;
     
-#line 868 "barf_regex_parser.cpp"
-    return NULL;
+#line 841 "barf_regex_parser.cpp"
 }
 
 // rule 28: bracket_char_set <- bracket_char_set:bracket_char_set bracket_expression_char:ch    
@@ -882,8 +854,7 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
         delete ch;
         return bracket_char_set;
     
-#line 886 "barf_regex_parser.cpp"
-    return NULL;
+#line 858 "barf_regex_parser.cpp"
 }
 
 // rule 29: bracket_char_set <- bracket_char_set:bracket_char_set bracket_expression_char:begin_range '-' bracket_expression_char:end_range    
@@ -907,8 +878,7 @@ Ast::Base * Parser::ReductionRuleHandler0029 ()
         delete end_range;
         return bracket_char_set;
     
-#line 911 "barf_regex_parser.cpp"
-    return NULL;
+#line 882 "barf_regex_parser.cpp"
 }
 
 // rule 30: bracket_char_set <- bracket_char_set:bracket_char_set '[' ':' id:id ':' ']'    
@@ -925,8 +895,7 @@ Ast::Base * Parser::ReductionRuleHandler0030 ()
         delete id;
         return bracket_char_set;
     
-#line 929 "barf_regex_parser.cpp"
-    return NULL;
+#line 899 "barf_regex_parser.cpp"
 }
 
 // rule 31: bracket_char_set <-     
@@ -938,8 +907,7 @@ Ast::Base * Parser::ReductionRuleHandler0031 ()
         BracketCharSet *bracket_char_set = new BracketCharSet();
         return bracket_char_set;
     
-#line 942 "barf_regex_parser.cpp"
-    return NULL;
+#line 911 "barf_regex_parser.cpp"
 }
 
 // rule 32: bracket_expression_char <- bracket_expression_normal_char:normal_char    
@@ -950,8 +918,7 @@ Ast::Base * Parser::ReductionRuleHandler0032 ()
 
 #line 500 "barf_regex_parser.trison"
  return normal_char; 
-#line 954 "barf_regex_parser.cpp"
-    return NULL;
+#line 922 "barf_regex_parser.cpp"
 }
 
 // rule 33: bracket_expression_char <- '\\' bracket_expression_normal_char:normal_char    
@@ -962,8 +929,7 @@ Ast::Base * Parser::ReductionRuleHandler0033 ()
 
 #line 502 "barf_regex_parser.trison"
  normal_char->Escape(); return normal_char; 
-#line 966 "barf_regex_parser.cpp"
-    return NULL;
+#line 933 "barf_regex_parser.cpp"
 }
 
 // rule 34: bracket_expression_char <- '\\' bracket_expression_control_char:control_char    
@@ -974,8 +940,7 @@ Ast::Base * Parser::ReductionRuleHandler0034 ()
 
 #line 504 "barf_regex_parser.trison"
  return control_char; 
-#line 978 "barf_regex_parser.cpp"
-    return NULL;
+#line 944 "barf_regex_parser.cpp"
 }
 
 // rule 35: atom_control_char <- '|'    
@@ -984,8 +949,7 @@ Ast::Base * Parser::ReductionRuleHandler0035 ()
 
 #line 520 "barf_regex_parser.trison"
  return new Char('|'); 
-#line 988 "barf_regex_parser.cpp"
-    return NULL;
+#line 953 "barf_regex_parser.cpp"
 }
 
 // rule 36: atom_control_char <- '('    
@@ -994,8 +958,7 @@ Ast::Base * Parser::ReductionRuleHandler0036 ()
 
 #line 522 "barf_regex_parser.trison"
  return new Char('('); 
-#line 998 "barf_regex_parser.cpp"
-    return NULL;
+#line 962 "barf_regex_parser.cpp"
 }
 
 // rule 37: atom_control_char <- ')'    
@@ -1004,8 +967,7 @@ Ast::Base * Parser::ReductionRuleHandler0037 ()
 
 #line 524 "barf_regex_parser.trison"
  return new Char(')'); 
-#line 1008 "barf_regex_parser.cpp"
-    return NULL;
+#line 971 "barf_regex_parser.cpp"
 }
 
 // rule 38: atom_control_char <- '{'    
@@ -1014,8 +976,7 @@ Ast::Base * Parser::ReductionRuleHandler0038 ()
 
 #line 526 "barf_regex_parser.trison"
  return new Char('{'); 
-#line 1018 "barf_regex_parser.cpp"
-    return NULL;
+#line 980 "barf_regex_parser.cpp"
 }
 
 // rule 39: atom_control_char <- '}'    
@@ -1024,8 +985,7 @@ Ast::Base * Parser::ReductionRuleHandler0039 ()
 
 #line 528 "barf_regex_parser.trison"
  return new Char('}'); 
-#line 1028 "barf_regex_parser.cpp"
-    return NULL;
+#line 989 "barf_regex_parser.cpp"
 }
 
 // rule 40: atom_control_char <- '['    
@@ -1034,8 +994,7 @@ Ast::Base * Parser::ReductionRuleHandler0040 ()
 
 #line 530 "barf_regex_parser.trison"
  return new Char('['); 
-#line 1038 "barf_regex_parser.cpp"
-    return NULL;
+#line 998 "barf_regex_parser.cpp"
 }
 
 // rule 41: atom_control_char <- ']'    
@@ -1044,8 +1003,7 @@ Ast::Base * Parser::ReductionRuleHandler0041 ()
 
 #line 532 "barf_regex_parser.trison"
  return new Char(']'); 
-#line 1048 "barf_regex_parser.cpp"
-    return NULL;
+#line 1007 "barf_regex_parser.cpp"
 }
 
 // rule 42: atom_control_char <- '?'    
@@ -1054,8 +1012,7 @@ Ast::Base * Parser::ReductionRuleHandler0042 ()
 
 #line 534 "barf_regex_parser.trison"
  return new Char('?'); 
-#line 1058 "barf_regex_parser.cpp"
-    return NULL;
+#line 1016 "barf_regex_parser.cpp"
 }
 
 // rule 43: atom_control_char <- '*'    
@@ -1064,8 +1021,7 @@ Ast::Base * Parser::ReductionRuleHandler0043 ()
 
 #line 536 "barf_regex_parser.trison"
  return new Char('*'); 
-#line 1068 "barf_regex_parser.cpp"
-    return NULL;
+#line 1025 "barf_regex_parser.cpp"
 }
 
 // rule 44: atom_control_char <- '+'    
@@ -1074,8 +1030,7 @@ Ast::Base * Parser::ReductionRuleHandler0044 ()
 
 #line 538 "barf_regex_parser.trison"
  return new Char('+'); 
-#line 1078 "barf_regex_parser.cpp"
-    return NULL;
+#line 1034 "barf_regex_parser.cpp"
 }
 
 // rule 45: atom_control_char <- '.'    
@@ -1084,8 +1039,7 @@ Ast::Base * Parser::ReductionRuleHandler0045 ()
 
 #line 540 "barf_regex_parser.trison"
  return new Char('.'); 
-#line 1088 "barf_regex_parser.cpp"
-    return NULL;
+#line 1043 "barf_regex_parser.cpp"
 }
 
 // rule 46: atom_control_char <- '^'    
@@ -1094,8 +1048,7 @@ Ast::Base * Parser::ReductionRuleHandler0046 ()
 
 #line 542 "barf_regex_parser.trison"
  return new Char('^'); 
-#line 1098 "barf_regex_parser.cpp"
-    return NULL;
+#line 1052 "barf_regex_parser.cpp"
 }
 
 // rule 47: atom_control_char <- '$'    
@@ -1104,8 +1057,7 @@ Ast::Base * Parser::ReductionRuleHandler0047 ()
 
 #line 544 "barf_regex_parser.trison"
  return new Char('$'); 
-#line 1108 "barf_regex_parser.cpp"
-    return NULL;
+#line 1061 "barf_regex_parser.cpp"
 }
 
 // rule 48: atom_control_char <- '\\'    
@@ -1114,8 +1066,7 @@ Ast::Base * Parser::ReductionRuleHandler0048 ()
 
 #line 546 "barf_regex_parser.trison"
  return new Char('\\'); 
-#line 1118 "barf_regex_parser.cpp"
-    return NULL;
+#line 1070 "barf_regex_parser.cpp"
 }
 
 // rule 49: atom_normal_char <- ALPHA:alpha    
@@ -1126,8 +1077,7 @@ Ast::Base * Parser::ReductionRuleHandler0049 ()
 
 #line 557 "barf_regex_parser.trison"
  return alpha; 
-#line 1130 "barf_regex_parser.cpp"
-    return NULL;
+#line 1081 "barf_regex_parser.cpp"
 }
 
 // rule 50: atom_normal_char <- DIGIT:digit    
@@ -1138,8 +1088,7 @@ Ast::Base * Parser::ReductionRuleHandler0050 ()
 
 #line 558 "barf_regex_parser.trison"
  return digit; 
-#line 1142 "barf_regex_parser.cpp"
-    return NULL;
+#line 1092 "barf_regex_parser.cpp"
 }
 
 // rule 51: atom_normal_char <- CHAR:ch    
@@ -1150,8 +1099,7 @@ Ast::Base * Parser::ReductionRuleHandler0051 ()
 
 #line 559 "barf_regex_parser.trison"
  return ch; 
-#line 1154 "barf_regex_parser.cpp"
-    return NULL;
+#line 1103 "barf_regex_parser.cpp"
 }
 
 // rule 52: atom_normal_char <- ','    
@@ -1160,8 +1108,7 @@ Ast::Base * Parser::ReductionRuleHandler0052 ()
 
 #line 560 "barf_regex_parser.trison"
  return new Char(','); 
-#line 1164 "barf_regex_parser.cpp"
-    return NULL;
+#line 1112 "barf_regex_parser.cpp"
 }
 
 // rule 53: atom_normal_char <- '-'    
@@ -1170,8 +1117,7 @@ Ast::Base * Parser::ReductionRuleHandler0053 ()
 
 #line 561 "barf_regex_parser.trison"
  return new Char('-'); 
-#line 1174 "barf_regex_parser.cpp"
-    return NULL;
+#line 1121 "barf_regex_parser.cpp"
 }
 
 // rule 54: atom_normal_char <- ':'    
@@ -1180,8 +1126,7 @@ Ast::Base * Parser::ReductionRuleHandler0054 ()
 
 #line 562 "barf_regex_parser.trison"
  return new Char(':'); 
-#line 1184 "barf_regex_parser.cpp"
-    return NULL;
+#line 1130 "barf_regex_parser.cpp"
 }
 
 // rule 55: bracket_expression_control_char <- '-'    
@@ -1190,8 +1135,7 @@ Ast::Base * Parser::ReductionRuleHandler0055 ()
 
 #line 574 "barf_regex_parser.trison"
  return new Char('-'); 
-#line 1194 "barf_regex_parser.cpp"
-    return NULL;
+#line 1139 "barf_regex_parser.cpp"
 }
 
 // rule 56: bracket_expression_control_char <- '^'    
@@ -1200,8 +1144,7 @@ Ast::Base * Parser::ReductionRuleHandler0056 ()
 
 #line 576 "barf_regex_parser.trison"
  return new Char('^'); 
-#line 1204 "barf_regex_parser.cpp"
-    return NULL;
+#line 1148 "barf_regex_parser.cpp"
 }
 
 // rule 57: bracket_expression_control_char <- '['    
@@ -1210,8 +1153,7 @@ Ast::Base * Parser::ReductionRuleHandler0057 ()
 
 #line 578 "barf_regex_parser.trison"
  return new Char('['); 
-#line 1214 "barf_regex_parser.cpp"
-    return NULL;
+#line 1157 "barf_regex_parser.cpp"
 }
 
 // rule 58: bracket_expression_control_char <- ']'    
@@ -1220,8 +1162,7 @@ Ast::Base * Parser::ReductionRuleHandler0058 ()
 
 #line 580 "barf_regex_parser.trison"
  return new Char(']'); 
-#line 1224 "barf_regex_parser.cpp"
-    return NULL;
+#line 1166 "barf_regex_parser.cpp"
 }
 
 // rule 59: bracket_expression_control_char <- '\\'    
@@ -1230,8 +1171,7 @@ Ast::Base * Parser::ReductionRuleHandler0059 ()
 
 #line 582 "barf_regex_parser.trison"
  return new Char('\\'); 
-#line 1234 "barf_regex_parser.cpp"
-    return NULL;
+#line 1175 "barf_regex_parser.cpp"
 }
 
 // rule 60: bracket_expression_normal_char <- ALPHA:alpha    
@@ -1242,8 +1182,7 @@ Ast::Base * Parser::ReductionRuleHandler0060 ()
 
 #line 593 "barf_regex_parser.trison"
  return alpha; 
-#line 1246 "barf_regex_parser.cpp"
-    return NULL;
+#line 1186 "barf_regex_parser.cpp"
 }
 
 // rule 61: bracket_expression_normal_char <- DIGIT:digit    
@@ -1254,8 +1193,7 @@ Ast::Base * Parser::ReductionRuleHandler0061 ()
 
 #line 594 "barf_regex_parser.trison"
  return digit; 
-#line 1258 "barf_regex_parser.cpp"
-    return NULL;
+#line 1197 "barf_regex_parser.cpp"
 }
 
 // rule 62: bracket_expression_normal_char <- CHAR:ch    
@@ -1266,8 +1204,7 @@ Ast::Base * Parser::ReductionRuleHandler0062 ()
 
 #line 595 "barf_regex_parser.trison"
  return ch; 
-#line 1270 "barf_regex_parser.cpp"
-    return NULL;
+#line 1208 "barf_regex_parser.cpp"
 }
 
 // rule 63: bracket_expression_normal_char <- '|'    
@@ -1276,8 +1213,7 @@ Ast::Base * Parser::ReductionRuleHandler0063 ()
 
 #line 596 "barf_regex_parser.trison"
  return new Char('|'); 
-#line 1280 "barf_regex_parser.cpp"
-    return NULL;
+#line 1217 "barf_regex_parser.cpp"
 }
 
 // rule 64: bracket_expression_normal_char <- ':'    
@@ -1286,8 +1222,7 @@ Ast::Base * Parser::ReductionRuleHandler0064 ()
 
 #line 597 "barf_regex_parser.trison"
  return new Char(':'); 
-#line 1290 "barf_regex_parser.cpp"
-    return NULL;
+#line 1226 "barf_regex_parser.cpp"
 }
 
 // rule 65: bracket_expression_normal_char <- '?'    
@@ -1296,8 +1231,7 @@ Ast::Base * Parser::ReductionRuleHandler0065 ()
 
 #line 598 "barf_regex_parser.trison"
  return new Char('?'); 
-#line 1300 "barf_regex_parser.cpp"
-    return NULL;
+#line 1235 "barf_regex_parser.cpp"
 }
 
 // rule 66: bracket_expression_normal_char <- '*'    
@@ -1306,8 +1240,7 @@ Ast::Base * Parser::ReductionRuleHandler0066 ()
 
 #line 599 "barf_regex_parser.trison"
  return new Char('*'); 
-#line 1310 "barf_regex_parser.cpp"
-    return NULL;
+#line 1244 "barf_regex_parser.cpp"
 }
 
 // rule 67: bracket_expression_normal_char <- '+'    
@@ -1316,8 +1249,7 @@ Ast::Base * Parser::ReductionRuleHandler0067 ()
 
 #line 600 "barf_regex_parser.trison"
  return new Char('+'); 
-#line 1320 "barf_regex_parser.cpp"
-    return NULL;
+#line 1253 "barf_regex_parser.cpp"
 }
 
 // rule 68: bracket_expression_normal_char <- '.'    
@@ -1326,8 +1258,7 @@ Ast::Base * Parser::ReductionRuleHandler0068 ()
 
 #line 601 "barf_regex_parser.trison"
  return new Char('.'); 
-#line 1330 "barf_regex_parser.cpp"
-    return NULL;
+#line 1262 "barf_regex_parser.cpp"
 }
 
 // rule 69: bracket_expression_normal_char <- '$'    
@@ -1336,8 +1267,7 @@ Ast::Base * Parser::ReductionRuleHandler0069 ()
 
 #line 602 "barf_regex_parser.trison"
  return new Char('$'); 
-#line 1340 "barf_regex_parser.cpp"
-    return NULL;
+#line 1271 "barf_regex_parser.cpp"
 }
 
 // rule 70: bracket_expression_normal_char <- ','    
@@ -1346,8 +1276,7 @@ Ast::Base * Parser::ReductionRuleHandler0070 ()
 
 #line 603 "barf_regex_parser.trison"
  return new Char(','); 
-#line 1350 "barf_regex_parser.cpp"
-    return NULL;
+#line 1280 "barf_regex_parser.cpp"
 }
 
 // rule 71: bracket_expression_normal_char <- '('    
@@ -1356,8 +1285,7 @@ Ast::Base * Parser::ReductionRuleHandler0071 ()
 
 #line 604 "barf_regex_parser.trison"
  return new Char('('); 
-#line 1360 "barf_regex_parser.cpp"
-    return NULL;
+#line 1289 "barf_regex_parser.cpp"
 }
 
 // rule 72: bracket_expression_normal_char <- ')'    
@@ -1366,8 +1294,7 @@ Ast::Base * Parser::ReductionRuleHandler0072 ()
 
 #line 605 "barf_regex_parser.trison"
  return new Char(')'); 
-#line 1370 "barf_regex_parser.cpp"
-    return NULL;
+#line 1298 "barf_regex_parser.cpp"
 }
 
 // rule 73: bracket_expression_normal_char <- '{'    
@@ -1376,8 +1303,7 @@ Ast::Base * Parser::ReductionRuleHandler0073 ()
 
 #line 606 "barf_regex_parser.trison"
  return new Char('{'); 
-#line 1380 "barf_regex_parser.cpp"
-    return NULL;
+#line 1307 "barf_regex_parser.cpp"
 }
 
 // rule 74: bracket_expression_normal_char <- '}'    
@@ -1386,8 +1312,7 @@ Ast::Base * Parser::ReductionRuleHandler0074 ()
 
 #line 607 "barf_regex_parser.trison"
  return new Char('}'); 
-#line 1390 "barf_regex_parser.cpp"
-    return NULL;
+#line 1316 "barf_regex_parser.cpp"
 }
 
 // rule 75: id <- id:id ALPHA:alpha    
@@ -1405,8 +1330,7 @@ Ast::Base * Parser::ReductionRuleHandler0075 ()
         delete alpha;
         return id;
     
-#line 1409 "barf_regex_parser.cpp"
-    return NULL;
+#line 1334 "barf_regex_parser.cpp"
 }
 
 // rule 76: id <- id:id CHAR:ch    
@@ -1424,8 +1348,7 @@ Ast::Base * Parser::ReductionRuleHandler0076 ()
         delete ch;
         return id;
     
-#line 1428 "barf_regex_parser.cpp"
-    return NULL;
+#line 1352 "barf_regex_parser.cpp"
 }
 
 // rule 77: id <- id:id DIGIT:digit    
@@ -1443,8 +1366,7 @@ Ast::Base * Parser::ReductionRuleHandler0077 ()
         delete digit;
         return id;
     
-#line 1447 "barf_regex_parser.cpp"
-    return NULL;
+#line 1370 "barf_regex_parser.cpp"
 }
 
 // rule 78: id <- ALPHA:alpha    
@@ -1461,8 +1383,7 @@ Ast::Base * Parser::ReductionRuleHandler0078 ()
         delete alpha;
         return id;
     
-#line 1465 "barf_regex_parser.cpp"
-    return NULL;
+#line 1387 "barf_regex_parser.cpp"
 }
 
 // rule 79: id <- CHAR:ch    
@@ -1479,8 +1400,7 @@ Ast::Base * Parser::ReductionRuleHandler0079 ()
         delete ch;
         return id;
     
-#line 1483 "barf_regex_parser.cpp"
-    return NULL;
+#line 1404 "barf_regex_parser.cpp"
 }
 
 // rule 80: integer <- integer:integer DIGIT:digit    
@@ -1499,8 +1419,7 @@ Ast::Base * Parser::ReductionRuleHandler0080 ()
         delete digit;
         return integer;
     
-#line 1503 "barf_regex_parser.cpp"
-    return NULL;
+#line 1423 "barf_regex_parser.cpp"
 }
 
 // rule 81: integer <- DIGIT:digit    
@@ -1515,8 +1434,7 @@ Ast::Base * Parser::ReductionRuleHandler0081 ()
         delete digit;
         return integer;
     
-#line 1519 "barf_regex_parser.cpp"
-    return NULL;
+#line 1438 "barf_regex_parser.cpp"
 }
 
 
@@ -2784,5 +2702,5 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Regex
 } // end of namespace Barf
 
-#line 2788 "barf_regex_parser.cpp"
+#line 2706 "barf_regex_parser.cpp"
 

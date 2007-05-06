@@ -483,7 +483,6 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
     assert(0 < m_reduction_rule_token_count);
     return m_token_stack[m_token_stack.size() - m_reduction_rule_token_count];
 
-    return NULL;
 }
 
 // rule 1: root <- at_least_zero_newlines target:target directives    
@@ -501,8 +500,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
             m_add_codespec_list,
             m_add_directive_map);
     
-#line 505 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 504 "barf_targetspec_parser.cpp"
 }
 
 // rule 2: target <- DIRECTIVE_TARGET:throwaway ID:target_id at_least_one_newline    
@@ -518,26 +516,34 @@ Ast::Base * Parser::ReductionRuleHandler0002 ()
         delete throwaway;
         return target_id;
     
-#line 522 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 520 "barf_targetspec_parser.cpp"
 }
 
 // rule 3: directives <- directives add_codespec at_least_one_newline    
 Ast::Base * Parser::ReductionRuleHandler0003 ()
 {
-    return NULL;
+
+#line 204 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 529 "barf_targetspec_parser.cpp"
 }
 
 // rule 4: directives <- directives add_directive at_least_one_newline    
 Ast::Base * Parser::ReductionRuleHandler0004 ()
 {
-    return NULL;
+
+#line 206 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 538 "barf_targetspec_parser.cpp"
 }
 
 // rule 5: directives <-     
 Ast::Base * Parser::ReductionRuleHandler0005 ()
 {
-    return NULL;
+
+#line 208 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 547 "barf_targetspec_parser.cpp"
 }
 
 // rule 6: add_codespec <- DIRECTIVE_ADD_CODESPEC:throwaway STRING_LITERAL:filename ID:filename_directive_id    
@@ -565,8 +571,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
         delete throwaway;
         return NULL;
     
-#line 569 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 575 "barf_targetspec_parser.cpp"
 }
 
 // rule 7: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway ID:directive_to_add_id param_spec:param_type    
@@ -589,8 +594,7 @@ Ast::Base * Parser::ReductionRuleHandler0007 ()
         delete param_type;
         return NULL;
     
-#line 593 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 598 "barf_targetspec_parser.cpp"
 }
 
 // rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway1 ID:directive_to_add_id param_spec:param_type DIRECTIVE_DEFAULT:throwaway2 default_value:default_value    
@@ -628,8 +632,7 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
         delete throwaway2;
         return NULL;
     
-#line 632 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 636 "barf_targetspec_parser.cpp"
 }
 
 // rule 9: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE:throwaway ID:directive_to_add_id param_spec:param_type    
@@ -652,8 +655,7 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
         delete param_type;
         return NULL;
     
-#line 656 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 659 "barf_targetspec_parser.cpp"
 }
 
 // rule 10: param_spec <-     
@@ -664,8 +666,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
 
         return new ParamType(Ast::AT_NONE);
     
-#line 668 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 670 "barf_targetspec_parser.cpp"
 }
 
 // rule 11: param_spec <- DIRECTIVE_ID:throwaway    
@@ -679,8 +680,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
         delete throwaway;
         return new ParamType(Ast::AT_ID);
     
-#line 683 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 684 "barf_targetspec_parser.cpp"
 }
 
 // rule 12: param_spec <- DIRECTIVE_STRING:throwaway    
@@ -695,7 +695,6 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
         return new ParamType(Ast::AT_STRING);
     
 #line 698 "barf_targetspec_parser.cpp"
-    return NULL;
 }
 
 // rule 13: param_spec <- DIRECTIVE_DUMB_CODE_BLOCK:throwaway    
@@ -709,8 +708,7 @@ Ast::Base * Parser::ReductionRuleHandler0013 ()
         delete throwaway;
         return new ParamType(Ast::AT_DUMB_CODE_BLOCK);
     
-#line 713 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 712 "barf_targetspec_parser.cpp"
 }
 
 // rule 14: param_spec <- DIRECTIVE_STRICT_CODE_BLOCK:throwaway    
@@ -724,8 +722,7 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
         delete throwaway;
         return new ParamType(Ast::AT_STRICT_CODE_BLOCK);
     
-#line 728 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 726 "barf_targetspec_parser.cpp"
 }
 
 // rule 15: default_value <- ID:value    
@@ -736,8 +733,7 @@ Ast::Base * Parser::ReductionRuleHandler0015 ()
 
 #line 311 "barf_targetspec_parser.trison"
  return value; 
-#line 740 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 737 "barf_targetspec_parser.cpp"
 }
 
 // rule 16: default_value <- STRING_LITERAL:value    
@@ -748,8 +744,7 @@ Ast::Base * Parser::ReductionRuleHandler0016 ()
 
 #line 312 "barf_targetspec_parser.trison"
  return value; 
-#line 752 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 748 "barf_targetspec_parser.cpp"
 }
 
 // rule 17: default_value <- DUMB_CODE_BLOCK:value    
@@ -760,8 +755,7 @@ Ast::Base * Parser::ReductionRuleHandler0017 ()
 
 #line 313 "barf_targetspec_parser.trison"
  return value; 
-#line 764 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 759 "barf_targetspec_parser.cpp"
 }
 
 // rule 18: default_value <- STRICT_CODE_BLOCK:value    
@@ -772,32 +766,43 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
 
 #line 314 "barf_targetspec_parser.trison"
  return value; 
-#line 776 "barf_targetspec_parser.cpp"
-    return NULL;
+#line 770 "barf_targetspec_parser.cpp"
 }
 
 // rule 19: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0019 ()
 {
-    return NULL;
+
+#line 323 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 779 "barf_targetspec_parser.cpp"
 }
 
 // rule 20: at_least_zero_newlines <-     
 Ast::Base * Parser::ReductionRuleHandler0020 ()
 {
-    return NULL;
+
+#line 325 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 788 "barf_targetspec_parser.cpp"
 }
 
 // rule 21: at_least_one_newline <- at_least_one_newline NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0021 ()
 {
-    return NULL;
+
+#line 330 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 797 "barf_targetspec_parser.cpp"
 }
 
 // rule 22: at_least_one_newline <- NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0022 ()
 {
-    return NULL;
+
+#line 332 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 806 "barf_targetspec_parser.cpp"
 }
 
 
@@ -1226,5 +1231,5 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace TargetSpec
 } // end of namespace Barf
 
-#line 1230 "barf_targetspec_parser.cpp"
+#line 1235 "barf_targetspec_parser.cpp"
 

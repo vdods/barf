@@ -1341,10 +1341,7 @@ void StateMachine::GeneratePreprocessor ()
                        << rule->GetCodeBlock()->GetText()
                        << returning_line_directive << "\n";
             }
-            buffer << "    return "
-                   << m_preprocessor.GetReplacementValue(Preprocessor::BASE_ASSIGNED_TYPE_SENTINEL)
-                   << ";\n"
-                   << "}\n"
+            buffer << "}\n"
                    << "\n";
         }
 

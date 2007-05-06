@@ -267,9 +267,9 @@ if_statement %type "Conditional *"
 
 else_statement
 :
-    START_CODE ELSE END_CODE
+    START_CODE ELSE END_CODE { return NULL; }
 |
-    CODE_LINE ELSE CODE_NEWLINE
+    CODE_LINE ELSE CODE_NEWLINE { return NULL; }
 ;
 
 else_if_statement %type "Conditional *"
@@ -283,9 +283,9 @@ else_if_statement %type "Conditional *"
 
 end_if
 :
-    START_CODE END_IF END_CODE
+    START_CODE END_IF END_CODE { return NULL; }
 |
-    CODE_LINE END_IF CODE_NEWLINE
+    CODE_LINE END_IF CODE_NEWLINE { return NULL; }
 ;
 
 define %type "Define *"
@@ -326,9 +326,9 @@ define_map_element %type "Define *"
 
 end_define
 :
-    START_CODE END_DEFINE END_CODE
+    START_CODE END_DEFINE END_CODE { return NULL; }
 |
-    CODE_LINE END_DEFINE CODE_NEWLINE
+    CODE_LINE END_DEFINE CODE_NEWLINE { return NULL; }
 ;
 
 loop %type "Loop *"
@@ -342,9 +342,9 @@ loop %type "Loop *"
 
 end_loop
 :
-    START_CODE END_LOOP END_CODE
+    START_CODE END_LOOP END_CODE { return NULL; }
 |
-    CODE_LINE END_LOOP CODE_NEWLINE
+    CODE_LINE END_LOOP CODE_NEWLINE { return NULL; }
 ;
 
 for_each %type "ForEach *"
@@ -358,9 +358,9 @@ for_each %type "ForEach *"
 
 end_for_each
 :
-    START_CODE END_FOR_EACH END_CODE
+    START_CODE END_FOR_EACH END_CODE { return NULL; }
 |
-    CODE_LINE END_FOR_EACH CODE_NEWLINE
+    CODE_LINE END_FOR_EACH CODE_NEWLINE { return NULL; }
 ;
 
 expression %type "Expression *"

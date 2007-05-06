@@ -304,16 +304,16 @@ token_id %type "TokenId *"
 
 at_least_zero_newlines
 :
-    at_least_zero_newlines NEWLINE
+    at_least_zero_newlines NEWLINE { return NULL; }
 |
-    // empty reduction rule
+    /* empty reduction rule */ { return NULL; }
 ;
 
 at_least_one_newline
 :
-    at_least_one_newline NEWLINE
+    at_least_one_newline NEWLINE { return NULL; }
 |
-    NEWLINE
+    NEWLINE { return NULL; }
 ;
 
 nonterminal_list %type "NonterminalList *"

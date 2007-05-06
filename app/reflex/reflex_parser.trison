@@ -317,7 +317,7 @@ target_directive %type "CommonLang::TargetDirective *"
 
 target_directive_param %type "Ast::TextBase *"
 :
-    ID:value            { return value; }
+    ID:value                    { return value; }
 |   STRING_LITERAL:value        { return value; }
 |   STRICT_CODE_BLOCK:value     { return value; }
 |   DUMB_CODE_BLOCK:value       { return value; }
@@ -594,14 +594,14 @@ any_type_of_code_block %type "Ast::CodeBlock *"
 
 at_least_zero_newlines
 :
-    at_least_zero_newlines NEWLINE
+    at_least_zero_newlines NEWLINE  { return NULL; }
 |
-    // empty reduction rule
+    /* empty reduction rule */  { return NULL; }
 ;
 
 at_least_one_newline
 :
-    at_least_one_newline NEWLINE
+    at_least_one_newline NEWLINE { return NULL; }
 |
-    NEWLINE
+    NEWLINE { return NULL; }
 ;
