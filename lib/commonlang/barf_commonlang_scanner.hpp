@@ -74,22 +74,22 @@ enum
 };
 
 // /////////////////////////////////////////////////////////////////////////////
-// implements the "input buffer" API as described in the documentation
+// implements the InputApparatus interface as described in the documentation
 // /////////////////////////////////////////////////////////////////////////////
 
-class InputBuffer_
+class InputApparatus_
 {
 public:
 
-    typedef bool (InputBuffer_::*IsInputAtEndMethod_)();
-    typedef Uint8_ (InputBuffer_::*ReadNextAtomMethod_)();
+    typedef bool (InputApparatus_::*IsInputAtEndMethod_)();
+    typedef Uint8_ (InputApparatus_::*ReadNextAtomMethod_)();
 
-    InputBuffer_ (IsInputAtEndMethod_ IsInputAtEnd_, ReadNextAtomMethod_ ReadNextAtom_)
+    InputApparatus_ (IsInputAtEndMethod_ IsInputAtEnd_, ReadNextAtomMethod_ ReadNextAtom_)
         :
         m_IsInputAtEnd_(IsInputAtEnd_),
         m_ReadNextAtom_(ReadNextAtom_)
     {
-        // subclasses must call InputBuffer_::ResetForNewInput_ in their constructors.
+        // subclasses must call InputApparatus_::ResetForNewInput_ in their constructors.
     }
 
     bool IsAtEndOfInput () { return IsConditionalMet_(CF_END_OF_INPUT, CF_END_OF_INPUT); }
@@ -100,13 +100,6 @@ protected:
     {
         UpdateConditionalFlags_();
         return m_current_conditional_flags_;
-    }
-    bool IsConditionalMet_ (Uint8_ conditional_mask, Uint8_ conditional_flags)
-    {
-        UpdateConditionalFlags_();
-        // return true iff no bits indicated by conditional_mask differ between
-        // conditional_flags and m_current_conditional_flags_.
-        return ((conditional_flags ^ m_current_conditional_flags_) & conditional_mask) == 0;
     }
     Uint8_ GetInputAtom_ ()
     {
@@ -193,8 +186,15 @@ private:
         CF_BEGINNING_OF_LINE  = (1 << 2),
         CF_END_OF_LINE        = (1 << 3),
         CF_WORD_BOUNDARY      = (1 << 4)
-    }; // end of enum ReflexCpp_::InputBuffer_::ConditionalFlag_
+    }; // end of enum ReflexCpp_::InputApparatus_::ConditionalFlag_
 
+    bool IsConditionalMet_ (Uint8_ conditional_mask, Uint8_ conditional_flags)
+    {
+        UpdateConditionalFlags_();
+        // return true iff no bits indicated by conditional_mask differ between
+        // conditional_flags and m_current_conditional_flags_.
+        return ((conditional_flags ^ m_current_conditional_flags_) & conditional_mask) == 0;
+    }
     void FillBuffer_ ()
     {
         assert(m_read_cursor_ > 0);
@@ -249,13 +249,14 @@ private:
     Buffer_::size_type m_accept_cursor_;
     IsInputAtEndMethod_ m_IsInputAtEnd_;
     ReadNextAtomMethod_ m_ReadNextAtom_;
-}; // end of class ReflexCpp_::InputBuffer_
+}; // end of class ReflexCpp_::InputApparatus_
 
 // /////////////////////////////////////////////////////////////////////////////
-// this baseclass contains all the state machinery for "cpp" reflex target.
+// implements the AutomatonApparatus interface as described in the documentation 
+// -- it contains all the generalized state machinery for running a reflex DFA.
 // /////////////////////////////////////////////////////////////////////////////
 
-class Automaton_ : protected InputBuffer_
+class AutomatonApparatus_ : protected InputApparatus_
 {
 public:
 
@@ -265,13 +266,13 @@ public:
         Uint32_ m_accept_handler_index_;
         Size_ m_transition_count_;
         DfaTransition_ const *m_transition_;
-    }; // end of struct ReflexCpp_::Automaton_::DfaState_
+    }; // end of struct ReflexCpp_::AutomatonApparatus_::DfaState_
     struct DfaTransition_
     {
         enum Type_
         {
             TT_INPUT_ATOM_ = 0, TT_INPUT_ATOM_RANGE_, TT_CONDITIONAL_, TT_EPSILON_
-        }; // end of enum ReflexCpp_::Automaton_::DfaTransition_::Type_
+        }; // end of enum ReflexCpp_::AutomatonApparatus_::DfaTransition_::Type_
 
         Uint8_ m_transition_type_;
         Uint8_ m_data_0_;
@@ -298,9 +299,9 @@ public:
             // (m_data_0_) and flags (m_data_1_).
             return ((conditional_flags ^ m_data_1_) & m_data_0_) == 0;
         }
-    }; // end of struct ReflexCpp_::Automaton_::DfaTransition_
+    }; // end of struct ReflexCpp_::AutomatonApparatus_::DfaTransition_
 
-    Automaton_ (
+    AutomatonApparatus_ (
         DfaState_ const *state_table,
         Size_ state_count,
         DfaTransition_ const *transition_table,
@@ -309,11 +310,11 @@ public:
         IsInputAtEndMethod_ IsInputAtEnd_,
         ReadNextAtomMethod_ ReadNextAtom_)
         :
-        InputBuffer_(IsInputAtEnd_, ReadNextAtom_),
+        InputApparatus_(IsInputAtEnd_, ReadNextAtom_),
         m_accept_handler_count_(accept_handler_count)
     {
         CheckDfa_(state_table, state_count, transition_table, transition_count);
-        // subclasses must call ReflexCpp_::InputBuffer_::ResetForNewInput_ in their constructors.
+        // subclasses must call ReflexCpp_::InputApparatus_::ResetForNewInput_ in their constructors.
     }
 
 protected:
@@ -329,7 +330,7 @@ protected:
     }
     void ResetForNewInput_ (DfaState_ const *initial_state)
     {
-        InputBuffer_::ResetForNewInput_();
+        InputApparatus_::ResetForNewInput_();
         InitialState_(initial_state);
         m_current_state_ = NULL;
         m_accept_state_ = NULL;
@@ -481,7 +482,7 @@ private:
     DfaState_ const *m_initial_state_;
     DfaState_ const *m_current_state_;
     DfaState_ const *m_accept_state_;
-}; // end of class ReflexCpp_::Automaton_
+}; // end of class ReflexCpp_::AutomatonApparatus_
 
 } // end of namespace ReflexCpp_
 #endif // !defined(ReflexCpp_namespace_)
@@ -507,17 +508,17 @@ class Base;
 
 namespace CommonLang {
 
-#line 511 "barf_commonlang_scanner.hpp"
+#line 512 "barf_commonlang_scanner.hpp"
 
-class Scanner : private ReflexCpp_::Automaton_, 
+class Scanner : private ReflexCpp_::AutomatonApparatus_, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
-#line 516 "barf_commonlang_scanner.hpp"
+#line 517 "barf_commonlang_scanner.hpp"
 
 {
 public:
 
-    using Automaton_::IsAtEndOfInput;
+    using AutomatonApparatus_::IsAtEndOfInput;
 
     struct Mode
     {
@@ -584,7 +585,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 588 "barf_commonlang_scanner.hpp"
+#line 589 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -600,7 +601,7 @@ public:
     Scanner::Token::Type Scan (
 #line 83 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
-#line 604 "barf_commonlang_scanner.hpp"
+#line 605 "barf_commonlang_scanner.hpp"
 );
 
 private:
@@ -614,9 +615,9 @@ private:
 
     bool m_debug_spew_;
 
-    static Automaton_::DfaState_ const ms_state_table_[];
+    static AutomatonApparatus_::DfaState_ const ms_state_table_[];
     static ReflexCpp_::Size_ const ms_state_count_;
-    static Automaton_::DfaTransition_ const ms_transition_table_[];
+    static AutomatonApparatus_::DfaTransition_ const ms_transition_table_[];
     static ReflexCpp_::Size_ const ms_transition_count_;
     static ReflexCpp_::Uint32_ const ms_accept_handler_count_;
 
@@ -644,7 +645,7 @@ private:
     Uint32 m_code_block_bracket_level;
     Mode::Name m_return_state;
 
-#line 648 "barf_commonlang_scanner.hpp"
+#line 649 "barf_commonlang_scanner.hpp"
 
 }; // end of class Scanner
 
@@ -658,4 +659,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(_BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 662 "barf_commonlang_scanner.hpp"
+#line 663 "barf_commonlang_scanner.hpp"

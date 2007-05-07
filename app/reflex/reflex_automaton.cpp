@@ -87,11 +87,13 @@ void GenerateNfa (PrimarySource const &primary_source, Automaton &nfa)
     assert(nfa.m_start_state_index.size() == primary_source.m_scanner_mode_map->size());
 }
 
-void GenerateDfa (Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa)
+void GenerateDfa (PrimarySource const &primary_source, Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa)
 {
     assert(dfa.m_graph.GetNodeCount() == 0);
     assert(dfa.m_start_state_index.empty());
     Regex::GenerateDfa(nfa, nfa_accept_state_count, dfa);
+    assert(dfa.m_graph.GetNodeCount() >= primary_source.m_scanner_mode_map->size());
+    assert(dfa.m_start_state_index.size() == primary_source.m_scanner_mode_map->size());
 }
 
 } // end of namespace Reflex

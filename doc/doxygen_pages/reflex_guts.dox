@@ -273,7 +273,9 @@ First, some concepts will be defined for use in the forthcoming scanner algorith
 
 An <strong>atom</strong> is one piece of input, in this case an ASCII character.  It can be anything in the range 0-255 (though 0 is reserved to represent beginning-of-input and end-of-input).
 
-The scanner uses the <strong>input buffer</strong>, which is a deque (double-ended queue) of atoms, to track the accepted text and unread text.  It is a data structure whose elements can be referred to by element index, starting with index 0.  These indices will each be referred to as a <strong>cursor</strong>.  As will become apparent soon, a cursor is only valid if it has index greater than 0.  The input buffer is split into four sections.
+A <strong>deque</strong> (double-ended queue) is a well-known abstract container type.  It provides random access to indexed elements (like an array), and (amortized) constant-time insertion and removal of elements (hence the double-ended qualifier).  It must also provide an accessor for its length.  In the context of this scanner algorithm, a deque will contain elements of type atom.
+
+The scanner uses the <strong>input buffer</strong> (which utilizes a deque) to track the accepted text and unread text.  Each index of the input buffer will be referred to as a <strong>cursor</strong>.  As will become apparent soon, a cursor is only valid if it has index greater than 0.  The input buffer is split into four sections.
 
     <ul>
     <li>The <strong>previous atom</strong> is the single atom at the beginning of the input buffer.  It is necessary for calculating the <strong>conditionals</strong> (which will be defined later).  Its index is always 0.
@@ -317,6 +319,7 @@ A <strong>conditional</strong> is a pair of bitfields -- a mask and a set of fla
         @verbatim input_buffer[read_cursor] == '\\0' || input_buffer[read_cursor] == '\n' @endverbatim
     <li>word boundary      = 00010000 -- true if and only if the condition of the atom before the read cursor being a word character is not equal to the condition of the atom at the read cursor being a word character.  In pseudocode,
         @verbatim IsWordChar(input_buffer[read_cursor-1]) != IsWordChar(input_buffer[read_cursor]) @endverbatim
+        A word char is defined to be any lowercase or uppercase alphabetic character, an undercore, or a decimal digit.
     </ul>
 
 The <strong>current conditional flags</strong> is the flags portion of a conditional, indicating the conditions active in the input buffer at the read cursor.  The existence of the previous atom is solely to guarantee that there is always at least one atom before the read cursor upon which to perform the calculation of the current conditional flags.
@@ -325,36 +328,107 @@ The above definitions have been made for use in the following definition.
 
 @subsubsection reflex_guts_implementing_a_target_definitions_input_apparatus The Input Apparatus
 
-The <strong>input apparatus</strong> is an interface which provides certain well-defined operations on the above-defined entities.  Its encapsulation serves to simplify the interaction with the automaton apparatus (explained later) which runs the state machine.  The interface follows.
+The <strong>input apparatus</strong> is an interface which provides certain well-defined operations on the above-defined entities.  Its encapsulation serves to simplify the interaction with the automaton apparatus (explained later) which runs the state machine.  The interface follows (Note: types, structures and methods use CapitalizedWord identifiers, members use m_underscore_separated_lowercase identifiers prefixed with m_, and compile-time constants are indicated by UPPERCASE_WITH_UNDERSCORES identifiers).
 
-    <ul>
-    <li>type: <tt>bitfield</tt> -- An integer large enough to store the highest conditional bit flag.
-    <li>type: <tt>buffer_index</tt> -- An integer which can store an index into the input buffer.
-    <li>type: <tt>atom</tt> -- An 8-bit integer value to store atoms.
-    <li>type: <tt>string</tt> -- A string of atoms.
-    <li>type: <tt>method_returning_boolean</tt> -- A type which can be used to call a method taking no arguments, returning a boolean (e.g. a C++ method pointer).
-    <li>type: <tt>method_returning_atom</tt> -- A type which can be used to call a method taking no arguments, returning an atom (e.g. a C++ method pointer).
+@code
+interface InputApparatus {
+    // types
 
-    <li>member: <tt>input buffer</tt> -- Of a type satisfying the above definition of the input buffer.
-    <li>member: <tt>read cursor</tt> -- Of type buffer_index
-    <li>member: <tt>accept cursor</tt> -- Of type buffer_index
-    <li>member: <tt>current conditional flags</tt> -- Of type bitfield
-    <li>member: <tt>is_at_end_of_input_method</tt> -- Of type method_returning_boolean.  Stores the method to call to evaluate if there is no more input to be read (e.g. EOF).  This abstraction allows client code (i.e. the automaton apparatus, which is described below) to specify custom methods for retrieving end-of-input state.
-    <li>member: <tt>read_next_atom_method</tt> -- Of type method_returning_atom.  Stores the method to call to return the next atom from input (whatever form that may be).
+    // An 8-bit (unsigned) integer value to store atoms.
+    type Atom;
+    // An integer large enough to store the highest conditional bit flag.
+    type Bitfield;
+    // A string of atoms.
+    type String;
+    // A type which can be used to call a method taking no arguments, returning a Boolean (e.g. a C++ method pointer).
+    type MethodReturningBoolean;
+    // A type which can be used to call a method taking no arguments, returning an Atom (e.g. a C++ method pointer).
+    type MethodReturningAtom;
+    // A type satisfying the definition of input buffer, given above.
+    type InputBuffer;
+    // An integer large enough to store an index into the input buffer.
+    type BufferIndex;    
+    
+    // compile-time constants
+    
+    Bitfield BEGINNING_OF_INPUT = (1 << 0);
+    Bitfield END_OF_INPUT       = (1 << 1);
+    Bitfield BEGINNING_OF_LINE  = (1 << 2);
+    Bitfield END_OF_LINE        = (1 << 3);
+    Bitfield WORD_BOUNDARY      = (1 << 4);
+    
+    // members
+    
+    // The deque-object which will store the read-in atoms.
+    member InputBuffer            m_input_buffer;
+    // The index of the read cursor in the input buffer, as described above.
+    member BufferIndex            m_read_cursor;
+    // The index of the accept cursor in the input buffer, as described above.
+    member BufferIndex            m_accept_cursor;
+    // The cached value of the conditional flags at the location in the input buffer
+    // indicated by the read cursor.  Because it is a cached value, it will have to
+    // be updated before being accessed at certain times.
+    member Bitfield               m_current_conditional_flags;
+    // The method to call to determine if we're at the end of the input stream.
+    member MethodReturningBoolean m_is_at_end_of_input_method;
+    // The method to call to retrieve the next atom from the input stream.
+    member MethodReturningAtom    m_read_next_atom_method;
+    
+    // methods
+    
+    // Should be called once and only once upon creation of this input apparatus -- one-time
+    // initializations including construction of all members.
+    void Construct (MethodReturningBoolean is_at_end_of_input_method, MethodReturningAtom read_next_atom_method);
+    // Should be called when this object is going bye-bye.  Destroys all member variables
+    // and performs any other necessary clean-up.
+    void Destroy ();
+    // Return true if and only if CurrentConditionalFlags() indicates that the end-of-input 
+    // condition is true.
+    Boolean IsAtEndOfInput ();
+    // Returns the conditional flags for the current value of the read cursor and input buffer.
+    // This method will first have to ensure that at least one atom on either side of the 
+    // current read cursor is available before performing the calculations.
+    Bitfield CurrentConditionalFlags ();
+    // Returns true if and only if no relevant bits (the bits set in conditional_mask) differ 
+    // between conditional_flags and CurrentConditionalFlags().  Using C-language operators, 
+    // this can be calculated as 
+    // ((conditional_flags ^ CurrentConditionalFlags()) & conditional_mask) == 0
+    Boolean IsConditionalMet (Bitfield conditional_mask, Bitfield conditional_flags);
+    // Ensures there is at least one atom in the input buffer after the read cursor, by 
+    // using the is_at_end_of_input_method and read_next_atom_method methods (passed into
+    // Construct) as necessary.
+    Atom InputAtom ();
+    // Increments the read cursor by one.  The read cursor should be greater than zero and 
+    // less than the length of the input buffer.
+    void AdvanceReadCursor ();
+    // Assigns the read cursor's value to the accept cursor.
+    void SetAcceptCursor ();
+    // Extracts and returns the accepted string; the string of input buffer atoms in the range 
+    // [1, accept cursor) -- if the accept cursor is 0, it is an error.  Pops the same number 
+    // of atoms off the front of the input buffer.  Sets the read cursor to 1 (indicating the 
+    // new beginning of the unread string).  Sets the accept cursor to 0 (indicating the 
+    // non-existence of the accept string).  A result of the popping is that the new previous 
+    // atom is the last atom in the accepted string.
+    String Accept ();
+    // Extracts and returns the atom at index 1 in the input buffer.  If the accept cursor 
+    // is not 0, it is an error.  If the extracted atom is not 0 (null-terminating character), 
+    // pops the front of the input buffer once.  Sets the read cursor to 1 (which is the new 
+    // beginning of the unread string).
+    Atom Reject ();
+    // Clears the input buffer.  Pushes an atom with value 0 onto the input buffer (at this 
+    // point, a single atom with value 0 should be the only contents of the input buffer).  
+    // Sets the read cursor to 1 (indicating the beginning of the unread string).  Sets the 
+    // accept cursor to 0 (indicating the non-existence of the accept string).  Must somehow 
+    // indicate that the current conditional flags have not been calculated (so that when 
+    // CurrentConditionalFlags is called, the current conditional flags can be calculated).  
+    // This method must be called to initialize the input buffer before being used, as well 
+    // as any time this input buffer is being reused for a new input source (e.g. reading 
+    // from a second, different file).
+    void ResetForNewInput ();
+}
+@endcode
 
-    <li>method: <tt>Construct (method_returning_boolean is_at_end_of_input_method, method_returning_atom read_next_atom_method)</tt> -- should be called once and only once upon creation of this input apparatus.  Sets the value of is_at_end_of_input_method and read_next_atom_method using the passed-in values.  ResetForNewInput() can be called for pedantic safety, but in theory this is not necessary, as it will be called by the ResetForNewInput() method of the automaton apparatus (which is defined below).
-    <li>method: <tt>IsAtEndOfInput ()</tt> returns <tt>boolean</tt> -- returns true if and only if the current conditional flags indicate that the end-of-input condition is true.
-    <li>method: <tt>GetCurrentConditionalFlags ()</tt> returns <tt>bitfield</tt> -- Returns the conditional flags for the current value of the read cursor and input buffer.  This method will first have to ensure that at least one atom on either side of the current read cursor is available before performing the calculations.
-    <li>method: <tt>IsConditionalMet (bitfield conditional_mask, bitfield conditional_flags)</tt> returns <tt>boolean</tt> -- Returns true if and only if no relevant bits (the bits set in conditional_mask) differ between conditional_flags and GetCurrentConditionalFlags().  Using C-language operators, this can be calculated as <tt>((conditional_flags ^ GetCurrentConditionalFlags()) & conditional_mask) == 0</tt>.
-    <li>method: <tt>GetInputAtom ()</tt> returns <tt>atom</tt> -- Ensures there is at least one atom in the input buffer after the read cursor, by using is_at_end_of_input_method and read_next_atom_method as necessary.
-    <li>method: <tt>AdvanceReadCursor ()</tt> -- Increments the read cursor by one.  The read cursor should be greater than zero and less than the length of the input buffer.
-    <li>method: <tt>SetAcceptCursor ()</tt> -- Assigns the read cursor's value to the accept cursor.
-    <li>method: <tt>Accept ()</tt> returns <tt>string</tt> -- Extracts and returns the accepted string; the string of input buffer atoms in the range [1, accept cursor) -- if the accept cursor is 0, it is an error.  Pops the same number of atoms off the front of the input buffer.  Sets the read cursor to 1 (indicating the new beginning of the unread string).  Sets the accept cursor to 0 (indicating the non-existence of the accept string).  A result of the popping is that the new previous atom is the last atom in the accepted string.
-    <li>method: <tt>Reject ()</tt> returns <tt>atom</tt> -- Extracts and returns the atom at index 1 in the input buffer.  If the accept cursor is not 0, it is an error.  If the extracted atom is not 0 (null-terminating character), pops the front of the input buffer once.  Sets the read cursor to 1 (which is the new beginning of the unread string).
-    <li>method: <tt>ResetForNewInput ()</tt> -- Clears the input buffer.  Pushes an atom with value 0 onto the input buffer (at this point, a single atom with value 0 should be the only contents of the input buffer).  Sets the read cursor to 1 (indicating the beginning of the unread string).  Sets the accept cursor to 0 (indicating the non-existence of the accept string).  Must somehow indicate that the current conditional flags have not been calculated (so that when GetCurrentConditionalFlags is called, the current conditional flags can be calculated).  This method must be called to initialize the input buffer before being used, as well as any time this input buffer is being reused for a new input source (e.g. reading from a second, different file).
-    </ul>
-
-All of the following definitions are independent of the input apparatus -- they are definitions for the components required to run the FA generated by <tt>reflex</tt>.
+All of the following two definitions are independent of the input apparatus -- they are definitions for the components required to run the FA generated by <tt>reflex</tt>.
 
 The <strong>current scanner mode</strong> (not to be confused with an FA state) is the currently active "mode" of the scanner -- the two scanner modes in the example from @ref reflex_format are <tt>MAIN</tt> and <tt>BLOCK_COMMENT</tt>.  Each has an associated FA -- a set of states, transitions, a starting state, and a set of accept states.
 
@@ -454,13 +528,13 @@ for (transition in current_state.transitions)
 {
     if (transition is atomic)
     {
-        if (transition.AcceptsInputAtom(input_buffer.GetInputAtom()))
+        if (transition.AcceptsInputAtom(input_buffer.InputAtom()))
         {
             input_buffer.AdvanceReadCursor();
             return transition.target_dfa_state;
         }
     }
-    else if (transition.AcceptsConditionalFlags_(input_buffer.GetCurrentConditionalFlags()))
+    else if (transition.AcceptsConditionalFlags_(input_buffer.CurrentConditionalFlags()))
         return transition.target_dfa_state;
 }
 // if we reached here, no transition was possible
@@ -483,6 +557,7 @@ Each apparatus, in hiding its subordinate, provides a much cleaner and simpler A
     </ul>
 
 TODO: describe the "debug spew" and "scanner mode" properties.
+There are two important properties of the scanner apparatus which will now be described.  Firstly, the "debug spew" property, a boolean value, indicates wether or not various "debug messages" will be printed during the execution of 
 
 The scanner apparatus API follows.
 

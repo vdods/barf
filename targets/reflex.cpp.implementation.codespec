@@ -21,14 +21,14 @@
 
 <{class_name}::<{class_name} (<{if(is_defined(constructor_definition_parameters))}<{constructor_definition_parameters}<{else}<{constructor_parameters?}<{end_if})
     :
-    ReflexCpp_::Automaton_(
+    ReflexCpp_::AutomatonApparatus_(
         ms_state_table_,
         ms_state_count_,
         ms_transition_table_,
         ms_transition_count_,
         ms_accept_handler_count_,
-        static_cast<ReflexCpp_::InputBuffer_::IsInputAtEndMethod_>(&<{class_name}::IsInputAtEnd_),
-        static_cast<ReflexCpp_::InputBuffer_::ReadNextAtomMethod_>(&<{class_name}::ReadNextAtom_))<{if(is_defined(superclass_and_member_constructors))},
+        static_cast<ReflexCpp_::InputApparatus_::IsInputAtEndMethod_>(&<{class_name}::IsInputAtEnd_),
+        static_cast<ReflexCpp_::InputApparatus_::ReadNextAtomMethod_>(&<{class_name}::ReadNextAtom_))<{if(is_defined(superclass_and_member_constructors))},
 <*{superclass_and_member_constructors
 <{end_if}
 {
@@ -162,7 +162,7 @@ ReflexCpp_::Uint8_ <{class_name}::ReadNextAtom_ ()
 
 void <{class_name}::ResetForNewInput_ ()
 {
-    ReflexCpp_::Automaton_::ResetForNewInput_(ms_state_table_ + Mode::START_);
+    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + Mode::START_);
 
 <*{reset_for_new_input_actions?
 }
@@ -218,21 +218,21 @@ void <{class_name}::DebugPrintString_ (std::string const &s)
 <*{end_if
 // the order of the states indicates priority (only for accept states).
 // the lower the state's index in this array, the higher its priority.
-ReflexCpp_::Automaton_::DfaState_ const <{class_name}::ms_state_table_[] =
+ReflexCpp_::AutomatonApparatus_::DfaState_ const <{class_name}::ms_state_table_[] =
 {
 <*{loop(i, _dfa_state_count)
     { <{_dfa_state_accept_handler_index[i]}, <{_dfa_state_transition_count[i]}, ms_transition_table_+<{_dfa_state_transition_offset[i]} }<{if(i < _dfa_state_count-1)},<{end_if}
 <*{end_loop
 };
-ReflexCpp_::Size_ const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::Automaton_::DfaState_);
+ReflexCpp_::Size_ const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::AutomatonApparatus_::DfaState_);
 
-ReflexCpp_::Automaton_::DfaTransition_ const <{class_name}::ms_transition_table_[] =
+ReflexCpp_::AutomatonApparatus_::DfaTransition_ const <{class_name}::ms_transition_table_[] =
 {
 <*{loop(i, _dfa_transition_count)
-    { ReflexCpp_::Automaton_::DfaTransition_::<{_dfa_transition_type_name[i]}_, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::<{_dfa_transition_type_name[i]}_, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
 <*{end_loop
 };
-ReflexCpp_::Size_ const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(ReflexCpp_::Automaton_::DfaTransition_);
+ReflexCpp_::Size_ const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(ReflexCpp_::AutomatonApparatus_::DfaTransition_);
 
 ReflexCpp_::Uint32_ const <{class_name}::ms_accept_handler_count_ = <{_accept_handler_count};
 

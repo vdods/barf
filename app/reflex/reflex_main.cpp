@@ -135,7 +135,7 @@ void GenerateAndPrintDfaDotGraph (Reflex::PrimarySource const &primary_source, A
     // section, abort with an error code.
 
     try {
-        Reflex::GenerateDfa(nfa, primary_source.GetRuleCount(), dfa);
+        Reflex::GenerateDfa(primary_source, nfa, primary_source.GetRuleCount(), dfa);
         PrintDotGraph(dfa.m_graph, GetOptions().GetDaDotGraphPath(), "DFA");
     } catch (string const &exception) {
         EmitError(exception);
