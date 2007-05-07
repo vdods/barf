@@ -351,26 +351,26 @@ Uint32 GetDfaStateIndex (GraphContext &graph_context, DfaState const &dfa_state,
     return dfa_state_index;
 }
 
-void GenerateDfa (Graph const &nfa_graph, Uint32 nfa_accept_state_count, vector<Uint32> const &nfa_start_state, Graph &dfa_graph, vector<Uint32> &dfa_start_state)
+void GenerateDfa (Graph const &nfa_graph, Uint32 nfa_accept_state_count, vector<Uint32> const &nfa_start_state_index, Graph &dfa_graph, vector<Uint32> &dfa_start_state_index)
 {
     assert(nfa_graph.GetNodeCount() >= nfa_accept_state_count);
-    assert(nfa_graph.GetNodeCount() >= nfa_start_state.size());
-    assert(dfa_start_state.empty());
+    assert(nfa_graph.GetNodeCount() >= nfa_start_state_index.size());
+    assert(dfa_start_state_index.empty());
     assert(dfa_graph.GetNodeCount() == 0);
 
     DfaStateMap dfa_state_map;
     GraphContext graph_context(nfa_graph, nfa_accept_state_count, dfa_graph, dfa_state_map);
 
-    for (Uint32 i = 0; i < nfa_start_state.size(); ++i)
+    for (Uint32 i = 0; i < nfa_start_state_index.size(); ++i)
     {
-        assert(nfa_start_state[i] < nfa_graph.GetNodeCount());
+        assert(nfa_start_state_index[i] < nfa_graph.GetNodeCount());
 
         DfaState dfa_state;
-        dfa_state.insert(nfa_start_state[i]);
-        dfa_start_state.push_back(GetDfaStateIndex(graph_context, dfa_state, false));
+        dfa_state.insert(nfa_start_state_index[i]);
+        dfa_start_state_index.push_back(GetDfaStateIndex(graph_context, dfa_state, false));
     }
 
-    assert(dfa_start_state.size() == nfa_start_state.size());
+    assert(dfa_start_state_index.size() == nfa_start_state_index.size());
 }
 
 } // end of namespace Regex

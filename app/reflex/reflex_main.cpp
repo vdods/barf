@@ -76,8 +76,8 @@ int main (int argc, char **argv)
                 return 3;
 
             representation->GenerateNfaAndDfa();
-            representation->PrintNfaGraph(GetOptions()->GetNaDotGraphPath(), "NFA");
-            representation->PrintDfaGraph(GetOptions()->GetDaDotGraphPath(), "DFA");
+            representation->PrintNfaDotGraph(GetOptions()->GetNaDotGraphPath(), "NFA");
+            representation->PrintDfaDotGraph(GetOptions()->GetDaDotGraphPath(), "DFA");
 
             if (g_errors_encountered)
                 return 4;

@@ -378,6 +378,8 @@ reflex_LDADD = \
 reflex_SOURCES = \
 	app/reflex/reflex_ast.cpp \
 	app/reflex/reflex_ast_representation.cpp \
+	app/reflex/reflex_automaton.cpp \
+	app/reflex/reflex_codespecsymbols.cpp \
 	app/reflex/reflex_enums.cpp \
 	app/reflex/reflex_main.cpp \
 	app/reflex/reflex_options.cpp \
@@ -544,6 +546,8 @@ noinst_HEADERS = \
 	\
 	app/reflex/reflex.hpp \
 	app/reflex/reflex_ast.hpp \
+	app/reflex/reflex_automaton.hpp \
+	app/reflex/reflex_codespecsymbols.hpp \
 	app/reflex/reflex_enums.hpp \
 	app/reflex/reflex_options.hpp \
 	app/reflex/reflex_parser.hpp \

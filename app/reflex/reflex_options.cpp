@@ -109,7 +109,7 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'N',
         "generate-nfa-dot-graph",
-        &OptionsBase::GenerateNfaDotGraph,
+        &OptionsBase::GenerateNaDotGraph,
         "    Specifies the filename for a `dot` graph (see http://www.graphviz.org/)\n"
         "    of the generated nondeterministic finite automata (NFA).  Useful as a\n"
         "    diagnostic tool.  Specifying - (hyphen) indicates that the output should\n"
@@ -123,7 +123,7 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'D',
         "generate-dfa-dot-graph",
-        &OptionsBase::GenerateDfaDotGraph,
+        &OptionsBase::GenerateDaDotGraph,
         "    Specifies the filename for a `dot` graph (see http://www.graphviz.org/) of\n"
         "    the generated deterministic finite automata (DFA; which is generated from\n"
         "    the NFA).  Useful as a diagnostic tool.  Specifying - (hyphen) indicates\n"

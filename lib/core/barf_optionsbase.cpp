@@ -96,9 +96,9 @@ void OptionsBase::WithoutLineDirectives ()
     m_with_line_directives = false;
 }
 
-void OptionsBase::GenerateNfaDotGraph (string const &nfa_dot_graph_path)
+void OptionsBase::GenerateNaDotGraph (string const &na_dot_graph_path)
 {
-    m_na_dot_graph_path = nfa_dot_graph_path;
+    m_na_dot_graph_path = na_dot_graph_path;
 }
 
 void OptionsBase::DontGenerateNaDotGraph ()
@@ -106,9 +106,9 @@ void OptionsBase::DontGenerateNaDotGraph ()
     m_na_dot_graph_path.clear();
 }
 
-void OptionsBase::GenerateDfaDotGraph (string const &dfa_dot_graph_path)
+void OptionsBase::GenerateDaDotGraph (string const &da_dot_graph_path)
 {
-    m_da_dot_graph_path = dfa_dot_graph_path;
+    m_da_dot_graph_path = da_dot_graph_path;
 }
 
 void OptionsBase::DontGenerateDaDotGraph ()
@@ -186,11 +186,11 @@ void OptionsBase::AddTargetsSearchPath (string const &search_path, string const 
     {
         case SearchPath::ADD_PATH_SUCCESS:
             break;
-    
+
         case SearchPath::ADD_PATH_FAILURE_EMPTY:
             ReportErrorAndSetAbortFlag("empty path (" + set_by + ") can't be added to the targets search path");
             break;
-            
+
         case SearchPath::ADD_PATH_FAILURE_INVALID:
             ReportErrorAndSetAbortFlag("invalid path " + GetStringLiteral(search_path) + ' ' + set_by);
             break;

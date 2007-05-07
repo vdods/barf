@@ -47,7 +47,7 @@ enum
     AT_RULE_LIST,
     AT_SCANNER_MODE,
     AT_SCANNER_MODE_MAP,
-    AT_START_DIRECTIVE, 
+    AT_START_DIRECTIVE,
 
     AT_COUNT
 };
@@ -98,11 +98,6 @@ struct Rule : public Ast::Base
         delete m_rule_handler_map;
     }
 
-    void GenerateNfa (Graph &graph, Uint32 start_index, Uint32 end_index) const;
-    void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_id,
-        Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
-
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class Rule
 
@@ -133,15 +128,7 @@ struct ScannerMode : public Ast::Base
         delete m_rule_list;
     }
 
-    Uint32 GetAcceptHandlerCount () const { return m_rule_list->size(); }
-
-    void GenerateNfa (
-        Graph &nfa_graph,
-        vector<Uint32> &start_state_index_array,
-        Uint32 &next_accept_handler_index) const;
-    void PopulateAcceptHandlerCodeArraySymbol (
-        string const &target_id,
-        Preprocessor::ArraySymbol *accept_handler_code_symbol) const;
+    Uint32 GetRuleCount () const { return m_rule_list->size(); }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class ScannerMode
@@ -171,8 +158,7 @@ public:
         m_target_map(target_map),
         m_regex_macro_map(regex_macro_map),
         m_start_in_scanner_mode_directive(start_in_scanner_mode_directive),
-        m_scanner_mode_map(scanner_mode_map),
-        m_next_accept_handler_index(0)
+        m_scanner_mode_map(scanner_mode_map)
     {
         assert(m_target_map != NULL);
         assert(m_regex_macro_map != NULL);
@@ -180,15 +166,14 @@ public:
         assert(m_scanner_mode_map != NULL);
     }
 
-    CommonLang::TargetMap const &GetTargetMap () const { return *m_target_map; }
-    Uint32 GetAcceptHandlerCount () const;
-    Rule const *GetAcceptHandlerRule (Uint32 rule_index) const;
+    Uint32 GetRuleCount () const;
+    Rule const *GetRule (Uint32 rule_index) const;
     Graph const &GetNfaGraph () const { return m_nfa_graph; }
     Graph const &GetDfaGraph () const { return m_dfa_graph; }
 
     void GenerateNfaAndDfa () const;
-    void PrintNfaGraph (string const &filename, string const &graph_name) const;
-    void PrintDfaGraph (string const &filename, string const &graph_name) const;
+    void PrintNfaDotGraph (string const &filename, string const &graph_name) const;
+    void PrintDfaDotGraph (string const &filename, string const &graph_name) const;
     void GenerateAutomatonSymbols (
         Preprocessor::SymbolTable &symbol_table) const;
     void GenerateTargetDependentSymbols (
@@ -203,10 +188,9 @@ public:
 private:
 
     mutable Graph m_nfa_graph;
-    mutable vector<Uint32> m_nfa_start_state;
+    mutable vector<Uint32> m_nfa_start_state_index;
     mutable Graph m_dfa_graph;
-    mutable vector<Uint32> m_dfa_start_state;
-    mutable Uint32 m_next_accept_handler_index;
+    mutable vector<Uint32> m_dfa_start_state_index;
 }; // end of class Representation
 
 } // end of namespace Reflex

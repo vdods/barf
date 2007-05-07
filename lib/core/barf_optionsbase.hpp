@@ -67,8 +67,8 @@ public:
         m_enabled_verbosity(V_NONE),
         m_is_help_requested(false),
         m_abort(false)
-    { 
-        // if the BARF_TARGETS_SEARCH_PATH environment variable is set, 
+    {
+        // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
         // add it as the lowest-priority targets search path.
         // TODO: config.h-specified path
         char const *search_path = getenv("BARF_TARGETS_SEARCH_PATH");
@@ -130,9 +130,9 @@ public:
     void SetOutputDir (string const &output_dir);
     void WithLineDirectives ();
     void WithoutLineDirectives ();
-    void GenerateNfaDotGraph (string const &nfa_dot_graph_path);
+    void GenerateNaDotGraph (string const &na_dot_graph_path);
     void DontGenerateNaDotGraph ();
-    void GenerateDfaDotGraph (string const &dfa_dot_graph_path);
+    void GenerateDaDotGraph (string const &da_dot_graph_path);
     void DontGenerateDaDotGraph ();
     // verbosity options
     void EnableVerbosity (string const &verbosity_option);
@@ -160,7 +160,7 @@ protected:
 
         V_ALL                       = 0x7F
     };
-    
+
     // non-option argument value
     string m_input_filename;
     // warning and error option values
@@ -185,7 +185,7 @@ protected:
     bool m_is_help_requested;
     // indicates program should abort
     bool m_abort;
-    
+
 private:
 
     void AddTargetsSearchPath (string const &search_path, string const &set_by);
