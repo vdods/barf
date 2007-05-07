@@ -26,44 +26,44 @@ int main (int argc, char **argv)
     try
     {
         g_options = new Bpp::Options(argv[0]);
-        g_options->Parse(argc, argv);
-        if (GetOptions()->GetAbort())
+        GetOptions().Parse(argc, argv);
+        if (GetOptions().GetAbort())
             return 1;
-        else if (GetOptions()->GetIsHelpRequested())
+        else if (GetOptions().GetIsHelpRequested())
         {
-            GetOptions()->PrintHelpMessage(cerr);
+            GetOptions().PrintHelpMessage(cerr);
             return 0;
         }
 
         Preprocessor::Parser parser;
-        if (GetOptions()->GetShowParsingSpew())
+        if (GetOptions().GetShowParsingSpew())
             parser.SetDebugSpewLevel(2);
 
-        if (GetOptions()->GetInputFilename() == "-" || GetOptions()->GetInputFilename().empty())
+        if (GetOptions().GetInputFilename() == "-" || GetOptions().GetInputFilename().empty())
         {
-            GetOptions()->SetInputFilename("<stdin>");
-            parser.OpenUsingStream(&cin, GetOptions()->GetInputFilename(), true);
+            GetOptions().SetInputFilename("<stdin>");
+            parser.OpenUsingStream(&cin, GetOptions().GetInputFilename(), true);
         }
 
-        else if (!parser.OpenFile(GetOptions()->GetInputFilename()))
+        else if (!parser.OpenFile(GetOptions().GetInputFilename()))
         {
-            EmitError("file not found: \"" + GetOptions()->GetInputFilename() + "\"");
+            EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
             return 2;
         }
 
         ostream *out = NULL;
         ofstream out_fstream;
-        if (GetOptions()->GetOutputFilename() == "-" || GetOptions()->GetOutputFilename().empty())
+        if (GetOptions().GetOutputFilename() == "-" || GetOptions().GetOutputFilename().empty())
         {
-            GetOptions()->SetOutputFilename("<stdout>");
+            GetOptions().SetOutputFilename("<stdout>");
             out = &cout;
         }
         else
         {
-            out_fstream.open(GetOptions()->GetOutputFilename().c_str(), ofstream::out|ofstream::trunc);
+            out_fstream.open(GetOptions().GetOutputFilename().c_str(), ofstream::out|ofstream::trunc);
             if (!out_fstream.is_open())
             {
-                EmitError("unable to open file \"" + GetOptions()->GetOutputFilename() + "\" for writing");
+                EmitError("unable to open file \"" + GetOptions().GetOutputFilename() + "\" for writing");
                 return 3;
             }
             out = &out_fstream;
@@ -72,7 +72,7 @@ int main (int argc, char **argv)
 
         if (parser.Parse() != Preprocessor::Parser::PRC_SUCCESS)
         {
-            EmitError(FiLoc(GetOptions()->GetInputFilename()), "general preprocessor parse error");
+            EmitError(FiLoc(GetOptions().GetInputFilename()), "general preprocessor parse error");
             return 4;
         }
 
@@ -83,10 +83,10 @@ int main (int argc, char **argv)
             Dsc<Preprocessor::Body const *>(parser.GetAcceptedToken());
         assert(body != NULL);
 
-        if (GetOptions()->GetShowSyntaxTree())
+        if (GetOptions().GetShowSyntaxTree())
             body->Print(cerr);
 
-        Preprocessor::Textifier textifier(*out, GetOptions()->GetOutputFilename());
+        Preprocessor::Textifier textifier(*out, GetOptions().GetOutputFilename());
         textifier.SetGeneratesLineDirectives(false);
         Preprocessor::SymbolTable symbol_table;
         body->Execute(textifier, symbol_table);

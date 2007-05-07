@@ -19,10 +19,10 @@ extern bool g_conflicts_encountered;
 void EmitConflictWarning (string const &message)
 {
     g_conflicts_encountered = true;
-    if (GetOptions()->GetTreatWarningsAsErrors())
-        cerr << GetOptions()->GetInputFilename() << ": error: " << message << endl;
+    if (GetOptions().GetTreatWarningsAsErrors())
+        cerr << GetOptions().GetInputFilename() << ": error: " << message << endl;
     else
-        cerr << GetOptions()->GetInputFilename() << ": warning: " << message << endl;
+        cerr << GetOptions().GetInputFilename() << ": warning: " << message << endl;
 }
 
 } // end of namespace Trison

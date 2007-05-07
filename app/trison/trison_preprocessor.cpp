@@ -61,7 +61,7 @@ string Preprocessor::ProcessString (string const &string_to_process, string cons
                      ==
                      GetReturningLineDirectiveTag())
             {
-                assert(GetOptions()->GetWithLineDirectives());
+                assert(GetOptions().GetWithLineDirectives());
                 FiLoc filoc(filename, line+2);
                 string line_directive("\n" + filoc.GetLineDirectiveString() + "\n");
                 assert(line_directive[line_directive.length() - 1] == '\n');

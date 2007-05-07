@@ -153,7 +153,7 @@ void StateMachine::PrintHeaderFile (ostream &stream)
     stream <<
         m_preprocessor.ProcessString(
             ms_header_file_template,
-            GetOptions()->GetHeaderFilename());
+            GetOptions().GetHeaderFilename());
 }
 
 void StateMachine::PrintImplementationFile (ostream &stream)
@@ -164,7 +164,7 @@ void StateMachine::PrintImplementationFile (ostream &stream)
     stream <<
         m_preprocessor.ProcessString(
             ms_implementation_file_template,
-            GetOptions()->GetImplementationFilename());
+            GetOptions().GetImplementationFilename());
 }
 
 void StateMachine::GetStateTransitionIdsFromRulePhase (
@@ -930,7 +930,7 @@ void StateMachine::ResolveShiftReduceConflicts (
                                << first_terminal_rule_phase.m_rule_index << ", "
                                << default_rule_phase.m_rule_index << " and "
                                << current_rule_index;
-                        EmitError(FiLoc(GetOptions()->GetInputFilename()), buffer.str());
+                        EmitError(FiLoc(GetOptions().GetInputFilename()), buffer.str());
                         skip_rest = true;
                     }
                 }
@@ -973,7 +973,7 @@ void StateMachine::ResolveShiftReduceConflicts (
                         buffer << "conflict in rule associativity between rules "
                                << first_terminal_rule_phase.m_rule_index << " and "
                                << default_rule_phase.m_rule_index;
-                        EmitError(FiLoc(GetOptions()->GetInputFilename()), buffer.str());
+                        EmitError(FiLoc(GetOptions().GetInputFilename()), buffer.str());
                         skip_rest = true;
                     }
                 }
@@ -1004,7 +1004,7 @@ void StateMachine::ResolveShiftReduceConflicts (
                         buffer << "nesting of %nonassoc between rules "
                             << first_terminal_rule_phase.m_rule_index << " and "
                             << default_rule_phase.m_rule_index;
-                        EmitError(FiLoc(GetOptions()->GetInputFilename()), buffer.str());
+                        EmitError(FiLoc(GetOptions().GetInputFilename()), buffer.str());
                     }
                     // otherwise, use the terminal's action, which requires
                     // no effort on our part.
@@ -1138,7 +1138,7 @@ void StateMachine::GeneratePreprocessor ()
         string returning_line_directive;
         if (GetParserDirectiveShouldHaveLineDirective(parser_directive_type) &&
             parser_directive_set->GetDirectiveFiLoc(parser_directive_type).GetHasLineNumber() &&
-            GetOptions()->GetWithLineDirectives())
+            GetOptions().GetWithLineDirectives())
         {
             line_directive = "\n";
             line_directive += parser_directive_set->GetDirectiveFiLoc(parser_directive_type).GetLineDirectiveString();
@@ -1330,7 +1330,7 @@ void StateMachine::GeneratePreprocessor ()
                 string line_directive;
                 string returning_line_directive;
                 if (rule->GetCodeBlock()->GetFiLoc().GetHasLineNumber() &&
-                    GetOptions()->GetWithLineDirectives())
+                    GetOptions().GetWithLineDirectives())
                 {
                     line_directive = "\n";
                     line_directive += rule->GetCodeBlock()->GetFiLoc().GetLineDirectiveString();
@@ -1428,7 +1428,7 @@ void StateMachine::GeneratePreprocessor ()
     {
         m_preprocessor.SetReplacementValue(
             Preprocessor::HEADER_FILENAME,
-            GetFilenamePortion(GetOptions()->GetHeaderFilename()));
+            GetFilenamePortion(GetOptions().GetHeaderFilename()));
     }
 }
 

@@ -68,9 +68,10 @@ private:
     static Uint32 const ms_option_count;
 }; // end of class Options
 
-inline Options *GetOptions ()
+inline Trison::Options &GetOptions ()
 {
-    return Dsc<Options *>(g_options);
+    assert(g_options != NULL && "g_options has not been initialized");
+    return *Dsc<Options *>(g_options);
 }
 
 } // end of namespace Trison

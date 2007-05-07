@@ -40,26 +40,26 @@ int main (int argc, char **argv)
     try
     {
         g_options = new Options(argv[0]);
-        g_options->Parse(argc, argv);
-        if (GetOptions()->GetAbort())
+        GetOptions().Parse(argc, argv);
+        if (GetOptions().GetAbort())
             return 1;
-        else if (GetOptions()->GetIsHelpRequested())
+        else if (GetOptions().GetIsHelpRequested())
         {
-            GetOptions()->PrintHelpMessage(cerr);
+            GetOptions().PrintHelpMessage(cerr);
             return 0;
         }
 
         Parser parser;
 
-        if (GetOptions()->GetShowParsingSpew())
+        if (GetOptions().GetShowParsingSpew())
             parser.SetDebugSpewLevel(2);
 
-        if (!parser.SetInputFilename(GetOptions()->GetInputFilename()))
+        if (!parser.SetInputFilename(GetOptions().GetInputFilename()))
         {
-            if (GetOptions()->GetInputFilename().empty())
+            if (GetOptions().GetInputFilename().empty())
                 cerr << "error: no input file" << endl;
             else
-                cerr << "error: input file \"" << GetOptions()->GetInputFilename()
+                cerr << "error: input file \"" << GetOptions().GetInputFilename()
                      << "\" could not be read" << endl;
             return 1;
         }
@@ -72,7 +72,7 @@ int main (int argc, char **argv)
         if (g_errors_encountered || parser_return_code != Parser::PRC_SUCCESS)
             return 1;
 
-        if (GetOptions()->GetShowSyntaxTree())
+        if (GetOptions().GetShowSyntaxTree())
             parsed_grammar->Print(cerr);
 
         // this code block exists so that the lifetime of state_machine
@@ -88,37 +88,37 @@ int main (int argc, char **argv)
             if (g_errors_encountered)
                 return 1;
 
-            if (!(GetOptions()->GetTreatWarningsAsErrors() && g_conflicts_encountered) &&
-                GetOptions()->GetIsOutputBasenameSpecified())
+            if (!(GetOptions().GetTreatWarningsAsErrors() && g_conflicts_encountered) &&
+                GetOptions().GetIsOutputBasenameSpecified())
             {
-                assert(!GetOptions()->GetHeaderFilename().empty());
-                assert(!GetOptions()->GetImplementationFilename().empty());
+                assert(!GetOptions().GetHeaderFilename().empty());
+                assert(!GetOptions().GetImplementationFilename().empty());
 
-                ofstream header_file(GetOptions()->GetHeaderFilename().c_str());
+                ofstream header_file(GetOptions().GetHeaderFilename().c_str());
                 state_machine.PrintHeaderFile(header_file);
                 header_file.close();
 
-                ofstream implementation_file(GetOptions()->GetImplementationFilename().c_str());
+                ofstream implementation_file(GetOptions().GetImplementationFilename().c_str());
                 state_machine.PrintImplementationFile(implementation_file);
                 implementation_file.close();
             }
 
-            if (!GetOptions()->GetStateMachineFilename().empty())
+            if (!GetOptions().GetStateMachineFilename().empty())
             {
-                if (GetOptions()->GetStateMachineFilename() == "-")
+                if (GetOptions().GetStateMachineFilename() == "-")
                 {
                     state_machine.PrintStateMachineFile(cout);
                 }
                 else
                 {
-                    ofstream state_machine_file(GetOptions()->GetStateMachineFilename().c_str());
+                    ofstream state_machine_file(GetOptions().GetStateMachineFilename().c_str());
                     state_machine.PrintStateMachineFile(state_machine_file);
                     state_machine_file.close();
                 }
             }
         }
 
-        return (GetOptions()->GetTreatWarningsAsErrors() && g_conflicts_encountered) ? 1 : 0;
+        return (GetOptions().GetTreatWarningsAsErrors() && g_conflicts_encountered) ? 1 : 0;
     }
     catch (string const &exception)
     {

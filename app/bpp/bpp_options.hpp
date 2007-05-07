@@ -46,9 +46,10 @@ private:
 
 } // end of namespace Bpp
 
-inline Bpp::Options *GetOptions ()
+inline Bpp::Options &GetOptions ()
 {
-    return Dsc<Bpp::Options *>(g_options);
+    assert(g_options != NULL && "g_options has not been initialized");
+    return *Dsc<Bpp::Options *>(g_options);
 }
 
 #endif // !defined(_BPP_OPTIONS_HPP_)

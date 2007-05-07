@@ -28,24 +28,24 @@ int main (int argc, char **argv)
     try
     {
         g_options = new Reflex::Options(argv[0]);
-        g_options->Parse(argc, argv);
-        if (GetOptions()->GetAbort())
+        GetOptions().Parse(argc, argv);
+        if (GetOptions().GetAbort())
         {
             return 1;
         }
-        else if (GetOptions()->GetIsHelpRequested())
+        else if (GetOptions().GetIsHelpRequested())
         {
-            GetOptions()->PrintHelpMessage(cerr);
+            GetOptions().PrintHelpMessage(cerr);
             return 0;
         }
-        else if (GetOptions()->GetPrintTargetsSearchPathRequest() == Reflex::Options::PTSPR_SHORT)
+        else if (GetOptions().GetPrintTargetsSearchPathRequest() == Reflex::Options::PTSPR_SHORT)
         {
-            cout << GetOptions()->GetTargetsSearchPath().GetAsString("\n") << endl;
+            cout << GetOptions().GetTargetsSearchPath().GetAsString("\n") << endl;
             return 0;
         }
-        else if (GetOptions()->GetPrintTargetsSearchPathRequest() == Reflex::Options::PTSPR_VERBOSE)
+        else if (GetOptions().GetPrintTargetsSearchPathRequest() == Reflex::Options::PTSPR_VERBOSE)
         {
-            cout << GetOptions()->GetTargetsSearchPath().GetAsVerboseString("\n") << endl;
+            cout << GetOptions().GetTargetsSearchPath().GetAsVerboseString("\n") << endl;
             return 0;
         }
 
@@ -55,20 +55,20 @@ int main (int argc, char **argv)
         // having parsed the targetspec sources.
         {
             Reflex::Parser parser;
-            if (GetOptions()->GetShowScanningSpew())
+            if (GetOptions().GetShowScanningSpew())
                 parser.ScannerDebugSpew(true);
-            if (GetOptions()->GetShowParsingSpew())
+            if (GetOptions().GetShowParsingSpew())
                 parser.SetDebugSpewLevel(2);
 
-            if (!parser.OpenFile(GetOptions()->GetInputFilename()))
-                EmitError("file not found: \"" + GetOptions()->GetInputFilename() + "\"");
+            if (!parser.OpenFile(GetOptions().GetInputFilename()))
+                EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
             else if (parser.Parse() != Reflex::Parser::PRC_SUCCESS)
-                EmitError(FiLoc(GetOptions()->GetInputFilename()), "general reflex parse error");
+                EmitError(FiLoc(GetOptions().GetInputFilename()), "general reflex parse error");
             else
             {
                 representation = Dsc<Reflex::Representation *>(parser.GetAcceptedToken());
                 assert(representation != NULL);
-                if (GetOptions()->GetShowSyntaxTree())
+                if (GetOptions().GetShowSyntaxTree())
                     representation->Print(cerr);
             }
 
@@ -76,8 +76,8 @@ int main (int argc, char **argv)
                 return 3;
 
             representation->GenerateNfaAndDfa();
-            representation->PrintNfaDotGraph(GetOptions()->GetNaDotGraphPath(), "NFA");
-            representation->PrintDfaDotGraph(GetOptions()->GetDaDotGraphPath(), "DFA");
+            representation->PrintNfaDotGraph(GetOptions().GetNaDotGraphPath(), "NFA");
+            representation->PrintDfaDotGraph(GetOptions().GetDaDotGraphPath(), "DFA");
 
             if (g_errors_encountered)
                 return 4;
@@ -88,7 +88,7 @@ int main (int argc, char **argv)
         // possible to check short of running the run-before-code-gen code.
         {
             TargetSpec::Parser parser;
-            if (GetOptions()->GetShowTargetSpecParsingSpew())
+            if (GetOptions().GetShowTargetSpecParsingSpew())
                 parser.SetDebugSpewLevel(2);
 
             for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
@@ -108,7 +108,7 @@ int main (int argc, char **argv)
         // codespec and make all checks possible at this time.
         {
             Preprocessor::Parser parser;
-            if (GetOptions()->GetShowPreprocessorParsingSpew())
+            if (GetOptions().GetShowPreprocessorParsingSpew())
                 parser.SetDebugSpewLevel(2);
 
             for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
