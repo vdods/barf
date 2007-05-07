@@ -21,12 +21,7 @@ class Graph;
 
 namespace Regex {
 
-void GenerateDfa (
-    Graph const &nfa_graph,
-    vector<Uint32> const &nfa_start_state_index,
-    Uint32 nfa_accept_state_count,
-    Graph &dfa_graph,
-    vector<Uint32> &dfa_start_state_index);
+void GenerateDfa (Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa);
 
 } // end of namespace Regex
 } // end of namespace Barf

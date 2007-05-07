@@ -91,7 +91,7 @@ void GenerateDfa (Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton
 {
     assert(dfa.m_graph.GetNodeCount() == 0);
     assert(dfa.m_start_state_index.empty());
-    Regex::GenerateDfa(nfa.m_graph, nfa.m_start_state_index, nfa_accept_state_count, dfa.m_graph, dfa.m_start_state_index);
+    Regex::GenerateDfa(nfa, nfa_accept_state_count, dfa);
 }
 
 } // end of namespace Reflex
