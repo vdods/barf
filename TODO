@@ -2,6 +2,8 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- bug: getting "file not found" error when a file exists but the permissions
+  are such that the user can't read it.
 - change "general XXX parse error" into "general XXX parse error -- please
   report to xxx@yyy.com" so error reporting can be better
 - move anything specific to BARF that is currently in core out of core and
@@ -168,6 +170,7 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
+- add commandline option to describe the return codes
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - add "push accepted string back into buffer" API (call it Unaccept) to the
   generated scanner -- it should not be able to push any string, because the
@@ -195,6 +198,7 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+- add commandline option to describe the return codes
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - clean up the parsing so that it's less about passing crap around and more
   about using member variables of the parser (assign rule indices on the fly, etc)

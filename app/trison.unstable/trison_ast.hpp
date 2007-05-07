@@ -15,8 +15,6 @@
 
 #include "barf_ast.hpp"
 #include "barf_commonlang_ast.hpp"
-#include "barf_graph.hpp"
-#include "barf_preprocessor_symboltable.hpp"
 #include "barf_util.hpp"
 #include "trison_enums.hpp"
 
@@ -145,10 +143,6 @@ struct Rule : public Ast::Base
 
     string GetAsText (Uint32 stage = UINT32_UPPER_BOUND) const;
 
-    void PopulateRuleCodeArraySymbol (
-        string const &target_id,
-        Preprocessor::ArraySymbol *rule_code_symbol) const;
-
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct Rule
 
@@ -185,10 +179,6 @@ struct Nonterminal : public TokenId
 
     void SetRuleList (RuleList *rule_list);
     void SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda_graph_head_state, Uint32 npda_graph_return_state) const;
-
-    void PopulateRuleCodeArraySymbol (
-        string const &target_id,
-        Preprocessor::ArraySymbol *rule_code_symbol) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
@@ -298,25 +288,11 @@ struct PrimarySource : public Ast::Base
     Uint32 GetRuleCount () const { return m_nonterminal_list->GetRuleCount(); }
     Rule const *GetRule (Uint32 rule_index) const;
 
-    void GenerateNpdaAndDpda () const;
-    void PrintNpdaGraph (string const &filename, string const &graph_name) const;
-    void PrintDpdaGraph (string const &filename, string const &graph_name) const;
-    void GenerateAutomatonSymbols (
-        Preprocessor::SymbolTable &symbol_table) const;
-    void GenerateTargetDependentSymbols (
-        string const &target_id,
-        Preprocessor::SymbolTable &symbol_table) const;
-    void AssignRuleIndices ();
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-
-private:
-
-    mutable Graph m_npda_graph;
-    mutable Graph m_dpda_graph;
 }; // end of struct PrimarySource
 
 } // end of namespace Trison

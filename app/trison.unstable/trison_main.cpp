@@ -16,6 +16,9 @@
 #include "barf_preprocessor_parser.hpp"
 #include "barf_preprocessor_symboltable.hpp"
 #include "trison_ast.hpp"
+#include "trison_codespecsymbols.hpp"
+#include "trison_dpda.hpp"
+#include "trison_npda.hpp"
 #include "trison_options.hpp"
 #include "trison_parser.hpp"
 
@@ -30,140 +33,229 @@ bool g_conflicts_encountered = false;
 
 } // end of namespace Trison
 
+enum ReturnStatus
+{
+    RS_SUCCESS = 0,
+    RS_COMMANDLINE_ABORT,
+    RS_PRIMARY_SOURCE_ERROR,
+    RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR,
+    RS_TARGETSPEC_ERROR,
+    RS_CODESPEC_ERROR,
+    RS_WRITE_TARGETS_ERROR,
+    RS_FATAL_ERROR
+}; // end of enum ReturnStatus
+
+void ParseAndHandleOptions (int argc, char **argv)
+{
+    // create the Options singleton and parse the commandline.
+    // if the abort flag is set (indicating commandline error),
+    // exit with an error code.  otherwise perform handle-and-quit
+    // options (printing the help message, etc) if present.
+
+    g_options = new Trison::Options(argv[0]);
+    GetOptions().Parse(argc, argv);
+    if (GetOptions().GetAbort())
+    {
+        exit(RS_COMMANDLINE_ABORT);
+    }
+    else if (GetOptions().GetIsHelpRequested())
+    {
+        GetOptions().PrintHelpMessage(cerr);
+        exit(RS_SUCCESS);
+    }
+    else if (GetOptions().GetPrintTargetsSearchPathRequest() == Trison::Options::PTSPR_SHORT)
+    {
+        cout << GetOptions().GetTargetsSearchPath().GetAsString("\n") << endl;
+        exit(RS_SUCCESS);
+    }
+    else if (GetOptions().GetPrintTargetsSearchPathRequest() == Trison::Options::PTSPR_VERBOSE)
+    {
+        cout << GetOptions().GetTargetsSearchPath().GetAsVerboseString("\n") << endl;
+        exit(RS_SUCCESS);
+    }
+}
+
+Trison::PrimarySource const *ParsePrimarySource ()
+{
+    // parse the primary source and check everything possible without
+    // having parsed the targetspec sources.  if any errors were
+    // accumulated during this section, abort with an error code.
+
+    Trison::PrimarySource *primary_source = NULL;
+
+    Trison::Parser parser;
+    if (GetOptions().GetShowScanningSpew())
+        parser.ScannerDebugSpew(true);
+    if (GetOptions().GetShowParsingSpew())
+        parser.SetDebugSpewLevel(2);
+
+    if (!parser.OpenFile(GetOptions().GetInputFilename()))
+        EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
+    else if (parser.Parse() != Trison::Parser::PRC_SUCCESS)
+        EmitError(FiLoc(GetOptions().GetInputFilename()), "general trison parse error");
+    else
+    {
+        primary_source = Dsc<Trison::PrimarySource *>(parser.GetAcceptedToken());
+        assert(primary_source != NULL);
+        if (GetOptions().GetShowSyntaxTree())
+            primary_source->Print(cerr);
+    }
+
+    if (g_errors_encountered)
+        exit(RS_PRIMARY_SOURCE_ERROR);
+
+    return primary_source;
+}
+
+void PrintDotGraph (Graph const &graph, string const &filename, string const &graph_name)
+{
+    if (filename.empty())
+        return;
+
+    if (filename == "-")
+        graph.PrintDotGraph(cout, graph_name);
+    else
+    {
+        ofstream file(filename.c_str());
+        if (!file.is_open())
+            EmitWarning("could not open file \"" + filename + "\" for writing");
+        else
+            graph.PrintDotGraph(file, graph_name);
+    }
+}
+
+void GenerateAndPrintNpdaDotGraph (Trison::PrimarySource const &primary_source, Graph &npda_graph)
+{
+    // generate the NPDA and print it (if the filename is even specified).
+    // no error is possible in this section.
+
+    Trison::GenerateNpda(primary_source, npda_graph);
+    PrintDotGraph(npda_graph, GetOptions().GetNaDotGraphPath(), "NPDA");
+}
+
+void GenerateAndPrintDpdaDotGraph (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph)
+{
+    // generate the DPDA and print it (if the filename is even specified).
+    // GenerateDpda may throw an exception, which should be interpreted
+    // as a program error.  if any errors were accumulated during this
+    // section, abort with an error code.
+
+/*  NOTE not implemented yet
+    try {
+        Trison::GenerateDpda(npda_graph, dpda_graph);
+        PrintDotGraph(dpda_graph, GetOptions().GetDaDotGraphPath(), "DPDA");
+    } catch (string const &exception) {
+        EmitError(exception);
+    }
+
+    if (g_errors_encountered)
+        exit(RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR);
+*/
+}
+
+void ParseTargetSpecs (Trison::PrimarySource const &primary_source)
+{
+    // for each target in the primary source, parse the corresponding
+    // targetspec source, checking for required directives, doing everything
+    // possible to check short of running the run-before-code-gen code.
+    // if any errors were accumulated during this section, abort with
+    // an error code.
+
+    TargetSpec::Parser parser;
+    if (GetOptions().GetShowTargetSpecParsingSpew())
+        parser.SetDebugSpewLevel(2);
+
+    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
+                                               it_end = primary_source.m_target_map->end();
+         it != it_end;
+         ++it)
+    {
+        CommonLang::Target const *target = it->second;
+        assert(target != NULL);
+        target->ParseTargetSpec("trison", parser);
+    }
+
+    if (g_errors_encountered)
+        exit(RS_TARGETSPEC_ERROR);
+}
+
+void ParseCodeSpecs (Trison::PrimarySource const &primary_source)
+{
+    // for each codespec in every target, parse the codespec and
+    // make all checks possible at this time.  if any errors were
+    // accumulated during this section, abort with an error code.
+
+    Preprocessor::Parser parser;
+    if (GetOptions().GetShowPreprocessorParsingSpew())
+        parser.SetDebugSpewLevel(2);
+
+    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
+                                               it_end = primary_source.m_target_map->end();
+         it != it_end;
+         ++it)
+    {
+        CommonLang::Target const *target = it->second;
+        assert(target != NULL);
+        target->ParseCodeSpecs("trison", parser);
+    }
+
+    if (g_errors_encountered)
+        exit(RS_CODESPEC_ERROR);
+}
+
+void WriteTargets (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_graph)
+{
+    // for each target, fill in an empty Preprocessor::SymbolTable with the
+    // macros to be used by the codespecs, and execute each codespec, each
+    // with its own copy of the symbol table.  if any errors were accumulated
+    // during this section, abort with an error code.
+
+    Preprocessor::SymbolTable global_symbol_table;
+
+    Trison::GenerateGeneralAutomatonSymbols(primary_source, global_symbol_table);
+    Trison::GenerateNpdaSymbols(primary_source, npda_graph, global_symbol_table);
+    Trison::GenerateDpdaSymbols(primary_source, dpda_graph, global_symbol_table);
+
+    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
+                                               it_end = primary_source.m_target_map->end();
+         it != it_end;
+         ++it)
+    {
+        string const &target_id = it->first;
+        CommonLang::Target const *target = it->second;
+        assert(target != NULL);
+
+        Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
+
+        Trison::GenerateTargetDependentSymbols(primary_source, target_id, local_symbol_table);
+
+        target->GenerateCode(local_symbol_table);
+    }
+
+    if (g_errors_encountered)
+        exit(RS_WRITE_TARGETS_ERROR);
+}
+
 int main (int argc, char **argv)
 {
-    try
-    {
-        g_options = new Trison::Options(argv[0]);
-        GetOptions().Parse(argc, argv);
-        if (GetOptions().GetAbort())
-        {
-            return 1;
-        }
-        else if (GetOptions().GetIsHelpRequested())
-        {
-            GetOptions().PrintHelpMessage(cerr);
-            return 0;
-        }
-        else if (GetOptions().GetPrintTargetsSearchPathRequest() == Trison::Options::PTSPR_SHORT)
-        {
-            cout << GetOptions().GetTargetsSearchPath().GetAsString("\n") << endl;
-            return 0;
-        }
-        else if (GetOptions().GetPrintTargetsSearchPathRequest() == Trison::Options::PTSPR_VERBOSE)
-        {
-            cout << GetOptions().GetTargetsSearchPath().GetAsVerboseString("\n") << endl;
-            return 0;
-        }
+    try {
+        Trison::PrimarySource const *primary_source = NULL;
+        Graph npda_graph, dpda_graph;
 
-        Trison::PrimarySource *primary_source = NULL;
-
-        // parse the primary source and check everything possible without
-        // having parsed the targetspec sources.
-        {
-            Trison::Parser parser;
-            if (GetOptions().GetShowScanningSpew())
-                parser.ScannerDebugSpew(true);
-            if (GetOptions().GetShowParsingSpew())
-                parser.SetDebugSpewLevel(2);
-
-            if (!parser.OpenFile(GetOptions().GetInputFilename()))
-                EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
-            else if (parser.Parse() != Trison::Parser::PRC_SUCCESS)
-                EmitError(FiLoc(GetOptions().GetInputFilename()), "general trison parse error");
-            else
-            {
-                primary_source = Dsc<Trison::PrimarySource *>(parser.GetAcceptedToken());
-                assert(primary_source != NULL);
-                if (GetOptions().GetShowSyntaxTree())
-                    primary_source->Print(cerr);
-            }
-
-            if (g_errors_encountered)
-                return 3;
-
-            primary_source->GenerateNpdaAndDpda();
-            primary_source->PrintNpdaGraph(GetOptions().GetNaDotGraphPath(), "NPDA");
-            primary_source->PrintDpdaGraph(GetOptions().GetDaDotGraphPath(), "DPDA");
-
-            if (g_errors_encountered)
-                return 4;
-        }
-
-        // for each target in the primary source, parse the corresponding
-        // targetspec source, checking for required directives, doing everything
-        // possible to check short of running the run-before-code-gen code.
-        {
-            TargetSpec::Parser parser;
-            if (GetOptions().GetShowTargetSpecParsingSpew())
-                parser.SetDebugSpewLevel(2);
-
-            for (CommonLang::TargetMap::const_iterator it = primary_source->m_target_map->begin(),
-                                                       it_end = primary_source->m_target_map->end();
-                 it != it_end;
-                 ++it)
-            {
-                CommonLang::Target const *target = it->second;
-                assert(target != NULL);
-                target->ParseTargetSpec("trison", parser);
-            }
-        }
-        if (g_errors_encountered)
-            return 5;
-
-        // for each codespec in every target, parse the
-        // codespec and make all checks possible at this time.
-        {
-            Preprocessor::Parser parser;
-            if (GetOptions().GetShowPreprocessorParsingSpew())
-                parser.SetDebugSpewLevel(2);
-
-            for (CommonLang::TargetMap::const_iterator it = primary_source->m_target_map->begin(),
-                                                       it_end = primary_source->m_target_map->end();
-                 it != it_end;
-                 ++it)
-            {
-                CommonLang::Target const *target = it->second;
-                assert(target != NULL);
-                target->ParseCodeSpecs("trison", parser);
-            }
-        }
-        if (g_errors_encountered)
-            return 6;
-
-        // for each target, fill in an empty Preprocessor::SymbolTable
-        // with the macros to be used by the codespecs, and execute each codespec,
-        // each with its own copy of the symbol table.
-        {
-            Preprocessor::SymbolTable global_symbol_table;
-            primary_source->GenerateAutomatonSymbols(global_symbol_table);
-
-            for (CommonLang::TargetMap::const_iterator it = primary_source->m_target_map->begin(),
-                                                       it_end = primary_source->m_target_map->end();
-                 it != it_end;
-                 ++it)
-            {
-                string const &target_id = it->first;
-                CommonLang::Target const *target = it->second;
-                assert(target != NULL);
-
-                Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
-
-                primary_source->GenerateTargetDependentSymbols(target_id, local_symbol_table);
-                target->GenerateCode(local_symbol_table);
-            }
-        }
-        if (g_errors_encountered)
-            return 7;
+        ParseAndHandleOptions(argc, argv);
+        primary_source = ParsePrimarySource();
+        GenerateAndPrintNpdaDotGraph(*primary_source, npda_graph);
+        GenerateAndPrintDpdaDotGraph(*primary_source, npda_graph, dpda_graph);
+        ParseTargetSpecs(*primary_source);
+        ParseCodeSpecs(*primary_source);
+        WriteTargets(*primary_source, npda_graph, dpda_graph);
 
         delete primary_source;
-    }
-    catch (string const &exception)
-    {
+        return RS_SUCCESS;
+    } catch (string const &exception) {
+        // this is the catch block for fatal errors
         cerr << exception << endl;
-        return 8;
+        return RS_FATAL_ERROR;
     }
-
-    return 0;
 }
 

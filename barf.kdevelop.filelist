@@ -60,6 +60,8 @@ app/trison/trison_transition.hpp
 app/trison.unstable/trison.hpp
 app/trison.unstable/trison_ast.cpp
 app/trison.unstable/trison_ast.hpp
+app/trison.unstable/trison_codespecsymbols.cpp
+app/trison.unstable/trison_codespecsymbols.hpp
 app/trison.unstable/trison_dpda.cpp
 app/trison.unstable/trison_dpda.hpp
 app/trison.unstable/trison_enums.cpp

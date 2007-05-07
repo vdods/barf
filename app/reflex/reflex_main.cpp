@@ -27,6 +27,18 @@
 OptionsBase *g_options = NULL;
 bool g_errors_encountered = false;
 
+enum ReturnStatus
+{
+    RS_SUCCESS = 0,
+    RS_COMMANDLINE_ABORT,
+    RS_PRIMARY_SOURCE_ERROR,
+    RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR,
+    RS_TARGETSPEC_ERROR,
+    RS_CODESPEC_ERROR,
+    RS_WRITE_TARGETS_ERROR,
+    RS_FATAL_ERROR
+}; // end of enum ReturnStatus
+
 void ParseAndHandleOptions (int argc, char **argv)
 {
     // create the Options singleton and parse the commandline.
@@ -38,22 +50,22 @@ void ParseAndHandleOptions (int argc, char **argv)
     GetOptions().Parse(argc, argv);
     if (GetOptions().GetAbort())
     {
-        exit(1);
+        exit(RS_COMMANDLINE_ABORT);
     }
     else if (GetOptions().GetIsHelpRequested())
     {
         GetOptions().PrintHelpMessage(cerr);
-        exit(0);
+        exit(RS_SUCCESS);
     }
     else if (GetOptions().GetPrintTargetsSearchPathRequest() == Reflex::Options::PTSPR_SHORT)
     {
         cout << GetOptions().GetTargetsSearchPath().GetAsString("\n") << endl;
-        exit(0);
+        exit(RS_SUCCESS);
     }
     else if (GetOptions().GetPrintTargetsSearchPathRequest() == Reflex::Options::PTSPR_VERBOSE)
     {
         cout << GetOptions().GetTargetsSearchPath().GetAsVerboseString("\n") << endl;
-        exit(0);
+        exit(RS_SUCCESS);
     }
 }
 
@@ -84,7 +96,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     }
 
     if (g_errors_encountered)
-        exit(2);
+        exit(RS_PRIMARY_SOURCE_ERROR);
 
     return primary_source;
 }
@@ -106,7 +118,7 @@ void PrintDotGraph (Graph const &graph, string const &filename, string const &gr
     }
 }
 
-void GenerateAndPrintNfa (Reflex::PrimarySource const &primary_source, Automaton &nfa)
+void GenerateAndPrintNfaDotGraph (Reflex::PrimarySource const &primary_source, Automaton &nfa)
 {
     // generate the NFA and print it (if the filename is even specified).
     // no error is possible in this section.
@@ -115,7 +127,7 @@ void GenerateAndPrintNfa (Reflex::PrimarySource const &primary_source, Automaton
     PrintDotGraph(nfa.m_graph, GetOptions().GetNaDotGraphPath(), "NFA");
 }
 
-void GenerateAndPrintDfa (Reflex::PrimarySource const &primary_source, Automaton const &nfa, Automaton &dfa)
+void GenerateAndPrintDfaDotGraph (Reflex::PrimarySource const &primary_source, Automaton const &nfa, Automaton &dfa)
 {
     // generate the DFA and print it (if the filename is even specified).
     // GenerateDfa may throw an exception, which should be interpreted
@@ -130,7 +142,7 @@ void GenerateAndPrintDfa (Reflex::PrimarySource const &primary_source, Automaton
     }
 
     if (g_errors_encountered)
-        exit(3);
+        exit(RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR);
 }
 
 void ParseTargetSpecs (Reflex::PrimarySource const &primary_source)
@@ -156,7 +168,7 @@ void ParseTargetSpecs (Reflex::PrimarySource const &primary_source)
     }
 
     if (g_errors_encountered)
-        exit(4);
+        exit(RS_TARGETSPEC_ERROR);
 }
 
 void ParseCodeSpecs (Reflex::PrimarySource const &primary_source)
@@ -180,7 +192,7 @@ void ParseCodeSpecs (Reflex::PrimarySource const &primary_source)
     }
 
     if (g_errors_encountered)
-        exit(5);
+        exit(RS_CODESPEC_ERROR);
 }
 
 void WriteTargets (Reflex::PrimarySource const &primary_source, Automaton const &nfa, Automaton const &dfa)
@@ -213,7 +225,7 @@ void WriteTargets (Reflex::PrimarySource const &primary_source, Automaton const 
     }
 
     if (g_errors_encountered)
-        exit(6);
+        exit(RS_WRITE_TARGETS_ERROR);
 }
 
 int main (int argc, char **argv)
@@ -224,17 +236,17 @@ int main (int argc, char **argv)
 
         ParseAndHandleOptions(argc, argv);
         primary_source = ParsePrimarySource();
-        GenerateAndPrintNfa(*primary_source, nfa);
-        GenerateAndPrintDfa(*primary_source, nfa, dfa);
+        GenerateAndPrintNfaDotGraph(*primary_source, nfa);
+        GenerateAndPrintDfaDotGraph(*primary_source, nfa, dfa);
         ParseTargetSpecs(*primary_source);
         ParseCodeSpecs(*primary_source);
         WriteTargets(*primary_source, nfa, dfa);
 
         delete primary_source;
-        return 0;
+        return RS_SUCCESS;
     } catch (string const &exception) {
         // this is the catch block for fatal errors
         cerr << exception << endl;
-        return 7;
+        return RS_FATAL_ERROR;
     }
 }

@@ -21,16 +21,22 @@ namespace Reflex {
 
 void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Preprocessor::SymbolTable &symbol_table)
 {
+    // _accept_handler_count -- gives the number of accept handlers.
+    Preprocessor::ScalarSymbol *accept_handler_count_symbol =
+        symbol_table.DefineScalarSymbol("_accept_handler_count", FiLoc::ms_invalid);
+    accept_handler_count_symbol->SetScalarBody(
+        new Preprocessor::Body(
+            Sint32(primary_source.GetRuleCount()),
+            FiLoc::ms_invalid));
+
     // _start_in_scanner_mode -- value of %start_in_scanner_mode -- the name of the initial scanner mode
-    {
-        assert(primary_source.m_start_in_scanner_mode_directive != NULL);
-        Preprocessor::ScalarSymbol *symbol =
-            symbol_table.DefineScalarSymbol("_start_in_scanner_mode", FiLoc::ms_invalid);
-        symbol->SetScalarBody(
-            new Preprocessor::Body(
-                primary_source.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText(),
-                FiLoc::ms_invalid));
-    }
+    assert(primary_source.m_start_in_scanner_mode_directive != NULL);
+    Preprocessor::ScalarSymbol *symbol =
+        symbol_table.DefineScalarSymbol("_start_in_scanner_mode", FiLoc::ms_invalid);
+    symbol->SetScalarBody(
+        new Preprocessor::Body(
+            primary_source.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText(),
+            FiLoc::ms_invalid));
 }
 
 void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_graph, vector<Uint32> const &nfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
@@ -355,20 +361,12 @@ void PopulateAcceptHandlerCodeArraySymbol (ScannerMode const &scanner_mode, stri
 
 void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string const &target_id, Preprocessor::SymbolTable &symbol_table)
 {
-    // _accept_handler_count -- gives the number of accept handlers.
-    //
     // _accept_handler_code[_accept_handler_count] -- specifies code
     // for all accept handlers.
     {
-        Preprocessor::ScalarSymbol *accept_handler_count_symbol =
-            symbol_table.DefineScalarSymbol("_accept_handler_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *accept_handler_code_symbol =
             symbol_table.DefineArraySymbol("_accept_handler_code", FiLoc::ms_invalid);
 
-        accept_handler_count_symbol->SetScalarBody(
-            new Preprocessor::Body(
-                Sint32(primary_source.GetRuleCount()),
-                FiLoc::ms_invalid));
         for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
                                             it_end = primary_source.m_scanner_mode_map->end();
             it != it_end;

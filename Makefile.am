@@ -497,6 +497,7 @@ trison_unstable_LDADD = \
 
 trison_unstable_SOURCES = \
 	app/trison.unstable/trison_ast.cpp \
+	app/trison.unstable/trison_codespecsymbols.cpp \
 	app/trison.unstable/trison_dpda.cpp \
 	app/trison.unstable/trison_enums.cpp \
 	app/trison.unstable/trison_graph.cpp \
@@ -568,6 +569,7 @@ noinst_HEADERS = \
 	\
 	app/trison.unstable/trison.hpp \
 	app/trison.unstable/trison_ast.hpp \
+	app/trison.unstable/trison_codespecsymbols.hpp \
 	app/trison.unstable/trison_dpda.hpp \
 	app/trison.unstable/trison_enums.hpp \
 	app/trison.unstable/trison_graph.hpp \

@@ -10,8 +10,6 @@
 
 #include "reflex_ast.hpp"
 
-#include "barf_regex_ast.hpp"
-
 namespace Reflex {
 
 string const &GetAstTypeString (AstType ast_type)

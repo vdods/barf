@@ -6,7 +6,6 @@
 // from <{_source_filename} using <{_targetspec_filename} and <{_codespec_filename}
 // DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY
 
-#include <algorithm>
 #include <cassert>
 #include <deque>
 #include <iostream> // TEMP
