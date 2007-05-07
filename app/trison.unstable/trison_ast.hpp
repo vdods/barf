@@ -23,7 +23,7 @@
 namespace Trison {
 
 struct Nonterminal;
-struct Representation;
+struct PrimarySource;
 
 enum
 {
@@ -33,7 +33,7 @@ enum
     AT_PRECEDENCE,
     AT_PRECEDENCE_LIST,
     AT_PRECEDENCE_MAP,
-    AT_REPRESENTATION,
+    AT_PRIMARY_SOURCE,
     AT_RULE,
     AT_RULE_LIST,
     AT_RULE_TOKEN,
@@ -256,7 +256,7 @@ struct PrecedenceList : public Ast::AstList<Precedence>
     PrecedenceList () : Ast::AstList<Precedence>(AT_PRECEDENCE_LIST) { }
 }; // end of struct PrecedenceList
 
-struct Representation : public Ast::Base
+struct PrimarySource : public Ast::Base
 {
     CommonLang::TargetMap const *const m_target_map;
     TerminalMap const *const m_terminal_map;
@@ -266,7 +266,7 @@ struct Representation : public Ast::Base
     NonterminalMap const *const m_nonterminal_map;
     NonterminalList const *const m_nonterminal_list;
 
-    Representation (
+    PrimarySource (
         CommonLang::TargetMap const *target_map,
         TerminalMap const *terminal_map,
         PrecedenceMap const *precedence_map,
@@ -276,7 +276,7 @@ struct Representation : public Ast::Base
         NonterminalMap const *nonterminal_map,
         NonterminalList const *nonterminal_list)
         :
-        Ast::Base(filoc, AT_REPRESENTATION),
+        Ast::Base(filoc, AT_PRIMARY_SOURCE),
         m_target_map(target_map),
         m_terminal_map(terminal_map),
         m_precedence_map(precedence_map),
@@ -317,7 +317,7 @@ private:
 
     mutable Graph m_npda_graph;
     mutable Graph m_dpda_graph;
-}; // end of struct Representation
+}; // end of struct PrimarySource
 
 } // end of namespace Trison
 

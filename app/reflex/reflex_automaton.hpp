@@ -24,9 +24,9 @@ class Graph;
 
 namespace Reflex {
 
-class Representation;
+struct PrimarySource;
 
-void GenerateNfa (Representation const &representation, Automaton &nfa);
+void GenerateNfa (PrimarySource const &primary_source, Automaton &nfa);
 void GenerateDfa (Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa);
 
 } // end of namespace Reflex

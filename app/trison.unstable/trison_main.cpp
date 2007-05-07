@@ -56,7 +56,7 @@ int main (int argc, char **argv)
             return 0;
         }
 
-        Trison::Representation *representation = NULL;
+        Trison::PrimarySource *primary_source = NULL;
 
         // parse the primary source and check everything possible without
         // having parsed the targetspec sources.
@@ -73,18 +73,18 @@ int main (int argc, char **argv)
                 EmitError(FiLoc(GetOptions().GetInputFilename()), "general trison parse error");
             else
             {
-                representation = Dsc<Trison::Representation *>(parser.GetAcceptedToken());
-                assert(representation != NULL);
+                primary_source = Dsc<Trison::PrimarySource *>(parser.GetAcceptedToken());
+                assert(primary_source != NULL);
                 if (GetOptions().GetShowSyntaxTree())
-                    representation->Print(cerr);
+                    primary_source->Print(cerr);
             }
 
             if (g_errors_encountered)
                 return 3;
 
-            representation->GenerateNpdaAndDpda();
-            representation->PrintNpdaGraph(GetOptions().GetNaDotGraphPath(), "NPDA");
-            representation->PrintDpdaGraph(GetOptions().GetDaDotGraphPath(), "DPDA");
+            primary_source->GenerateNpdaAndDpda();
+            primary_source->PrintNpdaGraph(GetOptions().GetNaDotGraphPath(), "NPDA");
+            primary_source->PrintDpdaGraph(GetOptions().GetDaDotGraphPath(), "DPDA");
 
             if (g_errors_encountered)
                 return 4;
@@ -98,8 +98,8 @@ int main (int argc, char **argv)
             if (GetOptions().GetShowTargetSpecParsingSpew())
                 parser.SetDebugSpewLevel(2);
 
-            for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
-                                                       it_end = representation->m_target_map->end();
+            for (CommonLang::TargetMap::const_iterator it = primary_source->m_target_map->begin(),
+                                                       it_end = primary_source->m_target_map->end();
                  it != it_end;
                  ++it)
             {
@@ -118,8 +118,8 @@ int main (int argc, char **argv)
             if (GetOptions().GetShowPreprocessorParsingSpew())
                 parser.SetDebugSpewLevel(2);
 
-            for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
-                                                       it_end = representation->m_target_map->end();
+            for (CommonLang::TargetMap::const_iterator it = primary_source->m_target_map->begin(),
+                                                       it_end = primary_source->m_target_map->end();
                  it != it_end;
                  ++it)
             {
@@ -136,10 +136,10 @@ int main (int argc, char **argv)
         // each with its own copy of the symbol table.
         {
             Preprocessor::SymbolTable global_symbol_table;
-            representation->GenerateAutomatonSymbols(global_symbol_table);
+            primary_source->GenerateAutomatonSymbols(global_symbol_table);
 
-            for (CommonLang::TargetMap::const_iterator it = representation->m_target_map->begin(),
-                                                       it_end = representation->m_target_map->end();
+            for (CommonLang::TargetMap::const_iterator it = primary_source->m_target_map->begin(),
+                                                       it_end = primary_source->m_target_map->end();
                  it != it_end;
                  ++it)
             {
@@ -149,14 +149,14 @@ int main (int argc, char **argv)
 
                 Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
 
-                representation->GenerateTargetDependentSymbols(target_id, local_symbol_table);
+                primary_source->GenerateTargetDependentSymbols(target_id, local_symbol_table);
                 target->GenerateCode(local_symbol_table);
             }
         }
         if (g_errors_encountered)
             return 7;
 
-        delete representation;
+        delete primary_source;
     }
     catch (string const &exception)
     {

@@ -177,7 +177,7 @@ Parser::Token::Type Parser::Scan ()
 // root rule
 // ///////////////////////////////////////////////////////////////////////////
 
-root %type "Representation *"
+root %type "PrimarySource *"
 :
     at_least_zero_newlines
     targets_directive:target_map
@@ -201,15 +201,15 @@ root %type "Representation *"
                 "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"");
         }
 
-        Representation *representation =
-            new Representation(
+        PrimarySource *primary_source =
+            new PrimarySource(
                 target_map,
                 regular_expression_map,
                 start_in_scanner_mode_directive,
                 throwaway->GetFiLoc(),
                 scanner_mode_map);
         delete throwaway;
-        return representation;
+        return primary_source;
     }
 ;
 

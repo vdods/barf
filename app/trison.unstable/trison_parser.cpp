@@ -551,8 +551,8 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
                 "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"");
         }
 
-        Representation *representation =
-            new Representation(
+        PrimarySource *primary_source =
+            new PrimarySource(
                 target_map,
                 terminal_map,
                 precedence_map,
@@ -563,7 +563,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
                 m_nonterminal_list);
         delete throwaway;
         delete default_parse_nonterminal_id;
-        return representation;
+        return primary_source;
     
 #line 569 "trison_parser.cpp"
 }

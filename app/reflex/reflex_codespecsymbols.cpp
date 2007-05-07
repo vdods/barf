@@ -19,21 +19,21 @@
 
 namespace Reflex {
 
-void GenerateGeneralAutomatonSymbols (Representation const &representation, Preprocessor::SymbolTable &symbol_table)
+void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Preprocessor::SymbolTable &symbol_table)
 {
     // _start_in_scanner_mode -- value of %start_in_scanner_mode -- the name of the initial scanner mode
     {
-        assert(representation.m_start_in_scanner_mode_directive != NULL);
+        assert(primary_source.m_start_in_scanner_mode_directive != NULL);
         Preprocessor::ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol("_start_in_scanner_mode", FiLoc::ms_invalid);
         symbol->SetScalarBody(
             new Preprocessor::Body(
-                representation.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText(),
+                primary_source.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText(),
                 FiLoc::ms_invalid));
     }
 }
 
-void GenerateNfaSymbols (Representation const &representation, Graph const &nfa_graph, vector<Uint32> const &nfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
+void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_graph, vector<Uint32> const &nfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
 {
     assert(nfa_graph.GetNodeCount() > 0);
 
@@ -42,8 +42,8 @@ void GenerateNfaSymbols (Representation const &representation, Graph const &nfa_
         Preprocessor::MapSymbol *nfa_initial_node_index_symbol =
             symbol_table.DefineMapSymbol("_nfa_initial_node_index", FiLoc::ms_invalid);
         Uint32 state_index = 0;
-        for (ScannerModeMap::const_iterator it = representation.m_scanner_mode_map->begin(),
-                                            it_end = representation.m_scanner_mode_map->end();
+        for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
+                                            it_end = primary_source.m_scanner_mode_map->end();
             it != it_end;
             ++it)
         {
@@ -173,7 +173,7 @@ void GenerateNfaSymbols (Representation const &representation, Graph const &nfa_
     }
 }
 
-void GenerateDfaSymbols (Representation const &representation, Graph const &dfa_graph, vector<Uint32> const &dfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
+void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_graph, vector<Uint32> const &dfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
 {
     assert(dfa_graph.GetNodeCount() > 0);
 
@@ -182,8 +182,8 @@ void GenerateDfaSymbols (Representation const &representation, Graph const &dfa_
         Preprocessor::MapSymbol *dfa_initial_node_index_symbol =
             symbol_table.DefineMapSymbol("_dfa_initial_node_index", FiLoc::ms_invalid);
         Uint32 state_index = 0;
-        for (ScannerModeMap::const_iterator it = representation.m_scanner_mode_map->begin(),
-                                            it_end = representation.m_scanner_mode_map->end();
+        for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
+                                            it_end = primary_source.m_scanner_mode_map->end();
             it != it_end;
             ++it)
         {
@@ -353,7 +353,7 @@ void PopulateAcceptHandlerCodeArraySymbol (ScannerMode const &scanner_mode, stri
     }
 }
 
-void GenerateTargetDependentSymbols (Representation const &representation, string const &target_id, Preprocessor::SymbolTable &symbol_table)
+void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string const &target_id, Preprocessor::SymbolTable &symbol_table)
 {
     // _accept_handler_count -- gives the number of accept handlers.
     //
@@ -367,10 +367,10 @@ void GenerateTargetDependentSymbols (Representation const &representation, strin
 
         accept_handler_count_symbol->SetScalarBody(
             new Preprocessor::Body(
-                Sint32(representation.GetRuleCount()),
+                Sint32(primary_source.GetRuleCount()),
                 FiLoc::ms_invalid));
-        for (ScannerModeMap::const_iterator it = representation.m_scanner_mode_map->begin(),
-                                            it_end = representation.m_scanner_mode_map->end();
+        for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
+                                            it_end = primary_source.m_scanner_mode_map->end();
             it != it_end;
             ++it)
         {

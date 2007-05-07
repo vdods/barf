@@ -52,7 +52,7 @@ void GenerateNfa (
     }
 }
 
-void GenerateNfa (Representation const &representation, Automaton &nfa)
+void GenerateNfa (PrimarySource const &primary_source, Automaton &nfa)
 {
     assert(nfa.m_graph.GetNodeCount() == 0);
     assert(nfa.m_start_state_index.empty());
@@ -60,7 +60,7 @@ void GenerateNfa (Representation const &representation, Automaton &nfa)
     // pre-allocate all the accept handler state nodes, because the first
     // contiguous block of N nodes are reserved for accept states (where N
     // is the number of accept states).
-    for (Uint32 i = 0, accept_handler_count = representation.GetRuleCount();
+    for (Uint32 i = 0, accept_handler_count = primary_source.GetRuleCount();
          i < accept_handler_count;
          ++i)
     {
@@ -68,13 +68,13 @@ void GenerateNfa (Representation const &representation, Automaton &nfa)
             new Regex::NodeData(
                 Regex::NOT_START_NODE,
                 Regex::IS_ACCEPT_NODE,
-                string("(") + representation.GetRule(i)->m_rule_regex_string + ")",
+                string("(") + primary_source.GetRule(i)->m_rule_regex_string + ")",
                 i));
     }
 
     Uint32 next_accept_handler_index = 0;
-    for (ScannerModeMap::const_iterator it = representation.m_scanner_mode_map->begin(),
-                                        it_end = representation.m_scanner_mode_map->end();
+    for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
+                                        it_end = primary_source.m_scanner_mode_map->end();
          it != it_end;
          ++it)
     {
@@ -83,8 +83,8 @@ void GenerateNfa (Representation const &representation, Automaton &nfa)
         GenerateNfa(*scanner_mode, nfa.m_graph, nfa.m_start_state_index, next_accept_handler_index);
     }
 
-    assert(nfa.m_graph.GetNodeCount() >= representation.m_scanner_mode_map->size());
-    assert(nfa.m_start_state_index.size() == representation.m_scanner_mode_map->size());
+    assert(nfa.m_graph.GetNodeCount() >= primary_source.m_scanner_mode_map->size());
+    assert(nfa.m_start_state_index.size() == primary_source.m_scanner_mode_map->size());
 }
 
 void GenerateDfa (Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa)

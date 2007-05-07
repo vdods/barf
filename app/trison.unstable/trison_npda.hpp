@@ -18,7 +18,7 @@
 namespace Trison {
 
 struct Nonterminal;
-struct Representation;
+struct PrimarySource;
 struct Rule;
 
 struct NpdaNodeData : public Graph::Node::Data
@@ -29,7 +29,7 @@ struct NpdaNodeData : public Graph::Node::Data
     virtual string GetDescription () const = 0;
 }; // end of struct NpdaNodeData
 
-void GenerateNpda (Representation const &representation, Graph &npda_graph);
+void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph);
 
 } // end of namespace Trison
 

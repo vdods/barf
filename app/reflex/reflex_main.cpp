@@ -57,13 +57,13 @@ void ParseAndHandleOptions (int argc, char **argv)
     }
 }
 
-Reflex::Representation const *ParsePrimarySource ()
+Reflex::PrimarySource const *ParsePrimarySource ()
 {
     // parse the primary source and check everything possible without
     // having parsed the targetspec sources.  if any errors were
     // accumulated during this section, abort with an error code.
 
-    Reflex::Representation *representation = NULL;
+    Reflex::PrimarySource *primary_source = NULL;
 
     Reflex::Parser parser;
     if (GetOptions().GetShowScanningSpew())
@@ -77,16 +77,16 @@ Reflex::Representation const *ParsePrimarySource ()
         EmitError(FiLoc(GetOptions().GetInputFilename()), "general reflex parse error");
     else
     {
-        representation = Dsc<Reflex::Representation *>(parser.GetAcceptedToken());
-        assert(representation != NULL);
+        primary_source = Dsc<Reflex::PrimarySource *>(parser.GetAcceptedToken());
+        assert(primary_source != NULL);
         if (GetOptions().GetShowSyntaxTree())
-            representation->Print(cerr);
+            primary_source->Print(cerr);
     }
 
     if (g_errors_encountered)
         exit(2);
 
-    return representation;
+    return primary_source;
 }
 
 void PrintDotGraph (Graph const &graph, string const &filename, string const &graph_name)
@@ -106,16 +106,16 @@ void PrintDotGraph (Graph const &graph, string const &filename, string const &gr
     }
 }
 
-void GenerateAndPrintNfa (Reflex::Representation const &representation, Automaton &nfa)
+void GenerateAndPrintNfa (Reflex::PrimarySource const &primary_source, Automaton &nfa)
 {
     // generate the NFA and print it (if the filename is even specified).
     // no error is possible in this section.
 
-    Reflex::GenerateNfa(representation, nfa);
+    Reflex::GenerateNfa(primary_source, nfa);
     PrintDotGraph(nfa.m_graph, GetOptions().GetNaDotGraphPath(), "NFA");
 }
 
-void GenerateAndPrintDfa (Reflex::Representation const &representation, Automaton const &nfa, Automaton &dfa)
+void GenerateAndPrintDfa (Reflex::PrimarySource const &primary_source, Automaton const &nfa, Automaton &dfa)
 {
     // generate the DFA and print it (if the filename is even specified).
     // GenerateDfa may throw an exception, which should be interpreted
@@ -123,7 +123,7 @@ void GenerateAndPrintDfa (Reflex::Representation const &representation, Automato
     // section, abort with an error code.
 
     try {
-        Reflex::GenerateDfa(nfa, representation.GetRuleCount(), dfa);
+        Reflex::GenerateDfa(nfa, primary_source.GetRuleCount(), dfa);
         PrintDotGraph(dfa.m_graph, GetOptions().GetDaDotGraphPath(), "DFA");
     } catch (string const &exception) {
         EmitError(exception);
@@ -133,7 +133,7 @@ void GenerateAndPrintDfa (Reflex::Representation const &representation, Automato
         exit(3);
 }
 
-void ParseTargetSpecs (Reflex::Representation const &representation)
+void ParseTargetSpecs (Reflex::PrimarySource const &primary_source)
 {
     // for each target in the primary source, parse the corresponding
     // targetspec source, checking for required directives, doing everything
@@ -145,8 +145,8 @@ void ParseTargetSpecs (Reflex::Representation const &representation)
     if (GetOptions().GetShowTargetSpecParsingSpew())
         parser.SetDebugSpewLevel(2);
 
-    for (CommonLang::TargetMap::const_iterator it = representation.m_target_map->begin(),
-                                               it_end = representation.m_target_map->end();
+    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
+                                               it_end = primary_source.m_target_map->end();
          it != it_end;
          ++it)
     {
@@ -159,7 +159,7 @@ void ParseTargetSpecs (Reflex::Representation const &representation)
         exit(4);
 }
 
-void ParseCodeSpecs (Reflex::Representation const &representation)
+void ParseCodeSpecs (Reflex::PrimarySource const &primary_source)
 {
     // for each codespec in every target, parse the codespec and
     // make all checks possible at this time.  if any errors were
@@ -169,8 +169,8 @@ void ParseCodeSpecs (Reflex::Representation const &representation)
     if (GetOptions().GetShowPreprocessorParsingSpew())
         parser.SetDebugSpewLevel(2);
 
-    for (CommonLang::TargetMap::const_iterator it = representation.m_target_map->begin(),
-                                               it_end = representation.m_target_map->end();
+    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
+                                               it_end = primary_source.m_target_map->end();
          it != it_end;
          ++it)
     {
@@ -183,7 +183,7 @@ void ParseCodeSpecs (Reflex::Representation const &representation)
         exit(5);
 }
 
-void WriteTargets (Reflex::Representation const &representation, Automaton const &nfa, Automaton const &dfa)
+void WriteTargets (Reflex::PrimarySource const &primary_source, Automaton const &nfa, Automaton const &dfa)
 {
     // for each target, fill in an empty Preprocessor::SymbolTable with the
     // macros to be used by the codespecs, and execute each codespec, each
@@ -192,12 +192,12 @@ void WriteTargets (Reflex::Representation const &representation, Automaton const
 
     Preprocessor::SymbolTable global_symbol_table;
 
-    Reflex::GenerateGeneralAutomatonSymbols(representation, global_symbol_table);
-    Reflex::GenerateNfaSymbols(representation, nfa.m_graph, nfa.m_start_state_index, global_symbol_table);
-    Reflex::GenerateDfaSymbols(representation, dfa.m_graph, dfa.m_start_state_index, global_symbol_table);
+    Reflex::GenerateGeneralAutomatonSymbols(primary_source, global_symbol_table);
+    Reflex::GenerateNfaSymbols(primary_source, nfa.m_graph, nfa.m_start_state_index, global_symbol_table);
+    Reflex::GenerateDfaSymbols(primary_source, dfa.m_graph, dfa.m_start_state_index, global_symbol_table);
 
-    for (CommonLang::TargetMap::const_iterator it = representation.m_target_map->begin(),
-                                               it_end = representation.m_target_map->end();
+    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
+                                               it_end = primary_source.m_target_map->end();
          it != it_end;
          ++it)
     {
@@ -207,7 +207,7 @@ void WriteTargets (Reflex::Representation const &representation, Automaton const
 
         Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
 
-        Reflex::GenerateTargetDependentSymbols(representation, target_id, local_symbol_table);
+        Reflex::GenerateTargetDependentSymbols(primary_source, target_id, local_symbol_table);
 
         target->GenerateCode(local_symbol_table);
     }
@@ -219,18 +219,18 @@ void WriteTargets (Reflex::Representation const &representation, Automaton const
 int main (int argc, char **argv)
 {
     try {
-        Reflex::Representation const *representation = NULL;
+        Reflex::PrimarySource const *primary_source = NULL;
         Automaton nfa, dfa;
 
         ParseAndHandleOptions(argc, argv);
-        representation = ParsePrimarySource();
-        GenerateAndPrintNfa(*representation, nfa);
-        GenerateAndPrintDfa(*representation, nfa, dfa);
-        ParseTargetSpecs(*representation);
-        ParseCodeSpecs(*representation);
-        WriteTargets(*representation, nfa, dfa);
+        primary_source = ParsePrimarySource();
+        GenerateAndPrintNfa(*primary_source, nfa);
+        GenerateAndPrintDfa(*primary_source, nfa, dfa);
+        ParseTargetSpecs(*primary_source);
+        ParseCodeSpecs(*primary_source);
+        WriteTargets(*primary_source, nfa, dfa);
 
-        delete representation;
+        delete primary_source;
         return 0;
     } catch (string const &exception) {
         // this is the catch block for fatal errors

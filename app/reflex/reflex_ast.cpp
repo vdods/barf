@@ -18,7 +18,7 @@ string const &GetAstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AT_COUNT-CommonLang::AT_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_REPRESENTATION",
+        "AT_PRIMARY_SOURCE",
         "AT_RULE",
         "AT_RULE_LIST",
         "AT_SCANNER_MODE",
@@ -60,7 +60,7 @@ void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
     m_rule_handler_map->Print(stream, Stringify, indent_level+1);
 }
 
-Uint32 Representation::GetRuleCount () const
+Uint32 PrimarySource::GetRuleCount () const
 {
     Uint32 accept_handler_count = 0;
     for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
@@ -75,7 +75,7 @@ Uint32 Representation::GetRuleCount () const
     return accept_handler_count;
 }
 
-Rule const *Representation::GetRule (Uint32 rule_index) const
+Rule const *PrimarySource::GetRule (Uint32 rule_index) const
 {
     assert(rule_index < GetRuleCount());
     for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
@@ -94,12 +94,12 @@ Rule const *Representation::GetRule (Uint32 rule_index) const
     return NULL;
 }
 
-void Representation::Print (ostream &stream, Uint32 indent_level) const
+void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
 {
     Print(stream, GetAstTypeString, indent_level);
 }
 
-void Representation::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void PrimarySource::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
     m_target_map->Print(stream, Stringify, indent_level+1);

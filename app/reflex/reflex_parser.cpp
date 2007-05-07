@@ -482,7 +482,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 // state machine reduction rule handlers
 // ///////////////////////////////////////////////////////////////////////////
 
-// rule 0: %start <- root END_    
+// rule 0: %start <- root END_
 Ast::Base * Parser::ReductionRuleHandler0000 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -490,7 +490,7 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
 
 }
 
-// rule 1: root <- at_least_zero_newlines targets_directive:target_map target_directives macro_directives:regular_expression_map start_in_scanner_mode_directive:start_in_scanner_mode_directive END_PREAMBLE:throwaway scanner_modes:scanner_mode_map    
+// rule 1: root <- at_least_zero_newlines targets_directive:target_map target_directives macro_directives:regular_expression_map start_in_scanner_mode_directive:start_in_scanner_mode_directive END_PREAMBLE:throwaway scanner_modes:scanner_mode_map
 Ast::Base * Parser::ReductionRuleHandler0001 ()
 {
     assert(1 < m_reduction_rule_token_count);
@@ -520,20 +520,20 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
                 "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"");
         }
 
-        Representation *representation =
-            new Representation(
+        PrimarySource *primary_source =
+            new PrimarySource(
                 target_map,
                 regular_expression_map,
                 start_in_scanner_mode_directive,
                 throwaway->GetFiLoc(),
                 scanner_mode_map);
         delete throwaway;
-        return representation;
-    
+        return primary_source;
+
 #line 534 "reflex_parser.cpp"
 }
 
-// rule 2: targets_directive <- DIRECTIVE_TARGETS:throwaway target_ids:target_map at_least_one_newline    
+// rule 2: targets_directive <- DIRECTIVE_TARGETS:throwaway target_ids:target_map at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0002 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -547,11 +547,11 @@ Ast::Base * Parser::ReductionRuleHandler0002 ()
         m_target_map = target_map;
         delete throwaway;
         return target_map;
-    
+
 #line 552 "reflex_parser.cpp"
 }
 
-// rule 3: targets_directive <-     
+// rule 3: targets_directive <-
 Ast::Base * Parser::ReductionRuleHandler0003 ()
 {
 
@@ -560,11 +560,11 @@ Ast::Base * Parser::ReductionRuleHandler0003 ()
         assert(m_target_map == NULL);
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
-    
+
 #line 565 "reflex_parser.cpp"
 }
 
-// rule 4: targets_directive <- DIRECTIVE_TARGETS:throwaway %error at_least_one_newline    
+// rule 4: targets_directive <- DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0004 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -576,11 +576,11 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
         EmitError(throwaway->GetFiLoc(), "parse error in directive %targets");
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
-    
+
 #line 581 "reflex_parser.cpp"
 }
 
-// rule 5: target_ids <- target_ids:target_map ID:target_id    
+// rule 5: target_ids <- target_ids:target_map ID:target_id
 Ast::Base * Parser::ReductionRuleHandler0005 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -594,11 +594,11 @@ Ast::Base * Parser::ReductionRuleHandler0005 ()
         target->EnableCodeGeneration();
         target_map->Add(target_id->GetText(), target);
         return target_map;
-    
+
 #line 599 "reflex_parser.cpp"
 }
 
-// rule 6: target_ids <-     
+// rule 6: target_ids <-
 Ast::Base * Parser::ReductionRuleHandler0006 ()
 {
 
@@ -606,11 +606,11 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
 
         assert(m_target_map == NULL);
         return new CommonLang::TargetMap();
-    
+
 #line 611 "reflex_parser.cpp"
 }
 
-// rule 7: target_directives <- target_directives target_directive:target_directive    
+// rule 7: target_directives <- target_directives target_directive:target_directive
 Ast::Base * Parser::ReductionRuleHandler0007 ()
 {
     assert(1 < m_reduction_rule_token_count);
@@ -622,11 +622,11 @@ Ast::Base * Parser::ReductionRuleHandler0007 ()
         if (target_directive != NULL)
             m_target_map->AddTargetDirective(target_directive);
         return NULL;
-    
+
 #line 627 "reflex_parser.cpp"
 }
 
-// rule 8: target_directives <-     
+// rule 8: target_directives <-
 Ast::Base * Parser::ReductionRuleHandler0008 ()
 {
 
@@ -635,11 +635,11 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
         if (m_target_map == NULL)
             m_target_map = new CommonLang::TargetMap();
         return NULL;
-    
+
 #line 640 "reflex_parser.cpp"
 }
 
-// rule 9: target_directive <- DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive target_directive_param:param at_least_one_newline    
+// rule 9: target_directive <- DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive target_directive_param:param at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0009 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -655,11 +655,11 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
 
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, param);
-    
+
 #line 660 "reflex_parser.cpp"
 }
 
-// rule 10: target_directive <- DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error at_least_one_newline    
+// rule 10: target_directive <- DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0010 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -676,11 +676,11 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
         delete target_id;
         delete target_directive;
         return NULL;
-    
+
 #line 681 "reflex_parser.cpp"
 }
 
-// rule 11: target_directive <- DIRECTIVE_TARGET:throwaway '.' ID:target_id %error at_least_one_newline    
+// rule 11: target_directive <- DIRECTIVE_TARGET:throwaway '.' ID:target_id %error at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0011 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -694,11 +694,11 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
         delete throwaway;
         delete target_id;
         return NULL;
-    
+
 #line 699 "reflex_parser.cpp"
 }
 
-// rule 12: target_directive <- DIRECTIVE_TARGET:throwaway %error at_least_one_newline    
+// rule 12: target_directive <- DIRECTIVE_TARGET:throwaway %error at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0012 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -709,64 +709,64 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
         EmitError(throwaway->GetFiLoc(), "parse error in target name for directive %target");
         delete throwaway;
         return NULL;
-    
+
 #line 714 "reflex_parser.cpp"
 }
 
-// rule 13: target_directive_param <- ID:value    
+// rule 13: target_directive_param <- ID:value
 Ast::Base * Parser::ReductionRuleHandler0013 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::Id * value = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 320 "reflex_parser.trison"
- return value; 
+ return value;
 #line 725 "reflex_parser.cpp"
 }
 
-// rule 14: target_directive_param <- STRING_LITERAL:value    
+// rule 14: target_directive_param <- STRING_LITERAL:value
 Ast::Base * Parser::ReductionRuleHandler0014 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::String * value = Dsc< Ast::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 321 "reflex_parser.trison"
- return value; 
+ return value;
 #line 736 "reflex_parser.cpp"
 }
 
-// rule 15: target_directive_param <- STRICT_CODE_BLOCK:value    
+// rule 15: target_directive_param <- STRICT_CODE_BLOCK:value
 Ast::Base * Parser::ReductionRuleHandler0015 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::StrictCodeBlock * value = Dsc< Ast::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 322 "reflex_parser.trison"
- return value; 
+ return value;
 #line 747 "reflex_parser.cpp"
 }
 
-// rule 16: target_directive_param <- DUMB_CODE_BLOCK:value    
+// rule 16: target_directive_param <- DUMB_CODE_BLOCK:value
 Ast::Base * Parser::ReductionRuleHandler0016 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::DumbCodeBlock * value = Dsc< Ast::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 323 "reflex_parser.trison"
- return value; 
+ return value;
 #line 758 "reflex_parser.cpp"
 }
 
-// rule 17: target_directive_param <-     
+// rule 17: target_directive_param <-
 Ast::Base * Parser::ReductionRuleHandler0017 ()
 {
 
 #line 324 "reflex_parser.trison"
- return NULL; 
+ return NULL;
 #line 767 "reflex_parser.cpp"
 }
 
-// rule 18: macro_directives <- macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id REGEX:macro_regex_string at_least_one_newline    
+// rule 18: macro_directives <- macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id REGEX:macro_regex_string at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0018 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -797,11 +797,11 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
         delete macro_id;
         delete macro_regex_string;
         return regular_expression_map;
-    
+
 #line 802 "reflex_parser.cpp"
 }
 
-// rule 19: macro_directives <-     
+// rule 19: macro_directives <-
 Ast::Base * Parser::ReductionRuleHandler0019 ()
 {
 
@@ -811,11 +811,11 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
         // rule handler for the scanner mode rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
         return m_regex_macro_map;
-    
+
 #line 816 "reflex_parser.cpp"
 }
 
-// rule 20: macro_directives <- macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error at_least_one_newline    
+// rule 20: macro_directives <- macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0020 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -831,11 +831,11 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
         delete throwaway;
         delete macro_id;
         return regular_expression_map;
-    
+
 #line 836 "reflex_parser.cpp"
 }
 
-// rule 21: macro_directives <- macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error at_least_one_newline    
+// rule 21: macro_directives <- macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0021 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -848,11 +848,11 @@ Ast::Base * Parser::ReductionRuleHandler0021 ()
         EmitError(throwaway->GetFiLoc(), "parse error in directive %macro");
         delete throwaway;
         return regular_expression_map;
-    
+
 #line 853 "reflex_parser.cpp"
 }
 
-// rule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE:throwaway ID:scanner_mode_id at_least_one_newline    
+// rule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE:throwaway ID:scanner_mode_id at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0022 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -864,11 +864,11 @@ Ast::Base * Parser::ReductionRuleHandler0022 ()
 
         delete throwaway;
         return new StartInScannerModeDirective(scanner_mode_id);
-    
+
 #line 869 "reflex_parser.cpp"
 }
 
-// rule 23: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE:throwaway %error at_least_one_newline    
+// rule 23: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE:throwaway %error at_least_one_newline
 Ast::Base * Parser::ReductionRuleHandler0023 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -879,11 +879,11 @@ Ast::Base * Parser::ReductionRuleHandler0023 ()
         EmitError(throwaway->GetFiLoc(), "parse error in directive %start_in_scanner_mode");
         delete throwaway;
         return NULL;
-    
+
 #line 884 "reflex_parser.cpp"
 }
 
-// rule 24: scanner_modes <- scanner_modes:scanner_mode_map scanner_mode:scanner_mode    
+// rule 24: scanner_modes <- scanner_modes:scanner_mode_map scanner_mode:scanner_mode
 Ast::Base * Parser::ReductionRuleHandler0024 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -896,22 +896,22 @@ Ast::Base * Parser::ReductionRuleHandler0024 ()
         if (scanner_mode != NULL)
             scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
         return scanner_mode_map;
-    
+
 #line 901 "reflex_parser.cpp"
 }
 
-// rule 25: scanner_modes <-     
+// rule 25: scanner_modes <-
 Ast::Base * Parser::ReductionRuleHandler0025 ()
 {
 
 #line 412 "reflex_parser.trison"
 
         return new ScannerModeMap();
-    
+
 #line 912 "reflex_parser.cpp"
 }
 
-// rule 26: scanner_mode <- DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' scanner_mode_rules:rule_list ';'    
+// rule 26: scanner_mode <- DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' scanner_mode_rules:rule_list ';'
 Ast::Base * Parser::ReductionRuleHandler0026 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -925,11 +925,11 @@ Ast::Base * Parser::ReductionRuleHandler0026 ()
 
         delete throwaway;
         return new ScannerMode(scanner_mode_id, rule_list);
-    
+
 #line 930 "reflex_parser.cpp"
 }
 
-// rule 27: scanner_mode <- DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' %error ';'    
+// rule 27: scanner_mode <- DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' %error ';'
 Ast::Base * Parser::ReductionRuleHandler0027 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -942,11 +942,11 @@ Ast::Base * Parser::ReductionRuleHandler0027 ()
         EmitError(throwaway->GetFiLoc(), "parse error in scanner mode rule list");
         delete throwaway;
         return new ScannerMode(scanner_mode_id, new RuleList());
-    
+
 #line 947 "reflex_parser.cpp"
 }
 
-// rule 28: scanner_mode <- DIRECTIVE_STATE:throwaway %error ':' scanner_mode_rules:rule_list ';'    
+// rule 28: scanner_mode <- DIRECTIVE_STATE:throwaway %error ':' scanner_mode_rules:rule_list ';'
 Ast::Base * Parser::ReductionRuleHandler0028 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -960,11 +960,11 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
         delete throwaway;
         delete rule_list;
         return NULL;
-    
+
 #line 965 "reflex_parser.cpp"
 }
 
-// rule 29: scanner_mode_rules <- rule_list:rule_list    
+// rule 29: scanner_mode_rules <- rule_list:rule_list
 Ast::Base * Parser::ReductionRuleHandler0029 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -973,22 +973,22 @@ Ast::Base * Parser::ReductionRuleHandler0029 ()
 #line 444 "reflex_parser.trison"
 
         return rule_list;
-    
+
 #line 978 "reflex_parser.cpp"
 }
 
-// rule 30: scanner_mode_rules <-     
+// rule 30: scanner_mode_rules <-
 Ast::Base * Parser::ReductionRuleHandler0030 ()
 {
 
 #line 449 "reflex_parser.trison"
 
         return new RuleList();
-    
+
 #line 989 "reflex_parser.cpp"
 }
 
-// rule 31: rule_list <- rule_list:rule_list '|' rule:rule    
+// rule 31: rule_list <- rule_list:rule_list '|' rule:rule
 Ast::Base * Parser::ReductionRuleHandler0031 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1000,11 +1000,11 @@ Ast::Base * Parser::ReductionRuleHandler0031 ()
 
         rule_list->Append(rule);
         return rule_list;
-    
+
 #line 1005 "reflex_parser.cpp"
 }
 
-// rule 32: rule_list <- rule:rule    
+// rule 32: rule_list <- rule:rule
 Ast::Base * Parser::ReductionRuleHandler0032 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1015,11 +1015,11 @@ Ast::Base * Parser::ReductionRuleHandler0032 ()
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
-    
+
 #line 1020 "reflex_parser.cpp"
 }
 
-// rule 33: rule <- REGEX:regex_string rule_handlers:rule_handler_map    
+// rule 33: rule <- REGEX:regex_string rule_handlers:rule_handler_map
 Ast::Base * Parser::ReductionRuleHandler0033 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1082,11 +1082,11 @@ Ast::Base * Parser::ReductionRuleHandler0033 ()
         Rule *rule = new Rule(regex_string->GetText(), regex, rule_handler_map);
         delete regex_string;
         return rule;
-    
+
 #line 1087 "reflex_parser.cpp"
 }
 
-// rule 34: rule_handlers <- rule_handlers:rule_handler_map rule_handler:rule_handler    
+// rule 34: rule_handlers <- rule_handlers:rule_handler_map rule_handler:rule_handler
 Ast::Base * Parser::ReductionRuleHandler0034 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1099,22 +1099,22 @@ Ast::Base * Parser::ReductionRuleHandler0034 ()
         if (rule_handler != NULL)
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
-    
+
 #line 1104 "reflex_parser.cpp"
 }
 
-// rule 35: rule_handlers <-     
+// rule 35: rule_handlers <-
 Ast::Base * Parser::ReductionRuleHandler0035 ()
 {
 
 #line 540 "reflex_parser.trison"
 
         return new CommonLang::RuleHandlerMap();
-    
+
 #line 1115 "reflex_parser.cpp"
 }
 
-// rule 36: rule_handler <- DIRECTIVE_TARGET:throwaway '.' ID:target_id any_type_of_code_block:code_block    
+// rule 36: rule_handler <- DIRECTIVE_TARGET:throwaway '.' ID:target_id any_type_of_code_block:code_block
 Ast::Base * Parser::ReductionRuleHandler0036 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1133,11 +1133,11 @@ Ast::Base * Parser::ReductionRuleHandler0036 ()
                 target_id->GetFiLoc(),
                 "undeclared target \"" + target_id->GetText() + "\"");
         return new CommonLang::RuleHandler(target_id, code_block);
-    
+
 #line 1138 "reflex_parser.cpp"
 }
 
-// rule 37: rule_handler <- DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block    
+// rule 37: rule_handler <- DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
 Ast::Base * Parser::ReductionRuleHandler0037 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1152,11 +1152,11 @@ Ast::Base * Parser::ReductionRuleHandler0037 ()
         delete throwaway;
         delete code_block;
         return NULL;
-    
+
 #line 1157 "reflex_parser.cpp"
 }
 
-// rule 38: rule_handler <- DIRECTIVE_TARGET:throwaway %error    
+// rule 38: rule_handler <- DIRECTIVE_TARGET:throwaway %error
 Ast::Base * Parser::ReductionRuleHandler0038 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1168,11 +1168,11 @@ Ast::Base * Parser::ReductionRuleHandler0038 ()
         EmitError(throwaway->GetFiLoc(), "parse error in directive %target");
         delete throwaway;
         return NULL;
-    
+
 #line 1173 "reflex_parser.cpp"
 }
 
-// rule 39: rule_handler <- %error any_type_of_code_block:code_block    
+// rule 39: rule_handler <- %error any_type_of_code_block:code_block
 Ast::Base * Parser::ReductionRuleHandler0039 ()
 {
     assert(1 < m_reduction_rule_token_count);
@@ -1184,65 +1184,65 @@ Ast::Base * Parser::ReductionRuleHandler0039 ()
         EmitError(code_block->GetFiLoc(), "missing directive %target before rule handler code block");
         delete code_block;
         return NULL;
-    
+
 #line 1189 "reflex_parser.cpp"
 }
 
-// rule 40: any_type_of_code_block <- DUMB_CODE_BLOCK:dumb_code_block    
+// rule 40: any_type_of_code_block <- DUMB_CODE_BLOCK:dumb_code_block
 Ast::Base * Parser::ReductionRuleHandler0040 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::DumbCodeBlock * dumb_code_block = Dsc< Ast::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 590 "reflex_parser.trison"
- return dumb_code_block; 
+ return dumb_code_block;
 #line 1200 "reflex_parser.cpp"
 }
 
-// rule 41: any_type_of_code_block <- STRICT_CODE_BLOCK:strict_code_block    
+// rule 41: any_type_of_code_block <- STRICT_CODE_BLOCK:strict_code_block
 Ast::Base * Parser::ReductionRuleHandler0041 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::StrictCodeBlock * strict_code_block = Dsc< Ast::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
 #line 592 "reflex_parser.trison"
- return strict_code_block; 
+ return strict_code_block;
 #line 1211 "reflex_parser.cpp"
 }
 
-// rule 42: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
+// rule 42: at_least_zero_newlines <- at_least_zero_newlines NEWLINE
 Ast::Base * Parser::ReductionRuleHandler0042 ()
 {
 
 #line 597 "reflex_parser.trison"
- return NULL; 
+ return NULL;
 #line 1220 "reflex_parser.cpp"
 }
 
-// rule 43: at_least_zero_newlines <-     
+// rule 43: at_least_zero_newlines <-
 Ast::Base * Parser::ReductionRuleHandler0043 ()
 {
 
 #line 599 "reflex_parser.trison"
- return NULL; 
+ return NULL;
 #line 1229 "reflex_parser.cpp"
 }
 
-// rule 44: at_least_one_newline <- at_least_one_newline NEWLINE    
+// rule 44: at_least_one_newline <- at_least_one_newline NEWLINE
 Ast::Base * Parser::ReductionRuleHandler0044 ()
 {
 
 #line 604 "reflex_parser.trison"
- return NULL; 
+ return NULL;
 #line 1238 "reflex_parser.cpp"
 }
 
-// rule 45: at_least_one_newline <- NEWLINE    
+// rule 45: at_least_one_newline <- NEWLINE
 Ast::Base * Parser::ReductionRuleHandler0045 ()
 {
 
 #line 606 "reflex_parser.trison"
- return NULL; 
+ return NULL;
 #line 1247 "reflex_parser.cpp"
 }
 

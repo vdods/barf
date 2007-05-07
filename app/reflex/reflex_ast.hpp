@@ -42,7 +42,7 @@ namespace Reflex {
 
 enum
 {
-    AT_REPRESENTATION = CommonLang::AT_START_CUSTOM_TYPES_HERE_,
+    AT_PRIMARY_SOURCE = CommonLang::AT_START_CUSTOM_TYPES_HERE_,
     AT_RULE,
     AT_RULE_LIST,
     AT_SCANNER_MODE,
@@ -138,7 +138,7 @@ struct ScannerModeMap : public Ast::AstMap<ScannerMode>
     ScannerModeMap () : Ast::AstMap<ScannerMode>(AT_SCANNER_MODE_MAP) { }
 };
 
-class Representation : public Ast::Base
+struct PrimarySource : public Ast::Base
 {
 public:
 
@@ -147,14 +147,14 @@ public:
     StartInScannerModeDirective const *const m_start_in_scanner_mode_directive;
     ScannerModeMap const *const m_scanner_mode_map;
 
-    Representation (
+    PrimarySource (
         CommonLang::TargetMap const *target_map,
         Regex::RegularExpressionMap *regex_macro_map,
         StartInScannerModeDirective const *start_in_scanner_mode_directive,
         FiLoc const &end_preamble_filoc,
         ScannerModeMap const *scanner_mode_map)
         :
-        Ast::Base(target_map->GetFiLoc(), AT_REPRESENTATION),
+        Ast::Base(target_map->GetFiLoc(), AT_PRIMARY_SOURCE),
         m_target_map(target_map),
         m_regex_macro_map(regex_macro_map),
         m_start_in_scanner_mode_directive(start_in_scanner_mode_directive),
@@ -174,7 +174,7 @@ public:
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class Representation
+}; // end of struct PrimarySource
 
 } // end of namespace Reflex
 

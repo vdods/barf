@@ -30,7 +30,7 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_PRECEDENCE",
         "AT_PRECEDENCE_LIST",
         "AT_PRECEDENCE_MAP",
-        "AT_REPRESENTATION",
+        "AT_PRIMARY_SOURCE",
         "AT_RULE",
         "AT_RULE_LIST",
         "AT_RULE_TOKEN",
@@ -186,7 +186,7 @@ void Precedence::Print (ostream &stream, StringifyAstType Stringify, Uint32 inde
     stream << Tabs(indent_level+1) << "precedence level: " << m_precedence_level << endl;
 }
 
-Uint32 Representation::GetTokenIndex (string const &token_id) const
+Uint32 PrimarySource::GetTokenIndex (string const &token_id) const
 {
     assert(!token_id.empty());
 
@@ -220,7 +220,7 @@ Uint32 Representation::GetTokenIndex (string const &token_id) const
     return UINT32_UPPER_BOUND;
 }
 
-Rule const *Representation::GetRule (Uint32 rule_index) const
+Rule const *PrimarySource::GetRule (Uint32 rule_index) const
 {
     assert(rule_index < GetRuleCount());
     for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
@@ -236,7 +236,7 @@ Rule const *Representation::GetRule (Uint32 rule_index) const
     return NULL;
 }
 
-void Representation::GenerateNpdaAndDpda () const
+void PrimarySource::GenerateNpdaAndDpda () const
 {
     // generate the NPDA
     {
@@ -246,7 +246,7 @@ void Representation::GenerateNpdaAndDpda () const
     // generate the DPDA
 }
 
-void Representation::PrintNpdaGraph (string const &filename, string const &graph_name) const
+void PrimarySource::PrintNpdaGraph (string const &filename, string const &graph_name) const
 {
     // don't print anything if no filename was specified.
     if (filename.empty())
@@ -264,7 +264,7 @@ void Representation::PrintNpdaGraph (string const &filename, string const &graph
     }
 }
 
-void Representation::PrintDpdaGraph (string const &filename, string const &graph_name) const
+void PrimarySource::PrintDpdaGraph (string const &filename, string const &graph_name) const
 {
     // don't print anything if no filename was specified.
     if (filename.empty())
@@ -282,7 +282,7 @@ void Representation::PrintDpdaGraph (string const &filename, string const &graph
     }
 }
 
-void Representation::GenerateAutomatonSymbols (
+void PrimarySource::GenerateAutomatonSymbols (
     Preprocessor::SymbolTable &symbol_table) const
 {
     assert(m_npda_graph.GetNodeCount() > 0);
@@ -709,7 +709,7 @@ void Representation::GenerateAutomatonSymbols (
     }
 }
 
-void Representation::GenerateTargetDependentSymbols (
+void PrimarySource::GenerateTargetDependentSymbols (
     string const &target_id,
     Preprocessor::SymbolTable &symbol_table) const
 {
@@ -732,12 +732,12 @@ void Representation::GenerateTargetDependentSymbols (
     }
 }
 
-void Representation::Print (ostream &stream, Uint32 indent_level) const
+void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
 {
     Print(stream, GetAstTypeString, indent_level);
 }
 
-void Representation::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void PrimarySource::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
     m_target_map->Print(stream, Stringify, indent_level+1);

@@ -192,7 +192,7 @@ Parser::Token::Type Parser::Scan ()
 // root rule
 // ///////////////////////////////////////////////////////////////////////////
 
-root %type "Representation *"
+root %type "PrimarySource *"
 :
     at_least_zero_newlines
     targets_directive:target_map
@@ -223,8 +223,8 @@ root %type "Representation *"
                 "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"");
         }
 
-        Representation *representation =
-            new Representation(
+        PrimarySource *primary_source =
+            new PrimarySource(
                 target_map,
                 terminal_map,
                 precedence_map,
@@ -235,7 +235,7 @@ root %type "Representation *"
                 m_nonterminal_list);
         delete throwaway;
         delete default_parse_nonterminal_id;
-        return representation;
+        return primary_source;
     }
 ;
 

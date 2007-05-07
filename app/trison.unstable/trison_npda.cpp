@@ -135,12 +135,12 @@ struct GenericNpdaNodeData : public NpdaNodeData
 
 struct GraphContext
 {
-    Representation const &m_representation;
+    PrimarySource const &m_primary_source;
     Graph &m_graph;
 
-    GraphContext (Representation const &representation, Graph &graph)
+    GraphContext (PrimarySource const &primary_source, Graph &graph)
         :
-        m_representation(representation),
+        m_primary_source(primary_source),
         m_graph(graph)
     { }
 }; // end of struct GraphContext
@@ -159,7 +159,7 @@ void GenerateNpda (
     Uint32 start_index,
     Uint32 end_index)
 {
-    Uint32 transition_input = terminal.m_is_id ? graph_context.m_representation.GetTokenIndex(terminal.GetText()) : terminal.m_char;
+    Uint32 transition_input = terminal.m_is_id ? graph_context.m_primary_source.GetTokenIndex(terminal.GetText()) : terminal.m_char;
     graph_context.m_graph.AddTransition(start_index, ShiftTransition(transition_input, terminal.GetText(), end_index));
 }
 
@@ -170,8 +170,8 @@ void GenerateNpda (
     Uint32 end_index,
     Nonterminal const *owner_nonterminal)
 {
-    Terminal const *terminal = graph_context.m_representation.m_terminal_map->GetElement(rule_token.m_token_id);
-    Nonterminal const *nonterminal = graph_context.m_representation.m_nonterminal_map->GetElement(rule_token.m_token_id);
+    Terminal const *terminal = graph_context.m_primary_source.m_terminal_map->GetElement(rule_token.m_token_id);
+    Nonterminal const *nonterminal = graph_context.m_primary_source.m_nonterminal_map->GetElement(rule_token.m_token_id);
     if (terminal == NULL && nonterminal == NULL)
     {
         EmitError(rule_token.GetFiLoc(), "undeclared token \"" + rule_token.m_token_id + "\"");
@@ -184,7 +184,7 @@ void GenerateNpda (
     {
         // add a transition using the nonterminal's token index (which will
         // be encountered directly after a rule reduction).
-        Uint32 transition_input = graph_context.m_representation.GetTokenIndex(nonterminal->GetText());
+        Uint32 transition_input = graph_context.m_primary_source.GetTokenIndex(nonterminal->GetText());
         graph_context.m_graph.AddTransition(start_index, ShiftTransition(transition_input, nonterminal->GetText(), end_index));
         // generate the nonterminal's subgraph if not already generated
         EnsureGeneratedNpda(*nonterminal, graph_context);
@@ -265,7 +265,7 @@ void EnsureGeneratedNpda (
     Uint32 graph_head_state = graph_context.m_graph.AddNode(new NonterminalHeadNpdaNodeData(&nonterminal));
     // create the transitions from the start state to the head and return states
     graph_context.m_graph.AddTransition(graph_start_state, EpsilonTransition(graph_head_state));
-    graph_context.m_graph.AddTransition(graph_start_state, ShiftTransition(graph_context.m_representation.GetTokenIndex(nonterminal.GetText()), nonterminal.GetText(), graph_return_state));
+    graph_context.m_graph.AddTransition(graph_start_state, ShiftTransition(graph_context.m_primary_source.GetTokenIndex(nonterminal.GetText()), nonterminal.GetText(), graph_return_state));
     // create the return transition
     graph_context.m_graph.AddTransition(graph_return_state, ReturnTransition(nonterminal.GetText()));
     // record the start, head and return states
@@ -282,14 +282,14 @@ void EnsureGeneratedNpda (
     }
 }
 
-void GenerateNpda (Representation const &representation, Graph &npda_graph)
+void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph)
 {
     assert(npda_graph.GetNodeCount() == 0 && "must start with an empty graph");
 
     // the entire graph is generated starting with the default parse nonterminal
-    Nonterminal const *default_parse_nonterminal = representation.m_nonterminal_map->GetElement(representation.m_default_parse_nonterminal_id);
+    Nonterminal const *default_parse_nonterminal = primary_source.m_nonterminal_map->GetElement(primary_source.m_default_parse_nonterminal_id);
     assert(default_parse_nonterminal != NULL);
-    GraphContext graph_context(representation, npda_graph);
+    GraphContext graph_context(primary_source, npda_graph);
     EnsureGeneratedNpda(*default_parse_nonterminal, graph_context);
 
     // TODO: iterate through nonterminals and emit warnings for unused ones
