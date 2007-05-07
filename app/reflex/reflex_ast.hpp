@@ -168,29 +168,12 @@ public:
 
     Uint32 GetRuleCount () const;
     Rule const *GetRule (Uint32 rule_index) const;
-    Graph const &GetNfaGraph () const { return m_nfa_graph; }
-    Graph const &GetDfaGraph () const { return m_dfa_graph; }
 
-    void GenerateNfaAndDfa () const;
-    void PrintNfaDotGraph (string const &filename, string const &graph_name) const;
-    void PrintDfaDotGraph (string const &filename, string const &graph_name) const;
-    void GenerateAutomatonSymbols (
-        Preprocessor::SymbolTable &symbol_table) const;
-    void GenerateTargetDependentSymbols (
-        string const &target_id,
-        Preprocessor::SymbolTable &symbol_table) const;
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-
-private:
-
-    mutable Graph m_nfa_graph;
-    mutable vector<Uint32> m_nfa_start_state_index;
-    mutable Graph m_dfa_graph;
-    mutable vector<Uint32> m_dfa_start_state_index;
 }; // end of class Representation
 
 } // end of namespace Reflex

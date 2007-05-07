@@ -60,6 +60,40 @@ void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
     m_rule_handler_map->Print(stream, Stringify, indent_level+1);
 }
 
+Uint32 Representation::GetRuleCount () const
+{
+    Uint32 accept_handler_count = 0;
+    for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
+                                         it_end = m_scanner_mode_map->end();
+         it != it_end;
+         ++it)
+    {
+        ScannerMode const *scanner_mode = it->second;
+        assert(scanner_mode != NULL);
+        accept_handler_count += scanner_mode->GetRuleCount();
+    }
+    return accept_handler_count;
+}
+
+Rule const *Representation::GetRule (Uint32 rule_index) const
+{
+    assert(rule_index < GetRuleCount());
+    for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
+                                         it_end = m_scanner_mode_map->end();
+         it != it_end;
+         ++it)
+    {
+        ScannerMode const *scanner_mode = it->second;
+        assert(scanner_mode != NULL);
+        if (rule_index < scanner_mode->GetRuleCount())
+            return scanner_mode->m_rule_list->GetElement(rule_index);
+        else
+            rule_index -= scanner_mode->GetRuleCount();
+    }
+    assert(false && "GetRuleCount() doesn't match reality");
+    return NULL;
+}
+
 void Representation::Print (ostream &stream, Uint32 indent_level) const
 {
     Print(stream, GetAstTypeString, indent_level);

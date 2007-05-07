@@ -99,6 +99,7 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
                 Conditional transition_conditional(GetConditionalFromConditionalType(transition.Data0()));
                 // check if it conflicts with the passed-in conditional
                 if (conditional.ConflictsWith(transition_conditional))
+                    // TODO: improve this error to include a FiLoc
                     throw string("conditional ") + GetConditionalTypeString(transition.Data0()) + " conflicts with previous adjacent conditionals";
                 // compose this transition's conditional with the one passed-in.
                 Conditional transitioned_conditional(
@@ -351,7 +352,7 @@ Uint32 GetDfaStateIndex (GraphContext &graph_context, DfaState const &dfa_state,
     return dfa_state_index;
 }
 
-void GenerateDfa (Graph const &nfa_graph, Uint32 nfa_accept_state_count, vector<Uint32> const &nfa_start_state_index, Graph &dfa_graph, vector<Uint32> &dfa_start_state_index)
+void GenerateDfa (Graph const &nfa_graph, vector<Uint32> const &nfa_start_state_index, Uint32 nfa_accept_state_count, Graph &dfa_graph, vector<Uint32> &dfa_start_state_index)
 {
     assert(nfa_graph.GetNodeCount() >= nfa_accept_state_count);
     assert(nfa_graph.GetNodeCount() >= nfa_start_state_index.size());

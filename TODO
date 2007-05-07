@@ -149,6 +149,8 @@
   binary data.  this will also require some thought, since the current
   implementation depends on '\0' being disallowed.
 - move NodeData into separate file
+- improve the DFA generation so that throwing an exception when there is
+  a conditional conflict, it includes the file location that caused it.
 
 // ///////////////////////////////////////////////////////////////////////////
 // bpp
@@ -166,7 +168,8 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
-- rename Representation to PrimarySource ?
+- hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
+- rename Representation to PrimarySource
 - add "push accepted string back into buffer" API (call it Unaccept) to the
   generated scanner -- it should not be able to push any string, because the
   previous character is required.  this task would be easier implemented
@@ -193,7 +196,8 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
-- rename Representation to PrimarySource ?
+- hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
+- rename Representation to PrimarySource
 - clean up the parsing so that it's less about passing crap around and more
   about using member variables of the parser (assign rule indices on the fly, etc)
 - figure out how to guarantee branch uniqueness per Action_ branch list in C++ parser.

@@ -377,7 +377,6 @@ reflex_LDADD = \
 
 reflex_SOURCES = \
 	app/reflex/reflex_ast.cpp \
-	app/reflex/reflex_ast_representation.cpp \
 	app/reflex/reflex_automaton.cpp \
 	app/reflex/reflex_codespecsymbols.cpp \
 	app/reflex/reflex_enums.cpp \

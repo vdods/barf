@@ -52,10 +52,10 @@ void GenerateNfa (
     }
 }
 
-void GenerateNfa (Representation const &representation, Graph &nfa_graph, vector<Uint32> &nfa_start_state_index)
+void GenerateNfa (Representation const &representation, Automaton &nfa)
 {
-    assert(nfa_graph.GetNodeCount() == 0);
-    assert(nfa_start_state_index.empty());
+    assert(nfa.m_graph.GetNodeCount() == 0);
+    assert(nfa.m_start_state_index.empty());
 
     // pre-allocate all the accept handler state nodes, because the first
     // contiguous block of N nodes are reserved for accept states (where N
@@ -64,7 +64,7 @@ void GenerateNfa (Representation const &representation, Graph &nfa_graph, vector
          i < accept_handler_count;
          ++i)
     {
-        nfa_graph.AddNode(
+        nfa.m_graph.AddNode(
             new Regex::NodeData(
                 Regex::NOT_START_NODE,
                 Regex::IS_ACCEPT_NODE,
@@ -80,37 +80,18 @@ void GenerateNfa (Representation const &representation, Graph &nfa_graph, vector
     {
         ScannerMode const *scanner_mode = it->second;
         assert(scanner_mode != NULL);
-        GenerateNfa(*scanner_mode, nfa_graph, nfa_start_state_index, next_accept_handler_index);
+        GenerateNfa(*scanner_mode, nfa.m_graph, nfa.m_start_state_index, next_accept_handler_index);
     }
 
-    assert(nfa_graph.GetNodeCount() >= representation.m_scanner_mode_map->size());
-    assert(nfa_start_state_index.size() == representation.m_scanner_mode_map->size());
+    assert(nfa.m_graph.GetNodeCount() >= representation.m_scanner_mode_map->size());
+    assert(nfa.m_start_state_index.size() == representation.m_scanner_mode_map->size());
 }
 
-void GenerateDfa (Graph const &nfa_graph, Uint32 nfa_accept_state_count, vector<Uint32> const &nfa_start_state_index, Graph &dfa_graph, vector<Uint32> &dfa_start_state_index)
+void GenerateDfa (Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa)
 {
-    assert(dfa_graph.GetNodeCount() == 0);
-    assert(dfa_start_state_index.empty());
-    Regex::GenerateDfa(nfa_graph, nfa_accept_state_count, nfa_start_state_index, dfa_graph, dfa_start_state_index);
-}
-
-void PrintDotGraph (Graph const &graph, string const &filename, string const &graph_name)
-{
-    // TODO: move this into reflex_main.cpp or whatever is the master
-
-    if (filename.empty())
-        return;
-
-    if (filename == "-")
-        graph.PrintDotGraph(cout, graph_name);
-    else
-    {
-        ofstream file(filename.c_str());
-        if (!file.is_open())
-            EmitWarning("could not open file \"" + filename + "\" for writing");
-        else
-            graph.PrintDotGraph(file, graph_name);
-    }
+    assert(dfa.m_graph.GetNodeCount() == 0);
+    assert(dfa.m_start_state_index.empty());
+    Regex::GenerateDfa(nfa.m_graph, nfa.m_start_state_index, nfa_accept_state_count, dfa.m_graph, dfa.m_start_state_index);
 }
 
 } // end of namespace Reflex

@@ -17,6 +17,7 @@
 
 namespace Barf {
 
+struct Automaton;
 class Graph;
 
 } // end of namespace Barf
@@ -25,10 +26,8 @@ namespace Reflex {
 
 class Representation;
 
-void GenerateNfa (Representation const &representation, Graph &nfa_graph, vector<Uint32> &nfa_start_state_index);
-void GenerateDfa (Graph const &nfa_graph, Uint32 nfa_accept_state_count, vector<Uint32> const &nfa_start_state_index, Graph &dfa_graph, vector<Uint32> &dfa_start_state_index);
-
-void PrintDotGraph (Graph const &graph, string const &filename, string const &graph_name);
+void GenerateNfa (Representation const &representation, Automaton &nfa);
+void GenerateDfa (Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa);
 
 } // end of namespace Reflex
 

@@ -146,6 +146,12 @@ private:
 
 ostream &operator << (ostream &stream, Graph::Color const &color);
 
+struct Automaton
+{
+    Graph m_graph;
+    vector<Uint32> m_start_state_index;
+}; // end of struct Automaton
+
 } // end of namespace Barf
 
 #endif // !defined(_BARF_GRAPH_HPP_)
