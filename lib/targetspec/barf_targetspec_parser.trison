@@ -25,9 +25,9 @@ class Base;
 
 } // end of namespace Ast
 
-namespace TargetSpec {
+namespace Targetspec {
 
-struct AddCodeSpecList;
+struct AddCodespecList;
 struct AddDirectiveMap;
 %}
 
@@ -44,12 +44,12 @@ private:
     Token::Type Scan ();
 
     CommonLang::Scanner m_scanner;
-    AddCodeSpecList *m_add_codespec_list;
+    AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 }
 
 %parser_header_file_bottom%{
-} // end of namespace TargetSpec
+} // end of namespace Targetspec
 } // end of namespace Barf
 
 #endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
@@ -60,7 +60,7 @@ private:
 #include "barf_targetspec_ast.hpp"
 
 namespace Barf {
-namespace TargetSpec {
+namespace Targetspec {
 %}
 
 %parser_constructor_actions{
@@ -74,7 +74,7 @@ namespace TargetSpec {
 }
 
 %parser_start_of_parse_method_actions{
-    m_add_codespec_list = new AddCodeSpecList();
+    m_add_codespec_list = new AddCodespecList();
     m_add_directive_map = new AddDirectiveMap();
 }
 
@@ -138,7 +138,7 @@ Parser::Token::Type Parser::Scan ()
     }
 }
 
-} // end of namespace TargetSpec
+} // end of namespace Targetspec
 } // end of namespace Barf
 %}
 
@@ -224,7 +224,7 @@ add_codespec
             EmitError(throwaway->GetFiLoc(), "directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
         if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
             EmitError(throwaway->GetFiLoc(), "filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters");
-        m_add_codespec_list->Append(new AddCodeSpec(filename, filename_directive_id));
+        m_add_codespec_list->Append(new AddCodespec(filename, filename_directive_id));
         delete throwaway;
         return NULL;
     }

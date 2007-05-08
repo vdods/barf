@@ -19,9 +19,9 @@ class Base;
 
 } // end of namespace Ast
 
-namespace TargetSpec {
+namespace Targetspec {
 
-struct AddCodeSpecList;
+struct AddCodespecList;
 struct AddDirectiveMap;
 
 #line 28 "barf_targetspec_parser.hpp"
@@ -114,7 +114,7 @@ private:
     Token::Type Scan ();
 
     CommonLang::Scanner m_scanner;
-    AddCodeSpecList *m_add_codespec_list;
+    AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 
 #line 121 "barf_targetspec_parser.hpp"
@@ -271,7 +271,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #line 51 "barf_targetspec_parser.trison"
 
-} // end of namespace TargetSpec
+} // end of namespace Targetspec
 } // end of namespace Barf
 
 #endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)

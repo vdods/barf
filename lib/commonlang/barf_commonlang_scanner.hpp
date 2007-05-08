@@ -252,7 +252,7 @@ private:
 }; // end of class ReflexCpp_::InputApparatus_
 
 // /////////////////////////////////////////////////////////////////////////////
-// implements the AutomatonApparatus interface as described in the documentation 
+// implements the AutomatonApparatus interface as described in the documentation
 // -- it contains all the generalized state machinery for running a reflex DFA.
 // /////////////////////////////////////////////////////////////////////////////
 

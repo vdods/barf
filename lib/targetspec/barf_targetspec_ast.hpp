@@ -16,7 +16,7 @@
 #include "barf_ast.hpp"
 
 namespace Barf {
-namespace TargetSpec {
+namespace Targetspec {
 
 /*
 
@@ -28,7 +28,7 @@ Ast::Base (abstract)
     Specification
     Ast::Directive
         AddDirective
-        AddCodeSpec
+        AddCodespec
     ParamSpec
     ParamType
     Bound
@@ -49,7 +49,7 @@ AddDirective
         AstType (param type)
         Bound
 
-AddCodeSpec
+AddCodespec
     Ast::String (filename)
 
 ParamType
@@ -76,12 +76,12 @@ enum
 
 string const &GetAstTypeString (AstType ast_type);
 
-struct AddCodeSpec : public Ast::Directive
+struct AddCodespec : public Ast::Directive
 {
     Ast::String const *const m_filename;
     Ast::Id const *const m_filename_directive_id;
 
-    AddCodeSpec (Ast::String const *filename, Ast::Id const *filename_directive_id)
+    AddCodespec (Ast::String const *filename, Ast::Id const *filename_directive_id)
         :
         Ast::Directive("%add_codespec", filename->GetFiLoc(), AT_ADD_CODESPEC),
         m_filename(filename),
@@ -92,12 +92,12 @@ struct AddCodeSpec : public Ast::Directive
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class AddCodeSpec
+}; // end of class AddCodespec
 
-struct AddCodeSpecList : public Ast::AstList<AddCodeSpec>
+struct AddCodespecList : public Ast::AstList<AddCodespec>
 {
-    AddCodeSpecList () : Ast::AstList<AddCodeSpec>(AT_ADD_CODESPEC_LIST) { }
-}; // end of class AddCodeSpecList
+    AddCodespecList () : Ast::AstList<AddCodespec>(AT_ADD_CODESPEC_LIST) { }
+}; // end of class AddCodespecList
 
 struct AddDirective : public Ast::Directive
 {
@@ -174,12 +174,12 @@ struct ParamType : public Ast::Base
 struct Specification : public Ast::Base
 {
     Ast::Id const *const m_target_id;
-    AddCodeSpecList const *const m_add_codespec_list;
+    AddCodespecList const *const m_add_codespec_list;
     AddDirectiveMap const *const m_add_directive_map;
 
     Specification (
         Ast::Id const *target_id,
-        AddCodeSpecList const *add_codespec_list,
+        AddCodespecList const *add_codespec_list,
         AddDirectiveMap const *add_directive_map)
         :
         Ast::Base(target_id->GetFiLoc(), AT_SPECIFICATION),
@@ -204,7 +204,7 @@ struct SpecificationMap : public Ast::AstMap<Specification>
     SpecificationMap () : Ast::AstMap<Specification>(AT_SPECIFICATION_MAP) { }
 }; // end of class SpecificationMap
 
-} // end of namespace TargetSpec
+} // end of namespace Targetspec
 } // end of namespace Barf
 
 #endif // !defined(_BARF_TARGETSPEC_AST_HPP_)

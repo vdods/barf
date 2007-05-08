@@ -50,8 +50,7 @@
   functions in a particular case).  this will make the separation of systems
   clearer.
 - add some path-checking function -- i.e. to check for newlines and other stuff
-- hide the AST structs' members via accessors
-- rename CodeSpec to Codespec and code_spec to codespec
+- hide the AST structs' members via accessors (?)
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -64,6 +63,8 @@
 // commonlang
 // ///////////////////////////////////////////////////////////////////////////
 
+- rename to something better (AppCommon, ToolCommon?) and put the common
+  stuff from trison_main.cpp and reflex_main.cpp in there.
 - target directives (including rule handlers) should accept multiple targets ?
   like
   %target.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
@@ -84,7 +85,6 @@
 // targetspec
 // ///////////////////////////////////////////////////////////////////////////
 
-- rename TargetSpec to Targetspec and target_spec to targetspec
 - allow using the value of previously declared directive ids as default values
 - confirm that the declared name matches the filename -- or, should the
   targetspec's %target directive be removed (it is redundant) -- probably remove

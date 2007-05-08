@@ -152,7 +152,7 @@ void GenerateAndPrintDpdaDotGraph (Trison::PrimarySource const &primary_source, 
 */
 }
 
-void ParseTargetSpecs (Trison::PrimarySource const &primary_source)
+void ParseTargetspecs (Trison::PrimarySource const &primary_source)
 {
     // for each target in the primary source, parse the corresponding
     // targetspec source, checking for required directives, doing everything
@@ -160,7 +160,7 @@ void ParseTargetSpecs (Trison::PrimarySource const &primary_source)
     // if any errors were accumulated during this section, abort with
     // an error code.
 
-    TargetSpec::Parser parser;
+    Targetspec::Parser parser;
     parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_SCANNER));
     if (GetOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_PARSER))
         parser.SetDebugSpewLevel(2);
@@ -172,14 +172,14 @@ void ParseTargetSpecs (Trison::PrimarySource const &primary_source)
     {
         CommonLang::Target const *target = it->second;
         assert(target != NULL);
-        target->ParseTargetSpec("trison", parser);
+        target->ParseTargetspec("trison", parser);
     }
 
     if (g_errors_encountered)
         exit(RS_TARGETSPEC_ERROR);
 }
 
-void ParseCodeSpecs (Trison::PrimarySource const &primary_source)
+void ParseCodespecs (Trison::PrimarySource const &primary_source)
 {
     // for each codespec in every target, parse the codespec and
     // make all checks possible at this time.  if any errors were
@@ -197,7 +197,7 @@ void ParseCodeSpecs (Trison::PrimarySource const &primary_source)
     {
         CommonLang::Target const *target = it->second;
         assert(target != NULL);
-        target->ParseCodeSpecs("trison", parser);
+        target->ParseCodespecs("trison", parser);
     }
 
     if (g_errors_encountered)
@@ -249,8 +249,8 @@ int main (int argc, char **argv)
         primary_source = ParsePrimarySource();
         GenerateAndPrintNpdaDotGraph(*primary_source, npda_graph);
         GenerateAndPrintDpdaDotGraph(*primary_source, npda_graph, dpda_graph);
-        ParseTargetSpecs(*primary_source);
-        ParseCodeSpecs(*primary_source);
+        ParseTargetspecs(*primary_source);
+        ParseCodespecs(*primary_source);
         WriteTargets(*primary_source, npda_graph, dpda_graph);
 
         delete primary_source;

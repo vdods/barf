@@ -15,7 +15,7 @@
 #include "barf_targetspec_ast.hpp"
 
 namespace Barf {
-namespace TargetSpec {
+namespace Targetspec {
 
 #line 21 "barf_targetspec_parser.cpp"
 
@@ -77,7 +77,7 @@ Parser::ParserReturnCode Parser::Parse ()
 
 #line 76 "barf_targetspec_parser.trison"
 
-    m_add_codespec_list = new AddCodeSpecList();
+    m_add_codespec_list = new AddCodespecList();
     m_add_directive_map = new AddDirectiveMap();
 
 #line 84 "barf_targetspec_parser.cpp"
@@ -567,7 +567,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
             EmitError(throwaway->GetFiLoc(), "directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
         if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
             EmitError(throwaway->GetFiLoc(), "filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters");
-        m_add_codespec_list->Append(new AddCodeSpec(filename, filename_directive_id));
+        m_add_codespec_list->Append(new AddCodespec(filename, filename_directive_id));
         delete throwaway;
         return NULL;
     
@@ -1228,7 +1228,7 @@ Parser::Token::Type Parser::Scan ()
     }
 }
 
-} // end of namespace TargetSpec
+} // end of namespace Targetspec
 } // end of namespace Barf
 
 #line 1235 "barf_targetspec_parser.cpp"

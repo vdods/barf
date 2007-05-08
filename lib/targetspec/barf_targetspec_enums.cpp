@@ -11,7 +11,7 @@
 #include "barf_targetspec_enums.hpp"
 
 namespace Barf {
-namespace TargetSpec {
+namespace Targetspec {
 
-} // end of namespace TargetSpec
+} // end of namespace Targetspec
 } // end of namespace Barf

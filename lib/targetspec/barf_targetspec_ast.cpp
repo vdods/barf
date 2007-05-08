@@ -13,7 +13,7 @@
 #include "barf_message.hpp"
 
 namespace Barf {
-namespace TargetSpec {
+namespace Targetspec {
 
 string const &GetAstTypeString (AstType ast_type)
 {
@@ -56,7 +56,7 @@ void AddDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 in
     stream << Tabs(indent_level+1) << ParamType::GetParamTypeString(m_param_type) << endl;
 }
 
-void AddCodeSpec::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void AddCodespec::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
     m_filename->Print(stream, Stringify, indent_level+1);
@@ -80,5 +80,5 @@ string const &ParamType::GetParamTypeString (AstType ast_type)
     }
 }
 
-} // end of namespace TargetSpec
+} // end of namespace Targetspec
 } // end of namespace Barf
