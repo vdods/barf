@@ -11,8 +11,8 @@
   separate and formalize the dependencies of each system.
 - add optional-argument commandline options, and account for empty-argument
   required-argument options (e.g. `./reflex -I ""` will assert)
-- descriptions should be indicate "finite-automata-based scanners" and
-  "pushdown-automata-based parsers"
+- descriptions should be indicate "finite-automaton-based scanners" and
+  "pushdown-automaton-based parsers"
 - error when any output file is the same as an input file
 - shorten the enabled_verbosity names (and rename scanning/parsing spew to
   scanner/parser)
@@ -50,6 +50,7 @@
   clearer.
 - add some path-checking function -- i.e. to check for newlines and other stuff
 - hide the AST structs' members via accessors
+- rename CodeSpec to Codespec and code_spec to codespec
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -82,6 +83,7 @@
 // targetspec
 // ///////////////////////////////////////////////////////////////////////////
 
+- rename TargetSpec to Targetspec and target_spec to targetspec
 - allow using the value of previously declared directive ids as default values
 - confirm that the declared name matches the filename -- or, should the
   targetspec's %target directive be removed (it is redundant) -- probably remove

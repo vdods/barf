@@ -127,6 +127,9 @@ public:
 
 #line 31 "barf_preprocessor_parser.trison"
 
+    bool ScannerDebugSpew () const { /* TODO: implement */ return false; }
+    void ScannerDebugSpew (bool debug_spew) { /* TODO: implement */ }
+
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
     void OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers);
@@ -137,7 +140,7 @@ private:
 
     Scanner *m_scanner;
 
-#line 141 "barf_preprocessor_parser.hpp"
+#line 144 "barf_preprocessor_parser.hpp"
 
 private:
 
@@ -348,11 +351,11 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type);
 
 
-#line 43 "barf_preprocessor_parser.trison"
+#line 46 "barf_preprocessor_parser.trison"
 
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
 #endif // !defined(_BARF_PREPROCESSOR_PARSER_HPP_)
 
-#line 359 "barf_preprocessor_parser.hpp"
+#line 362 "barf_preprocessor_parser.hpp"

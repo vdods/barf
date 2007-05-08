@@ -95,16 +95,16 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'V',
         "enable-verbosity",
-        &Options::EnableVerbosity, // this is NOT &OptionsBase::EnableVerbosity
+        &OptionsBase::EnableVerbosity,
         "    Enables the specified verbosity option.  Valid parameters are\n"
-        "        \"parsing-spew\" - Show parser activity debug spew.\n"
-        "        \"print-ast\" - Show the parsed abstract syntax tree.\n"
+        "        \"parser\" - Show parser activity debug spew.\n"
+        "        \"ast\" - Show the parsed abstract syntax tree.\n"
         "        \"all\" - Enable all verbosity options.\n"
         "    All verbosity options are disabled by default.  See also option -v."),
     CommandLineOption(
         'v',
         "disable-verbosity",
-        &Options::DisableVerbosity, // this is NOT &OptionsBase::DisableVerbosity
+        &OptionsBase::DisableVerbosity,
         "    Disables the specified verbosity option.  See option -V for\n"
         "    valid parameters and their descriptions."),
     // just a space before the help option
@@ -127,7 +127,8 @@ Options::Options (string const &executable_filename)
         executable_filename,
         "Trison - A LALR(1) grammar parser generator.\n"
         "Part of the BARF compiler tool suite - written by Victor Dods.",
-        "[options] --output-basename=<basename> <input_filename>")
+        "[options] --output-basename=<basename> <input_filename>",
+        V_PRIMARY_SOURCE_PARSER|V_PRIMARY_SOURCE_AST)
 {
     m_with_line_directives = true;
 }
@@ -189,36 +190,6 @@ void Options::DontGenerateStateMachineFile ()
     m_state_machine_filename.clear();
 }
 
-void Options::EnableVerbosity (string const &verbosity_option)
-{
-    if (verbosity_option == "parsing-spew")
-        m_enabled_verbosity |= V_PARSING_SPEW;
-    else if (verbosity_option == "print-ast")
-        m_enabled_verbosity |= V_SYNTAX_TREE;
-    else if (verbosity_option == "all")
-        m_enabled_verbosity = V_ALL;
-    else
-    {
-        cerr << "error: invalid verbosity option argument \"" << verbosity_option << "\"" << endl;
-        m_abort = true;
-    }
-}
-
-void Options::DisableVerbosity (string const &verbosity_option)
-{
-    if (verbosity_option == "parsing-spew")
-        m_enabled_verbosity &= ~V_PARSING_SPEW;
-    else if (verbosity_option == "print-ast")
-        m_enabled_verbosity &= ~V_SYNTAX_TREE;
-    else if (verbosity_option == "all")
-        m_enabled_verbosity = V_NONE;
-    else
-    {
-        cerr << "error: invalid verbosity option argument \"" << verbosity_option << "\"" << endl;
-        m_abort = true;
-    }
-}
-
 void Options::Parse (int const argc, char const *const *const argv)
 {
     OptionsBase::Parse(argc, argv);
@@ -226,10 +197,7 @@ void Options::Parse (int const argc, char const *const *const argv)
     if (!GetIsHelpRequested())
     {
         if (GetInputFilename().empty())
-        {
-            cerr << "error: no input filename specified" << endl;
-            m_abort = true;
-        }
+            ReportErrorAndSetAbortFlag("no input filename specified");
     }
 }
 

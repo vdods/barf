@@ -29,6 +29,9 @@ class Scanner;
 %}
 
 %parser_class_methods_and_members{
+    bool ScannerDebugSpew () const { /* TODO: implement */ return false; }
+    void ScannerDebugSpew (bool debug_spew) { /* TODO: implement */ }
+
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
     void OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers);

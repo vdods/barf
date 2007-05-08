@@ -41,6 +41,27 @@ public:
         PTSPR_VERBOSE
     }; // end of enum OptionsBase::PrintTargetsSearchPathRequest
 
+    enum Verbosity
+    {
+        V_NONE                      = 0x0000,
+
+        V_EXECUTION                 = 0x0001,
+        V_PRIMARY_SOURCE_SCANNER    = 0x0002,
+        V_PRIMARY_SOURCE_PARSER     = 0x0004,
+        V_PRIMARY_SOURCE_AST        = 0x0008,
+        V_TARGETSPEC_SCANNER        = 0x0010,
+        V_TARGETSPEC_PARSER         = 0x0020,
+        V_TARGETSPEC_AST            = 0x0040,
+        V_CODESPEC_SCANNER          = 0x0080,
+        V_CODESPEC_PARSER           = 0x0100,
+        V_CODESPEC_AST              = 0x0200,
+        V_REGEX_SCANNER             = 0x0400,
+        V_REGEX_PARSER              = 0x0800,
+        V_REGEX_AST                 = 0x1000,
+
+        V_ALL                       = 0x1FFF
+    }; // end of enum OptionsBase::Verbosity
+
     template <typename OptionsBaseSubclass>
     OptionsBase (
         void (OptionsBaseSubclass::*non_option_argument_handler_method)(string const &),
@@ -48,7 +69,8 @@ public:
         Uint32 option_count,
         string const &executable_filename,
         string const &program_description,
-        string const &usage_message)
+        string const &usage_message,
+        Uint32 allowed_verbosity = V_ALL)
         :
         CommandLineParser(
             non_option_argument_handler_method,
@@ -66,8 +88,11 @@ public:
         m_with_line_directives(false),
         m_enabled_verbosity(V_NONE),
         m_is_help_requested(false),
-        m_abort(false)
+        m_abort(false),
+        m_allowed_verbosity(allowed_verbosity)
     {
+        assert((m_allowed_verbosity & ~V_ALL) == 0 && "allowed_verbosity contains invalid Verbosity flags");
+    
         // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
         // add it as the lowest-priority targets search path.
         // TODO: config.h-specified path
@@ -100,13 +125,7 @@ public:
     inline string const &GetNaDotGraphPath () const { return m_na_dot_graph_path; }
     inline string const &GetDaDotGraphPath () const { return m_da_dot_graph_path; }
     // verbosity options
-    inline bool GetShowScanningSpew () const { return m_enabled_verbosity & V_SCANNING_SPEW; }
-    inline bool GetShowParsingSpew () const { return m_enabled_verbosity & V_PARSING_SPEW; }
-    inline bool GetShowTargetSpecParsingSpew () const { return m_enabled_verbosity & V_TARGET_SPEC_PARSING_SPEW; }
-    inline bool GetShowPreprocessorParsingSpew () const { return m_enabled_verbosity & V_PREPROCESSOR_PARSING_SPEW; }
-    inline bool GetShowSyntaxTree () const { return m_enabled_verbosity & V_SYNTAX_TREE; }
-    inline bool GetShowTargetSpecSyntaxTree () const { return m_enabled_verbosity & V_TARGET_SPEC_SYNTAX_TREE; }
-    inline bool GetShowPreprocessorSyntaxTree () const { return m_enabled_verbosity & V_PREPROCESSOR_SYNTAX_TREE; }
+    inline bool GetIsVerbose (Verbosity verbosity) const { assert((verbosity & ~V_ALL) == 0); return (m_enabled_verbosity & verbosity) != 0; }
     // help option
     inline bool GetIsHelpRequested () const { return m_is_help_requested; }
 
@@ -135,8 +154,8 @@ public:
     void GenerateDaDotGraph (string const &da_dot_graph_path);
     void DontGenerateDaDotGraph ();
     // verbosity options
-    void EnableVerbosity (string const &verbosity_option);
-    void DisableVerbosity (string const &verbosity_option);
+    void EnableVerbosity (string const &verbosity_string);
+    void DisableVerbosity (string const &verbosity_string);
     // help option
     void RequestHelp ();
 
@@ -145,21 +164,6 @@ public:
 protected:
 
     void ReportErrorAndSetAbortFlag (string const &error_message);
-
-    enum
-    {
-        V_NONE                      = 0x00,
-
-        V_SCANNING_SPEW             = 0x01,
-        V_PARSING_SPEW              = 0x02,
-        V_TARGET_SPEC_PARSING_SPEW  = 0x04,
-        V_PREPROCESSOR_PARSING_SPEW = 0x08,
-        V_SYNTAX_TREE               = 0x10,
-        V_TARGET_SPEC_SYNTAX_TREE   = 0x20,
-        V_PREPROCESSOR_SYNTAX_TREE  = 0x40,
-
-        V_ALL                       = 0x7F
-    };
 
     // non-option argument value
     string m_input_filename;
@@ -180,7 +184,7 @@ protected:
     string m_na_dot_graph_path;
     string m_da_dot_graph_path;
     // verbosity options
-    Uint8 m_enabled_verbosity;
+    Uint32 m_enabled_verbosity;
     // help option value
     bool m_is_help_requested;
     // indicates program should abort
@@ -189,6 +193,9 @@ protected:
 private:
 
     void AddTargetsSearchPath (string const &search_path, string const &set_by);
+    Verbosity ParseVerbosityString (string const &verbosity_string);
+    
+    Uint32 const m_allowed_verbosity;
 }; // end of class OptionsBase
 
 } // end of namespace Barf

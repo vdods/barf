@@ -36,7 +36,8 @@ int main (int argc, char **argv)
         }
 
         Preprocessor::Parser parser;
-        if (GetOptions().GetShowParsingSpew())
+        parser.ScannerDebugSpew(Bpp::Options::V_PRIMARY_SOURCE_SCANNER);
+        if (GetOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER))
             parser.SetDebugSpewLevel(2);
 
         if (GetOptions().GetInputFilename() == "-" || GetOptions().GetInputFilename().empty())
@@ -83,7 +84,7 @@ int main (int argc, char **argv)
             Dsc<Preprocessor::Body const *>(parser.GetAcceptedToken());
         assert(body != NULL);
 
-        if (GetOptions().GetShowSyntaxTree())
+        if (GetOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_AST))
             body->Print(cerr);
 
         Preprocessor::Textifier textifier(*out, GetOptions().GetOutputFilename());

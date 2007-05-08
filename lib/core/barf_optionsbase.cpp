@@ -116,48 +116,22 @@ void OptionsBase::DontGenerateDaDotGraph ()
     m_da_dot_graph_path.clear();
 }
 
-void OptionsBase::EnableVerbosity (string const &verbosity_option)
+void OptionsBase::EnableVerbosity (string const &verbosity_string)
 {
-    if (verbosity_option == "scanning-spew")
-        m_enabled_verbosity |= V_SCANNING_SPEW;
-    else if (verbosity_option == "parsing-spew")
-        m_enabled_verbosity |= V_PARSING_SPEW;
-    else if (verbosity_option == "targetspec-parsing-spew")
-        m_enabled_verbosity |= V_TARGET_SPEC_PARSING_SPEW;
-    else if (verbosity_option == "preprocessor-parsing-spew")
-        m_enabled_verbosity |= V_PREPROCESSOR_PARSING_SPEW;
-    else if (verbosity_option == "print-ast")
-        m_enabled_verbosity |= V_SYNTAX_TREE;
-    else if (verbosity_option == "targetspec-print-ast")
-        m_enabled_verbosity |= V_TARGET_SPEC_SYNTAX_TREE;
-    else if (verbosity_option == "preprocessor-print-ast")
-        m_enabled_verbosity |= V_PREPROCESSOR_SYNTAX_TREE;
-    else if (verbosity_option == "all")
-        m_enabled_verbosity = V_ALL;
+    Verbosity verbosity = ParseVerbosityString(verbosity_string);
+    if (verbosity == V_NONE)
+        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_string + "\"");
     else
-        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_option + "\"");
+        m_enabled_verbosity |= verbosity;
 }
 
-void OptionsBase::DisableVerbosity (string const &verbosity_option)
+void OptionsBase::DisableVerbosity (string const &verbosity_string)
 {
-    if (verbosity_option == "scanning-spew")
-        m_enabled_verbosity &= ~V_SCANNING_SPEW;
-    else if (verbosity_option == "parsing-spew")
-        m_enabled_verbosity &= ~V_PARSING_SPEW;
-    else if (verbosity_option == "targetspec-parsing-spew")
-        m_enabled_verbosity &= ~V_TARGET_SPEC_PARSING_SPEW;
-    else if (verbosity_option == "preprocessor-parsing-spew")
-        m_enabled_verbosity &= ~V_PREPROCESSOR_PARSING_SPEW;
-    else if (verbosity_option == "print-ast")
-        m_enabled_verbosity &= ~V_SYNTAX_TREE;
-    else if (verbosity_option == "targetspec-print-ast")
-        m_enabled_verbosity &= ~V_TARGET_SPEC_SYNTAX_TREE;
-    else if (verbosity_option == "preprocessor-print-ast")
-        m_enabled_verbosity &= ~V_PREPROCESSOR_SYNTAX_TREE;
-    else if (verbosity_option == "all")
-        m_enabled_verbosity = V_NONE;
+    Verbosity verbosity = ParseVerbosityString(verbosity_string);
+    if (verbosity == V_NONE)
+        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_string + "\"");
     else
-        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_option + "\"");
+        m_enabled_verbosity &= ~verbosity;
 }
 
 void OptionsBase::RequestHelp ()
@@ -195,6 +169,28 @@ void OptionsBase::AddTargetsSearchPath (string const &search_path, string const 
             ReportErrorAndSetAbortFlag("invalid path " + GetStringLiteral(search_path) + ' ' + set_by);
             break;
     }
+}
+
+OptionsBase::Verbosity OptionsBase::ParseVerbosityString (string const &verbosity_string)
+{
+    Verbosity verbosity = V_NONE;
+
+    if      (verbosity_string == "execution")            verbosity = V_EXECUTION;
+    else if (verbosity_string == "scanner")              verbosity = V_PRIMARY_SOURCE_SCANNER;
+    else if (verbosity_string == "parser")               verbosity = V_PRIMARY_SOURCE_PARSER;
+    else if (verbosity_string == "ast")                  verbosity = V_PRIMARY_SOURCE_AST;
+    else if (verbosity_string == "targetspec-scanner")   verbosity = V_TARGETSPEC_SCANNER;
+    else if (verbosity_string == "targetspec-parser")    verbosity = V_TARGETSPEC_PARSER;
+    else if (verbosity_string == "targetspec-ast")       verbosity = V_TARGETSPEC_AST;
+    else if (verbosity_string == "codespec-scanner")     verbosity = V_CODESPEC_SCANNER;
+    else if (verbosity_string == "codespec-parser")      verbosity = V_CODESPEC_PARSER;
+    else if (verbosity_string == "codespec-ast")         verbosity = V_CODESPEC_AST;
+    else if (verbosity_string == "regex-scanner")        verbosity = V_REGEX_SCANNER;
+    else if (verbosity_string == "regex-parser")         verbosity = V_REGEX_PARSER;
+    else if (verbosity_string == "regex-ast")            verbosity = V_REGEX_AST;
+    else if (verbosity_string == "all")                  verbosity = V_ALL;
+    
+    return Verbosity(verbosity & m_allowed_verbosity);
 }
 
 } // end of namespace Barf

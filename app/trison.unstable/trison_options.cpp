@@ -158,14 +158,20 @@ CommandLineOption const Options::ms_option[] =
         "enable-verbosity",
         &OptionsBase::EnableVerbosity,
         "    Enables the specified verbosity option.  Valid parameters are\n"
-        "        \"scanning-spew\" - Show scanner activity debug spew.\n"
-        "        \"parsing-spew\" - Show parser activity debug spew.\n"
-        "        \"targetspec-parsing-spew\" - Show targetspec parser activity debug spew.\n"
-        "        \"preprocessor-parsing-spew\" - Show preprocessor parser activity debug spew.\n"
-        "        \"print-ast\" - Show the parsed abstract syntax tree.\n"
-        "        \"targetspec-print-ast\" - Show the parsed targetspec abstract syntax tree.\n"
-        "        \"preprocessor-print-ast\" - Show the parsed preprocessor abstract syntax tree.\n"
-        "        \"all\" - Enable all verbosity options.\n"
+        "        \"execution\" - Print general application activity to stderr. (not currently implemented)\n" // TODO: implement
+        "        \"scanner\" - Print primary source (*.trison) scanner activity to stderr.\n"
+        "        \"parser\" - Print primary source (*.trison) parser activity to stderr.\n"
+        "        \"ast\" - Print the parsed primary source abstract syntax tree to stderr.\n"
+        "        \"targetspec-scanner\" - Print targetspec scanner activity to stderr.\n"
+        "        \"targetspec-parser\" - Print targetspec parser activity to stderr.\n"
+        "        \"targetspec-ast\" - Print the parsed targetspec abstract syntax tree(s) to stderr.\n"
+        "        \"codespec-scanner\" - Print codespec scanner activity to stderr. (not currently implemented)\n" // TODO: implement
+        "        \"codespec-parser\" - Print codespec parser activity to stderr.\n"
+        "        \"codespec-ast\" - Print the parsed codespec abstract syntax tree(s) to stderr.\n"
+        "        \"regex-scanner\" - Print regex scanner activity to stderr.\n"
+        "        \"regex-parser\" - Print regex parser activity to stderr.\n"
+        "        \"regex-ast\" - Print the parsed regex abstract syntax tree(s) to stderr.\n"
+        "        \"all\" - Enable all above verbosity options.\n"
         "    All verbosity options are disabled by default.  See also option -v."),
     CommandLineOption(
         'v',

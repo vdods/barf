@@ -78,9 +78,8 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     Reflex::PrimarySource *primary_source = NULL;
 
     Reflex::Parser parser;
-    if (GetOptions().GetShowScanningSpew())
-        parser.ScannerDebugSpew(true);
-    if (GetOptions().GetShowParsingSpew())
+    parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
+    if (GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER))
         parser.SetDebugSpewLevel(2);
 
     if (!parser.OpenFile(GetOptions().GetInputFilename()))
@@ -91,7 +90,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     {
         primary_source = Dsc<Reflex::PrimarySource *>(parser.GetAcceptedToken());
         assert(primary_source != NULL);
-        if (GetOptions().GetShowSyntaxTree())
+        if (GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
             primary_source->Print(cerr);
     }
 
@@ -154,7 +153,8 @@ void ParseTargetSpecs (Reflex::PrimarySource const &primary_source)
     // an error code.
 
     TargetSpec::Parser parser;
-    if (GetOptions().GetShowTargetSpecParsingSpew())
+    parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER));
+    if (GetOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_PARSER))
         parser.SetDebugSpewLevel(2);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
@@ -178,7 +178,8 @@ void ParseCodeSpecs (Reflex::PrimarySource const &primary_source)
     // accumulated during this section, abort with an error code.
 
     Preprocessor::Parser parser;
-    if (GetOptions().GetShowPreprocessorParsingSpew())
+    parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_SCANNER));
+    if (GetOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_PARSER))
         parser.SetDebugSpewLevel(2);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),

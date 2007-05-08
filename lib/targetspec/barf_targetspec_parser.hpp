@@ -104,6 +104,9 @@ public:
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
+    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
+    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+
     bool OpenFile (string const &input_filename);
 
 private:
@@ -114,7 +117,7 @@ private:
     AddCodeSpecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 
-#line 118 "barf_targetspec_parser.hpp"
+#line 121 "barf_targetspec_parser.hpp"
 
 private:
 
@@ -266,11 +269,11 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type);
 
 
-#line 48 "barf_targetspec_parser.trison"
+#line 51 "barf_targetspec_parser.trison"
 
 } // end of namespace TargetSpec
 } // end of namespace Barf
 
 #endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 277 "barf_targetspec_parser.hpp"
+#line 280 "barf_targetspec_parser.hpp"

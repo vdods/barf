@@ -31,9 +31,6 @@ public:
 
     // output options
     void SetOutputFilename (string const &output_path);
-    // verbosity options
-    void EnableVerbosity (string const &verbosity_option);
-    void DisableVerbosity (string const &verbosity_option);
 
 private:
 

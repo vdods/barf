@@ -50,8 +50,7 @@ int main (int argc, char **argv)
         }
 
         Parser parser;
-
-        if (GetOptions().GetShowParsingSpew())
+        if (GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER))
             parser.SetDebugSpewLevel(2);
 
         if (!parser.SetInputFilename(GetOptions().GetInputFilename()))
@@ -72,7 +71,7 @@ int main (int argc, char **argv)
         if (g_errors_encountered || parser_return_code != Parser::PRC_SUCCESS)
             return 1;
 
-        if (GetOptions().GetShowSyntaxTree())
+        if (GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_AST))
             parsed_grammar->Print(cerr);
 
         // this code block exists so that the lifetime of state_machine

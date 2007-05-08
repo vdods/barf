@@ -34,6 +34,9 @@ struct AddDirectiveMap;
 %parser_class_methods_and_members{
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
+    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
+    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+
     bool OpenFile (string const &input_filename);
 
 private:

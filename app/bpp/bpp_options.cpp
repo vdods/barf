@@ -71,16 +71,18 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'V',
         "enable-verbosity",
-        &Options::EnableVerbosity, // this is NOT &OptionsBase::EnableVerbosity
+        &OptionsBase::EnableVerbosity,
         "    Enables the specified verbosity option.  Valid parameters are\n"
-        "        \"parsing-spew\" - Show parser activity debug spew.\n"
-        "        \"print-ast\" - Show the parsed abstract syntax tree.\n"
-        "        \"all\" - Enable all verbosity options.\n"
+        "        \"execution\" - Print general application activity to stderr. (not currently implemented)\n" // TODO: implement
+        "        \"scanner\" - Print scanner activity to stderr. (not currently implemented)\n" // TODO: implement
+        "        \"parser\" - Print parser activity to stderr.\n"
+        "        \"ast\" - Print the parsed abstract syntax tree to stderr.\n"
+        "        \"all\" - Enable all above verbosity options.\n"
         "    All verbosity options are disabled by default.  See also option -v."),
     CommandLineOption(
         'v',
         "disable-verbosity",
-        &Options::DisableVerbosity, // this is NOT &OptionsBase::DisableVerbosity
+        &OptionsBase::DisableVerbosity,
         "    Disables the specified verbosity option.  See option -V for\n"
         "    valid parameters and their descriptions."),
     // just a space before the help option
@@ -103,7 +105,8 @@ Options::Options (string const &executable_filename)
         executable_filename,
         "BPP - The Barf Preprocessor.\n"
         "Part of the BARF compiler tool suite - written by Victor Dods.",
-        "[options] [input_filename]")
+        "[options] [input_filename]",
+        V_EXECUTION|V_PRIMARY_SOURCE_SCANNER|V_PRIMARY_SOURCE_PARSER|V_PRIMARY_SOURCE_AST)
 { }
 
 void Options::SetOutputFilename (string const &output_filename)
@@ -112,30 +115,6 @@ void Options::SetOutputFilename (string const &output_filename)
         cerr << "warning: multiple output filenames specified; "
                 "will use the most recent filename" << endl;
     m_output_filename = output_filename;
-}
-
-void Options::EnableVerbosity (string const &verbosity_option)
-{
-    if (verbosity_option == "parsing-spew")
-        m_enabled_verbosity |= V_PARSING_SPEW;
-    else if (verbosity_option == "print-ast")
-        m_enabled_verbosity |= V_SYNTAX_TREE;
-    else if (verbosity_option == "all")
-        m_enabled_verbosity = V_ALL;
-    else
-        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_option + "\"");
-}
-
-void Options::DisableVerbosity (string const &verbosity_option)
-{
-    if (verbosity_option == "parsing-spew")
-        m_enabled_verbosity &= ~V_PARSING_SPEW;
-    else if (verbosity_option == "print-ast")
-        m_enabled_verbosity &= ~V_SYNTAX_TREE;
-    else if (verbosity_option == "all")
-        m_enabled_verbosity = V_NONE;
-    else
-        ReportErrorAndSetAbortFlag("invalid verbosity option argument \"" + verbosity_option + "\"");
 }
 
 void Options::Parse (int const argc, char const *const *const argv)

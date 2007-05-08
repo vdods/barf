@@ -30,9 +30,6 @@ public:
     string GetHeaderFilename () const;
     string GetImplementationFilename () const;
     inline string GetStateMachineFilename () const { return m_state_machine_filename; }
-    // verbosity options
-    inline bool GetShowParsingSpew () const { return m_enabled_verbosity & V_PARSING_SPEW; }
-    inline bool GetShowSyntaxTree () const { return m_enabled_verbosity & V_SYNTAX_TREE; }
 
     // output behavior options
     void SetOutputBasename (string const &output_basename);
@@ -40,23 +37,10 @@ public:
     void SetImplementationExtension (string const &implementation_extension);
     void GenerateStateMachineFile (string const &state_machine_filename);
     void DontGenerateStateMachineFile ();
-    // verbosity options
-    void EnableVerbosity (string const &verbosity_option);
-    void DisableVerbosity (string const &verbosity_option);
 
     void Parse (int argc, char const *const *argv);
 
 private:
-
-    enum
-    {
-        V_NONE          = 0x00,
-
-        V_PARSING_SPEW  = 0x01,
-        V_SYNTAX_TREE   = 0x02,
-
-        V_ALL           = 0x03
-    };
 
     // output behavior option values
     string m_output_basename;

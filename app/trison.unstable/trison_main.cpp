@@ -84,9 +84,8 @@ Trison::PrimarySource const *ParsePrimarySource ()
     Trison::PrimarySource *primary_source = NULL;
 
     Trison::Parser parser;
-    if (GetOptions().GetShowScanningSpew())
-        parser.ScannerDebugSpew(true);
-    if (GetOptions().GetShowParsingSpew())
+    parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER));
+    if (GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER))
         parser.SetDebugSpewLevel(2);
 
     if (!parser.OpenFile(GetOptions().GetInputFilename()))
@@ -97,7 +96,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
     {
         primary_source = Dsc<Trison::PrimarySource *>(parser.GetAcceptedToken());
         assert(primary_source != NULL);
-        if (GetOptions().GetShowSyntaxTree())
+        if (GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_AST))
             primary_source->Print(cerr);
     }
 
@@ -162,7 +161,8 @@ void ParseTargetSpecs (Trison::PrimarySource const &primary_source)
     // an error code.
 
     TargetSpec::Parser parser;
-    if (GetOptions().GetShowTargetSpecParsingSpew())
+    parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_SCANNER));
+    if (GetOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_PARSER))
         parser.SetDebugSpewLevel(2);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
@@ -186,7 +186,8 @@ void ParseCodeSpecs (Trison::PrimarySource const &primary_source)
     // accumulated during this section, abort with an error code.
 
     Preprocessor::Parser parser;
-    if (GetOptions().GetShowPreprocessorParsingSpew())
+    parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_CODESPEC_SCANNER));
+    if (GetOptions().GetIsVerbose(Trison::Options::V_CODESPEC_PARSER))
         parser.SetDebugSpewLevel(2);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),

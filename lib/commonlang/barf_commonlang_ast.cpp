@@ -105,7 +105,7 @@ void Target::ParseTargetSpec (string const &tool_prefix, TargetSpec::Parser &par
         {
             m_target_spec.m_specification = Dsc<TargetSpec::Specification *>(parser.GetAcceptedToken());
             assert(m_target_spec.m_specification != NULL);
-            if (g_options->GetShowTargetSpecSyntaxTree())
+            if (g_options->GetIsVerbose(OptionsBase::V_TARGETSPEC_AST))
                 m_target_spec.m_specification->Print(cerr);
             if (!g_errors_encountered)
                 CheckAgainstTargetSpec(*m_target_spec.m_specification);
@@ -144,7 +144,7 @@ void Target::ParseCodeSpecs (string const &tool_prefix, Preprocessor::Parser &pa
                     Dsc<Preprocessor::Body *>(parser.GetAcceptedToken());
                 assert(codespec_body != NULL);
                 m_code_spec_list.push_back(ParsedCodeSpec(add_codespec, codespec_body, code_spec_filename));
-                if (g_options->GetShowPreprocessorSyntaxTree())
+                if (g_options->GetIsVerbose(OptionsBase::V_CODESPEC_AST))
                     codespec_body->Print(cerr);
             }
         } catch (string const &exception) {
