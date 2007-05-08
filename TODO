@@ -106,7 +106,6 @@
 - add comment/description element to each codespec symbol, so that you can
   print out a list of all available codespec symbols and their descriptions
   from the commandline for easier development
-- rename xxx_symbol to xxx
 
 // ///////////////////////////////////////////////////////////////////////////
 // preprocessor
