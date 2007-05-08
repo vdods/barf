@@ -2,6 +2,8 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- guarantee that errors will be reported such that the line numbers never 
+  decrease.
 - improve the parser/scanner/ast verbosity (i.e. prefix each line with a label)
 - bug: getting "file not found" error when a file exists but the permissions
   are such that the user can't read it.
@@ -98,6 +100,15 @@
 - add error handling to the parser grammar
 
 // ///////////////////////////////////////////////////////////////////////////
+// codespec
+// ///////////////////////////////////////////////////////////////////////////
+
+- add comment/description element to each codespec symbol, so that you can
+  print out a list of all available codespec symbols and their descriptions
+  from the commandline for easier development
+- rename xxx_symbol to xxx
+
+// ///////////////////////////////////////////////////////////////////////////
 // preprocessor
 // ///////////////////////////////////////////////////////////////////////////
 
@@ -119,8 +130,6 @@
   only the "code" portions are reflex-scanned.  this will allow for flexibility
   in defining the code section delimiters
 - includes should use search path
-- in symbol table dump, don't print out the AT_BODY part, only the AT_TEXT or
-  AT_INTEGER or whatever.
 - add boolean property for wether or not a particular symbol was referenced
   during preprocessing.
 
@@ -169,7 +178,7 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
-- add commandline option to describe the return codes
+- add commandline option to describe the return codes (?)
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - add "push accepted string back into buffer" API (call it Unaccept) to the
   generated scanner -- it should not be able to push any string, because the
@@ -182,7 +191,6 @@
   to refer to codespecs, for easier development)
 - add option which prints the (reflex) targets available in the current search
   path and which directory each resides in.
-- add codespec macro of the regex for each rule
 - use smallest integer type to store state and transition indices, etc.
 - add _reflex_version to the code generator (_barf_version?)
 - the rule handler code block type should be specifiable by the targetspec
@@ -197,7 +205,7 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
-- add commandline option to describe the return codes
+- add commandline option to describe the return codes (?)
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - clean up the parsing so that it's less about passing crap around and more
   about using member variables of the parser (assign rule indices on the fly, etc)

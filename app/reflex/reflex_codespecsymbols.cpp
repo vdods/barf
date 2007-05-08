@@ -19,20 +19,79 @@
 
 namespace Reflex {
 
+void PopulateAcceptHandlerScannerModeAndRegexSymbols (
+    Rule const &rule,
+    string const &scanner_mode_id,
+    Preprocessor::ArraySymbol *accept_handler_scanner_mode_symbol,
+    Preprocessor::ArraySymbol *accept_handler_regex_symbol)
+{
+    assert(accept_handler_scanner_mode_symbol != NULL);
+    assert(accept_handler_regex_symbol != NULL);
+    
+    accept_handler_scanner_mode_symbol->AppendArrayElement(new Preprocessor::Body(scanner_mode_id));
+    accept_handler_regex_symbol->AppendArrayElement(new Preprocessor::Body(GetStringLiteral(rule.m_rule_regex_string)));
+}
+
+void PopulateAcceptHandlerScannerModeAndRegexSymbols (
+    ScannerMode const &scanner_mode,
+    Preprocessor::ArraySymbol *accept_handler_scanner_mode_symbol,
+    Preprocessor::ArraySymbol *accept_handler_regex_symbol)
+{
+    assert(accept_handler_scanner_mode_symbol != NULL);
+    assert(accept_handler_regex_symbol != NULL);
+
+    for (RuleList::const_iterator it = scanner_mode.m_rule_list->begin(),
+                                  it_end = scanner_mode.m_rule_list->end();
+         it != it_end;
+         ++it)
+    {
+        Rule const *rule = *it;
+        assert(rule != NULL);
+        PopulateAcceptHandlerScannerModeAndRegexSymbols(
+            *rule, 
+            scanner_mode.m_scanner_mode_id->GetText(), 
+            accept_handler_scanner_mode_symbol, 
+            accept_handler_regex_symbol);
+    }
+}
+
 void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Preprocessor::SymbolTable &symbol_table)
 {
     // _accept_handler_count -- gives the number of accept handlers.
-    Preprocessor::ScalarSymbol *accept_handler_count_symbol =
-        symbol_table.DefineScalarSymbol("_accept_handler_count", FiLoc::ms_invalid);
-    accept_handler_count_symbol->SetScalarBody(
-        new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
-
+    {
+        Preprocessor::ScalarSymbol *accept_handler_count_symbol =
+            symbol_table.DefineScalarSymbol("_accept_handler_count", FiLoc::ms_invalid);
+        accept_handler_count_symbol->SetScalarBody(
+            new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
+    }
+    
+    // _accept_handler_scanner_mode -- the name of the scanner mode this accept handler belongs to
+    //
+    // _accept_handler_regex -- a string literal of the regex associated with each accept handler
+    {
+        Preprocessor::ArraySymbol *accept_handler_scanner_mode_symbol =
+            symbol_table.DefineArraySymbol("_accept_handler_scanner_mode", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *accept_handler_regex_symbol =
+            symbol_table.DefineArraySymbol("_accept_handler_regex", FiLoc::ms_invalid);
+        for (ScannerModeMap::const_iterator scanner_mode_it = primary_source.m_scanner_mode_map->begin(),
+                                            scanner_mode_it_end = primary_source.m_scanner_mode_map->end();
+            scanner_mode_it != scanner_mode_it_end;
+            ++scanner_mode_it)
+        {
+            ScannerMode const *scanner_mode = scanner_mode_it->second;
+            assert(scanner_mode != NULL);
+            PopulateAcceptHandlerScannerModeAndRegexSymbols(*scanner_mode, accept_handler_scanner_mode_symbol, accept_handler_regex_symbol);
+        }
+    }
+    
     // _start_in_scanner_mode -- value of %start_in_scanner_mode -- the name of the initial scanner mode
-    assert(primary_source.m_start_in_scanner_mode_directive != NULL);
-    Preprocessor::ScalarSymbol *symbol =
-        symbol_table.DefineScalarSymbol("_start_in_scanner_mode", FiLoc::ms_invalid);
-    symbol->SetScalarBody(
-        new Preprocessor::Body(primary_source.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText()));
+    {
+        assert(primary_source.m_start_in_scanner_mode_directive != NULL);
+        Preprocessor::ScalarSymbol *symbol =
+            symbol_table.DefineScalarSymbol("_start_in_scanner_mode", FiLoc::ms_invalid);
+        symbol->SetScalarBody(
+            new Preprocessor::Body(primary_source.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText()));
+    }
 }
 
 void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_graph, vector<Uint32> const &nfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
