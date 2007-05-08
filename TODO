@@ -192,7 +192,6 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
-- add verbosity option for dumping the symbol table
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -234,4 +233,3 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
-- add verbosity option for dumping the symbol table

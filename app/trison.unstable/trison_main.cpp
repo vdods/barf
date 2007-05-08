@@ -229,6 +229,8 @@ void WriteTargets (Trison::PrimarySource const &primary_source, Graph const &npd
         Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
 
         Trison::GenerateTargetDependentSymbols(primary_source, target_id, local_symbol_table);
+        if (GetOptions().GetIsVerbose(Trison::Options::V_CODESPEC_SYMBOLS))
+            local_symbol_table.Print(cerr);
 
         target->GenerateCode(local_symbol_table);
     }

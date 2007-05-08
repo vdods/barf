@@ -221,6 +221,8 @@ void WriteTargets (Reflex::PrimarySource const &primary_source, Automaton const 
         Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
 
         Reflex::GenerateTargetDependentSymbols(primary_source, target_id, local_symbol_table);
+        if (GetOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_SYMBOLS))
+            local_symbol_table.Print(cerr);
 
         target->GenerateCode(local_symbol_table);
     }

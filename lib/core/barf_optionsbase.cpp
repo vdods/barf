@@ -185,11 +185,12 @@ OptionsBase::Verbosity OptionsBase::ParseVerbosityString (string const &verbosit
     else if (verbosity_string == "codespec-scanner")     verbosity = V_CODESPEC_SCANNER;
     else if (verbosity_string == "codespec-parser")      verbosity = V_CODESPEC_PARSER;
     else if (verbosity_string == "codespec-ast")         verbosity = V_CODESPEC_AST;
+    else if (verbosity_string == "codespec-symbols")     verbosity = V_CODESPEC_SYMBOLS;
     else if (verbosity_string == "regex-scanner")        verbosity = V_REGEX_SCANNER;
     else if (verbosity_string == "regex-parser")         verbosity = V_REGEX_PARSER;
     else if (verbosity_string == "regex-ast")            verbosity = V_REGEX_AST;
     else if (verbosity_string == "all")                  verbosity = V_ALL;
-    
+
     return Verbosity(verbosity & m_allowed_verbosity);
 }
 

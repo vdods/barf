@@ -55,11 +55,12 @@ public:
         V_CODESPEC_SCANNER          = 0x0080,
         V_CODESPEC_PARSER           = 0x0100,
         V_CODESPEC_AST              = 0x0200,
-        V_REGEX_SCANNER             = 0x0400,
-        V_REGEX_PARSER              = 0x0800,
-        V_REGEX_AST                 = 0x1000,
+        V_CODESPEC_SYMBOLS          = 0x0400,
+        V_REGEX_SCANNER             = 0x0800,
+        V_REGEX_PARSER              = 0x1000,
+        V_REGEX_AST                 = 0x2000,
 
-        V_ALL                       = 0x1FFF
+        V_ALL                       = 0x3FFF
     }; // end of enum OptionsBase::Verbosity
 
     template <typename OptionsBaseSubclass>
@@ -92,7 +93,7 @@ public:
         m_allowed_verbosity(allowed_verbosity)
     {
         assert((m_allowed_verbosity & ~V_ALL) == 0 && "allowed_verbosity contains invalid Verbosity flags");
-    
+
         // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
         // add it as the lowest-priority targets search path.
         // TODO: config.h-specified path
@@ -194,7 +195,7 @@ private:
 
     void AddTargetsSearchPath (string const &search_path, string const &set_by);
     Verbosity ParseVerbosityString (string const &verbosity_string);
-    
+
     Uint32 const m_allowed_verbosity;
 }; // end of class OptionsBase
 
