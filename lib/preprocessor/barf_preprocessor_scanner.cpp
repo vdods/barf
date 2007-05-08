@@ -23,7 +23,7 @@ Scanner::Scanner ()
     InputBase(),
     m_start_code_delimiter("<{"),
     m_end_code_delimiter("}"),
-    m_code_line_delimiter("<*{")
+    m_code_line_delimiter("<*|")
 { }
 
 Scanner::~Scanner ()

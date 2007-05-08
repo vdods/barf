@@ -118,7 +118,6 @@
 - see if the scanner can be half hand-scanned and half reflex-scanned, so that
   only the "code" portions are reflex-scanned.  this will allow for flexibility
   in defining the code section delimiters
-- change <*{ into <*| or <| so it doesn't screw up brace matching
 - includes should use search path
 - add default value for Body::Body()'s file_location param as
   FileLocation::ms_invalid, so it doesn't have to be specified explicitly
