@@ -131,7 +131,7 @@ void GenerateNfa (RegularExpression const &regular_expression, Graph &graph, Uin
         graph.AddTransition(start_index, EpsilonTransition(branching_state_index));
 
         for (Ast::List<Branch>::const_iterator it = regular_expression.begin(),
-                                                     it_end = regular_expression.end();
+                                               it_end = regular_expression.end();
              it != it_end;
              ++it)
         {

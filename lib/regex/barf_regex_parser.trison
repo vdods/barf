@@ -40,6 +40,9 @@ namespace Regex {
 
     using InputBase::Close;
 
+    bool ScannerDebugSpew () const { return false; /* TODO: not implemented yet */ }
+    void ScannerDebugSpew (bool debug_spew) { /* TODO: not implemented yet */ }
+
     // this method will throw a std::string if a macro is used without
     // providing a macro map, or otherwise if an undefined macro is
     // referenced.

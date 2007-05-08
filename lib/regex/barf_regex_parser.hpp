@@ -102,6 +102,9 @@ public:
 
     using InputBase::Close;
 
+    bool ScannerDebugSpew () const { return false; /* TODO: not implemented yet */ }
+    void ScannerDebugSpew (bool debug_spew) { /* TODO: not implemented yet */ }
+
     // this method will throw a std::string if a macro is used without
     // providing a macro map, or otherwise if an undefined macro is
     // referenced.
@@ -113,7 +116,7 @@ private:
 
     mutable RegularExpressionMap *m_macro_map;
 
-#line 117 "barf_regex_parser.hpp"
+#line 120 "barf_regex_parser.hpp"
 
 private:
 
@@ -324,11 +327,11 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type);
 
 
-#line 55 "barf_regex_parser.trison"
+#line 58 "barf_regex_parser.trison"
 
 } // end of namespace Regex
 } // end of namespace Barf
 
 #endif // !defined(_BARF_REGEX_PARSER_HPP_)
 
-#line 335 "barf_regex_parser.hpp"
+#line 338 "barf_regex_parser.hpp"

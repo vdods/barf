@@ -15,8 +15,6 @@
 
 #include "barf_optionsbase.hpp"
 
-extern OptionsBase *g_options;
-
 namespace Reflex {
 
 class Options : public OptionsBase

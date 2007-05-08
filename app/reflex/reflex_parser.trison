@@ -68,6 +68,7 @@ private:
 %parser_implementation_file_top%{
 #include <sstream>
 
+#include "barf_optionsbase.hpp"
 #include "barf_regex_ast.hpp"
 #include "barf_regex_parser.hpp"
 #include "reflex_ast.hpp"
@@ -333,13 +334,19 @@ macro_directives %type "Regex::RegularExpressionMap *"
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id REGEX:macro_regex_string at_least_one_newline
     {
         Regex::Parser parser;
+        parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
+        if (g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER))
+            parser.SetDebugSpewLevel(2);
         istringstream in(macro_regex_string->GetText());
         parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
         try {
             if (parser.Parse(regular_expression_map) == Regex::Parser::PRC_SUCCESS)
-                regular_expression_map->Add(
-                    macro_id->GetText(),
-                    Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken()));
+            {
+                Regex::RegularExpression *regex = Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken());
+                if (g_options->GetIsVerbose(OptionsBase::V_REGEX_AST))
+                    regex->Print(cerr);
+                regular_expression_map->Add(macro_id->GetText(), regex);
+            }
             else
                 EmitError(throwaway->GetFiLoc(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
         } catch (string const &exception) {
@@ -477,11 +484,18 @@ rule %type "Rule *"
         Regex::RegularExpression *regex = NULL;
         {
             Regex::Parser parser;
+            parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
+            if (g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER))
+                parser.SetDebugSpewLevel(2);
             istringstream in(regex_string->GetText());
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
                 if (parser.Parse(m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
+                {
                     regex = Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken());
+                    if (g_options->GetIsVerbose(OptionsBase::V_REGEX_AST))
+                        regex->Print(cerr);
+                }
                 else
                 {
                     EmitError(

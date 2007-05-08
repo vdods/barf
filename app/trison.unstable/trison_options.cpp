@@ -168,9 +168,6 @@ CommandLineOption const Options::ms_option[] =
         "        \"codespec-scanner\" - Print codespec scanner activity to stderr. (not currently implemented)\n" // TODO: implement
         "        \"codespec-parser\" - Print codespec parser activity to stderr.\n"
         "        \"codespec-ast\" - Print the parsed codespec abstract syntax tree(s) to stderr.\n"
-        "        \"regex-scanner\" - Print regex scanner activity to stderr.\n"
-        "        \"regex-parser\" - Print regex parser activity to stderr.\n"
-        "        \"regex-ast\" - Print the parsed regex abstract syntax tree(s) to stderr.\n"
         "        \"all\" - Enable all above verbosity options.\n"
         "    All verbosity options are disabled by default.  See also option -v."),
     CommandLineOption(
