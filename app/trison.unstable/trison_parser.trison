@@ -371,10 +371,11 @@ terminal_directives %type "TerminalMap *"
 
 terminal_directive
 :
-    DIRECTIVE_TERMINAL:throwaway terminals:terminal_list terminal_type_spec:assigned_type at_least_one_newline
+    DIRECTIVE_TERMINAL:throwaway terminals:terminal_list type_spec:assigned_type_map at_least_one_newline
     {
         assert(m_terminal_map != NULL);
         assert(terminal_list != NULL);
+        assert(assigned_type_map != NULL);
         for (TerminalList::iterator it = terminal_list->begin(),
                                     it_end = terminal_list->end();
              it != it_end;
@@ -382,14 +383,12 @@ terminal_directive
         {
             Trison::Terminal *terminal = *it;
             assert(terminal != NULL);
-            if (assigned_type != NULL)
-                terminal->SetAssignedType(assigned_type->GetText());
+            terminal->SetAssignedTypeMap(assigned_type_map);
             m_terminal_map->Add(terminal->GetText(), terminal);
         }
         terminal_list->clear();
         delete throwaway;
         delete terminal_list;
-        delete assigned_type;
         return NULL;
     }
 ;
@@ -409,20 +408,6 @@ terminals %type "TerminalList *"
         if (terminal != NULL)
             terminal_list->Append(terminal);
         return terminal_list;
-    }
-;
-
-terminal_type_spec %type "Ast::String *"
-:
-    DIRECTIVE_TYPE:throwaway STRING_LITERAL:assigned_type
-    {
-        delete throwaway;
-        return assigned_type;
-    }
-|
-    // empty reduction rule
-    {
-        return NULL;
     }
 ;
 
@@ -570,7 +555,10 @@ nonterminal %type "Nonterminal *"
 :
     nonterminal_specification:nonterminal ':' rules:rule_list ';'
     {
-        nonterminal->SetRuleList(rule_list);
+        if (nonterminal != NULL)
+            nonterminal->SetRuleList(rule_list);
+        else
+            delete rule_list;
         return nonterminal;
     }
 |
@@ -583,32 +571,18 @@ nonterminal %type "Nonterminal *"
 
 nonterminal_specification %type "Nonterminal *"
 :
-    DIRECTIVE_NONTERMINAL:throwaway1 ID:id DIRECTIVE_TYPE:throwaway2 STRING_LITERAL:assigned_type
+    DIRECTIVE_NONTERMINAL:throwaway ID:id type_spec:assigned_type_map
     {
         assert(m_terminal_map != NULL);
+        assert(id != NULL);
+        assert(assigned_type_map != NULL);
         if (m_terminal_map->GetElement(id->GetText()) != NULL)
             EmitError(id->GetFiLoc(), "id collision with terminal " + id->GetText());
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
                 id->GetFiLoc(),
-                assigned_type->GetText());
-        delete throwaway1;
-        delete id;
-        delete throwaway2;
-        delete assigned_type;
-        return nonterminal;
-    }
-|
-    DIRECTIVE_NONTERMINAL:throwaway ID:id
-    {
-        assert(m_terminal_map != NULL);
-        if (m_terminal_map->GetElement(id->GetText()) != NULL)
-            EmitError(id->GetFiLoc(), "id collision with terminal " + id->GetText());
-        Nonterminal *nonterminal =
-            new Nonterminal(
-                id->GetText(),
-                id->GetFiLoc());
+                assigned_type_map);
         delete throwaway;
         delete id;
         return nonterminal;
@@ -616,6 +590,7 @@ nonterminal_specification %type "Nonterminal *"
 |
     DIRECTIVE_NONTERMINAL:throwaway %error
     {
+        assert(throwaway != NULL);
         EmitError(throwaway->GetFiLoc(), "syntax error while parsing nonterminal specification");
         delete throwaway;
         return NULL;
@@ -623,18 +598,10 @@ nonterminal_specification %type "Nonterminal *"
 |
     DIRECTIVE_NONTERMINAL:throwaway ID:id %error
     {
+        assert(id != NULL);
         EmitError(id->GetFiLoc(), "syntax error in %nonterminal directive");
         delete throwaway;
         delete id;
-        return NULL;
-    }
-|
-    DIRECTIVE_NONTERMINAL:throwaway1 ID:id DIRECTIVE_TYPE:throwaway2 %error
-    {
-        EmitError(id->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
-        delete throwaway1;
-        delete id;
-        delete throwaway2;
         return NULL;
     }
 ;
@@ -835,5 +802,24 @@ any_type_of_code_block %type "Ast::CodeBlock *"
     DUMB_CODE_BLOCK:dumb_code_block { return dumb_code_block; }
 |
     STRICT_CODE_BLOCK:strict_code_block { return strict_code_block; }
+;
+
+type_spec %type "TypeMap *"
+:
+    type_spec:type_map DIRECTIVE_TYPE:throwaway '.' ID:target_id STRING_LITERAL:assigned_type
+    {
+        assert(type_map != NULL);
+        assert(target_id != NULL);
+        assert(assigned_type != NULL);
+        type_map->Add(target_id->GetText(), assigned_type);
+        delete throwaway;
+        delete target_id;
+        return type_map;
+    }
+|
+    // empty reduction rule
+    {
+        return new TypeMap();
+    }
 ;
 

@@ -40,11 +40,17 @@ enum
     AT_TERMINAL_LIST,
     AT_TERMINAL_MAP,
     AT_TOKEN_ID,
+    AT_TYPE_MAP,
 
     AT_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
+
+struct TypeMap : public Ast::AstMap<Ast::String>
+{
+    TypeMap () : Ast::AstMap<Ast::String>(AT_TYPE_MAP) { }
+}; // end of struct TypeMap
 
 struct TokenId : public Ast::TextBase
 {
@@ -65,7 +71,8 @@ struct Terminal : public TokenId
         :
         TokenId(id->GetText(), id->GetFiLoc(), AT_TERMINAL),
         m_is_id(true),
-        m_char('\0')
+        m_char('\0'),
+        m_assigned_type_map(NULL)
     {
         delete id;
     }
@@ -73,20 +80,21 @@ struct Terminal : public TokenId
         :
         TokenId(GetCharLiteral(ch->GetChar()), ch->GetFiLoc(), AT_TERMINAL),
         m_is_id(false),
-        m_char(ch->GetChar())
+        m_char(ch->GetChar()),
+        m_assigned_type_map(NULL)
     {
         delete ch;
     }
 
-    string const &GetAssignedType () const { return m_assigned_type; }
+    string const &GetAssignedType (string const &target_id) const;
 
-    void SetAssignedType (string const &assigned_type);
+    void SetAssignedTypeMap (TypeMap const *assigned_type_map);
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    string m_assigned_type;
+    TypeMap const *m_assigned_type_map;
 }; // end of struct Terminal
 
 struct TerminalList : public Ast::AstList<Terminal>
@@ -153,16 +161,16 @@ struct RuleList : public Ast::AstList<Rule>
 
 struct Nonterminal : public TokenId
 {
-    string const m_assigned_type;
+    TypeMap const *const m_assigned_type_map;
     RuleList const *m_rule_list;
 
     Nonterminal (
         string const &id,
         FiLoc const &filoc,
-        string const &assigned_type = gs_empty_string)
+        TypeMap const *assigned_type_map = NULL)
         :
         TokenId(id, filoc, AT_NONTERMINAL),
-        m_assigned_type(assigned_type),
+        m_assigned_type_map(assigned_type_map),
         m_rule_list(NULL),
         m_npda_graph_start_state(UINT32_UPPER_BOUND),
         m_npda_graph_head_state(UINT32_UPPER_BOUND),
@@ -171,7 +179,6 @@ struct Nonterminal : public TokenId
         assert(!id.empty());
     }
 
-    bool GetHasAssignedType () const { return !m_assigned_type.empty(); }
     bool GetIsNpdaGraphed () const { return m_npda_graph_start_state != UINT32_UPPER_BOUND; }
     Uint32 GetNpdaGraphStartState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_start_state; }
     Uint32 GetNpdaGraphHeadState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_head_state; }

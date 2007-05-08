@@ -27,25 +27,18 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	force-all-scanners \
 	barf-commonlang-scanner \
 	barf-commonlang-scanner-force \
-	barf-commonlang-scanner-release \
 	barf-targetspec-parser \
 	barf-targetspec-parser-force \
-	barf-targetspec-parser-release \
 	barf-preprocessor-parser \
 	barf-preprocessor-parser-force \
-	barf-preprocessor-parser-release \
 	barf-regex-parser \
 	barf-regex-parser-force \
-	barf-regex-parser-release \
 	reflex-parser \
 	reflex-parser-force \
-	reflex-parser-release \
 	trison-parser \
 	trison-parser-force \
-	trison-parser-release \
 	trison-unstable-parser \
-	trison-unstable-parser-force \
-	trison-unstable-parser-release
+	trison-unstable-parser-force
 
 libbarf-all: libbarf-commonlang libbarf-core libbarf-targetspec libbarf-preprocessor libbarf-regex
 libbarf-commonlang: lib/libbarf-commonlang.la
@@ -247,11 +240,8 @@ $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/comm
 
 barf-commonlang-scanner-force: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
 	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
-
-barf-commonlang-scanner-release: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --without-line-directives --output-directory $(top_srcdir)/lib/commonlang/
 else # !STABLE_REFLEX_EXISTS
-barf-commonlang-scanner barf-commonlang-scanner-force barf-commonlang-scanner-release:
+barf-commonlang-scanner barf-commonlang-scanner-force:
 	@echo "!!!"
 	@echo "!!! Can't build barf commonlang scanner without stable trison binary."
 	@echo "!!! Use --with-stable-reflex configure option."
@@ -267,9 +257,6 @@ $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/targe
 barf-targetspec-parser-force: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 
-barf-targetspec-parser-release: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
-
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
@@ -278,9 +265,6 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp: $(top_srcdir)/lib/p
 barf-preprocessor-parser-force: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser --generate-states-file $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.states
 
-barf-preprocessor-parser-release: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser --generate-states-file $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.states
-
 barf-regex-parser: $(top_srcdir)/lib/regex/barf_regex_parser.hpp
 $(top_srcdir)/lib/regex/barf_regex_parser.hpp: $(top_srcdir)/lib/regex/barf_regex_parser.cpp
 $(top_srcdir)/lib/regex/barf_regex_parser.cpp: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
@@ -288,23 +272,20 @@ $(top_srcdir)/lib/regex/barf_regex_parser.cpp: $(top_srcdir)/lib/regex/barf_rege
 
 barf-regex-parser-force: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
-
-barf-regex-parser-release: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
 else # !STABLE_TRISON_EXISTS
-barf-targetspec-parser barf-targetspec-parser-force barf-targetspec-parser-release:
+barf-targetspec-parser barf-targetspec-parser-force:
 	@echo "!!!"
 	@echo "!!! Can't build barf targetspec parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 
-barf-preprocessor-parser barf-preprocessor-parser-force barf-preprocessor-parser-release:
+barf-preprocessor-parser barf-preprocessor-parser-force:
 	@echo "!!!"
 	@echo "!!! Can't build barf preprocessor parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 
-barf-regex-parser barf-regex-parser-force barf-regex-parser-release:
+barf-regex-parser barf-regex-parser-force:
 	@echo "!!!"
 	@echo "!!! Can't build barf regex parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
@@ -393,11 +374,8 @@ $(top_srcdir)/app/reflex/reflex_parser.cpp: $(top_srcdir)/app/reflex/reflex_pars
 
 reflex-parser-force: $(top_srcdir)/app/reflex/reflex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/reflex/reflex_parser --generate-states-file $(top_srcdir)/app/reflex/reflex_parser.states
-
-reflex-parser-release: $(top_srcdir)/app/reflex/reflex_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/app/reflex/reflex_parser --generate-states-file $(top_srcdir)/app/reflex/reflex_parser.states
 else # !STABLE_TRISON_EXISTS
-reflex-parser reflex-parser-force reflex-parser-release:
+reflex-parser reflex-parser-force:
 	@echo "!!!"
 	@echo "!!! Can't build reflex parser without stable reflex binary."
 	@echo "!!! Use --with-stable-reflex configure option."
@@ -444,11 +422,8 @@ $(top_srcdir)/app/trison/trison_parser.cpp: $(top_srcdir)/app/trison/trison_pars
 
 trison-parser-force: $(top_srcdir)/app/trison/trison_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison/trison_parser --generate-states-file $(top_srcdir)/app/trison/trison_parser.states
-
-trison-parser-release: $(top_srcdir)/app/trison/trison_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/app/trison/trison_parser --generate-states-file $(top_srcdir)/app/trison/trison_parser.states
 else # !STABLE_TRISON_EXISTS
-trison-parser trison-parser-force trison-parser-release:
+trison-parser trison-parser-force:
 	@echo "!!!"
 	@echo "!!! Can't build trison parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
@@ -516,11 +491,8 @@ $(top_srcdir)/app/trison.unstable/trison_parser.cpp: $(top_srcdir)/app/trison.un
 
 trison-unstable-parser-force: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/trison.unstable/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison.unstable/trison_parser --generate-states-file $(top_srcdir)/app/trison.unstable/trison_parser.states
-
-trison-unstable-parser-release: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/app/trison.unstable/trison_parser.trison --warnings-as-errors --without-line-directives --output-basename $(top_srcdir)/app/trison.unstable/trison_parser --generate-states-file $(top_srcdir)/app/trison.unstable/trison_parser.states
 else # !STABLE_TRISON_EXISTS
-trison-unstable-parser trison-unstable-parser-force trison-unstable-parser-release:
+trison-unstable-parser trison-unstable-parser-force:
 	@echo "!!!"
 	@echo "!!! Can't build trison.unstable parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
@@ -529,7 +501,7 @@ endif
 
 else # !BUILD_TRISON_UNSTABLE
 
-trison-unstable-parser trison-unstable-parser-force trison-unstable-parser-release:
+trison-unstable-parser trison-unstable-parser-force:
 	@echo "!!!"
 	@echo "!!! These targets are disabled without configuring using --enable-trison-unstable."
 	@echo "!!!"

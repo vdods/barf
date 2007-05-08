@@ -197,9 +197,6 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
-- there will have to be separate, target-specific %type directives for each
-  terminal and nonterminal.  something like
-  %terminal XYZ %target.cpp.type "Ast *" %target.java.type "Ast"
 - add commandline option to describe the return codes
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - clean up the parsing so that it's less about passing crap around and more

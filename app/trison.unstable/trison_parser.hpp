@@ -98,9 +98,9 @@ public:
             terminal__,
             terminal_directive__,
             terminal_directives__,
-            terminal_type_spec__,
             terminals__,
             token_id__,
+            type_spec__,
 
             // special start nonterminal
             START_,
@@ -345,8 +345,6 @@ private:
     Ast::Base * ReductionRuleHandler0062 ();
     Ast::Base * ReductionRuleHandler0063 ();
     Ast::Base * ReductionRuleHandler0064 ();
-    Ast::Base * ReductionRuleHandler0065 ();
-    Ast::Base * ReductionRuleHandler0066 ();
 
 }; // end of class Parser
 
@@ -359,4 +357,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 363 "trison_parser.hpp"
+#line 361 "trison_parser.hpp"

@@ -32,7 +32,8 @@ string const &GetAstTypeString (AstType ast_type)
         "AT_TERMINAL",
         "AT_TERMINAL_LIST",
         "AT_TERMINAL_MAP",
-        "AT_TOKEN_ID"
+        "AT_TOKEN_ID",
+        "AT_TYPE_MAP"
     };
 
     assert(ast_type < AT_COUNT);
@@ -44,15 +45,26 @@ string const &GetAstTypeString (AstType ast_type)
 
 void Terminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    assert(!m_assigned_type.empty());
+    assert(m_assigned_type_map != NULL);
     TokenId::Print(stream, Stringify, indent_level);
-    stream << Tabs(indent_level+1) << "assigned type: " << m_assigned_type << endl;
+    stream << Tabs(indent_level+1) << "assigned types: " << endl;
+    m_assigned_type_map->Print(stream, Stringify, indent_level+2);
 }
 
-void Terminal::SetAssignedType (string const &assigned_type)
+string const &Terminal::GetAssignedType (string const &target_id) const
 {
-    assert(m_assigned_type.empty() && "already has an assigned type");
-    m_assigned_type = assigned_type;
+    assert(m_assigned_type_map != NULL);
+    assert(!target_id.empty());
+    Ast::String const *assigned_type = m_assigned_type_map->GetElement(target_id);
+    assert(assigned_type != NULL);
+    return assigned_type->GetText();
+}
+
+void Terminal::SetAssignedTypeMap (TypeMap const *assigned_type_map)
+{
+    assert(m_assigned_type_map == NULL);
+    assert(assigned_type_map != NULL);
+    m_assigned_type_map = assigned_type_map;
 }
 
 void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -119,8 +131,11 @@ void Nonterminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
 {
     Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "id: " << GetText() << endl;
-    if (!m_assigned_type.empty())
-        stream << Tabs(indent_level+1) << "assigned type: " << GetStringLiteral(m_assigned_type) << endl;
+    if (m_assigned_type_map != NULL)
+    {
+        stream << Tabs(indent_level+1) << "assigned types: " << endl;
+        m_assigned_type_map->Print(stream, Stringify, indent_level+2);
+    }
     m_rule_list->Print(stream, Stringify, indent_level);
 }
 
