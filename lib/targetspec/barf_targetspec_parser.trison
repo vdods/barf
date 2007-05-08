@@ -113,12 +113,9 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::CHAR_LITERAL:
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:
-        case CommonLang::Scanner::Token::DIRECTIVE_LEFT:
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
-        case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:
         case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:
-        case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:
         case CommonLang::Scanner::Token::DIRECTIVE_START_IN_SCANNER_MODE:
         case CommonLang::Scanner::Token::DIRECTIVE_STATE:
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:

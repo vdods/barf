@@ -203,8 +203,6 @@
   about using member variables of the parser (assign rule indices on the fly, etc)
 - figure out how to guarantee branch uniqueness per Action_ branch list in C++ parser.
 - add default values in trison cpp targetspec for Scan implementation
-- change "%prec %left BLAH" into "%prec.left BLAH" (and maybe prec into precedence)
-  or maybe go back to bison form -- "%left BLAH"
 - you shouldn't have to specify %terminal 'X' for ascii chars.  you should
   just be able to use them (or maybe add as option)
 - specifying any %target.xxx directive seems to add the target; stop this

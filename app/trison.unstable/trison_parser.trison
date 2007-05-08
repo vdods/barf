@@ -116,11 +116,8 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::CHAR_LITERAL:                        return Parser::Token::CHAR_LITERAL;
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Parser::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL;
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:                     return Parser::Token::DIRECTIVE_ERROR;
-        case CommonLang::Scanner::Token::DIRECTIVE_LEFT:                      return Parser::Token::DIRECTIVE_LEFT;
-        case CommonLang::Scanner::Token::DIRECTIVE_NONASSOC:                  return Parser::Token::DIRECTIVE_NONASSOC;
         case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:               return Parser::Token::DIRECTIVE_NONTERMINAL;
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:                      return Parser::Token::DIRECTIVE_PREC;
-        case CommonLang::Scanner::Token::DIRECTIVE_RIGHT:                     return Parser::Token::DIRECTIVE_RIGHT;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                    return Parser::Token::DIRECTIVE_TARGET;
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                   return Parser::Token::DIRECTIVE_TARGETS;
         case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:                  return Parser::Token::DIRECTIVE_TERMINAL;
@@ -167,11 +164,8 @@ Parser::Token::Type Parser::Scan ()
 %token CHAR_LITERAL %type "Ast::Char *"
 %token DIRECTIVE_DEFAULT_PARSE_NONTERMINAL %type "Ast::ThrowAway *"
 %token DIRECTIVE_ERROR %type "Ast::ThrowAway *"
-%token DIRECTIVE_LEFT %type "Ast::ThrowAway *"
-%token DIRECTIVE_NONASSOC %type "Ast::ThrowAway *"
 %token DIRECTIVE_NONTERMINAL %type "Ast::ThrowAway *"
 %token DIRECTIVE_PREC %type "Ast::ThrowAway *"
-%token DIRECTIVE_RIGHT %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
 %token DIRECTIVE_TARGETS %type "Ast::ThrowAway *"
 %token DIRECTIVE_TERMINAL %type "Ast::ThrowAway *"
@@ -457,56 +451,31 @@ precedence_directive %type "PrecedenceMap *"
         return m_precedence_map;
     }
 |
-    DIRECTIVE_PREC:throwaway DIRECTIVE_LEFT:throwaway2 ID:id at_least_one_newline
+    DIRECTIVE_PREC:throwaway '.' ID:associativity_id ID:id at_least_one_newline
     {
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
+        assert(associativity_id != NULL);
+
+        Associativity associativity = A_LEFT;
+        if (associativity_id->GetText() == "left")
+            associativity = A_LEFT;
+        else if (associativity_id->GetText() == "nonassoc")
+            associativity = A_NONASSOC;
+        else if (associativity_id->GetText() == "right")
+            associativity = A_RIGHT;
+        else
+            EmitError(throwaway->GetFiLoc(), "invalid associativity specifier \"" + associativity_id->GetText() + "\"");
+
         Precedence *precedence =
             new Precedence(
                 id->GetText(),
-                A_LEFT,
+                associativity,
                 id->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_id, precedence);
         delete throwaway;
-        delete throwaway2;
-        delete id;
-        return m_precedence_map;
-    }
-|
-    DIRECTIVE_PREC:throwaway DIRECTIVE_NONASSOC:throwaway2 ID:id at_least_one_newline
-    {
-        assert(m_precedence_list != NULL);
-        assert(m_precedence_map != NULL);
-        Precedence *precedence =
-            new Precedence(
-                id->GetText(),
-                A_NONASSOC,
-                id->GetFiLoc(),
-                m_precedence_map->size());
-        m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_id, precedence);
-        delete throwaway;
-        delete throwaway2;
-        delete id;
-        return m_precedence_map;
-    }
-|
-    DIRECTIVE_PREC:throwaway DIRECTIVE_RIGHT:throwaway2 ID:id at_least_one_newline
-    {
-        assert(m_precedence_list != NULL);
-        assert(m_precedence_map != NULL);
-        Precedence *precedence =
-            new Precedence(
-                id->GetText(),
-                A_RIGHT,
-                id->GetFiLoc(),
-                m_precedence_map->size());
-        m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_id, precedence);
-        delete throwaway;
-        delete throwaway2;
         delete id;
         return m_precedence_map;
     }

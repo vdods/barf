@@ -52,11 +52,8 @@ public:
             CHAR_LITERAL,
             DIRECTIVE_DEFAULT_PARSE_NONTERMINAL,
             DIRECTIVE_ERROR,
-            DIRECTIVE_LEFT,
-            DIRECTIVE_NONASSOC,
             DIRECTIVE_NONTERMINAL,
             DIRECTIVE_PREC,
-            DIRECTIVE_RIGHT,
             DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
             DIRECTIVE_TERMINAL,
@@ -157,7 +154,7 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 161 "trison_parser.hpp"
+#line 158 "trison_parser.hpp"
 
 private:
 
@@ -343,8 +340,6 @@ private:
     Ast::Base * ReductionRuleHandler0060 ();
     Ast::Base * ReductionRuleHandler0061 ();
     Ast::Base * ReductionRuleHandler0062 ();
-    Ast::Base * ReductionRuleHandler0063 ();
-    Ast::Base * ReductionRuleHandler0064 ();
 
 }; // end of class Parser
 
@@ -357,4 +352,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 361 "trison_parser.hpp"
+#line 356 "trison_parser.hpp"
