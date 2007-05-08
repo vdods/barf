@@ -293,7 +293,7 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
             symbol->SetScalarBody(new Preprocessor::Body(target_directive->m_directive_value->GetText(), source_filoc));
         }
         else
-            symbol->SetScalarBody(new Preprocessor::Body(gs_empty_string, FiLoc::ms_invalid));
+            symbol->SetScalarBody(new Preprocessor::Body(gs_empty_string));
     }
 
     // define symbols for unspecified target directives which have
@@ -312,7 +312,7 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
                 symbol_table.DefineScalarSymbol(
                     directive_id,
                     FiLoc::ms_invalid);
-            symbol->SetScalarBody(new Preprocessor::Body(add_directive->GetDefaultValue()->GetText(), FiLoc::ms_invalid));
+            symbol->SetScalarBody(new Preprocessor::Body(add_directive->GetDefaultValue()->GetText()));
         }
     }
 }

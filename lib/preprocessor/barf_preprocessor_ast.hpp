@@ -175,8 +175,8 @@ class Body : public ExecutableAstList, public Executable
 public:
 
     Body () : ExecutableAstList(AT_BODY), Executable() { }
-    Body (string const &body_text, FiLoc const &source_filoc);
-    Body (Sint32 body_integer, FiLoc const &source_filoc);
+    Body (string const &body_text, FiLoc const &source_filoc = FiLoc::ms_invalid);
+    Body (Sint32 body_integer, FiLoc const &source_filoc = FiLoc::ms_invalid);
 
     bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const;
 

@@ -119,9 +119,6 @@
   only the "code" portions are reflex-scanned.  this will allow for flexibility
   in defining the code section delimiters
 - includes should use search path
-- add default value for Body::Body()'s file_location param as
-  FileLocation::ms_invalid, so it doesn't have to be specified explicitly
-  everywhere
 - in symbol table dump, don't print out the AT_BODY part, only the AT_TEXT or
   AT_INTEGER or whatever.
 - add boolean property for wether or not a particular symbol was referenced
@@ -195,6 +192,7 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
+- add verbosity option for dumping the symbol table
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -236,3 +234,4 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
+- add verbosity option for dumping the symbol table

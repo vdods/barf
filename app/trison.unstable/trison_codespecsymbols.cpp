@@ -33,7 +33,7 @@ void PopulateRuleCodeArraySymbol (Rule const &rule, string const &target_id, Pre
                 rule_handler_code_block->GetFiLoc()));
     }
     else
-        rule_code_symbol->AppendArrayElement(new Preprocessor::Body("", FiLoc::ms_invalid));
+        rule_code_symbol->AppendArrayElement(new Preprocessor::Body(""));
 }
 
 void PopulateRuleCodeArraySymbol (Nonterminal const &nonterminal, string const &target_id, Preprocessor::ArraySymbol *rule_code_symbol)
@@ -57,9 +57,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     Preprocessor::ScalarSymbol *rule_count_symbol =
         symbol_table.DefineScalarSymbol("_rule_count", FiLoc::ms_invalid);
     rule_count_symbol->SetScalarBody(
-        new Preprocessor::Body(
-            Sint32(primary_source.GetRuleCount()),
-            FiLoc::ms_invalid));
+        new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
 }
 
 void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda_graph, Preprocessor::SymbolTable &symbol_table)
@@ -71,9 +69,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
         Preprocessor::ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol("_default_parse_nonterminal", FiLoc::ms_invalid);
         symbol->SetScalarBody(
-            new Preprocessor::Body(
-                primary_source.m_default_parse_nonterminal_id,
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(primary_source.m_default_parse_nonterminal_id));
     }
 
     // _terminal_index_list[terminal count] -- list of terminal token values
@@ -100,13 +96,9 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
 
         // add the special END_ terminal token
         terminal_index_list_symbol->AppendArrayElement(
-            new Preprocessor::Body(
-                Sint32(token_index++),
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(Sint32(token_index++)));
         terminal_name_list_symbol->AppendArrayElement(
-            new Preprocessor::Body(
-                "END_",
-                FiLoc::ms_invalid));
+            new Preprocessor::Body("END_"));
 
         for (TerminalMap::const_iterator it = primary_source.m_terminal_map->begin(), it_end = primary_source.m_terminal_map->end();
              it != it_end;
@@ -117,20 +109,16 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             if (terminal->m_is_id)
             {
                 terminal_index_list_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(token_index++),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(token_index++)));
                 terminal_name_list_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        terminal->GetText(),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(terminal->GetText()));
             }
         }
 
         nonterminal_index_list_symbol->AppendArrayElement(
-            new Preprocessor::Body(0, FiLoc::ms_invalid));
+            new Preprocessor::Body(Sint32(0)));
         nonterminal_name_list_symbol->AppendArrayElement(
-            new Preprocessor::Body("none_", FiLoc::ms_invalid));
+            new Preprocessor::Body("none_"));
 
         for (NonterminalMap::const_iterator it = primary_source.m_nonterminal_map->begin(), it_end = primary_source.m_nonterminal_map->end();
              it != it_end;
@@ -139,13 +127,9 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             Nonterminal const *nonterminal = it->second;
             assert(nonterminal != NULL);
             nonterminal_index_list_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(token_index++),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(token_index++)));
             nonterminal_name_list_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    nonterminal->GetText(),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(nonterminal->GetText()));
         }
     }
 
@@ -163,9 +147,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             assert(nonterminal != NULL);
             npda_nonterminal_start_state_index_symbol->SetMapElement(
                 nonterminal_name,
-                new Preprocessor::Body(
-                    Sint32(nonterminal->GetNpdaGraphStartState()),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(nonterminal->GetNpdaGraphStartState())));
         }
     }
 
@@ -191,9 +173,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
         Preprocessor::ScalarSymbol *npda_precedence_count_symbol =
             symbol_table.DefineScalarSymbol("_npda_precedence_count", FiLoc::ms_invalid);
         npda_precedence_count_symbol->SetScalarBody(
-            new Preprocessor::Body(
-                Sint32(primary_source.m_precedence_list->size()),
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(Sint32(primary_source.m_precedence_list->size())));
 
         Preprocessor::MapSymbol *npda_precedence_index_symbol =
             symbol_table.DefineMapSymbol("_npda_precedence_index", FiLoc::ms_invalid);
@@ -208,9 +188,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             // the level and index are the same at the time trison runs
             npda_precedence_index_symbol->SetMapElement(
                 precedence_id,
-                new Preprocessor::Body(
-                    precedence.m_precedence_level,
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(precedence.m_precedence_level));
         }
 
         Preprocessor::ArraySymbol *npda_precedence_name_symbol =
@@ -229,21 +207,13 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             assert(*it != NULL);
             Precedence const &precedence = **it;
             npda_precedence_name_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    precedence.m_precedence_id,
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(precedence.m_precedence_id));
             npda_precedence_level_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    precedence.m_precedence_level,
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(precedence.m_precedence_level));
             npda_precedence_associativity_index_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(precedence.m_precedence_associativity),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(precedence.m_precedence_associativity)));
             npda_precedence_associativity_name_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    precedence.m_precedence_associativity == A_LEFT ? "LEFT" : (precedence.m_precedence_associativity == A_NONASSOC ? "NONASSOC" : "RIGHT"),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(precedence.m_precedence_associativity == A_LEFT ? "LEFT" : (precedence.m_precedence_associativity == A_NONASSOC ? "NONASSOC" : "RIGHT")));
         }
     }
 
@@ -283,34 +253,22 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             Rule const &rule = *primary_source.GetRule(i);
 
             npda_rule_reduction_nonterminal_index_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(primary_source.GetTokenIndex(rule.m_owner_nonterminal->GetText())),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(primary_source.GetTokenIndex(rule.m_owner_nonterminal->GetText()))));
             npda_rule_reduction_nonterminal_name_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    rule.m_owner_nonterminal->GetText(),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(rule.m_owner_nonterminal->GetText()));
 
             Precedence const *rule_precedence = primary_source.m_precedence_map->GetElement(rule.m_rule_precedence_id);
             assert(rule_precedence != NULL);
             npda_rule_precedence_index_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(rule_precedence->m_precedence_level),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(rule_precedence->m_precedence_level)));
             npda_rule_precedence_name_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    rule.m_rule_precedence_id,
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(rule.m_rule_precedence_id));
 
             npda_rule_token_count_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(rule.m_rule_token_list->size()),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(rule.m_rule_token_list->size())));
 
             npda_rule_description_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    GetStringLiteral(rule.GetAsText()),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(GetStringLiteral(rule.GetAsText())));
         }
     }
 
@@ -319,9 +277,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
         Preprocessor::ScalarSymbol *npda_state_count_symbol =
             symbol_table.DefineScalarSymbol("_npda_state_count", FiLoc::ms_invalid);
         npda_state_count_symbol->SetScalarBody(
-            new Preprocessor::Body(
-                Sint32(npda_graph.GetNodeCount()),
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(Sint32(npda_graph.GetNodeCount())));
     }
 
     // _npda_state_rule_index[_npda_state_count] -- the index of the rule which this state
@@ -413,25 +369,15 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
                 Graph::Transition const &transition = *it;
 
                 npda_transition_type_index_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.Type()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.Type())));
                 npda_transition_type_name_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        GetTransitionTypeString(transition.Type()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(GetTransitionTypeString(transition.Type())));
                 npda_transition_data_index_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.Data0()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.Data0())));
                 npda_transition_data_name_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        transition.Label(),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(transition.Label()));
                 npda_transition_target_node_index_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.TargetIndex()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.TargetIndex())));
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);
                 ++node_transition_count;
@@ -443,39 +389,23 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             Nonterminal const *nonterminal = node_data.GetAssociatedNonterminal();
             Rule const *rule = node_data.GetAssociatedRule();
             npda_state_rule_index_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    rule != NULL ? Sint32(rule->m_rule_index) : primary_source.GetRuleCount(),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(rule != NULL ? Sint32(rule->m_rule_index) : primary_source.GetRuleCount()));
             npda_state_rule_stage_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    rule != NULL ? Sint32(node_data.GetRuleStage()) : 0,
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(rule != NULL ? Sint32(node_data.GetRuleStage()) : 0));
             npda_state_description_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    GetStringLiteral(node_data.GetDescription()),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(GetStringLiteral(node_data.GetDescription())));
             npda_state_nonterminal_index_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(nonterminal != NULL ? primary_source.GetTokenIndex(nonterminal->GetText()) : 0),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(nonterminal != NULL ? primary_source.GetTokenIndex(nonterminal->GetText()) : 0)));
             npda_state_nonterminal_name_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    nonterminal != NULL ? nonterminal->GetText() : "none_",
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(nonterminal != NULL ? nonterminal->GetText() : "none_"));
             npda_state_transition_offset_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(node_transition_offset),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(node_transition_offset)));
             npda_state_transition_count_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(node_transition_count),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(node_transition_count)));
         }
 
         npda_transition_count_symbol->SetScalarBody(
-            new Preprocessor::Body(
-                Sint32(total_transition_count),
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(Sint32(total_transition_count)));
     }
 }
 

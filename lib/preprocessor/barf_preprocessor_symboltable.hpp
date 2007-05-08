@@ -62,12 +62,12 @@ class ScalarSymbol : public Symbol
 {
 public:
 
-    ScalarSymbol (string const &id) : Symbol(id) { }
+    ScalarSymbol (string const &id) : Symbol(id), m_body(NULL) { }
 
     virtual bool GetIsScalarSymbol () const { return true; }
     Body const *GetScalarBody () const { return m_body; }
 
-    void SetScalarBody (Body const *body) { m_body = body; }
+    void SetScalarBody (Body const *body) { assert(m_body == NULL); assert(body != NULL); m_body = body; }
 
     virtual Uint32 Sizeof () const { return 1; }
     virtual Symbol *Clone () const;

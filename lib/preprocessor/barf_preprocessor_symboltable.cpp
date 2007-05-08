@@ -33,7 +33,9 @@ void ScalarSymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 in
 {
     stream << Tabs(indent_level) << m_id << " (scalar)" << endl;
     assert(m_body != NULL);
-    m_body->Print(stream, Stringify, indent_level+1);
+    assert(m_body->size() == 1);
+    assert(m_body->GetElement(0) != NULL);
+    m_body->GetElement(0)->Print(stream, Stringify, indent_level+1);
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -55,8 +57,10 @@ void ArraySymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
     {
         Body const *body = m_body_vector[i];
         assert(body != NULL);
+        assert(body->size() == 1);
+        assert(body->GetElement(0) != NULL);
         stream << Tabs(indent_level+1) << "element " << i << endl;
-        body->Print(stream, Stringify, indent_level+2);
+        body->GetElement(0)->Print(stream, Stringify, indent_level+2);
     }
     stream << Tabs(indent_level) << '}' << endl;
 }
@@ -77,15 +81,17 @@ void MapSymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
     stream << Tabs(indent_level) << m_id << " (map - " << m_body_map.size() << " elements)" << endl;
     stream << Tabs(indent_level) << '{' << endl;
     for (BodyMap::const_iterator it = m_body_map.begin(),
-                              it_end = m_body_map.end();
+                                 it_end = m_body_map.end();
          it != it_end;
          ++it)
     {
         string const &key = it->first;
         Body const *body = it->second;
         assert(body != NULL);
+        assert(body->size() == 1);
+        assert(body->GetElement(0) != NULL);
         stream << Tabs(indent_level+1) << "element \"" << key << '\"' << endl;
-        body->Print(stream, Stringify, indent_level+2);
+        body->GetElement(0)->Print(stream, Stringify, indent_level+2);
     }
     stream << Tabs(indent_level) << '}' << endl;
 }
@@ -97,7 +103,7 @@ void MapSymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
 SymbolTable::SymbolTable (SymbolTable const &symbol_table)
 {
     for (SymbolMap::const_iterator it = symbol_table.m_symbol_map.begin(),
-                                it_end = symbol_table.m_symbol_map.end();
+                                   it_end = symbol_table.m_symbol_map.end();
          it != it_end;
          ++it)
     {
@@ -213,7 +219,7 @@ void SymbolTable::Print (ostream &stream) const
     stream << "SymbolTable dump (" << m_symbol_map.size() << " elements)" << endl;
     stream << '{' << endl;
     for (SymbolMap::const_iterator it = m_symbol_map.begin(),
-                                it_end = m_symbol_map.end();
+                                   it_end = m_symbol_map.end();
          it != it_end;
          ++it)
     {

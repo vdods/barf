@@ -25,18 +25,14 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     Preprocessor::ScalarSymbol *accept_handler_count_symbol =
         symbol_table.DefineScalarSymbol("_accept_handler_count", FiLoc::ms_invalid);
     accept_handler_count_symbol->SetScalarBody(
-        new Preprocessor::Body(
-            Sint32(primary_source.GetRuleCount()),
-            FiLoc::ms_invalid));
+        new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
 
     // _start_in_scanner_mode -- value of %start_in_scanner_mode -- the name of the initial scanner mode
     assert(primary_source.m_start_in_scanner_mode_directive != NULL);
     Preprocessor::ScalarSymbol *symbol =
         symbol_table.DefineScalarSymbol("_start_in_scanner_mode", FiLoc::ms_invalid);
     symbol->SetScalarBody(
-        new Preprocessor::Body(
-            primary_source.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText(),
-            FiLoc::ms_invalid));
+        new Preprocessor::Body(primary_source.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText()));
 }
 
 void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_graph, vector<Uint32> const &nfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
@@ -59,9 +55,7 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
             assert(state_index < nfa_start_state_index.size());
             nfa_initial_node_index_symbol->SetMapElement(
                 scanner_mode_name,
-                new Preprocessor::Body(
-                    Sint32(nfa_start_state_index[state_index]),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(nfa_start_state_index[state_index])));
             ++state_index;
         }
     }
@@ -71,9 +65,7 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
         Preprocessor::ScalarSymbol *nfa_state_count_symbol =
             symbol_table.DefineScalarSymbol("_nfa_state_count", FiLoc::ms_invalid);
         nfa_state_count_symbol->SetScalarBody(
-            new Preprocessor::Body(
-                Sint32(nfa_graph.GetNodeCount()),
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(Sint32(nfa_graph.GetNodeCount())));
     }
 
     // _nfa_state_transition_offset[_nfa_state_count] -- gives the first index of the
@@ -136,25 +128,15 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
                 Graph::Transition const &transition = *it;
 
                 nfa_transition_type_integer_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.Type()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.Type())));
                 nfa_transition_type_name_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Regex::GetTransitionTypeString(transition.Type()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Regex::GetTransitionTypeString(transition.Type())));
                 nfa_transition_data_0_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.Data0()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.Data0())));
                 nfa_transition_data_1_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.Data1()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.Data1())));
                 nfa_transition_target_node_index_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.TargetIndex()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.TargetIndex())));
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);
                 ++node_transition_count;
@@ -163,19 +145,13 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
             }
 
             nfa_state_transition_offset_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(node_transition_offset),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(node_transition_offset)));
             nfa_state_transition_count_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    Sint32(node_transition_count),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(node_transition_count)));
         }
 
         nfa_transition_count_symbol->SetScalarBody(
-            new Preprocessor::Body(
-                Sint32(total_transition_count),
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(Sint32(total_transition_count)));
     }
 }
 
@@ -199,9 +175,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
             assert(state_index < dfa_start_state_index.size());
             dfa_initial_node_index_symbol->SetMapElement(
                 scanner_mode_name,
-                new Preprocessor::Body(
-                    Sint32(dfa_start_state_index[state_index]),
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(Sint32(dfa_start_state_index[state_index])));
             ++state_index;
         }
     }
@@ -211,9 +185,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
         Preprocessor::ScalarSymbol *dfa_state_count_symbol =
             symbol_table.DefineScalarSymbol("_dfa_state_count", FiLoc::ms_invalid);
         dfa_state_count_symbol->SetScalarBody(
-            new Preprocessor::Body(
-                Sint32(dfa_graph.GetNodeCount()),
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(Sint32(dfa_graph.GetNodeCount())));
     }
 
     // _dfa_state_accept_handler_index[_dfa_state_count] -- gives the accept-handler-index
@@ -284,25 +256,15 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
                 Graph::Transition const &transition = *it;
 
                 dfa_transition_type_integer_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.Type()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.Type())));
                 dfa_transition_type_name_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Regex::GetTransitionTypeString(transition.Type()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Regex::GetTransitionTypeString(transition.Type())));
                 dfa_transition_data_0_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.Data0()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.Data0())));
                 dfa_transition_data_1_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.Data1()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.Data1())));
                 dfa_transition_target_node_index_symbol->AppendArrayElement(
-                    new Preprocessor::Body(
-                        Sint32(transition.TargetIndex()),
-                        FiLoc::ms_invalid));
+                    new Preprocessor::Body(Sint32(transition.TargetIndex())));
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);
                 ++node_transition_count;
@@ -311,23 +273,15 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
             }
 
             dfa_state_accept_handler_index_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    node_accept_handler_index,
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(node_accept_handler_index));
             dfa_state_transition_offset_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    node_transition_offset,
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(node_transition_offset));
             dfa_state_transition_count_symbol->AppendArrayElement(
-                new Preprocessor::Body(
-                    node_transition_count,
-                    FiLoc::ms_invalid));
+                new Preprocessor::Body(node_transition_count));
         }
 
         dfa_transition_count_symbol->SetScalarBody(
-            new Preprocessor::Body(
-                total_transition_count,
-                FiLoc::ms_invalid));
+            new Preprocessor::Body(total_transition_count));
     }
 }
 
