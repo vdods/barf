@@ -31,6 +31,8 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	barf-targetspec-parser-force \
 	barf-preprocessor-parser \
 	barf-preprocessor-parser-force \
+	barf-preprocessor-scanner \
+	barf-preprocessor-scanner-force \
 	barf-regex-parser \
 	barf-regex-parser-force \
 	reflex-parser \
@@ -50,7 +52,7 @@ libbarf-regex: lib/libbarf-regex.la
 doc:
 	$(DOXYGEN) Doxyfile
 
-spotless: clean clean-parser-extras
+spotless: clean clean-parser-extras clean-scanner-extras
 
 clean-parser-extras:
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.states
@@ -76,9 +78,13 @@ clean-all-parsers: clean-parser-extras
 	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.cpp
 	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.hpp
 
+clean-scanner-extras:
+
 clean-all-scanners:
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
 
 force-all-parsers: \
 	barf-targetspec-parser-force \
@@ -89,7 +95,8 @@ force-all-parsers: \
 	trison-unstable-parser-force
 
 force-all-scanners: \
-	barf-commonlang-scanner-force
+	barf-commonlang-scanner-force \
+	barf-preprocessor-scanner-force
 
 noinst_LTLIBRARIES = \
 	lib/libbarf-commonlang.la \
@@ -216,6 +223,7 @@ lib_libbarf_preprocessor_la_SOURCES = \
     lib/preprocessor/barf_preprocessor_parser.cpp \
     lib/preprocessor/barf_preprocessor_parser.trison \
     lib/preprocessor/barf_preprocessor_scanner.cpp \
+    lib/preprocessor/barf_preprocessor_scanner_new.cpp \
     lib/preprocessor/barf_preprocessor_symboltable.cpp \
     lib/preprocessor/barf_preprocessor_textifier.cpp
 
@@ -240,10 +248,24 @@ $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/comm
 
 barf-commonlang-scanner-force: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
 	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
+	
+barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX)
+	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/
+
+barf-preprocessor-scanner-force: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX)
+	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/
 else # !STABLE_REFLEX_EXISTS
 barf-commonlang-scanner barf-commonlang-scanner-force:
 	@echo "!!!"
-	@echo "!!! Can't build barf commonlang scanner without stable trison binary."
+	@echo "!!! Can't build barf commonlang scanner without stable reflex binary."
+	@echo "!!! Use --with-stable-reflex configure option."
+	@echo "!!!"
+
+barf-preprocessor-scanner barf-preprocessor-scanner-force:
+	@echo "!!!"
+	@echo "!!! Can't build barf preprocessor scanner without stable reflex binary."
 	@echo "!!! Use --with-stable-reflex configure option."
 	@echo "!!!"
 endif
@@ -578,6 +600,7 @@ noinst_HEADERS = \
 	lib/preprocessor/barf_preprocessor_ast.hpp \
 	lib/preprocessor/barf_preprocessor_parser.hpp \
 	lib/preprocessor/barf_preprocessor_scanner.hpp \
+	lib/preprocessor/barf_preprocessor_scanner_new.hpp \
 	lib/preprocessor/barf_preprocessor_symboltable.hpp \
 	lib/preprocessor/barf_preprocessor_textifier.hpp \
 	\

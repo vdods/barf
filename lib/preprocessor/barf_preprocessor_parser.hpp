@@ -53,7 +53,7 @@ public:
             ID,
             IF,
             INCLUDE,
-            INTEGER,
+            INTEGER_LITERAL,
             IS_DEFINED,
             KEYWORD_INT,
             KEYWORD_STRING,
@@ -61,8 +61,8 @@ public:
             SANDBOX_INCLUDE,
             SIZEOF,
             START_CODE,
-            STRING,
             STRING_LENGTH,
+            STRING_LITERAL,
             TEXT,
             UNDEFINE,
             WARNING,
@@ -73,6 +73,7 @@ public:
             // user-defined nonterminal tokens
             body__,
             code__,
+            code_body__,
             conditional_series__,
             conditional_series_end__,
             define__,
@@ -140,7 +141,7 @@ private:
 
     Scanner *m_scanner;
 
-#line 144 "barf_preprocessor_parser.hpp"
+#line 145 "barf_preprocessor_parser.hpp"
 
 private:
 
@@ -345,6 +346,7 @@ private:
     Ast::Base * ReductionRuleHandler0079 ();
     Ast::Base * ReductionRuleHandler0080 ();
     Ast::Base * ReductionRuleHandler0081 ();
+    Ast::Base * ReductionRuleHandler0082 ();
 
 }; // end of class Parser
 
@@ -358,4 +360,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_BARF_PREPROCESSOR_PARSER_HPP_)
 
-#line 362 "barf_preprocessor_parser.hpp"
+#line 364 "barf_preprocessor_parser.hpp"

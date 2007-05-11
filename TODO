@@ -106,6 +106,8 @@
 - add comment/description element to each codespec symbol, so that you can
   print out a list of all available codespec symbols and their descriptions
   from the commandline for easier development
+- allow targetspec-declared, primary-source-defined codespec symbols to use
+  codespec symbols? (i.e. { printf(<{_rule_regex}); } ) ?
 
 // ///////////////////////////////////////////////////////////////////////////
 // preprocessor
@@ -128,7 +130,7 @@
 - see if the scanner can be half hand-scanned and half reflex-scanned, so that
   only the "code" portions are reflex-scanned.  this will allow for flexibility
   in defining the code section delimiters
-- includes should use search path
+- includes should use some sort of search path
 - add boolean property for wether or not a particular symbol was referenced
   during preprocessing.
 
@@ -152,7 +154,13 @@
 - use \c and \C to turn case sensitivity off/on -- this would not be a
   state-machine-determined thing, but it would influence character classes
   and such.
-- implement ungreedy matching
+* implement ungreedy pattern matching (e.g. ".*?b" when given "aaabab" will
+  match "aaab" instead of the greedy match of "aaabab").
+* positive/negative lookahead matching 
+  "dumbfaces" -> "dumb(?=face)" matches "dumb"
+  "dumbfaces" -> "dumb(?=erface)" doesn't match
+  "dumbfaces" -> "dumb(?!face)" doesn't match
+  "dumbfaces" -> "dumb(?!erface)" matches "dumb"
 - fix up the \x stuff in the scanner (disallow \x alone, require a hex char)
 - allow '\0' as a transition atom -- this will allow usage of regexes for
   binary data.  this will also require some thought, since the current
@@ -177,6 +185,10 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
+- add --emit-[only-]targets and --omit-targets to control generation of
+  specific targets (e.g. if you wanted to not generate code for anything,
+  but you did want a dot graph of the NFA).
+- add API similar to yymore() for continuing the accepted string
 - add commandline option to describe the return codes (?)
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - add "push accepted string back into buffer" API (call it Unaccept) to the
@@ -199,11 +211,17 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
+- add flex-like interactive scanner option -- if it's enabled, you must specify
+  the "get next char" directive, otherwise you must specify the "read chars"
+  directive (which reads a big chunk of input for faster reads)
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+- add --emit-[only-]targets and --omit-targets to control generation of
+  specific targets (e.g. if you wanted to not generate code for anything,
+  but you did want a dot graph of the NPDA).
 - add commandline option to describe the return codes (?)
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - clean up the parsing so that it's less about passing crap around and more

@@ -296,6 +296,8 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 %macro NEWLINE              (\n)
 // any char
 %macro ANYTHING             (\n|.)
+// end-of-file condition
+%macro END_OF_FILE          (\z)
 
 %start_in_scanner_mode MAIN
 
@@ -394,9 +396,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
             return Token::NEWLINE;
     }
 |
-    (\z)
+    ({END_OF_FILE})
     %target.cpp {
-        SPEW("MAIN - (\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("MAIN - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         return Token::END_OF_FILE;
     }
 |
@@ -426,9 +428,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         IncrementLineNumber(GetNewlineCount(accepted_string));
     }
 |
-    (\z)
+    ({END_OF_FILE})
     %target.cpp {
-        SPEW("BLOCK_COMMENT - (\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("BLOCK_COMMENT - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         EmitWarning(GetFiLoc(), "unterminated block comment");
         return Token::END_OF_FILE;
     }
@@ -481,9 +483,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         ScannerMode(Mode::CHAR_LITERAL_END);
     }
 |
-    (\\?\z) // end of file (which may be preceded by a backslash)
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
     %target.cpp {
-        SPEW("CHAR_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_GUTS - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "unterminated character literal");
         return Token::END_OF_FILE;
     }
@@ -509,9 +511,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         return Token::CHAR_LITERAL;
     }
 |
-    (\\?\z) // end of file (which may be preceded by a backslash)
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
     %target.cpp {
-        SPEW("CHAR_LITERAL_END - (\\\\?\\z) - accepted_string = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_END - (\\\\?{END_OF_FILE}) - accepted_string = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "unterminated character literal");
         assert(*token != NULL);
         delete *token;
@@ -587,9 +589,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         return Token::STRING_LITERAL;
     }
 |
-    (\\?\z) // end of file (which may be preceded by a backslash)
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
     %target.cpp {
-        SPEW("STRING_LITERAL_GUTS - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("STRING_LITERAL_GUTS - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         EmitError(GetFiLoc(), "unterminated string literal");
         assert(*token != NULL);
         delete *token;
@@ -645,9 +647,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
     }
 |
-    (\\?\z) // end of file (which may be preceded by a backslash)
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
     %target.cpp {
-        SPEW("REGULAR_EXPRESSION - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("REGULAR_EXPRESSION - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -685,9 +687,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
     }
 |
-    (\\?\z) // end of file (which may be preceded by a backslash)
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
     %target.cpp {
-        SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("REGULAR_EXPRESSION_BRACKET_EXPRESSION - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -714,9 +716,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
     }
 |
-    (\z)
+    ({END_OF_FILE})
     %target.cpp {
-        SPEW("DUMB_CODE_BLOCK - (\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("DUMB_CODE_BLOCK - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -788,9 +790,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
     }
 |
-    (\z) // end of file
+    ({END_OF_FILE}) // end of file
     %target.cpp {
-        SPEW("STRICT_CODE_BLOCK - (\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("STRICT_CODE_BLOCK - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -810,9 +812,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         ScannerMode(Mode::STRICT_CODE_BLOCK);
     }
 |
-    (([^'\\]|\\{ANYTHING})*\\?\z) // everything up to an end of file encountered before the first single quote
+    (([^'\\]|\\{ANYTHING})*\\?{END_OF_FILE}) // everything up to an end of file encountered before the first single quote
     %target.cpp {
-        SPEW("CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^'\\\\]|\\\\{ANYTHING})*\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -833,9 +835,9 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         ScannerMode(Mode::STRICT_CODE_BLOCK);
     }
 |
-    (([^"\\]|\\{ANYTHING})*\\?\z) // everything up to an end of file encountered before the first double quote
+    (([^"\\]|\\{ANYTHING})*\\?{END_OF_FILE}) // everything up to an end of file encountered before the first double quote
     %target.cpp {
-        SPEW("STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^\"\\\\]|\\\\{ANYTHING}))*\\\\?\\z) = " << GetStringLiteral(accepted_string));
+        SPEW("STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK - (([^\"\\\\]|\\\\{ANYTHING}))*\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string));
         assert(*token != NULL);
         delete *token;
         *token = NULL;

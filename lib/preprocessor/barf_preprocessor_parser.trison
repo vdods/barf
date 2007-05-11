@@ -118,8 +118,8 @@ Parser::Token::Type Parser::Scan ()
 %token WARNING ERROR FATAL_ERROR
 %token SIZEOF
 %token IS_DEFINED
-%token INTEGER %type "Integer *"
-%token STRING %type "Text *"
+%token INTEGER_LITERAL %type "Integer *"
+%token STRING_LITERAL %type "Text *"
 %token KEYWORD_INT KEYWORD_STRING
 %token STRING_LENGTH
 %token '(' ')' '[' ']' ',' '?'
@@ -172,11 +172,9 @@ body %type "Body *"
 
 executable %type "ExecutableAst *"
 :
-    START_CODE code:code END_CODE    { return code; }
+    code:code                      { return code; }
 |
-    CODE_LINE code:code CODE_NEWLINE { return code; }
-|
-    conditional_series:conditional   { return conditional; }
+    conditional_series:conditional { return conditional; }
 |
     define:define body:body end_define
     {
@@ -198,6 +196,13 @@ executable %type "ExecutableAst *"
 ;
 
 code %type "ExecutableAst *"
+:
+    START_CODE code_body:code_body END_CODE { return code_body; }
+|
+    CODE_LINE code_body:code_body CODE_NEWLINE { return code_body; }
+;
+
+code_body %type "ExecutableAst *"
 :
     // empty reduction rule
     { return NULL; }
@@ -320,10 +325,10 @@ define_array_element %type "Define *"
 
 define_map_element %type "Define *"
 :
-    START_CODE DEFINE '(' ID:id '[' STRING:key ']' ')' END_CODE
+    START_CODE DEFINE '(' ID:id '[' STRING_LITERAL:key ']' ')' END_CODE
     { return new DefineMapElement(id, key); }
 |
-    CODE_LINE DEFINE '(' ID:id '[' STRING:key ']' ')' CODE_NEWLINE
+    CODE_LINE DEFINE '(' ID:id '[' STRING_LITERAL:key ']' ')' CODE_NEWLINE
     { return new DefineMapElement(id, key); }
 ;
 
@@ -368,10 +373,10 @@ end_for_each
 
 expression %type "Expression *"
 :
-    STRING:str
+    STRING_LITERAL:str
     { return str; }
 |
-    INTEGER:integer
+    INTEGER_LITERAL:integer
     { return integer; }
 |
     SIZEOF '(' ID:id ')'

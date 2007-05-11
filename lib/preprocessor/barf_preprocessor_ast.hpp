@@ -553,15 +553,21 @@ class Text : public Expression
 {
 public:
 
-    // the text passed to this constructor should not contain any macro code
+    // TODO: deprecate this once the reflex scanner is implemented
     Text (string const &text, FiLoc const &filoc)
         :
         Expression(filoc, AT_TEXT),
         m_text(text)
     { }
+    Text (char const *s, Uint32 char_count, FiLoc const &filoc)
+        :
+        Expression(filoc, AT_TEXT),
+        m_text(s, char_count)
+    { }
 
     inline string const &GetText () const { return m_text; }
     inline void SetText (string const &text) { m_text = text; }
+    inline void AppendText (string const &text) { m_text += text; }
 
     virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return false; }
 

@@ -23,7 +23,7 @@ Scanner::Scanner ()
     InputBase(),
     m_start_code_delimiter("<{"),
     m_end_code_delimiter("}"),
-    m_code_line_delimiter("<*|")
+    m_code_line_delimiter("<|")
 { }
 
 Scanner::~Scanner ()
@@ -260,7 +260,7 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
     }
     else if (IsDigit(m_text[m_current_position]))
     {
-        string::size_type integer_end = m_text.find_first_not_of("0123456789_", m_current_position);
+        string::size_type integer_end = m_text.find_first_not_of("0123456789", m_current_position);
         string integer_text = m_text.substr(m_current_position, integer_end-m_current_position);
         m_current_position = integer_end;
 
@@ -268,7 +268,7 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
         istringstream in(integer_text);
         in >> value;
         *scanned_token = new Integer(value, GetFiLoc());
-        return Parser::Token::INTEGER;
+        return Parser::Token::INTEGER_LITERAL;
     }
     else if (m_text[m_current_position] == '\"')
     {
@@ -297,7 +297,7 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
         ++m_current_position;
         *scanned_token = new Text(GetEscapedString(string_literal), GetFiLoc());
         IncrementLineNumber(GetNewlineCount(string_literal));
-        return Parser::Token::STRING;
+        return Parser::Token::STRING_LITERAL;
     }
     else
     {
