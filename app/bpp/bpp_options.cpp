@@ -14,9 +14,7 @@ namespace Bpp {
 
 CommandLineOption const Options::ms_option[] =
 {
-    // warning and error options header
     CommandLineOption("Warning and error options"),
-    // warning and error options
     CommandLineOption(
         'W',
         "warnings-as-errors",
@@ -55,9 +53,9 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DontAssertOnError,
         "    This negates the effect of option -A, and is the default behavior."),
 #endif
-    // output behavior options header
+
+
     CommandLineOption("Output behavior options"),
-    // output behavior options
     CommandLineOption(
         'o',
         "output-filename",
@@ -65,9 +63,20 @@ CommandLineOption const Options::ms_option[] =
         "    Optionally specifies a file path to write output to.  Default behavior\n"
         "    is to write to stdout.  Specifying \"-\" will also send output to stdout\n"
         "    Warning and error messages are always to stderr."),
-    // verbosity options header
+        
+        
+    CommandLineOption("Macro-related options"),
+    CommandLineOption(
+        'D',
+        "predefine",
+        &OptionsBase::Predefine,
+        "    Defines a macro value before parsing the input file.  Macro values\n"
+        "    specified in the input file will override values defined via this\n"
+        "    commandline option.  The argument is of the form:\n"
+        "        <macro_id>=<value>"),
+        
+        
     CommandLineOption("Verbosity options"),
-    // verbosity options
     CommandLineOption(
         'V',
         "enable-verbosity",
@@ -85,9 +94,9 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DisableVerbosity,
         "    Disables the specified verbosity option.  See option -V for\n"
         "    valid parameters and their descriptions."),
-    // just a space before the help option
+        
+        
     CommandLineOption(""),
-    // help option
     CommandLineOption(
         'h',
         "help",

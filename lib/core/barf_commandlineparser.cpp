@@ -81,9 +81,7 @@ void CommandLineParser::PrintHelpMessage (ostream &stream) const
         {
             assert(option->m_short_name != '\0' || !option->m_long_name.empty());
 
-            if (option->m_short_name == '\0')
-                stream << "   ";
-            else
+            if (option->m_short_name != '\0')
                 stream << "-" << option->m_short_name;
 
             if (option->m_short_name != '\0' && !option->m_long_name.empty())

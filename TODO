@@ -185,6 +185,9 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
+- allow "--predefine targets=" ?
+- move the --with-line-directives option to be specified by the target, and
+  overridable by the primary source
 - add --emit-[only-]targets and --omit-targets to control generation of
   specific targets (e.g. if you wanted to not generate code for anything,
   but you did want a dot graph of the NFA).
@@ -219,6 +222,9 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+- allow "--predefine targets=" ?
+- move the --with-line-directives option to be specified by the target, and
+  overridable by the primary source
 - add --emit-[only-]targets and --omit-targets to control generation of
   specific targets (e.g. if you wanted to not generate code for anything,
   but you did want a dot graph of the NPDA).

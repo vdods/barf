@@ -116,6 +116,16 @@ void OptionsBase::DontGenerateDaDotGraph ()
     m_da_dot_graph_path.clear();
 }
 
+void OptionsBase::Predefine (string const &arg)
+{
+    m_predefine.push_back(arg);
+}
+
+void OptionsBase::Postdefine (string const &arg)
+{
+    m_postdefine.push_back(arg);
+}
+
 void OptionsBase::EnableVerbosity (string const &verbosity_string)
 {
     Verbosity verbosity = ParseVerbosityString(verbosity_string);

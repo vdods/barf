@@ -14,9 +14,7 @@ namespace Trison {
 
 CommandLineOption const Options::ms_option[] =
 {
-    // warning and error options header
     CommandLineOption("Warning and error options"),
-    // warning and error options
     CommandLineOption(
         'W',
         "warnings-as-errors",
@@ -40,9 +38,9 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DontHaltOnFirstError,
         "    The program will continue executing as long as possible before aborting\n"
         "    when errors occur.  This is the default behavior.  See also option -E."),
-    // output behavior options header
+        
+        
     CommandLineOption("Output behavior options"),
-    // output behavior options
     CommandLineOption(
         'o',
         "output-basename",
@@ -89,9 +87,9 @@ CommandLineOption const Options::ms_option[] =
         "    Do not use #line directives in the generated source.  This might be helpful\n"
         "    when the original parser source will not be available during compilation or\n"
         "    debugging.  See also option -L."),
-    // verbosity options header
+        
+        
     CommandLineOption("Verbosity options"),
-    // verbosity options
     CommandLineOption(
         'V',
         "enable-verbosity",
@@ -107,9 +105,9 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DisableVerbosity,
         "    Disables the specified verbosity option.  See option -V for\n"
         "    valid parameters and their descriptions."),
-    // just a space before the help option
+        
+        
     CommandLineOption(""),
-    // help option
     CommandLineOption(
         'h',
         "help",

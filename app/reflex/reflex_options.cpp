@@ -14,9 +14,7 @@ namespace Reflex {
 
 CommandLineOption const Options::ms_option[] =
 {
-    // warning and error options header
     CommandLineOption("Warning and error options"),
-    // warning and error options
     CommandLineOption(
         'W',
         "warnings-as-errors",
@@ -55,9 +53,9 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DontAssertOnError,
         "    This negates the effect of option -A, and is the default behavior."),
 #endif
-    // input behavior options header
+
+
     CommandLineOption("Input behavior options"),
-    // input behavior options
     CommandLineOption(
         'I',
         "include-targets-search-path",
@@ -82,9 +80,9 @@ CommandLineOption const Options::ms_option[] =
         "    once all -I options have been processed, then exits.  Each path entry is\n"
         "    followed by a description of how each was added.  Each entry is delimited\n"
         "    by a newline.  This is identical to option -p except for the description."),
-    // output behavior options header
+        
+        
     CommandLineOption("Output behavior options"),
-    // output behavior options
     CommandLineOption(
         'o',
         "output-directory",
@@ -107,36 +105,56 @@ CommandLineOption const Options::ms_option[] =
         "    debugging, or if the target language doesn't support #line directives to\n"
         "    begin with.  See also option -L."),
     CommandLineOption(
-        'N',
         "generate-nfa-dot-graph",
         &OptionsBase::GenerateNaDotGraph,
         "    Specifies the filename for a `dot` graph (see http://www.graphviz.org/)\n"
         "    of the generated nondeterministic finite automata (NFA).  Useful as a\n"
         "    diagnostic tool.  Specifying - (hyphen) indicates that the output should\n"
-        "    be to stdout.  See also option -n."),
+        "    be to stdout.  See also option --dont-generate-nfa-dot-graph."),
     CommandLineOption(
-        'n',
         "dont-generate-nfa-dot-graph",
         &OptionsBase::DontGenerateNaDotGraph,
         "    Do not create a `dot` graph file for the NFA.  This is the default\n"
-        "    behavior.  See also option -N."),
+        "    behavior.  See also option --generate-nfa-dot-graph."),
     CommandLineOption(
-        'D',
         "generate-dfa-dot-graph",
         &OptionsBase::GenerateDaDotGraph,
         "    Specifies the filename for a `dot` graph (see http://www.graphviz.org/) of\n"
         "    the generated deterministic finite automata (DFA; which is generated from\n"
         "    the NFA).  Useful as a diagnostic tool.  Specifying - (hyphen) indicates\n"
-        "    that the output should be to stdout.  See also option -d."),
+        "    that the output should be to stdout.  See also option\n"
+        "    --dont-generate-dfa-got-graph."),
     CommandLineOption(
-        'd',
         "dont-generate-dfa-dot-graph",
         &OptionsBase::DontGenerateDaDotGraph,
         "    Do not create a `dot` graph file for the DFA.  This is the default\n"
-        "    behavior.  See also option -D."),
-    // verbosity options header
+        "    behavior.  See also option --generate-dfa-dot-graph."),
+        
+        
+    CommandLineOption("Target-related options"),
+    CommandLineOption(
+        'D',
+        "predefine",
+        &OptionsBase::Predefine,
+        "    Defines a targetspec directive value for a given target before parsing\n"
+        "    the primary source.  Directive values specified in the primary source will\n"
+        "    override values defined via this commandline option.  The argument is of\n"
+        "    the form:\n"
+        "        target.<target_id>.<directive_id>=<value>\n"
+        "    The <value> portion of the argument must include the delimiters appropriate\n"
+        "    to the targetspec directive (e.g. %string directives require a double-quote-\n"
+        "    delimited <value>, etc)."),
+    CommandLineOption(
+        'd',
+        "postdefine",
+        &OptionsBase::Postdefine,
+        "    Defines a targetspec directive value for a given target after parsing\n"
+        "    the primary source.  Directive values specified in the primary source will\n"
+        "    be overridden by values defined via this commandline option.  See option\n"
+        "    -d for details on the form of the argument."),
+    
+        
     CommandLineOption("Verbosity options"),
-    // verbosity options
     CommandLineOption(
         'V',
         "enable-verbosity",
@@ -164,9 +182,9 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DisableVerbosity,
         "    Disables the specified verbosity option.  See option -V for\n"
         "    valid parameters and their descriptions."),
-    // just a space before the help option
+        
+        
     CommandLineOption(""),
-    // help option
     CommandLineOption(
         'h',
         "help",

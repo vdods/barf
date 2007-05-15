@@ -104,31 +104,36 @@ public:
 
     // indicates if there were problems with the specified options
     // and that the program should not continue executing.
-    inline bool GetAbort () const { return m_abort || !GetParseSucceeded(); }
+    bool GetAbort () const { return m_abort || !GetParseSucceeded(); }
 
     // non-option argument accessor
-    inline string const &GetInputFilename () const { return m_input_filename; }
+    string const &GetInputFilename () const { return m_input_filename; }
     // warning and error option accessors
-    inline bool GetTreatWarningsAsErrors () const { return m_treat_warnings_as_errors; }
-    inline bool GetHaltOnFirstError () const { return m_halt_on_first_error; }
+    bool GetTreatWarningsAsErrors () const { return m_treat_warnings_as_errors; }
+    bool GetHaltOnFirstError () const { return m_halt_on_first_error; }
 #if DEBUG
-    inline bool GetAssertOnError () const { return m_assert_on_error; }
+    bool GetAssertOnError () const { return m_assert_on_error; }
 #endif
     // input options
-    inline SearchPath const &GetTargetsSearchPath () const { return m_targets_search_path; }
-    inline PrintTargetsSearchPathRequest GetPrintTargetsSearchPathRequest () const { return m_print_targets_search_path_request; }
+    SearchPath const &GetTargetsSearchPath () const { return m_targets_search_path; }
+    PrintTargetsSearchPathRequest GetPrintTargetsSearchPathRequest () const { return m_print_targets_search_path_request; }
     // output options
-    inline string const &GetOutputDirectory () const { return m_output_directory; } // TODO: deprecate
-    inline string const &GetOutputFilenameBase () const { return m_output_filename_base; } // TODO: deprecate
-    inline string GetOutputPathBase () const { return m_output_directory + m_output_filename_base; } // TODO: deprecate
-    inline string GetOutputDir () const { return m_output_dir; }
-    inline bool GetWithLineDirectives () const { return m_with_line_directives; }
-    inline string const &GetNaDotGraphPath () const { return m_na_dot_graph_path; }
-    inline string const &GetDaDotGraphPath () const { return m_da_dot_graph_path; }
+    string const &GetOutputDirectory () const { return m_output_directory; } // TODO: deprecate
+    string const &GetOutputFilenameBase () const { return m_output_filename_base; } // TODO: deprecate
+    string GetOutputPathBase () const { return m_output_directory + m_output_filename_base; } // TODO: deprecate
+    string GetOutputDir () const { return m_output_dir; }
+    bool GetWithLineDirectives () const { return m_with_line_directives; }
+    string const &GetNaDotGraphPath () const { return m_na_dot_graph_path; }
+    string const &GetDaDotGraphPath () const { return m_da_dot_graph_path; }
+    // target-related options
+    vector<string>::size_type GetPredefineCount () const { return m_predefine.size(); }
+    string const &GetPredefine (vector<string>::size_type index) const { assert(index < m_predefine.size()); return m_predefine[index]; }
+    vector<string>::size_type GetPostdefineCount () const { return m_postdefine.size(); }
+    string const &GetPostdefine (vector<string>::size_type index) const { assert(index < m_postdefine.size()); return m_postdefine[index]; }
     // verbosity options
-    inline bool GetIsVerbose (Verbosity verbosity) const { assert((verbosity & ~V_ALL) == 0); return (m_enabled_verbosity & verbosity) != 0; }
+    bool GetIsVerbose (Verbosity verbosity) const { assert((verbosity & ~V_ALL) == 0); return (m_enabled_verbosity & verbosity) != 0; }
     // help option
-    inline bool GetIsHelpRequested () const { return m_is_help_requested; }
+    bool GetIsHelpRequested () const { return m_is_help_requested; }
 
     // non-option argument handler
     void SetInputFilename (string const &input_filename);
@@ -154,6 +159,9 @@ public:
     void DontGenerateNaDotGraph ();
     void GenerateDaDotGraph (string const &da_dot_graph_path);
     void DontGenerateDaDotGraph ();
+    // target-related options
+    void Predefine (string const &arg);
+    void Postdefine (string const &arg);
     // verbosity options
     void EnableVerbosity (string const &verbosity_string);
     void DisableVerbosity (string const &verbosity_string);
@@ -184,6 +192,9 @@ protected:
     bool m_with_line_directives;
     string m_na_dot_graph_path;
     string m_da_dot_graph_path;
+    // target-related options
+    vector<string> m_predefine;
+    vector<string> m_postdefine;
     // verbosity options
     Uint32 m_enabled_verbosity;
     // help option value
