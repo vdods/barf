@@ -375,7 +375,7 @@ public:
         assert(rule_list != NULL);
         m_rule_list = rule_list;
         for (RuleList::const_iterator it = m_rule_list->begin(),
-                                     it_end = m_rule_list->end();
+                                      it_end = m_rule_list->end();
              it != it_end;
              ++it)
         {

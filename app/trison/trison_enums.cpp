@@ -32,8 +32,7 @@ void PrettyPrint (ostream &stream, TransitionAction transition_action)
         "shift and push state",
         "push state",
         "reduce using rule",
-        "reduce and accept using rule",
-        "throw away lookahead token"
+        "reduce and accept using rule"
     };
 
     assert(transition_action < TA_COUNT);
@@ -90,8 +89,7 @@ ostream &operator << (ostream &stream, TransitionAction transition_action)
         "TA_SHIFT_AND_PUSH_STATE",
         "TA_PUSH_STATE",
         "TA_REDUCE_USING_RULE",
-        "TA_REDUCE_AND_ACCEPT_USING_RULE",
-        "TA_THROW_AWAY_LOOKAHEAD_TOKEN"
+        "TA_REDUCE_AND_ACCEPT_USING_RULE"
     };
 
     assert(transition_action < TA_COUNT);

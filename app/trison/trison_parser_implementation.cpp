@@ -96,10 +96,7 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()\n\
     m_lookahead_token_type = Token::INVALID_;\n\
     m_lookahead_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
     m_is_new_lookahead_token_required = true;\n\
-\n\
-    m_saved_lookahead_token_type = Token::INVALID_;\n\
-    m_get_new_lookahead_token_type_from_saved = false;\n\
-    m_previous_transition_accepted_error_token = false;\n\
+    m_in_error_handling_mode = false;\n\
 \n\
     m_is_returning_with_non_terminal = false;\n\
     m_returning_with_this_non_terminal = Token::INVALID_;\n\
@@ -151,12 +148,15 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()\n\
             StateTransition const &state_transition =\n\
                 ms_state_transition[state_transition_number];\n\
             // if this token matches the current transition, do its action\n\
-            if (state_transition.m_token_type == state_transition_token_type)\n\
+            if (m_in_error_handling_mode && state_transition.m_token_type == Token::ERROR_ && state_transition_token_type != Token::END_ ||\n\
+                !m_in_error_handling_mode && state_transition.m_token_type == state_transition_token_type)\n\
             {\n\
                 if (state_transition.m_token_type == Token::ERROR_)\n\
-                    m_previous_transition_accepted_error_token = true;\n\
-                else\n\
-                    m_previous_transition_accepted_error_token = false;\n\
+                {\n\
+                    ThrowAwayToken(m_lookahead_token);\n\
+                    m_lookahead_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
+                    m_lookahead_token_type = Token::ERROR_;\n\
+                }\n\
 \n\
                 PrintStateTransition(state_transition_number);\n\
                 if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)\n\
@@ -182,60 +182,31 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()\n\
             else\n\
             {\n\
                 assert(!m_is_new_lookahead_token_required);\n\
+                assert(!m_in_error_handling_mode);\n\
 \n\
                 DEBUG_SPEW_1(\"!!! error recovery: begin\" << std::endl);\n\
+                m_in_error_handling_mode = true;\n\
 \n\
-                // if an error was encountered, and this state accepts the %error\n\
-                // token, then we don't need to pop states\n\
-                if (GetDoesStateAcceptErrorToken(current_state_number))\n\
+                // pop the stack until we reach an error-handling state, but only\n\
+                // if the lookahead token isn't END_ (to prevent an infinite loop).\n\
+                while (!GetDoesStateAcceptErrorToken(current_state_number) || m_lookahead_token_type == Token::END_)\n\
                 {\n\
-                    // if an error token was previously accepted, then throw\n\
-                    // away the lookahead token, because whatever the lookahead\n\
-                    // was didn't match.  this prevents an infinite loop.\n\
-                    if (m_previous_transition_accepted_error_token)\n\
+                    DEBUG_SPEW_1(\"!!! error recovery: popping state \" << current_state_number << std::endl);\n\
+                    assert(m_token_stack.size() + 1 == m_state_stack.size());\n\
+                    if (m_token_stack.size() > 0)\n\
                     {\n\
-                        ThrowAwayToken(m_lookahead_token);\n\
-                        m_is_new_lookahead_token_required = true;\n\
-                    }\n\
-                    // otherwise, save off the lookahead token so that once the\n\
-                    // %error token has been shifted, the lookahead can be\n\
-                    // re-analyzed.\n\
-                    else\n\
-                    {\n\
-                        m_saved_lookahead_token_type = m_lookahead_token_type;\n\
-                        m_get_new_lookahead_token_type_from_saved = true;\n\
-                        m_lookahead_token_type = Token::ERROR_;\n\
-                    }\n\
-                }\n\
-                // otherwise save off the lookahead token for the error panic popping\n\
-                else\n\
-                {\n\
-                    // save off the lookahead token type and set the current to Token::ERROR_\n\
-                    m_saved_lookahead_token_type = m_lookahead_token_type;\n\
-                    m_get_new_lookahead_token_type_from_saved = true;\n\
-                    m_lookahead_token_type = Token::ERROR_;\n\
-\n\
-                    // pop until we either run off the stack, or find a state\n\
-                    // which accepts the %error token.\n\
-                    assert(m_state_stack.size() > 0);\n\
-                    do\n\
-                    {\n\
-                        DEBUG_SPEW_1(\"!!! error recovery: popping state \" << current_state_number << std::endl);\n\
-                        m_state_stack.pop_back();\n\
-\n\
-                        if (m_state_stack.size() == 0)\n\
-                        {\n\
-                            ThrowAwayTokenStack();\n\
-                            DEBUG_SPEW_1(\"!!! error recovery: unhandled error -- quitting\" << std::endl);\n\
-                            return PRC_UNHANDLED_PARSE_ERROR;\n\
-                        }\n\
-\n\
-                        assert(m_token_stack.size() > 0);\n\
                         ThrowAwayToken(m_token_stack.back());\n\
                         m_token_stack.pop_back();\n\
-                        current_state_number = m_state_stack.back();\n\
                     }\n\
-                    while (!GetDoesStateAcceptErrorToken(current_state_number));\n\
+                    m_state_stack.pop_back();\n\
+\n\
+                    if (m_state_stack.size() == 0)\n\
+                    {\n\
+                        DEBUG_SPEW_1(\"!!! error recovery: unhandled error -- quitting\" << std::endl);\n\
+                        return PRC_UNHANDLED_PARSE_ERROR;\n\
+                    }\n\
+\n\
+                    current_state_number = m_state_stack.back();\n\
                 }\n\
 \n\
                 DEBUG_SPEW_1(\"!!! error recovery: found state which accepts %error token\" << std::endl);\n\
@@ -252,15 +223,18 @@ $$CLASS_NAME$$::ActionReturnCode $$CLASS_NAME$$::ProcessAction ($$CLASS_NAME$$::
 {\n\
     if (action.m_transition_action == TA_SHIFT_AND_PUSH_STATE)\n\
     {\n\
+        m_in_error_handling_mode = false;\n\
         ShiftLookaheadToken();\n\
         PushState(action.m_data);\n\
     }\n\
     else if (action.m_transition_action == TA_PUSH_STATE)\n\
     {\n\
+        assert(!m_in_error_handling_mode);\n\
         PushState(action.m_data);\n\
     }\n\
     else if (action.m_transition_action == TA_REDUCE_USING_RULE)\n\
     {\n\
+        assert(!m_in_error_handling_mode);\n\
         unsigned int reduction_rule_number = action.m_data;\n\
         assert(reduction_rule_number < ms_reduction_rule_count);\n\
         ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];\n\
@@ -268,6 +242,7 @@ $$CLASS_NAME$$::ActionReturnCode $$CLASS_NAME$$::ProcessAction ($$CLASS_NAME$$::
     }\n\
     else if (action.m_transition_action == TA_REDUCE_AND_ACCEPT_USING_RULE)\n\
     {\n\
+        assert(!m_in_error_handling_mode);\n\
         unsigned int reduction_rule_number = action.m_data;\n\
         assert(reduction_rule_number < ms_reduction_rule_count);\n\
         ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];\n\
@@ -275,12 +250,6 @@ $$CLASS_NAME$$::ActionReturnCode $$CLASS_NAME$$::ProcessAction ($$CLASS_NAME$$::
         DEBUG_SPEW_1(\"*** accept\" << std::endl);\n\
         // everything is done, so just return.\n\
         return ARC_ACCEPT_AND_RETURN;\n\
-    }\n\
-    else if (action.m_transition_action == TA_THROW_AWAY_LOOKAHEAD_TOKEN)\n\
-    {\n\
-        assert(!m_is_new_lookahead_token_required);\n\
-        ThrowAwayToken(m_lookahead_token);\n\
-        m_is_new_lookahead_token_required = true;\n\
     }\n\
 \n\
     return ARC_CONTINUE_PARSING;\n\
@@ -326,6 +295,8 @@ void $$CLASS_NAME$$::ReduceUsingRule (ReductionRule const &reduction_rule, bool 
     // call the reduction rule handler if it exists\n\
     if (reduction_rule.m_handler != NULL)\n\
         m_reduction_token = (this->*(reduction_rule.m_handler))();\n\
+    else\n\
+        m_reduction_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
     // pop the states and tokens\n\
     PopStates(reduction_rule.m_number_of_tokens_to_reduce_by, false);\n\
 \n\
@@ -334,12 +305,14 @@ void $$CLASS_NAME$$::ReduceUsingRule (ReductionRule const &reduction_rule, bool 
     {\n\
         // push the token that resulted from the reduction\n\
         m_token_stack.push_back(m_reduction_token);\n\
+        m_reduction_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
         PrintStateStack();\n\
     }\n\
 }\n\
 \n\
 void $$CLASS_NAME$$::PopStates (unsigned int number_of_states_to_pop, bool print_state_stack)\n\
 {\n\
+    assert(m_token_stack.size() + 1 == m_state_stack.size());\n\
     assert(number_of_states_to_pop < m_state_stack.size());\n\
     assert(number_of_states_to_pop <= m_token_stack.size());\n\
 \n\
@@ -382,6 +355,8 @@ void $$CLASS_NAME$$::ScanANewLookaheadToken ()\n\
 \n\
 void $$CLASS_NAME$$::ThrowAwayToken ($$BASE_ASSIGNED_TYPE$$ token)\n\
 {\n\
+    DEBUG_SPEW_1(\"*** throwing away token of type \" << m_lookahead_token_type << std::endl);\n\
+\n\
 $$THROW_AWAY_TOKEN_ACTIONS$$\n\
 }\n\
 \n\

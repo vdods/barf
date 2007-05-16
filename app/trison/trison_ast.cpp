@@ -530,6 +530,9 @@ Grammar::Grammar (
             }
 
             case AT_START_DIRECTIVE:
+                if (start_directive != NULL)
+                    EmitError(directive->GetFiLoc(), "duplicate %start directive");
+                delete start_directive;
                 start_directive = Dsc<StartDirective *>(directive);
                 break;
 
@@ -554,7 +557,7 @@ Grammar::Grammar (
     else
     {
         Ast::Id *start_nonterminal_id =
-            new Ast::Id("%start", FiLoc::ms_invalid);
+            new Ast::Id("%start", start_directive->GetFiLoc());
         m_start_nonterminal =
             new Nonterminal(start_nonterminal_id, NULL);
 

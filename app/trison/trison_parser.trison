@@ -128,6 +128,19 @@ root %type "Grammar *"
         delete end_preamble;
         return grammar;
     }
+|
+    directive_list:directive_list END_PREAMBLE:end_preamble nonterminal_list:nonterminal_list %error
+    {
+        EmitError("extraneous tokens at end of file");
+
+        Grammar *grammar =
+            new Grammar(
+                directive_list,
+                end_preamble->GetFiLoc(),
+                nonterminal_list);
+        delete end_preamble;
+        return grammar;
+    }
 ;
 
 directive_list %type "Ast::DirectiveList *"
@@ -221,7 +234,7 @@ directive %type "Ast::Directive *"
     {
         EmitError(throwaway->GetFiLoc(), "syntax error in %prec directive");
 
-        Ast::Id *dummy_id = new Ast::Id("ERROR", throwaway->GetFiLoc());
+        Ast::Id *dummy_id = new Ast::Id("!ERROR!", throwaway->GetFiLoc());
         delete throwaway;
         return new PrecedenceDirective(dummy_id);
     }
@@ -236,7 +249,7 @@ directive %type "Ast::Directive *"
     {
         EmitError(throwaway->GetFiLoc(), "syntax error in %start directive");
 
-        Ast::Id *dummy_id = new Ast::Id("ERROR", throwaway->GetFiLoc());
+        Ast::Id *dummy_id = new Ast::Id("!ERROR!", throwaway->GetFiLoc());
         delete throwaway;
         return new StartDirective(dummy_id);
     }
@@ -336,6 +349,7 @@ nonterminal %type "Nonterminal *"
 :
     nonterminal_specification:nonterminal_specification ':' rule_list:rule_list ';'
     {
+        assert(nonterminal_specification != NULL);
         nonterminal_specification->SetRuleList(rule_list);
         return nonterminal_specification;
     }
@@ -365,7 +379,7 @@ nonterminal_specification %type "Nonterminal *"
     {
         EmitError(FL, "syntax error while parsing nonterminal specification");
 
-        return NULL;
+        return new Nonterminal(new Ast::Id("!ERROR!", FiLoc::ms_invalid), NULL);
     }
 |
     ID:id %error

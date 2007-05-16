@@ -115,10 +115,7 @@ Parser::ParserReturnCode Parser::PrivateParse ()
     m_lookahead_token_type = Token::INVALID_;
     m_lookahead_token = NULL;
     m_is_new_lookahead_token_required = true;
-
-    m_saved_lookahead_token_type = Token::INVALID_;
-    m_get_new_lookahead_token_type_from_saved = false;
-    m_previous_transition_accepted_error_token = false;
+    m_in_error_handling_mode = false;
 
     m_is_returning_with_non_terminal = false;
     m_returning_with_this_non_terminal = Token::INVALID_;
@@ -170,12 +167,15 @@ Parser::ParserReturnCode Parser::PrivateParse ()
             StateTransition const &state_transition =
                 ms_state_transition[state_transition_number];
             // if this token matches the current transition, do its action
-            if (state_transition.m_token_type == state_transition_token_type)
+            if (m_in_error_handling_mode && state_transition.m_token_type == Token::ERROR_ && state_transition_token_type != Token::END_ ||
+                !m_in_error_handling_mode && state_transition.m_token_type == state_transition_token_type)
             {
                 if (state_transition.m_token_type == Token::ERROR_)
-                    m_previous_transition_accepted_error_token = true;
-                else
-                    m_previous_transition_accepted_error_token = false;
+                {
+                    ThrowAwayToken(m_lookahead_token);
+                    m_lookahead_token = NULL;
+                    m_lookahead_token_type = Token::ERROR_;
+                }
 
                 PrintStateTransition(state_transition_number);
                 if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)
@@ -201,60 +201,31 @@ Parser::ParserReturnCode Parser::PrivateParse ()
             else
             {
                 assert(!m_is_new_lookahead_token_required);
+                assert(!m_in_error_handling_mode);
 
                 DEBUG_SPEW_1("!!! error recovery: begin" << std::endl);
+                m_in_error_handling_mode = true;
 
-                // if an error was encountered, and this state accepts the %error
-                // token, then we don't need to pop states
-                if (GetDoesStateAcceptErrorToken(current_state_number))
+                // pop the stack until we reach an error-handling state, but only
+                // if the lookahead token isn't END_ (to prevent an infinite loop).
+                while (!GetDoesStateAcceptErrorToken(current_state_number) || m_lookahead_token_type == Token::END_)
                 {
-                    // if an error token was previously accepted, then throw
-                    // away the lookahead token, because whatever the lookahead
-                    // was didn't match.  this prevents an infinite loop.
-                    if (m_previous_transition_accepted_error_token)
+                    DEBUG_SPEW_1("!!! error recovery: popping state " << current_state_number << std::endl);
+                    assert(m_token_stack.size() + 1 == m_state_stack.size());
+                    if (m_token_stack.size() > 0)
                     {
-                        ThrowAwayToken(m_lookahead_token);
-                        m_is_new_lookahead_token_required = true;
-                    }
-                    // otherwise, save off the lookahead token so that once the
-                    // %error token has been shifted, the lookahead can be
-                    // re-analyzed.
-                    else
-                    {
-                        m_saved_lookahead_token_type = m_lookahead_token_type;
-                        m_get_new_lookahead_token_type_from_saved = true;
-                        m_lookahead_token_type = Token::ERROR_;
-                    }
-                }
-                // otherwise save off the lookahead token for the error panic popping
-                else
-                {
-                    // save off the lookahead token type and set the current to Token::ERROR_
-                    m_saved_lookahead_token_type = m_lookahead_token_type;
-                    m_get_new_lookahead_token_type_from_saved = true;
-                    m_lookahead_token_type = Token::ERROR_;
-
-                    // pop until we either run off the stack, or find a state
-                    // which accepts the %error token.
-                    assert(m_state_stack.size() > 0);
-                    do
-                    {
-                        DEBUG_SPEW_1("!!! error recovery: popping state " << current_state_number << std::endl);
-                        m_state_stack.pop_back();
-
-                        if (m_state_stack.size() == 0)
-                        {
-                            ThrowAwayTokenStack();
-                            DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
-                            return PRC_UNHANDLED_PARSE_ERROR;
-                        }
-
-                        assert(m_token_stack.size() > 0);
                         ThrowAwayToken(m_token_stack.back());
                         m_token_stack.pop_back();
-                        current_state_number = m_state_stack.back();
                     }
-                    while (!GetDoesStateAcceptErrorToken(current_state_number));
+                    m_state_stack.pop_back();
+
+                    if (m_state_stack.size() == 0)
+                    {
+                        DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
+                        return PRC_UNHANDLED_PARSE_ERROR;
+                    }
+
+                    current_state_number = m_state_stack.back();
                 }
 
                 DEBUG_SPEW_1("!!! error recovery: found state which accepts %error token" << std::endl);
@@ -271,15 +242,18 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
 {
     if (action.m_transition_action == TA_SHIFT_AND_PUSH_STATE)
     {
+        m_in_error_handling_mode = false;
         ShiftLookaheadToken();
         PushState(action.m_data);
     }
     else if (action.m_transition_action == TA_PUSH_STATE)
     {
+        assert(!m_in_error_handling_mode);
         PushState(action.m_data);
     }
     else if (action.m_transition_action == TA_REDUCE_USING_RULE)
     {
+        assert(!m_in_error_handling_mode);
         unsigned int reduction_rule_number = action.m_data;
         assert(reduction_rule_number < ms_reduction_rule_count);
         ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];
@@ -287,6 +261,7 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
     }
     else if (action.m_transition_action == TA_REDUCE_AND_ACCEPT_USING_RULE)
     {
+        assert(!m_in_error_handling_mode);
         unsigned int reduction_rule_number = action.m_data;
         assert(reduction_rule_number < ms_reduction_rule_count);
         ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];
@@ -294,12 +269,6 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
         DEBUG_SPEW_1("*** accept" << std::endl);
         // everything is done, so just return.
         return ARC_ACCEPT_AND_RETURN;
-    }
-    else if (action.m_transition_action == TA_THROW_AWAY_LOOKAHEAD_TOKEN)
-    {
-        assert(!m_is_new_lookahead_token_required);
-        ThrowAwayToken(m_lookahead_token);
-        m_is_new_lookahead_token_required = true;
     }
 
     return ARC_CONTINUE_PARSING;
@@ -345,6 +314,8 @@ void Parser::ReduceUsingRule (ReductionRule const &reduction_rule, bool and_acce
     // call the reduction rule handler if it exists
     if (reduction_rule.m_handler != NULL)
         m_reduction_token = (this->*(reduction_rule.m_handler))();
+    else
+        m_reduction_token = NULL;
     // pop the states and tokens
     PopStates(reduction_rule.m_number_of_tokens_to_reduce_by, false);
 
@@ -353,12 +324,14 @@ void Parser::ReduceUsingRule (ReductionRule const &reduction_rule, bool and_acce
     {
         // push the token that resulted from the reduction
         m_token_stack.push_back(m_reduction_token);
+        m_reduction_token = NULL;
         PrintStateStack();
     }
 }
 
 void Parser::PopStates (unsigned int number_of_states_to_pop, bool print_state_stack)
 {
+    assert(m_token_stack.size() + 1 == m_state_stack.size());
     assert(number_of_states_to_pop < m_state_stack.size());
     assert(number_of_states_to_pop <= m_token_stack.size());
 
@@ -401,12 +374,14 @@ void Parser::ScanANewLookaheadToken ()
 
 void Parser::ThrowAwayToken (Ast::Base * token)
 {
+    DEBUG_SPEW_1("*** throwing away token of type " << m_lookahead_token_type << std::endl);
+
 
 #line 72 "barf_targetspec_parser.trison"
 
     delete token;
 
-#line 410 "barf_targetspec_parser.cpp"
+#line 385 "barf_targetspec_parser.cpp"
 }
 
 void Parser::ThrowAwayTokenStack ()
@@ -500,7 +475,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
             m_add_codespec_list,
             m_add_directive_map);
     
-#line 504 "barf_targetspec_parser.cpp"
+#line 479 "barf_targetspec_parser.cpp"
 }
 
 // rule 2: target <- DIRECTIVE_TARGET:throwaway ID:target_id at_least_one_newline    
@@ -516,7 +491,7 @@ Ast::Base * Parser::ReductionRuleHandler0002 ()
         delete throwaway;
         return target_id;
     
-#line 520 "barf_targetspec_parser.cpp"
+#line 495 "barf_targetspec_parser.cpp"
 }
 
 // rule 3: directives <- directives add_codespec at_least_one_newline    
@@ -525,7 +500,7 @@ Ast::Base * Parser::ReductionRuleHandler0003 ()
 
 #line 204 "barf_targetspec_parser.trison"
  return NULL; 
-#line 529 "barf_targetspec_parser.cpp"
+#line 504 "barf_targetspec_parser.cpp"
 }
 
 // rule 4: directives <- directives add_directive at_least_one_newline    
@@ -534,7 +509,7 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
 
 #line 206 "barf_targetspec_parser.trison"
  return NULL; 
-#line 538 "barf_targetspec_parser.cpp"
+#line 513 "barf_targetspec_parser.cpp"
 }
 
 // rule 5: directives <-     
@@ -543,7 +518,7 @@ Ast::Base * Parser::ReductionRuleHandler0005 ()
 
 #line 208 "barf_targetspec_parser.trison"
  return NULL; 
-#line 547 "barf_targetspec_parser.cpp"
+#line 522 "barf_targetspec_parser.cpp"
 }
 
 // rule 6: add_codespec <- DIRECTIVE_ADD_CODESPEC:throwaway STRING_LITERAL:filename ID:filename_directive_id    
@@ -571,7 +546,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
         delete throwaway;
         return NULL;
     
-#line 575 "barf_targetspec_parser.cpp"
+#line 550 "barf_targetspec_parser.cpp"
 }
 
 // rule 7: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway ID:directive_to_add_id param_spec:param_type    
@@ -594,7 +569,7 @@ Ast::Base * Parser::ReductionRuleHandler0007 ()
         delete param_type;
         return NULL;
     
-#line 598 "barf_targetspec_parser.cpp"
+#line 573 "barf_targetspec_parser.cpp"
 }
 
 // rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:throwaway1 ID:directive_to_add_id param_spec:param_type DIRECTIVE_DEFAULT:throwaway2 default_value:default_value    
@@ -632,7 +607,7 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
         delete throwaway2;
         return NULL;
     
-#line 636 "barf_targetspec_parser.cpp"
+#line 611 "barf_targetspec_parser.cpp"
 }
 
 // rule 9: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE:throwaway ID:directive_to_add_id param_spec:param_type    
@@ -655,7 +630,7 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
         delete param_type;
         return NULL;
     
-#line 659 "barf_targetspec_parser.cpp"
+#line 634 "barf_targetspec_parser.cpp"
 }
 
 // rule 10: param_spec <-     
@@ -666,7 +641,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
 
         return new ParamType(Ast::AT_NONE);
     
-#line 670 "barf_targetspec_parser.cpp"
+#line 645 "barf_targetspec_parser.cpp"
 }
 
 // rule 11: param_spec <- DIRECTIVE_ID:throwaway    
@@ -680,7 +655,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
         delete throwaway;
         return new ParamType(Ast::AT_ID);
     
-#line 684 "barf_targetspec_parser.cpp"
+#line 659 "barf_targetspec_parser.cpp"
 }
 
 // rule 12: param_spec <- DIRECTIVE_STRING:throwaway    
@@ -694,7 +669,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
         delete throwaway;
         return new ParamType(Ast::AT_STRING);
     
-#line 698 "barf_targetspec_parser.cpp"
+#line 673 "barf_targetspec_parser.cpp"
 }
 
 // rule 13: param_spec <- DIRECTIVE_DUMB_CODE_BLOCK:throwaway    
@@ -708,7 +683,7 @@ Ast::Base * Parser::ReductionRuleHandler0013 ()
         delete throwaway;
         return new ParamType(Ast::AT_DUMB_CODE_BLOCK);
     
-#line 712 "barf_targetspec_parser.cpp"
+#line 687 "barf_targetspec_parser.cpp"
 }
 
 // rule 14: param_spec <- DIRECTIVE_STRICT_CODE_BLOCK:throwaway    
@@ -722,7 +697,7 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
         delete throwaway;
         return new ParamType(Ast::AT_STRICT_CODE_BLOCK);
     
-#line 726 "barf_targetspec_parser.cpp"
+#line 701 "barf_targetspec_parser.cpp"
 }
 
 // rule 15: default_value <- ID:value    
@@ -733,7 +708,7 @@ Ast::Base * Parser::ReductionRuleHandler0015 ()
 
 #line 311 "barf_targetspec_parser.trison"
  return value; 
-#line 737 "barf_targetspec_parser.cpp"
+#line 712 "barf_targetspec_parser.cpp"
 }
 
 // rule 16: default_value <- STRING_LITERAL:value    
@@ -744,7 +719,7 @@ Ast::Base * Parser::ReductionRuleHandler0016 ()
 
 #line 312 "barf_targetspec_parser.trison"
  return value; 
-#line 748 "barf_targetspec_parser.cpp"
+#line 723 "barf_targetspec_parser.cpp"
 }
 
 // rule 17: default_value <- DUMB_CODE_BLOCK:value    
@@ -755,7 +730,7 @@ Ast::Base * Parser::ReductionRuleHandler0017 ()
 
 #line 313 "barf_targetspec_parser.trison"
  return value; 
-#line 759 "barf_targetspec_parser.cpp"
+#line 734 "barf_targetspec_parser.cpp"
 }
 
 // rule 18: default_value <- STRICT_CODE_BLOCK:value    
@@ -766,7 +741,7 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
 
 #line 314 "barf_targetspec_parser.trison"
  return value; 
-#line 770 "barf_targetspec_parser.cpp"
+#line 745 "barf_targetspec_parser.cpp"
 }
 
 // rule 19: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
@@ -775,7 +750,7 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
 
 #line 323 "barf_targetspec_parser.trison"
  return NULL; 
-#line 779 "barf_targetspec_parser.cpp"
+#line 754 "barf_targetspec_parser.cpp"
 }
 
 // rule 20: at_least_zero_newlines <-     
@@ -784,7 +759,7 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
 
 #line 325 "barf_targetspec_parser.trison"
  return NULL; 
-#line 788 "barf_targetspec_parser.cpp"
+#line 763 "barf_targetspec_parser.cpp"
 }
 
 // rule 21: at_least_one_newline <- at_least_one_newline NEWLINE    
@@ -793,7 +768,7 @@ Ast::Base * Parser::ReductionRuleHandler0021 ()
 
 #line 330 "barf_targetspec_parser.trison"
  return NULL; 
-#line 797 "barf_targetspec_parser.cpp"
+#line 772 "barf_targetspec_parser.cpp"
 }
 
 // rule 22: at_least_one_newline <- NEWLINE    
@@ -802,7 +777,7 @@ Ast::Base * Parser::ReductionRuleHandler0022 ()
 
 #line 332 "barf_targetspec_parser.trison"
  return NULL; 
-#line 806 "barf_targetspec_parser.cpp"
+#line 781 "barf_targetspec_parser.cpp"
 }
 
 
@@ -1228,5 +1203,5 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#line 1232 "barf_targetspec_parser.cpp"
+#line 1207 "barf_targetspec_parser.cpp"
 

@@ -660,9 +660,6 @@ void StateMachine::GenerateState (StateId const &state_id)
 
     // TODO: add in check that all rule-tokens-to-the-left are the same?
 
-    AddErrorCollapsingTransitions(
-        state,
-        &terminal_transition_map);
     ResolveReduceReduceAndErrorConflicts(
         state,
         state_id,
@@ -682,35 +679,6 @@ void StateMachine::GenerateState (StateId const &state_id)
     AddSpawnedRulePhases(
         state,
         &nonterminal_transition_map);
-}
-
-void StateMachine::AddErrorCollapsingTransitions (
-    State *const state,
-    map<Terminal *, Transition> *const terminal_transition_map)
-{
-    assert(state != NULL);
-    assert(terminal_transition_map != NULL);
-
-    // if %error exists to the left of any of this state's rule phases,
-    // add an %error terminal transition action (to throw it away)
-    for (StateId::const_iterator it = state->GetStateId().begin(),
-                                         it_end = state->GetStateId().end();
-         it != it_end;
-         ++it)
-    {
-        RulePhase const &rule_phase = *it;
-        // only operate on rule phases that actually have tokens to the left
-        if (rule_phase.m_phase > 0)
-        {
-            RuleToken const *rule_token = GetRuleTokenToLeft(rule_phase);
-            assert(rule_token != NULL);
-            if (rule_token->GetTokenId()->GetText() == "%error")
-            {
-                (*terminal_transition_map)[m_error_terminal].SetTransitionAction(
-                    TA_THROW_AWAY_LOOKAHEAD_TOKEN);
-            }
-        }
-    }
 }
 
 void StateMachine::ResolveReduceReduceAndErrorConflicts (

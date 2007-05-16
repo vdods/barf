@@ -56,7 +56,6 @@ enum TransitionAction
     TA_PUSH_STATE,
     TA_REDUCE_USING_RULE,
     TA_REDUCE_AND_ACCEPT_USING_RULE,
-    TA_THROW_AWAY_LOOKAHEAD_TOKEN,
 
     TA_COUNT
 }; // end of enum TransitionAction

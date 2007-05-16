@@ -65,11 +65,11 @@ int main (int argc, char **argv)
 
         Parser::ParserReturnCode parser_return_code = parser.Parse();
 
-        Grammar *parsed_grammar = Dsc<Grammar *>(parser.GetAcceptedToken());
-        assert(parsed_grammar != NULL);
-
         if (g_errors_encountered || parser_return_code != Parser::PRC_SUCCESS)
             return 1;
+
+        Grammar *parsed_grammar = Dsc<Grammar *>(parser.GetAcceptedToken());
+        assert(parsed_grammar != NULL);
 
         if (GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_AST))
             parsed_grammar->Print(cerr);

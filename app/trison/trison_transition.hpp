@@ -46,8 +46,7 @@ public:
     }
     inline bool GetIsNontrivial () const
     {
-        return !m_transition_id.empty() ||
-               m_transition_action == TA_THROW_AWAY_LOOKAHEAD_TOKEN;
+        return !m_transition_id.empty();
     }
 
     inline void SetTransitionAction (TransitionAction transition_action)

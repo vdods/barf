@@ -115,10 +115,7 @@ Parser::ParserReturnCode Parser::PrivateParse ()
     m_lookahead_token_type = Token::INVALID_;
     m_lookahead_token = NULL;
     m_is_new_lookahead_token_required = true;
-
-    m_saved_lookahead_token_type = Token::INVALID_;
-    m_get_new_lookahead_token_type_from_saved = false;
-    m_previous_transition_accepted_error_token = false;
+    m_in_error_handling_mode = false;
 
     m_is_returning_with_non_terminal = false;
     m_returning_with_this_non_terminal = Token::INVALID_;
@@ -170,12 +167,15 @@ Parser::ParserReturnCode Parser::PrivateParse ()
             StateTransition const &state_transition =
                 ms_state_transition[state_transition_number];
             // if this token matches the current transition, do its action
-            if (state_transition.m_token_type == state_transition_token_type)
+            if (m_in_error_handling_mode && state_transition.m_token_type == Token::ERROR_ && state_transition_token_type != Token::END_ ||
+                !m_in_error_handling_mode && state_transition.m_token_type == state_transition_token_type)
             {
                 if (state_transition.m_token_type == Token::ERROR_)
-                    m_previous_transition_accepted_error_token = true;
-                else
-                    m_previous_transition_accepted_error_token = false;
+                {
+                    ThrowAwayToken(m_lookahead_token);
+                    m_lookahead_token = NULL;
+                    m_lookahead_token_type = Token::ERROR_;
+                }
 
                 PrintStateTransition(state_transition_number);
                 if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)
@@ -201,60 +201,31 @@ Parser::ParserReturnCode Parser::PrivateParse ()
             else
             {
                 assert(!m_is_new_lookahead_token_required);
+                assert(!m_in_error_handling_mode);
 
                 DEBUG_SPEW_1("!!! error recovery: begin" << std::endl);
+                m_in_error_handling_mode = true;
 
-                // if an error was encountered, and this state accepts the %error
-                // token, then we don't need to pop states
-                if (GetDoesStateAcceptErrorToken(current_state_number))
+                // pop the stack until we reach an error-handling state, but only
+                // if the lookahead token isn't END_ (to prevent an infinite loop).
+                while (!GetDoesStateAcceptErrorToken(current_state_number) || m_lookahead_token_type == Token::END_)
                 {
-                    // if an error token was previously accepted, then throw
-                    // away the lookahead token, because whatever the lookahead
-                    // was didn't match.  this prevents an infinite loop.
-                    if (m_previous_transition_accepted_error_token)
+                    DEBUG_SPEW_1("!!! error recovery: popping state " << current_state_number << std::endl);
+                    assert(m_token_stack.size() + 1 == m_state_stack.size());
+                    if (m_token_stack.size() > 0)
                     {
-                        ThrowAwayToken(m_lookahead_token);
-                        m_is_new_lookahead_token_required = true;
-                    }
-                    // otherwise, save off the lookahead token so that once the
-                    // %error token has been shifted, the lookahead can be
-                    // re-analyzed.
-                    else
-                    {
-                        m_saved_lookahead_token_type = m_lookahead_token_type;
-                        m_get_new_lookahead_token_type_from_saved = true;
-                        m_lookahead_token_type = Token::ERROR_;
-                    }
-                }
-                // otherwise save off the lookahead token for the error panic popping
-                else
-                {
-                    // save off the lookahead token type and set the current to Token::ERROR_
-                    m_saved_lookahead_token_type = m_lookahead_token_type;
-                    m_get_new_lookahead_token_type_from_saved = true;
-                    m_lookahead_token_type = Token::ERROR_;
-
-                    // pop until we either run off the stack, or find a state
-                    // which accepts the %error token.
-                    assert(m_state_stack.size() > 0);
-                    do
-                    {
-                        DEBUG_SPEW_1("!!! error recovery: popping state " << current_state_number << std::endl);
-                        m_state_stack.pop_back();
-
-                        if (m_state_stack.size() == 0)
-                        {
-                            ThrowAwayTokenStack();
-                            DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
-                            return PRC_UNHANDLED_PARSE_ERROR;
-                        }
-
-                        assert(m_token_stack.size() > 0);
                         ThrowAwayToken(m_token_stack.back());
                         m_token_stack.pop_back();
-                        current_state_number = m_state_stack.back();
                     }
-                    while (!GetDoesStateAcceptErrorToken(current_state_number));
+                    m_state_stack.pop_back();
+
+                    if (m_state_stack.size() == 0)
+                    {
+                        DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
+                        return PRC_UNHANDLED_PARSE_ERROR;
+                    }
+
+                    current_state_number = m_state_stack.back();
                 }
 
                 DEBUG_SPEW_1("!!! error recovery: found state which accepts %error token" << std::endl);
@@ -271,15 +242,18 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
 {
     if (action.m_transition_action == TA_SHIFT_AND_PUSH_STATE)
     {
+        m_in_error_handling_mode = false;
         ShiftLookaheadToken();
         PushState(action.m_data);
     }
     else if (action.m_transition_action == TA_PUSH_STATE)
     {
+        assert(!m_in_error_handling_mode);
         PushState(action.m_data);
     }
     else if (action.m_transition_action == TA_REDUCE_USING_RULE)
     {
+        assert(!m_in_error_handling_mode);
         unsigned int reduction_rule_number = action.m_data;
         assert(reduction_rule_number < ms_reduction_rule_count);
         ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];
@@ -287,6 +261,7 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
     }
     else if (action.m_transition_action == TA_REDUCE_AND_ACCEPT_USING_RULE)
     {
+        assert(!m_in_error_handling_mode);
         unsigned int reduction_rule_number = action.m_data;
         assert(reduction_rule_number < ms_reduction_rule_count);
         ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];
@@ -294,12 +269,6 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
         DEBUG_SPEW_1("*** accept" << std::endl);
         // everything is done, so just return.
         return ARC_ACCEPT_AND_RETURN;
-    }
-    else if (action.m_transition_action == TA_THROW_AWAY_LOOKAHEAD_TOKEN)
-    {
-        assert(!m_is_new_lookahead_token_required);
-        ThrowAwayToken(m_lookahead_token);
-        m_is_new_lookahead_token_required = true;
     }
 
     return ARC_CONTINUE_PARSING;
@@ -345,6 +314,8 @@ void Parser::ReduceUsingRule (ReductionRule const &reduction_rule, bool and_acce
     // call the reduction rule handler if it exists
     if (reduction_rule.m_handler != NULL)
         m_reduction_token = (this->*(reduction_rule.m_handler))();
+    else
+        m_reduction_token = NULL;
     // pop the states and tokens
     PopStates(reduction_rule.m_number_of_tokens_to_reduce_by, false);
 
@@ -353,12 +324,14 @@ void Parser::ReduceUsingRule (ReductionRule const &reduction_rule, bool and_acce
     {
         // push the token that resulted from the reduction
         m_token_stack.push_back(m_reduction_token);
+        m_reduction_token = NULL;
         PrintStateStack();
     }
 }
 
 void Parser::PopStates (unsigned int number_of_states_to_pop, bool print_state_stack)
 {
+    assert(m_token_stack.size() + 1 == m_state_stack.size());
     assert(number_of_states_to_pop < m_state_stack.size());
     assert(number_of_states_to_pop <= m_token_stack.size());
 
@@ -401,12 +374,14 @@ void Parser::ScanANewLookaheadToken ()
 
 void Parser::ThrowAwayToken (Ast::Base * token)
 {
+    DEBUG_SPEW_1("*** throwing away token of type " << m_lookahead_token_type << std::endl);
+
 
 #line 70 "trison_parser.trison"
 
     delete token;
 
-#line 410 "trison_parser.cpp"
+#line 385 "trison_parser.cpp"
 }
 
 void Parser::ThrowAwayTokenStack ()
@@ -515,18 +490,43 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
         delete end_preamble;
         return grammar;
     
+#line 494 "trison_parser.cpp"
+}
+
+// rule 2: root <- directive_list:directive_list END_PREAMBLE:end_preamble nonterminal_list:nonterminal_list %error    
+Ast::Base * Parser::ReductionRuleHandler0002 ()
+{
+    assert(0 < m_reduction_rule_token_count);
+    Ast::DirectiveList * directive_list = Dsc< Ast::DirectiveList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    assert(1 < m_reduction_rule_token_count);
+    Ast::ThrowAway * end_preamble = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    assert(2 < m_reduction_rule_token_count);
+    NonterminalList * nonterminal_list = Dsc< NonterminalList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+
+#line 133 "trison_parser.trison"
+
+        EmitError("extraneous tokens at end of file");
+
+        Grammar *grammar =
+            new Grammar(
+                directive_list,
+                end_preamble->GetFiLoc(),
+                nonterminal_list);
+        delete end_preamble;
+        return grammar;
+    
 #line 519 "trison_parser.cpp"
 }
 
-// rule 2: directive_list <- directive_list:directive_list directive:directive    
-Ast::Base * Parser::ReductionRuleHandler0002 ()
+// rule 3: directive_list <- directive_list:directive_list directive:directive    
+Ast::Base * Parser::ReductionRuleHandler0003 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::DirectiveList * directive_list = Dsc< Ast::DirectiveList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::Directive * directive = Dsc< Ast::Directive * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 136 "trison_parser.trison"
+#line 149 "trison_parser.trison"
 
         if (directive != NULL)
             directive_list->Append(directive);
@@ -535,26 +535,26 @@ Ast::Base * Parser::ReductionRuleHandler0002 ()
 #line 536 "trison_parser.cpp"
 }
 
-// rule 3: directive_list <- at_least_zero_newlines    
-Ast::Base * Parser::ReductionRuleHandler0003 ()
+// rule 4: directive_list <- at_least_zero_newlines    
+Ast::Base * Parser::ReductionRuleHandler0004 ()
 {
 
-#line 143 "trison_parser.trison"
+#line 156 "trison_parser.trison"
 
         return new Ast::DirectiveList();
     
 #line 547 "trison_parser.cpp"
 }
 
-// rule 4: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRICT_CODE_BLOCK:value at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0004 ()
+// rule 5: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRICT_CODE_BLOCK:value at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0005 ()
 {
     assert(0 < m_reduction_rule_token_count);
     ParserDirective * parser_directive = Dsc< ParserDirective * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::StrictCodeBlock * value = Dsc< Ast::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 151 "trison_parser.trison"
+#line 164 "trison_parser.trison"
 
         parser_directive->SetValue(value);
         return parser_directive;
@@ -562,15 +562,15 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
 #line 563 "trison_parser.cpp"
 }
 
-// rule 5: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive DUMB_CODE_BLOCK:value at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0005 ()
+// rule 6: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive DUMB_CODE_BLOCK:value at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0006 ()
 {
     assert(0 < m_reduction_rule_token_count);
     ParserDirective * parser_directive = Dsc< ParserDirective * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::DumbCodeBlock * value = Dsc< Ast::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 157 "trison_parser.trison"
+#line 170 "trison_parser.trison"
 
         if (!ParserDirective::GetDoesParserDirectiveAcceptDumbCodeBlock(
                 parser_directive->GetParserDirectiveType()))
@@ -588,15 +588,15 @@ Ast::Base * Parser::ReductionRuleHandler0005 ()
 #line 589 "trison_parser.cpp"
 }
 
-// rule 6: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRING:value at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0006 ()
+// rule 7: directive <- DIRECTIVE_PARSER_WITH_PARAMETER:parser_directive STRING:value at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0007 ()
 {
     assert(0 < m_reduction_rule_token_count);
     ParserDirective * parser_directive = Dsc< ParserDirective * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::String * value = Dsc< Ast::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 173 "trison_parser.trison"
+#line 186 "trison_parser.trison"
 
         parser_directive->SetValue(value);
         return parser_directive;
@@ -604,28 +604,28 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
 #line 605 "trison_parser.cpp"
 }
 
-// rule 7: directive <- DIRECTIVE_PARSER_WITHOUT_PARAMETER:parser_directive at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0007 ()
+// rule 8: directive <- DIRECTIVE_PARSER_WITHOUT_PARAMETER:parser_directive at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0008 ()
 {
     assert(0 < m_reduction_rule_token_count);
     ParserDirective * parser_directive = Dsc< ParserDirective * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 179 "trison_parser.trison"
+#line 192 "trison_parser.trison"
 
         return parser_directive;
     
 #line 618 "trison_parser.cpp"
 }
 
-// rule 8: directive <- DIRECTIVE_TOKEN:throwaway token_id_list:token_id_list at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0008 ()
+// rule 9: directive <- DIRECTIVE_TOKEN:throwaway token_id_list:token_id_list at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0009 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     TokenIdList * token_id_list = Dsc< TokenIdList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 184 "trison_parser.trison"
+#line 197 "trison_parser.trison"
 
         delete throwaway;
         return new TokenDirective(token_id_list, NULL);
@@ -633,8 +633,8 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
 #line 634 "trison_parser.cpp"
 }
 
-// rule 9: directive <- DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 STRING:assigned_type at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0009 ()
+// rule 10: directive <- DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 STRING:assigned_type at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0010 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway1 = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -645,7 +645,7 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
     assert(3 < m_reduction_rule_token_count);
     Ast::String * assigned_type = Dsc< Ast::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 190 "trison_parser.trison"
+#line 203 "trison_parser.trison"
 
         delete throwaway1;
         delete throwaway2;
@@ -654,13 +654,13 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
 #line 655 "trison_parser.cpp"
 }
 
-// rule 10: directive <- DIRECTIVE_TOKEN:throwaway %error at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0010 ()
+// rule 11: directive <- DIRECTIVE_TOKEN:throwaway %error at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0011 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 197 "trison_parser.trison"
+#line 210 "trison_parser.trison"
 
         EmitError(throwaway->GetFiLoc(), "syntax error in %token directive");
 
@@ -670,8 +670,8 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
 #line 671 "trison_parser.cpp"
 }
 
-// rule 11: directive <- DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 %error at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0011 ()
+// rule 12: directive <- DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 %error at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0012 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway1 = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -680,7 +680,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
     assert(2 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway2 = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 205 "trison_parser.trison"
+#line 218 "trison_parser.trison"
 
         EmitError(throwaway2->GetFiLoc(), "syntax error in %type directive");
 
@@ -692,15 +692,15 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
 #line 693 "trison_parser.cpp"
 }
 
-// rule 12: directive <- PREC:throwaway ID:id at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0012 ()
+// rule 13: directive <- PREC:throwaway ID:id at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0013 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 215 "trison_parser.trison"
+#line 228 "trison_parser.trison"
 
         delete throwaway;
         return new PrecedenceDirective(id);
@@ -708,32 +708,32 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
 #line 709 "trison_parser.cpp"
 }
 
-// rule 13: directive <- PREC:throwaway %error at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0013 ()
+// rule 14: directive <- PREC:throwaway %error at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0014 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 221 "trison_parser.trison"
+#line 234 "trison_parser.trison"
 
         EmitError(throwaway->GetFiLoc(), "syntax error in %prec directive");
 
-        Ast::Id *dummy_id = new Ast::Id("ERROR", throwaway->GetFiLoc());
+        Ast::Id *dummy_id = new Ast::Id("!ERROR!", throwaway->GetFiLoc());
         delete throwaway;
         return new PrecedenceDirective(dummy_id);
     
 #line 726 "trison_parser.cpp"
 }
 
-// rule 14: directive <- START:throwaway ID:id at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0014 ()
+// rule 15: directive <- START:throwaway ID:id at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0015 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 230 "trison_parser.trison"
+#line 243 "trison_parser.trison"
 
         delete throwaway;
         return new StartDirective(id);
@@ -741,30 +741,30 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
 #line 742 "trison_parser.cpp"
 }
 
-// rule 15: directive <- START:throwaway %error at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0015 ()
+// rule 16: directive <- START:throwaway %error at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0016 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 236 "trison_parser.trison"
+#line 249 "trison_parser.trison"
 
         EmitError(throwaway->GetFiLoc(), "syntax error in %start directive");
 
-        Ast::Id *dummy_id = new Ast::Id("ERROR", throwaway->GetFiLoc());
+        Ast::Id *dummy_id = new Ast::Id("!ERROR!", throwaway->GetFiLoc());
         delete throwaway;
         return new StartDirective(dummy_id);
     
 #line 759 "trison_parser.cpp"
 }
 
-// rule 16: directive <- %error STRICT_CODE_BLOCK:value at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0016 ()
+// rule 17: directive <- %error STRICT_CODE_BLOCK:value at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0017 ()
 {
     assert(1 < m_reduction_rule_token_count);
     Ast::StrictCodeBlock * value = Dsc< Ast::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 245 "trison_parser.trison"
+#line 258 "trison_parser.trison"
 
         EmitError(value->GetFiLoc(), "syntax error in directive");
 
@@ -773,13 +773,13 @@ Ast::Base * Parser::ReductionRuleHandler0016 ()
 #line 774 "trison_parser.cpp"
 }
 
-// rule 17: directive <- %error DUMB_CODE_BLOCK:value at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0017 ()
+// rule 18: directive <- %error DUMB_CODE_BLOCK:value at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0018 ()
 {
     assert(1 < m_reduction_rule_token_count);
     Ast::DumbCodeBlock * value = Dsc< Ast::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 252 "trison_parser.trison"
+#line 265 "trison_parser.trison"
 
         EmitError(value->GetFiLoc(), "syntax error in directive");
 
@@ -788,13 +788,13 @@ Ast::Base * Parser::ReductionRuleHandler0017 ()
 #line 789 "trison_parser.cpp"
 }
 
-// rule 18: directive <- %error STRING:value at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0018 ()
+// rule 19: directive <- %error STRING:value at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0019 ()
 {
     assert(1 < m_reduction_rule_token_count);
     Ast::String * value = Dsc< Ast::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 259 "trison_parser.trison"
+#line 272 "trison_parser.trison"
 
         EmitError(value->GetFiLoc(), "syntax error in directive");
 
@@ -803,11 +803,11 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
 #line 804 "trison_parser.cpp"
 }
 
-// rule 19: directive <- %error at_least_one_newline    
-Ast::Base * Parser::ReductionRuleHandler0019 ()
+// rule 20: directive <- %error at_least_one_newline    
+Ast::Base * Parser::ReductionRuleHandler0020 ()
 {
 
-#line 266 "trison_parser.trison"
+#line 279 "trison_parser.trison"
 
         EmitError(FL, "syntax error in directive");
 
@@ -816,15 +816,15 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
 #line 817 "trison_parser.cpp"
 }
 
-// rule 20: token_id_list <- token_id_list:token_id_list token_id:token_id    
-Ast::Base * Parser::ReductionRuleHandler0020 ()
+// rule 21: token_id_list <- token_id_list:token_id_list token_id:token_id    
+Ast::Base * Parser::ReductionRuleHandler0021 ()
 {
     assert(0 < m_reduction_rule_token_count);
     TokenIdList * token_id_list = Dsc< TokenIdList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     TokenId * token_id = Dsc< TokenId * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 276 "trison_parser.trison"
+#line 289 "trison_parser.trison"
 
         token_id_list->Append(token_id);
         return token_id_list;
@@ -832,13 +832,13 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
 #line 833 "trison_parser.cpp"
 }
 
-// rule 21: token_id_list <- token_id:token_id    
-Ast::Base * Parser::ReductionRuleHandler0021 ()
+// rule 22: token_id_list <- token_id:token_id    
+Ast::Base * Parser::ReductionRuleHandler0022 ()
 {
     assert(0 < m_reduction_rule_token_count);
     TokenId * token_id = Dsc< TokenId * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 282 "trison_parser.trison"
+#line 295 "trison_parser.trison"
 
         TokenIdList *token_id_list = new TokenIdList();
         token_id_list->Append(token_id);
@@ -847,13 +847,13 @@ Ast::Base * Parser::ReductionRuleHandler0021 ()
 #line 848 "trison_parser.cpp"
 }
 
-// rule 22: token_id <- ID:id    
-Ast::Base * Parser::ReductionRuleHandler0022 ()
+// rule 23: token_id <- ID:id    
+Ast::Base * Parser::ReductionRuleHandler0023 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 292 "trison_parser.trison"
+#line 305 "trison_parser.trison"
 
         TokenIdId *token_id_id =
             new TokenIdId(id->GetText(), id->GetFiLoc());
@@ -863,64 +863,64 @@ Ast::Base * Parser::ReductionRuleHandler0022 ()
 #line 864 "trison_parser.cpp"
 }
 
-// rule 23: token_id <- TOKEN_ID_CHAR:token_id_char    
-Ast::Base * Parser::ReductionRuleHandler0023 ()
+// rule 24: token_id <- TOKEN_ID_CHAR:token_id_char    
+Ast::Base * Parser::ReductionRuleHandler0024 ()
 {
     assert(0 < m_reduction_rule_token_count);
     TokenIdChar * token_id_char = Dsc< TokenIdChar * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 300 "trison_parser.trison"
+#line 313 "trison_parser.trison"
 
         return token_id_char;
     
 #line 877 "trison_parser.cpp"
 }
 
-// rule 24: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
-Ast::Base * Parser::ReductionRuleHandler0024 ()
+// rule 25: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
+Ast::Base * Parser::ReductionRuleHandler0025 ()
 {
 
-#line 307 "trison_parser.trison"
+#line 320 "trison_parser.trison"
  return NULL; 
 #line 886 "trison_parser.cpp"
 }
 
-// rule 25: at_least_zero_newlines <-     
-Ast::Base * Parser::ReductionRuleHandler0025 ()
+// rule 26: at_least_zero_newlines <-     
+Ast::Base * Parser::ReductionRuleHandler0026 ()
 {
 
-#line 309 "trison_parser.trison"
+#line 322 "trison_parser.trison"
  return NULL; 
 #line 895 "trison_parser.cpp"
 }
 
-// rule 26: at_least_one_newline <- at_least_one_newline NEWLINE    
-Ast::Base * Parser::ReductionRuleHandler0026 ()
+// rule 27: at_least_one_newline <- at_least_one_newline NEWLINE    
+Ast::Base * Parser::ReductionRuleHandler0027 ()
 {
 
-#line 314 "trison_parser.trison"
+#line 327 "trison_parser.trison"
  return NULL; 
 #line 904 "trison_parser.cpp"
 }
 
-// rule 27: at_least_one_newline <- NEWLINE    
-Ast::Base * Parser::ReductionRuleHandler0027 ()
+// rule 28: at_least_one_newline <- NEWLINE    
+Ast::Base * Parser::ReductionRuleHandler0028 ()
 {
 
-#line 316 "trison_parser.trison"
+#line 329 "trison_parser.trison"
  return NULL; 
 #line 913 "trison_parser.cpp"
 }
 
-// rule 28: nonterminal_list <- nonterminal_list:nonterminal_list nonterminal:nonterminal    
-Ast::Base * Parser::ReductionRuleHandler0028 ()
+// rule 29: nonterminal_list <- nonterminal_list:nonterminal_list nonterminal:nonterminal    
+Ast::Base * Parser::ReductionRuleHandler0029 ()
 {
     assert(0 < m_reduction_rule_token_count);
     NonterminalList * nonterminal_list = Dsc< NonterminalList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Nonterminal * nonterminal = Dsc< Nonterminal * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 322 "trison_parser.trison"
+#line 335 "trison_parser.trison"
 
         // the nonterminal could be null if an error was recovered from
         if (nonterminal != NULL)
@@ -930,48 +930,49 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
 #line 931 "trison_parser.cpp"
 }
 
-// rule 29: nonterminal_list <-     
-Ast::Base * Parser::ReductionRuleHandler0029 ()
+// rule 30: nonterminal_list <-     
+Ast::Base * Parser::ReductionRuleHandler0030 ()
 {
 
-#line 330 "trison_parser.trison"
+#line 343 "trison_parser.trison"
 
         return new NonterminalList();
     
 #line 942 "trison_parser.cpp"
 }
 
-// rule 30: nonterminal <- nonterminal_specification:nonterminal_specification ':' rule_list:rule_list ';'    
-Ast::Base * Parser::ReductionRuleHandler0030 ()
+// rule 31: nonterminal <- nonterminal_specification:nonterminal_specification ':' rule_list:rule_list ';'    
+Ast::Base * Parser::ReductionRuleHandler0031 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Nonterminal * nonterminal_specification = Dsc< Nonterminal * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
     RuleList * rule_list = Dsc< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 338 "trison_parser.trison"
+#line 351 "trison_parser.trison"
 
+        assert(nonterminal_specification != NULL);
         nonterminal_specification->SetRuleList(rule_list);
         return nonterminal_specification;
     
-#line 958 "trison_parser.cpp"
+#line 959 "trison_parser.cpp"
 }
 
-// rule 31: nonterminal <- %error ';'    
-Ast::Base * Parser::ReductionRuleHandler0031 ()
+// rule 32: nonterminal <- %error ';'    
+Ast::Base * Parser::ReductionRuleHandler0032 ()
 {
 
-#line 344 "trison_parser.trison"
+#line 358 "trison_parser.trison"
 
         EmitError(FL, "syntax error in nonterminal definition");
 
         return NULL;
     
-#line 971 "trison_parser.cpp"
+#line 972 "trison_parser.cpp"
 }
 
-// rule 32: nonterminal_specification <- ID:id TYPE:throwaway STRING:assigned_type    
-Ast::Base * Parser::ReductionRuleHandler0032 ()
+// rule 33: nonterminal_specification <- ID:id TYPE:throwaway STRING:assigned_type    
+Ast::Base * Parser::ReductionRuleHandler0033 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -980,142 +981,142 @@ Ast::Base * Parser::ReductionRuleHandler0032 ()
     assert(2 < m_reduction_rule_token_count);
     Ast::String * assigned_type = Dsc< Ast::String * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 354 "trison_parser.trison"
+#line 368 "trison_parser.trison"
 
         delete throwaway;
         return new Nonterminal(id, assigned_type);
     
-#line 989 "trison_parser.cpp"
+#line 990 "trison_parser.cpp"
 }
 
-// rule 33: nonterminal_specification <- ID:id    
-Ast::Base * Parser::ReductionRuleHandler0033 ()
+// rule 34: nonterminal_specification <- ID:id    
+Ast::Base * Parser::ReductionRuleHandler0034 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 360 "trison_parser.trison"
+#line 374 "trison_parser.trison"
 
         return new Nonterminal(id, NULL);
     
-#line 1002 "trison_parser.cpp"
+#line 1003 "trison_parser.cpp"
 }
 
-// rule 34: nonterminal_specification <- %error    
-Ast::Base * Parser::ReductionRuleHandler0034 ()
+// rule 35: nonterminal_specification <- %error    
+Ast::Base * Parser::ReductionRuleHandler0035 ()
 {
 
-#line 365 "trison_parser.trison"
+#line 379 "trison_parser.trison"
 
         EmitError(FL, "syntax error while parsing nonterminal specification");
 
-        return NULL;
+        return new Nonterminal(new Ast::Id("!ERROR!", FiLoc::ms_invalid), NULL);
     
-#line 1015 "trison_parser.cpp"
+#line 1016 "trison_parser.cpp"
 }
 
-// rule 35: nonterminal_specification <- ID:id %error    
-Ast::Base * Parser::ReductionRuleHandler0035 ()
+// rule 36: nonterminal_specification <- ID:id %error    
+Ast::Base * Parser::ReductionRuleHandler0036 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 372 "trison_parser.trison"
+#line 386 "trison_parser.trison"
 
         EmitError(id->GetFiLoc(), "syntax error in nonterminal directive");
 
         return new Nonterminal(id, NULL);
     
-#line 1030 "trison_parser.cpp"
+#line 1031 "trison_parser.cpp"
 }
 
-// rule 36: nonterminal_specification <- ID:id TYPE:throwaway %error    
-Ast::Base * Parser::ReductionRuleHandler0036 ()
+// rule 37: nonterminal_specification <- ID:id TYPE:throwaway %error    
+Ast::Base * Parser::ReductionRuleHandler0037 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 379 "trison_parser.trison"
+#line 393 "trison_parser.trison"
 
         EmitError(id->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
 
         delete throwaway;
         return new Nonterminal(id, NULL);
     
-#line 1048 "trison_parser.cpp"
+#line 1049 "trison_parser.cpp"
 }
 
-// rule 37: rule_list <- rule_list:rule_list '|' rule:rule    
-Ast::Base * Parser::ReductionRuleHandler0037 ()
+// rule 38: rule_list <- rule_list:rule_list '|' rule:rule    
+Ast::Base * Parser::ReductionRuleHandler0038 ()
 {
     assert(0 < m_reduction_rule_token_count);
     RuleList * rule_list = Dsc< RuleList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
     Rule * rule = Dsc< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 390 "trison_parser.trison"
+#line 404 "trison_parser.trison"
 
         rule_list->Append(rule);
         return rule_list;
     
-#line 1064 "trison_parser.cpp"
+#line 1065 "trison_parser.cpp"
 }
 
-// rule 38: rule_list <- rule:rule    
-Ast::Base * Parser::ReductionRuleHandler0038 ()
+// rule 39: rule_list <- rule:rule    
+Ast::Base * Parser::ReductionRuleHandler0039 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Rule * rule = Dsc< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 396 "trison_parser.trison"
+#line 410 "trison_parser.trison"
 
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
     
-#line 1079 "trison_parser.cpp"
+#line 1080 "trison_parser.cpp"
 }
 
-// rule 39: rule <- rule_specification:rule_specification STRICT_CODE_BLOCK:code_block    
-Ast::Base * Parser::ReductionRuleHandler0039 ()
+// rule 40: rule <- rule_specification:rule_specification STRICT_CODE_BLOCK:code_block    
+Ast::Base * Parser::ReductionRuleHandler0040 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Rule * rule_specification = Dsc< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::StrictCodeBlock * code_block = Dsc< Ast::StrictCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 406 "trison_parser.trison"
+#line 420 "trison_parser.trison"
 
         rule_specification->SetCodeBlock(code_block);
         return rule_specification;
     
-#line 1095 "trison_parser.cpp"
+#line 1096 "trison_parser.cpp"
 }
 
-// rule 40: rule <- rule_specification:rule_specification    
-Ast::Base * Parser::ReductionRuleHandler0040 ()
+// rule 41: rule <- rule_specification:rule_specification    
+Ast::Base * Parser::ReductionRuleHandler0041 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Rule * rule_specification = Dsc< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 412 "trison_parser.trison"
+#line 426 "trison_parser.trison"
 
         return rule_specification;
     
-#line 1108 "trison_parser.cpp"
+#line 1109 "trison_parser.cpp"
 }
 
-// rule 41: rule <- rule_specification:rule_specification DUMB_CODE_BLOCK:code_block    
-Ast::Base * Parser::ReductionRuleHandler0041 ()
+// rule 42: rule <- rule_specification:rule_specification DUMB_CODE_BLOCK:code_block    
+Ast::Base * Parser::ReductionRuleHandler0042 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Rule * rule_specification = Dsc< Rule * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::DumbCodeBlock * code_block = Dsc< Ast::DumbCodeBlock * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 417 "trison_parser.trison"
+#line 431 "trison_parser.trison"
 
         EmitError(
             code_block->GetFiLoc(),
@@ -1124,28 +1125,10 @@ Ast::Base * Parser::ReductionRuleHandler0041 ()
         rule_specification->SetCodeBlock(code_block);
         return rule_specification;
     
-#line 1128 "trison_parser.cpp"
+#line 1129 "trison_parser.cpp"
 }
 
-// rule 42: rule_specification <- rule_token_list:rule_token_list LEFT:throwaway rule_precedence_directive:rule_precedence_directive    
-Ast::Base * Parser::ReductionRuleHandler0042 ()
-{
-    assert(0 < m_reduction_rule_token_count);
-    RuleTokenList * rule_token_list = Dsc< RuleTokenList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
-    assert(1 < m_reduction_rule_token_count);
-    Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
-    assert(2 < m_reduction_rule_token_count);
-    Ast::Id * rule_precedence_directive = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
-
-#line 430 "trison_parser.trison"
-
-        delete throwaway;
-        return new Rule(rule_token_list, A_LEFT, rule_precedence_directive);
-    
-#line 1146 "trison_parser.cpp"
-}
-
-// rule 43: rule_specification <- rule_token_list:rule_token_list RIGHT:throwaway rule_precedence_directive:rule_precedence_directive    
+// rule 43: rule_specification <- rule_token_list:rule_token_list LEFT:throwaway rule_precedence_directive:rule_precedence_directive    
 Ast::Base * Parser::ReductionRuleHandler0043 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1155,15 +1138,15 @@ Ast::Base * Parser::ReductionRuleHandler0043 ()
     assert(2 < m_reduction_rule_token_count);
     Ast::Id * rule_precedence_directive = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 436 "trison_parser.trison"
+#line 444 "trison_parser.trison"
 
         delete throwaway;
-        return new Rule(rule_token_list, A_RIGHT, rule_precedence_directive);
+        return new Rule(rule_token_list, A_LEFT, rule_precedence_directive);
     
-#line 1164 "trison_parser.cpp"
+#line 1147 "trison_parser.cpp"
 }
 
-// rule 44: rule_specification <- rule_token_list:rule_token_list NONASSOC:throwaway rule_precedence_directive:rule_precedence_directive    
+// rule 44: rule_specification <- rule_token_list:rule_token_list RIGHT:throwaway rule_precedence_directive:rule_precedence_directive    
 Ast::Base * Parser::ReductionRuleHandler0044 ()
 {
     assert(0 < m_reduction_rule_token_count);
@@ -1173,127 +1156,145 @@ Ast::Base * Parser::ReductionRuleHandler0044 ()
     assert(2 < m_reduction_rule_token_count);
     Ast::Id * rule_precedence_directive = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 442 "trison_parser.trison"
+#line 450 "trison_parser.trison"
+
+        delete throwaway;
+        return new Rule(rule_token_list, A_RIGHT, rule_precedence_directive);
+    
+#line 1165 "trison_parser.cpp"
+}
+
+// rule 45: rule_specification <- rule_token_list:rule_token_list NONASSOC:throwaway rule_precedence_directive:rule_precedence_directive    
+Ast::Base * Parser::ReductionRuleHandler0045 ()
+{
+    assert(0 < m_reduction_rule_token_count);
+    RuleTokenList * rule_token_list = Dsc< RuleTokenList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    assert(1 < m_reduction_rule_token_count);
+    Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
+    assert(2 < m_reduction_rule_token_count);
+    Ast::Id * rule_precedence_directive = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+
+#line 456 "trison_parser.trison"
 
         delete throwaway;
         return new Rule(rule_token_list, A_NONASSOC, rule_precedence_directive);
     
-#line 1182 "trison_parser.cpp"
+#line 1183 "trison_parser.cpp"
 }
 
-// rule 45: rule_specification <- rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive    
-Ast::Base * Parser::ReductionRuleHandler0045 ()
+// rule 46: rule_specification <- rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive    
+Ast::Base * Parser::ReductionRuleHandler0046 ()
 {
     assert(0 < m_reduction_rule_token_count);
     RuleTokenList * rule_token_list = Dsc< RuleTokenList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::Id * rule_precedence_directive = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 448 "trison_parser.trison"
+#line 462 "trison_parser.trison"
 
         // the default associativity when none is specified is LEFT
         return new Rule(rule_token_list, A_LEFT, rule_precedence_directive);
     
-#line 1198 "trison_parser.cpp"
+#line 1199 "trison_parser.cpp"
 }
 
-// rule 46: rule_token_list <- rule_token_list:rule_token_list rule_token:rule_token    
-Ast::Base * Parser::ReductionRuleHandler0046 ()
+// rule 47: rule_token_list <- rule_token_list:rule_token_list rule_token:rule_token    
+Ast::Base * Parser::ReductionRuleHandler0047 ()
 {
     assert(0 < m_reduction_rule_token_count);
     RuleTokenList * rule_token_list = Dsc< RuleTokenList * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     RuleToken * rule_token = Dsc< RuleToken * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 457 "trison_parser.trison"
+#line 471 "trison_parser.trison"
 
         rule_token_list->Append(rule_token);
         return rule_token_list;
     
-#line 1214 "trison_parser.cpp"
+#line 1215 "trison_parser.cpp"
 }
 
-// rule 47: rule_token_list <-     
-Ast::Base * Parser::ReductionRuleHandler0047 ()
+// rule 48: rule_token_list <-     
+Ast::Base * Parser::ReductionRuleHandler0048 ()
 {
 
-#line 463 "trison_parser.trison"
+#line 477 "trison_parser.trison"
 
         // it is necessary to explicitly assign the file location here because
         // the rule token list may be empty (and thus wouldn't take its file
         // location from the first appended list element).
         return new RuleTokenList(FL);
     
-#line 1228 "trison_parser.cpp"
+#line 1229 "trison_parser.cpp"
 }
 
-// rule 48: rule_token <- token_id:token_id ':' ID:assigned_id    
-Ast::Base * Parser::ReductionRuleHandler0048 ()
+// rule 49: rule_token <- token_id:token_id ':' ID:assigned_id    
+Ast::Base * Parser::ReductionRuleHandler0049 ()
 {
     assert(0 < m_reduction_rule_token_count);
     TokenId * token_id = Dsc< TokenId * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(2 < m_reduction_rule_token_count);
     Ast::Id * assigned_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 474 "trison_parser.trison"
+#line 488 "trison_parser.trison"
 
         return new RuleToken(token_id, assigned_id);
     
-#line 1243 "trison_parser.cpp"
+#line 1244 "trison_parser.cpp"
 }
 
-// rule 49: rule_token <- token_id:token_id    
-Ast::Base * Parser::ReductionRuleHandler0049 ()
+// rule 50: rule_token <- token_id:token_id    
+Ast::Base * Parser::ReductionRuleHandler0050 ()
 {
     assert(0 < m_reduction_rule_token_count);
     TokenId * token_id = Dsc< TokenId * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 479 "trison_parser.trison"
+#line 493 "trison_parser.trison"
 
         return new RuleToken(token_id, NULL);
     
-#line 1256 "trison_parser.cpp"
+#line 1257 "trison_parser.cpp"
 }
 
-// rule 50: rule_token <- DIRECTIVE_ERROR:throwaway    
-Ast::Base * Parser::ReductionRuleHandler0050 ()
+// rule 51: rule_token <- DIRECTIVE_ERROR:throwaway    
+Ast::Base * Parser::ReductionRuleHandler0051 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 484 "trison_parser.trison"
+#line 498 "trison_parser.trison"
 
         delete throwaway;
         return new RuleToken(new TokenIdId("%error", FL), NULL);
     
-#line 1270 "trison_parser.cpp"
+#line 1271 "trison_parser.cpp"
 }
 
-// rule 51: rule_precedence_directive <- PREC:throwaway ID:id    
-Ast::Base * Parser::ReductionRuleHandler0051 ()
+// rule 52: rule_precedence_directive <- PREC:throwaway ID:id    
+Ast::Base * Parser::ReductionRuleHandler0052 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Ast::ThrowAway * throwaway = Dsc< Ast::ThrowAway * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
     assert(1 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 493 "trison_parser.trison"
+#line 507 "trison_parser.trison"
 
         delete throwaway;
         return id;
     
-#line 1286 "trison_parser.cpp"
+#line 1287 "trison_parser.cpp"
 }
 
-// rule 52: rule_precedence_directive <-     
-Ast::Base * Parser::ReductionRuleHandler0052 ()
+// rule 53: rule_precedence_directive <-     
+Ast::Base * Parser::ReductionRuleHandler0053 ()
 {
 
-#line 499 "trison_parser.trison"
+#line 513 "trison_parser.trison"
 
         return NULL;
     
-#line 1297 "trison_parser.cpp"
+#line 1298 "trison_parser.cpp"
 }
 
 
@@ -1306,57 +1307,58 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
 {
     {                 Token::START_,  2, &Parser::ReductionRuleHandler0000, "rule 0: %start <- root END_    "},
     {                 Token::root__,  3, &Parser::ReductionRuleHandler0001, "rule 1: root <- directive_list END_PREAMBLE nonterminal_list    "},
-    {       Token::directive_list__,  2, &Parser::ReductionRuleHandler0002, "rule 2: directive_list <- directive_list directive    "},
-    {       Token::directive_list__,  1, &Parser::ReductionRuleHandler0003, "rule 3: directive_list <- at_least_zero_newlines    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0004, "rule 4: directive <- DIRECTIVE_PARSER_WITH_PARAMETER STRICT_CODE_BLOCK at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0005, "rule 5: directive <- DIRECTIVE_PARSER_WITH_PARAMETER DUMB_CODE_BLOCK at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0006, "rule 6: directive <- DIRECTIVE_PARSER_WITH_PARAMETER STRING at_least_one_newline    "},
-    {            Token::directive__,  2, &Parser::ReductionRuleHandler0007, "rule 7: directive <- DIRECTIVE_PARSER_WITHOUT_PARAMETER at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0008, "rule 8: directive <- DIRECTIVE_TOKEN token_id_list at_least_one_newline    "},
-    {            Token::directive__,  5, &Parser::ReductionRuleHandler0009, "rule 9: directive <- DIRECTIVE_TOKEN token_id_list TYPE STRING at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0010, "rule 10: directive <- DIRECTIVE_TOKEN %error at_least_one_newline    "},
-    {            Token::directive__,  5, &Parser::ReductionRuleHandler0011, "rule 11: directive <- DIRECTIVE_TOKEN token_id_list TYPE %error at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0012, "rule 12: directive <- PREC ID at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0013, "rule 13: directive <- PREC %error at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0014, "rule 14: directive <- START ID at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0015, "rule 15: directive <- START %error at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0016, "rule 16: directive <- %error STRICT_CODE_BLOCK at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0017, "rule 17: directive <- %error DUMB_CODE_BLOCK at_least_one_newline    "},
-    {            Token::directive__,  3, &Parser::ReductionRuleHandler0018, "rule 18: directive <- %error STRING at_least_one_newline    "},
-    {            Token::directive__,  2, &Parser::ReductionRuleHandler0019, "rule 19: directive <- %error at_least_one_newline    "},
-    {        Token::token_id_list__,  2, &Parser::ReductionRuleHandler0020, "rule 20: token_id_list <- token_id_list token_id    "},
-    {        Token::token_id_list__,  1, &Parser::ReductionRuleHandler0021, "rule 21: token_id_list <- token_id    "},
-    {             Token::token_id__,  1, &Parser::ReductionRuleHandler0022, "rule 22: token_id <- ID    "},
-    {             Token::token_id__,  1, &Parser::ReductionRuleHandler0023, "rule 23: token_id <- TOKEN_ID_CHAR    "},
-    {Token::at_least_zero_newlines__,  2, &Parser::ReductionRuleHandler0024, "rule 24: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    "},
-    {Token::at_least_zero_newlines__,  0, &Parser::ReductionRuleHandler0025, "rule 25: at_least_zero_newlines <-     "},
-    { Token::at_least_one_newline__,  2, &Parser::ReductionRuleHandler0026, "rule 26: at_least_one_newline <- at_least_one_newline NEWLINE    "},
-    { Token::at_least_one_newline__,  1, &Parser::ReductionRuleHandler0027, "rule 27: at_least_one_newline <- NEWLINE    "},
-    {     Token::nonterminal_list__,  2, &Parser::ReductionRuleHandler0028, "rule 28: nonterminal_list <- nonterminal_list nonterminal    "},
-    {     Token::nonterminal_list__,  0, &Parser::ReductionRuleHandler0029, "rule 29: nonterminal_list <-     "},
-    {          Token::nonterminal__,  4, &Parser::ReductionRuleHandler0030, "rule 30: nonterminal <- nonterminal_specification ':' rule_list ';'    "},
-    {          Token::nonterminal__,  2, &Parser::ReductionRuleHandler0031, "rule 31: nonterminal <- %error ';'    "},
-    {Token::nonterminal_specification__,  3, &Parser::ReductionRuleHandler0032, "rule 32: nonterminal_specification <- ID TYPE STRING    "},
-    {Token::nonterminal_specification__,  1, &Parser::ReductionRuleHandler0033, "rule 33: nonterminal_specification <- ID    "},
-    {Token::nonterminal_specification__,  1, &Parser::ReductionRuleHandler0034, "rule 34: nonterminal_specification <- %error    "},
-    {Token::nonterminal_specification__,  2, &Parser::ReductionRuleHandler0035, "rule 35: nonterminal_specification <- ID %error    "},
-    {Token::nonterminal_specification__,  3, &Parser::ReductionRuleHandler0036, "rule 36: nonterminal_specification <- ID TYPE %error    "},
-    {            Token::rule_list__,  3, &Parser::ReductionRuleHandler0037, "rule 37: rule_list <- rule_list '|' rule    "},
-    {            Token::rule_list__,  1, &Parser::ReductionRuleHandler0038, "rule 38: rule_list <- rule    "},
-    {                 Token::rule__,  2, &Parser::ReductionRuleHandler0039, "rule 39: rule <- rule_specification STRICT_CODE_BLOCK    "},
-    {                 Token::rule__,  1, &Parser::ReductionRuleHandler0040, "rule 40: rule <- rule_specification    "},
-    {                 Token::rule__,  2, &Parser::ReductionRuleHandler0041, "rule 41: rule <- rule_specification DUMB_CODE_BLOCK    "},
-    {   Token::rule_specification__,  3, &Parser::ReductionRuleHandler0042, "rule 42: rule_specification <- rule_token_list LEFT rule_precedence_directive    "},
-    {   Token::rule_specification__,  3, &Parser::ReductionRuleHandler0043, "rule 43: rule_specification <- rule_token_list RIGHT rule_precedence_directive    "},
-    {   Token::rule_specification__,  3, &Parser::ReductionRuleHandler0044, "rule 44: rule_specification <- rule_token_list NONASSOC rule_precedence_directive    "},
-    {   Token::rule_specification__,  2, &Parser::ReductionRuleHandler0045, "rule 45: rule_specification <- rule_token_list rule_precedence_directive    "},
-    {      Token::rule_token_list__,  2, &Parser::ReductionRuleHandler0046, "rule 46: rule_token_list <- rule_token_list rule_token    "},
-    {      Token::rule_token_list__,  0, &Parser::ReductionRuleHandler0047, "rule 47: rule_token_list <-     "},
-    {           Token::rule_token__,  3, &Parser::ReductionRuleHandler0048, "rule 48: rule_token <- token_id ':' ID    "},
-    {           Token::rule_token__,  1, &Parser::ReductionRuleHandler0049, "rule 49: rule_token <- token_id    "},
-    {           Token::rule_token__,  1, &Parser::ReductionRuleHandler0050, "rule 50: rule_token <- DIRECTIVE_ERROR    "},
-    {Token::rule_precedence_directive__,  2, &Parser::ReductionRuleHandler0051, "rule 51: rule_precedence_directive <- PREC ID    "},
-    {Token::rule_precedence_directive__,  0, &Parser::ReductionRuleHandler0052, "rule 52: rule_precedence_directive <-     "},
+    {                 Token::root__,  4, &Parser::ReductionRuleHandler0002, "rule 2: root <- directive_list END_PREAMBLE nonterminal_list %error    "},
+    {       Token::directive_list__,  2, &Parser::ReductionRuleHandler0003, "rule 3: directive_list <- directive_list directive    "},
+    {       Token::directive_list__,  1, &Parser::ReductionRuleHandler0004, "rule 4: directive_list <- at_least_zero_newlines    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0005, "rule 5: directive <- DIRECTIVE_PARSER_WITH_PARAMETER STRICT_CODE_BLOCK at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0006, "rule 6: directive <- DIRECTIVE_PARSER_WITH_PARAMETER DUMB_CODE_BLOCK at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0007, "rule 7: directive <- DIRECTIVE_PARSER_WITH_PARAMETER STRING at_least_one_newline    "},
+    {            Token::directive__,  2, &Parser::ReductionRuleHandler0008, "rule 8: directive <- DIRECTIVE_PARSER_WITHOUT_PARAMETER at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0009, "rule 9: directive <- DIRECTIVE_TOKEN token_id_list at_least_one_newline    "},
+    {            Token::directive__,  5, &Parser::ReductionRuleHandler0010, "rule 10: directive <- DIRECTIVE_TOKEN token_id_list TYPE STRING at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0011, "rule 11: directive <- DIRECTIVE_TOKEN %error at_least_one_newline    "},
+    {            Token::directive__,  5, &Parser::ReductionRuleHandler0012, "rule 12: directive <- DIRECTIVE_TOKEN token_id_list TYPE %error at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0013, "rule 13: directive <- PREC ID at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0014, "rule 14: directive <- PREC %error at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0015, "rule 15: directive <- START ID at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0016, "rule 16: directive <- START %error at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0017, "rule 17: directive <- %error STRICT_CODE_BLOCK at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0018, "rule 18: directive <- %error DUMB_CODE_BLOCK at_least_one_newline    "},
+    {            Token::directive__,  3, &Parser::ReductionRuleHandler0019, "rule 19: directive <- %error STRING at_least_one_newline    "},
+    {            Token::directive__,  2, &Parser::ReductionRuleHandler0020, "rule 20: directive <- %error at_least_one_newline    "},
+    {        Token::token_id_list__,  2, &Parser::ReductionRuleHandler0021, "rule 21: token_id_list <- token_id_list token_id    "},
+    {        Token::token_id_list__,  1, &Parser::ReductionRuleHandler0022, "rule 22: token_id_list <- token_id    "},
+    {             Token::token_id__,  1, &Parser::ReductionRuleHandler0023, "rule 23: token_id <- ID    "},
+    {             Token::token_id__,  1, &Parser::ReductionRuleHandler0024, "rule 24: token_id <- TOKEN_ID_CHAR    "},
+    {Token::at_least_zero_newlines__,  2, &Parser::ReductionRuleHandler0025, "rule 25: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    "},
+    {Token::at_least_zero_newlines__,  0, &Parser::ReductionRuleHandler0026, "rule 26: at_least_zero_newlines <-     "},
+    { Token::at_least_one_newline__,  2, &Parser::ReductionRuleHandler0027, "rule 27: at_least_one_newline <- at_least_one_newline NEWLINE    "},
+    { Token::at_least_one_newline__,  1, &Parser::ReductionRuleHandler0028, "rule 28: at_least_one_newline <- NEWLINE    "},
+    {     Token::nonterminal_list__,  2, &Parser::ReductionRuleHandler0029, "rule 29: nonterminal_list <- nonterminal_list nonterminal    "},
+    {     Token::nonterminal_list__,  0, &Parser::ReductionRuleHandler0030, "rule 30: nonterminal_list <-     "},
+    {          Token::nonterminal__,  4, &Parser::ReductionRuleHandler0031, "rule 31: nonterminal <- nonterminal_specification ':' rule_list ';'    "},
+    {          Token::nonterminal__,  2, &Parser::ReductionRuleHandler0032, "rule 32: nonterminal <- %error ';'    "},
+    {Token::nonterminal_specification__,  3, &Parser::ReductionRuleHandler0033, "rule 33: nonterminal_specification <- ID TYPE STRING    "},
+    {Token::nonterminal_specification__,  1, &Parser::ReductionRuleHandler0034, "rule 34: nonterminal_specification <- ID    "},
+    {Token::nonterminal_specification__,  1, &Parser::ReductionRuleHandler0035, "rule 35: nonterminal_specification <- %error    "},
+    {Token::nonterminal_specification__,  2, &Parser::ReductionRuleHandler0036, "rule 36: nonterminal_specification <- ID %error    "},
+    {Token::nonterminal_specification__,  3, &Parser::ReductionRuleHandler0037, "rule 37: nonterminal_specification <- ID TYPE %error    "},
+    {            Token::rule_list__,  3, &Parser::ReductionRuleHandler0038, "rule 38: rule_list <- rule_list '|' rule    "},
+    {            Token::rule_list__,  1, &Parser::ReductionRuleHandler0039, "rule 39: rule_list <- rule    "},
+    {                 Token::rule__,  2, &Parser::ReductionRuleHandler0040, "rule 40: rule <- rule_specification STRICT_CODE_BLOCK    "},
+    {                 Token::rule__,  1, &Parser::ReductionRuleHandler0041, "rule 41: rule <- rule_specification    "},
+    {                 Token::rule__,  2, &Parser::ReductionRuleHandler0042, "rule 42: rule <- rule_specification DUMB_CODE_BLOCK    "},
+    {   Token::rule_specification__,  3, &Parser::ReductionRuleHandler0043, "rule 43: rule_specification <- rule_token_list LEFT rule_precedence_directive    "},
+    {   Token::rule_specification__,  3, &Parser::ReductionRuleHandler0044, "rule 44: rule_specification <- rule_token_list RIGHT rule_precedence_directive    "},
+    {   Token::rule_specification__,  3, &Parser::ReductionRuleHandler0045, "rule 45: rule_specification <- rule_token_list NONASSOC rule_precedence_directive    "},
+    {   Token::rule_specification__,  2, &Parser::ReductionRuleHandler0046, "rule 46: rule_specification <- rule_token_list rule_precedence_directive    "},
+    {      Token::rule_token_list__,  2, &Parser::ReductionRuleHandler0047, "rule 47: rule_token_list <- rule_token_list rule_token    "},
+    {      Token::rule_token_list__,  0, &Parser::ReductionRuleHandler0048, "rule 48: rule_token_list <-     "},
+    {           Token::rule_token__,  3, &Parser::ReductionRuleHandler0049, "rule 49: rule_token <- token_id ':' ID    "},
+    {           Token::rule_token__,  1, &Parser::ReductionRuleHandler0050, "rule 50: rule_token <- token_id    "},
+    {           Token::rule_token__,  1, &Parser::ReductionRuleHandler0051, "rule 51: rule_token <- DIRECTIVE_ERROR    "},
+    {Token::rule_precedence_directive__,  2, &Parser::ReductionRuleHandler0052, "rule 52: rule_precedence_directive <- PREC ID    "},
+    {Token::rule_precedence_directive__,  0, &Parser::ReductionRuleHandler0053, "rule 53: rule_precedence_directive <-     "},
 
     // special error panic reduction rule
     {                 Token::ERROR_,  1,                                     NULL, "* -> error"}
@@ -1377,86 +1379,86 @@ Parser::State const Parser::ms_state[] =
     {   6,    7,    0,   13,    1}, // state    2
     {  14,    1,   15,    0,    0}, // state    3
     {   0,    0,   16,    0,    0}, // state    4
-    {  17,    5,    0,   22,    1}, // state    5
-    {  23,    3,    0,    0,    0}, // state    6
-    {  26,    1,    0,   27,    1}, // state    7
-    {  28,    3,    0,   31,    2}, // state    8
-    {   0,    0,   33,   34,    1}, // state    9
-    {  35,    2,    0,    0,    0}, // state   10
-    {  37,    2,    0,    0,    0}, // state   11
-    {   0,    0,   39,    0,    0}, // state   12
-    {   0,    0,   40,    0,    0}, // state   13
-    {  41,    1,    0,   42,    1}, // state   14
-    {  43,    1,    0,   44,    1}, // state   15
-    {  45,    1,    0,   46,    1}, // state   16
-    {   0,    0,   47,    0,    0}, // state   17
-    {  48,    1,   49,    0,    0}, // state   18
-    {  50,    1,    0,   51,    1}, // state   19
-    {  52,    1,    0,   53,    1}, // state   20
-    {  54,    1,    0,   55,    1}, // state   21
-    {  56,    1,   57,    0,    0}, // state   22
-    {  58,    2,    0,   60,    1}, // state   23
-    {   0,    0,   61,    0,    0}, // state   24
-    {   0,    0,   62,    0,    0}, // state   25
-    {  63,    4,    0,   67,    2}, // state   26
-    {   0,    0,   69,    0,    0}, // state   27
-    {  70,    3,    0,   73,    2}, // state   28
-    {  75,    2,    0,   77,    1}, // state   29
-    {  78,    1,    0,   79,    1}, // state   30
-    {  80,    2,    0,   82,    1}, // state   31
-    {  83,    1,    0,   84,    1}, // state   32
-    {  85,    1,   86,    0,    0}, // state   33
-    {  87,    1,   88,    0,    0}, // state   34
-    {  89,    1,   90,    0,    0}, // state   35
-    {   0,    0,   91,    0,    0}, // state   36
-    {  92,    1,   93,    0,    0}, // state   37
-    {  94,    1,   95,    0,    0}, // state   38
-    {  96,    1,   97,    0,    0}, // state   39
-    {  98,    1,   99,    0,    0}, // state   40
-    { 100,    2,    0,    0,    0}, // state   41
-    {   0,    0,  102,    0,    0}, // state   42
-    { 103,    1,  104,    0,    0}, // state   43
-    { 105,    3,    0,    0,    0}, // state   44
-    { 108,    3,    0,    0,    0}, // state   45
-    {   0,    0,  111,    0,    0}, // state   46
-    { 112,    1,    0,    0,    0}, // state   47
-    { 113,    1,  114,    0,    0}, // state   48
-    { 115,    1,  116,    0,    0}, // state   49
-    { 117,    1,  118,    0,    0}, // state   50
-    { 119,    1,  120,    0,    0}, // state   51
-    { 121,    2,    0,  123,    1}, // state   52
-    { 124,    1,    0,  125,    1}, // state   53
-    {   0,    0,  126,    0,    0}, // state   54
-    { 127,    2,    0,    0,    0}, // state   55
-    { 129,    2,    0,    0,    0}, // state   56
-    {   0,    0,  131,  132,    4}, // state   57
-    { 136,    1,  137,    0,    0}, // state   58
-    { 138,    1,  139,    0,    0}, // state   59
-    { 140,    2,    0,    0,    0}, // state   60
-    {   0,    0,  142,    0,    0}, // state   61
-    { 143,    2,    0,    0,    0}, // state   62
-    {   0,    0,  145,    0,    0}, // state   63
-    { 146,    2,  148,    0,    0}, // state   64
-    { 149,    7,  156,  157,    3}, // state   65
-    {   0,    0,  160,    0,    0}, // state   66
-    {   0,    0,  161,  162,    3}, // state   67
-    {   0,    0,  165,    0,    0}, // state   68
-    {   0,    0,  166,    0,    0}, // state   69
-    {   0,    0,  167,    0,    0}, // state   70
-    { 168,    1,  169,  170,    1}, // state   71
-    { 171,    1,  172,  173,    1}, // state   72
-    { 174,    1,    0,    0,    0}, // state   73
-    { 175,    1,  176,  177,    1}, // state   74
-    { 178,    1,  179,    0,    0}, // state   75
-    {   0,    0,  180,    0,    0}, // state   76
-    {   0,    0,  181,    0,    0}, // state   77
-    {   0,    0,  182,    0,    0}, // state   78
-    {   0,    0,  183,    0,    0}, // state   79
-    {   0,    0,  184,    0,    0}, // state   80
-    {   0,    0,  185,    0,    0}, // state   81
-    {   0,    0,  186,    0,    0}, // state   82
-    { 187,    1,    0,    0,    0}, // state   83
-    {   0,    0,  188,    0,    0}  // state   84
+    {  17,    4,    0,   21,    1}, // state    5
+    {  22,    3,    0,    0,    0}, // state    6
+    {  25,    1,    0,   26,    1}, // state    7
+    {  27,    3,    0,   30,    2}, // state    8
+    {   0,    0,   32,   33,    1}, // state    9
+    {  34,    2,    0,    0,    0}, // state   10
+    {  36,    2,    0,    0,    0}, // state   11
+    {   0,    0,   38,    0,    0}, // state   12
+    {   0,    0,   39,    0,    0}, // state   13
+    {  40,    1,    0,   41,    1}, // state   14
+    {  42,    1,    0,   43,    1}, // state   15
+    {  44,    1,    0,   45,    1}, // state   16
+    {   0,    0,   46,    0,    0}, // state   17
+    {  47,    1,   48,    0,    0}, // state   18
+    {  49,    1,    0,   50,    1}, // state   19
+    {  51,    1,    0,   52,    1}, // state   20
+    {  53,    1,    0,   54,    1}, // state   21
+    {  55,    1,   56,    0,    0}, // state   22
+    {  57,    1,    0,   58,    1}, // state   23
+    {   0,    0,   59,    0,    0}, // state   24
+    {   0,    0,   60,    0,    0}, // state   25
+    {  61,    4,    0,   65,    2}, // state   26
+    {   0,    0,   67,    0,    0}, // state   27
+    {  68,    3,    0,   71,    2}, // state   28
+    {  73,    1,    0,   74,    1}, // state   29
+    {  75,    1,    0,   76,    1}, // state   30
+    {  77,    1,    0,   78,    1}, // state   31
+    {  79,    1,    0,   80,    1}, // state   32
+    {  81,    1,   82,    0,    0}, // state   33
+    {  83,    1,   84,    0,    0}, // state   34
+    {  85,    1,   86,    0,    0}, // state   35
+    {   0,    0,   87,    0,    0}, // state   36
+    {  88,    1,   89,    0,    0}, // state   37
+    {  90,    1,   91,    0,    0}, // state   38
+    {  92,    1,   93,    0,    0}, // state   39
+    {  94,    1,   95,    0,    0}, // state   40
+    {  96,    2,    0,    0,    0}, // state   41
+    {   0,    0,   98,    0,    0}, // state   42
+    {  99,    1,  100,    0,    0}, // state   43
+    { 101,    3,  104,    0,    0}, // state   44
+    { 105,    3,    0,    0,    0}, // state   45
+    {   0,    0,  108,    0,    0}, // state   46
+    { 109,    1,    0,    0,    0}, // state   47
+    { 110,    1,  111,    0,    0}, // state   48
+    { 112,    1,  113,    0,    0}, // state   49
+    { 114,    1,  115,    0,    0}, // state   50
+    { 116,    1,  117,    0,    0}, // state   51
+    { 118,    1,    0,  119,    1}, // state   52
+    { 120,    1,    0,  121,    1}, // state   53
+    {   0,    0,  122,    0,    0}, // state   54
+    {   0,    0,  123,    0,    0}, // state   55
+    { 124,    2,    0,    0,    0}, // state   56
+    {   0,    0,  126,  127,    4}, // state   57
+    { 131,    1,  132,    0,    0}, // state   58
+    { 133,    1,  134,    0,    0}, // state   59
+    {   0,    0,  135,    0,    0}, // state   60
+    {   0,    0,  136,    0,    0}, // state   61
+    { 137,    2,    0,    0,    0}, // state   62
+    {   0,    0,  139,    0,    0}, // state   63
+    { 140,    2,  142,    0,    0}, // state   64
+    { 143,    7,  150,  151,    3}, // state   65
+    {   0,    0,  154,    0,    0}, // state   66
+    {   0,    0,  155,  156,    3}, // state   67
+    {   0,    0,  159,    0,    0}, // state   68
+    {   0,    0,  160,    0,    0}, // state   69
+    {   0,    0,  161,    0,    0}, // state   70
+    { 162,    1,  163,  164,    1}, // state   71
+    { 165,    1,  166,  167,    1}, // state   72
+    { 168,    1,    0,    0,    0}, // state   73
+    { 169,    1,  170,  171,    1}, // state   74
+    { 172,    1,  173,    0,    0}, // state   75
+    {   0,    0,  174,    0,    0}, // state   76
+    {   0,    0,  175,    0,    0}, // state   77
+    {   0,    0,  176,    0,    0}, // state   78
+    {   0,    0,  177,    0,    0}, // state   79
+    {   0,    0,  178,    0,    0}, // state   80
+    {   0,    0,  179,    0,    0}, // state   81
+    {   0,    0,  180,    0,    0}, // state   82
+    { 181,    1,    0,    0,    0}, // state   83
+    {   0,    0,  182,    0,    0}  // state   84
 
 };
 
@@ -1477,7 +1479,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state    0
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   25}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   26}},
     // nonterminal transitions
     {                 Token::root__, {                  TA_PUSH_STATE,    1}},
     {       Token::directive_list__, {                  TA_PUSH_STATE,    2}},
@@ -1509,7 +1511,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   13}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    3}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    4}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state    4
@@ -1521,7 +1523,6 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state    5
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                 Token::ERROR_, {  TA_THROW_AWAY_LOOKAHEAD_TOKEN,    0}},
     {      Token::STRICT_CODE_BLOCK, {        TA_SHIFT_AND_PUSH_STATE,   14}},
     {        Token::DUMB_CODE_BLOCK, {        TA_SHIFT_AND_PUSH_STATE,   15}},
     {                 Token::STRING, {        TA_SHIFT_AND_PUSH_STATE,   16}},
@@ -1560,7 +1561,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state    9
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   29}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   30}},
     // nonterminal transitions
     {     Token::nonterminal_list__, {                  TA_PUSH_STATE,   28}},
 
@@ -1582,13 +1583,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   12
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    2}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    3}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   13
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   24}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   25}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   14
@@ -1618,7 +1619,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   17
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   27}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   28}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   18
@@ -1626,7 +1627,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   19}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   20}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   19
@@ -1658,13 +1659,12 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    7}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    8}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   23
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                 Token::ERROR_, {  TA_THROW_AWAY_LOOKAHEAD_TOKEN,    0}},
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     // nonterminal transitions
     { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   40}},
@@ -1673,13 +1673,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   24
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   22}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   23}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   25
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   23}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   24}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   26
@@ -1697,7 +1697,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   27
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   21}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   22}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   28
@@ -1714,7 +1714,6 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   29
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                 Token::ERROR_, {  TA_THROW_AWAY_LOOKAHEAD_TOKEN,    0}},
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     // nonterminal transitions
     { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   48}},
@@ -1731,7 +1730,6 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   31
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                 Token::ERROR_, {  TA_THROW_AWAY_LOOKAHEAD_TOKEN,    0}},
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     // nonterminal transitions
     { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   50}},
@@ -1750,7 +1748,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   16}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   17}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   34
@@ -1758,7 +1756,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   17}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   18}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   35
@@ -1766,13 +1764,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   18}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   19}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   36
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   26}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   27}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   37
@@ -1780,7 +1778,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    4}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    5}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   38
@@ -1788,7 +1786,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    5}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    6}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   39
@@ -1796,7 +1794,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    6}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    7}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   40
@@ -1804,7 +1802,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   10}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   11}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   41
@@ -1817,7 +1815,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   42
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   20}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   21}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   43
@@ -1825,29 +1823,31 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    8}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    9}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   44
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                 Token::ERROR_, {  TA_THROW_AWAY_LOOKAHEAD_TOKEN,    0}},
-    {              Token::Type(':'), {           TA_REDUCE_USING_RULE,   34}},
+    {                   Token::END_, {           TA_REDUCE_USING_RULE,    2}},
+    {              Token::Type(':'), {           TA_REDUCE_USING_RULE,   35}},
     {              Token::Type(';'), {        TA_SHIFT_AND_PUSH_STATE,   54}},
+    // default transition
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   35}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   45
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
     {                 Token::ERROR_, {        TA_SHIFT_AND_PUSH_STATE,   55}},
-    {              Token::Type(':'), {           TA_REDUCE_USING_RULE,   33}},
+    {              Token::Type(':'), {           TA_REDUCE_USING_RULE,   34}},
     {                   Token::TYPE, {        TA_SHIFT_AND_PUSH_STATE,   56}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   46
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   28}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   29}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   47
@@ -1861,7 +1861,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   13}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   14}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   49
@@ -1869,7 +1869,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   12}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   13}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   50
@@ -1877,7 +1877,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   15}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   16}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   51
@@ -1885,13 +1885,12 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   14}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   15}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   52
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                 Token::ERROR_, {  TA_THROW_AWAY_LOOKAHEAD_TOKEN,    0}},
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   17}},
     // nonterminal transitions
     { Token::at_least_one_newline__, {                  TA_PUSH_STATE,   58}},
@@ -1908,14 +1907,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   54
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   31}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   32}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   55
 // ///////////////////////////////////////////////////////////////////////////
-    // terminal transitions
-    {                 Token::ERROR_, {  TA_THROW_AWAY_LOOKAHEAD_TOKEN,    0}},
-    {              Token::Type(':'), {           TA_REDUCE_USING_RULE,   35}},
+    // default transition
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   36}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   56
@@ -1928,7 +1926,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   57
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   47}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   48}},
     // nonterminal transitions
     {            Token::rule_list__, {                  TA_PUSH_STATE,   62}},
     {                 Token::rule__, {                  TA_PUSH_STATE,   63}},
@@ -1941,7 +1939,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   11}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   12}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   59
@@ -1949,20 +1947,19 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                Token::NEWLINE, {        TA_SHIFT_AND_PUSH_STATE,   36}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    9}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   10}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   60
 // ///////////////////////////////////////////////////////////////////////////
-    // terminal transitions
-    {                 Token::ERROR_, {  TA_THROW_AWAY_LOOKAHEAD_TOKEN,    0}},
-    {              Token::Type(':'), {           TA_REDUCE_USING_RULE,   36}},
+    // default transition
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   37}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   61
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   32}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   33}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   62
@@ -1975,7 +1972,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   63
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   38}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   39}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   64
@@ -1984,7 +1981,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {      Token::STRICT_CODE_BLOCK, {        TA_SHIFT_AND_PUSH_STATE,   68}},
     {        Token::DUMB_CODE_BLOCK, {        TA_SHIFT_AND_PUSH_STATE,   69}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   40}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   41}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   65
@@ -1998,7 +1995,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {                  Token::RIGHT, {        TA_SHIFT_AND_PUSH_STATE,   74}},
     {          Token::TOKEN_ID_CHAR, {        TA_SHIFT_AND_PUSH_STATE,   25}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   52}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   53}},
     // nonterminal transitions
     {             Token::token_id__, {                  TA_PUSH_STATE,   75}},
     {           Token::rule_token__, {                  TA_PUSH_STATE,   76}},
@@ -2008,13 +2005,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   66
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   30}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   31}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   67
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   47}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   48}},
     // nonterminal transitions
     {                 Token::rule__, {                  TA_PUSH_STATE,   78}},
     {   Token::rule_specification__, {                  TA_PUSH_STATE,   64}},
@@ -2024,19 +2021,19 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   68
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   39}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   40}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   69
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   41}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   42}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   70
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   50}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   51}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   71
@@ -2044,7 +2041,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                   Token::PREC, {        TA_SHIFT_AND_PUSH_STATE,   73}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   52}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   53}},
     // nonterminal transitions
     {Token::rule_precedence_directive__, {                  TA_PUSH_STATE,   79}},
 
@@ -2054,7 +2051,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                   Token::PREC, {        TA_SHIFT_AND_PUSH_STATE,   73}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   52}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   53}},
     // nonterminal transitions
     {Token::rule_precedence_directive__, {                  TA_PUSH_STATE,   80}},
 
@@ -2070,7 +2067,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {                   Token::PREC, {        TA_SHIFT_AND_PUSH_STATE,   73}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   52}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   53}},
     // nonterminal transitions
     {Token::rule_precedence_directive__, {                  TA_PUSH_STATE,   82}},
 
@@ -2080,49 +2077,49 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     // terminal transitions
     {              Token::Type(':'), {        TA_SHIFT_AND_PUSH_STATE,   83}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   49}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   50}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   76
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   46}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   47}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   77
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   45}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   46}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   78
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   37}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   38}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   79
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   42}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   43}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   80
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   44}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   45}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   81
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   51}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   52}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   82
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   43}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   44}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   83
@@ -2134,7 +2131,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   84
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   48}}
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   49}}
 
 };
 
@@ -2160,5 +2157,5 @@ Parser::Token::Type Parser::Scan ()
 
 } // end of namespace Trison
 
-#line 2164 "trison_parser.cpp"
+#line 2161 "trison_parser.cpp"
 

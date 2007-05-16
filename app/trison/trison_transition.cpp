@@ -45,10 +45,6 @@ void Transition::PrettyPrint (ostream &stream, string const &name, StateMachine 
             break;
         }
 
-        case TA_THROW_AWAY_LOOKAHEAD_TOKEN:
-            assert(m_transition_id.size() == 0);
-            break;
-
         default:
             assert(false && "Invalid TransitionAction");
             break;
@@ -76,11 +72,6 @@ void Transition::PrintTransitionArrayElement (ostream &stream, StateMachine cons
             stream << setw(4) << first_and_only_rule_phase.m_rule_index << "}";
             break;
         }
-
-        case TA_THROW_AWAY_LOOKAHEAD_TOKEN:
-            assert(m_transition_id.size() == 0);
-            stream << setw(4) << 0 << "}";
-            break;
 
         default:
             assert(false && "Invalid TransitionAction");

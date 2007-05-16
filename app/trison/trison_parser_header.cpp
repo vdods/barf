@@ -63,7 +63,6 @@ private:\n\
         TA_PUSH_STATE,\n\
         TA_REDUCE_USING_RULE,\n\
         TA_REDUCE_AND_ACCEPT_USING_RULE,\n\
-        TA_THROW_AWAY_LOOKAHEAD_TOKEN,\n\
 \n\
         TA_COUNT\n\
     };\n\
@@ -110,13 +109,7 @@ private:\n\
         if (m_is_new_lookahead_token_required)\n\
         {\n\
             m_is_new_lookahead_token_required = false;\n\
-            if (m_get_new_lookahead_token_type_from_saved)\n\
-            {\n\
-                m_get_new_lookahead_token_type_from_saved = false;\n\
-                m_lookahead_token_type = m_saved_lookahead_token_type;\n\
-            }\n\
-            else\n\
-                ScanANewLookaheadToken();\n\
+            ScanANewLookaheadToken();\n\
         }\n\
     }\n\
     inline Token::Type GetLookaheadTokenType ()\n\
@@ -156,10 +149,7 @@ private:\n\
     Token::Type m_lookahead_token_type;\n\
     $$BASE_ASSIGNED_TYPE$$ m_lookahead_token;\n\
     bool m_is_new_lookahead_token_required;\n\
-\n\
-    Token::Type m_saved_lookahead_token_type;\n\
-    bool m_get_new_lookahead_token_type_from_saved;\n\
-    bool m_previous_transition_accepted_error_token;\n\
+    bool m_in_error_handling_mode;\n\
 \n\
     bool m_is_returning_with_non_terminal;\n\
     Token::Type m_returning_with_this_non_terminal;\n\

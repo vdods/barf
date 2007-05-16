@@ -166,7 +166,6 @@ private:
         TA_PUSH_STATE,
         TA_REDUCE_USING_RULE,
         TA_REDUCE_AND_ACCEPT_USING_RULE,
-        TA_THROW_AWAY_LOOKAHEAD_TOKEN,
 
         TA_COUNT
     };
@@ -213,13 +212,7 @@ private:
         if (m_is_new_lookahead_token_required)
         {
             m_is_new_lookahead_token_required = false;
-            if (m_get_new_lookahead_token_type_from_saved)
-            {
-                m_get_new_lookahead_token_type_from_saved = false;
-                m_lookahead_token_type = m_saved_lookahead_token_type;
-            }
-            else
-                ScanANewLookaheadToken();
+            ScanANewLookaheadToken();
         }
     }
     inline Token::Type GetLookaheadTokenType ()
@@ -259,10 +252,7 @@ private:
     Token::Type m_lookahead_token_type;
     Ast::Base * m_lookahead_token;
     bool m_is_new_lookahead_token_required;
-
-    Token::Type m_saved_lookahead_token_type;
-    bool m_get_new_lookahead_token_type_from_saved;
-    bool m_previous_transition_accepted_error_token;
+    bool m_in_error_handling_mode;
 
     bool m_is_returning_with_non_terminal;
     Token::Type m_returning_with_this_non_terminal;
@@ -352,4 +342,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 356 "trison_parser.hpp"
+#line 346 "trison_parser.hpp"
