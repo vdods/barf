@@ -13,6 +13,8 @@
 
 #include "barf.hpp"
 
+#include <ostream>
+
 namespace Barf {
 
 class FiLoc
@@ -72,15 +74,13 @@ public:
 private:
 
     // for use only by the constructor of ms_invalid
-    FiLoc ()
-        :
-        m_filename(),
-        m_line_number(0)
-    { }
+    FiLoc () : m_filename(), m_line_number(0) { }
 
     string m_filename;
     Uint32 m_line_number;
 }; // end of class FiLoc
+
+ostream &operator << (ostream &stream, FiLoc const &filoc);
 
 } // end of namespace Barf
 

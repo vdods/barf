@@ -529,6 +529,7 @@ public:
             READING_BODY = 3,
             READING_CODE = 12,
             READING_CODE_STRING_LITERAL_GUTS = 26,
+            TRANSITION_TO_CODE = 42,
             // default starting scanner mode
             START_ = READING_BODY
         }; // end of enum ScannerNew::Mode::Name
@@ -538,7 +539,7 @@ public:
 #line 41 "barf_preprocessor_scanner.reflex"
 
 
-#line 542 "barf_preprocessor_scanner_new.hpp"
+#line 543 "barf_preprocessor_scanner_new.hpp"
 
 public:
 
@@ -554,7 +555,7 @@ public:
     Parser::Token::Type Scan (
 #line 43 "barf_preprocessor_scanner.reflex"
  Ast::Base **token 
-#line 558 "barf_preprocessor_scanner_new.hpp"
+#line 559 "barf_preprocessor_scanner_new.hpp"
 );
 
 private:
@@ -594,7 +595,7 @@ private:
 
     bool m_is_reading_newline_sensitive_code;
 
-#line 598 "barf_preprocessor_scanner_new.hpp"
+#line 599 "barf_preprocessor_scanner_new.hpp"
 
 }; // end of class ScannerNew
 
@@ -606,4 +607,4 @@ private:
 
 #endif // !defined(_BARF_PREPROCESSOR_SCANNER_NEW_HPP_)
 
-#line 610 "barf_preprocessor_scanner_new.hpp"
+#line 611 "barf_preprocessor_scanner_new.hpp"

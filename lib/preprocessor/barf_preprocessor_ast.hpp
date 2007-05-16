@@ -568,6 +568,7 @@ public:
     inline string const &GetText () const { return m_text; }
     inline void SetText (string const &text) { m_text = text; }
     inline void AppendText (string const &text) { m_text += text; }
+    inline void AppendChar (Uint8 c) { m_text += c; }
 
     virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return false; }
 

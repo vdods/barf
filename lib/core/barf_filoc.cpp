@@ -46,4 +46,9 @@ void FiLoc::IncrementLineNumber (Uint32 by_value)
     m_line_number += by_value;
 }
 
+ostream &operator << (ostream &stream, FiLoc const &filoc)
+{
+    return stream << filoc.GetAsString();
+}
+
 } // end of namespace Barf

@@ -14,8 +14,8 @@
 
 #include "barf_preprocessor_ast.hpp"
 
-// #define SPEW(x) cerr << x << endl
-#define SPEW(x)
+#define SPEW(x) cerr << x << endl
+// #define SPEW(x)
 
 namespace Barf {
 namespace Preprocessor {
@@ -110,6 +110,7 @@ ScannerNew::Mode::Name ScannerNew::ScannerMode () const
         case 3: return Mode::READING_BODY;
         case 12: return Mode::READING_CODE;
         case 26: return Mode::READING_CODE_STRING_LITERAL_GUTS;
+        case 42: return Mode::TRANSITION_TO_CODE;
     }
 }
 
@@ -120,6 +121,7 @@ void ScannerNew::ScannerMode (Mode::Name mode)
         mode == Mode::READING_BODY ||
         mode == Mode::READING_CODE ||
         mode == Mode::READING_CODE_STRING_LITERAL_GUTS ||
+        mode == Mode::TRANSITION_TO_CODE ||
         (false && "invalid Mode::Name"));
     InitialState_(ms_state_table_ + mode);
     REFLEX_CPP_DEBUG_SPEW_(std::cerr << "*** scanner: transitioning to mode ")
@@ -128,6 +130,7 @@ void ScannerNew::ScannerMode (Mode::Name mode)
     else if (mode == Mode::READING_BODY) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "READING_BODY") }
     else if (mode == Mode::READING_CODE) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "READING_CODE") }
     else if (mode == Mode::READING_CODE_STRING_LITERAL_GUTS) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "READING_CODE_STRING_LITERAL_GUTS") }
+    else if (mode == Mode::TRANSITION_TO_CODE) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "TRANSITION_TO_CODE") }
     REFLEX_CPP_DEBUG_SPEW_(std::cerr << std::endl)
     assert(ScannerMode() == mode);
 }
@@ -135,7 +138,7 @@ void ScannerNew::ScannerMode (Mode::Name mode)
 Parser::Token::Type ScannerNew::Scan (
 #line 43 "barf_preprocessor_scanner.reflex"
  Ast::Base **token 
-#line 139 "barf_preprocessor_scanner_new.cpp"
+#line 142 "barf_preprocessor_scanner_new.cpp"
 )
 {
 
@@ -144,7 +147,7 @@ Parser::Token::Type ScannerNew::Scan (
     assert(token != NULL);
     assert(*token == NULL);
 
-#line 148 "barf_preprocessor_scanner_new.cpp"
+#line 151 "barf_preprocessor_scanner_new.cpp"
 
     std::string accepted_string;
     // this is the main scanner loop.  it only breaks when an accept handler
@@ -182,7 +185,7 @@ Parser::Token::Type ScannerNew::Scan (
 
     EmitError(GetFiLoc(), "unrecognized character " + GetCharLiteral(rejected_atom));
 
-#line 186 "barf_preprocessor_scanner_new.cpp"
+#line 189 "barf_preprocessor_scanner_new.cpp"
 
             }
             while (false);
@@ -201,13 +204,13 @@ Parser::Token::Type ScannerNew::Scan (
                 case 0:
                 {
 
-#line 407 "barf_preprocessor_scanner.reflex"
+#line 433 "barf_preprocessor_scanner.reflex"
 
-        SPEW("EXPECTING_END_OF_FILE - ({ANYTHING}*) = " << GetStringLiteral(accepted_string));
+        SPEW("EXPECTING_END_OF_FILE - ({ANYTHING}*) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(false && "this should never happen");
         return Parser::Token::BAD_TOKEN;
     
-#line 211 "barf_preprocessor_scanner_new.cpp"
+#line 214 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -215,12 +218,12 @@ Parser::Token::Type ScannerNew::Scan (
                 case 1:
                 {
 
-#line 414 "barf_preprocessor_scanner.reflex"
+#line 440 "barf_preprocessor_scanner.reflex"
 
-        SPEW("EXPECTING_END_OF_FILE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string));
+        SPEW("EXPECTING_END_OF_FILE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         return Parser::Token::END_;
     
-#line 224 "barf_preprocessor_scanner_new.cpp"
+#line 227 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -228,17 +231,17 @@ Parser::Token::Type ScannerNew::Scan (
                 case 2:
                 {
 
-#line 221 "barf_preprocessor_scanner.reflex"
+#line 223 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_BODY - (([^<]|<[^<|{])*<?<\\|) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_BODY - (([^<]|<[^<|{])*<?<\\|) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(accepted_string.length() >= 2);
         *token = new Text(accepted_string.c_str(), accepted_string.length()-2, GetFiLoc());
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        ScannerMode(Mode::READING_CODE);
         m_is_reading_newline_sensitive_code = true;
+        ScannerMode(Mode::TRANSITION_TO_CODE);
         return Parser::Token::TEXT;
     
-#line 242 "barf_preprocessor_scanner_new.cpp"
+#line 245 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -246,17 +249,17 @@ Parser::Token::Type ScannerNew::Scan (
                 case 3:
                 {
 
-#line 232 "barf_preprocessor_scanner.reflex"
+#line 234 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_BODY - (([^<]|<[^<|{])*<?<\\{) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_BODY - (([^<]|<[^<|{])*<?<\\{) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(accepted_string.length() >= 2);
         *token = new Text(accepted_string.c_str(), accepted_string.length()-2, GetFiLoc());
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        ScannerMode(Mode::READING_CODE);
         m_is_reading_newline_sensitive_code = false;
+        ScannerMode(Mode::TRANSITION_TO_CODE);
         return Parser::Token::TEXT;
     
-#line 260 "barf_preprocessor_scanner_new.cpp"
+#line 263 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -264,16 +267,16 @@ Parser::Token::Type ScannerNew::Scan (
                 case 4:
                 {
 
-#line 243 "barf_preprocessor_scanner.reflex"
+#line 245 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_BODY - (([^<]|<[^<|{])*<?{END_OF_FILE}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_BODY - (([^<]|<[^<|{])*<?{END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(accepted_string.length() >= 0);
         *token = new Text(accepted_string.c_str(), accepted_string.length(), GetFiLoc());
         IncrementLineNumber(GetNewlineCount(accepted_string));
         ScannerMode(Mode::EXPECTING_END_OF_FILE);
         return Parser::Token::END_;
     
-#line 277 "barf_preprocessor_scanner_new.cpp"
+#line 280 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -281,12 +284,12 @@ Parser::Token::Type ScannerNew::Scan (
                 case 5:
                 {
 
-#line 256 "barf_preprocessor_scanner.reflex"
+#line 273 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - ({WHITESPACE}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - ({WHITESPACE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         // ignore whitespace
     
-#line 290 "barf_preprocessor_scanner_new.cpp"
+#line 293 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -294,9 +297,9 @@ Parser::Token::Type ScannerNew::Scan (
                 case 6:
                 {
 
-#line 262 "barf_preprocessor_scanner.reflex"
+#line 279 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - ({NEWLINE}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - ({NEWLINE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         IncrementLineNumber(1);
         if (m_is_reading_newline_sensitive_code)
         {
@@ -304,7 +307,7 @@ Parser::Token::Type ScannerNew::Scan (
             return Parser::Token::CODE_NEWLINE;
         }
     
-#line 308 "barf_preprocessor_scanner_new.cpp"
+#line 311 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -312,14 +315,14 @@ Parser::Token::Type ScannerNew::Scan (
                 case 7:
                 {
 
-#line 273 "barf_preprocessor_scanner.reflex"
+#line 290 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         ScannerMode(Mode::EXPECTING_END_OF_FILE);
         if (m_is_reading_newline_sensitive_code)
             return Parser::Token::CODE_NEWLINE;
     
-#line 323 "barf_preprocessor_scanner_new.cpp"
+#line 326 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -327,15 +330,15 @@ Parser::Token::Type ScannerNew::Scan (
                 case 8:
                 {
 
-#line 281 "barf_preprocessor_scanner.reflex"
+#line 298 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - (\\}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - (\\}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         if (!m_is_reading_newline_sensitive_code)
             return Parser::Token::END_CODE;
         EmitError(GetFiLoc(), "unexpected '}' encountered");
         return Parser::Token::BAD_TOKEN;
     
-#line 339 "barf_preprocessor_scanner_new.cpp"
+#line 342 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -343,12 +346,12 @@ Parser::Token::Type ScannerNew::Scan (
                 case 9:
                 {
 
-#line 290 "barf_preprocessor_scanner.reflex"
+#line 307 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - ({OPERATOR}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - ({OPERATOR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         return Parser::Token::Type(accepted_string[0]);
     
-#line 352 "barf_preprocessor_scanner_new.cpp"
+#line 355 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -356,12 +359,12 @@ Parser::Token::Type ScannerNew::Scan (
                 case 10:
                 {
 
-#line 296 "barf_preprocessor_scanner.reflex"
+#line 313 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - ({ID}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - ({ID}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         return ParseKeyword(accepted_string, token);
     
-#line 365 "barf_preprocessor_scanner_new.cpp"
+#line 368 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -369,16 +372,16 @@ Parser::Token::Type ScannerNew::Scan (
                 case 11:
                 {
 
-#line 302 "barf_preprocessor_scanner.reflex"
+#line 319 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - ({INTEGER_LITERAL}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - ({INTEGER_LITERAL}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         Sint32 value = 0;
         istringstream in(accepted_string);
         in >> value;
         *token = new Integer(value, GetFiLoc());
         return Parser::Token::INTEGER_LITERAL;
     
-#line 382 "barf_preprocessor_scanner_new.cpp"
+#line 385 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -386,13 +389,13 @@ Parser::Token::Type ScannerNew::Scan (
                 case 12:
                 {
 
-#line 312 "barf_preprocessor_scanner.reflex"
+#line 329 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - (\") = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - (\") = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         *token = new Text("", GetFiLoc());
         ScannerMode(Mode::READING_CODE_STRING_LITERAL_GUTS);
     
-#line 396 "barf_preprocessor_scanner_new.cpp"
+#line 399 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -400,13 +403,13 @@ Parser::Token::Type ScannerNew::Scan (
                 case 13:
                 {
 
-#line 319 "barf_preprocessor_scanner.reflex"
+#line 336 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         EmitError(GetFiLoc(), "unexpected end of file encountered within preprocessor code section");
         return Parser::Token::END_;
     
-#line 410 "barf_preprocessor_scanner_new.cpp"
+#line 413 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -414,13 +417,13 @@ Parser::Token::Type ScannerNew::Scan (
                 case 14:
                 {
 
-#line 326 "barf_preprocessor_scanner.reflex"
+#line 343 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE - (.) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE - (.) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         EmitError(GetFiLoc(), "unrecognized character encountered within preprocessor code section");
         return Parser::Token::BAD_TOKEN;
     
-#line 424 "barf_preprocessor_scanner_new.cpp"
+#line 427 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -428,9 +431,9 @@ Parser::Token::Type ScannerNew::Scan (
                 case 15:
                 {
 
-#line 336 "barf_preprocessor_scanner.reflex"
+#line 353 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
@@ -438,9 +441,9 @@ Parser::Token::Type ScannerNew::Scan (
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
-        Dsc<Ast::String *>(*token)->AppendChar(Uint8(value));
+        Dsc<Text *>(*token)->AppendChar(Uint8(value));
     
-#line 444 "barf_preprocessor_scanner_new.cpp"
+#line 447 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -448,9 +451,9 @@ Parser::Token::Type ScannerNew::Scan (
                 case 16:
                 {
 
-#line 349 "barf_preprocessor_scanner.reflex"
+#line 366 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
@@ -458,9 +461,9 @@ Parser::Token::Type ScannerNew::Scan (
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
             EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
-        Dsc<Ast::String *>(*token)->AppendChar(Uint8(value));
+        Dsc<Text *>(*token)->AppendChar(Uint8(value));
     
-#line 464 "barf_preprocessor_scanner_new.cpp"
+#line 467 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -468,15 +471,15 @@ Parser::Token::Type ScannerNew::Scan (
                 case 17:
                 {
 
-#line 362 "barf_preprocessor_scanner.reflex"
+#line 379 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({STRING_ESC_CHAR}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({STRING_ESC_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        Dsc<Ast::String *>(*token)->AppendChar(GetEscapedChar(Uint8(accepted_string[1])));
+        Dsc<Text *>(*token)->AppendChar(GetEscapedChar(Uint8(accepted_string[1])));
     
-#line 480 "barf_preprocessor_scanner_new.cpp"
+#line 483 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -484,14 +487,15 @@ Parser::Token::Type ScannerNew::Scan (
                 case 18:
                 {
 
-#line 371 "barf_preprocessor_scanner.reflex"
+#line 388 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({STRING_NORMAL_CHAR}+) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({STRING_BAD_ESC_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
-        Dsc<Ast::TextBase *>(*token)->AppendText(accepted_string);
+        assert(accepted_string.length() == 2);
+        assert(accepted_string[0] == '\\');
+        EmitError(GetFiLoc(), "malformed string literal escape code -- backslash followed by " + GetCharLiteral(accepted_string[1]));
     
-#line 495 "barf_preprocessor_scanner_new.cpp"
+#line 499 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -499,14 +503,14 @@ Parser::Token::Type ScannerNew::Scan (
                 case 19:
                 {
 
-#line 379 "barf_preprocessor_scanner.reflex"
+#line 397 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE_STRING_LITERAL_GUTS - (\") = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({STRING_NORMAL_CHAR}+) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
-        ScannerMode(Mode::READING_CODE);
-        return Parser::Token::STRING_LITERAL;
+        IncrementLineNumber(GetNewlineCount(accepted_string));
+        Dsc<Text *>(*token)->AppendText(accepted_string);
     
-#line 510 "barf_preprocessor_scanner_new.cpp"
+#line 514 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -514,16 +518,14 @@ Parser::Token::Type ScannerNew::Scan (
                 case 20:
                 {
 
-#line 387 "barf_preprocessor_scanner.reflex"
+#line 405 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE_STRING_LITERAL_GUTS - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string));
-        EmitError(GetFiLoc(), "unterminated string literal");
+        SPEW("READING_CODE_STRING_LITERAL_GUTS - (\") = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
-        delete *token;
-        *token = NULL;
-        return Parser::Token::END_;
+        ScannerMode(Mode::READING_CODE);
+        return Parser::Token::STRING_LITERAL;
     
-#line 527 "barf_preprocessor_scanner_new.cpp"
+#line 529 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -531,13 +533,47 @@ Parser::Token::Type ScannerNew::Scan (
                 case 21:
                 {
 
-#line 397 "barf_preprocessor_scanner.reflex"
+#line 413 "barf_preprocessor_scanner.reflex"
 
-        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string));
+        SPEW("READING_CODE_STRING_LITERAL_GUTS - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
+        EmitError(GetFiLoc(), "unterminated string literal");
+        assert(*token != NULL);
+        delete *token;
+        *token = NULL;
+        return Parser::Token::END_;
+    
+#line 546 "barf_preprocessor_scanner_new.cpp"
+
+                }
+                break;
+
+                case 22:
+                {
+
+#line 423 "barf_preprocessor_scanner.reflex"
+
+        SPEW("READING_CODE_STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
         EmitError(GetFiLoc(), "ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal");
     
-#line 541 "barf_preprocessor_scanner_new.cpp"
+#line 560 "barf_preprocessor_scanner_new.cpp"
+
+                }
+                break;
+
+                case 23:
+                {
+
+#line 260 "barf_preprocessor_scanner.reflex"
+
+        SPEW("TRANSITION_TO_CODE - () = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
+        ScannerMode(Mode::READING_CODE);
+        if (m_is_reading_newline_sensitive_code)
+            return Parser::Token::CODE_LINE;
+        else
+            return Parser::Token::START_CODE;
+    
+#line 577 "barf_preprocessor_scanner_new.cpp"
 
                 }
                 break;
@@ -553,7 +589,7 @@ Parser::Token::Type ScannerNew::Scan (
     assert(false && "you didn't handle EOF properly");
     return Parser::Token::END_;
 
-#line 557 "barf_preprocessor_scanner_new.cpp"
+#line 593 "barf_preprocessor_scanner_new.cpp"
 }
 
 bool ScannerNew::IsInputAtEnd_ ()
@@ -563,7 +599,7 @@ bool ScannerNew::IsInputAtEnd_ ()
 
     return In().peek() == char_traits<char>::eof();
 
-#line 567 "barf_preprocessor_scanner_new.cpp"
+#line 603 "barf_preprocessor_scanner_new.cpp"
 }
 
 ReflexCpp_::Uint8_ ScannerNew::ReadNextAtom_ ()
@@ -573,7 +609,7 @@ ReflexCpp_::Uint8_ ScannerNew::ReadNextAtom_ ()
 
     return In().get();
 
-#line 577 "barf_preprocessor_scanner_new.cpp"
+#line 613 "barf_preprocessor_scanner_new.cpp"
 }
 
 void ScannerNew::ResetForNewInput_ ()
@@ -584,7 +620,7 @@ void ScannerNew::ResetForNewInput_ ()
 #line 162 "barf_preprocessor_scanner.reflex"
 
 
-#line 588 "barf_preprocessor_scanner_new.cpp"
+#line 624 "barf_preprocessor_scanner_new.cpp"
 }
 
 void ScannerNew::DebugPrintAtom_ (ReflexCpp_::Uint8_ atom)
@@ -641,17 +677,17 @@ ReflexCpp_::AutomatonApparatus_::DfaState_ const ScannerNew::ms_state_table_[] =
     { 0, 2, ms_transition_table_+0 },
     { 0, 1, ms_transition_table_+2 },
     { 0, 1, ms_transition_table_+3 },
-    { 22, 2, ms_transition_table_+4 },
-    { 22, 3, ms_transition_table_+6 },
-    { 22, 2, ms_transition_table_+9 },
-    { 22, 6, ms_transition_table_+11 },
-    { 22, 2, ms_transition_table_+17 },
+    { 24, 2, ms_transition_table_+4 },
+    { 24, 3, ms_transition_table_+6 },
+    { 24, 2, ms_transition_table_+9 },
+    { 24, 6, ms_transition_table_+11 },
+    { 24, 2, ms_transition_table_+17 },
     { 3, 0, ms_transition_table_+19 },
     { 2, 0, ms_transition_table_+19 },
     { 4, 6, ms_transition_table_+19 },
     { 4, 3, ms_transition_table_+25 },
-    { 22, 2, ms_transition_table_+28 },
-    { 22, 28, ms_transition_table_+30 },
+    { 24, 2, ms_transition_table_+28 },
+    { 24, 28, ms_transition_table_+30 },
     { 14, 0, ms_transition_table_+58 },
     { 5, 0, ms_transition_table_+58 },
     { 6, 0, ms_transition_table_+58 },
@@ -664,21 +700,23 @@ ReflexCpp_::AutomatonApparatus_::DfaState_ const ScannerNew::ms_state_table_[] =
     { 10, 4, ms_transition_table_+64 },
     { 8, 0, ms_transition_table_+68 },
     { 7, 28, ms_transition_table_+68 },
-    { 22, 2, ms_transition_table_+96 },
-    { 22, 9, ms_transition_table_+98 },
-    { 21, 0, ms_transition_table_+107 },
-    { 18, 4, ms_transition_table_+107 },
-    { 18, 4, ms_transition_table_+111 },
-    { 19, 0, ms_transition_table_+115 },
-    { 21, 2, ms_transition_table_+115 },
-    { 21, 5, ms_transition_table_+117 },
-    { 17, 0, ms_transition_table_+122 },
-    { 17, 1, ms_transition_table_+122 },
-    { 15, 1, ms_transition_table_+123 },
-    { 17, 3, ms_transition_table_+124 },
-    { 16, 3, ms_transition_table_+127 },
-    { 20, 5, ms_transition_table_+130 },
-    { 20, 9, ms_transition_table_+135 }
+    { 24, 2, ms_transition_table_+96 },
+    { 24, 9, ms_transition_table_+98 },
+    { 22, 0, ms_transition_table_+107 },
+    { 19, 4, ms_transition_table_+107 },
+    { 19, 4, ms_transition_table_+111 },
+    { 20, 0, ms_transition_table_+115 },
+    { 22, 2, ms_transition_table_+115 },
+    { 22, 7, ms_transition_table_+117 },
+    { 18, 0, ms_transition_table_+124 },
+    { 17, 0, ms_transition_table_+124 },
+    { 17, 1, ms_transition_table_+124 },
+    { 15, 1, ms_transition_table_+125 },
+    { 17, 3, ms_transition_table_+126 },
+    { 16, 3, ms_transition_table_+129 },
+    { 21, 7, ms_transition_table_+132 },
+    { 21, 9, ms_transition_table_+139 },
+    { 23, 0, ms_transition_table_+148 }
 };
 ReflexCpp_::Size_ const ScannerNew::ms_state_count_ = sizeof(ScannerNew::ms_state_table_) / sizeof(ReflexCpp_::AutomatonApparatus_::DfaState_);
 
@@ -781,7 +819,7 @@ ReflexCpp_::AutomatonApparatus_::DfaTransition_ const ScannerNew::ms_transition_
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 97, 122, ms_state_table_+22 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 126, 255, ms_state_table_+14 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_CONDITIONAL_, 2, 0, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_CONDITIONAL_, 2, 2, ms_state_table_+40 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_CONDITIONAL_, 2, 2, ms_state_table_+41 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 34, 34, ms_state_table_+31 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 92, 92, ms_state_table_+32 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 1, 8, ms_state_table_+28 },
@@ -800,25 +838,29 @@ ReflexCpp_::AutomatonApparatus_::DfaTransition_ const ScannerNew::ms_transition_
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 35, 91, ms_state_table_+30 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 93, 126, ms_state_table_+30 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_CONDITIONAL_, 2, 0, ms_state_table_+33 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_CONDITIONAL_, 2, 2, ms_state_table_+39 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 48, 48, ms_state_table_+35 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 120, 120, ms_state_table_+37 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 32, 47, ms_state_table_+34 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 49, 119, ms_state_table_+34 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 121, 126, ms_state_table_+34 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 48, 55, ms_state_table_+36 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 48, 55, ms_state_table_+36 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 48, 57, ms_state_table_+38 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 65, 70, ms_state_table_+38 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 97, 102, ms_state_table_+38 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 48, 57, ms_state_table_+38 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 65, 70, ms_state_table_+38 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 97, 102, ms_state_table_+38 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 48, 48, ms_state_table_+35 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 120, 120, ms_state_table_+37 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 32, 47, ms_state_table_+34 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 49, 119, ms_state_table_+34 },
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 121, 126, ms_state_table_+34 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_CONDITIONAL_, 2, 2, ms_state_table_+40 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 48, 48, ms_state_table_+36 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 120, 120, ms_state_table_+38 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 1, 31, ms_state_table_+34 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 32, 47, ms_state_table_+35 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 49, 119, ms_state_table_+35 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 121, 126, ms_state_table_+35 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 127, 255, ms_state_table_+34 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 48, 55, ms_state_table_+37 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 48, 55, ms_state_table_+37 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 48, 57, ms_state_table_+39 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 65, 70, ms_state_table_+39 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 97, 102, ms_state_table_+39 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 48, 57, ms_state_table_+39 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 65, 70, ms_state_table_+39 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 97, 102, ms_state_table_+39 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 48, 48, ms_state_table_+36 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 120, 120, ms_state_table_+38 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 1, 31, ms_state_table_+34 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 32, 47, ms_state_table_+35 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 49, 119, ms_state_table_+35 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 121, 126, ms_state_table_+35 },
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 127, 255, ms_state_table_+34 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 34, 34, ms_state_table_+31 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_, 92, 92, ms_state_table_+32 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::TT_INPUT_ATOM_RANGE_, 1, 8, ms_state_table_+28 },
@@ -831,7 +873,7 @@ ReflexCpp_::AutomatonApparatus_::DfaTransition_ const ScannerNew::ms_transition_
 };
 ReflexCpp_::Size_ const ScannerNew::ms_transition_count_ = sizeof(ScannerNew::ms_transition_table_) / sizeof(ReflexCpp_::AutomatonApparatus_::DfaTransition_);
 
-ReflexCpp_::Uint32_ const ScannerNew::ms_accept_handler_count_ = 22;
+ReflexCpp_::Uint32_ const ScannerNew::ms_accept_handler_count_ = 24;
 
 
 #line 143 "barf_preprocessor_scanner.reflex"
@@ -839,4 +881,4 @@ ReflexCpp_::Uint32_ const ScannerNew::ms_accept_handler_count_ = 22;
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 843 "barf_preprocessor_scanner_new.cpp"
+#line 885 "barf_preprocessor_scanner_new.cpp"

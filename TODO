@@ -2,7 +2,7 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
-- guarantee that errors will be reported such that the line numbers never 
+- guarantee that errors will be reported such that the line numbers never
   decrease.
 - improve the parser/scanner/ast verbosity (i.e. prefix each line with a label)
 - bug: getting "file not found" error when a file exists but the permissions
@@ -156,7 +156,7 @@
   and such.
 * implement ungreedy pattern matching (e.g. ".*?b" when given "aaabab" will
   match "aaab" instead of the greedy match of "aaabab").
-* positive/negative lookahead matching 
+* positive/negative lookahead matching
   "dumbfaces" -> "dumb(?=face)" matches "dumb"
   "dumbfaces" -> "dumb(?=erface)" doesn't match
   "dumbfaces" -> "dumb(?!face)" doesn't match

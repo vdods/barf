@@ -30,7 +30,7 @@ void EmitWarning (FiLoc const &filoc, string const &message)
     if (g_options != NULL && g_options->GetTreatWarningsAsErrors())
         EmitError(filoc, message);
     else
-        cerr << filoc.GetAsString() << ": warning: " << message << endl;
+        cerr << filoc << ": warning: " << message << endl;
 }
 
 void EmitError (string const &message)
@@ -59,7 +59,7 @@ void EmitError (FiLoc const &filoc, string const &message)
         if (g_options != NULL && g_options->GetAssertOnError())
             assert(false && "you have requested to assert on error, human, and here it is");
 #endif
-        cerr << filoc.GetAsString() << ": error: " << message << endl;
+        cerr << filoc << ": error: " << message << endl;
     }
 }
 
@@ -80,7 +80,7 @@ void EmitFatalError (FiLoc const &filoc, string const &message)
     if (g_options != NULL && g_options->GetAssertOnError())
         assert(false && "you have requested to assert on error, human, and here it is");
 #endif
-    THROW_STRING(filoc.GetAsString() << ": fatal: " << message);
+    THROW_STRING(filoc << ": fatal: " << message);
 }
 
 } // end of namespace Barf

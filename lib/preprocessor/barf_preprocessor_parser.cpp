@@ -508,7 +508,6 @@ Ast::Base * Parser::ReductionRuleHandler0000 ()
     assert(0 < m_reduction_rule_token_count);
     return m_token_stack[m_token_stack.size() - m_reduction_rule_token_count];
 
-    return NULL;
 }
 
 // rule 1: body <-     
@@ -519,8 +518,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
 
         return new Body();
     
-#line 523 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 522 "barf_preprocessor_parser.cpp"
 }
 
 // rule 2: body <- TEXT:text    
@@ -535,8 +533,7 @@ Ast::Base * Parser::ReductionRuleHandler0002 ()
         body->Append(text);
         return body;
     
-#line 539 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 537 "barf_preprocessor_parser.cpp"
 }
 
 // rule 3: body <- body:body executable:executable    
@@ -553,8 +550,7 @@ Ast::Base * Parser::ReductionRuleHandler0003 ()
             body->Append(executable);
         return body;
     
-#line 557 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 554 "barf_preprocessor_parser.cpp"
 }
 
 // rule 4: body <- body:body executable:executable TEXT:text    
@@ -574,8 +570,7 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
         body->Append(text);
         return body;
     
-#line 578 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 574 "barf_preprocessor_parser.cpp"
 }
 
 // rule 5: executable <- code:code    
@@ -586,8 +581,7 @@ Ast::Base * Parser::ReductionRuleHandler0005 ()
 
 #line 175 "barf_preprocessor_parser.trison"
  return code; 
-#line 590 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 585 "barf_preprocessor_parser.cpp"
 }
 
 // rule 6: executable <- conditional_series:conditional    
@@ -598,8 +592,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
 
 #line 177 "barf_preprocessor_parser.trison"
  return conditional; 
-#line 602 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 596 "barf_preprocessor_parser.cpp"
 }
 
 // rule 7: executable <- define:define body:body end_define    
@@ -615,8 +608,7 @@ Ast::Base * Parser::ReductionRuleHandler0007 ()
         define->SetBody(body);
         return define;
     
-#line 619 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 612 "barf_preprocessor_parser.cpp"
 }
 
 // rule 8: executable <- loop:loop body:body end_loop    
@@ -632,8 +624,7 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
         loop->SetBody(body);
         return loop;
     
-#line 636 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 628 "barf_preprocessor_parser.cpp"
 }
 
 // rule 9: executable <- for_each:for_each body:body end_for_each    
@@ -649,8 +640,7 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
         for_each->SetBody(body);
         return for_each;
     
-#line 653 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 644 "barf_preprocessor_parser.cpp"
 }
 
 // rule 10: code <- START_CODE code_body:code_body END_CODE    
@@ -661,8 +651,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
 
 #line 200 "barf_preprocessor_parser.trison"
  return code_body; 
-#line 665 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 655 "barf_preprocessor_parser.cpp"
 }
 
 // rule 11: code <- CODE_LINE code_body:code_body CODE_NEWLINE    
@@ -673,8 +662,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
 
 #line 202 "barf_preprocessor_parser.trison"
  return code_body; 
-#line 677 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 666 "barf_preprocessor_parser.cpp"
 }
 
 // rule 12: code_body <-     
@@ -683,8 +671,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
 
 #line 208 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 687 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 675 "barf_preprocessor_parser.cpp"
 }
 
 // rule 13: code_body <- expression:expression    
@@ -695,8 +682,7 @@ Ast::Base * Parser::ReductionRuleHandler0013 ()
 
 #line 211 "barf_preprocessor_parser.trison"
  return expression; 
-#line 699 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 686 "barf_preprocessor_parser.cpp"
 }
 
 // rule 14: code_body <- DUMP_SYMBOL_TABLE '(' ')'    
@@ -705,8 +691,7 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
 
 #line 214 "barf_preprocessor_parser.trison"
  return new DumpSymbolTable(); 
-#line 709 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 695 "barf_preprocessor_parser.cpp"
 }
 
 // rule 15: code_body <- UNDEFINE '(' ID:id ')'    
@@ -717,8 +702,7 @@ Ast::Base * Parser::ReductionRuleHandler0015 ()
 
 #line 217 "barf_preprocessor_parser.trison"
  return new Undefine(id); 
-#line 721 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 706 "barf_preprocessor_parser.cpp"
 }
 
 // rule 16: code_body <- DECLARE_ARRAY '(' ID:id ')'    
@@ -729,8 +713,7 @@ Ast::Base * Parser::ReductionRuleHandler0016 ()
 
 #line 220 "barf_preprocessor_parser.trison"
  return new DeclareArray(id); 
-#line 733 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 717 "barf_preprocessor_parser.cpp"
 }
 
 // rule 17: code_body <- DECLARE_MAP '(' ID:id ')'    
@@ -741,8 +724,7 @@ Ast::Base * Parser::ReductionRuleHandler0017 ()
 
 #line 223 "barf_preprocessor_parser.trison"
  return new DeclareMap(id); 
-#line 745 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 728 "barf_preprocessor_parser.cpp"
 }
 
 // rule 18: code_body <- INCLUDE '(' expression:include_filename_expression ')'    
@@ -753,8 +735,7 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
 
 #line 226 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, false); 
-#line 757 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 739 "barf_preprocessor_parser.cpp"
 }
 
 // rule 19: code_body <- SANDBOX_INCLUDE '(' expression:include_filename_expression ')'    
@@ -765,8 +746,7 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
 
 #line 229 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, true); 
-#line 769 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 750 "barf_preprocessor_parser.cpp"
 }
 
 // rule 20: code_body <- WARNING '(' expression:message_expression ')'    
@@ -777,8 +757,7 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
 
 #line 232 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::WARNING); 
-#line 781 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 761 "barf_preprocessor_parser.cpp"
 }
 
 // rule 21: code_body <- ERROR '(' expression:message_expression ')'    
@@ -789,8 +768,7 @@ Ast::Base * Parser::ReductionRuleHandler0021 ()
 
 #line 235 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::ERROR); 
-#line 793 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 772 "barf_preprocessor_parser.cpp"
 }
 
 // rule 22: code_body <- FATAL_ERROR '(' expression:message_expression ')'    
@@ -801,8 +779,7 @@ Ast::Base * Parser::ReductionRuleHandler0022 ()
 
 #line 238 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::FATAL_ERROR); 
-#line 805 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 783 "barf_preprocessor_parser.cpp"
 }
 
 // rule 23: conditional_series <- if_statement:conditional body:if_body conditional_series_end:else_body    
@@ -821,8 +798,7 @@ Ast::Base * Parser::ReductionRuleHandler0023 ()
         conditional->SetElseBody(else_body);
         return conditional;
     
-#line 825 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 802 "barf_preprocessor_parser.cpp"
 }
 
 // rule 24: conditional_series_end <- end_if    
@@ -831,8 +807,7 @@ Ast::Base * Parser::ReductionRuleHandler0024 ()
 
 #line 253 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 835 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 811 "barf_preprocessor_parser.cpp"
 }
 
 // rule 25: conditional_series_end <- else_statement body:body end_if    
@@ -843,8 +818,7 @@ Ast::Base * Parser::ReductionRuleHandler0025 ()
 
 #line 255 "barf_preprocessor_parser.trison"
  return body; 
-#line 847 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 822 "barf_preprocessor_parser.cpp"
 }
 
 // rule 26: conditional_series_end <- else_if_statement:conditional body:if_body conditional_series_end:else_body    
@@ -865,8 +839,7 @@ Ast::Base * Parser::ReductionRuleHandler0026 ()
         body->Append(conditional);
         return body;
     
-#line 869 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 843 "barf_preprocessor_parser.cpp"
 }
 
 // rule 27: if_statement <- START_CODE IF '(' expression:expression ')' END_CODE    
@@ -877,8 +850,7 @@ Ast::Base * Parser::ReductionRuleHandler0027 ()
 
 #line 270 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 881 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 854 "barf_preprocessor_parser.cpp"
 }
 
 // rule 28: if_statement <- CODE_LINE IF '(' expression:expression ')' CODE_NEWLINE    
@@ -889,8 +861,7 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
 
 #line 273 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 893 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 865 "barf_preprocessor_parser.cpp"
 }
 
 // rule 29: else_statement <- START_CODE ELSE END_CODE    
@@ -899,8 +870,7 @@ Ast::Base * Parser::ReductionRuleHandler0029 ()
 
 #line 278 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 903 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 874 "barf_preprocessor_parser.cpp"
 }
 
 // rule 30: else_statement <- CODE_LINE ELSE CODE_NEWLINE    
@@ -909,8 +879,7 @@ Ast::Base * Parser::ReductionRuleHandler0030 ()
 
 #line 280 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 913 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 883 "barf_preprocessor_parser.cpp"
 }
 
 // rule 31: else_if_statement <- START_CODE ELSE_IF '(' expression:expression ')' END_CODE    
@@ -921,8 +890,7 @@ Ast::Base * Parser::ReductionRuleHandler0031 ()
 
 #line 286 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 925 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 894 "barf_preprocessor_parser.cpp"
 }
 
 // rule 32: else_if_statement <- CODE_LINE ELSE_IF '(' expression:expression ')' CODE_NEWLINE    
@@ -933,8 +901,7 @@ Ast::Base * Parser::ReductionRuleHandler0032 ()
 
 #line 289 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 937 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 905 "barf_preprocessor_parser.cpp"
 }
 
 // rule 33: end_if <- START_CODE END_IF END_CODE    
@@ -943,8 +910,7 @@ Ast::Base * Parser::ReductionRuleHandler0033 ()
 
 #line 294 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 947 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 914 "barf_preprocessor_parser.cpp"
 }
 
 // rule 34: end_if <- CODE_LINE END_IF CODE_NEWLINE    
@@ -953,8 +919,7 @@ Ast::Base * Parser::ReductionRuleHandler0034 ()
 
 #line 296 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 957 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 923 "barf_preprocessor_parser.cpp"
 }
 
 // rule 35: define <- define_scalar:define    
@@ -965,8 +930,7 @@ Ast::Base * Parser::ReductionRuleHandler0035 ()
 
 #line 301 "barf_preprocessor_parser.trison"
  return define; 
-#line 969 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 934 "barf_preprocessor_parser.cpp"
 }
 
 // rule 36: define <- define_array_element:define    
@@ -977,8 +941,7 @@ Ast::Base * Parser::ReductionRuleHandler0036 ()
 
 #line 303 "barf_preprocessor_parser.trison"
  return define; 
-#line 981 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 945 "barf_preprocessor_parser.cpp"
 }
 
 // rule 37: define <- define_map_element:define    
@@ -989,8 +952,7 @@ Ast::Base * Parser::ReductionRuleHandler0037 ()
 
 #line 305 "barf_preprocessor_parser.trison"
  return define; 
-#line 993 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 956 "barf_preprocessor_parser.cpp"
 }
 
 // rule 38: define_scalar <- START_CODE DEFINE '(' ID:id ')' END_CODE    
@@ -1001,8 +963,7 @@ Ast::Base * Parser::ReductionRuleHandler0038 ()
 
 #line 311 "barf_preprocessor_parser.trison"
  return new Define(id); 
-#line 1005 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 967 "barf_preprocessor_parser.cpp"
 }
 
 // rule 39: define_scalar <- CODE_LINE DEFINE '(' ID:id ')' CODE_NEWLINE    
@@ -1013,8 +974,7 @@ Ast::Base * Parser::ReductionRuleHandler0039 ()
 
 #line 314 "barf_preprocessor_parser.trison"
  return new Define(id); 
-#line 1017 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 978 "barf_preprocessor_parser.cpp"
 }
 
 // rule 40: define_array_element <- START_CODE DEFINE '(' ID:id '[' ']' ')' END_CODE    
@@ -1025,8 +985,7 @@ Ast::Base * Parser::ReductionRuleHandler0040 ()
 
 #line 320 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
-#line 1029 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 989 "barf_preprocessor_parser.cpp"
 }
 
 // rule 41: define_array_element <- CODE_LINE DEFINE '(' ID:id '[' ']' ')' CODE_NEWLINE    
@@ -1037,8 +996,7 @@ Ast::Base * Parser::ReductionRuleHandler0041 ()
 
 #line 323 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
-#line 1041 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1000 "barf_preprocessor_parser.cpp"
 }
 
 // rule 42: define_map_element <- START_CODE DEFINE '(' ID:id '[' STRING_LITERAL:key ']' ')' END_CODE    
@@ -1051,8 +1009,7 @@ Ast::Base * Parser::ReductionRuleHandler0042 ()
 
 #line 329 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
-#line 1055 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1013 "barf_preprocessor_parser.cpp"
 }
 
 // rule 43: define_map_element <- CODE_LINE DEFINE '(' ID:id '[' STRING_LITERAL:key ']' ')' CODE_NEWLINE    
@@ -1065,8 +1022,7 @@ Ast::Base * Parser::ReductionRuleHandler0043 ()
 
 #line 332 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
-#line 1069 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1026 "barf_preprocessor_parser.cpp"
 }
 
 // rule 44: end_define <- START_CODE END_DEFINE END_CODE    
@@ -1075,8 +1031,7 @@ Ast::Base * Parser::ReductionRuleHandler0044 ()
 
 #line 337 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1079 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1035 "barf_preprocessor_parser.cpp"
 }
 
 // rule 45: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE    
@@ -1085,8 +1040,7 @@ Ast::Base * Parser::ReductionRuleHandler0045 ()
 
 #line 339 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1089 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1044 "barf_preprocessor_parser.cpp"
 }
 
 // rule 46: loop <- START_CODE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' END_CODE    
@@ -1099,8 +1053,7 @@ Ast::Base * Parser::ReductionRuleHandler0046 ()
 
 #line 345 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
-#line 1103 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1057 "barf_preprocessor_parser.cpp"
 }
 
 // rule 47: loop <- CODE_LINE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' CODE_NEWLINE    
@@ -1113,8 +1066,7 @@ Ast::Base * Parser::ReductionRuleHandler0047 ()
 
 #line 348 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
-#line 1117 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1070 "barf_preprocessor_parser.cpp"
 }
 
 // rule 48: end_loop <- START_CODE END_LOOP END_CODE    
@@ -1123,8 +1075,7 @@ Ast::Base * Parser::ReductionRuleHandler0048 ()
 
 #line 353 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1127 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1079 "barf_preprocessor_parser.cpp"
 }
 
 // rule 49: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE    
@@ -1133,8 +1084,7 @@ Ast::Base * Parser::ReductionRuleHandler0049 ()
 
 #line 355 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1137 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1088 "barf_preprocessor_parser.cpp"
 }
 
 // rule 50: for_each <- START_CODE FOR_EACH '(' ID:key_id ',' ID:map_id ')' END_CODE    
@@ -1147,8 +1097,7 @@ Ast::Base * Parser::ReductionRuleHandler0050 ()
 
 #line 361 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
-#line 1151 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1101 "barf_preprocessor_parser.cpp"
 }
 
 // rule 51: for_each <- CODE_LINE FOR_EACH '(' ID:key_id ',' ID:map_id ')' CODE_NEWLINE    
@@ -1161,8 +1110,7 @@ Ast::Base * Parser::ReductionRuleHandler0051 ()
 
 #line 364 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
-#line 1165 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1114 "barf_preprocessor_parser.cpp"
 }
 
 // rule 52: end_for_each <- START_CODE END_FOR_EACH END_CODE    
@@ -1171,8 +1119,7 @@ Ast::Base * Parser::ReductionRuleHandler0052 ()
 
 #line 369 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1175 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1123 "barf_preprocessor_parser.cpp"
 }
 
 // rule 53: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE    
@@ -1181,8 +1128,7 @@ Ast::Base * Parser::ReductionRuleHandler0053 ()
 
 #line 371 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1185 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1132 "barf_preprocessor_parser.cpp"
 }
 
 // rule 54: expression <- STRING_LITERAL:str    
@@ -1193,8 +1139,7 @@ Ast::Base * Parser::ReductionRuleHandler0054 ()
 
 #line 377 "barf_preprocessor_parser.trison"
  return str; 
-#line 1197 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1143 "barf_preprocessor_parser.cpp"
 }
 
 // rule 55: expression <- INTEGER_LITERAL:integer    
@@ -1205,8 +1150,7 @@ Ast::Base * Parser::ReductionRuleHandler0055 ()
 
 #line 380 "barf_preprocessor_parser.trison"
  return integer; 
-#line 1209 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1154 "barf_preprocessor_parser.cpp"
 }
 
 // rule 56: expression <- SIZEOF '(' ID:id ')'    
@@ -1217,8 +1161,7 @@ Ast::Base * Parser::ReductionRuleHandler0056 ()
 
 #line 383 "barf_preprocessor_parser.trison"
  return new Sizeof(id); 
-#line 1221 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1165 "barf_preprocessor_parser.cpp"
 }
 
 // rule 57: expression <- KEYWORD_INT '(' expression:expression ')'    
@@ -1229,8 +1172,7 @@ Ast::Base * Parser::ReductionRuleHandler0057 ()
 
 #line 386 "barf_preprocessor_parser.trison"
  return new Operation(Operation::INT_CAST, expression); 
-#line 1233 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1176 "barf_preprocessor_parser.cpp"
 }
 
 // rule 58: expression <- KEYWORD_STRING '(' expression:expression ')'    
@@ -1241,8 +1183,7 @@ Ast::Base * Parser::ReductionRuleHandler0058 ()
 
 #line 389 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_CAST, expression); 
-#line 1245 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1187 "barf_preprocessor_parser.cpp"
 }
 
 // rule 59: expression <- STRING_LENGTH '(' expression:expression ')'    
@@ -1253,8 +1194,7 @@ Ast::Base * Parser::ReductionRuleHandler0059 ()
 
 #line 392 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_LENGTH, expression); 
-#line 1257 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1198 "barf_preprocessor_parser.cpp"
 }
 
 // rule 60: expression <- IS_DEFINED '(' ID:id ')'    
@@ -1265,8 +1205,7 @@ Ast::Base * Parser::ReductionRuleHandler0060 ()
 
 #line 395 "barf_preprocessor_parser.trison"
  return new IsDefined(id, NULL); 
-#line 1269 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1209 "barf_preprocessor_parser.cpp"
 }
 
 // rule 61: expression <- IS_DEFINED '(' ID:id '[' expression:element_index_expression ']' ')'    
@@ -1279,8 +1218,7 @@ Ast::Base * Parser::ReductionRuleHandler0061 ()
 
 #line 398 "barf_preprocessor_parser.trison"
  return new IsDefined(id, element_index_expression); 
-#line 1283 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1222 "barf_preprocessor_parser.cpp"
 }
 
 // rule 62: expression <- ID:id    
@@ -1291,8 +1229,7 @@ Ast::Base * Parser::ReductionRuleHandler0062 ()
 
 #line 401 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
-#line 1295 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1233 "barf_preprocessor_parser.cpp"
 }
 
 // rule 63: expression <- ID:id '[' expression:element_index_expression ']'    
@@ -1305,8 +1242,7 @@ Ast::Base * Parser::ReductionRuleHandler0063 ()
 
 #line 404 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); 
-#line 1309 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1246 "barf_preprocessor_parser.cpp"
 }
 
 // rule 64: expression <- ID:id '?'    
@@ -1317,8 +1253,7 @@ Ast::Base * Parser::ReductionRuleHandler0064 ()
 
 #line 407 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
-#line 1321 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1257 "barf_preprocessor_parser.cpp"
 }
 
 // rule 65: expression <- ID:id '[' expression:element_index_expression ']' '?'    
@@ -1331,8 +1266,7 @@ Ast::Base * Parser::ReductionRuleHandler0065 ()
 
 #line 410 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); 
-#line 1335 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1270 "barf_preprocessor_parser.cpp"
 }
 
 // rule 66: expression <- expression:left '.' expression:right    %left %prec CONCATENATION
@@ -1345,8 +1279,7 @@ Ast::Base * Parser::ReductionRuleHandler0066 ()
 
 #line 413 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::CONCATENATE, right); 
-#line 1349 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1283 "barf_preprocessor_parser.cpp"
 }
 
 // rule 67: expression <- expression:left '|' '|' expression:right     %prec LOGICAL_OR
@@ -1359,8 +1292,7 @@ Ast::Base * Parser::ReductionRuleHandler0067 ()
 
 #line 416 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_OR, right); 
-#line 1363 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1296 "barf_preprocessor_parser.cpp"
 }
 
 // rule 68: expression <- expression:left '&' '&' expression:right     %prec LOGICAL_AND
@@ -1373,8 +1305,7 @@ Ast::Base * Parser::ReductionRuleHandler0068 ()
 
 #line 419 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_AND, right); 
-#line 1377 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1309 "barf_preprocessor_parser.cpp"
 }
 
 // rule 69: expression <- expression:left '=' '=' expression:right     %prec EQUALITY
@@ -1387,8 +1318,7 @@ Ast::Base * Parser::ReductionRuleHandler0069 ()
 
 #line 422 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::EQUAL, right); 
-#line 1391 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1322 "barf_preprocessor_parser.cpp"
 }
 
 // rule 70: expression <- expression:left '!' '=' expression:right     %prec EQUALITY
@@ -1401,8 +1331,7 @@ Ast::Base * Parser::ReductionRuleHandler0070 ()
 
 #line 425 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::NOT_EQUAL, right); 
-#line 1405 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1335 "barf_preprocessor_parser.cpp"
 }
 
 // rule 71: expression <- expression:left '<' expression:right    %left %prec COMPARISON
@@ -1415,8 +1344,7 @@ Ast::Base * Parser::ReductionRuleHandler0071 ()
 
 #line 428 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN, right); 
-#line 1419 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1348 "barf_preprocessor_parser.cpp"
 }
 
 // rule 72: expression <- expression:left '<' '=' expression:right     %prec COMPARISON
@@ -1429,8 +1357,7 @@ Ast::Base * Parser::ReductionRuleHandler0072 ()
 
 #line 431 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN_OR_EQUAL, right); 
-#line 1433 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1361 "barf_preprocessor_parser.cpp"
 }
 
 // rule 73: expression <- expression:left '>' expression:right    %left %prec COMPARISON
@@ -1443,8 +1370,7 @@ Ast::Base * Parser::ReductionRuleHandler0073 ()
 
 #line 434 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN, right); 
-#line 1447 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1374 "barf_preprocessor_parser.cpp"
 }
 
 // rule 74: expression <- expression:left '>' '=' expression:right     %prec COMPARISON
@@ -1457,8 +1383,7 @@ Ast::Base * Parser::ReductionRuleHandler0074 ()
 
 #line 437 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN_OR_EQUAL, right); 
-#line 1461 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1387 "barf_preprocessor_parser.cpp"
 }
 
 // rule 75: expression <- expression:left '+' expression:right    %left %prec ADDITION
@@ -1471,8 +1396,7 @@ Ast::Base * Parser::ReductionRuleHandler0075 ()
 
 #line 440 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::PLUS, right); 
-#line 1475 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1400 "barf_preprocessor_parser.cpp"
 }
 
 // rule 76: expression <- expression:left '-' expression:right    %left %prec ADDITION
@@ -1485,8 +1409,7 @@ Ast::Base * Parser::ReductionRuleHandler0076 ()
 
 #line 443 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MINUS, right); 
-#line 1489 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1413 "barf_preprocessor_parser.cpp"
 }
 
 // rule 77: expression <- expression:left '*' expression:right    %left %prec MULTIPLICATION
@@ -1499,8 +1422,7 @@ Ast::Base * Parser::ReductionRuleHandler0077 ()
 
 #line 446 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MULTIPLY, right); 
-#line 1503 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1426 "barf_preprocessor_parser.cpp"
 }
 
 // rule 78: expression <- expression:left '/' expression:right    %left %prec MULTIPLICATION
@@ -1513,8 +1435,7 @@ Ast::Base * Parser::ReductionRuleHandler0078 ()
 
 #line 449 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::DIVIDE, right); 
-#line 1517 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1439 "barf_preprocessor_parser.cpp"
 }
 
 // rule 79: expression <- expression:left '%' expression:right    %left %prec MULTIPLICATION
@@ -1527,8 +1448,7 @@ Ast::Base * Parser::ReductionRuleHandler0079 ()
 
 #line 452 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::REMAINDER, right); 
-#line 1531 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1452 "barf_preprocessor_parser.cpp"
 }
 
 // rule 80: expression <- '-' expression:expression     %prec UNARY
@@ -1539,8 +1459,7 @@ Ast::Base * Parser::ReductionRuleHandler0080 ()
 
 #line 455 "barf_preprocessor_parser.trison"
  return new Operation(Operation::MINUS, expression); 
-#line 1543 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1463 "barf_preprocessor_parser.cpp"
 }
 
 // rule 81: expression <- '!' expression:expression     %prec UNARY
@@ -1551,8 +1470,7 @@ Ast::Base * Parser::ReductionRuleHandler0081 ()
 
 #line 458 "barf_preprocessor_parser.trison"
  return new Operation(Operation::LOGICAL_NOT, expression); 
-#line 1555 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1474 "barf_preprocessor_parser.cpp"
 }
 
 // rule 82: expression <- '(' expression:expression ')'    
@@ -1563,8 +1481,7 @@ Ast::Base * Parser::ReductionRuleHandler0082 ()
 
 #line 461 "barf_preprocessor_parser.trison"
  return expression; 
-#line 1567 "barf_preprocessor_parser.cpp"
-    return NULL;
+#line 1485 "barf_preprocessor_parser.cpp"
 }
 
 
@@ -4649,5 +4566,5 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 4653 "barf_preprocessor_parser.cpp"
+#line 4570 "barf_preprocessor_parser.cpp"
 

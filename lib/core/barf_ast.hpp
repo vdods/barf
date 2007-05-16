@@ -15,6 +15,7 @@
 
 #include <ostream>
 #include <map>
+#include <sstream>
 #include <vector>
 
 #include "barf_filoc.hpp"
@@ -191,7 +192,7 @@ struct Map : private map<string, ElementType *>
         assert(element != NULL);
         iterator it = find(key);
         if (it != end())
-            EmitError(element->GetFiLoc(), "key \"" + key + "\" previously specified at " + it->second->GetFiLoc().GetAsString());
+            EmitError(element->GetFiLoc(), FORMAT("key \"" << key << "\" previously specified at " << it->second->GetFiLoc()));
         else
             map<string, ElementType *>::operator[](key) = element;
     }

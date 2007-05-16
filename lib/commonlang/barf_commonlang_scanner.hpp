@@ -534,7 +534,7 @@ public:
             REGULAR_EXPRESSION_BRACKET_EXPRESSION = 72,
             STRICT_CODE_BLOCK = 82,
             STRING_LITERAL_GUTS = 93,
-            STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK = 108,
+            STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK = 109,
             // default starting scanner mode
             START_ = MAIN
         }; // end of enum Scanner::Mode::Name
