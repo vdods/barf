@@ -595,25 +595,25 @@ void <{class_name}::PrintParserBranchList_ ()
 <|end_loop
 TrisonCpp_::Npda_::Precedence_ const <{class_name}::ms_precedence_table_[] =
 {
-<|loop(i, sizeof(_npda_precedence_level))
+<|loop(i, sizeof(_precedence_level))
     { <|
-<{_npda_precedence_level[i]}<|", "
-TrisonCpp_::Npda_::ASSOCIATIVITY_<{_npda_precedence_associativity_name[i]}_<|", "
-"<{_npda_precedence_name[i]}"<|
- }<{if(i+1 < sizeof(_npda_precedence_level))},<{end_if}
+<{_precedence_level[i]}<|", "
+TrisonCpp_::Npda_::ASSOCIATIVITY_<{_precedence_associativity_name[i]}_<|", "
+"<{_precedence_name[i]}"<|
+ }<{if(i+1 < sizeof(_precedence_level))},<{end_if}
 <|end_loop
 };
 TrisonCpp_::Size_ const <{class_name}::ms_precedence_count_ = sizeof(<{class_name}::ms_precedence_table_) / sizeof(TrisonCpp_::Npda_::Precedence_);
 
 TrisonCpp_::Npda_::Rule_ const <{class_name}::ms_rule_table_[] =
 {
-<|loop(i, sizeof(_npda_rule_reduction_nonterminal_index))
+<|loop(i, sizeof(_rule_reduction_nonterminal_index))
     { <|
-<{class_name}::Nonterminal::<{_npda_rule_reduction_nonterminal_name[i]}<|", "
-<{if(_npda_rule_precedence_index[i] < _npda_precedence_count)}ms_precedence_table_+<{_npda_rule_precedence_index[i]}<{else}NULL<{end_if}<|", "
-<{_npda_rule_token_count[i]}<|", "
-<|_npda_rule_description[i]
- }<{if(i+1 < sizeof(_npda_rule_reduction_nonterminal_index))},<{end_if}
+<{class_name}::Nonterminal::<{_rule_reduction_nonterminal_name[i]}<|", "
+<{if(_rule_precedence_index[i] < _precedence_count)}ms_precedence_table_+<{_rule_precedence_index[i]}<{else}NULL<{end_if}<|", "
+<{_rule_token_count[i]}<|", "
+<|_rule_description[i]
+ }<{if(i+1 < sizeof(_rule_reduction_nonterminal_index))},<{end_if}
 <|end_loop
 };
 TrisonCpp_::Size_ const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(TrisonCpp_::Npda_::Rule_);
@@ -658,7 +658,7 @@ TrisonCpp_::Size_ const <{class_name}::ms_transition_count_ = sizeof(<{class_nam
 enum
 {
     TABLE_SIZE_ASSERTIONS_ =
-        TrisonCpp_::Assert_<<{class_name}::ms_precedence_count_ == <{_npda_precedence_count}>::v_ &&
+        TrisonCpp_::Assert_<<{class_name}::ms_precedence_count_ == <{_precedence_count}>::v_ &&
         TrisonCpp_::Assert_<<{class_name}::ms_rule_count_ == <{_rule_count}>::v_ &&
         TrisonCpp_::Assert_<<{class_name}::ms_state_count_ == <{_npda_state_count}>::v_ &&
         TrisonCpp_::Assert_<<{class_name}::ms_transition_count_ == <{_npda_transition_count}>::v_

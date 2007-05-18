@@ -54,17 +54,63 @@ void PopulateRuleCodeArraySymbol (Nonterminal const &nonterminal, string const &
 void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Preprocessor::SymbolTable &symbol_table)
 {
     // _rule_count -- gives the total number of rules (from all nonterminals combined).
-    Preprocessor::ScalarSymbol *rule_count =
-        symbol_table.DefineScalarSymbol("_rule_count", FiLoc::ms_invalid);
-    rule_count->SetScalarBody(
-        new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
-}
+    {
+        Preprocessor::ScalarSymbol *rule_count =
+            symbol_table.DefineScalarSymbol("_rule_count", FiLoc::ms_invalid);
+        rule_count->SetScalarBody(
+            new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
+    }
 
-void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda_graph, Preprocessor::SymbolTable &symbol_table)
-{
-    assert(npda_graph.GetNodeCount() > 0);
+    // _rule_total_token_count -- specifies the total number of rule tokens from all
+    // rules, summed together.
+    //
+    // _rule_token_assigned_id[_rule_total_token_count] -- a contiguous array of
+    // all the token identifiers for the rule tokens in all rules.  i.e.
+    // elements 0 - m will correspond to the rule token ids in rule 0, elements
+    // m+1 - n will correspond to the rule token ids in rule 1, etc.  if
+    // no identifier was given for a particular token, it will be the empty string.
+    //
+    // _rule_token_table_offset[_rule_count]
+    //
+    // _rule_token_table_count[_rule_count]
+    {
+        Preprocessor::ScalarSymbol *rule_total_token_count =
+            symbol_table.DefineScalarSymbol("_rule_total_token_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_token_assigned_id =
+            symbol_table.DefineArraySymbol("_rule_token_assigned_id", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_token_table_offset =
+            symbol_table.DefineArraySymbol("_rule_token_table_offset", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_token_table_count =
+            symbol_table.DefineArraySymbol("_rule_token_table_count", FiLoc::ms_invalid);
 
-    // _default_parse_nonterminal -- value of %default_parse_nonterminal -- the name of the default default parse nonterminal
+        Uint32 rule_total_token_count_value = primary_source.GetRuleTokenCount();
+        rule_total_token_count->SetScalarBody(
+            new Preprocessor::Body(Sint32(rule_total_token_count_value)));
+        for (Uint32 i = 0; i < rule_total_token_count_value; ++i)
+        {
+            RuleToken const *rule_token = primary_source.GetRuleToken(i);
+            assert(rule_token != NULL);
+            rule_token_assigned_id->AppendArrayElement(
+                new Preprocessor::Body(rule_token->m_assigned_id));
+        }
+
+        Uint32 rule_count = primary_source.GetRuleCount();
+        Uint32 token_table_offset = 0;
+        for (Uint32 i = 0; i < rule_count; ++i)
+        {
+            Rule const *rule = primary_source.GetRule(i);
+            assert(rule != NULL);
+            assert(rule->m_rule_token_list != NULL);
+            rule_token_table_offset->AppendArrayElement(
+                new Preprocessor::Body(Sint32(token_table_offset)));
+            rule_token_table_count->AppendArrayElement(
+                new Preprocessor::Body(Sint32(rule->m_rule_token_list->size())));
+            token_table_offset += rule->m_rule_token_list->size();
+        }
+    }
+
+    // _default_parse_nonterminal -- value of %default_parse_nonterminal -- the
+    // name of the default default parse nonterminal
     {
         Preprocessor::ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol("_default_parse_nonterminal", FiLoc::ms_invalid);
@@ -133,6 +179,141 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
         }
     }
 
+    // _precedence_count -- gives the number of precedences
+    //
+    // _precedence_index[precedence name] -- maps precedence name => precedence index
+    // it should be noted that there is always a "DEFAULT_" precedence with index 0
+    //
+    // _precedence_name[_precedence_count] -- the name of this precedence
+    //
+    // _precedence_level[_precedence_count] -- the numeric precedence level; higher
+    // level indicates higher precedence.  the "DEFAULT_" precedence has level 0.
+    //
+    // _precedence_associativity_index[_precedence_count] -- the numeric value of
+    // the associativity of this precedence (or 1 if no explicit associativity was
+    // supplied). the values are 0 for %left, 1 for %nonassoc, and 2 for %right.
+    //
+    // _precedence_associativity_name[_precedence_count] -- the named associativity
+    // of this precedence (or "NONASSOC" if no explicit associativity was supplied).
+    // the names are "LEFT" for %left, "NONASSOC" for %nonassoc, and "RIGHT" for
+    // %right.
+    {
+        Preprocessor::ScalarSymbol *precedence_count =
+            symbol_table.DefineScalarSymbol("_precedence_count", FiLoc::ms_invalid);
+        precedence_count->SetScalarBody(
+            new Preprocessor::Body(Sint32(primary_source.m_precedence_list->size())));
+
+        Preprocessor::MapSymbol *precedence_index =
+            symbol_table.DefineMapSymbol("_precedence_index", FiLoc::ms_invalid);
+        for (PrecedenceMap::const_iterator it = primary_source.m_precedence_map->begin(),
+                                           it_end = primary_source.m_precedence_map->end();
+             it != it_end;
+             ++it)
+        {
+            string const &precedence_id = it->first;
+            assert(it->second != NULL);
+            Precedence const &precedence = *it->second;
+            // the level and index are the same at the time trison runs
+            precedence_index->SetMapElement(
+                precedence_id,
+                new Preprocessor::Body(precedence.m_precedence_level));
+        }
+
+        Preprocessor::ArraySymbol *precedence_name =
+            symbol_table.DefineArraySymbol("_precedence_name", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *precedence_level =
+            symbol_table.DefineArraySymbol("_precedence_level", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *precedence_associativity_index =
+            symbol_table.DefineArraySymbol("_precedence_associativity_index", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *precedence_associativity_name =
+            symbol_table.DefineArraySymbol("_precedence_associativity_name", FiLoc::ms_invalid);
+        for (PrecedenceList::const_iterator it = primary_source.m_precedence_list->begin(),
+                                            it_end = primary_source.m_precedence_list->end();
+             it != it_end;
+             ++it)
+        {
+            assert(*it != NULL);
+            Precedence const &precedence = **it;
+            precedence_name->AppendArrayElement(
+                new Preprocessor::Body(precedence.m_precedence_id));
+            precedence_level->AppendArrayElement(
+                new Preprocessor::Body(precedence.m_precedence_level));
+            precedence_associativity_index->AppendArrayElement(
+                new Preprocessor::Body(Sint32(precedence.m_precedence_associativity)));
+            precedence_associativity_name->AppendArrayElement(
+                new Preprocessor::Body(precedence.m_precedence_associativity == A_LEFT ? "LEFT" : (precedence.m_precedence_associativity == A_NONASSOC ? "NONASSOC" : "RIGHT")));
+        }
+    }
+
+    // _rule_reduction_nonterminal_index[_rule_count] -- the index of the nonterminal
+    // which this rule reduces to.
+    //
+    // _rule_reduction_nonterminal_name[_rule_count] -- the name of the nonterminal
+    // which this rule reduces to.
+    //
+    // _rule_precedence_index[_rule_count] -- the numeric value of the
+    // precedence of the rule which this state is a part of (0 if no explicit
+    // precedence was supplied).
+    //
+    // _rule_precedence_name[_rule_count] -- the named precedence of the
+    // rule which this state is a part of ("DEFAULT_" if no explicit precedence was supplied).
+    //
+    // _rule_token_count[_rule_count] -- the number of tokens in this rule
+    //
+    // _rule_description[_rule_count] -- the textual description of
+    // this rule (e.g. "exp <- exp '+' exp")
+    {
+        Preprocessor::ArraySymbol *rule_reduction_nonterminal_index =
+            symbol_table.DefineArraySymbol("_rule_reduction_nonterminal_index", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_reduction_nonterminal_name =
+            symbol_table.DefineArraySymbol("_rule_reduction_nonterminal_name", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_precedence_index =
+            symbol_table.DefineArraySymbol("_rule_precedence_index", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_precedence_name =
+            symbol_table.DefineArraySymbol("_rule_precedence_name", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_token_count =
+            symbol_table.DefineArraySymbol("_rule_token_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_description =
+            symbol_table.DefineArraySymbol("_rule_description", FiLoc::ms_invalid);
+
+        for (Uint32 i = 0; i < primary_source.GetRuleCount(); ++i)
+        {
+            Rule const &rule = *primary_source.GetRule(i);
+
+            rule_reduction_nonterminal_index->AppendArrayElement(
+                new Preprocessor::Body(Sint32(primary_source.GetTokenIndex(rule.m_owner_nonterminal->GetText()))));
+            rule_reduction_nonterminal_name->AppendArrayElement(
+                new Preprocessor::Body(rule.m_owner_nonterminal->GetText()));
+
+            Precedence const *rule_precedence = primary_source.m_precedence_map->GetElement(rule.m_rule_precedence_id);
+            assert(rule_precedence != NULL);
+            rule_precedence_index->AppendArrayElement(
+                new Preprocessor::Body(Sint32(rule_precedence->m_precedence_level)));
+            rule_precedence_name->AppendArrayElement(
+                new Preprocessor::Body(rule.m_rule_precedence_id));
+
+            rule_token_count->AppendArrayElement(
+                new Preprocessor::Body(Sint32(rule.m_rule_token_list->size())));
+
+            rule_description->AppendArrayElement(
+                new Preprocessor::Body(GetStringLiteral(rule.GetAsText())));
+        }
+    }
+
+}
+
+void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda_graph, Preprocessor::SymbolTable &symbol_table)
+{
+    assert(npda_graph.GetNodeCount() > 0);
+
+    // _npda_state_count -- the number of nodes in the nondeterministic pushdown automaton (NPDA)
+    {
+        Preprocessor::ScalarSymbol *npda_state_count =
+            symbol_table.DefineScalarSymbol("_npda_state_count", FiLoc::ms_invalid);
+        npda_state_count->SetScalarBody(
+            new Preprocessor::Body(Sint32(npda_graph.GetNodeCount())));
+    }
+
     // _npda_nonterminal_start_state_index[nonterminal name] -- maps nonterminal name => node index
     {
         Preprocessor::MapSymbol *npda_nonterminal_start_state_index =
@@ -149,135 +330,6 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
                 nonterminal_name,
                 new Preprocessor::Body(Sint32(nonterminal->GetNpdaGraphStartState())));
         }
-    }
-
-    // _npda_precedence_count -- gives the number of precedences
-    //
-    // _npda_precedence_index[precedence name] -- maps precedence name => precedence index
-    // it should be noted that there is always a "DEFAULT_" precedence with index 0
-    //
-    // _npda_precedence_name[_npda_precedence_count] -- the name of this precedence
-    //
-    // _npda_precedence_level[_npda_precedence_count] -- the numeric precedence level; higher
-    // level indicates higher precedence.  the "DEFAULT_" precedence has level 0.
-    //
-    // _npda_precedence_associativity_index[_npda_precedence_count] -- the numeric value of
-    // the associativity of this precedence (or 1 if no explicit associativity was
-    // supplied). the values are 0 for %left, 1 for %nonassoc, and 2 for %right.
-    //
-    // _npda_precedence_associativity_name[_npda_precedence_count] -- the named associativity
-    // of this precedence (or "NONASSOC" if no explicit associativity was supplied).
-    // the names are "LEFT" for %left, "NONASSOC" for %nonassoc, and "RIGHT" for
-    // %right.
-    {
-        Preprocessor::ScalarSymbol *npda_precedence_count =
-            symbol_table.DefineScalarSymbol("_npda_precedence_count", FiLoc::ms_invalid);
-        npda_precedence_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(primary_source.m_precedence_list->size())));
-
-        Preprocessor::MapSymbol *npda_precedence_index =
-            symbol_table.DefineMapSymbol("_npda_precedence_index", FiLoc::ms_invalid);
-        for (PrecedenceMap::const_iterator it = primary_source.m_precedence_map->begin(),
-                                           it_end = primary_source.m_precedence_map->end();
-             it != it_end;
-             ++it)
-        {
-            string const &precedence_id = it->first;
-            assert(it->second != NULL);
-            Precedence const &precedence = *it->second;
-            // the level and index are the same at the time trison runs
-            npda_precedence_index->SetMapElement(
-                precedence_id,
-                new Preprocessor::Body(precedence.m_precedence_level));
-        }
-
-        Preprocessor::ArraySymbol *npda_precedence_name =
-            symbol_table.DefineArraySymbol("_npda_precedence_name", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_precedence_level =
-            symbol_table.DefineArraySymbol("_npda_precedence_level", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_precedence_associativity_index =
-            symbol_table.DefineArraySymbol("_npda_precedence_associativity_index", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_precedence_associativity_name =
-            symbol_table.DefineArraySymbol("_npda_precedence_associativity_name", FiLoc::ms_invalid);
-        for (PrecedenceList::const_iterator it = primary_source.m_precedence_list->begin(),
-                                            it_end = primary_source.m_precedence_list->end();
-             it != it_end;
-             ++it)
-        {
-            assert(*it != NULL);
-            Precedence const &precedence = **it;
-            npda_precedence_name->AppendArrayElement(
-                new Preprocessor::Body(precedence.m_precedence_id));
-            npda_precedence_level->AppendArrayElement(
-                new Preprocessor::Body(precedence.m_precedence_level));
-            npda_precedence_associativity_index->AppendArrayElement(
-                new Preprocessor::Body(Sint32(precedence.m_precedence_associativity)));
-            npda_precedence_associativity_name->AppendArrayElement(
-                new Preprocessor::Body(precedence.m_precedence_associativity == A_LEFT ? "LEFT" : (precedence.m_precedence_associativity == A_NONASSOC ? "NONASSOC" : "RIGHT")));
-        }
-    }
-
-    // _npda_rule_reduction_nonterminal_index[_rule_count] -- the index of the nonterminal
-    // which this rule reduces to.
-    //
-    // _npda_rule_reduction_nonterminal_name[_rule_count] -- the name of the nonterminal
-    // which this rule reduces to.
-    //
-    // _npda_rule_precedence_index[_rule_count] -- the numeric value of the
-    // precedence of the rule which this state is a part of (0 if no explicit
-    // precedence was supplied).
-    //
-    // _npda_rule_precedence_name[_rule_count] -- the named precedence of the
-    // rule which this state is a part of ("DEFAULT_" if no explicit precedence was supplied).
-    //
-    // _npda_rule_token_count[_rule_count] -- the number of tokens in this rule
-    //
-    // _npda_rule_description[_rule_count] -- the textual description of
-    // this rule (e.g. "exp <- exp '+' exp")
-    {
-        Preprocessor::ArraySymbol *npda_rule_reduction_nonterminal_index =
-            symbol_table.DefineArraySymbol("_npda_rule_reduction_nonterminal_index", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_rule_reduction_nonterminal_name =
-            symbol_table.DefineArraySymbol("_npda_rule_reduction_nonterminal_name", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_rule_precedence_index =
-            symbol_table.DefineArraySymbol("_npda_rule_precedence_index", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_rule_precedence_name =
-            symbol_table.DefineArraySymbol("_npda_rule_precedence_name", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_rule_token_count =
-            symbol_table.DefineArraySymbol("_npda_rule_token_count", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_rule_description =
-            symbol_table.DefineArraySymbol("_npda_rule_description", FiLoc::ms_invalid);
-
-        for (Uint32 i = 0; i < primary_source.GetRuleCount(); ++i)
-        {
-            Rule const &rule = *primary_source.GetRule(i);
-
-            npda_rule_reduction_nonterminal_index->AppendArrayElement(
-                new Preprocessor::Body(Sint32(primary_source.GetTokenIndex(rule.m_owner_nonterminal->GetText()))));
-            npda_rule_reduction_nonterminal_name->AppendArrayElement(
-                new Preprocessor::Body(rule.m_owner_nonterminal->GetText()));
-
-            Precedence const *rule_precedence = primary_source.m_precedence_map->GetElement(rule.m_rule_precedence_id);
-            assert(rule_precedence != NULL);
-            npda_rule_precedence_index->AppendArrayElement(
-                new Preprocessor::Body(Sint32(rule_precedence->m_precedence_level)));
-            npda_rule_precedence_name->AppendArrayElement(
-                new Preprocessor::Body(rule.m_rule_precedence_id));
-
-            npda_rule_token_count->AppendArrayElement(
-                new Preprocessor::Body(Sint32(rule.m_rule_token_list->size())));
-
-            npda_rule_description->AppendArrayElement(
-                new Preprocessor::Body(GetStringLiteral(rule.GetAsText())));
-        }
-    }
-
-    // _npda_state_count -- the number of nodes in the nondeterministic pushdown automaton (NPDA)
-    {
-        Preprocessor::ScalarSymbol *npda_state_count =
-            symbol_table.DefineScalarSymbol("_npda_state_count", FiLoc::ms_invalid);
-        npda_state_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(npda_graph.GetNodeCount())));
     }
 
     // _npda_state_rule_index[_npda_state_count] -- the index of the rule which this state
@@ -417,17 +469,41 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
 void GenerateTargetDependentSymbols(PrimarySource const &primary_source, string const &target_id, Preprocessor::SymbolTable &symbol_table)
 {
     // _rule_code[_rule_count] -- specifies code for each rule.
-    Preprocessor::ArraySymbol *rule_code =
-        symbol_table.DefineArraySymbol("_rule_code", FiLoc::ms_invalid);
-
-    for (NonterminalMap::const_iterator it = primary_source.m_nonterminal_map->begin(),
-                                        it_end = primary_source.m_nonterminal_map->end();
-         it != it_end;
-         ++it)
     {
-        Nonterminal const *nonterminal = it->second;
-        assert(nonterminal != NULL);
-        PopulateRuleCodeArraySymbol(*nonterminal, target_id, rule_code);
+        Preprocessor::ArraySymbol *rule_code =
+            symbol_table.DefineArraySymbol("_rule_code", FiLoc::ms_invalid);
+
+        for (NonterminalMap::const_iterator it = primary_source.m_nonterminal_map->begin(),
+                                            it_end = primary_source.m_nonterminal_map->end();
+             it != it_end;
+             ++it)
+        {
+            Nonterminal const *nonterminal = it->second;
+            assert(nonterminal != NULL);
+            PopulateRuleCodeArraySymbol(*nonterminal, target_id, rule_code);
+        }
+    }
+
+    // _rule_token_assigned_type[_rule_total_token_count] -- a contiguous array of
+    // all the target-dependent types for the rule tokens in all rules.  i.e.
+    // elements 0 - m will correspond to the rule tokens in rule 0, elements
+    // m+1 - n will correspond to the rule tokens in rule 1, etc.
+    {
+        Preprocessor::ArraySymbol *rule_token_assigned_type =
+            symbol_table.DefineArraySymbol("_rule_token_assigned_type", FiLoc::ms_invalid);
+
+        Uint32 rule_total_token_count = primary_source.GetRuleTokenCount();
+        for (Uint32 i = 0; i < rule_total_token_count; ++i)
+        {
+            RuleToken const *rule_token = primary_source.GetRuleToken(i);
+            assert(rule_token != NULL);
+            Terminal const *terminal = primary_source.m_terminal_map->GetElement(rule_token->m_token_id);
+            Nonterminal const *nonterminal = primary_source.m_nonterminal_map->GetElement(rule_token->m_token_id);
+            assert(terminal != NULL && nonterminal == NULL || terminal == NULL && nonterminal != NULL);
+            string const &assigned_type = terminal != NULL ? terminal->GetAssignedType(target_id) : nonterminal->GetAssignedType(target_id);
+            rule_token_assigned_type->AppendArrayElement(
+                new Preprocessor::Body(assigned_type));
+        }
     }
 }
 

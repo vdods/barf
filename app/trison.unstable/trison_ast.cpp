@@ -100,6 +100,15 @@ void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
     m_rule_handler_map->Print(stream, Stringify, indent_level+1);
 }
 
+string const &Nonterminal::GetAssignedType (string const &target_id) const
+{
+    assert(m_assigned_type_map != NULL);
+    assert(!target_id.empty());
+    Ast::String const *assigned_type = m_assigned_type_map->GetElement(target_id);
+    assert(assigned_type != NULL);
+    return assigned_type->GetText();
+}
+
 void Nonterminal::SetRuleList (RuleList *rule_list)
 {
     assert(m_rule_list == NULL && "already has a rule list");
@@ -200,10 +209,54 @@ Rule const *PrimarySource::GetRule (Uint32 rule_index) const
     {
         Nonterminal const *nonterminal = m_nonterminal_list->GetElement(i);
         assert(nonterminal != NULL);
+        assert(nonterminal->m_rule_list != NULL);
         if (rule_index < nonterminal->m_rule_list->size())
             return nonterminal->m_rule_list->GetElement(rule_index);
         else
             rule_index -= nonterminal->m_rule_list->size();
+    }
+    assert(false && "this should never happen");
+    return NULL;
+}
+
+Uint32 PrimarySource::GetRuleTokenCount () const
+{
+    Uint32 rule_token_count = 0;
+    for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
+    {
+        Nonterminal const *nonterminal = m_nonterminal_list->GetElement(i);
+        assert(nonterminal != NULL);
+        assert(nonterminal->m_rule_list != NULL);
+        for (Uint32 j = 0; j < nonterminal->m_rule_list->size(); ++j)
+        {
+            Rule const *rule = nonterminal->m_rule_list->GetElement(j);
+            assert(rule != NULL);
+            assert(rule->m_rule_token_list != NULL);
+            rule_token_count += rule->m_rule_token_list->size();
+        }
+    }
+    return rule_token_count;
+}
+
+RuleToken const *PrimarySource::GetRuleToken (Uint32 rule_token_index) const
+{
+    assert(rule_token_index < GetRuleTokenCount());
+    for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
+    {
+        Nonterminal const *nonterminal = m_nonterminal_list->GetElement(i);
+        assert(nonterminal != NULL);
+        assert(nonterminal->m_rule_list != NULL);
+        for (Uint32 j = 0; j < nonterminal->m_rule_list->size(); ++j)
+        {
+            Rule const *rule = nonterminal->m_rule_list->GetElement(j);
+            assert(rule != NULL);
+            assert(rule->m_rule_token_list != NULL);
+
+            if (rule_token_index < rule->m_rule_token_list->size())
+                return rule->m_rule_token_list->GetElement(rule_token_index);
+            else
+                rule_token_index -= rule->m_rule_token_list->size();
+        }
     }
     assert(false && "this should never happen");
     return NULL;

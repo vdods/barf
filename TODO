@@ -2,6 +2,8 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- change EmitWarning, EmitError and EmitFatalError to take the message first
+  and an optional FiLoc second, with a default value of FiLoc::ms_invalid.
 - guarantee that errors will be reported such that the line numbers never
   decrease.
 - improve the parser/scanner/ast verbosity (i.e. prefix each line with a label)
@@ -185,6 +187,9 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
+- add interactive/noninteractive option to target -- interactive will do
+  char-by-char input, while noninteractive will do the faster chunk reading
+  and buffering.
 - allow "--predefine targets=" ?
 - move the --with-line-directives option to be specified by the target, and
   overridable by the primary source

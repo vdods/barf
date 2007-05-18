@@ -179,6 +179,7 @@ struct Nonterminal : public TokenId
         assert(!id.empty());
     }
 
+    string const &GetAssignedType (string const &target_id) const;
     bool GetIsNpdaGraphed () const { return m_npda_graph_start_state != UINT32_UPPER_BOUND; }
     Uint32 GetNpdaGraphStartState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_start_state; }
     Uint32 GetNpdaGraphHeadState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_head_state; }
@@ -294,6 +295,8 @@ struct PrimarySource : public Ast::Base
     Uint32 GetTokenIndex (string const &token_id) const;
     Uint32 GetRuleCount () const { return m_nonterminal_list->GetRuleCount(); }
     Rule const *GetRule (Uint32 rule_index) const;
+    Uint32 GetRuleTokenCount () const;
+    RuleToken const *GetRuleToken (Uint32 rule_token_index) const;
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
