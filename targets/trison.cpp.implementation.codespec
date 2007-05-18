@@ -83,7 +83,7 @@ void <{class_name}::ClearBranches_ ()
 void <{class_name}::ClearTokenStack_ ()
 {
     // throw away all tokens remaining in the token stack and clear it.
-    for (TokenBuffer_::iterator it_ = m_token_stack_.begin(), it_end_ = m_token_stack_.end(); it_ != it_end_; ++it_)
+    for (TokenQueue_::iterator it_ = m_token_stack_.begin(), it_end_ = m_token_stack_.end(); it_ != it_end_; ++it_)
         ThrowAwayToken_(it_->m_token_data_);
     m_token_stack_.clear();
 }
@@ -91,11 +91,11 @@ void <{class_name}::ClearTokenStack_ ()
 void <{class_name}::ClearLookaheadQueue_ ()
 {
     // throw away all tokens remaining in the lookahead queue and clear it
-    for (TokenBuffer_::iterator it_ = m_lookahead_queue_.begin(), it_end_ = m_lookahead_queue_.end(); it_ != it_end_; ++it_)
+    for (TokenQueue_::iterator it_ = m_lookahead_token_queue_.begin(), it_end_ = m_lookahead_token_queue_.end(); it_ != it_end_; ++it_)
         ThrowAwayToken_(it_->m_token_data_);
-    m_lookahead_queue_.clear();
+    m_lookahead_token_queue_.clear();
     // also reset the cursor
-    m_lookahead_queue_cursor_ = 0;
+    m_lookahead_token_queue_cursor_ = 0;
 }
 
 void <{class_name}::ClearMostRecentReturnState_ ()
@@ -118,8 +118,8 @@ void <{class_name}::ThrowAwayToken_ (TokenData_ &token)
 void <{class_name}::ResetForNewInput_ ()
 {
 //     TrisonCpp_::Npda_::ResetForNewInput_();
-    m_lookahead_queue_.clear();
-    m_lookahead_queue_cursor_ = 0;
+    m_lookahead_token_queue_.clear();
+    m_lookahead_token_queue_cursor_ = 0;
 /*
     ClearBranches_();
     ClearTokenStack_();
@@ -294,10 +294,10 @@ void <{class_name}::ResetForNewInput_ ()
 
 <{class_name}::Token_ &<{class_name}::ShiftLookaheadToken_ ()
 {
-    assert(m_lookahead_queue_cursor_ <= m_lookahead_queue_.size());
-    if (m_lookahead_queue_cursor_ == m_lookahead_queue_.size())
-        m_lookahead_queue_.push_back(Scan());
-    return m_lookahead_queue_[m_lookahead_queue_cursor_++];
+    assert(m_lookahead_token_queue_cursor_ <= m_lookahead_token_queue_.size());
+    if (m_lookahead_token_queue_cursor_ == m_lookahead_token_queue_.size())
+        m_lookahead_token_queue_.push_back(Scan());
+    return m_lookahead_token_queue_[m_lookahead_token_queue_cursor_++];
 }
 
 void <{class_name}::PerformEpsilonClosure_ ()
@@ -532,10 +532,23 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
             {
                 Reduce_ *reduce = static_cast<Reduce_ *>(action);
                 assert(reduce->m_reduction_rule_ != NULL);
+                
                 if (!first_action)
                     std::cerr << ',';
                 std::cerr << " reduce \"" << reduce->m_reduction_rule_->m_description_ << '\"';
                 first_action = false;
+                
+                // execute the reduction rule with the given index.  this is
+                // essentially just a big switch statement.  push the returned
+                // token onto the front of the lookahead queue.
+                m_lookahead_token_queue_.push_front(
+                    Token_(
+                        reduce->m_reduction_rule_->m_reduction_nonterminal_token_id_,
+                        ExecuteReductionRule_(reduce->m_reduction_rule_ - ms_rule_table_)));
+                // pop a number of tokens off the stack equal to the number
+                // of tokens in the reduced rule.
+                assert(m_token_stack_.size() >= reduce->m_reduction_rule_->m_token_count_);
+                m_token_stack_.resize(m_token_stack_.size() - reduce->m_reduction_rule_->m_token_count_);
                 break;
             }
 
@@ -543,10 +556,15 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
             {
                 Shift_ *shift = static_cast<Shift_ *>(action);
                 shift->ClearRuleRange_();
+                
                 if (!first_action)
                     std::cerr << ',';
                 std::cerr << " shift";
                 first_action = false;
+                
+                // shift the front of the lookahead queue onto the end of the token stack
+                m_token_stack_.push_back(m_lookahead_token_queue_.front().m_token_data_);
+                m_lookahead_token_queue_.pop_front();
                 break;
             }
         }
@@ -578,6 +596,32 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
     }
 }
 
+<{class_name}::TokenData_ <{class_name}::ExecuteReductionRule_ (TrisonCpp_::Size_ rule_index)
+{
+    assert(rule_index < ms_rule_count_);
+    switch (rule_index)
+    {
+        default:
+            assert(false && "this should never happen");
+            return <{token_data_type_sentinel};
+    
+<|loop(i, _rule_count)
+        case <{i}: 
+        {
+            assert(ms_rule_table_[rule_index].m_token_count_ <= m_token_stack_.size());
+<|loop(j, _rule_token_table_count[i])
+<|if(_rule_token_assigned_id[_rule_token_table_offset[i]+j] != "")
+            <{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}<{else}<{token_data_type}<{end_if} <{_rule_token_assigned_id[_rule_token_table_offset[i]+j]}(m_token_stack_[m_token_stack_.size()-<{_rule_token_count[i]-j}]);
+<|end_if
+<|end_loop
+<|_rule_code[i]
+        } 
+        break;
+
+<|end_loop
+    }
+}
+
 void <{class_name}::PrintParserBranchList_ ()
 {
     std::cerr << "&&& parser branch list &&&" << std::endl;
@@ -586,13 +630,6 @@ void <{class_name}::PrintParserBranchList_ ()
     std::cerr << "&&& end of parser branch list &&&" << std::endl;
 }
 
-<|loop(i, _rule_count)
-<{class_name}::TokenData_ <{class_name}::RuleCode<{i}_ ()
-{
-<|_rule_code[i]
-}
-
-<|end_loop
 TrisonCpp_::Npda_::Precedence_ const <{class_name}::ms_precedence_table_[] =
 {
 <|loop(i, sizeof(_precedence_level))

@@ -1127,10 +1127,10 @@ public:
         }; // end of enum <{class_name}::ParseNonterminal::Name
     }; // end of struct <{class_name}::ParseNonterminal
 
-    struct Token_
+    struct Token_ // TODO: rename to Token
     {
-        TokenId_ m_token_id_;
-        TokenData_ m_token_data_;
+        TokenId_ m_token_id_; // TODO: rename to m_id or m_token_id
+        TokenData_ m_token_data_; // TODO: rename to m_data or m_token_data
 
         Token_ () : m_token_id_(Nonterminal::none_) { }
         Token_ (TokenId_ token_id, TokenData_ const &token_data)
@@ -1140,11 +1140,12 @@ public:
         {
             assert(m_token_id_ != Nonterminal::none_);
         }
-    }; // end of struct <{class_name}::Token
+    }; // end of struct <{class_name}::Token_
 
 private:
 
-    typedef std::deque<Token_> TokenBuffer_;
+    typedef std::deque<TokenData_> TokenDataQueue_;
+    typedef std::deque<Token_> TokenQueue_;
 
 <|if(is_defined(top_of_class))
 public:
@@ -1202,14 +1203,11 @@ private:
     void PerformShiftTransition_ (Branch_ &source_branch, State_ const *target_state);
     void PruneBranchList_ (ParserBranchList_ &branch_list);
     void ExecuteAndRemoveTrunk_ ();
+    TokenData_ ExecuteReductionRule_ (TrisonCpp_::Size_ rule_index);
     void PrintParserBranchList_ (); // TEMP
     // end blah
 
 
-
-<|loop(i, _rule_count)
-    TokenData_ RuleCode<{i}_ ();
-<|end_loop
 
     // TODO: move as much stuff to the base class as possible
     Action_ *m_tree_root_;
@@ -1220,9 +1218,9 @@ private:
     bool m_reduce_transitions_were_performed_;
     bool m_shift_transitions_were_performed_;
     bool m_nonassoc_error_encountered_;
-    TokenBuffer_ m_token_stack_;
-    TokenBuffer_ m_lookahead_queue_; // TODO: make the lookahead queue into its own class/object so it's a separate API
-    TokenBuffer_::size_type m_lookahead_queue_cursor_;
+    TokenDataQueue_ m_token_stack_;
+    TokenQueue_ m_lookahead_token_queue_; // TODO: make the lookahead queue into its own class/object so it's a separate API
+    TokenQueue_::size_type m_lookahead_token_queue_cursor_;
 <|if(is_defined(generate_debug_spew_code))
     bool m_debug_spew_;
 

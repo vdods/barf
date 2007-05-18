@@ -487,7 +487,9 @@ void GenerateTargetDependentSymbols(PrimarySource const &primary_source, string 
     // _rule_token_assigned_type[_rule_total_token_count] -- a contiguous array of
     // all the target-dependent types for the rule tokens in all rules.  i.e.
     // elements 0 - m will correspond to the rule tokens in rule 0, elements
-    // m+1 - n will correspond to the rule tokens in rule 1, etc.
+    // m+1 - n will correspond to the rule tokens in rule 1, etc.  the value will
+    // be the empty string if no overridden type was given, and therefore the
+    // default type should be used.
     {
         Preprocessor::ArraySymbol *rule_token_assigned_type =
             symbol_table.DefineArraySymbol("_rule_token_assigned_type", FiLoc::ms_invalid);
@@ -497,12 +499,8 @@ void GenerateTargetDependentSymbols(PrimarySource const &primary_source, string 
         {
             RuleToken const *rule_token = primary_source.GetRuleToken(i);
             assert(rule_token != NULL);
-            Terminal const *terminal = primary_source.m_terminal_map->GetElement(rule_token->m_token_id);
-            Nonterminal const *nonterminal = primary_source.m_nonterminal_map->GetElement(rule_token->m_token_id);
-            assert(terminal != NULL && nonterminal == NULL || terminal == NULL && nonterminal != NULL);
-            string const &assigned_type = terminal != NULL ? terminal->GetAssignedType(target_id) : nonterminal->GetAssignedType(target_id);
             rule_token_assigned_type->AppendArrayElement(
-                new Preprocessor::Body(assigned_type));
+                new Preprocessor::Body(primary_source.GetAssignedType(rule_token->m_token_id, target_id)));
         }
     }
 }

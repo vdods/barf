@@ -86,7 +86,7 @@ struct Terminal : public TokenId
         delete ch;
     }
 
-    string const &GetAssignedType (string const &target_id) const;
+    TypeMap const *GetAssignedTypeMap () const { assert(m_assigned_type_map != NULL); return m_assigned_type_map; }
 
     void SetAssignedTypeMap (TypeMap const *assigned_type_map);
 
@@ -94,7 +94,7 @@ struct Terminal : public TokenId
 
 private:
 
-    TypeMap const *m_assigned_type_map;
+    TypeMap const *m_assigned_type_map; // TODO: move into TokenId (baseclass)
 }; // end of struct Terminal
 
 struct TerminalList : public Ast::AstList<Terminal>
@@ -161,7 +161,7 @@ struct RuleList : public Ast::AstList<Rule>
 
 struct Nonterminal : public TokenId
 {
-    TypeMap const *const m_assigned_type_map;
+    TypeMap const *const m_assigned_type_map; // TODO: move into TokenId (baseclass)
     RuleList const *m_rule_list;
 
     Nonterminal (
@@ -179,7 +179,6 @@ struct Nonterminal : public TokenId
         assert(!id.empty());
     }
 
-    string const &GetAssignedType (string const &target_id) const;
     bool GetIsNpdaGraphed () const { return m_npda_graph_start_state != UINT32_UPPER_BOUND; }
     Uint32 GetNpdaGraphStartState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_start_state; }
     Uint32 GetNpdaGraphHeadState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_head_state; }
@@ -297,6 +296,7 @@ struct PrimarySource : public Ast::Base
     Rule const *GetRule (Uint32 rule_index) const;
     Uint32 GetRuleTokenCount () const;
     RuleToken const *GetRuleToken (Uint32 rule_token_index) const;
+    string const &GetAssignedType (string const &token_id, string const &target_id) const;
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.

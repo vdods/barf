@@ -51,15 +51,6 @@ void Terminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent
     m_assigned_type_map->Print(stream, Stringify, indent_level+2);
 }
 
-string const &Terminal::GetAssignedType (string const &target_id) const
-{
-    assert(m_assigned_type_map != NULL);
-    assert(!target_id.empty());
-    Ast::String const *assigned_type = m_assigned_type_map->GetElement(target_id);
-    assert(assigned_type != NULL);
-    return assigned_type->GetText();
-}
-
 void Terminal::SetAssignedTypeMap (TypeMap const *assigned_type_map)
 {
     assert(m_assigned_type_map == NULL);
@@ -98,15 +89,6 @@ void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
     stream << Tabs(indent_level+1) << "precedence: " << m_rule_precedence_id << endl;
     m_rule_token_list->Print(stream, Stringify, indent_level+1);
     m_rule_handler_map->Print(stream, Stringify, indent_level+1);
-}
-
-string const &Nonterminal::GetAssignedType (string const &target_id) const
-{
-    assert(m_assigned_type_map != NULL);
-    assert(!target_id.empty());
-    Ast::String const *assigned_type = m_assigned_type_map->GetElement(target_id);
-    assert(assigned_type != NULL);
-    return assigned_type->GetText();
 }
 
 void Nonterminal::SetRuleList (RuleList *rule_list)
@@ -260,6 +242,19 @@ RuleToken const *PrimarySource::GetRuleToken (Uint32 rule_token_index) const
     }
     assert(false && "this should never happen");
     return NULL;
+}
+
+string const &PrimarySource::GetAssignedType (string const &token_id, string const &target_id) const
+{
+    assert(!token_id.empty());
+    assert(!target_id.empty());
+    Terminal const *terminal = m_terminal_map->GetElement(token_id);
+    Nonterminal const *nonterminal = m_nonterminal_map->GetElement(token_id);
+    assert(terminal != NULL && nonterminal == NULL || terminal == NULL && nonterminal != NULL);
+    TypeMap const *assigned_type_map = terminal != NULL ? terminal->GetAssignedTypeMap() : nonterminal->m_assigned_type_map;
+    assert(assigned_type_map != NULL);
+    Ast::String const *assigned_type = assigned_type_map->GetElement(target_id);
+    return assigned_type != NULL ? assigned_type->GetText() : gs_empty_string;
 }
 
 void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
