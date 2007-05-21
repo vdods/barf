@@ -77,6 +77,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
 
     Reflex::PrimarySource *primary_source = NULL;
 
+    Ast::Base *parsed_tree_root = NULL;
     Reflex::Parser parser;
     parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
     if (GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER))
@@ -84,11 +85,11 @@ Reflex::PrimarySource const *ParsePrimarySource ()
 
     if (!parser.OpenFile(GetOptions().GetInputFilename()))
         EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
-    else if (parser.Parse() != Reflex::Parser::PRC_SUCCESS)
+    else if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
         EmitError(FiLoc(GetOptions().GetInputFilename()), "general reflex parse error");
     else
     {
-        primary_source = Dsc<Reflex::PrimarySource *>(parser.GetAcceptedToken());
+        primary_source = Dsc<Reflex::PrimarySource *>(parsed_tree_root);
         assert(primary_source != NULL);
         if (GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
             primary_source->Print(cerr);

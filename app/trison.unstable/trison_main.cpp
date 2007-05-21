@@ -83,6 +83,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
 
     Trison::PrimarySource *primary_source = NULL;
 
+    Ast::Base *parsed_tree_root = NULL;
     Trison::Parser parser;
     parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER));
     if (GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER))
@@ -90,11 +91,11 @@ Trison::PrimarySource const *ParsePrimarySource ()
 
     if (!parser.OpenFile(GetOptions().GetInputFilename()))
         EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
-    else if (parser.Parse() != Trison::Parser::PRC_SUCCESS)
+    else if (parser.Parse(&parsed_tree_root) != Trison::Parser::PRC_SUCCESS)
         EmitError(FiLoc(GetOptions().GetInputFilename()), "general trison parse error");
     else
     {
-        primary_source = Dsc<Trison::PrimarySource *>(parser.GetAcceptedToken());
+        primary_source = Dsc<Trison::PrimarySource *>(parsed_tree_root);
         assert(primary_source != NULL);
         if (GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_AST))
             primary_source->Print(cerr);

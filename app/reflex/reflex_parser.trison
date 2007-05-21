@@ -337,9 +337,10 @@ macro_directives %type "Regex::RegularExpressionMap *"
         istringstream in(macro_regex_string->GetText());
         parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
         try {
-            if (parser.Parse(regular_expression_map) == Regex::Parser::PRC_SUCCESS)
+            Ast::Base *parsed_tree_root = NULL;
+            if (parser.Parse(&parsed_tree_root, regular_expression_map) == Regex::Parser::PRC_SUCCESS)
             {
-                Regex::RegularExpression *regex = Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken());
+                Regex::RegularExpression *regex = Dsc<Regex::RegularExpression *>(parsed_tree_root);
                 if (g_options->GetIsVerbose(OptionsBase::V_REGEX_AST))
                     regex->Print(cerr);
                 regular_expression_map->Add(macro_id->GetText(), regex);
@@ -480,6 +481,7 @@ rule %type "Rule *"
         // parse the rule regex
         Regex::RegularExpression *regex = NULL;
         {
+            Ast::Base *parsed_tree_root = NULL;
             Regex::Parser parser;
             parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
             if (g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER))
@@ -487,9 +489,9 @@ rule %type "Rule *"
             istringstream in(regex_string->GetText());
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
-                if (parser.Parse(m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
+                if (parser.Parse(&parsed_tree_root, m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
                 {
-                    regex = Dsc<Regex::RegularExpression *>(parser.GetAcceptedToken());
+                    regex = Dsc<Regex::RegularExpression *>(parsed_tree_root);
                     if (g_options->GetIsVerbose(OptionsBase::V_REGEX_AST))
                         regex->Print(cerr);
                 }

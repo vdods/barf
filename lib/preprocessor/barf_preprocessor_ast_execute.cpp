@@ -225,13 +225,13 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
             EmitError(GetFiLoc(), "file \"" + filename + "\" not found");
             return;
         }
-        if (parser.Parse() != Parser::PRC_SUCCESS)
+        Ast::Base *parsed_tree_root = NULL;
+        if (parser.Parse(&parsed_tree_root) != Parser::PRC_SUCCESS)
         {
             EmitError(GetFiLoc(), "parse error in include file \"" + filename + "\"");
             return;
         }
-
-        m_include_body_root = static_cast<Body *>(parser.GetAcceptedToken());
+        m_include_body_root = Dsc<Body *>(parsed_tree_root);
     }
 
     assert(m_include_body_root != NULL);

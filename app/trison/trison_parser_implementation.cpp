@@ -20,7 +20,6 @@ $$SUPERCLASS_AND_MEMBER_CONSTRUCTORS$$\n\
 $$CONSTRUCTOR_ACTIONS$$\n\
     m_debug_spew_level = 0;\n\
     DEBUG_SPEW_2(\"### number of state transitions = \" << ms_state_transition_count << std::endl);\n\
-    m_reduction_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
 }\n\
 \n\
 $$CLASS_NAME$$::~$$CLASS_NAME$$ ()\n\
@@ -59,11 +58,11 @@ void $$CLASS_NAME$$::CheckStateConsistency ()\n\
     assert(counter == ms_state_transition_count);\n\
 }\n\
 \n\
-$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::Parse ()\n\
+$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::Parse ($$BASE_ASSIGNED_TYPE$$ *parsed_tree_root)\n\
 {\n\
 $$START_OF_PARSE_METHOD_ACTIONS$$\n\
 \n\
-    ParserReturnCode return_code = PrivateParse();\n\
+    ParserReturnCode return_code = PrivateParse(parsed_tree_root);\n\
 \n\
 $$END_OF_PARSE_METHOD_ACTIONS$$\n\
 \n\
@@ -88,8 +87,10 @@ bool $$CLASS_NAME$$::GetDoesStateAcceptErrorToken ($$CLASS_NAME$$::StateNumber s
     return false;\n\
 }\n\
 \n\
-$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()\n\
+$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ($$BASE_ASSIGNED_TYPE$$ *parsed_tree_root)\n\
 {\n\
+    assert(parsed_tree_root && \"the return-value pointer must be valid\");\n\
+\n\
     m_state_stack.clear();\n\
     m_token_stack.clear();\n\
 \n\
@@ -160,7 +161,10 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()\n\
 \n\
                 PrintStateTransition(state_transition_number);\n\
                 if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)\n\
-                    return PRC_SUCCESS; // the accepted token is in m_reduction_token\n\
+                {\n\
+                    *parsed_tree_root = m_reduction_token;\n\
+                    return PRC_SUCCESS;\n\
+                }\n\
                 else\n\
                     break;\n\
             }\n\
@@ -176,7 +180,10 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()\n\
                 Action const &default_action =\n\
                     ms_state_transition[default_action_state_transition_number].m_action;\n\
                 if (ProcessAction(default_action) == ARC_ACCEPT_AND_RETURN)\n\
-                    return PRC_SUCCESS; // the accepted token is in m_reduction_token\n\
+                {\n\
+                    *parsed_tree_root = m_reduction_token;\n\
+                    return PRC_SUCCESS;\n\
+                }\n\
             }\n\
             // otherwise go into error recovery mode\n\
             else\n\
@@ -203,6 +210,7 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()\n\
                     if (m_state_stack.size() == 0)\n\
                     {\n\
                         DEBUG_SPEW_1(\"!!! error recovery: unhandled error -- quitting\" << std::endl);\n\
+                        *parsed_tree_root = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
                         return PRC_UNHANDLED_PARSE_ERROR;\n\
                     }\n\
 \n\
@@ -215,7 +223,9 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ()\n\
         }\n\
     }\n\
 \n\
-    // this should never happen because the above loop is infinite\n\
+    // this should never happen because the above loop is infinite, but we'll do\n\
+    // stuff here anyway in case some compiler isn't smart enough to realize it.\n\
+    *parsed_tree_root = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
     return PRC_UNHANDLED_PARSE_ERROR;\n\
 }\n\
 \n\

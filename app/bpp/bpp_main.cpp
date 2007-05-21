@@ -71,7 +71,8 @@ int main (int argc, char **argv)
         }
         assert(out != NULL);
 
-        if (parser.Parse() != Preprocessor::Parser::PRC_SUCCESS)
+        Ast::Base *parsed_tree_root = NULL;
+        if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
         {
             EmitError(FiLoc(GetOptions().GetInputFilename()), "general preprocessor parse error");
             return 4;
@@ -80,8 +81,7 @@ int main (int argc, char **argv)
         if (g_errors_encountered)
             return 5;
 
-        Preprocessor::Body const *body =
-            Dsc<Preprocessor::Body const *>(parser.GetAcceptedToken());
+        Preprocessor::Body const *body = Dsc<Preprocessor::Body const *>(parsed_tree_root);
         assert(body != NULL);
 
         if (GetOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_AST))

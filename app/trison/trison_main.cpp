@@ -63,12 +63,13 @@ int main (int argc, char **argv)
             return 1;
         }
 
-        Parser::ParserReturnCode parser_return_code = parser.Parse();
+        Ast::Base *parsed_tree_root = NULL;
+        Parser::ParserReturnCode parser_return_code = parser.Parse(&parsed_tree_root);
 
         if (g_errors_encountered || parser_return_code != Parser::PRC_SUCCESS)
             return 1;
 
-        Grammar *parsed_grammar = Dsc<Grammar *>(parser.GetAcceptedToken());
+        Grammar *parsed_grammar = Dsc<Grammar *>(parsed_tree_root);
         assert(parsed_grammar != NULL);
 
         if (GetOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_AST))

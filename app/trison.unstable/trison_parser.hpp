@@ -112,9 +112,6 @@ public:
     Parser ();
     ~Parser ();
 
-    inline Ast::Base * const &GetAcceptedToken () const { return m_reduction_token; }
-    inline void ClearAcceptedToken () { m_reduction_token = NULL; }
-
     inline unsigned int GetDebugSpewLevel () const { return m_debug_spew_level; }
     inline void SetDebugSpewLevel (unsigned int debug_spew_level) { m_debug_spew_level = debug_spew_level; }
 
@@ -128,7 +125,7 @@ public:
 
 public:
 
-    ParserReturnCode Parse ();
+    ParserReturnCode Parse (Ast::Base * *parsed_tree_root);
 
 public:
 
@@ -154,7 +151,7 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 158 "trison_parser.hpp"
+#line 155 "trison_parser.hpp"
 
 private:
 
@@ -227,7 +224,7 @@ private:
     }
     bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
 
-    ParserReturnCode PrivateParse ();
+    ParserReturnCode PrivateParse (Ast::Base * *parsed_tree_root);
 
     ActionReturnCode ProcessAction (Action const &action);
     void ShiftLookaheadToken ();
@@ -342,4 +339,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 346 "trison_parser.hpp"
+#line 343 "trison_parser.hpp"

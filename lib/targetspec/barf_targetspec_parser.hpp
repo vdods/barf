@@ -79,9 +79,6 @@ public:
     Parser ();
     ~Parser ();
 
-    inline Ast::Base * const &GetAcceptedToken () const { return m_reduction_token; }
-    inline void ClearAcceptedToken () { m_reduction_token = NULL; }
-
     inline unsigned int GetDebugSpewLevel () const { return m_debug_spew_level; }
     inline void SetDebugSpewLevel (unsigned int debug_spew_level) { m_debug_spew_level = debug_spew_level; }
 
@@ -95,7 +92,7 @@ public:
 
 public:
 
-    ParserReturnCode Parse ();
+    ParserReturnCode Parse (Ast::Base * *parsed_tree_root);
 
 public:
 
@@ -117,7 +114,7 @@ private:
     AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 
-#line 121 "barf_targetspec_parser.hpp"
+#line 118 "barf_targetspec_parser.hpp"
 
 private:
 
@@ -190,7 +187,7 @@ private:
     }
     bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
 
-    ParserReturnCode PrivateParse ();
+    ParserReturnCode PrivateParse (Ast::Base * *parsed_tree_root);
 
     ActionReturnCode ProcessAction (Action const &action);
     void ShiftLookaheadToken ();
@@ -266,4 +263,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 270 "barf_targetspec_parser.hpp"
+#line 267 "barf_targetspec_parser.hpp"

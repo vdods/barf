@@ -95,15 +95,16 @@ void Target::ParseTargetspec (string const &tool_prefix, Targetspec::Parser &par
     try {
         string filename(tool_prefix + '.' + m_target_id + ".targetspec");
         m_targetspec.m_source_path = g_options->GetTargetsSearchPath().GetFilePath(filename);
+        Ast::Base *parsed_tree_root = NULL;
         if (m_targetspec.m_source_path.empty())
             EmitError(FiLoc(g_options->GetInputFilename()), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
         else if (!parser.OpenFile(m_targetspec.m_source_path))
             EmitError(FiLoc(g_options->GetInputFilename()), "unable to open file \"" + m_targetspec.m_source_path + "\" for reading");
-        else if (parser.Parse() != Targetspec::Parser::PRC_SUCCESS)
+        else if (parser.Parse(&parsed_tree_root) != Targetspec::Parser::PRC_SUCCESS)
             EmitError(FiLoc(m_targetspec.m_source_path), "general targetspec parse error");
         else
         {
-            m_targetspec.m_specification = Dsc<Targetspec::Specification *>(parser.GetAcceptedToken());
+            m_targetspec.m_specification = Dsc<Targetspec::Specification *>(parsed_tree_root);
             assert(m_targetspec.m_specification != NULL);
             if (g_options->GetIsVerbose(OptionsBase::V_TARGETSPEC_AST))
                 m_targetspec.m_specification->Print(cerr);
@@ -132,16 +133,16 @@ void Target::ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &pa
         try {
             string filename(tool_prefix + '.' + m_target_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
             string codespec_filename(g_options->GetTargetsSearchPath().GetFilePath(filename));
+            Ast::Base *parsed_tree_root = NULL;
             if (codespec_filename.empty())
                 EmitError(FiLoc(m_targetspec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
             else if (!parser.OpenFile(codespec_filename))
                 EmitError(FiLoc(m_targetspec.m_source_path), "unable to open file \"" + codespec_filename + "\" for reading");
-            else if (parser.Parse() != Preprocessor::Parser::PRC_SUCCESS)
+            else if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
                 EmitError(FiLoc(codespec_filename), "general preprocessor parse error");
             else
             {
-                Preprocessor::Body *codespec_body =
-                    Dsc<Preprocessor::Body *>(parser.GetAcceptedToken());
+                Preprocessor::Body *codespec_body = Dsc<Preprocessor::Body *>(parsed_tree_root);
                 assert(codespec_body != NULL);
                 m_codespec_list.push_back(ParsedCodespec(add_codespec, codespec_body, codespec_filename));
                 if (g_options->GetIsVerbose(OptionsBase::V_CODESPEC_AST))

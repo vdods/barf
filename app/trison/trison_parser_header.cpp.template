@@ -27,9 +27,6 @@ $$NONTERMINAL_TOKEN_DECLARATIONS$$
     $$CLASS_NAME$$ ();
     $$FORCE_VIRTUAL_DESTRUCTOR$$~$$CLASS_NAME$$ ();
 
-    inline $$BASE_ASSIGNED_TYPE$$ const &GetAcceptedToken () const { return m_reduction_token; }
-    inline void ClearAcceptedToken () { m_reduction_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$; }
-
     inline unsigned int GetDebugSpewLevel () const { return m_debug_spew_level; }
     inline void SetDebugSpewLevel (unsigned int debug_spew_level) { m_debug_spew_level = debug_spew_level; }
 
@@ -43,7 +40,7 @@ $$NONTERMINAL_TOKEN_DECLARATIONS$$
 
 $$PARSE_METHOD_ACCESS$$
 
-    ParserReturnCode Parse ();
+    ParserReturnCode Parse ($$BASE_ASSIGNED_TYPE$$ *parsed_tree_root);
 
 public:
 
@@ -120,7 +117,7 @@ private:
     }
     bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
 
-    ParserReturnCode PrivateParse ();
+    ParserReturnCode PrivateParse ($$BASE_ASSIGNED_TYPE$$ *parsed_tree_root);
 
     ActionReturnCode ProcessAction (Action const &action);
     void ShiftLookaheadToken ();

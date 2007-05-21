@@ -55,20 +55,20 @@
 <|end_if
 }
 
-<{class_name}::ParserReturnCode <{class_name}::Parse (ParseNonterminal::Name nonterminal_to_parse_)
+<{class_name}::ParserReturnCode <{class_name}::Parse (TokenData_ *parsed_tree_root_, ParseNonterminal::Name nonterminal_to_parse_)
 {
 <|if(is_defined(start_of_parse_method_actions))
 <|start_of_parse_method_actions
 
 <|end_if
 <|if(is_defined(end_of_parse_method_actions))
-    ParserReturnCode parser_return_code_ = Parse_(nonterminal_to_parse_);
+    ParserReturnCode parser_return_code_ = Parse_(parsed_tree_root_, nonterminal_to_parse_);
 
 <|end_of_parse_method_actions
 
     return parser_return_code_;
 <|else
-    return Parse_(nonterminal_to_parse_);
+    return Parse_(parsed_tree_root_, nonterminal_to_parse_);
 <|end_if
 }
 /*
@@ -133,14 +133,18 @@ void <{class_name}::ResetForNewInput_ ()
 <|end_if
 }
 
-<{class_name}::ParserReturnCode <{class_name}::Parse_ (ParseNonterminal::Name nonterminal_to_parse_)
+<{class_name}::ParserReturnCode <{class_name}::Parse_ (TokenData_ *parsed_tree_root_, ParseNonterminal::Name nonterminal_to_parse_)
 {
+    assert(parsed_tree_root_ != NULL && "the return-value pointer must be valid");
+
     ParserReturnCode parser_return_code_ = PRC_SUCCESS;
 
     // TODO: clear any existing tree/branches
 
     assert(m_tree_root_ == NULL);
     assert(m_parser_branch_list_.IsEmpty_());
+    assert(m_token_stack_.empty());
+    assert(m_lookahead_token_queue_cursor_ == 0);
 
     // create the tree root - TODO move the below initialization into Action_() for case TreeNode_::ACTION_
     m_tree_root_ = new Action_(TreeNode_::ACTION_);
@@ -251,6 +255,8 @@ void <{class_name}::ResetForNewInput_ ()
 
                     // return the single stack token TODO
                     parser_return_code_ = PRC_SUCCESS;
+                    assert(m_token_stack_.size() == 1);
+                    *parsed_tree_root_ = m_token_stack_[0];
                     std::cerr << "*** returning successfully ***" << std::endl;
                     break;
                 }
@@ -260,7 +266,10 @@ void <{class_name}::ResetForNewInput_ ()
                     assert(m_parser_branch_list_.IsEmpty_());
                     assert(m_doomed_return_branch_list_.IsEmpty_());
                     m_parser_branch_list_.TrisonCpp_::List_<ParserBranch_>::Prepend_(m_doomed_nonreturn_branch_list_);
+                    *parsed_tree_root_ = <{token_data_type_sentinel};
                     assert(false && "error handling mode not implemented yet");
+                    parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
+                    break;
                 }
             }
 
@@ -288,6 +297,9 @@ void <{class_name}::ResetForNewInput_ ()
     delete m_tree_root_;
     m_tree_root_ = NULL;
     assert(m_parser_branch_list_.IsEmpty_());
+
+    m_token_stack_.clear();
+    m_lookahead_token_queue_cursor_ = 0;
 
     return parser_return_code_;
 }
@@ -507,8 +519,8 @@ void <{class_name}::PruneBranchList_ (ParserBranchList_ &branch_list)
 void <{class_name}::ExecuteAndRemoveTrunk_ ()
 {
     Action_ *action = m_tree_root_;
-    bool first_action = true;
 
+    std::cerr << std::endl;
     while (true)
     {
         assert(action != NULL);
@@ -532,12 +544,9 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
             {
                 Reduce_ *reduce = static_cast<Reduce_ *>(action);
                 assert(reduce->m_reduction_rule_ != NULL);
-                
-                if (!first_action)
-                    std::cerr << ',';
-                std::cerr << " reduce \"" << reduce->m_reduction_rule_->m_description_ << '\"';
-                first_action = false;
-                
+
+                std::cerr << "    reduce \"" << reduce->m_reduction_rule_->m_description_ << "\" -- ";
+
                 // execute the reduction rule with the given index.  this is
                 // essentially just a big switch statement.  push the returned
                 // token onto the front of the lookahead queue.
@@ -545,6 +554,8 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
                     Token_(
                         reduce->m_reduction_rule_->m_reduction_nonterminal_token_id_,
                         ExecuteReductionRule_(reduce->m_reduction_rule_ - ms_rule_table_)));
+                ++m_lookahead_token_queue_cursor_;
+                assert(m_lookahead_token_queue_cursor_ != 0 && "lookahead token queue cursor wrapped");
                 // pop a number of tokens off the stack equal to the number
                 // of tokens in the reduced rule.
                 assert(m_token_stack_.size() >= reduce->m_reduction_rule_->m_token_count_);
@@ -556,15 +567,14 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
             {
                 Shift_ *shift = static_cast<Shift_ *>(action);
                 shift->ClearRuleRange_();
-                
-                if (!first_action)
-                    std::cerr << ',';
-                std::cerr << " shift";
-                first_action = false;
-                
+
+                std::cerr << "    shift" << std::endl;
+
                 // shift the front of the lookahead queue onto the end of the token stack
+                assert(m_lookahead_token_queue_cursor_ > 0);
                 m_token_stack_.push_back(m_lookahead_token_queue_.front().m_token_data_);
                 m_lookahead_token_queue_.pop_front();
+                --m_lookahead_token_queue_cursor_;
                 break;
             }
         }
@@ -604,9 +614,9 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
         default:
             assert(false && "this should never happen");
             return <{token_data_type_sentinel};
-    
+
 <|loop(i, _rule_count)
-        case <{i}: 
+        case <{i}:
         {
             assert(ms_rule_table_[rule_index].m_token_count_ <= m_token_stack_.size());
 <|loop(j, _rule_token_table_count[i])
@@ -615,7 +625,7 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
 <|end_if
 <|end_loop
 <|_rule_code[i]
-        } 
+        }
         break;
 
 <|end_loop

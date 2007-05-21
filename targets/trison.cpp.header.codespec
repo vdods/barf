@@ -1170,7 +1170,7 @@ public:
 <{parse_method_access}
 
 <|end_if
-    ParserReturnCode Parse (ParseNonterminal::Name nonterminal_to_parse_ = ParseNonterminal::<{_default_parse_nonterminal});
+    ParserReturnCode Parse (TokenData_ *parsed_tree_root_, ParseNonterminal::Name nonterminal_to_parse_ = ParseNonterminal::<{_default_parse_nonterminal});
 
 private:
 
@@ -1193,7 +1193,7 @@ private:
 
 
     // blah
-    ParserReturnCode Parse_ (ParseNonterminal::Name nonterminal_to_parse_);
+    ParserReturnCode Parse_ (TokenData_ *parsed_tree_root_, ParseNonterminal::Name nonterminal_to_parse_);
     Token_ &ShiftLookaheadToken_ ();
     void PerformEpsilonClosure_ ();
     void PerformEpsilonClosure_ (Branch_ &source_branch, StateStack_ &extra_state_stack);

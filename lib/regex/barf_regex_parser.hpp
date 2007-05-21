@@ -69,9 +69,6 @@ public:
     Parser ();
     virtual ~Parser ();
 
-    inline Ast::Base * const &GetAcceptedToken () const { return m_reduction_token; }
-    inline void ClearAcceptedToken () { m_reduction_token = NULL; }
-
     inline unsigned int GetDebugSpewLevel () const { return m_debug_spew_level; }
     inline void SetDebugSpewLevel (unsigned int debug_spew_level) { m_debug_spew_level = debug_spew_level; }
 
@@ -85,7 +82,7 @@ public:
 
 private:
 
-    ParserReturnCode Parse ();
+    ParserReturnCode Parse (Ast::Base * *parsed_tree_root);
 
 public:
 
@@ -108,7 +105,7 @@ public:
     // this method will throw a std::string if a macro is used without
     // providing a macro map, or otherwise if an undefined macro is
     // referenced.
-    ParserReturnCode Parse (RegularExpressionMap *macro_map);
+    ParserReturnCode Parse (Ast::Base **parsed_tree_root, RegularExpressionMap *macro_map);
 
 private:
 
@@ -116,7 +113,7 @@ private:
 
     mutable RegularExpressionMap *m_macro_map;
 
-#line 120 "barf_regex_parser.hpp"
+#line 117 "barf_regex_parser.hpp"
 
 private:
 
@@ -189,7 +186,7 @@ private:
     }
     bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
 
-    ParserReturnCode PrivateParse ();
+    ParserReturnCode PrivateParse (Ast::Base * *parsed_tree_root);
 
     ActionReturnCode ProcessAction (Action const &action);
     void ShiftLookaheadToken ();
@@ -324,4 +321,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_BARF_REGEX_PARSER_HPP_)
 
-#line 328 "barf_regex_parser.hpp"
+#line 325 "barf_regex_parser.hpp"
