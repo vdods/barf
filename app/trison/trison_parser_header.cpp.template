@@ -40,7 +40,7 @@ $$NONTERMINAL_TOKEN_DECLARATIONS$$
 
 $$PARSE_METHOD_ACCESS$$
 
-    ParserReturnCode Parse ($$BASE_ASSIGNED_TYPE$$ *parsed_tree_root);
+    ParserReturnCode Parse ($$BASE_ASSIGNED_TYPE$$ *return_token);
 
 public:
 
@@ -117,7 +117,7 @@ private:
     }
     bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
 
-    ParserReturnCode PrivateParse ($$BASE_ASSIGNED_TYPE$$ *parsed_tree_root);
+    ParserReturnCode PrivateParse ($$BASE_ASSIGNED_TYPE$$ *return_token);
 
     ActionReturnCode ProcessAction (Action const &action);
     void ShiftLookaheadToken ();

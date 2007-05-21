@@ -118,7 +118,7 @@ public:
 
 public:
 
-    ParserReturnCode Parse (Ast::Base * *parsed_tree_root);
+    ParserReturnCode Parse (Ast::Base * *return_token);
 
 public:
 
@@ -211,7 +211,7 @@ private:
     }
     bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
 
-    ParserReturnCode PrivateParse (Ast::Base * *parsed_tree_root);
+    ParserReturnCode PrivateParse (Ast::Base * *return_token);
 
     ActionReturnCode ProcessAction (Action const &action);
     void ShiftLookaheadToken ();

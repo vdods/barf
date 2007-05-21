@@ -46,7 +46,7 @@ namespace Regex {
     // this method will throw a std::string if a macro is used without
     // providing a macro map, or otherwise if an undefined macro is
     // referenced.
-    ParserReturnCode Parse (Ast::Base **parsed_tree_root, RegularExpressionMap *macro_map);
+    ParserReturnCode Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map);
 
 private:
 
@@ -101,15 +101,19 @@ inline Uint8 GetHexDigitValue (Uint8 c)
     return c;
 }
 
-Parser::ParserReturnCode Parser::Parse (Ast::Base **parsed_tree_root, RegularExpressionMap *macro_map)
+Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map)
 {
+    assert(parsed_regex != NULL);
     assert(m_macro_map == NULL);
-    m_macro_map = macro_map;
     try {
-        ParserReturnCode retval = Parse(parsed_tree_root);
+        Ast::Base *parsed_tree_root = NULL;
+        m_macro_map = macro_map;
+        ParserReturnCode retval = Parse(&parsed_tree_root);
+        *parsed_regex = Dsc<RegularExpression *>(parsed_tree_root);
         m_macro_map = NULL;
         return retval;
     } catch (string const &exception) {
+        *parsed_regex = NULL;
         m_macro_map = NULL;
         throw exception;
     }

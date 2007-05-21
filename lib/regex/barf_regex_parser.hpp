@@ -82,7 +82,7 @@ public:
 
 private:
 
-    ParserReturnCode Parse (Ast::Base * *parsed_tree_root);
+    ParserReturnCode Parse (Ast::Base * *return_token);
 
 public:
 
@@ -105,7 +105,7 @@ public:
     // this method will throw a std::string if a macro is used without
     // providing a macro map, or otherwise if an undefined macro is
     // referenced.
-    ParserReturnCode Parse (Ast::Base **parsed_tree_root, RegularExpressionMap *macro_map);
+    ParserReturnCode Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map);
 
 private:
 
@@ -186,7 +186,7 @@ private:
     }
     bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
 
-    ParserReturnCode PrivateParse (Ast::Base * *parsed_tree_root);
+    ParserReturnCode PrivateParse (Ast::Base * *return_token);
 
     ActionReturnCode ProcessAction (Action const &action);
     void ShiftLookaheadToken ();

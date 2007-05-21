@@ -268,5 +268,3 @@
   the scanner to check this, because the parser might have read in extra
   lookaheads that put it at EOF.  you'll have to go by the lookahead queue
   in the parser.
-- add optional directive for type of parsed tree root (the pointer passed in
-  to the Parse method)

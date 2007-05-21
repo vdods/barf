@@ -58,11 +58,11 @@ void $$CLASS_NAME$$::CheckStateConsistency ()\n\
     assert(counter == ms_state_transition_count);\n\
 }\n\
 \n\
-$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::Parse ($$BASE_ASSIGNED_TYPE$$ *parsed_tree_root)\n\
+$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::Parse ($$BASE_ASSIGNED_TYPE$$ *return_token)\n\
 {\n\
 $$START_OF_PARSE_METHOD_ACTIONS$$\n\
 \n\
-    ParserReturnCode return_code = PrivateParse(parsed_tree_root);\n\
+    ParserReturnCode return_code = PrivateParse(return_token);\n\
 \n\
 $$END_OF_PARSE_METHOD_ACTIONS$$\n\
 \n\
@@ -87,9 +87,9 @@ bool $$CLASS_NAME$$::GetDoesStateAcceptErrorToken ($$CLASS_NAME$$::StateNumber s
     return false;\n\
 }\n\
 \n\
-$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ($$BASE_ASSIGNED_TYPE$$ *parsed_tree_root)\n\
+$$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ($$BASE_ASSIGNED_TYPE$$ *return_token)\n\
 {\n\
-    assert(parsed_tree_root && \"the return-value pointer must be valid\");\n\
+    assert(return_token && \"the return-token pointer must be valid\");\n\
 \n\
     m_state_stack.clear();\n\
     m_token_stack.clear();\n\
@@ -162,7 +162,7 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ($$BASE_ASSIGNED_T
                 PrintStateTransition(state_transition_number);\n\
                 if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)\n\
                 {\n\
-                    *parsed_tree_root = m_reduction_token;\n\
+                    *return_token = m_reduction_token;\n\
                     return PRC_SUCCESS;\n\
                 }\n\
                 else\n\
@@ -181,7 +181,7 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ($$BASE_ASSIGNED_T
                     ms_state_transition[default_action_state_transition_number].m_action;\n\
                 if (ProcessAction(default_action) == ARC_ACCEPT_AND_RETURN)\n\
                 {\n\
-                    *parsed_tree_root = m_reduction_token;\n\
+                    *return_token = m_reduction_token;\n\
                     return PRC_SUCCESS;\n\
                 }\n\
             }\n\
@@ -210,7 +210,7 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ($$BASE_ASSIGNED_T
                     if (m_state_stack.size() == 0)\n\
                     {\n\
                         DEBUG_SPEW_1(\"!!! error recovery: unhandled error -- quitting\" << std::endl);\n\
-                        *parsed_tree_root = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
+                        *return_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
                         return PRC_UNHANDLED_PARSE_ERROR;\n\
                     }\n\
 \n\
@@ -225,7 +225,7 @@ $$CLASS_NAME$$::ParserReturnCode $$CLASS_NAME$$::PrivateParse ($$BASE_ASSIGNED_T
 \n\
     // this should never happen because the above loop is infinite, but we'll do\n\
     // stuff here anyway in case some compiler isn't smart enough to realize it.\n\
-    *parsed_tree_root = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
+    *return_token = $$BASE_ASSIGNED_TYPE_SENTINEL$$;\n\
     return PRC_UNHANDLED_PARSE_ERROR;\n\
 }\n\
 \n\

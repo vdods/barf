@@ -71,7 +71,7 @@ void Parser::CheckStateConsistency ()
     assert(counter == ms_state_transition_count);
 }
 
-Parser::ParserReturnCode Parser::Parse (Ast::Base * *parsed_tree_root)
+Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token)
 {
 
 #line 91 "trison_parser.trison"
@@ -85,7 +85,7 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *parsed_tree_root)
 
 #line 87 "trison_parser.cpp"
 
-    ParserReturnCode return_code = PrivateParse(parsed_tree_root);
+    ParserReturnCode return_code = PrivateParse(return_token);
 
 
 
@@ -110,9 +110,9 @@ bool Parser::GetDoesStateAcceptErrorToken (Parser::StateNumber state_number) con
     return false;
 }
 
-Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
+Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *return_token)
 {
-    assert(parsed_tree_root && "the return-value pointer must be valid");
+    assert(return_token && "the return-token pointer must be valid");
 
     m_state_stack.clear();
     m_token_stack.clear();
@@ -185,7 +185,7 @@ Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
                 PrintStateTransition(state_transition_number);
                 if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)
                 {
-                    *parsed_tree_root = m_reduction_token;
+                    *return_token = m_reduction_token;
                     return PRC_SUCCESS;
                 }
                 else
@@ -204,7 +204,7 @@ Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
                     ms_state_transition[default_action_state_transition_number].m_action;
                 if (ProcessAction(default_action) == ARC_ACCEPT_AND_RETURN)
                 {
-                    *parsed_tree_root = m_reduction_token;
+                    *return_token = m_reduction_token;
                     return PRC_SUCCESS;
                 }
             }
@@ -233,7 +233,7 @@ Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
                     if (m_state_stack.size() == 0)
                     {
                         DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
-                        *parsed_tree_root = NULL;
+                        *return_token = NULL;
                         return PRC_UNHANDLED_PARSE_ERROR;
                     }
 
@@ -248,7 +248,7 @@ Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
 
     // this should never happen because the above loop is infinite, but we'll do
     // stuff here anyway in case some compiler isn't smart enough to realize it.
-    *parsed_tree_root = NULL;
+    *return_token = NULL;
     return PRC_UNHANDLED_PARSE_ERROR;
 }
 

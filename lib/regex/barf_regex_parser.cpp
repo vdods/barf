@@ -72,7 +72,7 @@ void Parser::CheckStateConsistency ()
     assert(counter == ms_state_transition_count);
 }
 
-Parser::ParserReturnCode Parser::Parse (Ast::Base * *parsed_tree_root)
+Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token)
 {
 
 #line 80 "barf_regex_parser.trison"
@@ -80,7 +80,7 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *parsed_tree_root)
 
 #line 82 "barf_regex_parser.cpp"
 
-    ParserReturnCode return_code = PrivateParse(parsed_tree_root);
+    ParserReturnCode return_code = PrivateParse(return_token);
 
 
 #line 83 "barf_regex_parser.trison"
@@ -109,9 +109,9 @@ bool Parser::GetDoesStateAcceptErrorToken (Parser::StateNumber state_number) con
     return false;
 }
 
-Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
+Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *return_token)
 {
-    assert(parsed_tree_root && "the return-value pointer must be valid");
+    assert(return_token && "the return-token pointer must be valid");
 
     m_state_stack.clear();
     m_token_stack.clear();
@@ -184,7 +184,7 @@ Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
                 PrintStateTransition(state_transition_number);
                 if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)
                 {
-                    *parsed_tree_root = m_reduction_token;
+                    *return_token = m_reduction_token;
                     return PRC_SUCCESS;
                 }
                 else
@@ -203,7 +203,7 @@ Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
                     ms_state_transition[default_action_state_transition_number].m_action;
                 if (ProcessAction(default_action) == ARC_ACCEPT_AND_RETURN)
                 {
-                    *parsed_tree_root = m_reduction_token;
+                    *return_token = m_reduction_token;
                     return PRC_SUCCESS;
                 }
             }
@@ -232,7 +232,7 @@ Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
                     if (m_state_stack.size() == 0)
                     {
                         DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
-                        *parsed_tree_root = NULL;
+                        *return_token = NULL;
                         return PRC_UNHANDLED_PARSE_ERROR;
                     }
 
@@ -247,7 +247,7 @@ Parser::ParserReturnCode Parser::PrivateParse (Ast::Base * *parsed_tree_root)
 
     // this should never happen because the above loop is infinite, but we'll do
     // stuff here anyway in case some compiler isn't smart enough to realize it.
-    *parsed_tree_root = NULL;
+    *return_token = NULL;
     return PRC_UNHANDLED_PARSE_ERROR;
 }
 
@@ -471,7 +471,7 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
     assert(2 < m_reduction_rule_token_count);
     Branch * branch = Dsc< Branch * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 313 "barf_regex_parser.trison"
+#line 317 "barf_regex_parser.trison"
 
         regex->Append(branch);
         return regex;
@@ -485,7 +485,7 @@ Ast::Base * Parser::ReductionRuleHandler0002 ()
     assert(0 < m_reduction_rule_token_count);
     Branch * branch = Dsc< Branch * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 319 "barf_regex_parser.trison"
+#line 323 "barf_regex_parser.trison"
 
         RegularExpression *regex = new RegularExpression();
         regex->Append(branch);
@@ -500,7 +500,7 @@ Ast::Base * Parser::ReductionRuleHandler0003 ()
     assert(0 < m_reduction_rule_token_count);
     Branch * branch = Dsc< Branch * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 328 "barf_regex_parser.trison"
+#line 332 "barf_regex_parser.trison"
  return branch; 
 #line 506 "barf_regex_parser.cpp"
 }
@@ -511,7 +511,7 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
     assert(0 < m_reduction_rule_token_count);
     Branch * branch = Dsc< Branch * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 329 "barf_regex_parser.trison"
+#line 333 "barf_regex_parser.trison"
  return branch; 
 #line 517 "barf_regex_parser.cpp"
 }
@@ -520,7 +520,7 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
 Ast::Base * Parser::ReductionRuleHandler0005 ()
 {
 
-#line 330 "barf_regex_parser.trison"
+#line 334 "barf_regex_parser.trison"
  return new Branch(); 
 #line 526 "barf_regex_parser.cpp"
 }
@@ -533,7 +533,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
     assert(1 < m_reduction_rule_token_count);
     Bound * bound = Dsc< Bound * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 336 "barf_regex_parser.trison"
+#line 340 "barf_regex_parser.trison"
 
         branch->AddBound(bound);
         return branch;
@@ -549,7 +549,7 @@ Ast::Base * Parser::ReductionRuleHandler0007 ()
     assert(1 < m_reduction_rule_token_count);
     Atom * atom = Dsc< Atom * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 345 "barf_regex_parser.trison"
+#line 349 "barf_regex_parser.trison"
 
         branch->AddAtom(atom);
         return branch;
@@ -565,7 +565,7 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
     assert(1 < m_reduction_rule_token_count);
     Atom * atom = Dsc< Atom * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 351 "barf_regex_parser.trison"
+#line 355 "barf_regex_parser.trison"
 
         branch->AddAtom(atom);
         return branch;
@@ -579,7 +579,7 @@ Ast::Base * Parser::ReductionRuleHandler0009 ()
     assert(0 < m_reduction_rule_token_count);
     Atom * atom = Dsc< Atom * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 357 "barf_regex_parser.trison"
+#line 361 "barf_regex_parser.trison"
 
         Branch *branch = new Branch();
         branch->AddAtom(atom);
@@ -594,7 +594,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
     assert(1 < m_reduction_rule_token_count);
     Ast::Id * macro_name = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 371 "barf_regex_parser.trison"
+#line 375 "barf_regex_parser.trison"
 
         assert(macro_name != NULL);
         if (m_macro_map == NULL)
@@ -613,7 +613,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
     assert(1 < m_reduction_rule_token_count);
     RegularExpression * regex = Dsc< RegularExpression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 381 "barf_regex_parser.trison"
+#line 385 "barf_regex_parser.trison"
  return regex; 
 #line 619 "barf_regex_parser.cpp"
 }
@@ -622,7 +622,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
 Ast::Base * Parser::ReductionRuleHandler0012 ()
 {
 
-#line 382 "barf_regex_parser.trison"
+#line 386 "barf_regex_parser.trison"
  return new RegularExpression(); 
 #line 628 "barf_regex_parser.cpp"
 }
@@ -631,7 +631,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
 Ast::Base * Parser::ReductionRuleHandler0013 ()
 {
 
-#line 383 "barf_regex_parser.trison"
+#line 387 "barf_regex_parser.trison"
  return new Char('\0', CT_BEGINNING_OF_LINE); 
 #line 637 "barf_regex_parser.cpp"
 }
@@ -640,7 +640,7 @@ Ast::Base * Parser::ReductionRuleHandler0013 ()
 Ast::Base * Parser::ReductionRuleHandler0014 ()
 {
 
-#line 384 "barf_regex_parser.trison"
+#line 388 "barf_regex_parser.trison"
  return new Char('\0', CT_END_OF_LINE); 
 #line 646 "barf_regex_parser.cpp"
 }
@@ -649,7 +649,7 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
 Ast::Base * Parser::ReductionRuleHandler0015 ()
 {
 
-#line 385 "barf_regex_parser.trison"
+#line 389 "barf_regex_parser.trison"
  return new BracketCharSet('\n', true); 
 #line 655 "barf_regex_parser.cpp"
 }
@@ -660,7 +660,7 @@ Ast::Base * Parser::ReductionRuleHandler0016 ()
     assert(0 < m_reduction_rule_token_count);
     Char * ch = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 386 "barf_regex_parser.trison"
+#line 390 "barf_regex_parser.trison"
  return ch; 
 #line 666 "barf_regex_parser.cpp"
 }
@@ -671,7 +671,7 @@ Ast::Base * Parser::ReductionRuleHandler0017 ()
     assert(1 < m_reduction_rule_token_count);
     Char * ch = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 387 "barf_regex_parser.trison"
+#line 391 "barf_regex_parser.trison"
  ch->Escape(); return ch; 
 #line 677 "barf_regex_parser.cpp"
 }
@@ -682,7 +682,7 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
     assert(1 < m_reduction_rule_token_count);
     Char * ch = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 388 "barf_regex_parser.trison"
+#line 392 "barf_regex_parser.trison"
  return ch; 
 #line 688 "barf_regex_parser.cpp"
 }
@@ -693,7 +693,7 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
     assert(0 < m_reduction_rule_token_count);
     Atom * exp = Dsc< Atom * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 389 "barf_regex_parser.trison"
+#line 393 "barf_regex_parser.trison"
  return exp; 
 #line 699 "barf_regex_parser.cpp"
 }
@@ -702,7 +702,7 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
 Ast::Base * Parser::ReductionRuleHandler0020 ()
 {
 
-#line 394 "barf_regex_parser.trison"
+#line 398 "barf_regex_parser.trison"
  return new Bound(0, Bound::NO_UPPER_BOUND); 
 #line 708 "barf_regex_parser.cpp"
 }
@@ -711,7 +711,7 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
 Ast::Base * Parser::ReductionRuleHandler0021 ()
 {
 
-#line 396 "barf_regex_parser.trison"
+#line 400 "barf_regex_parser.trison"
  return new Bound(1, Bound::NO_UPPER_BOUND); 
 #line 717 "barf_regex_parser.cpp"
 }
@@ -720,7 +720,7 @@ Ast::Base * Parser::ReductionRuleHandler0021 ()
 Ast::Base * Parser::ReductionRuleHandler0022 ()
 {
 
-#line 398 "barf_regex_parser.trison"
+#line 402 "barf_regex_parser.trison"
  return new Bound(0, 1); 
 #line 726 "barf_regex_parser.cpp"
 }
@@ -731,7 +731,7 @@ Ast::Base * Parser::ReductionRuleHandler0023 ()
     assert(1 < m_reduction_rule_token_count);
     Ast::SignedInteger * exact_bound = Dsc< Ast::SignedInteger * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 401 "barf_regex_parser.trison"
+#line 405 "barf_regex_parser.trison"
 
         assert(exact_bound->GetValue() >= 0);
         Bound *bound = new Bound(exact_bound->GetValue(), exact_bound->GetValue());
@@ -747,7 +747,7 @@ Ast::Base * Parser::ReductionRuleHandler0024 ()
     assert(1 < m_reduction_rule_token_count);
     Ast::SignedInteger * lower_bound = Dsc< Ast::SignedInteger * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 409 "barf_regex_parser.trison"
+#line 413 "barf_regex_parser.trison"
 
         assert(lower_bound->GetValue() >= 0);
         return new Bound(lower_bound->GetValue(), Bound::NO_UPPER_BOUND);
@@ -763,7 +763,7 @@ Ast::Base * Parser::ReductionRuleHandler0025 ()
     assert(3 < m_reduction_rule_token_count);
     Ast::SignedInteger * upper_bound = Dsc< Ast::SignedInteger * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 415 "barf_regex_parser.trison"
+#line 419 "barf_regex_parser.trison"
 
         assert(lower_bound->GetValue() >= 0);
         assert(upper_bound->GetValue() >= 0);
@@ -800,7 +800,7 @@ Ast::Base * Parser::ReductionRuleHandler0026 ()
     assert(1 < m_reduction_rule_token_count);
     BracketCharSet * bracket_char_set = Dsc< BracketCharSet * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 451 "barf_regex_parser.trison"
+#line 455 "barf_regex_parser.trison"
 
         if (bracket_char_set->GetIsEmpty())
             THROW_STRING("invalid empty bracket expression");
@@ -815,7 +815,7 @@ Ast::Base * Parser::ReductionRuleHandler0027 ()
     assert(2 < m_reduction_rule_token_count);
     BracketCharSet * bracket_char_set = Dsc< BracketCharSet * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 458 "barf_regex_parser.trison"
+#line 462 "barf_regex_parser.trison"
 
         if (bracket_char_set->GetIsEmpty())
             THROW_STRING("invalid empty bracket expression");
@@ -833,7 +833,7 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
     assert(1 < m_reduction_rule_token_count);
     Char * ch = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 469 "barf_regex_parser.trison"
+#line 473 "barf_regex_parser.trison"
 
         bracket_char_set->AddChar(ch->GetChar());
         delete ch;
@@ -852,7 +852,7 @@ Ast::Base * Parser::ReductionRuleHandler0029 ()
     assert(3 < m_reduction_rule_token_count);
     Char * end_range = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 476 "barf_regex_parser.trison"
+#line 480 "barf_regex_parser.trison"
 
         if (end_range->GetChar() < begin_range->GetChar())
             THROW_STRING("invalid bracketed range [" << GetCharLiteral(begin_range->GetChar(), false) << '-' << GetCharLiteral(end_range->GetChar(), false) << ']');
@@ -874,7 +874,7 @@ Ast::Base * Parser::ReductionRuleHandler0030 ()
     assert(3 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 488 "barf_regex_parser.trison"
+#line 492 "barf_regex_parser.trison"
 
         bracket_char_set->AddCharClass(id->GetText());
         delete id;
@@ -887,7 +887,7 @@ Ast::Base * Parser::ReductionRuleHandler0030 ()
 Ast::Base * Parser::ReductionRuleHandler0031 ()
 {
 
-#line 495 "barf_regex_parser.trison"
+#line 499 "barf_regex_parser.trison"
 
         BracketCharSet *bracket_char_set = new BracketCharSet();
         return bracket_char_set;
@@ -901,7 +901,7 @@ Ast::Base * Parser::ReductionRuleHandler0032 ()
     assert(0 < m_reduction_rule_token_count);
     Char * normal_char = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 503 "barf_regex_parser.trison"
+#line 507 "barf_regex_parser.trison"
  return normal_char; 
 #line 907 "barf_regex_parser.cpp"
 }
@@ -912,7 +912,7 @@ Ast::Base * Parser::ReductionRuleHandler0033 ()
     assert(1 < m_reduction_rule_token_count);
     Char * normal_char = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 505 "barf_regex_parser.trison"
+#line 509 "barf_regex_parser.trison"
  normal_char->Escape(); return normal_char; 
 #line 918 "barf_regex_parser.cpp"
 }
@@ -923,7 +923,7 @@ Ast::Base * Parser::ReductionRuleHandler0034 ()
     assert(1 < m_reduction_rule_token_count);
     Char * control_char = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 507 "barf_regex_parser.trison"
+#line 511 "barf_regex_parser.trison"
  return control_char; 
 #line 929 "barf_regex_parser.cpp"
 }
@@ -932,7 +932,7 @@ Ast::Base * Parser::ReductionRuleHandler0034 ()
 Ast::Base * Parser::ReductionRuleHandler0035 ()
 {
 
-#line 523 "barf_regex_parser.trison"
+#line 527 "barf_regex_parser.trison"
  return new Char('|'); 
 #line 938 "barf_regex_parser.cpp"
 }
@@ -941,7 +941,7 @@ Ast::Base * Parser::ReductionRuleHandler0035 ()
 Ast::Base * Parser::ReductionRuleHandler0036 ()
 {
 
-#line 525 "barf_regex_parser.trison"
+#line 529 "barf_regex_parser.trison"
  return new Char('('); 
 #line 947 "barf_regex_parser.cpp"
 }
@@ -950,7 +950,7 @@ Ast::Base * Parser::ReductionRuleHandler0036 ()
 Ast::Base * Parser::ReductionRuleHandler0037 ()
 {
 
-#line 527 "barf_regex_parser.trison"
+#line 531 "barf_regex_parser.trison"
  return new Char(')'); 
 #line 956 "barf_regex_parser.cpp"
 }
@@ -959,7 +959,7 @@ Ast::Base * Parser::ReductionRuleHandler0037 ()
 Ast::Base * Parser::ReductionRuleHandler0038 ()
 {
 
-#line 529 "barf_regex_parser.trison"
+#line 533 "barf_regex_parser.trison"
  return new Char('{'); 
 #line 965 "barf_regex_parser.cpp"
 }
@@ -968,7 +968,7 @@ Ast::Base * Parser::ReductionRuleHandler0038 ()
 Ast::Base * Parser::ReductionRuleHandler0039 ()
 {
 
-#line 531 "barf_regex_parser.trison"
+#line 535 "barf_regex_parser.trison"
  return new Char('}'); 
 #line 974 "barf_regex_parser.cpp"
 }
@@ -977,7 +977,7 @@ Ast::Base * Parser::ReductionRuleHandler0039 ()
 Ast::Base * Parser::ReductionRuleHandler0040 ()
 {
 
-#line 533 "barf_regex_parser.trison"
+#line 537 "barf_regex_parser.trison"
  return new Char('['); 
 #line 983 "barf_regex_parser.cpp"
 }
@@ -986,7 +986,7 @@ Ast::Base * Parser::ReductionRuleHandler0040 ()
 Ast::Base * Parser::ReductionRuleHandler0041 ()
 {
 
-#line 535 "barf_regex_parser.trison"
+#line 539 "barf_regex_parser.trison"
  return new Char(']'); 
 #line 992 "barf_regex_parser.cpp"
 }
@@ -995,7 +995,7 @@ Ast::Base * Parser::ReductionRuleHandler0041 ()
 Ast::Base * Parser::ReductionRuleHandler0042 ()
 {
 
-#line 537 "barf_regex_parser.trison"
+#line 541 "barf_regex_parser.trison"
  return new Char('?'); 
 #line 1001 "barf_regex_parser.cpp"
 }
@@ -1004,7 +1004,7 @@ Ast::Base * Parser::ReductionRuleHandler0042 ()
 Ast::Base * Parser::ReductionRuleHandler0043 ()
 {
 
-#line 539 "barf_regex_parser.trison"
+#line 543 "barf_regex_parser.trison"
  return new Char('*'); 
 #line 1010 "barf_regex_parser.cpp"
 }
@@ -1013,7 +1013,7 @@ Ast::Base * Parser::ReductionRuleHandler0043 ()
 Ast::Base * Parser::ReductionRuleHandler0044 ()
 {
 
-#line 541 "barf_regex_parser.trison"
+#line 545 "barf_regex_parser.trison"
  return new Char('+'); 
 #line 1019 "barf_regex_parser.cpp"
 }
@@ -1022,7 +1022,7 @@ Ast::Base * Parser::ReductionRuleHandler0044 ()
 Ast::Base * Parser::ReductionRuleHandler0045 ()
 {
 
-#line 543 "barf_regex_parser.trison"
+#line 547 "barf_regex_parser.trison"
  return new Char('.'); 
 #line 1028 "barf_regex_parser.cpp"
 }
@@ -1031,7 +1031,7 @@ Ast::Base * Parser::ReductionRuleHandler0045 ()
 Ast::Base * Parser::ReductionRuleHandler0046 ()
 {
 
-#line 545 "barf_regex_parser.trison"
+#line 549 "barf_regex_parser.trison"
  return new Char('^'); 
 #line 1037 "barf_regex_parser.cpp"
 }
@@ -1040,7 +1040,7 @@ Ast::Base * Parser::ReductionRuleHandler0046 ()
 Ast::Base * Parser::ReductionRuleHandler0047 ()
 {
 
-#line 547 "barf_regex_parser.trison"
+#line 551 "barf_regex_parser.trison"
  return new Char('$'); 
 #line 1046 "barf_regex_parser.cpp"
 }
@@ -1049,7 +1049,7 @@ Ast::Base * Parser::ReductionRuleHandler0047 ()
 Ast::Base * Parser::ReductionRuleHandler0048 ()
 {
 
-#line 549 "barf_regex_parser.trison"
+#line 553 "barf_regex_parser.trison"
  return new Char('\\'); 
 #line 1055 "barf_regex_parser.cpp"
 }
@@ -1060,7 +1060,7 @@ Ast::Base * Parser::ReductionRuleHandler0049 ()
     assert(0 < m_reduction_rule_token_count);
     Char * alpha = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 560 "barf_regex_parser.trison"
+#line 564 "barf_regex_parser.trison"
  return alpha; 
 #line 1066 "barf_regex_parser.cpp"
 }
@@ -1071,7 +1071,7 @@ Ast::Base * Parser::ReductionRuleHandler0050 ()
     assert(0 < m_reduction_rule_token_count);
     Char * digit = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 561 "barf_regex_parser.trison"
+#line 565 "barf_regex_parser.trison"
  return digit; 
 #line 1077 "barf_regex_parser.cpp"
 }
@@ -1082,7 +1082,7 @@ Ast::Base * Parser::ReductionRuleHandler0051 ()
     assert(0 < m_reduction_rule_token_count);
     Char * ch = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 562 "barf_regex_parser.trison"
+#line 566 "barf_regex_parser.trison"
  return ch; 
 #line 1088 "barf_regex_parser.cpp"
 }
@@ -1091,7 +1091,7 @@ Ast::Base * Parser::ReductionRuleHandler0051 ()
 Ast::Base * Parser::ReductionRuleHandler0052 ()
 {
 
-#line 563 "barf_regex_parser.trison"
+#line 567 "barf_regex_parser.trison"
  return new Char(','); 
 #line 1097 "barf_regex_parser.cpp"
 }
@@ -1100,7 +1100,7 @@ Ast::Base * Parser::ReductionRuleHandler0052 ()
 Ast::Base * Parser::ReductionRuleHandler0053 ()
 {
 
-#line 564 "barf_regex_parser.trison"
+#line 568 "barf_regex_parser.trison"
  return new Char('-'); 
 #line 1106 "barf_regex_parser.cpp"
 }
@@ -1109,7 +1109,7 @@ Ast::Base * Parser::ReductionRuleHandler0053 ()
 Ast::Base * Parser::ReductionRuleHandler0054 ()
 {
 
-#line 565 "barf_regex_parser.trison"
+#line 569 "barf_regex_parser.trison"
  return new Char(':'); 
 #line 1115 "barf_regex_parser.cpp"
 }
@@ -1118,7 +1118,7 @@ Ast::Base * Parser::ReductionRuleHandler0054 ()
 Ast::Base * Parser::ReductionRuleHandler0055 ()
 {
 
-#line 577 "barf_regex_parser.trison"
+#line 581 "barf_regex_parser.trison"
  return new Char('-'); 
 #line 1124 "barf_regex_parser.cpp"
 }
@@ -1127,7 +1127,7 @@ Ast::Base * Parser::ReductionRuleHandler0055 ()
 Ast::Base * Parser::ReductionRuleHandler0056 ()
 {
 
-#line 579 "barf_regex_parser.trison"
+#line 583 "barf_regex_parser.trison"
  return new Char('^'); 
 #line 1133 "barf_regex_parser.cpp"
 }
@@ -1136,7 +1136,7 @@ Ast::Base * Parser::ReductionRuleHandler0056 ()
 Ast::Base * Parser::ReductionRuleHandler0057 ()
 {
 
-#line 581 "barf_regex_parser.trison"
+#line 585 "barf_regex_parser.trison"
  return new Char('['); 
 #line 1142 "barf_regex_parser.cpp"
 }
@@ -1145,7 +1145,7 @@ Ast::Base * Parser::ReductionRuleHandler0057 ()
 Ast::Base * Parser::ReductionRuleHandler0058 ()
 {
 
-#line 583 "barf_regex_parser.trison"
+#line 587 "barf_regex_parser.trison"
  return new Char(']'); 
 #line 1151 "barf_regex_parser.cpp"
 }
@@ -1154,7 +1154,7 @@ Ast::Base * Parser::ReductionRuleHandler0058 ()
 Ast::Base * Parser::ReductionRuleHandler0059 ()
 {
 
-#line 585 "barf_regex_parser.trison"
+#line 589 "barf_regex_parser.trison"
  return new Char('\\'); 
 #line 1160 "barf_regex_parser.cpp"
 }
@@ -1165,7 +1165,7 @@ Ast::Base * Parser::ReductionRuleHandler0060 ()
     assert(0 < m_reduction_rule_token_count);
     Char * alpha = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 596 "barf_regex_parser.trison"
+#line 600 "barf_regex_parser.trison"
  return alpha; 
 #line 1171 "barf_regex_parser.cpp"
 }
@@ -1176,7 +1176,7 @@ Ast::Base * Parser::ReductionRuleHandler0061 ()
     assert(0 < m_reduction_rule_token_count);
     Char * digit = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 597 "barf_regex_parser.trison"
+#line 601 "barf_regex_parser.trison"
  return digit; 
 #line 1182 "barf_regex_parser.cpp"
 }
@@ -1187,7 +1187,7 @@ Ast::Base * Parser::ReductionRuleHandler0062 ()
     assert(0 < m_reduction_rule_token_count);
     Char * ch = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 598 "barf_regex_parser.trison"
+#line 602 "barf_regex_parser.trison"
  return ch; 
 #line 1193 "barf_regex_parser.cpp"
 }
@@ -1196,7 +1196,7 @@ Ast::Base * Parser::ReductionRuleHandler0062 ()
 Ast::Base * Parser::ReductionRuleHandler0063 ()
 {
 
-#line 599 "barf_regex_parser.trison"
+#line 603 "barf_regex_parser.trison"
  return new Char('|'); 
 #line 1202 "barf_regex_parser.cpp"
 }
@@ -1205,7 +1205,7 @@ Ast::Base * Parser::ReductionRuleHandler0063 ()
 Ast::Base * Parser::ReductionRuleHandler0064 ()
 {
 
-#line 600 "barf_regex_parser.trison"
+#line 604 "barf_regex_parser.trison"
  return new Char(':'); 
 #line 1211 "barf_regex_parser.cpp"
 }
@@ -1214,7 +1214,7 @@ Ast::Base * Parser::ReductionRuleHandler0064 ()
 Ast::Base * Parser::ReductionRuleHandler0065 ()
 {
 
-#line 601 "barf_regex_parser.trison"
+#line 605 "barf_regex_parser.trison"
  return new Char('?'); 
 #line 1220 "barf_regex_parser.cpp"
 }
@@ -1223,7 +1223,7 @@ Ast::Base * Parser::ReductionRuleHandler0065 ()
 Ast::Base * Parser::ReductionRuleHandler0066 ()
 {
 
-#line 602 "barf_regex_parser.trison"
+#line 606 "barf_regex_parser.trison"
  return new Char('*'); 
 #line 1229 "barf_regex_parser.cpp"
 }
@@ -1232,7 +1232,7 @@ Ast::Base * Parser::ReductionRuleHandler0066 ()
 Ast::Base * Parser::ReductionRuleHandler0067 ()
 {
 
-#line 603 "barf_regex_parser.trison"
+#line 607 "barf_regex_parser.trison"
  return new Char('+'); 
 #line 1238 "barf_regex_parser.cpp"
 }
@@ -1241,7 +1241,7 @@ Ast::Base * Parser::ReductionRuleHandler0067 ()
 Ast::Base * Parser::ReductionRuleHandler0068 ()
 {
 
-#line 604 "barf_regex_parser.trison"
+#line 608 "barf_regex_parser.trison"
  return new Char('.'); 
 #line 1247 "barf_regex_parser.cpp"
 }
@@ -1250,7 +1250,7 @@ Ast::Base * Parser::ReductionRuleHandler0068 ()
 Ast::Base * Parser::ReductionRuleHandler0069 ()
 {
 
-#line 605 "barf_regex_parser.trison"
+#line 609 "barf_regex_parser.trison"
  return new Char('$'); 
 #line 1256 "barf_regex_parser.cpp"
 }
@@ -1259,7 +1259,7 @@ Ast::Base * Parser::ReductionRuleHandler0069 ()
 Ast::Base * Parser::ReductionRuleHandler0070 ()
 {
 
-#line 606 "barf_regex_parser.trison"
+#line 610 "barf_regex_parser.trison"
  return new Char(','); 
 #line 1265 "barf_regex_parser.cpp"
 }
@@ -1268,7 +1268,7 @@ Ast::Base * Parser::ReductionRuleHandler0070 ()
 Ast::Base * Parser::ReductionRuleHandler0071 ()
 {
 
-#line 607 "barf_regex_parser.trison"
+#line 611 "barf_regex_parser.trison"
  return new Char('('); 
 #line 1274 "barf_regex_parser.cpp"
 }
@@ -1277,7 +1277,7 @@ Ast::Base * Parser::ReductionRuleHandler0071 ()
 Ast::Base * Parser::ReductionRuleHandler0072 ()
 {
 
-#line 608 "barf_regex_parser.trison"
+#line 612 "barf_regex_parser.trison"
  return new Char(')'); 
 #line 1283 "barf_regex_parser.cpp"
 }
@@ -1286,7 +1286,7 @@ Ast::Base * Parser::ReductionRuleHandler0072 ()
 Ast::Base * Parser::ReductionRuleHandler0073 ()
 {
 
-#line 609 "barf_regex_parser.trison"
+#line 613 "barf_regex_parser.trison"
  return new Char('{'); 
 #line 1292 "barf_regex_parser.cpp"
 }
@@ -1295,7 +1295,7 @@ Ast::Base * Parser::ReductionRuleHandler0073 ()
 Ast::Base * Parser::ReductionRuleHandler0074 ()
 {
 
-#line 610 "barf_regex_parser.trison"
+#line 614 "barf_regex_parser.trison"
  return new Char('}'); 
 #line 1301 "barf_regex_parser.cpp"
 }
@@ -1308,7 +1308,7 @@ Ast::Base * Parser::ReductionRuleHandler0075 ()
     assert(1 < m_reduction_rule_token_count);
     Char * alpha = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 616 "barf_regex_parser.trison"
+#line 620 "barf_regex_parser.trison"
 
         assert(id != NULL);
         id->AppendChar(alpha->GetChar());
@@ -1326,7 +1326,7 @@ Ast::Base * Parser::ReductionRuleHandler0076 ()
     assert(1 < m_reduction_rule_token_count);
     Char * ch = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 624 "barf_regex_parser.trison"
+#line 628 "barf_regex_parser.trison"
 
         assert(id != NULL);
         id->AppendChar(ch->GetChar());
@@ -1344,7 +1344,7 @@ Ast::Base * Parser::ReductionRuleHandler0077 ()
     assert(1 < m_reduction_rule_token_count);
     Char * digit = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 632 "barf_regex_parser.trison"
+#line 636 "barf_regex_parser.trison"
 
         assert(id != NULL);
         id->AppendChar(digit->GetChar());
@@ -1360,7 +1360,7 @@ Ast::Base * Parser::ReductionRuleHandler0078 ()
     assert(0 < m_reduction_rule_token_count);
     Char * alpha = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 640 "barf_regex_parser.trison"
+#line 644 "barf_regex_parser.trison"
 
         string temp;
         temp += alpha->GetChar();
@@ -1377,7 +1377,7 @@ Ast::Base * Parser::ReductionRuleHandler0079 ()
     assert(0 < m_reduction_rule_token_count);
     Char * ch = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 649 "barf_regex_parser.trison"
+#line 653 "barf_regex_parser.trison"
 
         string temp;
         temp += ch->GetChar();
@@ -1396,7 +1396,7 @@ Ast::Base * Parser::ReductionRuleHandler0080 ()
     assert(1 < m_reduction_rule_token_count);
     Char * digit = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 661 "barf_regex_parser.trison"
+#line 665 "barf_regex_parser.trison"
 
         integer->ShiftAndAdd(digit->GetChar() - '0');
         if (integer->GetValue() > 255)
@@ -1413,7 +1413,7 @@ Ast::Base * Parser::ReductionRuleHandler0081 ()
     assert(0 < m_reduction_rule_token_count);
     Char * digit = Dsc< Char * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 670 "barf_regex_parser.trison"
+#line 674 "barf_regex_parser.trison"
 
         Ast::SignedInteger *integer = new Ast::SignedInteger(digit->GetChar() - '0', FiLoc::ms_invalid);
         delete digit;
@@ -2524,15 +2524,19 @@ inline Uint8 GetHexDigitValue (Uint8 c)
     return c;
 }
 
-Parser::ParserReturnCode Parser::Parse (Ast::Base **parsed_tree_root, RegularExpressionMap *macro_map)
+Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map)
 {
+    assert(parsed_regex != NULL);
     assert(m_macro_map == NULL);
-    m_macro_map = macro_map;
     try {
-        ParserReturnCode retval = Parse(parsed_tree_root);
+        Ast::Base *parsed_tree_root = NULL;
+        m_macro_map = macro_map;
+        ParserReturnCode retval = Parse(&parsed_tree_root);
+        *parsed_regex = Dsc<RegularExpression *>(parsed_tree_root);
         m_macro_map = NULL;
         return retval;
     } catch (string const &exception) {
+        *parsed_regex = NULL;
         m_macro_map = NULL;
         throw exception;
     }
@@ -2687,5 +2691,5 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Regex
 } // end of namespace Barf
 
-#line 2691 "barf_regex_parser.cpp"
+#line 2695 "barf_regex_parser.cpp"
 
