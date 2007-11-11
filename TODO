@@ -2,6 +2,9 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+* make separate configure.ac/makefile.am for example apps (maybe even a
+  separate makefile for each one so it's obvious how to write makefiles that
+  use BARF tools)
 - change EmitWarning, EmitError and EmitFatalError to take the message first
   and an optional FiLoc second, with a default value of FiLoc::ms_invalid.
 - guarantee that errors will be reported such that the line numbers never

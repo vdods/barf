@@ -1,0 +1,178 @@
+// ///////////////////////////////////////////////////////////////////////////
+// calculator_scanner.reflex by Victor Dods, created 2006/11/10
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%targets cpp
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner header-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.header_filename "calculator_scanner.hpp"
+%target.cpp.implementation_filename "calculator_scanner.cpp"
+%target.cpp.top_of_header_file %{
+#if !defined(_CALCULATOR_SCANNER_HPP_)
+#define _CALCULATOR_SCANNER_HPP_
+
+#include "calculator.hpp"
+
+#include <sstream>
+
+#include "calculator_parser.hpp"
+
+namespace Calculator {
+%}
+%target.cpp.constructor_parameters { string const &input_string }
+%target.cpp.class_name Scanner
+%target.cpp.scan_method_parameters { cl_N &token }
+%target.cpp.bottom_of_class {
+    istringstream m_input;
+}
+%target.cpp.bottom_of_header_file %{
+} // end of namespace Calculator
+
+#endif // !defined(_CALCULATOR_SCANNER_HPP_)
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner implementation-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.top_of_implementation_file %{
+// #define SPEW(x) cerr << x << endl
+#define SPEW(x)
+
+namespace Calculator {
+%}
+%target.cpp.constructor_actions {
+    m_input.str(input_string);
+}
+%target.cpp.end_of_scan_method_actions %{
+    return Parser::Token::BAD_TOKEN;
+%}
+%target.cpp.bottom_of_implementation_file %{
+} // end of namespace Calculator
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner I/O parameters
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.return_type "Parser::Token::Type"
+%target.cpp.return_true_iff_input_is_at_end {
+    return m_input.peek() == char_traits<char>::eof();
+}
+%target.cpp.return_next_input_char {
+    return m_input.get();
+}
+%target.cpp.rejection_actions {
+    assert(false && "we should have handled this in the catch-all rule");
+}
+%target.cpp.reset_for_new_input_actions {
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner misc directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.generate_debug_spew_code
+%target.cpp.dont_generate_timestamps
+
+// ///////////////////////////////////////////////////////////////////////////
+// target-independent scanner directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// an unsigned integer literal
+%macro INTEGER              (0|[1-9][0-9]*)
+// an unsigned floating-point literal with optional base 10 exponent
+%macro FLOAT                ({INTEGER}\.[0-9]+([eE][\-+]?{INTEGER})?)
+// arithmetic operators and brackets
+%macro OPERATOR             ([+\-*/\^()\\])
+// non-newline whitespace
+%macro WHITESPACE           ([ \t])
+// newline
+%macro NEWLINE              (\n)
+// end-of-file condition
+%macro END_OF_FILE          (\z)
+
+%start_in_scanner_mode MAIN
+
+%%
+
+// ///////////////////////////////////////////////////////////////////////////
+// scanner modes and constituent regex rules
+// ///////////////////////////////////////////////////////////////////////////
+
+%scanner_mode MAIN
+:
+    ({INTEGER})
+    %target.cpp {
+        token = cl_I(accepted_string.c_str());
+        return Parser::Token::NUMBER;
+    }
+|
+    ({FLOAT})
+    %target.cpp {
+        token = cl_F(accepted_string.c_str());
+        return Parser::Token::NUMBER;
+    }
+|
+    (pi)
+    %target.cpp {
+        token = pi(float_format(100)); // 100 digits of pi
+        return Parser::Token::NUMBER;
+    }
+|
+    (e)
+    %target.cpp {
+        token = exp1(float_format(100)); // 100 digits of e
+        return Parser::Token::NUMBER;
+    }
+|
+    (i)
+    %target.cpp {
+        token = sqrt(cl_N(-1)); // TODO -- find better way of returning I.
+        return Parser::Token::NUMBER;
+    }
+|
+    (r)
+    %target.cpp {
+        return Parser::Token::RESULT;
+    }
+|
+    (mod)
+    %target.cpp {
+        return Parser::Token::MOD;
+    }
+|
+    ({OPERATOR})
+    %target.cpp {
+        return Parser::Token::Type(accepted_string[0]);
+    }
+|
+    ({WHITESPACE})
+    %target.cpp {
+        // ignore all non-newline whitespace
+    }
+|
+    ({NEWLINE})
+    %target.cpp {
+        return Parser::Token::NEWLINE;
+    }
+|
+    ({END_OF_FILE})
+    %target.cpp {
+        return Parser::Token::END_;
+    }
+|
+    (.) // catch-all rule -- any other char is unrecognized
+    %target.cpp {
+        return Parser::Token::BAD_TOKEN;
+    }
+;

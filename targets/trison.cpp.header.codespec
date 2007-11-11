@@ -896,11 +896,13 @@ protected:
         void Print_ (std::ostream &stream, Rule_ const *rule_table, State_ const *state_table, Uint32_ indent_level) const
         {
             // fake polymorphism here, because we don't want to use virtual inheritance
-            switch (m_tree_node_type_)
+            if (m_parent_ == NULL) // special treatment for the root
+                PrivatePrint_(stream, rule_table, state_table, indent_level);
+            else switch (m_tree_node_type_)
             {
                 default:
-                case BRANCH_: assert(false && "this should never happen"); break;
-                case ACTION_: PrivatePrint_(stream, rule_table, state_table, indent_level); break;
+                case BRANCH_:
+                case ACTION_: assert(false && "this should never happen"); break;
                 case REDUCE_: static_cast<Reduce_ const *>(this)->Print_(stream, rule_table, state_table, indent_level); break;
                 case SHIFT_ : static_cast<Shift_ const *>(this)->Print_(stream, rule_table, state_table, indent_level); break;
             }

@@ -245,9 +245,8 @@ void <{class_name}::ResetForNewInput_ ()
                     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
                     assert(m_doomed_nonreturn_branch_list_.IsEmpty_());
 
-                    std::cerr << "*** executing and removing trunk (actions:";
+                    std::cerr << "*** executing and removing trunk - actions:";
                     ExecuteAndRemoveTrunk_();
-                    std::cerr << ") ***" << std::endl;
                     m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
 
                     // TODO technically there should only be one return branch at this
@@ -288,9 +287,8 @@ void <{class_name}::ResetForNewInput_ ()
         // read so far, the "trunk" of the tree represents the actions which all of
         // the branches agree upon.  therefore, there is no reason not to execute said
         // actions now.  execute said actions, removing them as you go.
-        std::cerr << "*** executing and removing trunk (actions:";
+        std::cerr << "*** executing and removing trunk - actions:";
         ExecuteAndRemoveTrunk_();
-        std::cerr << ") ***" << std::endl;
         m_tree_root_->Print_(std::cerr, ms_rule_table_, ms_state_table_, 0);
         assert(m_tree_root_->AssertActionAndParserBranchListsAreConsistent_(m_parser_branch_list_));
 
@@ -548,7 +546,7 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
                 Reduce_ *reduce = static_cast<Reduce_ *>(action);
                 assert(reduce->m_reduction_rule_ != NULL);
 
-                std::cerr << "    reduce \"" << reduce->m_reduction_rule_->m_description_ << "\" -- ";
+                std::cerr << "*** reduce \"" << reduce->m_reduction_rule_->m_description_ << "\" -- ";
 
                 // execute the reduction rule with the given index.  this is
                 // essentially just a big switch statement.  push the returned
@@ -571,7 +569,7 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
                 Shift_ *shift = static_cast<Shift_ *>(action);
                 shift->ClearRuleRange_();
 
-                std::cerr << "    shift" << std::endl;
+                std::cerr << "*** shift" << std::endl;
 
                 // shift the front of the lookahead queue onto the end of the token stack
                 assert(m_lookahead_token_queue_cursor_ > 0);
