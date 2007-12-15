@@ -428,6 +428,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
     {
         "BAD_TOKEN",
         "FLOAT",
+        "HELP",
         "MOD",
         "NEWLINE",
         "NUMBER",
@@ -485,7 +486,7 @@ cl_N Parser::ReductionRuleHandler0001 ()
         m_should_print_result = false;
         return 0;
     
-#line 489 "calculator_parser.cpp"
+#line 490 "calculator_parser.cpp"
     return 0;
 }
 
@@ -502,7 +503,7 @@ cl_N Parser::ReductionRuleHandler0002 ()
             m_last_result = result;
         return result;
     
-#line 506 "calculator_parser.cpp"
+#line 507 "calculator_parser.cpp"
     return 0;
 }
 
@@ -515,7 +516,7 @@ cl_N Parser::ReductionRuleHandler0003 ()
         m_should_print_result = false;
         return 0;
     
-#line 519 "calculator_parser.cpp"
+#line 520 "calculator_parser.cpp"
     return 0;
 }
 
@@ -529,7 +530,7 @@ cl_N Parser::ReductionRuleHandler0004 ()
 
 #line 135 "calculator_parser.trison"
  return MODULO(lhs + rhs); 
-#line 533 "calculator_parser.cpp"
+#line 534 "calculator_parser.cpp"
     return 0;
 }
 
@@ -543,7 +544,7 @@ cl_N Parser::ReductionRuleHandler0005 ()
 
 #line 137 "calculator_parser.trison"
  return MODULO(lhs - rhs); 
-#line 547 "calculator_parser.cpp"
+#line 548 "calculator_parser.cpp"
     return 0;
 }
 
@@ -557,7 +558,7 @@ cl_N Parser::ReductionRuleHandler0006 ()
 
 #line 139 "calculator_parser.trison"
  return MODULO(lhs * rhs); 
-#line 561 "calculator_parser.cpp"
+#line 562 "calculator_parser.cpp"
     return 0;
 }
 
@@ -580,7 +581,7 @@ cl_N Parser::ReductionRuleHandler0007 ()
         else
             return lhs / rhs;
     
-#line 584 "calculator_parser.cpp"
+#line 585 "calculator_parser.cpp"
     return 0;
 }
 
@@ -592,7 +593,7 @@ cl_N Parser::ReductionRuleHandler0008 ()
 
 #line 153 "calculator_parser.trison"
  return MODULO(exp); 
-#line 596 "calculator_parser.cpp"
+#line 597 "calculator_parser.cpp"
     return 0;
 }
 
@@ -604,7 +605,7 @@ cl_N Parser::ReductionRuleHandler0009 ()
 
 #line 155 "calculator_parser.trison"
  return MODULO(-exp); 
-#line 608 "calculator_parser.cpp"
+#line 609 "calculator_parser.cpp"
     return 0;
 }
 
@@ -627,7 +628,7 @@ cl_N Parser::ReductionRuleHandler0010 ()
         else
             return MODULO(expt(base, power));
     
-#line 631 "calculator_parser.cpp"
+#line 632 "calculator_parser.cpp"
     return 0;
 }
 
@@ -639,7 +640,7 @@ cl_N Parser::ReductionRuleHandler0011 ()
 
 #line 169 "calculator_parser.trison"
  return exp; 
-#line 643 "calculator_parser.cpp"
+#line 644 "calculator_parser.cpp"
     return 0;
 }
 
@@ -649,9 +650,9 @@ cl_N Parser::ReductionRuleHandler0012 ()
     assert(0 < m_reduction_rule_token_count);
     cl_N number = static_cast< cl_N >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 173 "calculator_parser.trison"
+#line 171 "calculator_parser.trison"
  return MODULO(number); 
-#line 655 "calculator_parser.cpp"
+#line 656 "calculator_parser.cpp"
     return 0;
 }
 
@@ -659,60 +660,103 @@ cl_N Parser::ReductionRuleHandler0012 ()
 cl_N Parser::ReductionRuleHandler0013 ()
 {
 
-#line 175 "calculator_parser.trison"
+#line 173 "calculator_parser.trison"
  return m_last_result; 
-#line 665 "calculator_parser.cpp"
+#line 666 "calculator_parser.cpp"
     return 0;
 }
 
-// rule 14: command <- '\\' MOD NUMBER:number    
+// rule 14: command <- '\\' FLOAT    
 cl_N Parser::ReductionRuleHandler0014 ()
 {
-    assert(2 < m_reduction_rule_token_count);
-    cl_N number = static_cast< cl_N >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 181 "calculator_parser.trison"
+#line 179 "calculator_parser.trison"
 
-        if (realpart(number) >= 0)
-            m_modulus = realpart(number);
-        else
-            cerr << "error: invalid modulus (must be non-negative)" << endl;
+        cout << "last result in floating-point: " << cl_float(realpart(m_last_result));
+        if (!zerop(imagpart(m_last_result)))
+            cout << " + " << cl_float(imagpart(m_last_result)) << "i";
+        cout << endl;
         return 0;
     
-#line 683 "calculator_parser.cpp"
+#line 682 "calculator_parser.cpp"
     return 0;
 }
 
-// rule 15: command <- '\\' MOD    
+// rule 15: command <- '\\' HELP    
 cl_N Parser::ReductionRuleHandler0015 ()
 {
 
-#line 190 "calculator_parser.trison"
+#line 188 "calculator_parser.trison"
 
-        cout << "current modulus: " << m_modulus << endl;
+        cout << "Operators\n"
+                "  + - * / ^ ( )\n"
+                "Symbols\n"
+                "  r          - The value of the previous result.\n"
+                "  pi         - The ratio of a circle's circumference to its diameter.\n"
+                "  e          - The base of the natural logarithm.\n"
+                "Commands\n"
+                "  \\float     - Print last result in floating point format.\n"
+                "  \\help      - This help screen.\n"
+                "  \\mod [arg] - Sets the modulus (i.e. modulo arithmetic).  Giving no\n"
+                "               argument will print the current modulus.  A modulus\n"
+                "               of 0 indicates no result truncation." << endl;
         return 0;
     
-#line 696 "calculator_parser.cpp"
-    return 0;
-}
-
-// rule 16: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
-cl_N Parser::ReductionRuleHandler0016 ()
-{
-
-#line 198 "calculator_parser.trison"
- return 0; 
 #line 706 "calculator_parser.cpp"
     return 0;
 }
 
-// rule 17: at_least_zero_newlines <-     
+// rule 16: command <- '\\' MOD expression:exp    
+cl_N Parser::ReductionRuleHandler0016 ()
+{
+    assert(2 < m_reduction_rule_token_count);
+    cl_N exp = static_cast< cl_N >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+
+#line 205 "calculator_parser.trison"
+
+        if (realpart(exp) >= 0 && zerop(imagpart(exp)))
+        {
+            m_modulus = realpart(exp);
+            cout << "current modulus set to: " << m_modulus << endl;
+        }
+        else
+            cerr << "error: invalid modulus (must be non-negative, real)" << endl;
+        return 0;
+    
+#line 727 "calculator_parser.cpp"
+    return 0;
+}
+
+// rule 17: command <- '\\' MOD    
 cl_N Parser::ReductionRuleHandler0017 ()
 {
 
-#line 200 "calculator_parser.trison"
+#line 217 "calculator_parser.trison"
+
+        cout << "current modulus: " << m_modulus << endl;
+        return 0;
+    
+#line 740 "calculator_parser.cpp"
+    return 0;
+}
+
+// rule 18: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
+cl_N Parser::ReductionRuleHandler0018 ()
+{
+
+#line 225 "calculator_parser.trison"
  return 0; 
-#line 716 "calculator_parser.cpp"
+#line 750 "calculator_parser.cpp"
+    return 0;
+}
+
+// rule 19: at_least_zero_newlines <-     
+cl_N Parser::ReductionRuleHandler0019 ()
+{
+
+#line 227 "calculator_parser.trison"
+ return 0; 
+#line 760 "calculator_parser.cpp"
     return 0;
 }
 
@@ -738,10 +782,12 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {           Token::expression__,  3, &Parser::ReductionRuleHandler0011, "rule 11: expression <- '(' expression ')'    "},
     {           Token::expression__,  1, &Parser::ReductionRuleHandler0012, "rule 12: expression <- NUMBER    "},
     {           Token::expression__,  1, &Parser::ReductionRuleHandler0013, "rule 13: expression <- RESULT    "},
-    {              Token::command__,  3, &Parser::ReductionRuleHandler0014, "rule 14: command <- '\\' MOD NUMBER    "},
-    {              Token::command__,  2, &Parser::ReductionRuleHandler0015, "rule 15: command <- '\\' MOD    "},
-    {Token::at_least_zero_newlines__,  2, &Parser::ReductionRuleHandler0016, "rule 16: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    "},
-    {Token::at_least_zero_newlines__,  0, &Parser::ReductionRuleHandler0017, "rule 17: at_least_zero_newlines <-     "},
+    {              Token::command__,  2, &Parser::ReductionRuleHandler0014, "rule 14: command <- '\\' FLOAT    "},
+    {              Token::command__,  2, &Parser::ReductionRuleHandler0015, "rule 15: command <- '\\' HELP    "},
+    {              Token::command__,  3, &Parser::ReductionRuleHandler0016, "rule 16: command <- '\\' MOD expression    "},
+    {              Token::command__,  2, &Parser::ReductionRuleHandler0017, "rule 17: command <- '\\' MOD    "},
+    {Token::at_least_zero_newlines__,  2, &Parser::ReductionRuleHandler0018, "rule 18: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    "},
+    {Token::at_least_zero_newlines__,  0, &Parser::ReductionRuleHandler0019, "rule 19: at_least_zero_newlines <-     "},
 
     // special error panic reduction rule
     {                 Token::ERROR_,  1,                                     NULL, "* -> error"}
@@ -763,27 +809,29 @@ Parser::State const Parser::ms_state[] =
     {  13,    5,    0,   18,    1}, // state    3
     {  19,    5,    0,   24,    1}, // state    4
     {  25,    5,    0,   30,    1}, // state    5
-    {  31,    1,    0,    0,    0}, // state    6
-    {  32,    1,    0,    0,    0}, // state    7
-    {  33,    5,   38,    0,    0}, // state    8
-    {   0,    0,   39,    0,    0}, // state    9
-    {  40,    1,   41,    0,    0}, // state   10
-    {  42,    1,   43,    0,    0}, // state   11
-    {  44,    6,    0,    0,    0}, // state   12
-    {  50,    1,   51,    0,    0}, // state   13
-    {   0,    0,   52,    0,    0}, // state   14
-    {  53,    5,    0,   58,    1}, // state   15
-    {  59,    5,    0,   64,    1}, // state   16
-    {  65,    5,    0,   70,    1}, // state   17
-    {  71,    5,    0,   76,    1}, // state   18
-    {  77,    5,    0,   82,    1}, // state   19
-    {   0,    0,   83,    0,    0}, // state   20
-    {   0,    0,   84,    0,    0}, // state   21
-    {  85,    3,   88,    0,    0}, // state   22
-    {  89,    3,   92,    0,    0}, // state   23
-    {  93,    1,   94,    0,    0}, // state   24
-    {  95,    1,   96,    0,    0}, // state   25
-    {  97,    1,   98,    0,    0}  // state   26
+    {  31,    3,    0,    0,    0}, // state    6
+    {  34,    1,    0,    0,    0}, // state    7
+    {  35,    5,   40,    0,    0}, // state    8
+    {   0,    0,   41,    0,    0}, // state    9
+    {  42,    1,   43,    0,    0}, // state   10
+    {  44,    1,   45,    0,    0}, // state   11
+    {  46,    6,    0,    0,    0}, // state   12
+    {   0,    0,   52,    0,    0}, // state   13
+    {   0,    0,   53,    0,    0}, // state   14
+    {  54,    5,   59,   60,    1}, // state   15
+    {   0,    0,   61,    0,    0}, // state   16
+    {  62,    5,    0,   67,    1}, // state   17
+    {  68,    5,    0,   73,    1}, // state   18
+    {  74,    5,    0,   79,    1}, // state   19
+    {  80,    5,    0,   85,    1}, // state   20
+    {  86,    5,    0,   91,    1}, // state   21
+    {   0,    0,   92,    0,    0}, // state   22
+    {  93,    5,   98,    0,    0}, // state   23
+    {  99,    3,  102,    0,    0}, // state   24
+    { 103,    3,  106,    0,    0}, // state   25
+    { 107,    1,  108,    0,    0}, // state   26
+    { 109,    1,  110,    0,    0}, // state   27
+    { 111,    1,  112,    0,    0}  // state   28
 
 };
 
@@ -869,23 +917,25 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state    6
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                    Token::MOD, {        TA_SHIFT_AND_PUSH_STATE,   13}},
+    {                  Token::FLOAT, {        TA_SHIFT_AND_PUSH_STATE,   13}},
+    {                   Token::HELP, {        TA_SHIFT_AND_PUSH_STATE,   14}},
+    {                    Token::MOD, {        TA_SHIFT_AND_PUSH_STATE,   15}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state    7
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                   Token::END_, {        TA_SHIFT_AND_PUSH_STATE,   14}},
+    {                   Token::END_, {        TA_SHIFT_AND_PUSH_STATE,   16}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state    8
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,   15}},
-    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   16}},
-    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   17}},
-    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   18}},
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,   17}},
+    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   18}},
+    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   20}},
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    2}},
 
@@ -899,7 +949,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   10
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    8}},
 
@@ -907,7 +957,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   11
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    9}},
 
@@ -915,26 +965,24 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   12
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,   15}},
-    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   16}},
-    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   17}},
-    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   18}},
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
-    {              Token::Type(')'), {        TA_SHIFT_AND_PUSH_STATE,   20}},
+    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,   17}},
+    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   18}},
+    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   20}},
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
+    {              Token::Type(')'), {        TA_SHIFT_AND_PUSH_STATE,   22}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   13
 // ///////////////////////////////////////////////////////////////////////////
-    // terminal transitions
-    {                 Token::NUMBER, {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   15}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   14}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   14
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {TA_REDUCE_AND_ACCEPT_USING_RULE,    0}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   15}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   15
@@ -945,20 +993,16 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,    3}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,    4}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,    5}},
+    // default transition
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   17}},
     // nonterminal transitions
-    {           Token::expression__, {                  TA_PUSH_STATE,   22}},
+    {           Token::expression__, {                  TA_PUSH_STATE,   23}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   16
 // ///////////////////////////////////////////////////////////////////////////
-    // terminal transitions
-    {                 Token::NUMBER, {        TA_SHIFT_AND_PUSH_STATE,    1}},
-    {                 Token::RESULT, {        TA_SHIFT_AND_PUSH_STATE,    2}},
-    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,    3}},
-    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,    4}},
-    {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,    5}},
-    // nonterminal transitions
-    {           Token::expression__, {                  TA_PUSH_STATE,   23}},
+    // default transition
+    {               Token::DEFAULT_, {TA_REDUCE_AND_ACCEPT_USING_RULE,    0}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   17
@@ -999,56 +1043,86 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // ///////////////////////////////////////////////////////////////////////////
 // state   20
 // ///////////////////////////////////////////////////////////////////////////
-    // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   11}},
+    // terminal transitions
+    {                 Token::NUMBER, {        TA_SHIFT_AND_PUSH_STATE,    1}},
+    {                 Token::RESULT, {        TA_SHIFT_AND_PUSH_STATE,    2}},
+    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,    3}},
+    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,    4}},
+    {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,    5}},
+    // nonterminal transitions
+    {           Token::expression__, {                  TA_PUSH_STATE,   27}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   21
 // ///////////////////////////////////////////////////////////////////////////
-    // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   14}},
+    // terminal transitions
+    {                 Token::NUMBER, {        TA_SHIFT_AND_PUSH_STATE,    1}},
+    {                 Token::RESULT, {        TA_SHIFT_AND_PUSH_STATE,    2}},
+    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,    3}},
+    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,    4}},
+    {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,    5}},
+    // nonterminal transitions
+    {           Token::expression__, {                  TA_PUSH_STATE,   28}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   22
 // ///////////////////////////////////////////////////////////////////////////
-    // terminal transitions
-    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   17}},
-    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   18}},
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    4}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   11}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   23
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   17}},
-    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   18}},
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,   17}},
+    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   18}},
+    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   20}},
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    5}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   16}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   24
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   20}},
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    6}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    4}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   25
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   20}},
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    7}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    5}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   26
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
+    // default transition
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    6}},
+
+// ///////////////////////////////////////////////////////////////////////////
+// state   27
+// ///////////////////////////////////////////////////////////////////////////
+    // terminal transitions
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
+    // default transition
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,    7}},
+
+// ///////////////////////////////////////////////////////////////////////////
+// state   28
+// ///////////////////////////////////////////////////////////////////////////
+    // terminal transitions
+    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   10}}
 
@@ -1076,5 +1150,5 @@ Parser::Token::Type Parser::Scan ()
 
 } // end of namespace Calculator
 
-#line 1080 "calculator_parser.cpp"
+#line 1154 "calculator_parser.cpp"
 

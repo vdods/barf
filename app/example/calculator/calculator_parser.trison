@@ -95,7 +95,7 @@ Parser::Token::Type Parser::Scan ()
 %token NEWLINE
 %token NUMBER
 %token RESULT
-%token MOD FLOAT
+%token FLOAT HELP MOD 
 %token '+' '-' '*' '/' '^' '(' ')' '\\'
 
 %prec ADDITION
@@ -167,8 +167,6 @@ expression
     }
 |
     '(' expression:exp ')' { return exp; }
-// |
-//     FLOAT '(' expression:exp ')' { return 
 |
     NUMBER:number { return MODULO(number); }
 |
@@ -177,10 +175,39 @@ expression
 
 command
 :
+    '\\' FLOAT
+    {
+        cout << "last result in floating-point: " << cl_float(realpart(m_last_result));
+        if (!zerop(imagpart(m_last_result)))
+            cout << " + " << cl_float(imagpart(m_last_result)) << "i";
+        cout << endl;
+        return 0;
+    }
+|
+    '\\' HELP
+    {
+        cout << "Operators\n"
+                "  + - * / ^ ( )\n"
+                "Symbols\n"
+                "  r          - The value of the previous result.\n"
+                "  pi         - The ratio of a circle's circumference to its diameter.\n"
+                "  e          - The base of the natural logarithm.\n"
+                "Commands\n"
+                "  \\float     - Print last result in floating point format.\n"
+                "  \\help      - This help screen.\n"
+                "  \\mod [arg] - Sets the modulus (i.e. modulo arithmetic).  Giving no\n"
+                "               argument will print the current modulus.  A modulus\n"
+                "               of 0 indicates no result truncation." << endl;
+        return 0;
+    }
+|
     '\\' MOD expression:exp
     {
         if (realpart(exp) >= 0 && zerop(imagpart(exp)))
+        {
             m_modulus = realpart(exp);
+            cout << "current modulus set to: " << m_modulus << endl;
+        }
         else
             cerr << "error: invalid modulus (must be non-negative, real)" << endl;
         return 0;

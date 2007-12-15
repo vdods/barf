@@ -28,6 +28,7 @@ public:
             // user-defined terminal, non-single-character tokens
             BAD_TOKEN = 0x100,
             FLOAT,
+            HELP,
             MOD,
             NEWLINE,
             NUMBER,
@@ -93,7 +94,7 @@ private:
     cl_R m_modulus;
     bool m_should_print_result;
 
-#line 97 "calculator_parser.hpp"
+#line 98 "calculator_parser.hpp"
 
 private:
 
@@ -234,6 +235,8 @@ private:
     cl_N ReductionRuleHandler0015 ();
     cl_N ReductionRuleHandler0016 ();
     cl_N ReductionRuleHandler0017 ();
+    cl_N ReductionRuleHandler0018 ();
+    cl_N ReductionRuleHandler0019 ();
 
 }; // end of class Parser
 
@@ -246,4 +249,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_CALCULATOR_PARSER_HPP_)
 
-#line 250 "calculator_parser.hpp"
+#line 253 "calculator_parser.hpp"

@@ -21,6 +21,8 @@ int main (int argc, char **argv)
     char buffer[BUFFER_SIZE];
     Parser parser;
 
+    cout << "BARF calculator by Victor Dods - type \\help for help." << endl;
+
     while (!cin.eof())
     {
         cin.getline(buffer, BUFFER_SIZE, '\n');
