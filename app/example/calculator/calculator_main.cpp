@@ -18,7 +18,6 @@ using namespace Calculator;
 
 int main (int argc, char **argv)
 {
-    cl_N result;
     char buffer[BUFFER_SIZE];
     Parser parser;
 
@@ -27,11 +26,11 @@ int main (int argc, char **argv)
         cin.getline(buffer, BUFFER_SIZE, '\n');
         buffer[BUFFER_SIZE-1] = '\0'; // just to make sure
         parser.SetInputString(buffer);
-        switch (parser.Parse(&result))
+        switch (parser.Parse())
         {
             case Parser::PRC_SUCCESS:
                 if (parser.ShouldPrintResult())
-                    cout << " = " << result << endl;
+                    cout << " = " << parser.GetAcceptedToken() << endl;
                 break;
 
             case Parser::PRC_UNHANDLED_PARSE_ERROR:

@@ -151,6 +151,11 @@ namespace Calculator {
         return Parser::Token::MOD;
     }
 |
+    (float)
+    %target.cpp {
+        return Parser::Token::FLOAT;
+    }
+|
     ({OPERATOR})
     %target.cpp {
         return Parser::Token::Type(accepted_string[0]);

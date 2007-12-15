@@ -47,7 +47,7 @@ private:
 %parser_implementation_file_top%{
 #include "calculator_scanner.hpp"
 
-#define MODULO(x) x/*(zerop(m_modulus) ? x : mod(realpart(x), m_modulus))*/
+#define MODULO(x) (zerop(m_modulus) ? x : cl_N(mod(realpart(x), m_modulus)))
 
 namespace Calculator {
 %}
@@ -95,7 +95,7 @@ Parser::Token::Type Parser::Scan ()
 %token NEWLINE
 %token NUMBER
 %token RESULT
-%token MOD
+%token MOD FLOAT
 %token '+' '-' '*' '/' '^' '(' ')' '\\'
 
 %prec ADDITION
@@ -167,6 +167,8 @@ expression
     }
 |
     '(' expression:exp ')' { return exp; }
+// |
+//     FLOAT '(' expression:exp ')' { return 
 |
     NUMBER:number { return MODULO(number); }
 |
@@ -175,12 +177,18 @@ expression
 
 command
 :
-    '\\' MOD NUMBER:number
+    '\\' MOD expression:exp
     {
-        if (realpart(number) >= 0)
-            m_modulus = realpart(number);
+        if (realpart(exp) >= 0 && zerop(imagpart(exp)))
+            m_modulus = realpart(exp);
         else
-            cerr << "error: invalid modulus (must be non-negative)" << endl;
+            cerr << "error: invalid modulus (must be non-negative, real)" << endl;
+        return 0;
+    }
+|
+    '\\' MOD
+    {
+        cout << "current modulus: " << m_modulus << endl;
         return 0;
     }
 ;

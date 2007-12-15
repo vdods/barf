@@ -12,6 +12,14 @@ app/bpp/bpp.hpp
 app/bpp/bpp_main.cpp
 app/bpp/bpp_options.cpp
 app/bpp/bpp_options.hpp
+app/example/calculator/calculator.hpp
+app/example/calculator/calculator_main.cpp
+app/example/calculator/calculator_parser.cpp
+app/example/calculator/calculator_parser.hpp
+app/example/calculator/calculator_parser.trison
+app/example/calculator/calculator_scanner.cpp
+app/example/calculator/calculator_scanner.hpp
+app/example/calculator/calculator_scanner.reflex
 app/reflex/example.reflex
 app/reflex/reflex.hpp
 app/reflex/reflex_ast.cpp
