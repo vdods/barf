@@ -529,8 +529,8 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
             nonterminal_map->GetElement(default_parse_nonterminal_id->GetText()) == NULL)
         {
             EmitError(
-                default_parse_nonterminal_id->GetFiLoc(),
-                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"");
+                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"",
+                default_parse_nonterminal_id->GetFiLoc());
         }
 
         PrimarySource *primary_source =
@@ -590,7 +590,7 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
 #line 258 "trison_parser.trison"
 
         assert(m_target_map == NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %targets");
+        EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     
@@ -688,7 +688,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
 
 #line 314 "trison_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText());
+        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         delete target_directive;
@@ -707,7 +707,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
 
 #line 323 "trison_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %target." + target_id->GetText());
+        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
@@ -723,7 +723,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
 
 #line 331 "trison_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in target name for directive %target");
+        EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
@@ -960,7 +960,7 @@ Ast::Base * Parser::ReductionRuleHandler0026 ()
         else if (associativity_id->GetText() == "right")
             associativity = A_RIGHT;
         else
-            EmitError(throwaway->GetFiLoc(), "invalid associativity specifier \"" + associativity_id->GetText() + "\"");
+            EmitError("invalid associativity specifier \"" + associativity_id->GetText() + "\"", throwaway->GetFiLoc());
 
         Precedence *precedence =
             new Precedence(
@@ -1053,7 +1053,7 @@ Ast::Base * Parser::ReductionRuleHandler0031 ()
 
 #line 535 "trison_parser.trison"
 
-        EmitError(GetFiLoc(), "syntax error in nonterminal definition");
+        EmitError("syntax error in nonterminal definition", GetFiLoc());
         return NULL;
     
 #line 1060 "trison_parser.cpp"
@@ -1075,7 +1075,7 @@ Ast::Base * Parser::ReductionRuleHandler0032 ()
         assert(id != NULL);
         assert(assigned_type_map != NULL);
         if (m_terminal_map->GetElement(id->GetText()) != NULL)
-            EmitError(id->GetFiLoc(), "id collision with terminal " + id->GetText());
+            EmitError("id collision with terminal " + id->GetText(), id->GetFiLoc());
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
@@ -1097,7 +1097,7 @@ Ast::Base * Parser::ReductionRuleHandler0033 ()
 #line 561 "trison_parser.trison"
 
         assert(throwaway != NULL);
-        EmitError(throwaway->GetFiLoc(), "syntax error while parsing nonterminal specification");
+        EmitError("syntax error while parsing nonterminal specification", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
@@ -1115,7 +1115,7 @@ Ast::Base * Parser::ReductionRuleHandler0034 ()
 #line 569 "trison_parser.trison"
 
         assert(id != NULL);
-        EmitError(id->GetFiLoc(), "syntax error in %nonterminal directive");
+        EmitError("syntax error in %nonterminal directive", id->GetFiLoc());
         delete throwaway;
         delete id;
         return NULL;
@@ -1235,8 +1235,8 @@ Ast::Base * Parser::ReductionRuleHandler0041 ()
         assert(m_target_map != NULL);
         if (m_target_map->GetElement(target_id->GetText()) == NULL)
             EmitWarning(
-                target_id->GetFiLoc(),
-                "undeclared target \"" + target_id->GetText() + "\"");
+                "undeclared target \"" + target_id->GetText() + "\"",
+                target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     
 #line 1243 "trison_parser.cpp"
@@ -1253,7 +1253,7 @@ Ast::Base * Parser::ReductionRuleHandler0042 ()
 #line 650 "trison_parser.trison"
 
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in target id after directive %target");
+        EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
         delete throwaway;
         delete code_block;
         return NULL;
@@ -1270,7 +1270,7 @@ Ast::Base * Parser::ReductionRuleHandler0043 ()
 #line 659 "trison_parser.trison"
 
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %target");
+        EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
@@ -1286,7 +1286,7 @@ Ast::Base * Parser::ReductionRuleHandler0044 ()
 #line 667 "trison_parser.trison"
 
         assert(m_target_map != NULL);
-        EmitError(code_block->GetFiLoc(), "missing directive %target before rule handler code block");
+        EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     
@@ -2531,7 +2531,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in targetspec");
+            EmitError("unrecognized token encountered in targetspec", m_lookahead_token->GetFiLoc());
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;

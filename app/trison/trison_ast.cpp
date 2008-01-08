@@ -382,12 +382,12 @@ void ParserDirectiveSet::AddDirective (
     {
         // throw an error upon duplicate parser directives
         EmitError(
-            parser_directive->GetFiLoc(),
             "duplicate parser directive \"" +
             ParserDirective::GetString(parser_directive_type) +
             "\" (first encountered at " +
             m_parser_directive[parser_directive_type]->GetFiLoc().GetAsString() +
-            ")");
+            ")",
+            parser_directive->GetFiLoc());
         delete parser_directive;
     }
     else
@@ -405,7 +405,7 @@ void ParserDirectiveSet::CheckDependencies ()
     // check for required parser directives
 
     if (m_parser_directive[PDT_CLASS_NAME] == NULL)
-        EmitError(FiLoc(g_options->GetInputFilename()), "required directive %parser_class_name is missing");
+        EmitError("required directive %parser_class_name is missing", FiLoc(g_options->GetInputFilename()));
 
     // check for other directive dependencies
 
@@ -424,18 +424,18 @@ void ParserDirectiveSet::CheckDependencies ()
         if (text != "public:" && text != "protected:" && text != "private:")
         {
             EmitError(
-                GetDirectiveFiLoc(PDT_PARSE_METHOD_ACCESS),
                 "%parser_parse_method_access must be one of \"public:\", "
-                "\"protected:\" or \"private:\" (if unspecified, \"public:\" is used)");
+                "\"protected:\" or \"private:\" (if unspecified, \"public:\" is used)",
+                GetDirectiveFiLoc(PDT_PARSE_METHOD_ACCESS));
         }
     }
 
     if (m_parser_directive[PDT_BASE_ASSIGNED_TYPE_SENTINEL] != NULL)
         if (m_parser_directive[PDT_BASE_ASSIGNED_TYPE] == NULL)
             EmitError(
-                FiLoc(g_options->GetInputFilename()),
                 "%parser_base_assigned_type must be specified if "
-                "%parser_base_assigned_type_sentinel is");
+                "%parser_base_assigned_type_sentinel is",
+                FiLoc(g_options->GetInputFilename()));
 }
 
 void ParserDirectiveSet::FillInMissingOptionalDirectivesWithDefaults ()
@@ -531,7 +531,7 @@ Grammar::Grammar (
 
             case AT_START_DIRECTIVE:
                 if (start_directive != NULL)
-                    EmitError(directive->GetFiLoc(), "duplicate %start directive");
+                    EmitError("duplicate %start directive", directive->GetFiLoc());
                 delete start_directive;
                 start_directive = Dsc<StartDirective *>(directive);
                 break;
@@ -553,7 +553,7 @@ Grammar::Grammar (
 
     // create m_start_nonterminal from start_directive
     if (start_directive == NULL)
-        EmitError(end_preamble_filoc, "missing %start directive");
+        EmitError("missing %start directive", end_preamble_filoc);
     else
     {
         Ast::Id *start_nonterminal_id =

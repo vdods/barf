@@ -116,7 +116,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%terminal") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TERMINAL; }
     if (accepted_string == "%type") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TYPE; }
 
-    EmitError(GetFiLoc(), "invalid directive \"" + accepted_string + "\"");
+    EmitError("invalid directive \"" + accepted_string + "\"", GetFiLoc());
     return Token::BAD_TOKEN;
 }
 
@@ -247,7 +247,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 248 "barf_commonlang_scanner.reflex"
 
-    EmitError(GetFiLoc(), "unrecognized character " + GetCharLiteral(rejected_atom));
+    EmitError("unrecognized character " + GetCharLiteral(rejected_atom), GetFiLoc());
 
 #line 253 "barf_commonlang_scanner.cpp"
 
@@ -301,7 +301,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 434 "barf_commonlang_scanner.reflex"
 
         SPEW("BLOCK_COMMENT - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitWarning(GetFiLoc(), "unterminated block comment");
+        EmitWarning("unterminated block comment", GetFiLoc());
         return Token::END_OF_FILE;
     
 #line 308 "barf_commonlang_scanner.cpp"
@@ -330,7 +330,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 517 "barf_commonlang_scanner.reflex"
 
         SPEW("CHAR_LITERAL_END - (\\\\?{END_OF_FILE}) - accepted_string = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "unterminated character literal");
+        EmitError("unterminated character literal", GetFiLoc());
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -348,7 +348,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 528 "barf_commonlang_scanner.reflex"
 
         SPEW("CHAR_LITERAL_END - ({ANYTHING}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "malformed character literal");
+        EmitError("malformed character literal", GetFiLoc());
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
         assert(*token != NULL);
@@ -373,7 +373,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[1] == '0');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
-            EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
+            EmitError("octal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         *token = new Ast::Char(Uint8(value), GetFiLoc());
         ScannerMode(Mode::CHAR_LITERAL_END);
     
@@ -393,7 +393,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
-            EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
+            EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         *token = new Ast::Char(Uint8(value), GetFiLoc());
         ScannerMode(Mode::CHAR_LITERAL_END);
     
@@ -441,7 +441,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 489 "barf_commonlang_scanner.reflex"
 
         SPEW("CHAR_LITERAL_GUTS - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "unterminated character literal");
+        EmitError("unterminated character literal", GetFiLoc());
         return Token::END_OF_FILE;
     
 #line 448 "barf_commonlang_scanner.cpp"
@@ -455,7 +455,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 496 "barf_commonlang_scanner.reflex"
 
         SPEW("CHAR_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "unexpected character " + GetCharLiteral(accepted_string[0]) + " in character literal");
+        EmitError("unexpected character " + GetCharLiteral(accepted_string[0]) + " in character literal", GetFiLoc());
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
         *token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
@@ -491,7 +491,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFiLoc(), "unterminated character literal in { } style code block");
+        EmitError("unterminated character literal in { } style code block", GetFiLoc());
         IncrementLineNumber(GetNewlineCount(accepted_string));
         return Token::END_OF_FILE;
     
@@ -539,7 +539,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFiLoc(), "unterminated %{ %} style code block");
+        EmitError("unterminated %{ %} style code block", GetFiLoc());
         return Token::END_OF_FILE;
     
 #line 546 "barf_commonlang_scanner.cpp"
@@ -744,7 +744,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 408 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (.) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "unexpected character " + GetCharLiteral(accepted_string[0]));
+        EmitError("unexpected character " + GetCharLiteral(accepted_string[0]), GetFiLoc());
         return Token::BAD_TOKEN;
     
 #line 751 "barf_commonlang_scanner.cpp"
@@ -827,7 +827,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFiLoc(), "unterminated regular expression");
+        EmitError("unterminated regular expression", GetFiLoc());
         return Token::END_OF_FILE;
     
 #line 834 "barf_commonlang_scanner.cpp"
@@ -892,7 +892,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFiLoc(), "unterminated bracket expression inside regular expression");
+        EmitError("unterminated bracket expression inside regular expression", GetFiLoc());
         return Token::END_OF_FILE;
     
 #line 899 "barf_commonlang_scanner.cpp"
@@ -1019,7 +1019,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFiLoc(), "unterminated { } style code block");
+        EmitError("unterminated { } style code block", GetFiLoc());
         return Token::END_OF_FILE;
     
 #line 1026 "barf_commonlang_scanner.cpp"
@@ -1039,7 +1039,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[1] == '0');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
-            EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
+            EmitError("octal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         Dsc<Ast::String *>(*token)->AppendChar(Uint8(value));
     
 #line 1046 "barf_commonlang_scanner.cpp"
@@ -1059,7 +1059,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
-            EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
+            EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         Dsc<Ast::String *>(*token)->AppendChar(Uint8(value));
     
 #line 1066 "barf_commonlang_scanner.cpp"
@@ -1092,7 +1092,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        EmitError(GetFiLoc(), "malformed string literal escape code -- backslash followed by " + GetCharLiteral(accepted_string[1]));
+        EmitError("malformed string literal escape code -- backslash followed by " + GetCharLiteral(accepted_string[1]), GetFiLoc());
     
 #line 1098 "barf_commonlang_scanner.cpp"
 
@@ -1135,7 +1135,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 604 "barf_commonlang_scanner.reflex"
 
         SPEW("STRING_LITERAL_GUTS - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "unterminated string literal");
+        EmitError("unterminated string literal", GetFiLoc());
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -1153,7 +1153,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
-        EmitError(GetFiLoc(), "ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal");
+        EmitError("ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal", GetFiLoc());
     
 #line 1159 "barf_commonlang_scanner.cpp"
 
@@ -1185,7 +1185,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        EmitError(GetFiLoc(), "unterminated string literal in { } style code block");
+        EmitError("unterminated string literal in { } style code block", GetFiLoc());
         IncrementLineNumber(GetNewlineCount(accepted_string));
         return Token::END_OF_FILE;
     

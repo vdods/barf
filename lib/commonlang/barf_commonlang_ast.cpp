@@ -87,7 +87,7 @@ void Target::Add (TargetDirective *target_directive)
     if (m_is_enabled_for_code_generation)
         Add(target_directive->m_directive_id->GetText(), target_directive);
     else
-        EmitWarning(target_directive->GetFiLoc(), "undeclared target \"" + target_directive->m_target_id->GetText() + "\"");
+        EmitWarning("undeclared target \"" + target_directive->m_target_id->GetText() + "\"", target_directive->GetFiLoc());
 }
 
 void Target::ParseTargetspec (string const &tool_prefix, Targetspec::Parser &parser) const
@@ -97,11 +97,11 @@ void Target::ParseTargetspec (string const &tool_prefix, Targetspec::Parser &par
         m_targetspec.m_source_path = g_options->GetTargetsSearchPath().GetFilePath(filename);
         Ast::Base *parsed_tree_root = NULL;
         if (m_targetspec.m_source_path.empty())
-            EmitError(FiLoc(g_options->GetInputFilename()), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
+            EmitError("file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString(), FiLoc(g_options->GetInputFilename()));
         else if (!parser.OpenFile(m_targetspec.m_source_path))
-            EmitError(FiLoc(g_options->GetInputFilename()), "unable to open file \"" + m_targetspec.m_source_path + "\" for reading");
+            EmitError("unable to open file \"" + m_targetspec.m_source_path + "\" for reading", FiLoc(g_options->GetInputFilename()));
         else if (parser.Parse(&parsed_tree_root) != Targetspec::Parser::PRC_SUCCESS)
-            EmitError(FiLoc(m_targetspec.m_source_path), "general targetspec parse error");
+            EmitError("general targetspec parse error", FiLoc(m_targetspec.m_source_path));
         else
         {
             m_targetspec.m_specification = Dsc<Targetspec::Specification *>(parsed_tree_root);
@@ -135,11 +135,11 @@ void Target::ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &pa
             string codespec_filename(g_options->GetTargetsSearchPath().GetFilePath(filename));
             Ast::Base *parsed_tree_root = NULL;
             if (codespec_filename.empty())
-                EmitError(FiLoc(m_targetspec.m_source_path), "file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString());
+                EmitError("file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString(), FiLoc(m_targetspec.m_source_path));
             else if (!parser.OpenFile(codespec_filename))
-                EmitError(FiLoc(m_targetspec.m_source_path), "unable to open file \"" + codespec_filename + "\" for reading");
+                EmitError("unable to open file \"" + codespec_filename + "\" for reading", FiLoc(m_targetspec.m_source_path));
             else if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
-                EmitError(FiLoc(codespec_filename), "general preprocessor parse error");
+                EmitError("general preprocessor parse error", FiLoc(codespec_filename));
             else
             {
                 Preprocessor::Body *codespec_body = Dsc<Preprocessor::Body *>(parsed_tree_root);
@@ -182,7 +182,7 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
         ofstream stream;
         stream.open(filename.c_str());
         if (!stream.is_open())
-            EmitError(FiLoc(g_options->GetInputFilename()), "could not open file \"" + filename + "\" for writing");
+            EmitError("could not open file \"" + filename + "\" for writing", FiLoc(g_options->GetInputFilename()));
         else
         {
             Preprocessor::SymbolTable codespec_symbol_table(target_symbol_table);
@@ -236,9 +236,9 @@ void Target::CheckAgainstTargetspec (Targetspec::Specification const &specificat
         assert(target_directive != NULL);
         if (specification.m_add_directive_map->GetElement(target_directive->m_directive_id->GetText()) == NULL)
             EmitError(
-                target_directive->GetFiLoc(),
                 "directive " + target_directive->GetDirectiveString() +
-                " does not exist in targetspec for " + m_target_id);
+                " does not exist in targetspec for " + m_target_id,
+                target_directive->GetFiLoc());
     }
 }
 
@@ -249,16 +249,16 @@ void Target::CheckAgainstAddDirective (
     if (target_directive == NULL)
     {
         if (add_directive.GetIsRequired())
-            EmitError(FiLoc(g_options->GetInputFilename()), "missing required directive %target." + m_target_id + "." + add_directive.m_directive_to_add_id->GetText());
+            EmitError("missing required directive %target." + m_target_id + "." + add_directive.m_directive_to_add_id->GetText(), FiLoc(g_options->GetInputFilename()));
     }
     else if (add_directive.m_param_type == Ast::AT_NONE)
     {
         if (target_directive->m_directive_value != NULL)
-            EmitError(target_directive->GetFiLoc(), "superfluous parameter given for directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " which does not accept a parameter");
+            EmitError("superfluous parameter given for directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " which does not accept a parameter", target_directive->GetFiLoc());
     }
     else if (target_directive->m_directive_value->GetAstType() != add_directive.m_param_type)
     {
-        EmitError(target_directive->GetFiLoc(), "directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " expects " + Targetspec::ParamType::GetParamTypeString(add_directive.m_param_type) + ", got " + Targetspec::ParamType::GetParamTypeString(target_directive->m_directive_value->GetAstType()));
+        EmitError("directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " expects " + Targetspec::ParamType::GetParamTypeString(add_directive.m_param_type) + ", got " + Targetspec::ParamType::GetParamTypeString(target_directive->m_directive_value->GetAstType()), target_directive->GetFiLoc());
     }
 }
 

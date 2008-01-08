@@ -86,7 +86,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     if (!parser.OpenFile(GetOptions().GetInputFilename()))
         EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
     else if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
-        EmitError(FiLoc(GetOptions().GetInputFilename()), "general reflex parse error");
+        EmitError("general reflex parse error", FiLoc(GetOptions().GetInputFilename()));
     else
     {
         primary_source = Dsc<Reflex::PrimarySource *>(parsed_tree_root);

@@ -74,7 +74,7 @@ void DefineArrayElement::Execute (Textifier &textifier, SymbolTable &symbol_tabl
     Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
     if (symbol != NULL && !symbol->GetIsArraySymbol())
     {
-        EmitError(m_id->GetFiLoc(), "macro \"" + m_id->GetText() + "\" is not an array");
+        EmitError("macro \"" + m_id->GetText() + "\" is not an array", m_id->GetFiLoc());
         return;
     }
 
@@ -97,7 +97,7 @@ void DefineMapElement::Execute (Textifier &textifier, SymbolTable &symbol_table)
     Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
     if (symbol != NULL && !symbol->GetIsMapSymbol())
     {
-        EmitError(m_id->GetFiLoc(), "macro \"" + m_id->GetText() + "\" is not a map");
+        EmitError("macro \"" + m_id->GetText() + "\" is not a map", m_id->GetFiLoc());
         return;
     }
 
@@ -147,7 +147,7 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     {
         ostringstream out;
         out << "negative value (" << iteration_count << ") invalid for loop iteration count";
-        EmitError(GetFiLoc(), out.str());
+        EmitError(out.str(), GetFiLoc());
         return;
     }
     for (m_iterator_integer->SetValue(0);
@@ -170,12 +170,12 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         Symbol *symbol = symbol_table.GetSymbol(m_map_id->GetText());
         if (symbol == NULL)
         {
-            EmitError(m_map_id->GetFiLoc(), "undefined macro \"" + m_map_id->GetText() + "\"");
+            EmitError("undefined macro \"" + m_map_id->GetText() + "\"", m_map_id->GetFiLoc());
             return;
         }
         if (!symbol->GetIsMapSymbol())
         {
-            EmitError(m_map_id->GetFiLoc(), "macro \"" + m_map_id->GetText() + "\" is not a map");
+            EmitError("macro \"" + m_map_id->GetText() + "\" is not a map", m_map_id->GetFiLoc());
             return;
         }
         map_symbol = Dsc<MapSymbol *>(symbol);
@@ -222,13 +222,13 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         string filename(m_include_filename_expression->GetTextValue(symbol_table));
         if (!parser.OpenFile(filename))
         {
-            EmitError(GetFiLoc(), "file \"" + filename + "\" not found");
+            EmitError("file \"" + filename + "\" not found", GetFiLoc());
             return;
         }
         Ast::Base *parsed_tree_root = NULL;
         if (parser.Parse(&parsed_tree_root) != Parser::PRC_SUCCESS)
         {
-            EmitError(GetFiLoc(), "parse error in include file \"" + filename + "\"");
+            EmitError("parse error in include file \"" + filename + "\"", GetFiLoc());
             return;
         }
         m_include_body_root = Dsc<Body *>(parsed_tree_root);
@@ -251,15 +251,15 @@ void Message::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     switch (m_criticality)
     {
         case WARNING:
-            EmitWarning(GetFiLoc(), message_text);
+            EmitWarning(message_text, GetFiLoc());
             break;
 
         case ERROR:
-            EmitError(GetFiLoc(), message_text);
+            EmitError(message_text, GetFiLoc());
             break;
 
         case FATAL_ERROR:
-            EmitFatalError(GetFiLoc(), message_text);
+            EmitFatalError(message_text, GetFiLoc());
             break;
 
         default:

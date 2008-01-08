@@ -74,7 +74,7 @@ int main (int argc, char **argv)
         Ast::Base *parsed_tree_root = NULL;
         if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
         {
-            EmitError(FiLoc(GetOptions().GetInputFilename()), "general preprocessor parse error");
+            EmitError("general preprocessor parse error", FiLoc(GetOptions().GetInputFilename()));
             return 4;
         }
 

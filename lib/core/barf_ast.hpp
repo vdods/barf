@@ -192,7 +192,7 @@ struct Map : private map<string, ElementType *>
         assert(element != NULL);
         iterator it = find(key);
         if (it != end())
-            EmitError(element->GetFiLoc(), FORMAT("key \"" << key << "\" previously specified at " << it->second->GetFiLoc()));
+            EmitError(FORMAT("key \"" << key << "\" previously specified at " << it->second->GetFiLoc()), element->GetFiLoc());
         else
             map<string, ElementType *>::operator[](key) = element;
     }

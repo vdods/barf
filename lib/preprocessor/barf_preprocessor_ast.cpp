@@ -249,7 +249,7 @@ Sint32 Sizeof::GetIntegerValue (SymbolTable &symbol_table) const
         return symbol->Sizeof();
     else
     {
-        EmitError(GetFiLoc(), "can not return sizeof undefined macro \"" + m_id->GetText() + "\"");
+        EmitError("can not return sizeof undefined macro \"" + m_id->GetText() + "\"", GetFiLoc());
         return 0;
     }
 }
@@ -314,7 +314,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
     if (symbol == NULL)
     {
         if (m_dereference_type == DEREFERENCE_ALWAYS)
-            EmitError(m_id->GetFiLoc(), "undefined macro \"" + m_id->GetText() + "\"");
+            EmitError("undefined macro \"" + m_id->GetText() + "\"", m_id->GetFiLoc());
         return NULL;
     }
 
@@ -323,7 +323,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
     {
         if (m_element_index_expression != NULL)
         {
-            EmitError(GetFiLoc(), "trying to dereference a scalar macro as an array or map");
+            EmitError("trying to dereference a scalar macro as an array or map", GetFiLoc());
             return NULL;
         }
         dereferenced_body = Dsc<ScalarSymbol *>(symbol)->GetScalarBody();
@@ -333,7 +333,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
     {
         if (m_element_index_expression == NULL)
         {
-            EmitError(GetFiLoc(), "trying to dereference an array macro without an array index");
+            EmitError("trying to dereference an array macro without an array index", GetFiLoc());
             return NULL;
         }
         Sint32 element_index = m_element_index_expression->GetIntegerValue(symbol_table);
@@ -341,7 +341,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
         {
             ostringstream out;
             out << "negative value (" << element_index << ") invalid for array index";
-            EmitError(GetFiLoc(), out.str());
+            EmitError(out.str(), GetFiLoc());
             return 0;
         }
         dereferenced_body = Dsc<ArraySymbol *>(symbol)->GetArrayElement(Uint32(element_index));
@@ -349,7 +349,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
         {
             ostringstream out;
             out << "macro \"" << m_id->GetText() << "\" has no element " << element_index;
-            EmitError(GetFiLoc(), out.str());
+            EmitError(out.str(), GetFiLoc());
             return NULL;
         }
     }
@@ -358,7 +358,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
         assert(symbol->GetIsMapSymbol());
         if (m_element_index_expression == NULL)
         {
-            EmitError(GetFiLoc(), "trying to dereference a map macro without a map key");
+            EmitError("trying to dereference a map macro without a map key", GetFiLoc());
             return NULL;
         }
         string element_key = m_element_index_expression->GetTextValue(symbol_table);
@@ -366,8 +366,8 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
         if (dereferenced_body == NULL)
         {
             EmitError(
-                GetFiLoc(),
-                "macro \"" + m_id->GetText() + "\" has no such element " + GetStringLiteral(element_key));
+                "macro \"" + m_id->GetText() + "\" has no such element " + GetStringLiteral(element_key),
+                GetFiLoc());
             return NULL;
         }
     }
@@ -465,7 +465,7 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
             Sint32 right_operand = m_right->GetIntegerValue(symbol_table);
             if (right_operand == 0)
             {
-                EmitWarning(GetFiLoc(), "divide by zero");
+                EmitWarning("divide by zero", GetFiLoc());
                 return 0;
             }
             else
@@ -477,7 +477,7 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
             Sint32 right_operand = m_right->GetIntegerValue(symbol_table);
             if (right_operand == 0)
             {
-                EmitWarning(GetFiLoc(), "divide by zero");
+                EmitWarning("divide by zero", GetFiLoc());
                 return 0;
             }
             else
@@ -496,7 +496,7 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
         case EQUAL:
             if (m_left->GetIsNativeIntegerValue(symbol_table) != m_right->GetIsNativeIntegerValue(symbol_table))
             {
-                EmitError(m_left->GetFiLoc(), "int/string type mismatch for == operator");
+                EmitError("int/string type mismatch for == operator", m_left->GetFiLoc());
                 return 0;
             }
             if (m_left->GetIsNativeIntegerValue(symbol_table))
@@ -507,7 +507,7 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
         case NOT_EQUAL:
             if (m_left->GetIsNativeIntegerValue(symbol_table) != m_right->GetIsNativeIntegerValue(symbol_table))
             {
-                EmitError(m_left->GetFiLoc(), "int/string type mismatch for != operator");
+                EmitError("int/string type mismatch for != operator", m_left->GetFiLoc());
                 return 0;
             }
             if (m_left->GetIsNativeIntegerValue(symbol_table))
@@ -533,7 +533,7 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
         case STRING_LENGTH:
             if (m_right->GetIsNativeIntegerValue(symbol_table))
             {
-                EmitError(m_left->GetFiLoc(), "type mismatch for string_length operator (expecting a string)");
+                EmitError("type mismatch for string_length operator (expecting a string)", m_left->GetFiLoc());
                 return 0;
             }
             else

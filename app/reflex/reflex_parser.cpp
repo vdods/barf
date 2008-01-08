@@ -502,8 +502,8 @@ Ast::Base * Parser::ReductionRuleHandler0001 ()
             scanner_mode_map->GetElement(start_in_scanner_mode_directive->m_scanner_mode_id->GetText()) == NULL)
         {
             EmitError(
-                start_in_scanner_mode_directive->GetFiLoc(),
-                "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"");
+                "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"",
+                start_in_scanner_mode_directive->GetFiLoc());
         }
 
         PrimarySource *primary_source =
@@ -559,7 +559,7 @@ Ast::Base * Parser::ReductionRuleHandler0004 ()
 #line 236 "reflex_parser.trison"
 
         assert(m_target_map == NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %targets");
+        EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     
@@ -657,7 +657,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
 
 #line 292 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText());
+        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         delete target_directive;
@@ -676,7 +676,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
 
 #line 301 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %target." + target_id->GetText());
+        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
@@ -692,7 +692,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
 
 #line 309 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in target name for directive %target");
+        EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
@@ -781,9 +781,9 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
                 regular_expression_map->Add(macro_id->GetText(), regex);
             }
             else
-                EmitError(throwaway->GetFiLoc(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
+                EmitError("parse error in regular expression (" + macro_regex_string->GetText() + ")", throwaway->GetFiLoc());
         } catch (string const &exception) {
-            EmitError(throwaway->GetFiLoc(), exception + " in regular expression (" + macro_regex_string->GetText() + ")");
+            EmitError(exception + " in regular expression (" + macro_regex_string->GetText() + ")", throwaway->GetFiLoc());
         }
         delete throwaway;
         delete macro_id;
@@ -819,7 +819,7 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
 
 #line 367 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %macro " + macro_id->GetText());
+        EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete macro_id;
         return regular_expression_map;
@@ -837,7 +837,7 @@ Ast::Base * Parser::ReductionRuleHandler0021 ()
 
 #line 375 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %macro");
+        EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
         return regular_expression_map;
     
@@ -868,7 +868,7 @@ Ast::Base * Parser::ReductionRuleHandler0023 ()
 
 #line 395 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %start_in_scanner_mode");
+        EmitError("parse error in directive %start_in_scanner_mode", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
@@ -931,7 +931,7 @@ Ast::Base * Parser::ReductionRuleHandler0027 ()
 
 #line 430 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner mode rule list");
+        EmitError("parse error in scanner mode rule list", throwaway->GetFiLoc());
         delete throwaway;
         return new ScannerMode(scanner_mode_id, new RuleList());
     
@@ -948,7 +948,7 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
 
 #line 437 "reflex_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner mode id");
+        EmitError("parse error in scanner mode id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
@@ -1041,14 +1041,14 @@ Ast::Base * Parser::ReductionRuleHandler0033 ()
                 else
                 {
                     EmitError(
-                        regex_string->GetFiLoc(),
-                        "parse error in regular expression (" + regex_string->GetText() + ")");
+                        "parse error in regular expression (" + regex_string->GetText() + ")",
+                        regex_string->GetFiLoc());
                     regex = new Regex::RegularExpression();
                 }
             } catch (string const &exception) {
                 EmitError(
-                    regex_string->GetFiLoc(),
-                    exception + " in regular expression (" + regex_string->GetText() + ")");
+                    exception + " in regular expression (" + regex_string->GetText() + ")",
+                    regex_string->GetFiLoc());
                 regex = new Regex::RegularExpression();
             }
             assert(regex != NULL);
@@ -1065,8 +1065,8 @@ Ast::Base * Parser::ReductionRuleHandler0033 ()
             if (rule_handler_map->GetElement(target_id) == NULL)
             {
                 EmitWarning(
-                    regex_string->GetFiLoc(),
-                    "missing rule handler for target \"" + target_id + "\"");
+                    "missing rule handler for target \"" + target_id + "\"",
+                    regex_string->GetFiLoc());
                 // add a blank code block for the rule handler's missing target
                 rule_handler_map->Add(
                     target_id,
@@ -1128,8 +1128,8 @@ Ast::Base * Parser::ReductionRuleHandler0036 ()
         assert(m_target_map != NULL);
         if (m_target_map->GetElement(target_id->GetText()) == NULL)
             EmitWarning(
-                target_id->GetFiLoc(),
-                "undeclared target \"" + target_id->GetText() + "\"");
+                "undeclared target \"" + target_id->GetText() + "\"",
+                target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     
 #line 1136 "reflex_parser.cpp"
@@ -1146,7 +1146,7 @@ Ast::Base * Parser::ReductionRuleHandler0037 ()
 #line 569 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in target id after directive %target");
+        EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
         delete throwaway;
         delete code_block;
         return NULL;
@@ -1163,7 +1163,7 @@ Ast::Base * Parser::ReductionRuleHandler0038 ()
 #line 578 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %target");
+        EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
@@ -1179,7 +1179,7 @@ Ast::Base * Parser::ReductionRuleHandler0039 ()
 #line 586 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
-        EmitError(code_block->GetFiLoc(), "missing directive %target before rule handler code block");
+        EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     
@@ -2057,7 +2057,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in targetspec");
+            EmitError("unrecognized token encountered in targetspec", m_lookahead_token->GetFiLoc());
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;

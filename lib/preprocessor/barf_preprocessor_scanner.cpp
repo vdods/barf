@@ -282,7 +282,7 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
 
         if (m_current_position >= m_text.length())
         {
-            EmitError(GetFiLoc(), "unterminated string literal");
+            EmitError("unterminated string literal", GetFiLoc());
             return Parser::Token::END_;
         }
         else

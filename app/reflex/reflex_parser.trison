@@ -134,7 +134,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in targetspec");
+            EmitError("unrecognized token encountered in targetspec", m_lookahead_token->GetFiLoc());
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;
@@ -195,8 +195,8 @@ root %type "PrimarySource *"
             scanner_mode_map->GetElement(start_in_scanner_mode_directive->m_scanner_mode_id->GetText()) == NULL)
         {
             EmitError(
-                start_in_scanner_mode_directive->GetFiLoc(),
-                "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"");
+                "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"",
+                start_in_scanner_mode_directive->GetFiLoc());
         }
 
         PrimarySource *primary_source =
@@ -235,7 +235,7 @@ targets_directive %type "CommonLang::TargetMap *"
     DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
     {
         assert(m_target_map == NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %targets");
+        EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     }
@@ -290,7 +290,7 @@ target_directive %type "CommonLang::TargetDirective *"
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText());
+        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         delete target_directive;
@@ -299,7 +299,7 @@ target_directive %type "CommonLang::TargetDirective *"
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %target." + target_id->GetText());
+        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
@@ -307,7 +307,7 @@ target_directive %type "CommonLang::TargetDirective *"
 |
     DIRECTIVE_TARGET:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in target name for directive %target");
+        EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -345,9 +345,9 @@ macro_directives %type "Regex::RegularExpressionMap *"
                 regular_expression_map->Add(macro_id->GetText(), regex);
             }
             else
-                EmitError(throwaway->GetFiLoc(), "parse error in regular expression (" + macro_regex_string->GetText() + ")");
+                EmitError("parse error in regular expression (" + macro_regex_string->GetText() + ")", throwaway->GetFiLoc());
         } catch (string const &exception) {
-            EmitError(throwaway->GetFiLoc(), exception + " in regular expression (" + macro_regex_string->GetText() + ")");
+            EmitError(exception + " in regular expression (" + macro_regex_string->GetText() + ")", throwaway->GetFiLoc());
         }
         delete throwaway;
         delete macro_id;
@@ -365,7 +365,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
 |
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %macro " + macro_id->GetText());
+        EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete macro_id;
         return regular_expression_map;
@@ -373,7 +373,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
 |
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %macro");
+        EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
         return regular_expression_map;
     }
@@ -393,7 +393,7 @@ start_in_scanner_mode_directive %type "StartInScannerModeDirective *"
 |
     DIRECTIVE_START_IN_SCANNER_MODE:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %start_in_scanner_mode");
+        EmitError("parse error in directive %start_in_scanner_mode", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -428,14 +428,14 @@ scanner_mode %type "ScannerMode *"
 |
     DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' %error ';'
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner mode rule list");
+        EmitError("parse error in scanner mode rule list", throwaway->GetFiLoc());
         delete throwaway;
         return new ScannerMode(scanner_mode_id, new RuleList());
     }
 |
     DIRECTIVE_STATE:throwaway %error ':' scanner_mode_rules:rule_list ';'
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in scanner mode id");
+        EmitError("parse error in scanner mode id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
@@ -495,14 +495,14 @@ rule %type "Rule *"
                 else
                 {
                     EmitError(
-                        regex_string->GetFiLoc(),
-                        "parse error in regular expression (" + regex_string->GetText() + ")");
+                        "parse error in regular expression (" + regex_string->GetText() + ")",
+                        regex_string->GetFiLoc());
                     regex = new Regex::RegularExpression();
                 }
             } catch (string const &exception) {
                 EmitError(
-                    regex_string->GetFiLoc(),
-                    exception + " in regular expression (" + regex_string->GetText() + ")");
+                    exception + " in regular expression (" + regex_string->GetText() + ")",
+                    regex_string->GetFiLoc());
                 regex = new Regex::RegularExpression();
             }
             assert(regex != NULL);
@@ -519,8 +519,8 @@ rule %type "Rule *"
             if (rule_handler_map->GetElement(target_id) == NULL)
             {
                 EmitWarning(
-                    regex_string->GetFiLoc(),
-                    "missing rule handler for target \"" + target_id + "\"");
+                    "missing rule handler for target \"" + target_id + "\"",
+                    regex_string->GetFiLoc());
                 // add a blank code block for the rule handler's missing target
                 rule_handler_map->Add(
                     target_id,
@@ -560,15 +560,15 @@ rule_handler %type "CommonLang::RuleHandler *"
         assert(m_target_map != NULL);
         if (m_target_map->GetElement(target_id->GetText()) == NULL)
             EmitWarning(
-                target_id->GetFiLoc(),
-                "undeclared target \"" + target_id->GetText() + "\"");
+                "undeclared target \"" + target_id->GetText() + "\"",
+                target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
     DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
     {
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in target id after directive %target");
+        EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
         delete throwaway;
         delete code_block;
         return NULL;
@@ -577,7 +577,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     DIRECTIVE_TARGET:throwaway %error
     {
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %target");
+        EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -585,7 +585,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     %error any_type_of_code_block:code_block
     {
         assert(m_target_map != NULL);
-        EmitError(code_block->GetFiLoc(), "missing directive %target before rule handler code block");
+        EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     }

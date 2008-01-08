@@ -92,7 +92,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
     if (!parser.OpenFile(GetOptions().GetInputFilename()))
         EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
     else if (parser.Parse(&parsed_tree_root) != Trison::Parser::PRC_SUCCESS)
-        EmitError(FiLoc(GetOptions().GetInputFilename()), "general trison parse error");
+        EmitError("general trison parse error", FiLoc(GetOptions().GetInputFilename()));
     else
     {
         primary_source = Dsc<Trison::PrimarySource *>(parsed_tree_root);

@@ -183,7 +183,7 @@ Parser::Token::Type ScannerNew::Scan (
 
 #line 159 "barf_preprocessor_scanner.reflex"
 
-    EmitError(GetFiLoc(), "unrecognized character " + GetCharLiteral(rejected_atom));
+    EmitError("unrecognized character " + GetCharLiteral(rejected_atom), GetFiLoc());
 
 #line 189 "barf_preprocessor_scanner_new.cpp"
 
@@ -335,7 +335,7 @@ Parser::Token::Type ScannerNew::Scan (
         SPEW("READING_CODE - (\\}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         if (!m_is_reading_newline_sensitive_code)
             return Parser::Token::END_CODE;
-        EmitError(GetFiLoc(), "unexpected '}' encountered");
+        EmitError("unexpected '}' encountered", GetFiLoc());
         return Parser::Token::BAD_TOKEN;
     
 #line 342 "barf_preprocessor_scanner_new.cpp"
@@ -406,7 +406,7 @@ Parser::Token::Type ScannerNew::Scan (
 #line 336 "barf_preprocessor_scanner.reflex"
 
         SPEW("READING_CODE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "unexpected end of file encountered within preprocessor code section");
+        EmitError("unexpected end of file encountered within preprocessor code section", GetFiLoc());
         return Parser::Token::END_;
     
 #line 413 "barf_preprocessor_scanner_new.cpp"
@@ -420,7 +420,7 @@ Parser::Token::Type ScannerNew::Scan (
 #line 343 "barf_preprocessor_scanner.reflex"
 
         SPEW("READING_CODE - (.) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "unrecognized character encountered within preprocessor code section");
+        EmitError("unrecognized character encountered within preprocessor code section", GetFiLoc());
         return Parser::Token::BAD_TOKEN;
     
 #line 427 "barf_preprocessor_scanner_new.cpp"
@@ -440,7 +440,7 @@ Parser::Token::Type ScannerNew::Scan (
         assert(accepted_string[1] == '0');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
-            EmitError(GetFiLoc(), "octal character literal value out of range (" + accepted_string + ")");
+            EmitError("octal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         Dsc<Text *>(*token)->AppendChar(Uint8(value));
     
 #line 447 "barf_preprocessor_scanner_new.cpp"
@@ -460,7 +460,7 @@ Parser::Token::Type ScannerNew::Scan (
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
-            EmitError(GetFiLoc(), "hexadecimal character literal value out of range (" + accepted_string + ")");
+            EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         Dsc<Text *>(*token)->AppendChar(Uint8(value));
     
 #line 467 "barf_preprocessor_scanner_new.cpp"
@@ -493,7 +493,7 @@ Parser::Token::Type ScannerNew::Scan (
         assert(*token != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        EmitError(GetFiLoc(), "malformed string literal escape code -- backslash followed by " + GetCharLiteral(accepted_string[1]));
+        EmitError("malformed string literal escape code -- backslash followed by " + GetCharLiteral(accepted_string[1]), GetFiLoc());
     
 #line 499 "barf_preprocessor_scanner_new.cpp"
 
@@ -536,7 +536,7 @@ Parser::Token::Type ScannerNew::Scan (
 #line 413 "barf_preprocessor_scanner.reflex"
 
         SPEW("READING_CODE_STRING_LITERAL_GUTS - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        EmitError(GetFiLoc(), "unterminated string literal");
+        EmitError("unterminated string literal", GetFiLoc());
         assert(*token != NULL);
         delete *token;
         *token = NULL;
@@ -554,7 +554,7 @@ Parser::Token::Type ScannerNew::Scan (
 
         SPEW("READING_CODE_STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
-        EmitError(GetFiLoc(), "ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal");
+        EmitError("ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal", GetFiLoc());
     
 #line 560 "barf_preprocessor_scanner_new.cpp"
 

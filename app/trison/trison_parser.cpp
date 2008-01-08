@@ -588,7 +588,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
             ostringstream out;
             out << ParserDirective::GetString(parser_directive->GetParserDirectiveType())
                 << " does not accept %{ %} code blocks -- use { }";
-            EmitError(parser_directive->GetFiLoc(), out.str());
+            EmitError(out.str(), parser_directive->GetFiLoc());
             return NULL;
         }
 
@@ -672,7 +672,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
 
 #line 210 "trison_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "syntax error in %token directive");
+        EmitError("syntax error in %token directive", throwaway->GetFiLoc());
 
         delete throwaway;
         return new TokenDirective(new TokenIdList(), NULL);
@@ -692,7 +692,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
 
 #line 218 "trison_parser.trison"
 
-        EmitError(throwaway2->GetFiLoc(), "syntax error in %type directive");
+        EmitError("syntax error in %type directive", throwaway2->GetFiLoc());
 
         Ast::String *dummy_string = new Ast::String(throwaway2->GetFiLoc());
         delete throwaway1;
@@ -726,7 +726,7 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
 
 #line 234 "trison_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "syntax error in %prec directive");
+        EmitError("syntax error in %prec directive", throwaway->GetFiLoc());
 
         Ast::Id *dummy_id = new Ast::Id("!ERROR!", throwaway->GetFiLoc());
         delete throwaway;
@@ -759,7 +759,7 @@ Ast::Base * Parser::ReductionRuleHandler0016 ()
 
 #line 249 "trison_parser.trison"
 
-        EmitError(throwaway->GetFiLoc(), "syntax error in %start directive");
+        EmitError("syntax error in %start directive", throwaway->GetFiLoc());
 
         Ast::Id *dummy_id = new Ast::Id("!ERROR!", throwaway->GetFiLoc());
         delete throwaway;
@@ -776,7 +776,7 @@ Ast::Base * Parser::ReductionRuleHandler0017 ()
 
 #line 258 "trison_parser.trison"
 
-        EmitError(value->GetFiLoc(), "syntax error in directive");
+        EmitError("syntax error in directive", value->GetFiLoc());
 
         return NULL;
     
@@ -791,7 +791,7 @@ Ast::Base * Parser::ReductionRuleHandler0018 ()
 
 #line 265 "trison_parser.trison"
 
-        EmitError(value->GetFiLoc(), "syntax error in directive");
+        EmitError("syntax error in directive", value->GetFiLoc());
 
         return NULL;
     
@@ -806,7 +806,7 @@ Ast::Base * Parser::ReductionRuleHandler0019 ()
 
 #line 272 "trison_parser.trison"
 
-        EmitError(value->GetFiLoc(), "syntax error in directive");
+        EmitError("syntax error in directive", value->GetFiLoc());
 
         return NULL;
     
@@ -819,7 +819,7 @@ Ast::Base * Parser::ReductionRuleHandler0020 ()
 
 #line 279 "trison_parser.trison"
 
-        EmitError(FL, "syntax error in directive");
+        EmitError("syntax error in directive", FL);
 
         return NULL;
     
@@ -974,7 +974,7 @@ Ast::Base * Parser::ReductionRuleHandler0032 ()
 
 #line 358 "trison_parser.trison"
 
-        EmitError(FL, "syntax error in nonterminal definition");
+        EmitError("syntax error in nonterminal definition", FL);
 
         return NULL;
     
@@ -1018,7 +1018,7 @@ Ast::Base * Parser::ReductionRuleHandler0035 ()
 
 #line 379 "trison_parser.trison"
 
-        EmitError(FL, "syntax error while parsing nonterminal specification");
+        EmitError("syntax error while parsing nonterminal specification", FL);
 
         return new Nonterminal(new Ast::Id("!ERROR!", FiLoc::ms_invalid), NULL);
     
@@ -1033,7 +1033,7 @@ Ast::Base * Parser::ReductionRuleHandler0036 ()
 
 #line 386 "trison_parser.trison"
 
-        EmitError(id->GetFiLoc(), "syntax error in nonterminal directive");
+        EmitError("syntax error in nonterminal directive", id->GetFiLoc());
 
         return new Nonterminal(id, NULL);
     
@@ -1050,7 +1050,7 @@ Ast::Base * Parser::ReductionRuleHandler0037 ()
 
 #line 393 "trison_parser.trison"
 
-        EmitError(id->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
+        EmitError("syntax error in nonterminal %type directive; was expecting a string", id->GetFiLoc());
 
         delete throwaway;
         return new Nonterminal(id, NULL);
@@ -1129,8 +1129,8 @@ Ast::Base * Parser::ReductionRuleHandler0042 ()
 #line 431 "trison_parser.trison"
 
         EmitError(
-            code_block->GetFiLoc(),
-            "rules do not accept %{ %} code blocks -- use { } instead");
+            "rules do not accept %{ %} code blocks -- use { } instead",
+            code_block->GetFiLoc());
 
         rule_specification->SetCodeBlock(code_block);
         return rule_specification;

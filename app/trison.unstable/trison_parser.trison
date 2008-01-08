@@ -142,7 +142,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in targetspec");
+            EmitError("unrecognized token encountered in targetspec", m_lookahead_token->GetFiLoc());
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;
@@ -213,8 +213,8 @@ root %type "PrimarySource *"
             nonterminal_map->GetElement(default_parse_nonterminal_id->GetText()) == NULL)
         {
             EmitError(
-                default_parse_nonterminal_id->GetFiLoc(),
-                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"");
+                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"",
+                default_parse_nonterminal_id->GetFiLoc());
         }
 
         PrimarySource *primary_source =
@@ -257,7 +257,7 @@ targets_directive %type "CommonLang::TargetMap *"
     DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
     {
         assert(m_target_map == NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %targets");
+        EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     }
@@ -312,7 +312,7 @@ target_directive %type "CommonLang::TargetDirective *"
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText());
+        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         delete target_directive;
@@ -321,7 +321,7 @@ target_directive %type "CommonLang::TargetDirective *"
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in directive name for directive %target." + target_id->GetText());
+        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
@@ -329,7 +329,7 @@ target_directive %type "CommonLang::TargetDirective *"
 |
     DIRECTIVE_TARGET:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "parse error in target name for directive %target");
+        EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -465,7 +465,7 @@ precedence_directive %type "PrecedenceMap *"
         else if (associativity_id->GetText() == "right")
             associativity = A_RIGHT;
         else
-            EmitError(throwaway->GetFiLoc(), "invalid associativity specifier \"" + associativity_id->GetText() + "\"");
+            EmitError("invalid associativity specifier \"" + associativity_id->GetText() + "\"", throwaway->GetFiLoc());
 
         Precedence *precedence =
             new Precedence(
@@ -533,7 +533,7 @@ nonterminal %type "Nonterminal *"
 |
     %error ';'
     {
-        EmitError(GetFiLoc(), "syntax error in nonterminal definition");
+        EmitError("syntax error in nonterminal definition", GetFiLoc());
         return NULL;
     }
 ;
@@ -546,7 +546,7 @@ nonterminal_specification %type "Nonterminal *"
         assert(id != NULL);
         assert(assigned_type_map != NULL);
         if (m_terminal_map->GetElement(id->GetText()) != NULL)
-            EmitError(id->GetFiLoc(), "id collision with terminal " + id->GetText());
+            EmitError("id collision with terminal " + id->GetText(), id->GetFiLoc());
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
@@ -560,7 +560,7 @@ nonterminal_specification %type "Nonterminal *"
     DIRECTIVE_NONTERMINAL:throwaway %error
     {
         assert(throwaway != NULL);
-        EmitError(throwaway->GetFiLoc(), "syntax error while parsing nonterminal specification");
+        EmitError("syntax error while parsing nonterminal specification", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -568,7 +568,7 @@ nonterminal_specification %type "Nonterminal *"
     DIRECTIVE_NONTERMINAL:throwaway ID:id %error
     {
         assert(id != NULL);
-        EmitError(id->GetFiLoc(), "syntax error in %nonterminal directive");
+        EmitError("syntax error in %nonterminal directive", id->GetFiLoc());
         delete throwaway;
         delete id;
         return NULL;
@@ -641,15 +641,15 @@ rule_handler %type "CommonLang::RuleHandler *"
         assert(m_target_map != NULL);
         if (m_target_map->GetElement(target_id->GetText()) == NULL)
             EmitWarning(
-                target_id->GetFiLoc(),
-                "undeclared target \"" + target_id->GetText() + "\"");
+                "undeclared target \"" + target_id->GetText() + "\"",
+                target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
     DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
     {
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in target id after directive %target");
+        EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
         delete throwaway;
         delete code_block;
         return NULL;
@@ -658,7 +658,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     DIRECTIVE_TARGET:throwaway %error
     {
         assert(m_target_map != NULL);
-        EmitError(throwaway->GetFiLoc(), "parse error in directive %target");
+        EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -666,7 +666,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     %error any_type_of_code_block:code_block
     {
         assert(m_target_map != NULL);
-        EmitError(code_block->GetFiLoc(), "missing directive %target before rule handler code block");
+        EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     }

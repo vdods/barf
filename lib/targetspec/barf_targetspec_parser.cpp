@@ -547,11 +547,11 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
         assert(m_add_directive_map != NULL);
         AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_id->GetText());
         if (add_directive == NULL)
-            EmitError(throwaway->GetFiLoc(), "undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive");
+            EmitError("undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive", throwaway->GetFiLoc());
         if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != Ast::AT_STRING)
-            EmitError(throwaway->GetFiLoc(), "directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string");
+            EmitError("directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string", throwaway->GetFiLoc());
         if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
-            EmitError(throwaway->GetFiLoc(), "filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters");
+            EmitError("filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters", throwaway->GetFiLoc());
         m_add_codespec_list->Append(new AddCodespec(filename, filename_directive_id));
         delete throwaway;
         return NULL;
@@ -608,10 +608,10 @@ Ast::Base * Parser::ReductionRuleHandler0008 ()
             directive);
         if (param_type->m_param_type != default_value->GetAstType())
             EmitError(
-                throwaway1->GetFiLoc(),
                 "type mismatch for default value for directive " + directive->GetDirectiveString() +
                 "; was expecting type " + Ast::TextBase::GetDirectiveTypeString(param_type->m_param_type) +
-                " but got type " + Ast::TextBase::GetDirectiveTypeString(default_value->GetAstType()));
+                " but got type " + Ast::TextBase::GetDirectiveTypeString(default_value->GetAstType()),
+                throwaway1->GetFiLoc());
         delete throwaway1;
         delete param_type;
         delete throwaway2;
@@ -1199,7 +1199,7 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::END_PREAMBLE:
         case CommonLang::Scanner::Token::REGEX:
             assert(m_lookahead_token != NULL);
-            EmitError(m_lookahead_token->GetFiLoc(), "unrecognized token encountered in targetspec");
+            EmitError("unrecognized token encountered in targetspec", m_lookahead_token->GetFiLoc());
             delete m_lookahead_token;
             m_lookahead_token = NULL;
             return Parser::Token::BAD_TOKEN;

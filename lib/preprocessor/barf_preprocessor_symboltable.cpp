@@ -129,7 +129,7 @@ ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &id, FiLoc const &fi
 
     if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        EmitWarning("redefinition of previously defined macro \"" + id + "\"", filoc);
         UndefineSymbol(id, filoc);
     }
 
@@ -144,7 +144,7 @@ ScalarSymbol *SymbolTable::DefineScalarSymbolAsText (string const &id, FiLoc con
 
     if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        EmitWarning("redefinition of previously defined macro \"" + id + "\"", filoc);
         UndefineSymbol(id, filoc);
     }
 
@@ -160,7 +160,7 @@ ScalarSymbol *SymbolTable::DefineScalarSymbolAsInteger (string const &id, FiLoc 
 
     if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        EmitWarning("redefinition of previously defined macro \"" + id + "\"", filoc);
         UndefineSymbol(id, filoc);
     }
 
@@ -176,7 +176,7 @@ ArraySymbol *SymbolTable::DefineArraySymbol (string const &id, FiLoc const &filo
 
     if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        EmitWarning("redefinition of previously defined macro \"" + id + "\"", filoc);
         UndefineSymbol(id, filoc);
     }
 
@@ -191,7 +191,7 @@ MapSymbol *SymbolTable::DefineMapSymbol (string const &id, FiLoc const &filoc)
 
     if (GetSymbol(id) != NULL)
     {
-        EmitWarning(filoc, "redefinition of previously defined macro \"" + id + "\"");
+        EmitWarning("redefinition of previously defined macro \"" + id + "\"", filoc);
         UndefineSymbol(id, filoc);
     }
 
@@ -211,7 +211,7 @@ void SymbolTable::UndefineSymbol (string const &id, FiLoc const &filoc)
         m_symbol_map.erase(it);
     }
     else
-        EmitWarning(filoc, "macro \"" + id + "\" is not currently defined");
+        EmitWarning("macro \"" + id + "\" is not currently defined", filoc);
 }
 
 void SymbolTable::Print (ostream &stream) const

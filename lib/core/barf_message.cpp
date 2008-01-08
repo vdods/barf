@@ -17,70 +17,45 @@
 
 namespace Barf {
 
-void EmitWarning (string const &message)
+void EmitWarning (string const &message, FiLoc const &filoc)
 {
     if (g_options != NULL && g_options->GetTreatWarningsAsErrors())
-        EmitError(message);
+        EmitError(message, filoc);
+    else if (filoc.GetIsValid())
+        cerr << filoc << ": warning: " << message << endl;
     else
         cerr << "warning: " << message << endl;
 }
 
-void EmitWarning (FiLoc const &filoc, string const &message)
-{
-    if (g_options != NULL && g_options->GetTreatWarningsAsErrors())
-        EmitError(filoc, message);
-    else
-        cerr << filoc << ": warning: " << message << endl;
-}
-
-void EmitError (string const &message)
+void EmitError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
     if (g_options != NULL && g_options->GetHaltOnFirstError())
-        EmitFatalError(message);
+        EmitFatalError(message, filoc);
     else
     {
 #if DEBUG
         if (g_options != NULL && g_options->GetAssertOnError())
             assert(false && "you have requested to assert on error, human, and here it is");
 #endif
-        cerr << "error: " << message << endl;
+        if (filoc.GetIsValid())
+            cerr << filoc << ": error: " << message << endl;
+        else
+            cerr << "error: " << message << endl;
     }
 }
 
-void EmitError (FiLoc const &filoc, string const &message)
+void EmitFatalError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
-    if (g_options != NULL && g_options->GetHaltOnFirstError())
-        EmitFatalError(filoc, message);
+#if DEBUG
+    if (g_options != NULL && g_options->GetAssertOnError())
+        assert(false && "you have requested to assert on error, human, and here it is");
+#endif
+    if (filoc.GetIsValid())
+        THROW_STRING(filoc << ": fatal error: " << message);
     else
-    {
-#if DEBUG
-        if (g_options != NULL && g_options->GetAssertOnError())
-            assert(false && "you have requested to assert on error, human, and here it is");
-#endif
-        cerr << filoc << ": error: " << message << endl;
-    }
-}
-
-void EmitFatalError (string const &message)
-{
-    g_errors_encountered = true;
-#if DEBUG
-    if (g_options != NULL && g_options->GetAssertOnError())
-        assert(false && "you have requested to assert on error, human, and here it is");
-#endif
-    THROW_STRING("fatal: " << message);
-}
-
-void EmitFatalError (FiLoc const &filoc, string const &message)
-{
-    g_errors_encountered = true;
-#if DEBUG
-    if (g_options != NULL && g_options->GetAssertOnError())
-        assert(false && "you have requested to assert on error, human, and here it is");
-#endif
-    THROW_STRING(filoc << ": fatal: " << message);
+        THROW_STRING("fatal error: " << message);
 }
 
 } // end of namespace Barf

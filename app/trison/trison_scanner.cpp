@@ -95,7 +95,7 @@ Parser::Token::Type Scanner::Scan (Ast::Base **const scanned_token)
                 catch (Parser::Token::Type token_type)
                 {
                     if (token_type == Parser::Token::END_)
-                        EmitWarning(FL, "unterminated comment");
+                        EmitWarning("unterminated comment", FL);
                     return token_type;
                 }
                 break;
@@ -124,7 +124,7 @@ Parser::Token::Type Scanner::ScanId (Ast::Base **const scanned_token)
     // ids with underscores is a method used by the parser generator
     // to ensure unique state machine token types.
     if (*m_text.rbegin() == '_')
-        EmitError(FL, "ids can not end with an underscore (\"" + m_text + "\")");
+        EmitError("ids can not end with an underscore (\"" + m_text + "\")", FL);
 
     *scanned_token = new Ast::Id(m_text, FL);
     return Parser::Token::ID;
@@ -253,9 +253,9 @@ Parser::Token::Type Scanner::ScanStrictCodeBlock (Ast::Base **const scanned_toke
             catch (Parser::Token::Type token_type)
             {
                 if (token_type == Parser::Token::BAD_TOKEN)
-                    EmitFatalError(FL, "malformed character literal");
+                    EmitFatalError("malformed character literal", FL);
                 else
-                    EmitFatalError(FL, "unterminated character literal");
+                    EmitFatalError("unterminated character literal", FL);
                 // this is moot because EmitFatalError throws
                 return Parser::Token::BAD_TOKEN;
             }
@@ -291,7 +291,7 @@ Parser::Token::Type Scanner::ScanStrictCodeBlock (Ast::Base **const scanned_toke
     }
     else
     {
-        EmitFatalError(FL, "unterminated code block");
+        EmitFatalError("unterminated code block", FL);
         // this is moot because EmitFatalError throws
         return Parser::Token::BAD_TOKEN;
     }
@@ -319,7 +319,7 @@ Parser::Token::Type Scanner::ScanDumbCodeBlock (Ast::Base **const scanned_token)
 
             if (IsNextCharEOF(&c))
             {
-                EmitFatalError(FL, "unterminated code block");
+                EmitFatalError("unterminated code block", FL);
                 // this is moot because EmitFatalError throws
                 return Parser::Token::BAD_TOKEN;
             }
@@ -344,7 +344,7 @@ Parser::Token::Type Scanner::ScanDumbCodeBlock (Ast::Base **const scanned_token)
         }
     }
 
-    EmitFatalError(FL, "unterminated code block");
+    EmitFatalError("unterminated code block", FL);
     // this is moot because EmitFatalError throws
     return Parser::Token::BAD_TOKEN;
 }
@@ -368,7 +368,7 @@ Parser::Token::Type Scanner::ScanStringLiteral (Ast::Base **const scanned_token)
         {
             if (IsNextCharEOF(&c))
             {
-                EmitFatalError(FL, "unterminated string");
+                EmitFatalError("unterminated string", FL);
                 // this is moot because EmitFatalError throws
                 return Parser::Token::BAD_TOKEN;
             }
@@ -404,7 +404,7 @@ Parser::Token::Type Scanner::ScanStringLiteral (Ast::Base **const scanned_token)
     }
     else
     {
-        EmitFatalError(FL, "unterminated string");
+        EmitFatalError("unterminated string", FL);
         // this is moot because EmitFatalError throws
         return Parser::Token::BAD_TOKEN;
     }
@@ -426,9 +426,9 @@ Parser::Token::Type Scanner::ScanCharLiteral (Ast::Base **const scanned_token)
     catch (Parser::Token::Type token_type)
     {
         if (token_type == Parser::Token::BAD_TOKEN)
-            EmitFatalError(FL, "malformed character literal");
+            EmitFatalError("malformed character literal", FL);
         else
-            EmitFatalError(FL, "unterminated character literal");
+            EmitFatalError("unterminated character literal", FL);
         // this is moot because EmitFatalError throws
         return Parser::Token::BAD_TOKEN;
     }
@@ -460,7 +460,7 @@ void Scanner::ScanStringLiteralInsideCodeBlock ()
         if (c == '\\')
         {
             if (IsNextCharEOF(&c))
-                EmitFatalError(FL, "unterminated code block");
+                EmitFatalError("unterminated code block", FL);
             m_input >> c;
             m_text += c;
             if (c == '\n')
@@ -469,7 +469,7 @@ void Scanner::ScanStringLiteralInsideCodeBlock ()
     }
 
     if (c != '"')
-        EmitFatalError(FL, "unterminated code block");
+        EmitFatalError("unterminated code block", FL);
     else
     {
         m_input >> c;

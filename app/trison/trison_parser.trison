@@ -174,7 +174,7 @@ directive %type "Ast::Directive *"
             ostringstream out;
             out << ParserDirective::GetString(parser_directive->GetParserDirectiveType())
                 << " does not accept %{ %} code blocks -- use { }";
-            EmitError(parser_directive->GetFiLoc(), out.str());
+            EmitError(out.str(), parser_directive->GetFiLoc());
             return NULL;
         }
 
@@ -208,7 +208,7 @@ directive %type "Ast::Directive *"
 |
     DIRECTIVE_TOKEN:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "syntax error in %token directive");
+        EmitError("syntax error in %token directive", throwaway->GetFiLoc());
 
         delete throwaway;
         return new TokenDirective(new TokenIdList(), NULL);
@@ -216,7 +216,7 @@ directive %type "Ast::Directive *"
 |
     DIRECTIVE_TOKEN:throwaway1 token_id_list:token_id_list TYPE:throwaway2 %error at_least_one_newline
     {
-        EmitError(throwaway2->GetFiLoc(), "syntax error in %type directive");
+        EmitError("syntax error in %type directive", throwaway2->GetFiLoc());
 
         Ast::String *dummy_string = new Ast::String(throwaway2->GetFiLoc());
         delete throwaway1;
@@ -232,7 +232,7 @@ directive %type "Ast::Directive *"
 |
     PREC:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "syntax error in %prec directive");
+        EmitError("syntax error in %prec directive", throwaway->GetFiLoc());
 
         Ast::Id *dummy_id = new Ast::Id("!ERROR!", throwaway->GetFiLoc());
         delete throwaway;
@@ -247,7 +247,7 @@ directive %type "Ast::Directive *"
 |
     START:throwaway %error at_least_one_newline
     {
-        EmitError(throwaway->GetFiLoc(), "syntax error in %start directive");
+        EmitError("syntax error in %start directive", throwaway->GetFiLoc());
 
         Ast::Id *dummy_id = new Ast::Id("!ERROR!", throwaway->GetFiLoc());
         delete throwaway;
@@ -256,28 +256,28 @@ directive %type "Ast::Directive *"
 |
     %error STRICT_CODE_BLOCK:value at_least_one_newline
     {
-        EmitError(value->GetFiLoc(), "syntax error in directive");
+        EmitError("syntax error in directive", value->GetFiLoc());
 
         return NULL;
     }
 |
     %error DUMB_CODE_BLOCK:value at_least_one_newline
     {
-        EmitError(value->GetFiLoc(), "syntax error in directive");
+        EmitError("syntax error in directive", value->GetFiLoc());
 
         return NULL;
     }
 |
     %error STRING:value at_least_one_newline
     {
-        EmitError(value->GetFiLoc(), "syntax error in directive");
+        EmitError("syntax error in directive", value->GetFiLoc());
 
         return NULL;
     }
 |
     %error at_least_one_newline
     {
-        EmitError(FL, "syntax error in directive");
+        EmitError("syntax error in directive", FL);
 
         return NULL;
     }
@@ -356,7 +356,7 @@ nonterminal %type "Nonterminal *"
 |
     %error ';'
     {
-        EmitError(FL, "syntax error in nonterminal definition");
+        EmitError("syntax error in nonterminal definition", FL);
 
         return NULL;
     }
@@ -377,21 +377,21 @@ nonterminal_specification %type "Nonterminal *"
 |
     %error
     {
-        EmitError(FL, "syntax error while parsing nonterminal specification");
+        EmitError("syntax error while parsing nonterminal specification", FL);
 
         return new Nonterminal(new Ast::Id("!ERROR!", FiLoc::ms_invalid), NULL);
     }
 |
     ID:id %error
     {
-        EmitError(id->GetFiLoc(), "syntax error in nonterminal directive");
+        EmitError("syntax error in nonterminal directive", id->GetFiLoc());
 
         return new Nonterminal(id, NULL);
     }
 |
     ID:id TYPE:throwaway %error
     {
-        EmitError(id->GetFiLoc(), "syntax error in nonterminal %type directive; was expecting a string");
+        EmitError("syntax error in nonterminal %type directive; was expecting a string", id->GetFiLoc());
 
         delete throwaway;
         return new Nonterminal(id, NULL);
@@ -430,8 +430,8 @@ rule %type "Rule *"
     rule_specification:rule_specification DUMB_CODE_BLOCK:code_block
     {
         EmitError(
-            code_block->GetFiLoc(),
-            "rules do not accept %{ %} code blocks -- use { } instead");
+            "rules do not accept %{ %} code blocks -- use { } instead",
+            code_block->GetFiLoc());
 
         rule_specification->SetCodeBlock(code_block);
         return rule_specification;
