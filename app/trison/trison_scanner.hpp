@@ -43,6 +43,8 @@ public:
 
 private:
 
+    FiLoc GetFiLoc () const { return FiLoc(m_input_filename, m_line_number); }
+
     Parser::Token::Type ScanId (Ast::Base **scanned_token);
     Parser::Token::Type ScanOperator (Ast::Base **scanned_token);
     Parser::Token::Type ScanDirective (Ast::Base **scanned_token);

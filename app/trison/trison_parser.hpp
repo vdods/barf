@@ -113,11 +113,13 @@ public:
 
 private:
 
+    FiLoc GetFiLoc () const;
+
     Token::Type Scan ();
 
     Scanner *m_scanner;
 
-#line 121 "trison_parser.hpp"
+#line 123 "trison_parser.hpp"
 
 private:
 
@@ -290,10 +292,10 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type);
 
 
-#line 44 "trison_parser.trison"
+#line 46 "trison_parser.trison"
 
 } // end of namespace Trison
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 300 "trison_parser.hpp"
+#line 302 "trison_parser.hpp"

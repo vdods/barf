@@ -16,9 +16,6 @@
 
 namespace Trison {
 
-#undef FL
-#define FL FiLoc(m_input_filename, m_line_number)
-
 Scanner::Scanner ()
 {
     m_line_number = 0;
@@ -95,7 +92,7 @@ Parser::Token::Type Scanner::Scan (Ast::Base **const scanned_token)
                 catch (Parser::Token::Type token_type)
                 {
                     if (token_type == Parser::Token::END_)
-                        EmitWarning("unterminated comment", FL);
+                        EmitWarning("unterminated comment", GetFiLoc());
                     return token_type;
                 }
                 break;
@@ -124,9 +121,9 @@ Parser::Token::Type Scanner::ScanId (Ast::Base **const scanned_token)
     // ids with underscores is a method used by the parser generator
     // to ensure unique state machine token types.
     if (*m_text.rbegin() == '_')
-        EmitError("ids can not end with an underscore (\"" + m_text + "\")", FL);
+        EmitError("ids can not end with an underscore (\"" + m_text + "\")", GetFiLoc());
 
-    *scanned_token = new Ast::Id(m_text, FL);
+    *scanned_token = new Ast::Id(m_text, GetFiLoc());
     return Parser::Token::ID;
 }
 
@@ -159,7 +156,7 @@ Parser::Token::Type Scanner::ScanDirective (Ast::Base **const scanned_token)
     {
         m_input >> c;
         m_text += c;
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         m_in_preamble = false;
         return Parser::Token::END_PREAMBLE;
     }
@@ -173,7 +170,7 @@ Parser::Token::Type Scanner::ScanDirective (Ast::Base **const scanned_token)
     if (m_text.substr(0, 8) == "%parser_" &&
         ParserDirective::GetParserDirectiveType(m_text) < PDT_COUNT)
     {
-        *scanned_token = new ParserDirective(m_text, FL);
+        *scanned_token = new ParserDirective(m_text, GetFiLoc());
         return
             ParserDirective::GetDoesParserDirectiveTypeRequireAParameter(
                 static_cast<ParserDirective *>(*scanned_token)->
@@ -183,42 +180,42 @@ Parser::Token::Type Scanner::ScanDirective (Ast::Base **const scanned_token)
     }
     else if (m_text == "%token")
     {
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         return Parser::Token::DIRECTIVE_TOKEN;
     }
     else if (m_text == "%left")
     {
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         return Parser::Token::LEFT;
     }
     else if (m_text == "%right")
     {
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         return Parser::Token::RIGHT;
     }
     else if (m_text == "%nonassoc")
     {
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         return Parser::Token::NONASSOC;
     }
     else if (m_text == "%prec")
     {
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         return Parser::Token::PREC;
     }
     else if (m_text == "%start")
     {
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         return Parser::Token::START;
     }
     else if (m_text == "%type")
     {
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         return Parser::Token::TYPE;
     }
     else if (m_text == "%error")
     {
-        *scanned_token = new Ast::ThrowAway(FL);
+        *scanned_token = new Ast::ThrowAway(GetFiLoc());
         return Parser::Token::DIRECTIVE_ERROR;
     }
 
@@ -253,9 +250,9 @@ Parser::Token::Type Scanner::ScanStrictCodeBlock (Ast::Base **const scanned_toke
             catch (Parser::Token::Type token_type)
             {
                 if (token_type == Parser::Token::BAD_TOKEN)
-                    EmitFatalError("malformed character literal", FL);
+                    EmitFatalError("malformed character literal", GetFiLoc());
                 else
-                    EmitFatalError("unterminated character literal", FL);
+                    EmitFatalError("unterminated character literal", GetFiLoc());
                 // this is moot because EmitFatalError throws
                 return Parser::Token::BAD_TOKEN;
             }
@@ -291,7 +288,7 @@ Parser::Token::Type Scanner::ScanStrictCodeBlock (Ast::Base **const scanned_toke
     }
     else
     {
-        EmitFatalError("unterminated code block", FL);
+        EmitFatalError("unterminated code block", GetFiLoc());
         // this is moot because EmitFatalError throws
         return Parser::Token::BAD_TOKEN;
     }
@@ -319,7 +316,7 @@ Parser::Token::Type Scanner::ScanDumbCodeBlock (Ast::Base **const scanned_token)
 
             if (IsNextCharEOF(&c))
             {
-                EmitFatalError("unterminated code block", FL);
+                EmitFatalError("unterminated code block", GetFiLoc());
                 // this is moot because EmitFatalError throws
                 return Parser::Token::BAD_TOKEN;
             }
@@ -344,7 +341,7 @@ Parser::Token::Type Scanner::ScanDumbCodeBlock (Ast::Base **const scanned_token)
         }
     }
 
-    EmitFatalError("unterminated code block", FL);
+    EmitFatalError("unterminated code block", GetFiLoc());
     // this is moot because EmitFatalError throws
     return Parser::Token::BAD_TOKEN;
 }
@@ -368,7 +365,7 @@ Parser::Token::Type Scanner::ScanStringLiteral (Ast::Base **const scanned_token)
         {
             if (IsNextCharEOF(&c))
             {
-                EmitFatalError("unterminated string", FL);
+                EmitFatalError("unterminated string", GetFiLoc());
                 // this is moot because EmitFatalError throws
                 return Parser::Token::BAD_TOKEN;
             }
@@ -404,7 +401,7 @@ Parser::Token::Type Scanner::ScanStringLiteral (Ast::Base **const scanned_token)
     }
     else
     {
-        EmitFatalError("unterminated string", FL);
+        EmitFatalError("unterminated string", GetFiLoc());
         // this is moot because EmitFatalError throws
         return Parser::Token::BAD_TOKEN;
     }
@@ -426,9 +423,9 @@ Parser::Token::Type Scanner::ScanCharLiteral (Ast::Base **const scanned_token)
     catch (Parser::Token::Type token_type)
     {
         if (token_type == Parser::Token::BAD_TOKEN)
-            EmitFatalError("malformed character literal", FL);
+            EmitFatalError("malformed character literal", GetFiLoc());
         else
-            EmitFatalError("unterminated character literal", FL);
+            EmitFatalError("unterminated character literal", GetFiLoc());
         // this is moot because EmitFatalError throws
         return Parser::Token::BAD_TOKEN;
     }
@@ -436,12 +433,12 @@ Parser::Token::Type Scanner::ScanCharLiteral (Ast::Base **const scanned_token)
     if (m_text[1] == '\\')
     {
         assert(m_text.length() == 4);
-        *scanned_token = new TokenIdChar(GetEscapedChar(m_text[2]), FL);
+        *scanned_token = new TokenIdChar(GetEscapedChar(m_text[2]), GetFiLoc());
     }
     else
     {
         assert(m_text.length() == 3);
-        *scanned_token = new TokenIdChar(m_text[1], FL);
+        *scanned_token = new TokenIdChar(m_text[1], GetFiLoc());
     }
 
     return Parser::Token::TOKEN_ID_CHAR;
@@ -460,7 +457,7 @@ void Scanner::ScanStringLiteralInsideCodeBlock ()
         if (c == '\\')
         {
             if (IsNextCharEOF(&c))
-                EmitFatalError("unterminated code block", FL);
+                EmitFatalError("unterminated code block", GetFiLoc());
             m_input >> c;
             m_text += c;
             if (c == '\n')
@@ -469,7 +466,7 @@ void Scanner::ScanStringLiteralInsideCodeBlock ()
     }
 
     if (c != '"')
-        EmitFatalError("unterminated code block", FL);
+        EmitFatalError("unterminated code block", GetFiLoc());
     else
     {
         m_input >> c;

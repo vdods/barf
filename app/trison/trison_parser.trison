@@ -36,6 +36,8 @@ class Scanner;
 
 private:
 
+    FiLoc GetFiLoc () const;
+
     Token::Type Scan ();
 
     Scanner *m_scanner;
@@ -54,9 +56,6 @@ private:
 #include "trison_scanner.hpp"
 
 namespace Trison {
-
-#undef FL
-#define FL FiLoc(m_scanner->GetInputFilename(), m_scanner->GetLineNumber())
 %}
 
 %parser_constructor_actions{
@@ -77,6 +76,12 @@ bool Parser::SetInputFilename (string const &input_filename)
     assert(m_scanner != NULL);
     m_scanner->Close();
     return m_scanner->Open(input_filename);
+}
+
+FiLoc Parser::GetFiLoc () const
+{
+    assert(m_scanner != NULL);
+    return FiLoc(m_scanner->GetInputFilename(), m_scanner->GetLineNumber());
 }
 
 Parser::Token::Type Parser::Scan ()
@@ -277,7 +282,7 @@ directive %type "Ast::Directive *"
 |
     %error at_least_one_newline
     {
-        EmitError("syntax error in directive", FL);
+        EmitError("syntax error in directive", GetFiLoc());
 
         return NULL;
     }
@@ -356,7 +361,7 @@ nonterminal %type "Nonterminal *"
 |
     %error ';'
     {
-        EmitError("syntax error in nonterminal definition", FL);
+        EmitError("syntax error in nonterminal definition", GetFiLoc());
 
         return NULL;
     }
@@ -377,7 +382,7 @@ nonterminal_specification %type "Nonterminal *"
 |
     %error
     {
-        EmitError("syntax error while parsing nonterminal specification", FL);
+        EmitError("syntax error while parsing nonterminal specification", GetFiLoc());
 
         return new Nonterminal(new Ast::Id("!ERROR!", FiLoc::ms_invalid), NULL);
     }
@@ -478,7 +483,7 @@ rule_token_list %type "RuleTokenList *"
         // it is necessary to explicitly assign the file location here because
         // the rule token list may be empty (and thus wouldn't take its file
         // location from the first appended list element).
-        return new RuleTokenList(FL);
+        return new RuleTokenList(GetFiLoc());
     }
 ;
 
@@ -497,7 +502,7 @@ rule_token %type "RuleToken *"
     DIRECTIVE_ERROR:throwaway
     {
         delete throwaway;
-        return new RuleToken(new TokenIdId("%error", FL), NULL);
+        return new RuleToken(new TokenIdId("%error", GetFiLoc()), NULL);
     }
 ;
 
