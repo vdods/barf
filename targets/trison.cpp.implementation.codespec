@@ -546,7 +546,7 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
                 Reduce_ *reduce = static_cast<Reduce_ *>(action);
                 assert(reduce->m_reduction_rule_ != NULL);
 
-                std::cerr << "*** reduce \"" << reduce->m_reduction_rule_->m_description_ << "\" -- ";
+                std::cerr << "*** reduce \"" << reduce->m_reduction_rule_->m_description_ << "\"" << std::endl;
 
                 // execute the reduction rule with the given index.  this is
                 // essentially just a big switch statement.  push the returned
@@ -626,11 +626,14 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
 <|end_if
 <|end_loop
 <|_rule_code[i]
+            break;
         }
-        break;
 
 <|end_loop
     }
+
+    assert(false && "no value returned from reduction rule code block");
+    return <{token_data_type_sentinel};
 }
 
 void <{class_name}::PrintParserBranchList_ ()

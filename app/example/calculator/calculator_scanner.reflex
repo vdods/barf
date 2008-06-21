@@ -125,13 +125,13 @@ namespace Calculator {
 |
     (pi)
     %target.cpp {
-        token = pi(float_format(30)); // 100 digits of pi
+        token = pi(float_format(FLOAT_DIGITS));
         return Parser::Token::NUMBER;
     }
 |
     (e)
     %target.cpp {
-        token = exp1(float_format(30)); // 100 digits of e
+        token = exp1(float_format(FLOAT_DIGITS));
         return Parser::Token::NUMBER;
     }
 |

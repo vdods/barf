@@ -19,6 +19,7 @@ using namespace Calculator;
 int main (int argc, char **argv)
 {
     char buffer[BUFFER_SIZE];
+    cl_N accepted_token;
     Parser parser;
 
     cout << "BARF calculator by Victor Dods - type \\help for help." << endl;
@@ -28,11 +29,11 @@ int main (int argc, char **argv)
         cin.getline(buffer, BUFFER_SIZE, '\n');
         buffer[BUFFER_SIZE-1] = '\0'; // just to make sure
         parser.SetInputString(buffer);
-        switch (parser.Parse())
+        switch (parser.Parse(&accepted_token))
         {
             case Parser::PRC_SUCCESS:
                 if (parser.ShouldPrintResult())
-                    cout << " = " << parser.GetAcceptedToken() << endl;
+                    cout << " = " << accepted_token << endl;
                 break;
 
             case Parser::PRC_UNHANDLED_PARSE_ERROR:

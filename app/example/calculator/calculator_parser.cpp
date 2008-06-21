@@ -33,7 +33,6 @@ Parser::Parser ()
 #line 34 "calculator_parser.cpp"
     m_debug_spew_level = 0;
     DEBUG_SPEW_2("### number of state transitions = " << ms_state_transition_count << std::endl);
-    m_reduction_token = 0;
 }
 
 Parser::~Parser ()
@@ -44,7 +43,7 @@ Parser::~Parser ()
     delete m_scanner;
     m_scanner = NULL;
 
-#line 48 "calculator_parser.cpp"
+#line 47 "calculator_parser.cpp"
 }
 
 void Parser::CheckStateConsistency ()
@@ -78,16 +77,16 @@ void Parser::CheckStateConsistency ()
     assert(counter == ms_state_transition_count);
 }
 
-Parser::ParserReturnCode Parser::Parse ()
+Parser::ParserReturnCode Parser::Parse (cl_N *return_token)
 {
 
 #line 67 "calculator_parser.trison"
 
     m_should_print_result = true;
 
-#line 89 "calculator_parser.cpp"
+#line 88 "calculator_parser.cpp"
 
-    ParserReturnCode return_code = PrivateParse();
+    ParserReturnCode return_code = PrivateParse(return_token);
 
 
 
@@ -112,18 +111,17 @@ bool Parser::GetDoesStateAcceptErrorToken (Parser::StateNumber state_number) con
     return false;
 }
 
-Parser::ParserReturnCode Parser::PrivateParse ()
+Parser::ParserReturnCode Parser::PrivateParse (cl_N *return_token)
 {
+    assert(return_token && "the return-token pointer must be valid");
+
     m_state_stack.clear();
     m_token_stack.clear();
 
     m_lookahead_token_type = Token::INVALID_;
     m_lookahead_token = 0;
     m_is_new_lookahead_token_required = true;
-
-    m_saved_lookahead_token_type = Token::INVALID_;
-    m_get_new_lookahead_token_type_from_saved = false;
-    m_previous_transition_accepted_error_token = false;
+    m_in_error_handling_mode = false;
 
     m_is_returning_with_non_terminal = false;
     m_returning_with_this_non_terminal = Token::INVALID_;
@@ -175,16 +173,22 @@ Parser::ParserReturnCode Parser::PrivateParse ()
             StateTransition const &state_transition =
                 ms_state_transition[state_transition_number];
             // if this token matches the current transition, do its action
-            if (state_transition.m_token_type == state_transition_token_type)
+            if (m_in_error_handling_mode && state_transition.m_token_type == Token::ERROR_ && state_transition_token_type != Token::END_ ||
+                !m_in_error_handling_mode && state_transition.m_token_type == state_transition_token_type)
             {
                 if (state_transition.m_token_type == Token::ERROR_)
-                    m_previous_transition_accepted_error_token = true;
-                else
-                    m_previous_transition_accepted_error_token = false;
+                {
+                    ThrowAwayToken(m_lookahead_token);
+                    m_lookahead_token = 0;
+                    m_lookahead_token_type = Token::ERROR_;
+                }
 
                 PrintStateTransition(state_transition_number);
                 if (ProcessAction(state_transition.m_action) == ARC_ACCEPT_AND_RETURN)
-                    return PRC_SUCCESS; // the accepted token is in m_reduction_token
+                {
+                    *return_token = m_reduction_token;
+                    return PRC_SUCCESS;
+                }
                 else
                     break;
             }
@@ -200,66 +204,41 @@ Parser::ParserReturnCode Parser::PrivateParse ()
                 Action const &default_action =
                     ms_state_transition[default_action_state_transition_number].m_action;
                 if (ProcessAction(default_action) == ARC_ACCEPT_AND_RETURN)
-                    return PRC_SUCCESS; // the accepted token is in m_reduction_token
+                {
+                    *return_token = m_reduction_token;
+                    return PRC_SUCCESS;
+                }
             }
             // otherwise go into error recovery mode
             else
             {
                 assert(!m_is_new_lookahead_token_required);
+                assert(!m_in_error_handling_mode);
 
                 DEBUG_SPEW_1("!!! error recovery: begin" << std::endl);
+                m_in_error_handling_mode = true;
 
-                // if an error was encountered, and this state accepts the %error
-                // token, then we don't need to pop states
-                if (GetDoesStateAcceptErrorToken(current_state_number))
+                // pop the stack until we reach an error-handling state, but only
+                // if the lookahead token isn't END_ (to prevent an infinite loop).
+                while (!GetDoesStateAcceptErrorToken(current_state_number) || m_lookahead_token_type == Token::END_)
                 {
-                    // if an error token was previously accepted, then throw
-                    // away the lookahead token, because whatever the lookahead
-                    // was didn't match.  this prevents an infinite loop.
-                    if (m_previous_transition_accepted_error_token)
+                    DEBUG_SPEW_1("!!! error recovery: popping state " << current_state_number << std::endl);
+                    assert(m_token_stack.size() + 1 == m_state_stack.size());
+                    if (m_token_stack.size() > 0)
                     {
-                        ThrowAwayToken(m_lookahead_token);
-                        m_is_new_lookahead_token_required = true;
-                    }
-                    // otherwise, save off the lookahead token so that once the
-                    // %error token has been shifted, the lookahead can be
-                    // re-analyzed.
-                    else
-                    {
-                        m_saved_lookahead_token_type = m_lookahead_token_type;
-                        m_get_new_lookahead_token_type_from_saved = true;
-                        m_lookahead_token_type = Token::ERROR_;
-                    }
-                }
-                // otherwise save off the lookahead token for the error panic popping
-                else
-                {
-                    // save off the lookahead token type and set the current to Token::ERROR_
-                    m_saved_lookahead_token_type = m_lookahead_token_type;
-                    m_get_new_lookahead_token_type_from_saved = true;
-                    m_lookahead_token_type = Token::ERROR_;
-
-                    // pop until we either run off the stack, or find a state
-                    // which accepts the %error token.
-                    assert(m_state_stack.size() > 0);
-                    do
-                    {
-                        DEBUG_SPEW_1("!!! error recovery: popping state " << current_state_number << std::endl);
-                        m_state_stack.pop_back();
-
-                        if (m_state_stack.size() == 0)
-                        {
-                            ThrowAwayTokenStack();
-                            DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
-                            return PRC_UNHANDLED_PARSE_ERROR;
-                        }
-
-                        assert(m_token_stack.size() > 0);
                         ThrowAwayToken(m_token_stack.back());
                         m_token_stack.pop_back();
-                        current_state_number = m_state_stack.back();
                     }
-                    while (!GetDoesStateAcceptErrorToken(current_state_number));
+                    m_state_stack.pop_back();
+
+                    if (m_state_stack.size() == 0)
+                    {
+                        DEBUG_SPEW_1("!!! error recovery: unhandled error -- quitting" << std::endl);
+                        *return_token = 0;
+                        return PRC_UNHANDLED_PARSE_ERROR;
+                    }
+
+                    current_state_number = m_state_stack.back();
                 }
 
                 DEBUG_SPEW_1("!!! error recovery: found state which accepts %error token" << std::endl);
@@ -268,7 +247,9 @@ Parser::ParserReturnCode Parser::PrivateParse ()
         }
     }
 
-    // this should never happen because the above loop is infinite
+    // this should never happen because the above loop is infinite, but we'll do
+    // stuff here anyway in case some compiler isn't smart enough to realize it.
+    *return_token = 0;
     return PRC_UNHANDLED_PARSE_ERROR;
 }
 
@@ -276,15 +257,18 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
 {
     if (action.m_transition_action == TA_SHIFT_AND_PUSH_STATE)
     {
+        m_in_error_handling_mode = false;
         ShiftLookaheadToken();
         PushState(action.m_data);
     }
     else if (action.m_transition_action == TA_PUSH_STATE)
     {
+        assert(!m_in_error_handling_mode);
         PushState(action.m_data);
     }
     else if (action.m_transition_action == TA_REDUCE_USING_RULE)
     {
+        assert(!m_in_error_handling_mode);
         unsigned int reduction_rule_number = action.m_data;
         assert(reduction_rule_number < ms_reduction_rule_count);
         ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];
@@ -292,6 +276,7 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
     }
     else if (action.m_transition_action == TA_REDUCE_AND_ACCEPT_USING_RULE)
     {
+        assert(!m_in_error_handling_mode);
         unsigned int reduction_rule_number = action.m_data;
         assert(reduction_rule_number < ms_reduction_rule_count);
         ReductionRule const &reduction_rule = ms_reduction_rule[reduction_rule_number];
@@ -299,12 +284,6 @@ Parser::ActionReturnCode Parser::ProcessAction (Parser::Action const &action)
         DEBUG_SPEW_1("*** accept" << std::endl);
         // everything is done, so just return.
         return ARC_ACCEPT_AND_RETURN;
-    }
-    else if (action.m_transition_action == TA_THROW_AWAY_LOOKAHEAD_TOKEN)
-    {
-        assert(!m_is_new_lookahead_token_required);
-        ThrowAwayToken(m_lookahead_token);
-        m_is_new_lookahead_token_required = true;
     }
 
     return ARC_CONTINUE_PARSING;
@@ -350,6 +329,8 @@ void Parser::ReduceUsingRule (ReductionRule const &reduction_rule, bool and_acce
     // call the reduction rule handler if it exists
     if (reduction_rule.m_handler != NULL)
         m_reduction_token = (this->*(reduction_rule.m_handler))();
+    else
+        m_reduction_token = 0;
     // pop the states and tokens
     PopStates(reduction_rule.m_number_of_tokens_to_reduce_by, false);
 
@@ -358,12 +339,14 @@ void Parser::ReduceUsingRule (ReductionRule const &reduction_rule, bool and_acce
     {
         // push the token that resulted from the reduction
         m_token_stack.push_back(m_reduction_token);
+        m_reduction_token = 0;
         PrintStateStack();
     }
 }
 
 void Parser::PopStates (unsigned int number_of_states_to_pop, bool print_state_stack)
 {
+    assert(m_token_stack.size() + 1 == m_state_stack.size());
     assert(number_of_states_to_pop < m_state_stack.size());
     assert(number_of_states_to_pop <= m_token_stack.size());
 
@@ -406,11 +389,13 @@ void Parser::ScanANewLookaheadToken ()
 
 void Parser::ThrowAwayToken (cl_N token)
 {
+    DEBUG_SPEW_1("*** throwing away token of type " << m_lookahead_token_type << std::endl);
+
 
 #line 71 "calculator_parser.trison"
 
 
-#line 414 "calculator_parser.cpp"
+#line 399 "calculator_parser.cpp"
 }
 
 void Parser::ThrowAwayTokenStack ()
@@ -474,7 +459,6 @@ cl_N Parser::ReductionRuleHandler0000 ()
     assert(0 < m_reduction_rule_token_count);
     return m_token_stack[m_token_stack.size() - m_reduction_rule_token_count];
 
-    return 0;
 }
 
 // rule 1: root <-     
@@ -486,8 +470,7 @@ cl_N Parser::ReductionRuleHandler0001 ()
         m_should_print_result = false;
         return 0;
     
-#line 490 "calculator_parser.cpp"
-    return 0;
+#line 474 "calculator_parser.cpp"
 }
 
 // rule 2: root <- expression:result    
@@ -503,8 +486,7 @@ cl_N Parser::ReductionRuleHandler0002 ()
             m_last_result = result;
         return result;
     
-#line 507 "calculator_parser.cpp"
-    return 0;
+#line 490 "calculator_parser.cpp"
 }
 
 // rule 3: root <- command    
@@ -516,8 +498,7 @@ cl_N Parser::ReductionRuleHandler0003 ()
         m_should_print_result = false;
         return 0;
     
-#line 520 "calculator_parser.cpp"
-    return 0;
+#line 502 "calculator_parser.cpp"
 }
 
 // rule 4: expression <- expression:lhs '+' expression:rhs    %left %prec ADDITION
@@ -530,8 +511,7 @@ cl_N Parser::ReductionRuleHandler0004 ()
 
 #line 135 "calculator_parser.trison"
  return MODULO(lhs + rhs); 
-#line 534 "calculator_parser.cpp"
-    return 0;
+#line 515 "calculator_parser.cpp"
 }
 
 // rule 5: expression <- expression:lhs '-' expression:rhs    %left %prec ADDITION
@@ -544,8 +524,7 @@ cl_N Parser::ReductionRuleHandler0005 ()
 
 #line 137 "calculator_parser.trison"
  return MODULO(lhs - rhs); 
-#line 548 "calculator_parser.cpp"
-    return 0;
+#line 528 "calculator_parser.cpp"
 }
 
 // rule 6: expression <- expression:lhs '*' expression:rhs    %left %prec MULTIPLICATION
@@ -558,8 +537,7 @@ cl_N Parser::ReductionRuleHandler0006 ()
 
 #line 139 "calculator_parser.trison"
  return MODULO(lhs * rhs); 
-#line 562 "calculator_parser.cpp"
-    return 0;
+#line 541 "calculator_parser.cpp"
 }
 
 // rule 7: expression <- expression:lhs '/' expression:rhs    %left %prec MULTIPLICATION
@@ -581,8 +559,7 @@ cl_N Parser::ReductionRuleHandler0007 ()
         else
             return lhs / rhs;
     
-#line 585 "calculator_parser.cpp"
-    return 0;
+#line 563 "calculator_parser.cpp"
 }
 
 // rule 8: expression <- '+' expression:exp     %prec UNARY
@@ -593,8 +570,7 @@ cl_N Parser::ReductionRuleHandler0008 ()
 
 #line 153 "calculator_parser.trison"
  return MODULO(exp); 
-#line 597 "calculator_parser.cpp"
-    return 0;
+#line 574 "calculator_parser.cpp"
 }
 
 // rule 9: expression <- '-' expression:exp     %prec UNARY
@@ -605,8 +581,7 @@ cl_N Parser::ReductionRuleHandler0009 ()
 
 #line 155 "calculator_parser.trison"
  return MODULO(-exp); 
-#line 609 "calculator_parser.cpp"
-    return 0;
+#line 585 "calculator_parser.cpp"
 }
 
 // rule 10: expression <- expression:base '^' expression:power    %right %prec EXPONENTIATION
@@ -628,8 +603,7 @@ cl_N Parser::ReductionRuleHandler0010 ()
         else
             return MODULO(expt(base, power));
     
-#line 632 "calculator_parser.cpp"
-    return 0;
+#line 607 "calculator_parser.cpp"
 }
 
 // rule 11: expression <- '(' expression:exp ')'    
@@ -640,8 +614,7 @@ cl_N Parser::ReductionRuleHandler0011 ()
 
 #line 169 "calculator_parser.trison"
  return exp; 
-#line 644 "calculator_parser.cpp"
-    return 0;
+#line 618 "calculator_parser.cpp"
 }
 
 // rule 12: expression <- NUMBER:number    
@@ -652,8 +625,7 @@ cl_N Parser::ReductionRuleHandler0012 ()
 
 #line 171 "calculator_parser.trison"
  return MODULO(number); 
-#line 656 "calculator_parser.cpp"
-    return 0;
+#line 629 "calculator_parser.cpp"
 }
 
 // rule 13: expression <- RESULT    
@@ -662,8 +634,7 @@ cl_N Parser::ReductionRuleHandler0013 ()
 
 #line 173 "calculator_parser.trison"
  return m_last_result; 
-#line 666 "calculator_parser.cpp"
-    return 0;
+#line 638 "calculator_parser.cpp"
 }
 
 // rule 14: command <- '\\' FLOAT    
@@ -672,14 +643,13 @@ cl_N Parser::ReductionRuleHandler0014 ()
 
 #line 179 "calculator_parser.trison"
 
-        cout << "last result in floating-point: " << cl_float(realpart(m_last_result));
+        cout << "last result in floating-point: " << cl_float(realpart(m_last_result), float_format(FLOAT_DIGITS));
         if (!zerop(imagpart(m_last_result)))
             cout << " + " << cl_float(imagpart(m_last_result)) << "i";
         cout << endl;
         return 0;
     
-#line 682 "calculator_parser.cpp"
-    return 0;
+#line 653 "calculator_parser.cpp"
 }
 
 // rule 15: command <- '\\' HELP    
@@ -694,6 +664,7 @@ cl_N Parser::ReductionRuleHandler0015 ()
                 "  r          - The value of the previous result.\n"
                 "  pi         - The ratio of a circle's circumference to its diameter.\n"
                 "  e          - The base of the natural logarithm.\n"
+                "  i          - The square root of -1.\n"
                 "Commands\n"
                 "  \\float     - Print last result in floating point format.\n"
                 "  \\help      - This help screen.\n"
@@ -702,62 +673,57 @@ cl_N Parser::ReductionRuleHandler0015 ()
                 "               of 0 indicates no result truncation." << endl;
         return 0;
     
-#line 706 "calculator_parser.cpp"
-    return 0;
+#line 677 "calculator_parser.cpp"
 }
 
-// rule 16: command <- '\\' MOD expression:exp    
+// rule 16: command <- '\\' MOD NUMBER:number    
 cl_N Parser::ReductionRuleHandler0016 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    cl_N exp = static_cast< cl_N >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    cl_N number = static_cast< cl_N >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 205 "calculator_parser.trison"
+#line 206 "calculator_parser.trison"
 
-        if (realpart(exp) >= 0 && zerop(imagpart(exp)))
+        if (realpart(number) >= 0 && zerop(imagpart(number)))
         {
-            m_modulus = realpart(exp);
+            m_modulus = realpart(number);
             cout << "current modulus set to: " << m_modulus << endl;
         }
         else
             cerr << "error: invalid modulus (must be non-negative, real)" << endl;
         return 0;
     
-#line 727 "calculator_parser.cpp"
-    return 0;
+#line 697 "calculator_parser.cpp"
 }
 
 // rule 17: command <- '\\' MOD    
 cl_N Parser::ReductionRuleHandler0017 ()
 {
 
-#line 217 "calculator_parser.trison"
+#line 218 "calculator_parser.trison"
 
         cout << "current modulus: " << m_modulus << endl;
         return 0;
     
-#line 740 "calculator_parser.cpp"
-    return 0;
+#line 709 "calculator_parser.cpp"
 }
 
 // rule 18: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    
 cl_N Parser::ReductionRuleHandler0018 ()
 {
 
-#line 225 "calculator_parser.trison"
+#line 226 "calculator_parser.trison"
  return 0; 
-#line 750 "calculator_parser.cpp"
-    return 0;
+#line 718 "calculator_parser.cpp"
 }
 
 // rule 19: at_least_zero_newlines <-     
 cl_N Parser::ReductionRuleHandler0019 ()
 {
 
-#line 227 "calculator_parser.trison"
+#line 228 "calculator_parser.trison"
  return 0; 
-#line 760 "calculator_parser.cpp"
-    return 0;
+#line 727 "calculator_parser.cpp"
 }
 
 
@@ -784,7 +750,7 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {           Token::expression__,  1, &Parser::ReductionRuleHandler0013, "rule 13: expression <- RESULT    "},
     {              Token::command__,  2, &Parser::ReductionRuleHandler0014, "rule 14: command <- '\\' FLOAT    "},
     {              Token::command__,  2, &Parser::ReductionRuleHandler0015, "rule 15: command <- '\\' HELP    "},
-    {              Token::command__,  3, &Parser::ReductionRuleHandler0016, "rule 16: command <- '\\' MOD expression    "},
+    {              Token::command__,  3, &Parser::ReductionRuleHandler0016, "rule 16: command <- '\\' MOD NUMBER    "},
     {              Token::command__,  2, &Parser::ReductionRuleHandler0017, "rule 17: command <- '\\' MOD    "},
     {Token::at_least_zero_newlines__,  2, &Parser::ReductionRuleHandler0018, "rule 18: at_least_zero_newlines <- at_least_zero_newlines NEWLINE    "},
     {Token::at_least_zero_newlines__,  0, &Parser::ReductionRuleHandler0019, "rule 19: at_least_zero_newlines <-     "},
@@ -818,20 +784,20 @@ Parser::State const Parser::ms_state[] =
     {  46,    6,    0,    0,    0}, // state   12
     {   0,    0,   52,    0,    0}, // state   13
     {   0,    0,   53,    0,    0}, // state   14
-    {  54,    5,   59,   60,    1}, // state   15
-    {   0,    0,   61,    0,    0}, // state   16
-    {  62,    5,    0,   67,    1}, // state   17
-    {  68,    5,    0,   73,    1}, // state   18
-    {  74,    5,    0,   79,    1}, // state   19
-    {  80,    5,    0,   85,    1}, // state   20
-    {  86,    5,    0,   91,    1}, // state   21
-    {   0,    0,   92,    0,    0}, // state   22
-    {  93,    5,   98,    0,    0}, // state   23
-    {  99,    3,  102,    0,    0}, // state   24
-    { 103,    3,  106,    0,    0}, // state   25
-    { 107,    1,  108,    0,    0}, // state   26
-    { 109,    1,  110,    0,    0}, // state   27
-    { 111,    1,  112,    0,    0}  // state   28
+    {  54,    1,   55,    0,    0}, // state   15
+    {   0,    0,   56,    0,    0}, // state   16
+    {  57,    5,    0,   62,    1}, // state   17
+    {  63,    5,    0,   68,    1}, // state   18
+    {  69,    5,    0,   74,    1}, // state   19
+    {  75,    5,    0,   80,    1}, // state   20
+    {  81,    5,    0,   86,    1}, // state   21
+    {   0,    0,   87,    0,    0}, // state   22
+    {   0,    0,   88,    0,    0}, // state   23
+    {  89,    3,   92,    0,    0}, // state   24
+    {  93,    3,   96,    0,    0}, // state   25
+    {  97,    1,   98,    0,    0}, // state   26
+    {  99,    1,  100,    0,    0}, // state   27
+    { 101,    1,  102,    0,    0}  // state   28
 
 };
 
@@ -988,15 +954,9 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   15
 // ///////////////////////////////////////////////////////////////////////////
     // terminal transitions
-    {                 Token::NUMBER, {        TA_SHIFT_AND_PUSH_STATE,    1}},
-    {                 Token::RESULT, {        TA_SHIFT_AND_PUSH_STATE,    2}},
-    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,    3}},
-    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,    4}},
-    {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,    5}},
+    {                 Token::NUMBER, {        TA_SHIFT_AND_PUSH_STATE,   23}},
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   17}},
-    // nonterminal transitions
-    {           Token::expression__, {                  TA_PUSH_STATE,   23}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   16
@@ -1073,12 +1033,6 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // ///////////////////////////////////////////////////////////////////////////
 // state   23
 // ///////////////////////////////////////////////////////////////////////////
-    // terminal transitions
-    {              Token::Type('+'), {        TA_SHIFT_AND_PUSH_STATE,   17}},
-    {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   18}},
-    {              Token::Type('*'), {        TA_SHIFT_AND_PUSH_STATE,   19}},
-    {              Token::Type('/'), {        TA_SHIFT_AND_PUSH_STATE,   20}},
-    {              Token::Type('^'), {        TA_SHIFT_AND_PUSH_STATE,   21}},
     // default transition
     {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   16}},
 
@@ -1150,5 +1104,5 @@ Parser::Token::Type Parser::Scan ()
 
 } // end of namespace Calculator
 
-#line 1154 "calculator_parser.cpp"
+#line 1108 "calculator_parser.cpp"
 

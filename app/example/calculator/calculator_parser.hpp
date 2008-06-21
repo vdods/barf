@@ -56,9 +56,6 @@ public:
     Parser ();
     ~Parser ();
 
-    inline cl_N const &GetAcceptedToken () const { return m_reduction_token; }
-    inline void ClearAcceptedToken () { m_reduction_token = 0; }
-
     inline unsigned int GetDebugSpewLevel () const { return m_debug_spew_level; }
     inline void SetDebugSpewLevel (unsigned int debug_spew_level) { m_debug_spew_level = debug_spew_level; }
 
@@ -72,7 +69,7 @@ public:
 
 public:
 
-    ParserReturnCode Parse ();
+    ParserReturnCode Parse (cl_N *return_token);
 
 public:
 
@@ -94,7 +91,7 @@ private:
     cl_R m_modulus;
     bool m_should_print_result;
 
-#line 98 "calculator_parser.hpp"
+#line 95 "calculator_parser.hpp"
 
 private:
 
@@ -106,7 +103,6 @@ private:
         TA_PUSH_STATE,
         TA_REDUCE_USING_RULE,
         TA_REDUCE_AND_ACCEPT_USING_RULE,
-        TA_THROW_AWAY_LOOKAHEAD_TOKEN,
 
         TA_COUNT
     };
@@ -153,13 +149,7 @@ private:
         if (m_is_new_lookahead_token_required)
         {
             m_is_new_lookahead_token_required = false;
-            if (m_get_new_lookahead_token_type_from_saved)
-            {
-                m_get_new_lookahead_token_type_from_saved = false;
-                m_lookahead_token_type = m_saved_lookahead_token_type;
-            }
-            else
-                ScanANewLookaheadToken();
+            ScanANewLookaheadToken();
         }
     }
     inline Token::Type GetLookaheadTokenType ()
@@ -174,7 +164,7 @@ private:
     }
     bool GetDoesStateAcceptErrorToken (StateNumber state_number) const;
 
-    ParserReturnCode PrivateParse ();
+    ParserReturnCode PrivateParse (cl_N *return_token);
 
     ActionReturnCode ProcessAction (Action const &action);
     void ShiftLookaheadToken ();
@@ -199,10 +189,7 @@ private:
     Token::Type m_lookahead_token_type;
     cl_N m_lookahead_token;
     bool m_is_new_lookahead_token_required;
-
-    Token::Type m_saved_lookahead_token_type;
-    bool m_get_new_lookahead_token_type_from_saved;
-    bool m_previous_transition_accepted_error_token;
+    bool m_in_error_handling_mode;
 
     bool m_is_returning_with_non_terminal;
     Token::Type m_returning_with_this_non_terminal;
@@ -249,4 +236,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_CALCULATOR_PARSER_HPP_)
 
-#line 253 "calculator_parser.hpp"
+#line 240 "calculator_parser.hpp"

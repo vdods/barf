@@ -166,7 +166,7 @@ Parser::Token::Type Scanner::Scan (
 
 #line 127 "calculator_scanner.reflex"
 
-        token = pi(float_format(30)); // 100 digits of pi
+        token = pi(float_format(FLOAT_DIGITS));
         return Parser::Token::NUMBER;
     
 #line 173 "calculator_scanner.cpp"
@@ -179,7 +179,7 @@ Parser::Token::Type Scanner::Scan (
 
 #line 133 "calculator_scanner.reflex"
 
-        token = exp1(float_format(30)); // 100 digits of e
+        token = exp1(float_format(FLOAT_DIGITS));
         return Parser::Token::NUMBER;
     
 #line 186 "calculator_scanner.cpp"

@@ -13,19 +13,15 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 
 .PHONY: \
 	barf-commonlang-scanner \
-	barf-commonlang-scanner-force \
+	force-barf-commonlang-scanner \
 	barf-preprocessor-parser \
-	barf-preprocessor-parser-force \
+	force-barf-preprocessor-parser \
 	barf-preprocessor-scanner \
-	barf-preprocessor-scanner-force \
+	force-barf-preprocessor-scanner \
 	barf-regex-parser \
-	barf-regex-parser-force \
+	force-barf-regex-parser \
 	barf-targetspec-parser \
-	barf-targetspec-parser-force \
-	calculator-parser \
-	calculator-parser-force \
-	calculator-scanner \
-	calculator-scanner-force \
+	force-barf-targetspec-parser \
 	clean-all-parsers \
 	clean-all-scanners \
 	clean-parser-extras \
@@ -39,12 +35,12 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	libbarf-regex \
 	libbarf-targetspec \
 	reflex-parser \
-	reflex-parser-force \
+	force-reflex-parser \
 	spotless \
 	trison-parser \
-	trison-parser-force \
+	force-trison-parser \
 	trison-unstable-parser \
-	trison-unstable-parser-force
+	force-trison-unstable-parser
 
 libbarf-all: libbarf-commonlang libbarf-core libbarf-targetspec libbarf-preprocessor libbarf-regex
 libbarf-commonlang: lib/libbarf-commonlang.la
@@ -59,7 +55,6 @@ doc:
 spotless: clean clean-parser-extras clean-scanner-extras
 
 clean-parser-extras:
-	rm -f $(top_srcdir)/app/example/calculator/calculator_parser.states
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.states
 	rm -f $(top_srcdir)/app/trison/trison_parser.states
 	rm -f $(top_srcdir)/app/trison/trison_parser_header.cpp
@@ -70,8 +65,6 @@ clean-parser-extras:
 	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.states
 
 clean-all-parsers: clean-parser-extras
-	rm -f $(top_srcdir)/app/example/calculator/calculator_parser.cpp
-	rm -f $(top_srcdir)/app/example/calculator/calculator_parser.hpp
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.cpp
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.hpp
 	rm -f $(top_srcdir)/app/trison/trison_parser.cpp
@@ -88,26 +81,22 @@ clean-all-parsers: clean-parser-extras
 clean-scanner-extras:
 
 clean-all-scanners:
-	rm -f $(top_srcdir)/app/example/calculator/calculator_scanner.cpp
-	rm -f $(top_srcdir)/app/example/calculator/calculator_scanner.hpp
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
 
 force-all-parsers: \
-	barf-targetspec-parser-force \
-	barf-preprocessor-parser-force \
-	barf-regex-parser-force \
-	calculator-parser-force \
-	reflex-parser-force \
-	trison-parser-force \
-	trison-unstable-parser-force
+	force-barf-targetspec-parser \
+	force-barf-preprocessor-parser \
+	force-barf-regex-parser \
+	force-reflex-parser \
+	force-trison-parser \
+	force-trison-unstable-parser
 
 force-all-scanners: \
-	barf-commonlang-scanner-force \
-	barf-preprocessor-scanner-force \
-	calculator-scanner-force
+	force-barf-commonlang-scanner \
+	force-barf-preprocessor-scanner
 
 noinst_LTLIBRARIES = \
 	lib/libbarf-commonlang.la \
@@ -119,14 +108,12 @@ noinst_LTLIBRARIES = \
 if BUILD_TRISON_UNSTABLE
 bin_PROGRAMS = \
 	bpp \
-	calculator \
 	reflex \
 	trison \
 	trison.unstable
 else # !BUILD_TRISON_UNSTABLE
 bin_PROGRAMS = \
 	bpp \
-	calculator \
 	reflex \
 	trison
 endif
@@ -259,7 +246,7 @@ $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp: $(top_srcdir)/lib/comm
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
 	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
 
-barf-commonlang-scanner-force: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
+force-barf-commonlang-scanner: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
 	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
 
 barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
@@ -267,16 +254,16 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp: $(top_srcdir)/
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX)
 	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/
 
-barf-preprocessor-scanner-force: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX)
+force-barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX)
 	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/
 else # !STABLE_REFLEX_EXISTS
-barf-commonlang-scanner barf-commonlang-scanner-force:
+barf-commonlang-scanner force-barf-commonlang-scanner:
 	@echo "!!!"
 	@echo "!!! Can't build barf commonlang scanner without stable reflex binary."
 	@echo "!!! Use --with-stable-reflex configure option."
 	@echo "!!!"
 
-barf-preprocessor-scanner barf-preprocessor-scanner-force:
+barf-preprocessor-scanner force-barf-preprocessor-scanner:
 	@echo "!!!"
 	@echo "!!! Can't build barf preprocessor scanner without stable reflex binary."
 	@echo "!!! Use --with-stable-reflex configure option."
@@ -289,7 +276,7 @@ $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp: $(top_srcdir)/lib/targe
 $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 
-barf-targetspec-parser-force: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
+force-barf-targetspec-parser: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
@@ -297,7 +284,7 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp: $(top_srcdir)/lib/p
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser --generate-states-file $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.states
 
-barf-preprocessor-parser-force: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
+force-barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser --generate-states-file $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.states
 
 barf-regex-parser: $(top_srcdir)/lib/regex/barf_regex_parser.hpp
@@ -305,22 +292,22 @@ $(top_srcdir)/lib/regex/barf_regex_parser.hpp: $(top_srcdir)/lib/regex/barf_rege
 $(top_srcdir)/lib/regex/barf_regex_parser.cpp: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
 
-barf-regex-parser-force: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
+force-barf-regex-parser: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
 else # !STABLE_TRISON_EXISTS
-barf-targetspec-parser barf-targetspec-parser-force:
+barf-targetspec-parser force-barf-targetspec-parser:
 	@echo "!!!"
 	@echo "!!! Can't build barf targetspec parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 
-barf-preprocessor-parser barf-preprocessor-parser-force:
+barf-preprocessor-parser force-barf-preprocessor-parser:
 	@echo "!!!"
 	@echo "!!! Can't build barf preprocessor parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 
-barf-regex-parser barf-regex-parser-force:
+barf-regex-parser force-barf-regex-parser:
 	@echo "!!!"
 	@echo "!!! Can't build barf regex parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
@@ -345,57 +332,6 @@ bpp_LDADD = \
 bpp_SOURCES = \
 	app/bpp/bpp_main.cpp \
 	app/bpp/bpp_options.cpp
-
-##############################################################################
-# calculator (example app)
-##############################################################################
-
-calculator_CPPFLAGS = \
-	$(AM_CPPFLAGS) \
-	-I$(top_srcdir)/app/example/calculator
-
-calculator_LDADD = \
-    $(LDADD) \
-    -lcln
-
-calculator_SOURCES = \
-	app/example/calculator/calculator_main.cpp \
-	app/example/calculator/calculator_parser.cpp \
-	app/example/calculator/calculator_parser.trison \
-	app/example/calculator/calculator_scanner.cpp \
-	app/example/calculator/calculator_scanner.reflex
-
-if STABLE_REFLEX_EXISTS
-calculator-scanner: $(top_srcdir)/app/example/calculator/calculator_scanner.hpp
-$(top_srcdir)/app/example/calculator/calculator_scanner.hpp: $(top_srcdir)/app/example/calculator/calculator_scanner.cpp
-$(top_srcdir)/app/example/calculator/calculator_scanner.cpp: $(top_srcdir)/app/example/calculator/calculator_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/app/example/calculator/calculator_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/example/calculator/
-
-calculator-scanner-force: $(top_srcdir)/app/example/calculator/calculator_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/app/example/calculator/calculator_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/example/calculator/
-else # !STABLE_REFLEX_EXISTS
-calculator-scanner calculator-scanner-force:
-	@echo "!!!"
-	@echo "!!! Can't build calculator scanner without stable reflex binary."
-	@echo "!!! Use --with-stable-reflex configure option."
-	@echo "!!!"
-endif
-
-if STABLE_TRISON_EXISTS
-calculator-parser: $(top_srcdir)/app/example/calculator/calculator_parser.hpp
-$(top_srcdir)/app/example/calculator/calculator_parser.hpp: $(top_srcdir)/app/example/calculator/calculator_parser.cpp
-$(top_srcdir)/app/example/calculator/calculator_parser.cpp: $(top_srcdir)/app/example/calculator/calculator_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/app/example/calculator/calculator_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/example/calculator/calculator_parser --generate-states-file $(top_srcdir)/app/example/calculator/calculator_parser.states
-
-calculator-parser-force: $(top_srcdir)/app/example/calculator/calculator_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/app/example/calculator/calculator_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/example/calculator/calculator_parser --generate-states-file $(top_srcdir)/app/example/calculator/calculator_parser.states
-else # !STABLE_TRISON_EXISTS
-calculator-parser calculator-parser-force:
-	@echo "!!!"
-	@echo "!!! Can't build calculator parser without stable trison binary."
-	@echo "!!! Use --with-stable-trison configure option."
-	@echo "!!!"
-endif
 
 ##############################################################################
 # playground (app for testing stuff)
@@ -458,10 +394,10 @@ $(top_srcdir)/app/reflex/reflex_parser.hpp: $(top_srcdir)/app/reflex/reflex_pars
 $(top_srcdir)/app/reflex/reflex_parser.cpp: $(top_srcdir)/app/reflex/reflex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/reflex/reflex_parser --generate-states-file $(top_srcdir)/app/reflex/reflex_parser.states
 
-reflex-parser-force: $(top_srcdir)/app/reflex/reflex_parser.trison $(STABLE_TRISON)
+force-reflex-parser: $(top_srcdir)/app/reflex/reflex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/reflex/reflex_parser --generate-states-file $(top_srcdir)/app/reflex/reflex_parser.states
 else # !STABLE_TRISON_EXISTS
-reflex-parser reflex-parser-force:
+reflex-parser force-reflex-parser:
 	@echo "!!!"
 	@echo "!!! Can't build reflex parser without stable reflex binary."
 	@echo "!!! Use --with-stable-reflex configure option."
@@ -506,10 +442,10 @@ $(top_srcdir)/app/trison/trison_parser.hpp: $(top_srcdir)/app/trison/trison_pars
 $(top_srcdir)/app/trison/trison_parser.cpp: $(top_srcdir)/app/trison/trison_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison/trison_parser --generate-states-file $(top_srcdir)/app/trison/trison_parser.states
 
-trison-parser-force: $(top_srcdir)/app/trison/trison_parser.trison $(STABLE_TRISON)
+force-trison-parser: $(top_srcdir)/app/trison/trison_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison/trison_parser --generate-states-file $(top_srcdir)/app/trison/trison_parser.states
 else # !STABLE_TRISON_EXISTS
-trison-parser trison-parser-force:
+trison-parser force-trison-parser:
 	@echo "!!!"
 	@echo "!!! Can't build trison parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
@@ -575,10 +511,10 @@ $(top_srcdir)/app/trison.unstable/trison_parser.hpp: $(top_srcdir)/app/trison.un
 $(top_srcdir)/app/trison.unstable/trison_parser.cpp: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/trison.unstable/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison.unstable/trison_parser --generate-states-file $(top_srcdir)/app/trison.unstable/trison_parser.states
 
-trison-unstable-parser-force: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON)
+force-trison-unstable-parser: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/trison.unstable/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison.unstable/trison_parser --generate-states-file $(top_srcdir)/app/trison.unstable/trison_parser.states
 else # !STABLE_TRISON_EXISTS
-trison-unstable-parser trison-unstable-parser-force:
+trison-unstable-parser force-trison-unstable-parser:
 	@echo "!!!"
 	@echo "!!! Can't build trison.unstable parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
@@ -587,7 +523,7 @@ endif
 
 else # !BUILD_TRISON_UNSTABLE
 
-trison-unstable-parser trison-unstable-parser-force:
+trison-unstable-parser force-trison-unstable-parser:
 	@echo "!!!"
 	@echo "!!! These targets are disabled without configuring using --enable-trison-unstable."
 	@echo "!!!"
@@ -601,10 +537,6 @@ endif
 noinst_HEADERS = \
 	app/bpp/bpp.hpp \
 	app/bpp/bpp_options.hpp \
-	\
-	app/example/calculator/calculator.hpp \
-	app/example/calculator/calculator_parser.hpp \
-	app/example/calculator/calculator_scanner.hpp \
 	\
 	app/reflex/reflex.hpp \
 	app/reflex/reflex_ast.hpp \

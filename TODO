@@ -37,7 +37,8 @@
 - get rid of empty xxx_enums.xpp files (once BARF is near complete)
 - move all AST usage to smart pointers to ease-ify stuff and to escape the
   woes of memory leaks (not like it matters that much in this context) --
-  or do comprehensive deleting of stuff (which would probably set a better
+  OR
+  do comprehensive deleting of stuff (which would probably set a better
   example for people who read the source code of the parsers/scanners).
 - get rid of AST hierarchy overviews once doxygen docs are to some decent state
 - use Ast::Directive::GetDirectiveString in error messages instead of
@@ -46,9 +47,10 @@
 - add "execution debug spew" mode for each program, which says what it's doing,
   e.g. opening files, doing type checking, env vars its using, etc
 - file locations should be "2d range" -- a starting line/column and an ending
-  line/column.  nonterminal expressions can then be the union of the file
-  locations of their component parts.  this technique will be useful later in
-  compiler design for debugging info.
+  line/column (or starting line/column and a number of bytes following).
+  nonterminal expressions can then be the union of the file locations of their
+  component parts.  this technique will be useful later in compiler design for
+  debugging info.
 - add metaprogramming stuff for integer types and compile time asserts
 - make all AST classes dumb storage containers with external, non-member
   functions which operate on them (unless it's more practical to use member
@@ -190,7 +192,9 @@
 
 - add interactive/noninteractive option to target -- interactive will do
   char-by-char input, while noninteractive will do the faster chunk reading
-  and buffering.
+  and buffering.  flex-like interactive scanner option -- if it's enabled,
+  you must specify the "get next char" directive, otherwise you must specify
+  the "read chars" directive (which reads a big chunk of input for faster reads)
 - allow "--predefine targets=" ?
 - move the --with-line-directives option to be specified by the target, and
   overridable by the primary source
@@ -220,9 +224,6 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
-- add flex-like interactive scanner option -- if it's enabled, you must specify
-  the "get next char" directive, otherwise you must specify the "read chars"
-  directive (which reads a big chunk of input for faster reads)
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison

@@ -95,7 +95,7 @@ Parser::Token::Type Parser::Scan ()
 %token NEWLINE
 %token NUMBER
 %token RESULT
-%token FLOAT HELP MOD 
+%token FLOAT HELP MOD
 %token '+' '-' '*' '/' '^' '(' ')' '\\'
 
 %prec ADDITION
@@ -177,7 +177,7 @@ command
 :
     '\\' FLOAT
     {
-        cout << "last result in floating-point: " << cl_float(realpart(m_last_result));
+        cout << "last result in floating-point: " << cl_float(realpart(m_last_result), float_format(FLOAT_DIGITS));
         if (!zerop(imagpart(m_last_result)))
             cout << " + " << cl_float(imagpart(m_last_result)) << "i";
         cout << endl;
@@ -192,6 +192,7 @@ command
                 "  r          - The value of the previous result.\n"
                 "  pi         - The ratio of a circle's circumference to its diameter.\n"
                 "  e          - The base of the natural logarithm.\n"
+                "  i          - The square root of -1.\n"
                 "Commands\n"
                 "  \\float     - Print last result in floating point format.\n"
                 "  \\help      - This help screen.\n"
@@ -201,11 +202,11 @@ command
         return 0;
     }
 |
-    '\\' MOD expression:exp
+    '\\' MOD NUMBER:number
     {
-        if (realpart(exp) >= 0 && zerop(imagpart(exp)))
+        if (realpart(number) >= 0 && zerop(imagpart(number)))
         {
-            m_modulus = realpart(exp);
+            m_modulus = realpart(number);
             cout << "current modulus set to: " << m_modulus << endl;
         }
         else

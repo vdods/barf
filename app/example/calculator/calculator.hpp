@@ -31,6 +31,9 @@
 using namespace cln;
 using namespace std;
 
+// number of digits of precision to use in cl_float types
+#define FLOAT_DIGITS 30
+
 // handy li'l macro for stringifying a boolean
 #define BOOL_TO_STRING(x) ((x) ? "true" : "false")
 // handy li'l macro to throw a string using stringstream semantics
