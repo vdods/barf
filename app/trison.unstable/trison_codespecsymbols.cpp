@@ -36,21 +36,6 @@ void PopulateRuleCodeArraySymbol (Rule const &rule, string const &target_id, Pre
         rule_code->AppendArrayElement(new Preprocessor::Body(""));
 }
 
-void PopulateRuleCodeArraySymbol (Nonterminal const &nonterminal, string const &target_id, Preprocessor::ArraySymbol *rule_code)
-{
-    assert(rule_code != NULL);
-
-    for (RuleList::const_iterator it = nonterminal.m_rule_list->begin(),
-                                  it_end = nonterminal.m_rule_list->end();
-         it != it_end;
-         ++it)
-    {
-        Rule const *rule = *it;
-        assert(rule != NULL);
-        PopulateRuleCodeArraySymbol(*rule, target_id, rule_code);
-    }
-}
-
 void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Preprocessor::SymbolTable &symbol_table)
 {
     // _rule_count -- gives the total number of rules (from all nonterminals combined).
@@ -473,14 +458,11 @@ void GenerateTargetDependentSymbols(PrimarySource const &primary_source, string 
         Preprocessor::ArraySymbol *rule_code =
             symbol_table.DefineArraySymbol("_rule_code", FiLoc::ms_invalid);
 
-        for (NonterminalMap::const_iterator it = primary_source.m_nonterminal_map->begin(),
-                                            it_end = primary_source.m_nonterminal_map->end();
-             it != it_end;
-             ++it)
+        for (Uint32 rule_index = 0; rule_index < primary_source.GetRuleCount(); ++rule_index)
         {
-            Nonterminal const *nonterminal = it->second;
-            assert(nonterminal != NULL);
-            PopulateRuleCodeArraySymbol(*nonterminal, target_id, rule_code);
+            Rule const *rule = primary_source.GetRule(rule_index);
+            assert(rule != NULL);
+            PopulateRuleCodeArraySymbol(*rule, target_id, rule_code);
         }
     }
 

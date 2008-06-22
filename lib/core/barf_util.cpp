@@ -239,7 +239,7 @@ string GetDirectoryPortion (string const &path)
 {
     string::size_type last_slash = path.find_last_of(DIRECTORY_SLASH_STRING);
     if (last_slash == string::npos)
-        return gs_empty_string;
+        return g_empty_string;
     else
         return path.substr(0, last_slash+1);
 }

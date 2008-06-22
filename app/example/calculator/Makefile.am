@@ -24,7 +24,7 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	\
 	spotless
 
-spotless: clean clean-calculator-parser-extras clean-calculator-scanner-extras
+spotless: clean clean-calculator-parser clean-calculator-scanner
 
 clean-calculator-parser: clean-calculator-parser-extras
 	rm -f $(top_srcdir)/calculator_parser.cpp

@@ -29,7 +29,7 @@ string SearchPath::GetFilePath (string const &filename) const
         if (GetIsValidFile(file_path))
             return file_path;
     }
-    return gs_empty_string;
+    return g_empty_string;
 }
 
 SearchPath::AddPathReturnCode SearchPath::AddPath (string path, string const &set_by)

@@ -1138,7 +1138,7 @@ public:
         TokenData_ m_token_data_; // TODO: rename to m_data or m_token_data
 
         Token_ () : m_token_id_(Nonterminal::none_) { }
-        Token_ (TokenId_ token_id, TokenData_ const &token_data)
+        Token_ (TokenId_ token_id, TokenData_ const &token_data = <{token_data_type_sentinel})
             :
             m_token_id_(token_id),
             m_token_data_(token_data)

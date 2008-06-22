@@ -90,7 +90,7 @@ string TextBase::GetDirectiveTypeString (AstType ast_type)
     if (ast_type == AT_STRICT_CODE_BLOCK) return "%strict_code_block";
 
     assert(false && "invalid TextBase AstType");
-    return gs_empty_string;
+    return g_empty_string;
 }
 
 void TextBase::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const

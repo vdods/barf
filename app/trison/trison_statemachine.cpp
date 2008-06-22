@@ -414,7 +414,7 @@ string const &StateMachine::GetAssignedType (string const &token_name) const
         else
             return m_grammar->GetParserDirectiveSet()->GetDirectiveValueText(PDT_BASE_ASSIGNED_TYPE);
     }
-    return gs_empty_string;
+    return g_empty_string;
 }
 
 bool StateMachine::GetParserDirectiveShouldHaveLineDirective (

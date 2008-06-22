@@ -299,7 +299,7 @@ string Dereference::GetTextValue (SymbolTable &symbol_table) const
 {
     Body const *dereferenced_body = GetDereferencedBody(symbol_table);
     if (dereferenced_body == NULL)
-        return gs_empty_string;
+        return g_empty_string;
 
     ostringstream out;
     Textifier textifier(out);

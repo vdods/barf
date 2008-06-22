@@ -254,7 +254,7 @@ string const &PrimarySource::GetAssignedType (string const &token_id, string con
     TypeMap const *assigned_type_map = terminal != NULL ? terminal->GetAssignedTypeMap() : nonterminal->m_assigned_type_map;
     assert(assigned_type_map != NULL);
     Ast::String const *assigned_type = assigned_type_map->GetElement(target_id);
-    return assigned_type != NULL ? assigned_type->GetText() : gs_empty_string;
+    return assigned_type != NULL ? assigned_type->GetText() : g_empty_string;
 }
 
 void PrimarySource::Print (ostream &stream, Uint32 indent_level) const

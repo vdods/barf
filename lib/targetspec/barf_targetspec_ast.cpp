@@ -72,11 +72,11 @@ string const &ParamType::GetParamTypeString (AstType ast_type)
 
     switch (ast_type)
     {
-        case Ast::AT_ID:        return s_id;
+        case Ast::AT_ID:                return s_id;
         case Ast::AT_STRING:            return s_string;
         case Ast::AT_DUMB_CODE_BLOCK:   return s_dumb_code_block;
         case Ast::AT_STRICT_CODE_BLOCK: return s_strict_code_block;
-        default:                              return gs_empty_string;
+        default:                        return g_empty_string;
     }
 }
 

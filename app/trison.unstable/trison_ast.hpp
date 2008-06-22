@@ -112,7 +112,7 @@ struct RuleToken : public Ast::Base
     string const m_token_id;
     string const m_assigned_id;
 
-    RuleToken (string const &token_id, FiLoc const &filoc, string const &assigned_id = gs_empty_string)
+    RuleToken (string const &token_id, FiLoc const &filoc, string const &assigned_id = g_empty_string)
         :
         Ast::Base(filoc, AT_RULE_TOKEN),
         m_token_id(token_id),

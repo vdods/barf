@@ -68,7 +68,7 @@ struct DfaConditionalTransition : public Graph::Transition
 {
     DfaConditionalTransition (Uint8 mask, Uint8 flags, Uint32 target_index)
         :
-        Graph::Transition(TT_CONDITIONAL, mask, flags, target_index, gs_empty_string, Graph::Color(0x0000FF))
+        Graph::Transition(TT_CONDITIONAL, mask, flags, target_index, g_empty_string, Graph::Color(0x0000FF))
     {
         SetLabel(GetDfaTransitionString(*this));
     }
@@ -78,7 +78,7 @@ struct NfaConditionalTransition : public Graph::Transition
 {
     NfaConditionalTransition (ConditionalType type, Uint32 target_index)
         :
-        Graph::Transition(TT_CONDITIONAL, type, type, target_index, gs_empty_string, Graph::Color(0x0000FF))
+        Graph::Transition(TT_CONDITIONAL, type, type, target_index, g_empty_string, Graph::Color(0x0000FF))
     {
         SetLabel(GetNfaTransitionString(*this));
     }

@@ -69,21 +69,12 @@ void OptionsBase::RequestVerbosePrintTargetsSearchPath ()
     m_print_targets_search_path_request = PTSPR_VERBOSE;
 }
 
-void OptionsBase::SetOutputBasename (string const &output_basename)
+void OptionsBase::SetOutputDirectory (string const &output_directory)
 {
-    if (!m_output_directory.empty() || !m_output_filename_base.empty())
-        cerr << "warning: multiple output basenames specified; "
-                "will use the most recent output basename" << endl;
-    m_output_directory = GetDirectoryPortion(output_basename);
-    m_output_filename_base = GetFilenamePortion(output_basename);
-}
-
-void OptionsBase::SetOutputDir (string const &output_dir)
-{
-    m_output_dir = output_dir;
-    assert(!m_output_dir.empty());
-    if (*m_output_dir.rbegin() != DIRECTORY_SLASH_CHAR)
-        m_output_dir += DIRECTORY_SLASH_CHAR;
+    m_output_directory = output_directory;
+    assert(!m_output_directory.empty());
+    if (*m_output_directory.rbegin() != DIRECTORY_SLASH_CHAR)
+        m_output_directory += DIRECTORY_SLASH_CHAR;
 }
 
 void OptionsBase::WithLineDirectives ()

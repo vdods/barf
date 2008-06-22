@@ -566,7 +566,7 @@ public:
             m_parser_directive[parser_directive_type]->GetValue() != NULL)
             return m_parser_directive[parser_directive_type]->GetValue()->GetText();
         else
-            return gs_empty_string;
+            return g_empty_string;
     }
 
     void AddDirective (ParserDirective const *parser_directive);

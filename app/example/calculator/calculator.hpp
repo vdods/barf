@@ -44,7 +44,7 @@ using namespace std;
 namespace Calculator {
 
 // useful little ready-made empty string
-extern string const gs_empty_string;
+extern string const g_empty_string;
 
 // this should be used as a "safe" static_cast -- in debug mode, it asserts
 // on the validity of the dynamic_cast result if the pointer isn't NULL to

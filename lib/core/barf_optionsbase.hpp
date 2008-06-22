@@ -96,7 +96,7 @@ public:
 
         // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
         // add it as the lowest-priority targets search path.
-        // TODO: config.h-specified path
+        // TODO: add config.h-specified path
         char const *search_path = getenv("BARF_TARGETS_SEARCH_PATH");
         if (search_path != NULL)
             AddTargetsSearchPath(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable");
@@ -118,10 +118,7 @@ public:
     SearchPath const &GetTargetsSearchPath () const { return m_targets_search_path; }
     PrintTargetsSearchPathRequest GetPrintTargetsSearchPathRequest () const { return m_print_targets_search_path_request; }
     // output options
-    string const &GetOutputDirectory () const { return m_output_directory; } // TODO: deprecate
-    string const &GetOutputFilenameBase () const { return m_output_filename_base; } // TODO: deprecate
-    string GetOutputPathBase () const { return m_output_directory + m_output_filename_base; } // TODO: deprecate
-    string GetOutputDir () const { return m_output_dir; }
+    string GetOutputDirectory () const { return m_output_directory; }
     bool GetWithLineDirectives () const { return m_with_line_directives; }
     string const &GetNaDotGraphPath () const { return m_na_dot_graph_path; }
     string const &GetDaDotGraphPath () const { return m_da_dot_graph_path; }
@@ -151,8 +148,7 @@ public:
     void RequestShortPrintTargetsSearchPath ();
     void RequestVerbosePrintTargetsSearchPath ();
     // output options
-    void SetOutputBasename (string const &output_basename);
-    void SetOutputDir (string const &output_dir);
+    void SetOutputDirectory (string const &output_directory);
     void WithLineDirectives ();
     void WithoutLineDirectives ();
     void GenerateNaDotGraph (string const &na_dot_graph_path);
@@ -187,8 +183,6 @@ protected:
     PrintTargetsSearchPathRequest m_print_targets_search_path_request;
     // output option values
     string m_output_directory;
-    string m_output_filename_base;
-    string m_output_dir;
     bool m_with_line_directives;
     string m_na_dot_graph_path;
     string m_da_dot_graph_path;

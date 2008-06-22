@@ -80,15 +80,15 @@ CommandLineOption const Options::ms_option[] =
         "    once all -I options have been processed, then exits.  Each path entry is\n"
         "    followed by a description of how each was added.  Each entry is delimited\n"
         "    by a newline.  This is identical to option -p except for the description."),
-        
-        
+
+
     CommandLineOption("Output behavior options"),
     CommandLineOption(
         'o',
-        "output-basename",
-        &OptionsBase::SetOutputBasename,
-        "    REQUIRED -- Specifies the name prefix of the output files, to which the\n"
-        "    header, implementation and grammar filename extensions will be appended."),
+        "output-directory",
+        &OptionsBase::SetOutputDirectory,
+        "    Specifies the target directory for generated code.  The default is the\n"
+        "    current working directory."),
     /*
     CommandLineOption(
         'S',
@@ -145,8 +145,8 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DontGenerateDaDotGraph,
         "    Do not create a `dot` graph file for the DPDA.  This is the default\n"
         "    behavior.  See also option --generate-dpda-dot-graph."),
-        
-        
+
+
     CommandLineOption("Target-related options"),
     CommandLineOption(
         'D',
@@ -168,8 +168,8 @@ CommandLineOption const Options::ms_option[] =
         "    the primary source.  Directive values specified in the primary source will\n"
         "    be overridden by values defined via this commandline option.  See option\n"
         "    -d for details on the form of the argument."),
-    
-        
+
+
     CommandLineOption("Verbosity options"),
     CommandLineOption(
         'V',
@@ -195,8 +195,8 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DisableVerbosity,
         "    Disables the specified verbosity option.  See option -V for\n"
         "    valid parameters and their descriptions."),
-        
-        
+
+
     CommandLineOption(""),
     CommandLineOption(
         'h',

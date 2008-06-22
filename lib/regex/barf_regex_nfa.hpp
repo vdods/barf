@@ -44,7 +44,7 @@ struct NodeData : public Graph::Node::Data
     string const m_node_label;
     Uint32 const m_dfa_accept_handler_index;
 
-    NodeData (IsStartNode is_start_node, IsAcceptNode is_accept_node, string const &node_label = gs_empty_string, Uint32 dfa_accept_handler_index = 0)
+    NodeData (IsStartNode is_start_node, IsAcceptNode is_accept_node, string const &node_label = g_empty_string, Uint32 dfa_accept_handler_index = 0)
         :
         m_is_start_node(is_start_node == IS_START_NODE),
         m_is_accept_node(is_accept_node == IS_ACCEPT_NODE),

@@ -58,6 +58,9 @@
   clearer.
 - add some path-checking function -- i.e. to check for newlines and other stuff
 - hide the AST structs' members via accessors (?)
+- change _TRISON_SCANNER_HPP_ to TRISON_SCANNER_HPP_ (in the ifndef include
+  thingies), since underscore-affixed identifiers are technically reserved
+  by the compiler.
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -224,6 +227,7 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
+- dot graphs and other extras should be generated in the output directory.
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -270,3 +274,4 @@
   the scanner to check this, because the parser might have read in extra
   lookaheads that put it at EOF.  you'll have to go by the lookahead queue
   in the parser.
+- dot graphs and other extras should be generated in the output directory.

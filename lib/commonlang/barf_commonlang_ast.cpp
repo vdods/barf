@@ -178,7 +178,7 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
         ParsedCodespec const &codespec = *it;
 
         string filename_directive_id(codespec.m_add_codespec->m_filename_directive_id->GetText());
-        string filename(g_options->GetOutputDir() + GetElement(filename_directive_id)->m_directive_value->GetText());
+        string filename(g_options->GetOutputDirectory() + GetElement(filename_directive_id)->m_directive_value->GetText());
         ofstream stream;
         stream.open(filename.c_str());
         if (!stream.is_open())
@@ -270,7 +270,7 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
     symbol_table.DefineScalarSymbolAsText("_targetspec_directory", FiLoc::ms_invalid, GetDirectoryPortion(m_targetspec.m_source_path));
     symbol_table.DefineScalarSymbolAsText("_targetspec_filename", FiLoc::ms_invalid, GetFilenamePortion(m_targetspec.m_source_path));
 
-    symbol_table.DefineScalarSymbolAsText("_output_directory", FiLoc::ms_invalid, g_options->GetOutputDir());
+    symbol_table.DefineScalarSymbolAsText("_output_directory", FiLoc::ms_invalid, g_options->GetOutputDirectory());
 
     // define symbols for each of the specified target directives
     for (const_iterator it = begin(),
@@ -294,7 +294,7 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
             symbol->SetScalarBody(new Preprocessor::Body(target_directive->m_directive_value->GetText(), source_filoc));
         }
         else
-            symbol->SetScalarBody(new Preprocessor::Body(gs_empty_string));
+            symbol->SetScalarBody(new Preprocessor::Body(g_empty_string));
     }
 
     // define symbols for unspecified target directives which have

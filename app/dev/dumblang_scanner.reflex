@@ -1,0 +1,88 @@
+%targets cpp
+
+%target.cpp.header_filename "dumblang_scanner.hpp"
+%target.cpp.implementation_filename "dumblang_scanner.cpp"
+%target.cpp.class_name Scanner
+
+
+
+%target.cpp.top_of_header_file %{
+#if !defined(DUMBLANG_SCANNER_HPP_)
+#define DUMBLANG_SCANNER_HPP_
+
+#include "dumblang_parser.hpp"
+%}
+%target.cpp.bottom_of_header_file %{
+#endif // !defined(DUMBLANG_SCANNER_HPP_)
+%}
+
+
+%target.cpp.end_of_scan_method_actions %{
+    assert(false && "you didn't handle EOF properly");
+%}
+
+
+%target.cpp.return_type "Parser::Token_"
+%target.cpp.return_true_iff_input_is_at_end {
+    return cin.peek() == char_traits<char>::eof();
+}
+%target.cpp.return_next_input_char {
+    return cin.get();
+}
+
+
+%target.cpp.generate_debug_spew_code
+%target.cpp.dont_generate_timestamps
+
+
+
+%macro ID                   ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
+%macro OPERATOR             ([,;(){}\-+*/\^=<>!])
+%macro WHITESPACE           ([ \t\n])
+%macro END_OF_FILE          (\z)
+
+%start_in_scanner_mode MAIN
+
+%%
+
+%scanner_mode MAIN
+:
+    (//.*) // line comment (not including the newline)
+    %target.cpp {
+        // ignore comments
+    }
+|
+    ({WHITESPACE}) // whitespace
+    %target.cpp {
+        // ignore whitespace
+    }
+|
+    ({ID}) // identifier
+    %target.cpp {
+        if (accepted_string == "if")
+            return Parser::Token_(Parser::Terminal::KEYWORD_IF);
+        if (accepted_string == "else")
+            return Parser::Token_(Parser::Terminal::KEYWORD_ELSE);
+        if (accepted_string == "var")
+            return Parser::Token_(Parser::Terminal::KEYWORD_VAR);
+        if (accepted_string == "func")
+            return Parser::Token_(Parser::Terminal::KEYWORD_FUNC);
+        return Parser::Token_(Parser::Terminal::ID, new Ast(Ast::ID, 0, accepted_string));
+    }
+|
+    ({OPERATOR}) // operator
+    %target.cpp {
+        return Parser::Token_(static_cast<Parser::Terminal::Name>(accepted_string[0]));
+    }
+|
+    ([1-9][0-9]*) // integer literal
+    %target.cpp {
+        return Parser::Token_(Parser::Terminal::INTEGER_LITERAL, new Ast(Ast::INTEGER_LITERAL, 6));
+    }
+|
+    ({END_OF_FILE})
+    %target.cpp {
+        return Parser::Token_(Parser::Terminal::END_);
+    }
+;
+

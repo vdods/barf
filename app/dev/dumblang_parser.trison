@@ -1,0 +1,468 @@
+%targets cpp
+
+%target.cpp.header_filename "dumblang_parser.hpp"
+%target.cpp.implementation_filename "dumblang_parser.cpp"
+
+
+%target.cpp.top_of_header_file %{
+#if !defined(DUMBLANG_PARSER_HPP_)
+#define DUMBLANG_PARSER_HPP_
+
+#include <iostream>
+#include <list>
+#include <string>
+
+using namespace std;
+
+typedef unsigned int uint;
+
+extern string const g_empty_string;
+
+class Ast;
+class Scanner;
+
+class Ast : public list<Ast *>
+{
+public:
+
+    enum AstType
+    {
+        DECLARATION_LIST = 0,
+        VAR_DECLARATION,
+        FUNC_DECLARATION,
+        PARAMETER_LIST,
+        CODE_BLOCK,
+        IF_STATEMENT,
+        IF_ELSE_STATEMENT,
+        EMPTY_STATEMENT,
+        ASSIGNMENT,
+        LESS_THAN,
+        LESS_THAN_OR_EQUAL,
+        GREATER_THAN,
+        GREATER_THAN_OR_EQUAL,
+        EQUAL,
+        NOT_EQUAL,
+        ADD,
+        SUBTRACT,
+        MULTIPLY,
+        DIVIDE,
+        NEGATIVE,
+        NOT,
+        EXPONENTIATE,
+        ID,
+        INTEGER_LITERAL,
+
+        TYPE_COUNT
+    };
+
+    Ast (AstType type, int int_data = 0, string const &string_data = g_empty_string)
+        :
+        m_type(type),
+        m_int_data(int_data),
+        m_string_data(string_data)
+    { }
+    ~Ast ()
+    {
+        for (iterator it = begin(), it_end = end(); it != it_end; ++it)
+            delete *it;
+        clear();
+    }
+
+    AstType Type () const { return m_type; }
+    int IntData () const { return m_int_data; }
+    string const &StringData () const { return m_string_data; }
+
+    void IntData (int int_data) { m_int_data = int_data; }
+    void StringData (string const &string_data) { m_string_data = string_data; }
+
+    void Print (uint indent_level = 0) const;
+
+private:
+
+    AstType const m_type;
+    int m_int_data;
+    string m_string_data;
+};
+%}
+%target.cpp.class_name Parser
+%target.cpp.bottom_of_class {
+    Token_ Scan ();
+
+private:
+
+    Scanner *m_scanner;
+}
+%target.cpp.bottom_of_header_file %{
+#endif // !defined(DUMBLANG_PARSER_HPP_)
+%}
+
+
+%target.cpp.top_of_implementation_file %{
+#include "dumblang_scanner.hpp"
+
+string const g_empty_string;
+
+struct Tabs
+{
+    Tabs (uint count) : m_count(count) { }
+
+    uint const m_count;
+};
+
+ostream &operator << (ostream &stream, Tabs const &tabs)
+{
+    for (uint i = 0; i < tabs.m_count; ++i)
+        stream << "    ";
+    return stream;
+}
+
+ostream &operator << (ostream &stream, Ast::AstType type)
+{
+    static char const *const s_type_string[Ast::TYPE_COUNT] =
+    {
+        "DECLARATION_LIST",
+        "VAR_DECLARATION",
+        "FUNC_DECLARATION",
+        "PARAMETER_LIST",
+        "CODE_BLOCK",
+        "IF_STATEMENT",
+        "IF_ELSE_STATEMENT",
+        "EMPTY_STATEMENT",
+        "ASSIGNMENT",
+        "LESS_THAN",
+        "LESS_THAN_OR_EQUAL",
+        "GREATER_THAN",
+        "GREATER_THAN_OR_EQUAL",
+        "EQUAL",
+        "NOT_EQUAL",
+        "ADD",
+        "SUBTRACT",
+        "MULTIPLY",
+        "DIVIDE",
+        "NEGATIVE",
+        "NOT",
+        "EXPONENTIATE",
+        "ID",
+        "INTEGER_LITERAL"
+    };
+
+    assert(type >= 0 && type < Ast::TYPE_COUNT);
+    return stream << s_type_string[(uint)type];
+}
+
+void Ast::Print (uint indent_level) const
+{
+    cerr << Tabs(indent_level) << m_type << ", int data = " << IntData() << ", string data = \"" << StringData() << "\"" << endl;
+    for (const_iterator it = begin(), it_end = end(); it != it_end; ++it)
+        (*it)->Print(indent_level+1);
+}
+%}
+%target.cpp.constructor_actions {
+    m_scanner = new Scanner();
+}
+%target.cpp.destructor_actions {
+    delete m_scanner;
+    m_scanner = NULL;
+}
+%target.cpp.bottom_of_implementation_file %{
+Parser::Token_ Parser::Scan ()
+{
+    assert(m_scanner != NULL);
+    return m_scanner->Scan();
+}
+
+int main (int argc, char **argv)
+{
+    Parser parser;
+    Ast *return_token;
+    if (Parser::PRC_SUCCESS == parser.Parse(&return_token))
+    {
+        cerr << endl << endl;
+        return_token->Print();
+    }
+    else
+        cerr << "\n\nunhandled parse error" << endl;
+    return 0;
+}
+%}
+
+
+%target.cpp.token_data_type "Ast *"
+%target.cpp.token_data_type_sentinel "NULL"
+%target.cpp.return_token_type "Ast *"
+
+%terminal '+' '-' '*' '/' '^' '(' ')'
+%terminal '>' '<' '=' '!'
+%terminal '{' '}' ';' ','
+%terminal ID
+%terminal INTEGER_LITERAL
+%terminal KEYWORD_IF KEYWORD_ELSE KEYWORD_VAR KEYWORD_FUNC
+
+%prec.right ASSIGNMENT
+%prec.left COMPARISON
+%prec.left ADDITION
+%prec.left MULTIPLICATION
+%prec.right UNARY
+%prec.right EXPONENTIATION
+%prec.right IF
+%prec.right IF_ELSE
+
+%default_parse_nonterminal declaration_list
+
+%%
+
+%nonterminal declaration_list
+:
+    declaration_list:list declaration:decl ';'
+    %target.cpp
+    {
+        list->push_back(decl);
+        return list;
+    }
+|
+    /* empty reduction rule */
+    %target.cpp
+    {
+        return new Ast(Ast::DECLARATION_LIST);
+    }
+;
+
+%nonterminal declaration
+:
+    KEYWORD_VAR ID:id
+    %target.cpp
+    {
+        Ast *decl = new Ast(Ast::VAR_DECLARATION);
+        decl->push_back(id);
+        return decl;
+    }
+|
+    KEYWORD_FUNC ID:id '(' function_parameters:params ')' '{' code_block:code '}'
+    %target.cpp
+    {
+        Ast *decl = new Ast(Ast::FUNC_DECLARATION);
+        decl->push_back(id);
+        decl->push_back(params);
+        decl->push_back(code);
+        return decl;
+    }
+;
+
+%nonterminal function_parameters
+:
+    parameter_list:list
+    %target.cpp { return list; }
+|
+    /* empty reduction rule */
+    %target.cpp { return new Ast(Ast::PARAMETER_LIST); }
+;
+
+%nonterminal parameter_list
+:
+    parameter_list:list ',' KEYWORD_VAR ID:id
+    %target.cpp
+    {
+        list->push_back(id);
+        return list;
+    }
+|
+    KEYWORD_VAR ID:id
+    %target.cpp
+    {
+        Ast *list = new Ast(Ast::PARAMETER_LIST);
+        list->push_back(id);
+        return list;
+    }
+;
+
+%nonterminal code_block
+:
+    code_block:code KEYWORD_VAR ID:id ';'
+    %target.cpp
+    {
+        Ast *decl = new Ast(Ast::VAR_DECLARATION);
+        decl->push_back(id);
+        code->push_back(decl);
+        return code;
+    }
+|
+    code_block:code statement:st
+    %target.cpp
+    {
+        code->push_back(st);
+        return code;
+    }
+|
+    /* empty reduction rule */
+    %target.cpp
+    {
+        return new Ast(Ast::CODE_BLOCK);
+    }
+;
+
+%nonterminal statement
+:
+    '{' code_block:code '}'
+    %target.cpp { return code; }
+|
+    expression:exp ';'
+    %target.cpp { return exp; }
+|
+    ';'
+    %target.cpp { return new Ast(Ast::EMPTY_STATEMENT); }
+|
+    KEYWORD_IF '(' expression:cond ')' statement:then %prec IF
+    %target.cpp
+    {
+        Ast *if_statement = new Ast(Ast::IF_STATEMENT);
+        if_statement->push_back(cond);
+        if_statement->push_back(then);
+        return if_statement;
+    }
+|
+    KEYWORD_IF '(' expression:cond ')' statement:then KEYWORD_ELSE statement:otherwise %prec IF_ELSE
+    %target.cpp
+    {
+        Ast *if_else_statement = new Ast(Ast::IF_ELSE_STATEMENT);
+        if_else_statement->push_back(cond);
+        if_else_statement->push_back(then);
+        if_else_statement->push_back(otherwise);
+        return if_else_statement;
+    }
+;
+
+%nonterminal expression
+:
+    ID:id '=' expression:val %prec ASSIGNMENT
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::ASSIGNMENT);
+        exp->push_back(id);
+        exp->push_back(val);
+        return exp;
+    }
+|
+    expression:l '<' expression:r %prec COMPARISON
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::LESS_THAN);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '<' '=' expression:r %prec COMPARISON
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::LESS_THAN_OR_EQUAL);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '>' expression:r %prec COMPARISON
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::GREATER_THAN);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '>' '=' expression:r %prec COMPARISON
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::GREATER_THAN_OR_EQUAL);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '=' '=' expression:r %prec COMPARISON
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::EQUAL);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '!' '=' expression:r %prec COMPARISON
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::NOT_EQUAL);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '+' expression:r %prec ADDITION
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::ADD);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '-' expression:r %prec ADDITION
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::SUBTRACT);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '*' expression:r %prec MULTIPLICATION
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::MULTIPLY);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '/' expression:r %prec MULTIPLICATION
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::DIVIDE);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    '-' expression:r %prec UNARY
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::NEGATIVE);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    '!' expression:r %prec UNARY
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::NOT);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    expression:l '^' expression:r %prec EXPONENTIATION
+    %target.cpp
+    {
+        Ast *exp = new Ast(Ast::EXPONENTIATE);
+        exp->push_back(l);
+        exp->push_back(r);
+        return exp;
+    }
+|
+    '(' expression:exp ')'
+    %target.cpp { return exp; }
+|
+    ID:id
+    %target.cpp { return id; }
+|
+    INTEGER_LITERAL:value
+    %target.cpp { return value; }
+;

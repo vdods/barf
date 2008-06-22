@@ -12,6 +12,6 @@
 
 namespace Barf {
 
-string const gs_empty_string;
+string const g_empty_string;
 
 } // end of namespace Barf
