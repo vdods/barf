@@ -233,6 +233,8 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+- see if it's possible to collapse the head states back together
+- add a max token stack depth in each parser implementation
 - allow "--predefine targets=" ?
 - move the --with-line-directives option to be specified by the target, and
   overridable by the primary source

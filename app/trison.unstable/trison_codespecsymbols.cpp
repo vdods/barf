@@ -104,10 +104,11 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     }
 
     // _terminal_index_list[terminal count] -- list of terminal token values
-    // (END_ is 0x100, then all non-char terminals are next contiguously)
+    // (END_ is 0x100, ERROR_ is 0x101, then all non-char terminals are next
+    // contiguously)
     //
     // _terminal_name_list[terminal count] -- list of terminal token names
-    // (END_ and then all non-char terminals)
+    // (END_, _ERROR, and then all non-char terminals)
     //
     // _nonterminal_index_list[nonterminal count] -- list of nonterminal token values;
     // they start where _terminal_index_list left off.
@@ -124,12 +125,12 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             symbol_table.DefineArraySymbol("_nonterminal_name_list", FiLoc::ms_invalid);
 
         Uint32 token_index = 0x100;
-
-        // add the special END_ terminal token
-        terminal_index_list->AppendArrayElement(
-            new Preprocessor::Body(Sint32(token_index++)));
-        terminal_name_list->AppendArrayElement(
-            new Preprocessor::Body("END_"));
+        // add the special END_ and ERROR_ terminal tokens (see also
+        // PrimarySource::GetTokenIndex in trison_ast.cpp)
+        terminal_index_list->AppendArrayElement(new Preprocessor::Body(Sint32(token_index++)));
+        terminal_name_list->AppendArrayElement(new Preprocessor::Body("END_"));
+        terminal_index_list->AppendArrayElement(new Preprocessor::Body(Sint32(token_index++)));
+        terminal_name_list->AppendArrayElement(new Preprocessor::Body("ERROR_"));
 
         for (TerminalMap::const_iterator it = primary_source.m_terminal_map->begin(), it_end = primary_source.m_terminal_map->end();
              it != it_end;

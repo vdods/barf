@@ -67,6 +67,8 @@
             return Parser::Token_(Parser::Terminal::KEYWORD_VAR);
         if (accepted_string == "func")
             return Parser::Token_(Parser::Terminal::KEYWORD_FUNC);
+        if (accepted_string == "return")
+            return Parser::Token_(Parser::Terminal::KEYWORD_RETURN);
         return Parser::Token_(Parser::Terminal::ID, new Ast(Ast::ID, 0, accepted_string));
     }
 |

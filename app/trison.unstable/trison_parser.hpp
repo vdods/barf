@@ -327,6 +327,7 @@ private:
     Ast::Base * ReductionRuleHandler0060 ();
     Ast::Base * ReductionRuleHandler0061 ();
     Ast::Base * ReductionRuleHandler0062 ();
+    Ast::Base * ReductionRuleHandler0063 ();
 
 }; // end of class Parser
 
@@ -339,4 +340,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 
-#line 343 "trison_parser.hpp"
+#line 344 "trison_parser.hpp"

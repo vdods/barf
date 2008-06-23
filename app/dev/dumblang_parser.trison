@@ -34,6 +34,7 @@ public:
         CODE_BLOCK,
         IF_STATEMENT,
         IF_ELSE_STATEMENT,
+        RETURN_STATEMENT,
         EMPTY_STATEMENT,
         ASSIGNMENT,
         LESS_THAN,
@@ -127,6 +128,7 @@ ostream &operator << (ostream &stream, Ast::AstType type)
         "CODE_BLOCK",
         "IF_STATEMENT",
         "IF_ELSE_STATEMENT",
+        "RETURN_STATEMENT",
         "EMPTY_STATEMENT",
         "ASSIGNMENT",
         "LESS_THAN",
@@ -196,7 +198,7 @@ int main (int argc, char **argv)
 %terminal '{' '}' ';' ','
 %terminal ID
 %terminal INTEGER_LITERAL
-%terminal KEYWORD_IF KEYWORD_ELSE KEYWORD_VAR KEYWORD_FUNC
+%terminal KEYWORD_IF KEYWORD_ELSE KEYWORD_VAR KEYWORD_FUNC KEYWORD_RETURN
 
 %prec.right ASSIGNMENT
 %prec.left COMPARISON
@@ -213,7 +215,7 @@ int main (int argc, char **argv)
 
 %nonterminal declaration_list
 :
-    declaration_list:list declaration:decl ';'
+    declaration_list:list declaration:decl
     %target.cpp
     {
         list->push_back(decl);
@@ -229,7 +231,7 @@ int main (int argc, char **argv)
 
 %nonterminal declaration
 :
-    KEYWORD_VAR ID:id
+    KEYWORD_VAR ID:id ';'
     %target.cpp
     {
         Ast *decl = new Ast(Ast::VAR_DECLARATION);
@@ -307,6 +309,14 @@ int main (int argc, char **argv)
 |
     expression:exp ';'
     %target.cpp { return exp; }
+|
+    KEYWORD_RETURN expression:exp ';'
+    %target.cpp
+    {
+        Ast *ret = new Ast(Ast::RETURN_STATEMENT);
+        ret->push_back(exp);
+        return ret;
+    }
 |
     ';'
     %target.cpp { return new Ast(Ast::EMPTY_STATEMENT); }

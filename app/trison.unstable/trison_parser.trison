@@ -708,6 +708,13 @@ rule_token %type "RuleToken *"
         delete token_id;
         return rule_token;
     }
+|
+    DIRECTIVE_ERROR:throwaway
+    {
+        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
+        delete throwaway;
+        return rule_token;
+    }
 ;
 
 rule_precedence_directive %type "Ast::Id *"

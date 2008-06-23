@@ -24,7 +24,7 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	\
 	spotless
 
-spotless: clean clean-dumblang-parser-extras clean-dumblang-scanner-extras
+spotless: clean clean-dumblang-parser clean-dumblang-scanner
 
 clean-dumblang-parser: clean-dumblang-parser-extras
 	rm -f $(top_srcdir)/dumblang_parser.cpp
@@ -62,8 +62,7 @@ dumblang_CPPFLAGS = \
 	-I$(top_srcdir)/
 
 dumblang_LDADD = \
-    $(LDADD) \
-    -lcln
+    $(LDADD)
 
 dumblang_SOURCES = \
 	dumblang_parser.cpp \

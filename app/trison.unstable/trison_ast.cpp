@@ -155,10 +155,16 @@ Uint32 PrimarySource::GetTokenIndex (string const &token_id) const
     assert(!token_id.empty());
 
     Uint32 index = 0x100;
+
+    // special terminals (see also GenerateGeneralAutomatonSymbols in trison_codespecsymbols.cpp)
     if (token_id == "END_")
         return index;
-
     ++index;
+
+    if (token_id == "ERROR_")
+        return index;
+    ++index;
+
     for (TerminalMap::const_iterator it = m_terminal_map->begin(), it_end = m_terminal_map->end();
          it != it_end;
          ++it)
