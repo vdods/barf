@@ -2,9 +2,7 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
-* make separate configure.ac/makefile.am for example apps (maybe even a
-  separate makefile for each one so it's obvious how to write makefiles that
-  use BARF tools)
+* use BARF_TARGETS_SEARCH_PATH in example app configure.ac files
 - guarantee that errors will be reported such that the line numbers never
   decrease.
 - improve the parser/scanner/ast verbosity (i.e. prefix each line with a label)
@@ -17,20 +15,19 @@
   separate and formalize the dependencies of each system.
 - add optional-argument commandline options, and account for empty-argument
   required-argument options (e.g. `./reflex -I ""` will assert)
-- descriptions should be indicate "finite-automaton-based scanners" and
+- descriptions should use terms "finite-automaton-based scanners" and
   "pushdown-automaton-based parsers"
-- error when any output file is the same as an input file
+- error when any output file is the same as an input file, or when any two
+  output files are the same.
 - shorten the enabled_verbosity names (and rename scanning/parsing spew to
   scanner/parser)
-- add dot graph generation for ASTs
 - add recursive block comments into barf_commonlang_scanner.reflex (think
   about how this will interact with other-languaged code blocks)
-- rename OutputDir to OutputDirectory once the other options have been
-  deprecated (this looks like it will happen once old trison is deprecated)
 - add _barf_version to preprocessor shit?
 - add targetspec versions -- so you can have multiple coexisting versions of
   the same target but at different versions.
-- config.h-specified search path
+- config.h-specified search path (?) (i don't know if i prefer this over
+  BARF_TARGETS_SEARCH_PATH)
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
@@ -61,6 +58,8 @@
 - change _TRISON_SCANNER_HPP_ to TRISON_SCANNER_HPP_ (in the ifndef include
   thingies), since underscore-affixed identifiers are technically reserved
   by the compiler.
+- the help display for trison and reflex is getting pretty long, consider
+  making a help system more like svn
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -74,7 +73,7 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - rename to something better (AppCommon, ToolCommon?) and put the common
-  stuff from trison_main.cpp and reflex_main.cpp in there.
+  stuff from trison_main.cpp and reflex_main.cpp in there (maybe)
 - target directives (including rule handlers) should accept multiple targets ?
   like
   %target.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
@@ -105,7 +104,7 @@
   OR
   think of a good way to specify not-very-often-changing baseclass-like
   files which may be common to many parsers/scanners
-- add error handling to the parser grammar
+- add error handling to the parser grammar (after new trison is done)
 
 // ///////////////////////////////////////////////////////////////////////////
 // codespec
@@ -121,16 +120,20 @@
 // preprocessor
 // ///////////////////////////////////////////////////////////////////////////
 
+- just make the preprocessor language better in general -- it's sort of crappy
 - add a printf function
 - add some way to use a different file location for errors/warnings
 - add comments (C++ and C style)
 - make _blah ids not be able to be defined in-file, they're reserved
 - add redefine directive so you can do stuff like
-  @<redefine(x)>@@<x+1>@@<end_redefine>@
+  <{redefine(x)}<{x+1}<{end_redefine}
+  OR
+  add assignment operator; e.g. <{x=x+3}
 - add eval directive so you can parse and execute a block of text as a preprocessor body.
 - add "-[ \t\n]*2147483648" as a scanner token, so that number can be scanned
-- add assignment operator? to do stuff like @<x=3*y>@
-- add similar looping construct for arrays?
+  OR
+  add 64 bit ints (better)
+- add looping construct for arrays?
 - caching for integer values on symbols (so getting the integer value of
   a symbol dereference is faster)
 - maybe make the Textifier detect if a newline was just printed, so that
@@ -146,9 +149,12 @@
 // regex
 // ///////////////////////////////////////////////////////////////////////////
 
+- document all of this regex stuff in detail, since it's pretty complicated,
+  and not completely standard
 - do not read overflowed hex chars -- e.g. "\x1E8BA" should be "\x1E" "8BA"
 - consider getting rid of \a \b \f \r \v and only having \t and \n, so that
-  conditionals can use \a \b etc.
+  conditionals can use \a \b etc (because just who the hell uses vertical
+  tab anyway?  they can use hex codes instead)
 - emit error/warning when a non-printable char is encountered in a regex
   (must use a hex code instead)
 - in graph printing, TT_INPUT_ATOM_RANGEs which include [ or ] as the ending
@@ -172,7 +178,7 @@
 - fix up the \x stuff in the scanner (disallow \x alone, require a hex char)
 - allow '\0' as a transition atom -- this will allow usage of regexes for
   binary data.  this will also require some thought, since the current
-  implementation depends on '\0' being disallowed.
+  implementation uses '\0' as a sentinel value.
 - move NodeData into separate file
 - improve the DFA generation so that throwing an exception when there is
   a conditional conflict, it includes the file location that caused it.
@@ -187,7 +193,8 @@
 // grope
 // ///////////////////////////////////////////////////////////////////////////
 
-- write it
+- write it (or not. probably not.  but it might be nice to have a
+  grep-like tool which can match across newlines)
 
 // ///////////////////////////////////////////////////////////////////////////
 // reflex
@@ -219,10 +226,13 @@
 - add option which prints the (reflex) targets available in the current search
   path and which directory each resides in.
 - use smallest integer type to store state and transition indices, etc.
+  (in C++, this can be done easily with templates)
 - add _reflex_version to the code generator (_barf_version?)
 - the rule handler code block type should be specifiable by the targetspec
-- add -D option for defining crap in the preprocessor stage -- before and
-  after the .reflex source is read (e.g. to override the output filenames)
+- add --predefine (-d) and --postdefine (-D) options for defining crap in the
+  preprocessor stage -- before and after the .reflex source is read (e.g. to
+  override the output filenames).  this could even be used to be able to
+  omit the output filenames in the primary source itself (probably preferable)
 - warn about targetspec directive values that weren't referenced in the
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
@@ -244,9 +254,12 @@
 - add commandline option to describe the return codes (?)
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - clean up the parsing so that it's less about passing crap around and more
-  about using member variables of the parser (assign rule indices on the fly, etc)
-- figure out how to guarantee branch uniqueness per Action_ branch list in C++ parser.
-- add default values in trison cpp targetspec for Scan implementation
+  about using member variables of the parser (assign rule indices on the fly,
+  etc)
+- figure out how to guarantee branch uniqueness per Action_ branch list in
+  C++ npda target.
+- add default values in trison cpp targetspec for Scan implementation (i.e.
+  just returning the ascii char values from stdin)
 - you shouldn't have to specify %terminal 'X' for ascii chars.  you should
   just be able to use them (or maybe add as option)
 - specifying any %target.xxx directive seems to add the target; stop this
@@ -256,17 +269,21 @@
 - the rule handler code block type should be specifiable by the targetspec
 - add option which prints the (trison) targets available in the current search
   path and which directory each resides in.
-- add %end keyword which matches the builtin terminal END_
+- add %end keyword which matches the builtin terminal END_ (?)
 - old trison: END_ shouldn't be acceptable by %error (verify this is an
   actual bug in the existing version)
 - check for reduction rule variable name collisions
 - call throw-away-token-actions on all tokens in token stack during parser
-  destructor and at the end of the parse method
-- add -D option for defining crap in the preprocessor stage -- before and
-  after the .trison source is read (e.g. to override the output filenames)
+  destructor and at the end of the parse method (maybe not at the end of the
+  parse method, since it might be desirable to parse multiple times with
+  the same parser/input stream)
+- add --predefine (-d) and --postdefine (-D) options for defining crap in the
+  preprocessor stage -- before and after the .trison source is read (e.g. to
+  override the output filenames).  this could even be used to be able to
+  omit the output filenames in the primary source itself (probably preferable)
 - make directives parseable in any order?
 - add a directive for what to do with unnamed tokens (because they might need
-  to be thrown away)
+  to be thrown away) or just call throw-away-token-actions on them
 - get rid of trison_message (and move the crap into barf_message)
 - warn about targetspec directive values that weren't referenced in the
   code generation (preprocessor) stage -- ones that don't appear at all in

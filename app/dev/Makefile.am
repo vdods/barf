@@ -73,11 +73,11 @@ dumblang_SOURCES = \
 if REFLEX_EXISTS
 dumblang-scanner: $(top_srcdir)/dumblang_scanner.hpp
 $(top_srcdir)/dumblang_scanner.hpp: $(top_srcdir)/dumblang_scanner.cpp
-$(top_srcdir)/dumblang_scanner.cpp: $(top_srcdir)/dumblang_scanner.reflex $(REFLEX)
+$(top_srcdir)/dumblang_scanner.cpp: $(top_srcdir)/dumblang_scanner.reflex $(REFLEX) $(TARGETS_PATH)/reflex.cpp.targetspec $(TARGETS_PATH)/reflex.cpp.header.codespec $(TARGETS_PATH)/reflex.cpp.implementation.codespec
 	$(REFLEX) $(top_srcdir)/dumblang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/
 
 force-dumblang-scanner: $(top_srcdir)/dumblang_scanner.reflex $(REFLEX)
-	$(REFLEX) $(top_srcdir)/dumblang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/
+	$(REFLEX) $(top_srcdir)/dumblang_scanner.reflex --include-targets-search-path $(TARGETS_PATH)  --warnings-as-errors --output-directory $(top_srcdir)/
 else # !REFLEX_EXISTS
 dumblang-scanner force-dumblang-scanner:
 	@echo "!!!"
@@ -89,7 +89,7 @@ endif
 if TRISON_EXISTS
 dumblang-parser: $(top_srcdir)/dumblang_parser.hpp
 $(top_srcdir)/dumblang_parser.hpp: $(top_srcdir)/dumblang_parser.cpp
-$(top_srcdir)/dumblang_parser.cpp: $(top_srcdir)/dumblang_parser.trison $(TRISON)
+$(top_srcdir)/dumblang_parser.cpp: $(top_srcdir)/dumblang_parser.trison $(TRISON) $(TARGETS_PATH)/trison.cpp_npda.targetspec $(TARGETS_PATH)/trison.cpp_npda.header.codespec $(TARGETS_PATH)/trison.cpp_npda.implementation.codespec
 	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.dot
 
 force-dumblang-parser: $(top_srcdir)/dumblang_parser.trison $(TRISON)

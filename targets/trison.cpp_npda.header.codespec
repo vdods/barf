@@ -56,7 +56,7 @@ public:
 template <> struct Integer_<0> { }; // empty for intentional compile errors
 
 // /////////////////////////////////////////////////////////////////////////////
-// typedefs for the integer types used in the "cpp" trison target
+// typedefs for the integer types used in the "cpp_npda" trison target
 // /////////////////////////////////////////////////////////////////////////////
 
 typedef Integer_<8> ::Signed_   Sint8_;
