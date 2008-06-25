@@ -179,8 +179,8 @@ int main (int argc, char **argv)
     Ast *return_token;
     if (Parser::PRC_SUCCESS == parser.Parse(&return_token))
     {
-        cerr << endl << endl;
-        return_token->Print();
+//         cerr << endl << endl;
+//         return_token->Print();
     }
     else
         cerr << "\n\nunhandled parse error" << endl;
@@ -209,10 +209,28 @@ int main (int argc, char **argv)
 %prec.right IF
 %prec.right IF_ELSE
 
-%default_parse_nonterminal declaration_list
+// %default_parse_nonterminal declaration_list
+%default_parse_nonterminal st
 
 %%
 
+%nonterminal st
+:
+    exp ';' %target.cpp { return NULL; }
+;
+
+%nonterminal exp
+:
+    exp '+' '+' exp %prec COMPARISON %target.cpp { return NULL; }
+|
+    exp '+' exp %prec ADDITION %target.cpp { return NULL; }
+|
+    exp '+' '+' '+' exp %prec MULTIPLICATION %target.cpp { return NULL; }
+|
+    ID %target.cpp { return NULL; }
+;
+
+/*
 %nonterminal declaration_list
 :
     declaration_list:list declaration:decl
@@ -222,7 +240,7 @@ int main (int argc, char **argv)
         return list;
     }
 |
-    /* empty reduction rule */
+    // empty reduction rule
     %target.cpp
     {
         return new Ast(Ast::DECLARATION_LIST);
@@ -255,7 +273,7 @@ int main (int argc, char **argv)
     parameter_list:list
     %target.cpp { return list; }
 |
-    /* empty reduction rule */
+    // empty reduction rule
     %target.cpp { return new Ast(Ast::PARAMETER_LIST); }
 ;
 
@@ -295,7 +313,7 @@ int main (int argc, char **argv)
         return code;
     }
 |
-    /* empty reduction rule */
+    // empty reduction rule
     %target.cpp
     {
         return new Ast(Ast::CODE_BLOCK);
@@ -476,3 +494,4 @@ int main (int argc, char **argv)
     INTEGER_LITERAL:value
     %target.cpp { return value; }
 ;
+*/

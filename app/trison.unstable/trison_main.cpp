@@ -17,7 +17,7 @@
 #include "barf_preprocessor_symboltable.hpp"
 #include "trison_ast.hpp"
 #include "trison_codespecsymbols.hpp"
-#include "trison_dpda.hpp"
+// #include "trison_dpda.hpp"
 #include "trison_npda.hpp"
 #include "trison_options.hpp"
 #include "trison_parser.hpp"
@@ -124,7 +124,7 @@ void PrintDotGraph (Graph const &graph, string const &filename, string const &gr
     }
 }
 
-void GenerateAndPrintNpdaDotGraph (Trison::PrimarySource const &primary_source, Graph &npda_graph)
+void GenerateNpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_source, Graph &npda_graph)
 {
     // generate the NPDA and print it (if the filename is even specified).
     // no error is possible in this section.
@@ -133,7 +133,7 @@ void GenerateAndPrintNpdaDotGraph (Trison::PrimarySource const &primary_source, 
     PrintDotGraph(npda_graph, GetOptions().GetNaDotGraphPath(), "NPDA");
 }
 
-void GenerateAndPrintDpdaDotGraph (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph)
+void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph)
 {
     // generate the DPDA and print it (if the filename is even specified).
     // GenerateDpda may throw an exception, which should be interpreted
@@ -248,8 +248,8 @@ int main (int argc, char **argv)
 
         ParseAndHandleOptions(argc, argv);
         primary_source = ParsePrimarySource();
-        GenerateAndPrintNpdaDotGraph(*primary_source, npda_graph);
-        GenerateAndPrintDpdaDotGraph(*primary_source, npda_graph, dpda_graph);
+        GenerateNpdaGraphAndPrintDotGraph(*primary_source, npda_graph);
+        GenerateDpdaGraphAndPrintDotGraph(*primary_source, npda_graph, dpda_graph);
         ParseTargetspecs(*primary_source);
         ParseCodespecs(*primary_source);
         WriteTargets(*primary_source, npda_graph, dpda_graph);

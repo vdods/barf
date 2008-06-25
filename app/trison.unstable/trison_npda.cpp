@@ -136,12 +136,12 @@ struct GenericNpdaNodeData : public NpdaNodeData
 struct GraphContext
 {
     PrimarySource const &m_primary_source;
-    Graph &m_graph;
+    Graph &m_npda_graph;
 
-    GraphContext (PrimarySource const &primary_source, Graph &graph)
+    GraphContext (PrimarySource const &primary_source, Graph &npda_graph)
         :
         m_primary_source(primary_source),
-        m_graph(graph)
+        m_npda_graph(npda_graph)
     { }
 }; // end of struct GraphContext
 
@@ -160,7 +160,7 @@ void GenerateNpda (
     Uint32 end_index)
 {
     Uint32 transition_input = terminal.m_is_id ? graph_context.m_primary_source.GetTokenIndex(terminal.GetText()) : terminal.m_char;
-    graph_context.m_graph.AddTransition(start_index, ShiftTransition(transition_input, terminal.GetText(), end_index));
+    graph_context.m_npda_graph.AddTransition(start_index, ShiftTransition(transition_input, terminal.GetText(), end_index));
 }
 
 void GenerateNpda (
@@ -185,14 +185,14 @@ void GenerateNpda (
         // add a transition using the nonterminal's token index (which will
         // be encountered directly after a rule reduction).
         Uint32 transition_input = graph_context.m_primary_source.GetTokenIndex(nonterminal->GetText());
-        graph_context.m_graph.AddTransition(start_index, ShiftTransition(transition_input, nonterminal->GetText(), end_index));
+        graph_context.m_npda_graph.AddTransition(start_index, ShiftTransition(transition_input, nonterminal->GetText(), end_index));
         // generate the nonterminal's subgraph if not already generated
         EnsureGeneratedNpda(*nonterminal, graph_context);
         // add a transition to the nonterminal's own head state (but only if
         // it's a different nonterminal than the one owning this rule,
         // otherwise we'll have an epsilon-transition cycle)
         if (nonterminal != owner_nonterminal)
-            graph_context.m_graph.AddTransition(start_index, EpsilonTransition(nonterminal->GetNpdaGraphHeadState()));
+            graph_context.m_npda_graph.AddTransition(start_index, EpsilonTransition(nonterminal->GetNpdaGraphHeadState()));
     }
 }
 
@@ -202,7 +202,8 @@ void GenerateNpda (
     Uint32 start_index,
     Nonterminal const &owner_nonterminal)
 {
-    // minimal graphing
+/*
+    // minimal graphing (same-nonterminal reduction rule head states are collapsed together)
     {
         // add all the shift transitions
         Uint32 stage = 0;
@@ -213,21 +214,21 @@ void GenerateNpda (
         {
             RuleToken const *rule_token = *it;
             assert(rule_token != NULL);
-            Uint32 end_index = graph_context.m_graph.AddNode(new RuleNpdaNodeData(&rule, ++stage));
+            Uint32 end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, ++stage));
             GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL);
             start_index = end_index;
         }
 
         // add the reduce transition at the tail of the rule states
-        graph_context.m_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
+        graph_context.m_npda_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
     }
-/*
-    // separate-rule-style graphing
+*/
+    // separate-rule-style graphing (separate same-nonterminal reduction rule head states)
     {
         // add the first state in the rule's state sequence
         Uint32 stage = 0;
-        Uint32 end_index = graph_context.m_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
-        graph_context.m_graph.AddTransition(start_index, EpsilonTransition(end_index));
+        Uint32 end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
+        graph_context.m_npda_graph.AddTransition(start_index, EpsilonTransition(end_index));
         start_index = end_index;
         ++stage;
 
@@ -239,16 +240,15 @@ void GenerateNpda (
         {
             RuleToken const *rule_token = *it;
             assert(rule_token != NULL);
-            end_index = graph_context.m_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
+            end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
             GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL);
             start_index = end_index;
             ++stage;
         }
 
         // add the reduce transition at the tail of the rule states
-        graph_context.m_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
+        graph_context.m_npda_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
     }
-*/
 }
 
 void EnsureGeneratedNpda (
@@ -260,14 +260,14 @@ void EnsureGeneratedNpda (
         return;
 
     // create the start, head and return states for this nonterminal
-    Uint32 graph_start_state = graph_context.m_graph.AddNode(new GenericNpdaNodeData("start: " + nonterminal.GetText(), Graph::Color(0xAEC3FF)));
-    Uint32 graph_return_state = graph_context.m_graph.AddNode(new GenericNpdaNodeData("return: " + nonterminal.GetText(), Graph::Color(0xC9AEFF), true));
-    Uint32 graph_head_state = graph_context.m_graph.AddNode(new NonterminalHeadNpdaNodeData(&nonterminal));
+    Uint32 graph_start_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("start: " + nonterminal.GetText(), Graph::Color(0xAEC3FF)));
+    Uint32 graph_return_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("return: " + nonterminal.GetText(), Graph::Color(0xC9AEFF), true));
+    Uint32 graph_head_state = graph_context.m_npda_graph.AddNode(new NonterminalHeadNpdaNodeData(&nonterminal));
     // create the transitions from the start state to the head and return states
-    graph_context.m_graph.AddTransition(graph_start_state, EpsilonTransition(graph_head_state));
-    graph_context.m_graph.AddTransition(graph_start_state, ShiftTransition(graph_context.m_primary_source.GetTokenIndex(nonterminal.GetText()), nonterminal.GetText(), graph_return_state));
+    graph_context.m_npda_graph.AddTransition(graph_start_state, EpsilonTransition(graph_head_state));
+    graph_context.m_npda_graph.AddTransition(graph_start_state, ShiftTransition(graph_context.m_primary_source.GetTokenIndex(nonterminal.GetText()), nonterminal.GetText(), graph_return_state));
     // create the return transition
-    graph_context.m_graph.AddTransition(graph_return_state, ReturnTransition(nonterminal.GetText()));
+    graph_context.m_npda_graph.AddTransition(graph_return_state, ReturnTransition(nonterminal.GetText()));
     // record the start, head and return states
     nonterminal.SetNpdaGraphStates(graph_start_state, graph_head_state, graph_return_state);
     // the rules are effectively or'ed together
@@ -286,13 +286,15 @@ void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph)
 {
     assert(npda_graph.GetNodeCount() == 0 && "must start with an empty graph");
 
-    // the entire graph is generated starting with the default parse nonterminal
-    Nonterminal const *default_parse_nonterminal = primary_source.m_nonterminal_map->GetElement(primary_source.m_default_parse_nonterminal_id);
-    assert(default_parse_nonterminal != NULL);
     GraphContext graph_context(primary_source, npda_graph);
-    EnsureGeneratedNpda(*default_parse_nonterminal, graph_context);
-
-    // TODO: iterate through nonterminals and emit warnings for unused ones
+    for (NonterminalList::const_iterator it = primary_source.m_nonterminal_list->begin(), it_end = primary_source.m_nonterminal_list->end();
+         it != it_end;
+         ++it)
+    {
+        Nonterminal const *nonterminal = *it;
+        assert(nonterminal != NULL);
+        EnsureGeneratedNpda(*nonterminal, graph_context);
+    }
 }
 
 } // end of namespace Trison

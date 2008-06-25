@@ -416,7 +416,8 @@ void <{class_name}::PerformReduceTransition_ (Branch_ &source_branch, Rule_ cons
     assert(reduction_rule != NULL);
     assert(reduction_rule >= ms_rule_table_ && reduction_rule < ms_rule_table_ + ms_rule_count_);
     assert(source_branch.m_lookahead_nonterminal_token_id_ == none__);
-    assert(source_branch.m_state_stack_.size() > reduction_rule->m_token_count_ + 1);
+//     assert(source_branch.m_state_stack_.size() > reduction_rule->m_token_count_ + 1); // for condensed nonterminal head states
+    assert(source_branch.m_state_stack_.size() > reduction_rule->m_token_count_ + 2); // for uncondensed nonterminal head states
     assert(source_branch.m_parent_ != NULL);
 
     // only bother with a reduce action if it would actually succeed
