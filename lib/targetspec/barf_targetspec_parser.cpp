@@ -548,7 +548,7 @@ Ast::Base * Parser::ReductionRuleHandler0006 ()
         AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_id->GetText());
         if (add_directive == NULL)
             EmitError("undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive", throwaway->GetFiLoc());
-        if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != Ast::AT_STRING)
+        if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != Ast::AST_STRING)
             EmitError("directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string", throwaway->GetFiLoc());
         if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
             EmitError("filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters", throwaway->GetFiLoc());
@@ -649,7 +649,7 @@ Ast::Base * Parser::ReductionRuleHandler0010 ()
 
 #line 280 "barf_targetspec_parser.trison"
 
-        return new ParamType(Ast::AT_NONE);
+        return new ParamType(Ast::AST_NONE);
     
 #line 655 "barf_targetspec_parser.cpp"
 }
@@ -663,7 +663,7 @@ Ast::Base * Parser::ReductionRuleHandler0011 ()
 #line 285 "barf_targetspec_parser.trison"
 
         delete throwaway;
-        return new ParamType(Ast::AT_ID);
+        return new ParamType(Ast::AST_ID);
     
 #line 669 "barf_targetspec_parser.cpp"
 }
@@ -677,7 +677,7 @@ Ast::Base * Parser::ReductionRuleHandler0012 ()
 #line 291 "barf_targetspec_parser.trison"
 
         delete throwaway;
-        return new ParamType(Ast::AT_STRING);
+        return new ParamType(Ast::AST_STRING);
     
 #line 683 "barf_targetspec_parser.cpp"
 }
@@ -691,7 +691,7 @@ Ast::Base * Parser::ReductionRuleHandler0013 ()
 #line 297 "barf_targetspec_parser.trison"
 
         delete throwaway;
-        return new ParamType(Ast::AT_DUMB_CODE_BLOCK);
+        return new ParamType(Ast::AST_DUMB_CODE_BLOCK);
     
 #line 697 "barf_targetspec_parser.cpp"
 }
@@ -705,7 +705,7 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
 #line 303 "barf_targetspec_parser.trison"
 
         delete throwaway;
-        return new ParamType(Ast::AT_STRICT_CODE_BLOCK);
+        return new ParamType(Ast::AST_STRICT_CODE_BLOCK);
     
 #line 711 "barf_targetspec_parser.cpp"
 }

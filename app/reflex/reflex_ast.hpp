@@ -42,14 +42,14 @@ namespace Reflex {
 
 enum
 {
-    AT_PRIMARY_SOURCE = CommonLang::AT_START_CUSTOM_TYPES_HERE_,
-    AT_RULE,
-    AT_RULE_LIST,
-    AT_SCANNER_MODE,
-    AT_SCANNER_MODE_MAP,
-    AT_START_DIRECTIVE,
+    AST_PRIMARY_SOURCE = CommonLang::AST_START_CUSTOM_TYPES_HERE_,
+    AST_RULE,
+    AST_RULE_LIST,
+    AST_SCANNER_MODE,
+    AST_SCANNER_MODE_MAP,
+    AST_START_DIRECTIVE,
 
-    AT_COUNT
+    AST_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
@@ -60,7 +60,7 @@ struct StartInScannerModeDirective : public Ast::Directive
 
     StartInScannerModeDirective (Ast::Id const *scanner_mode_id)
         :
-        Ast::Directive("%start_in_scanner_mode", scanner_mode_id->GetFiLoc(), AT_START_DIRECTIVE),
+        Ast::Directive("%start_in_scanner_mode", scanner_mode_id->GetFiLoc(), AST_START_DIRECTIVE),
         m_scanner_mode_id(scanner_mode_id)
     {
         assert(m_scanner_mode_id != NULL);
@@ -84,7 +84,7 @@ struct Rule : public Ast::Base
         Regex::RegularExpression const *rule_regex,
         CommonLang::RuleHandlerMap const *rule_handler_map)
         :
-        Ast::Base(rule_regex->GetFiLoc(), AT_RULE),
+        Ast::Base(rule_regex->GetFiLoc(), AST_RULE),
         m_rule_regex_string(rule_regex_string),
         m_rule_regex(rule_regex),
         m_rule_handler_map(rule_handler_map)
@@ -103,7 +103,7 @@ struct Rule : public Ast::Base
 
 struct RuleList : public Ast::AstList<Rule>
 {
-    RuleList () : Ast::AstList<Rule>(AT_RULE_LIST) { }
+    RuleList () : Ast::AstList<Rule>(AST_RULE_LIST) { }
 };
 
 struct ScannerMode : public Ast::Base
@@ -115,7 +115,7 @@ struct ScannerMode : public Ast::Base
         Ast::Id const *scanner_mode_id,
         RuleList *rule_list)
         :
-        Ast::Base(scanner_mode_id->GetFiLoc(), AT_SCANNER_MODE),
+        Ast::Base(scanner_mode_id->GetFiLoc(), AST_SCANNER_MODE),
         m_scanner_mode_id(scanner_mode_id),
         m_rule_list(rule_list)
     {
@@ -135,7 +135,7 @@ struct ScannerMode : public Ast::Base
 
 struct ScannerModeMap : public Ast::AstMap<ScannerMode>
 {
-    ScannerModeMap () : Ast::AstMap<ScannerMode>(AT_SCANNER_MODE_MAP) { }
+    ScannerModeMap () : Ast::AstMap<ScannerMode>(AST_SCANNER_MODE_MAP) { }
 };
 
 struct PrimarySource : public Ast::Base
@@ -154,7 +154,7 @@ public:
         FiLoc const &end_preamble_filoc,
         ScannerModeMap const *scanner_mode_map)
         :
-        Ast::Base(target_map->GetFiLoc(), AT_PRIMARY_SOURCE),
+        Ast::Base(target_map->GetFiLoc(), AST_PRIMARY_SOURCE),
         m_target_map(target_map),
         m_regex_macro_map(regex_macro_map),
         m_start_in_scanner_mode_directive(start_in_scanner_mode_directive),

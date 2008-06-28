@@ -17,22 +17,22 @@ namespace Regex {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-Ast::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AST_COUNT-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_BOUND",
-        "AT_BRACKET_CHAR_SET",
-        "AT_BRANCH",
-        "AT_CHAR",
-        "AT_PIECE",
-        "AT_REGULAR_EXPRESSION",
-        "AT_REGULAR_EXPRESSION_MAP"
+        "AST_BOUND",
+        "AST_BRACKET_CHAR_SET",
+        "AST_BRANCH",
+        "AST_CHAR",
+        "AST_PIECE",
+        "AST_REGULAR_EXPRESSION",
+        "AST_REGULAR_EXPRESSION_MAP"
     };
 
-    assert(ast_type < AT_COUNT);
-    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+    assert(ast_type < AST_COUNT);
+    if (ast_type < Ast::AST_START_CUSTOM_TYPES_HERE_)
         return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AST_START_CUSTOM_TYPES_HERE_];
 }
 
 // ///////////////////////////////////////////////////////////////////////////

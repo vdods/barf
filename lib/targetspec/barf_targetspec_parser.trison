@@ -217,7 +217,7 @@ add_codespec
         AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_id->GetText());
         if (add_directive == NULL)
             EmitError("undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive", throwaway->GetFiLoc());
-        if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != Ast::AT_STRING)
+        if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != Ast::AST_STRING)
             EmitError("directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string", throwaway->GetFiLoc());
         if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
             EmitError("filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters", throwaway->GetFiLoc());
@@ -278,31 +278,31 @@ param_spec %type "ParamType *"
 :
     // empty reduction rule
     {
-        return new ParamType(Ast::AT_NONE);
+        return new ParamType(Ast::AST_NONE);
     }
 |
     DIRECTIVE_ID:throwaway
     {
         delete throwaway;
-        return new ParamType(Ast::AT_ID);
+        return new ParamType(Ast::AST_ID);
     }
 |
     DIRECTIVE_STRING:throwaway
     {
         delete throwaway;
-        return new ParamType(Ast::AT_STRING);
+        return new ParamType(Ast::AST_STRING);
     }
 |
     DIRECTIVE_DUMB_CODE_BLOCK:throwaway
     {
         delete throwaway;
-        return new ParamType(Ast::AT_DUMB_CODE_BLOCK);
+        return new ParamType(Ast::AST_DUMB_CODE_BLOCK);
     }
 |
     DIRECTIVE_STRICT_CODE_BLOCK:throwaway
     {
         delete throwaway;
-        return new ParamType(Ast::AT_STRICT_CODE_BLOCK);
+        return new ParamType(Ast::AST_STRICT_CODE_BLOCK);
     }
 ;
 

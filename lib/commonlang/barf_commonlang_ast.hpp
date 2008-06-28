@@ -40,13 +40,13 @@ namespace CommonLang {
 
 enum
 {
-    AT_RULE_HANDLER = Ast::AT_START_CUSTOM_TYPES_HERE_,
-    AT_RULE_HANDLER_MAP,
-    AT_TARGET,
-    AT_TARGET_DIRECTIVE,
-    AT_TARGET_MAP,
+    AST_RULE_HANDLER = Ast::AST_START_CUSTOM_TYPES_HERE_,
+    AST_RULE_HANDLER_MAP,
+    AST_TARGET,
+    AST_TARGET_DIRECTIVE,
+    AST_TARGET_MAP,
 
-    AT_START_CUSTOM_TYPES_HERE_
+    AST_START_CUSTOM_TYPES_HERE_
 };
 
 string const &GetAstTypeString (AstType ast_type);
@@ -64,7 +64,7 @@ public:
         Ast::Id const *directive_id,
         Ast::TextBase const *directive_value)
         :
-        Directive("%target", target_id->GetFiLoc(), AT_TARGET_DIRECTIVE),
+        Directive("%target", target_id->GetFiLoc(), AST_TARGET_DIRECTIVE),
         m_target_id(target_id),
         m_directive_id(directive_id),
         m_directive_value(directive_value)
@@ -152,7 +152,7 @@ private:
 
 struct TargetMap : public Ast::AstMap<Target>
 {
-    TargetMap () : Ast::AstMap<Target>(AT_TARGET_MAP) { }
+    TargetMap () : Ast::AstMap<Target>(AST_TARGET_MAP) { }
 
     // sets the path of the primary source file on each Target
     void SetSourcePath (string const &source_path);
@@ -177,7 +177,7 @@ struct RuleHandler : public Ast::Base
             (target_id != NULL) ?
             target_id->GetFiLoc() :
             rule_handler_code_block->GetFiLoc(),
-            AT_RULE_HANDLER),
+            AST_RULE_HANDLER),
         m_target_id(target_id),
         m_rule_handler_code_block(rule_handler_code_block)
     {
@@ -190,7 +190,7 @@ struct RuleHandler : public Ast::Base
 
 struct RuleHandlerMap : public Ast::AstMap<RuleHandler>
 {
-    RuleHandlerMap () : Ast::AstMap<RuleHandler>(AT_RULE_HANDLER_MAP) { }
+    RuleHandlerMap () : Ast::AstMap<RuleHandler>(AST_RULE_HANDLER_MAP) { }
 }; // end of struct RuleHandlerMap
 
 } // end of namespace CommonLang

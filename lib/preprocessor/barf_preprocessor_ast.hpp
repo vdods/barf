@@ -115,30 +115,30 @@ string const &GetDereferenceTypeString (DereferenceType dereference_type);
 
 enum
 {
-    AT_BODY = Ast::AT_START_CUSTOM_TYPES_HERE_,
-    AT_BODY_LIST,
-    AT_CONDITIONAL,
-    AT_DECLARE_ARRAY,
-    AT_DECLARE_MAP,
-    AT_DEFINE,
-    AT_DEFINE_ARRAY_ELEMENT,
-    AT_DEFINE_MAP_ELEMENT,
-    AT_DEREFERENCE,
-    AT_DUMP_SYMBOL_TABLE,
-    AT_FOR_EACH,
-    AT_INCLUDE,
-    AT_INTEGER,
-    AT_INTEGER_CAST,
-    AT_IS_DEFINED,
-    AT_LOOP,
-    AT_MESSAGE,
-    AT_OPERATION,
-    AT_SIZEOF,
-    AT_STRING_CAST,
-    AT_TEXT,
-    AT_UNDEFINE,
+    AST_BODY = Ast::AST_START_CUSTOM_TYPES_HERE_,
+    AST_BODY_LIST,
+    AST_CONDITIONAL,
+    AST_DECLARE_ARRAY,
+    AST_DECLARE_MAP,
+    AST_DEFINE,
+    AST_DEFINE_ARRAY_ELEMENT,
+    AST_DEFINE_MAP_ELEMENT,
+    AST_DEREFERENCE,
+    AST_DUMP_SYMBOL_TABLE,
+    AST_FOR_EACH,
+    AST_INCLUDE,
+    AST_INTEGER,
+    AST_INTEGER_CAST,
+    AST_IS_DEFINED,
+    AST_LOOP,
+    AST_MESSAGE,
+    AST_OPERATION,
+    AST_SIZEOF,
+    AST_STRING_CAST,
+    AST_TEXT,
+    AST_UNDEFINE,
 
-    AT_COUNT
+    AST_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
@@ -174,7 +174,7 @@ class Body : public ExecutableAstList, public Executable
 {
 public:
 
-    Body () : ExecutableAstList(AT_BODY), Executable() { }
+    Body () : ExecutableAstList(AST_BODY), Executable() { }
     Body (string const &body_text, FiLoc const &source_filoc = FiLoc::ms_invalid);
     Body (Sint32 body_integer, FiLoc const &source_filoc = FiLoc::ms_invalid);
 
@@ -193,7 +193,7 @@ class BodyList : public Ast::AstList<Body>
 {
 public:
 
-    BodyList () : Ast::AstList<Body>(AT_BODY_LIST) { }
+    BodyList () : Ast::AstList<Body>(AST_BODY_LIST) { }
 }; // end of class BodyList
 
 class Directive : public ExecutableAst
@@ -231,7 +231,7 @@ public:
 
     Conditional (Expression const *if_expression)
         :
-        ExecutableAst(if_expression->GetFiLoc(), AT_CONDITIONAL),
+        ExecutableAst(if_expression->GetFiLoc(), AST_CONDITIONAL),
         m_if_expression(if_expression),
         m_if_body(NULL),
         m_else_body(NULL)
@@ -266,7 +266,7 @@ class DumpSymbolTable : public ExecutableAst
 {
 public:
 
-    DumpSymbolTable () : ExecutableAst(FiLoc::ms_invalid, AT_DUMP_SYMBOL_TABLE) { }
+    DumpSymbolTable () : ExecutableAst(FiLoc::ms_invalid, AST_DUMP_SYMBOL_TABLE) { }
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
 }; // end of class DumpSymbolTable
@@ -277,7 +277,7 @@ public:
 
     DeclareArray (Ast::Id const *id)
         :
-        Directive(id->GetFiLoc(), AT_DECLARE_ARRAY),
+        Directive(id->GetFiLoc(), AST_DECLARE_ARRAY),
         m_id(id)
     {
         assert(m_id != NULL);
@@ -298,7 +298,7 @@ public:
 
     DeclareMap (Ast::Id const *id)
         :
-        Directive(id->GetFiLoc(), AT_DECLARE_ARRAY),
+        Directive(id->GetFiLoc(), AST_DECLARE_ARRAY),
         m_id(id)
     {
         assert(m_id != NULL);
@@ -319,7 +319,7 @@ public:
 
     Define (Ast::Id *id)
         :
-        Directive(id->GetFiLoc(), AT_DEFINE),
+        Directive(id->GetFiLoc(), AST_DEFINE),
         m_id(id),
         m_body(NULL)
     {
@@ -358,7 +358,7 @@ public:
 
     DefineArrayElement (Ast::Id *id)
         :
-        Define(id, AT_DEFINE_ARRAY_ELEMENT)
+        Define(id, AST_DEFINE_ARRAY_ELEMENT)
     { }
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
@@ -370,7 +370,7 @@ public:
 
     DefineMapElement (Ast::Id *id, Text const *key)
         :
-        Define(id, AT_DEFINE_ARRAY_ELEMENT),
+        Define(id, AST_DEFINE_ARRAY_ELEMENT),
         m_key(key)
     {
         assert(m_key != NULL);
@@ -391,7 +391,7 @@ public:
 
     Undefine (Ast::Id *id)
         :
-        Directive(id->GetFiLoc(), AT_UNDEFINE),
+        Directive(id->GetFiLoc(), AST_UNDEFINE),
         m_id(id)
     {
         assert(m_id != NULL);
@@ -414,7 +414,7 @@ public:
         Ast::Id *iterator_id,
         Expression *iteration_count_expression)
         :
-        Directive(iterator_id->GetFiLoc(), AT_LOOP),
+        Directive(iterator_id->GetFiLoc(), AST_LOOP),
         m_iterator_id(iterator_id),
         m_iteration_count_expression(iteration_count_expression),
         m_body(NULL),
@@ -456,7 +456,7 @@ public:
         Ast::Id *key_id,
         Ast::Id *map_id)
         :
-        Directive(key_id->GetFiLoc(), AT_FOR_EACH),
+        Directive(key_id->GetFiLoc(), AST_FOR_EACH),
         m_key_id(key_id),
         m_map_id(map_id),
         m_body(NULL),
@@ -496,7 +496,7 @@ public:
 
     Include (Expression *include_filename_expression, bool is_sandboxed)
         :
-        Directive(include_filename_expression->GetFiLoc(), AT_INCLUDE),
+        Directive(include_filename_expression->GetFiLoc(), AST_INCLUDE),
         m_is_sandboxed(is_sandboxed),
         m_include_filename_expression(include_filename_expression),
         m_include_body_root(NULL)
@@ -530,7 +530,7 @@ public:
 
     Message (Expression *message_expression, Criticality criticality)
         :
-        Directive(message_expression->GetFiLoc(), AT_MESSAGE),
+        Directive(message_expression->GetFiLoc(), AST_MESSAGE),
         m_message_expression(message_expression),
         m_criticality(criticality)
     {
@@ -556,12 +556,12 @@ public:
     // TODO: deprecate this once the reflex scanner is implemented
     Text (string const &text, FiLoc const &filoc)
         :
-        Expression(filoc, AT_TEXT),
+        Expression(filoc, AST_TEXT),
         m_text(text)
     { }
     Text (char const *s, Uint32 char_count, FiLoc const &filoc)
         :
-        Expression(filoc, AT_TEXT),
+        Expression(filoc, AST_TEXT),
         m_text(s, char_count)
     { }
 
@@ -589,7 +589,7 @@ public:
 
     Integer (Sint32 value, FiLoc const &filoc)
         :
-        Expression(filoc, AT_INTEGER),
+        Expression(filoc, AST_INTEGER),
         m_value(value)
     { }
 
@@ -615,7 +615,7 @@ public:
 
     Sizeof (Ast::Id *id)
         :
-        Expression(id->GetFiLoc(), AT_SIZEOF),
+        Expression(id->GetFiLoc(), AST_SIZEOF),
         m_id(id)
     {
         assert(m_id != NULL);
@@ -641,7 +641,7 @@ public:
 
     Dereference (Ast::Id *id, Expression *element_index_expression, DereferenceType dereference_type)
         :
-        Expression(id->GetFiLoc(), AT_DEREFERENCE),
+        Expression(id->GetFiLoc(), AST_DEREFERENCE),
         m_id(id),
         m_element_index_expression(element_index_expression),
         m_dereference_type(dereference_type)
@@ -686,7 +686,7 @@ public:
 
     IsDefined (Ast::Id *id, Expression *element_index_expression)
         :
-        Dereference(id, element_index_expression, DEREFERENCE_ALWAYS, AT_IS_DEFINED)
+        Dereference(id, element_index_expression, DEREFERENCE_ALWAYS, AST_IS_DEFINED)
     { }
 
     virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }
@@ -730,7 +730,7 @@ public:
         Operator op,
         Expression const *right_expression)
         :
-        Expression(left_expression->GetFiLoc(), AT_OPERATION),
+        Expression(left_expression->GetFiLoc(), AST_OPERATION),
         m_op(op),
         m_left(left_expression),
         m_right(right_expression)
@@ -741,7 +741,7 @@ public:
         Operator op,
         Expression const *right_expression)
         :
-        Expression(right_expression->GetFiLoc(), AT_OPERATION),
+        Expression(right_expression->GetFiLoc(), AST_OPERATION),
         m_op(op),
         m_left(NULL),
         m_right(right_expression)

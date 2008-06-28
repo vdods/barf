@@ -17,22 +17,22 @@ namespace Targetspec {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-Ast::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AST_COUNT-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_ADD_CODESPEC",
-        "AT_ADD_CODESPEC_LIST",
-        "AT_ADD_DIRECTIVE",
-        "AT_ADD_DIRECTIVE_MAP",
-        "AT_PARAM_TYPE",
-        "AT_SPECIFICATION",
-        "AT_SPECIFICATION_MAP"
+        "AST_ADD_CODESPEC",
+        "AST_ADD_CODESPEC_LIST",
+        "AST_ADD_DIRECTIVE",
+        "AST_ADD_DIRECTIVE_MAP",
+        "AST_PARAM_TYPE",
+        "AST_SPECIFICATION",
+        "AST_SPECIFICATION_MAP"
     };
 
-    assert(ast_type < AT_COUNT);
-    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+    assert(ast_type < AST_COUNT);
+    if (ast_type < Ast::AST_START_CUSTOM_TYPES_HERE_)
         return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AST_START_CUSTOM_TYPES_HERE_];
 }
 
 void Specification::Print (ostream &stream, Uint32 indent_level) const
@@ -72,10 +72,10 @@ string const &ParamType::GetParamTypeString (AstType ast_type)
 
     switch (ast_type)
     {
-        case Ast::AT_ID:                return s_id;
-        case Ast::AT_STRING:            return s_string;
-        case Ast::AT_DUMB_CODE_BLOCK:   return s_dumb_code_block;
-        case Ast::AT_STRICT_CODE_BLOCK: return s_strict_code_block;
+        case Ast::AST_ID:                return s_id;
+        case Ast::AST_STRING:            return s_string;
+        case Ast::AST_DUMB_CODE_BLOCK:   return s_dumb_code_block;
+        case Ast::AST_STRICT_CODE_BLOCK: return s_strict_code_block;
         default:                        return g_empty_string;
     }
 }

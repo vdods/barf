@@ -25,36 +25,36 @@ struct PrimarySource;
 
 enum
 {
-    AT_NONTERMINAL = CommonLang::AT_START_CUSTOM_TYPES_HERE_,
-    AT_NONTERMINAL_LIST,
-    AT_NONTERMINAL_MAP,
-    AT_PRECEDENCE,
-    AT_PRECEDENCE_LIST,
-    AT_PRECEDENCE_MAP,
-    AT_PRIMARY_SOURCE,
-    AT_RULE,
-    AT_RULE_LIST,
-    AT_RULE_TOKEN,
-    AT_RULE_TOKEN_LIST,
-    AT_TERMINAL,
-    AT_TERMINAL_LIST,
-    AT_TERMINAL_MAP,
-    AT_TOKEN_ID,
-    AT_TYPE_MAP,
+    AST_NONTERMINAL = CommonLang::AST_START_CUSTOM_TYPES_HERE_,
+    AST_NONTERMINAL_LIST,
+    AST_NONTERMINAL_MAP,
+    AST_PRECEDENCE,
+    AST_PRECEDENCE_LIST,
+    AST_PRECEDENCE_MAP,
+    AST_PRIMARY_SOURCE,
+    AST_RULE,
+    AST_RULE_LIST,
+    AST_RULE_TOKEN,
+    AST_RULE_TOKEN_LIST,
+    AST_TERMINAL,
+    AST_TERMINAL_LIST,
+    AST_TERMINAL_MAP,
+    AST_TOKEN_ID,
+    AST_TYPE_MAP,
 
-    AT_COUNT
+    AST_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
 
 struct TypeMap : public Ast::AstMap<Ast::String>
 {
-    TypeMap () : Ast::AstMap<Ast::String>(AT_TYPE_MAP) { }
+    TypeMap () : Ast::AstMap<Ast::String>(AST_TYPE_MAP) { }
 }; // end of struct TypeMap
 
 struct TokenId : public Ast::TextBase
 {
-    TokenId (string const &text, FiLoc const &filoc, AstType ast_type = AT_TOKEN_ID)
+    TokenId (string const &text, FiLoc const &filoc, AstType ast_type = AST_TOKEN_ID)
         :
         TextBase(text, filoc, ast_type)
     {
@@ -69,7 +69,7 @@ struct Terminal : public TokenId
 
     Terminal (Ast::Id const *id)
         :
-        TokenId(id->GetText(), id->GetFiLoc(), AT_TERMINAL),
+        TokenId(id->GetText(), id->GetFiLoc(), AST_TERMINAL),
         m_is_id(true),
         m_char('\0'),
         m_assigned_type_map(NULL)
@@ -78,7 +78,7 @@ struct Terminal : public TokenId
     }
     Terminal (Ast::Char const *ch)
         :
-        TokenId(GetCharLiteral(ch->GetChar()), ch->GetFiLoc(), AT_TERMINAL),
+        TokenId(GetCharLiteral(ch->GetChar()), ch->GetFiLoc(), AST_TERMINAL),
         m_is_id(false),
         m_char(ch->GetChar()),
         m_assigned_type_map(NULL)
@@ -99,12 +99,12 @@ private:
 
 struct TerminalList : public Ast::AstList<Terminal>
 {
-    TerminalList () : Ast::AstList<Terminal>(AT_TERMINAL_LIST) { }
+    TerminalList () : Ast::AstList<Terminal>(AST_TERMINAL_LIST) { }
 }; // end of struct TerminalList
 
 struct TerminalMap : public Ast::AstMap<Terminal>
 {
-    TerminalMap () : Ast::AstMap<Terminal>(AT_TERMINAL_MAP) { }
+    TerminalMap () : Ast::AstMap<Terminal>(AST_TERMINAL_MAP) { }
 }; // end of struct TerminalMap
 
 struct RuleToken : public Ast::Base
@@ -114,7 +114,7 @@ struct RuleToken : public Ast::Base
 
     RuleToken (string const &token_id, FiLoc const &filoc, string const &assigned_id = g_empty_string)
         :
-        Ast::Base(filoc, AT_RULE_TOKEN),
+        Ast::Base(filoc, AST_RULE_TOKEN),
         m_token_id(token_id),
         m_assigned_id(assigned_id)
     {
@@ -126,7 +126,7 @@ struct RuleToken : public Ast::Base
 
 struct RuleTokenList : public Ast::AstList<RuleToken>
 {
-    RuleTokenList () : Ast::AstList<RuleToken>(AT_RULE_TOKEN_LIST) { }
+    RuleTokenList () : Ast::AstList<RuleToken>(AST_RULE_TOKEN_LIST) { }
 }; // end of struct RuleTokenList
 
 struct Rule : public Ast::Base
@@ -139,7 +139,7 @@ struct Rule : public Ast::Base
 
     Rule (RuleTokenList const *rule_token_list, string const &rule_precedence_id, Uint32 rule_index)
         :
-        Ast::Base(rule_token_list->GetFiLoc(), AT_RULE),
+        Ast::Base(rule_token_list->GetFiLoc(), AST_RULE),
         m_owner_nonterminal(NULL),
         m_rule_token_list(rule_token_list),
         m_rule_precedence_id(rule_precedence_id),
@@ -156,7 +156,7 @@ struct Rule : public Ast::Base
 
 struct RuleList : public Ast::AstList<Rule>
 {
-    RuleList () : Ast::AstList<Rule>(AT_RULE_LIST) { }
+    RuleList () : Ast::AstList<Rule>(AST_RULE_LIST) { }
 }; // end of struct RuleList
 
 struct Nonterminal : public TokenId
@@ -169,7 +169,7 @@ struct Nonterminal : public TokenId
         FiLoc const &filoc,
         TypeMap const *assigned_type_map = NULL)
         :
-        TokenId(id, filoc, AT_NONTERMINAL),
+        TokenId(id, filoc, AST_NONTERMINAL),
         m_assigned_type_map(assigned_type_map),
         m_rule_list(NULL),
         m_npda_graph_start_state(UINT32_UPPER_BOUND),
@@ -201,14 +201,14 @@ private:
 
 struct NonterminalList : public Ast::AstList<Nonterminal>
 {
-    NonterminalList () : Ast::AstList<Nonterminal>(AT_NONTERMINAL_LIST) { }
+    NonterminalList () : Ast::AstList<Nonterminal>(AST_NONTERMINAL_LIST) { }
 
     Uint32 GetRuleCount () const;
 }; // end of struct NonterminalList
 
 struct NonterminalMap : public Ast::AstMap<Nonterminal>
 {
-    NonterminalMap () : Ast::AstMap<Nonterminal>(AT_NONTERMINAL_MAP) { }
+    NonterminalMap () : Ast::AstMap<Nonterminal>(AST_NONTERMINAL_MAP) { }
 }; // end of struct NonterminalMap
 
 struct Precedence : public Ast::Base
@@ -228,7 +228,7 @@ struct Precedence : public Ast::Base
         FiLoc const &filoc,
         Sint32 precedence_level = DEFAULT_PRECEDENCE_LEVEL)
         :
-        Ast::Base(filoc, AT_PRECEDENCE),
+        Ast::Base(filoc, AST_PRECEDENCE),
         m_precedence_id(precedence_id),
         m_precedence_associativity(precedence_associativity),
         m_precedence_level(precedence_level)
@@ -245,12 +245,12 @@ struct Precedence : public Ast::Base
 
 struct PrecedenceMap : public Ast::AstMap<Precedence>
 {
-    PrecedenceMap () : Ast::AstMap<Precedence>(AT_PRECEDENCE_MAP) { }
+    PrecedenceMap () : Ast::AstMap<Precedence>(AST_PRECEDENCE_MAP) { }
 }; // end of struct PrecedenceMap
 
 struct PrecedenceList : public Ast::AstList<Precedence>
 {
-    PrecedenceList () : Ast::AstList<Precedence>(AT_PRECEDENCE_LIST) { }
+    PrecedenceList () : Ast::AstList<Precedence>(AST_PRECEDENCE_LIST) { }
 }; // end of struct PrecedenceList
 
 struct PrimarySource : public Ast::Base
@@ -273,7 +273,7 @@ struct PrimarySource : public Ast::Base
         NonterminalMap const *nonterminal_map,
         NonterminalList const *nonterminal_list)
         :
-        Ast::Base(filoc, AT_PRIMARY_SOURCE),
+        Ast::Base(filoc, AST_PRIMARY_SOURCE),
         m_target_map(target_map),
         m_terminal_map(terminal_map),
         m_precedence_map(precedence_map),

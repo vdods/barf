@@ -32,37 +32,37 @@ string const &GetDereferenceTypeString (DereferenceType dereference_type)
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-Ast::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AST_COUNT-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_BODY",
-        "AT_BODY_LIST",
-        "AT_CONDITIONAL",
-        "AT_DECLARE_ARRAY",
-        "AT_DECLARE_MAP",
-        "AT_DEFINE",
-        "AT_DEFINE_ARRAY_ELEMENT",
-        "AT_DEFINE_MAP_ELEMENT",
-        "AT_DEREFERENCE",
-        "AT_DUMP_SYMBOL_TABLE",
-        "AT_FOR_EACH",
-        "AT_INCLUDE",
-        "AT_INTEGER",
-        "AT_INTEGER_CAST",
-        "AT_IS_DEFINED",
-        "AT_LOOP",
-        "AT_MESSAGE",
-        "AT_OPERATION",
-        "AT_SIZEOF",
-        "AT_STRING_CAST",
-        "AT_TEXT",
-        "AT_UNDEFINE"
+        "AST_BODY",
+        "AST_BODY_LIST",
+        "AST_CONDITIONAL",
+        "AST_DECLARE_ARRAY",
+        "AST_DECLARE_MAP",
+        "AST_DEFINE",
+        "AST_DEFINE_ARRAY_ELEMENT",
+        "AST_DEFINE_MAP_ELEMENT",
+        "AST_DEREFERENCE",
+        "AST_DUMP_SYMBOL_TABLE",
+        "AST_FOR_EACH",
+        "AST_INCLUDE",
+        "AST_INTEGER",
+        "AST_INTEGER_CAST",
+        "AST_IS_DEFINED",
+        "AST_LOOP",
+        "AST_MESSAGE",
+        "AST_OPERATION",
+        "AST_SIZEOF",
+        "AST_STRING_CAST",
+        "AST_TEXT",
+        "AST_UNDEFINE"
     };
 
-    assert(ast_type < AT_COUNT);
-    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+    assert(ast_type < AST_COUNT);
+    if (ast_type < Ast::AST_START_CUSTOM_TYPES_HERE_)
         return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AST_START_CUSTOM_TYPES_HERE_];
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -71,7 +71,7 @@ string const &GetAstTypeString (AstType ast_type)
 
 Body::Body (string const &body_text, FiLoc const &source_filoc)
     :
-    ExecutableAstList(AT_BODY),
+    ExecutableAstList(AST_BODY),
     Executable()
 {
     Append(new Text(body_text, source_filoc));
@@ -79,7 +79,7 @@ Body::Body (string const &body_text, FiLoc const &source_filoc)
 
 Body::Body (Sint32 body_integer, FiLoc const &source_filoc)
     :
-    ExecutableAstList(AT_BODY),
+    ExecutableAstList(AST_BODY),
     Executable()
 {
     Append(new Integer(body_integer, source_filoc));

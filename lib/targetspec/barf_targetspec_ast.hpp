@@ -63,15 +63,15 @@ Bound
 
 enum
 {
-    AT_ADD_CODESPEC = Ast::AT_START_CUSTOM_TYPES_HERE_,
-    AT_ADD_CODESPEC_LIST,
-    AT_ADD_DIRECTIVE,
-    AT_ADD_DIRECTIVE_MAP,
-    AT_PARAM_TYPE,
-    AT_SPECIFICATION,
-    AT_SPECIFICATION_MAP,
+    AST_ADD_CODESPEC = Ast::AST_START_CUSTOM_TYPES_HERE_,
+    AST_ADD_CODESPEC_LIST,
+    AST_ADD_DIRECTIVE,
+    AST_ADD_DIRECTIVE_MAP,
+    AST_PARAM_TYPE,
+    AST_SPECIFICATION,
+    AST_SPECIFICATION_MAP,
 
-    AT_COUNT
+    AST_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
@@ -83,7 +83,7 @@ struct AddCodespec : public Ast::Directive
 
     AddCodespec (Ast::String const *filename, Ast::Id const *filename_directive_id)
         :
-        Ast::Directive("%add_codespec", filename->GetFiLoc(), AT_ADD_CODESPEC),
+        Ast::Directive("%add_codespec", filename->GetFiLoc(), AST_ADD_CODESPEC),
         m_filename(filename),
         m_filename_directive_id(filename_directive_id)
     {
@@ -96,7 +96,7 @@ struct AddCodespec : public Ast::Directive
 
 struct AddCodespecList : public Ast::AstList<AddCodespec>
 {
-    AddCodespecList () : Ast::AstList<AddCodespec>(AT_ADD_CODESPEC_LIST) { }
+    AddCodespecList () : Ast::AstList<AddCodespec>(AST_ADD_CODESPEC_LIST) { }
 }; // end of class AddCodespecList
 
 struct AddDirective : public Ast::Directive
@@ -106,16 +106,16 @@ struct AddDirective : public Ast::Directive
 
     AddDirective (Ast::Id const *directive_to_add_id, AstType param_type, string const &directive_id)
         :
-        Ast::Directive(directive_id, directive_to_add_id->GetFiLoc(), AT_ADD_DIRECTIVE),
+        Ast::Directive(directive_id, directive_to_add_id->GetFiLoc(), AST_ADD_DIRECTIVE),
         m_directive_to_add_id(directive_to_add_id),
         m_param_type(param_type)
     {
         assert(m_directive_to_add_id != NULL);
-        assert(m_param_type == Ast::AT_ID ||
-               m_param_type == Ast::AT_STRING ||
-               m_param_type == Ast::AT_DUMB_CODE_BLOCK ||
-               m_param_type == Ast::AT_STRICT_CODE_BLOCK ||
-               m_param_type == Ast::AT_NONE);
+        assert(m_param_type == Ast::AST_ID ||
+               m_param_type == Ast::AST_STRING ||
+               m_param_type == Ast::AST_DUMB_CODE_BLOCK ||
+               m_param_type == Ast::AST_STRICT_CODE_BLOCK ||
+               m_param_type == Ast::AST_NONE);
     }
 
     virtual bool GetIsRequired () const { return false; }
@@ -126,7 +126,7 @@ struct AddDirective : public Ast::Directive
 
 struct AddDirectiveMap : public Ast::AstMap<AddDirective>
 {
-    AddDirectiveMap () : Ast::AstMap<AddDirective>(AT_ADD_DIRECTIVE_MAP) { }
+    AddDirectiveMap () : Ast::AstMap<AddDirective>(AST_ADD_DIRECTIVE_MAP) { }
 }; // end of class AddDirectiveMap
 
 struct AddRequiredDirective : public AddDirective
@@ -158,14 +158,14 @@ struct ParamType : public Ast::Base
 
     ParamType (AstType param_type)
         :
-        Ast::Base(FiLoc::ms_invalid, AT_PARAM_TYPE),
+        Ast::Base(FiLoc::ms_invalid, AST_PARAM_TYPE),
         m_param_type(param_type)
     {
-        assert(m_param_type == Ast::AT_ID ||
-               m_param_type == Ast::AT_STRING ||
-               m_param_type == Ast::AT_DUMB_CODE_BLOCK ||
-               m_param_type == Ast::AT_STRICT_CODE_BLOCK ||
-               m_param_type == Ast::AT_NONE);
+        assert(m_param_type == Ast::AST_ID ||
+               m_param_type == Ast::AST_STRING ||
+               m_param_type == Ast::AST_DUMB_CODE_BLOCK ||
+               m_param_type == Ast::AST_STRICT_CODE_BLOCK ||
+               m_param_type == Ast::AST_NONE);
     }
 
     static string const &GetParamTypeString (AstType ast_type);
@@ -182,7 +182,7 @@ struct Specification : public Ast::Base
         AddCodespecList const *add_codespec_list,
         AddDirectiveMap const *add_directive_map)
         :
-        Ast::Base(target_id->GetFiLoc(), AT_SPECIFICATION),
+        Ast::Base(target_id->GetFiLoc(), AST_SPECIFICATION),
         m_target_id(target_id),
         m_add_codespec_list(add_codespec_list),
         m_add_directive_map(add_directive_map)
@@ -201,7 +201,7 @@ struct Specification : public Ast::Base
 
 struct SpecificationMap : public Ast::AstMap<Specification>
 {
-    SpecificationMap () : Ast::AstMap<Specification>(AT_SPECIFICATION_MAP) { }
+    SpecificationMap () : Ast::AstMap<Specification>(AST_SPECIFICATION_MAP) { }
 }; // end of class SpecificationMap
 
 } // end of namespace Targetspec

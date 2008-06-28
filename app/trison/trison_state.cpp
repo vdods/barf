@@ -170,7 +170,7 @@ void State::PrintTransitions (ostream &stream, bool is_last_state, StateMachine 
 
         TokenId const *token_id = terminal->GetTokenId();
         assert(token_id != NULL);
-        if (token_id->GetAstType() == AT_TOKEN_ID_ID)
+        if (token_id->GetAstType() == AST_TOKEN_ID_ID)
         {
             stream << "    {" << setw(30) << ("Token::" + terminal->GetImplementationFileId()) << ", ";
             transition.PrintTransitionArrayElement(stream, state_machine);

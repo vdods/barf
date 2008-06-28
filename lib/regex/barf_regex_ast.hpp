@@ -53,15 +53,15 @@ RegularExpression
 
 enum
 {
-    AT_BOUND = Ast::AT_START_CUSTOM_TYPES_HERE_,
-    AT_BRACKET_CHAR_SET,
-    AT_BRANCH,
-    AT_CHAR,
-    AT_PIECE,
-    AT_REGULAR_EXPRESSION,
-    AT_REGULAR_EXPRESSION_MAP,
+    AST_BOUND = Ast::AST_START_CUSTOM_TYPES_HERE_,
+    AST_BRACKET_CHAR_SET,
+    AST_BRANCH,
+    AST_CHAR,
+    AST_PIECE,
+    AST_REGULAR_EXPRESSION,
+    AST_REGULAR_EXPRESSION_MAP,
 
-    AT_COUNT
+    AST_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
@@ -84,7 +84,7 @@ struct Bound : public Ast::Base
 
     Bound (Sint16 lower_bound, Sint16 upper_bound)
         :
-        Ast::Base(FiLoc::ms_invalid, AT_BOUND),
+        Ast::Base(FiLoc::ms_invalid, AST_BOUND),
         m_lower_bound(lower_bound),
         m_upper_bound(upper_bound)
     {
@@ -106,7 +106,7 @@ struct Piece : public Ast::Base
 {
     Piece (Atom *atom, Bound *bound)
         :
-        Ast::Base(FiLoc::ms_invalid, AT_PIECE),
+        Ast::Base(FiLoc::ms_invalid, AST_PIECE),
         m_atom(atom),
         m_bound(bound)
     {
@@ -131,7 +131,7 @@ struct Branch : public Ast::AstList<Piece>
 {
     Branch ()
         :
-        Ast::AstList<Piece>(AT_BRANCH),
+        Ast::AstList<Piece>(AST_BRANCH),
         m_last_modification_was_atom_addition(false)
     { }
 
@@ -147,7 +147,7 @@ struct Char : public Atom
 {
     Char (Uint8 ch, ConditionalType conditional_type = CT_COUNT)
         :
-        Atom(AT_CHAR),
+        Atom(AST_CHAR),
         m_char(ch),
         m_conditional_type(conditional_type)
     {
@@ -174,13 +174,13 @@ struct BracketCharSet : public Atom
 {
     BracketCharSet ()
         :
-        Atom(AT_BRACKET_CHAR_SET)
+        Atom(AST_BRACKET_CHAR_SET)
     {
         m_char_set.reset();
     }
     BracketCharSet (Uint8 ch, bool negate)
         :
-        Atom(AT_BRACKET_CHAR_SET)
+        Atom(AST_BRACKET_CHAR_SET)
     {
         m_char_set.reset();
         AddChar(ch);
@@ -207,7 +207,7 @@ private:
 
 struct RegularExpression : public Atom, public Ast::List<Branch>
 {
-    RegularExpression () : Atom(AT_REGULAR_EXPRESSION), Ast::List<Branch>() { }
+    RegularExpression () : Atom(AST_REGULAR_EXPRESSION), Ast::List<Branch>() { }
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
@@ -218,7 +218,7 @@ struct RegularExpression : public Atom, public Ast::List<Branch>
 
 struct RegularExpressionMap : public Ast::AstMap<RegularExpression>
 {
-    RegularExpressionMap () : Ast::AstMap<RegularExpression>(AT_REGULAR_EXPRESSION_MAP) { }
+    RegularExpressionMap () : Ast::AstMap<RegularExpression>(AST_REGULAR_EXPRESSION_MAP) { }
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.

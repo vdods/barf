@@ -1177,7 +1177,7 @@ void StateMachine::GeneratePreprocessor ()
         {
             Terminal const *terminal = it->second;
             assert(terminal != NULL);
-            if (terminal->GetTokenId()->GetAstType() == AT_TOKEN_ID_ID)
+            if (terminal->GetTokenId()->GetAstType() == AST_TOKEN_ID_ID)
             {
                 string token_implementation_file_id =
                     terminal->GetImplementationFileId();

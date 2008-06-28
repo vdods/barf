@@ -20,37 +20,37 @@ namespace Trison {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-Ast::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AST_COUNT-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_GRAMMAR",
-        "AT_DIRECTIVE_LIST",
-        "AT_PARSER_DIRECTIVE_SET",
-        "AT_TOKEN_DIRECTIVE",
-        "AT_PRECEDENCE_DIRECTIVE",
-        "AT_PARSER_DIRECTIVE",
-        "AT_START_DIRECTIVE",
-        "AT_TOKEN_DIRECTIVE_LIST",
-        "AT_TOKEN_ID_LIST",
-        "AT_PRECEDENCE_DIRECTIVE_LIST",
-        "AT_NONTERMINAL_LIST",
-        "AT_NONTERMINAL",
-        "AT_RULE_LIST",
-        "AT_RULE",
-        "AT_RULE_TOKEN_LIST",
-        "AT_RULE_TOKEN",
-        "AT_TOKEN_ID_ID",
-        "AT_TOKEN_ID_CHAR",
-        "AT_ID",
-        "AT_CODE_BLOCK",
-        "AT_STRING",
-        "AT_THROW_AWAY"
+        "AST_GRAMMAR",
+        "AST_DIRECTIVE_LIST",
+        "AST_PARSER_DIRECTIVE_SET",
+        "AST_TOKEN_DIRECTIVE",
+        "AST_PRECEDENCE_DIRECTIVE",
+        "AST_PARSER_DIRECTIVE",
+        "AST_START_DIRECTIVE",
+        "AST_TOKEN_DIRECTIVE_LIST",
+        "AST_TOKEN_ID_LIST",
+        "AST_PRECEDENCE_DIRECTIVE_LIST",
+        "AST_NONTERMINAL_LIST",
+        "AST_NONTERMINAL",
+        "AST_RULE_LIST",
+        "AST_RULE",
+        "AST_RULE_TOKEN_LIST",
+        "AST_RULE_TOKEN",
+        "AST_TOKEN_ID_ID",
+        "AST_TOKEN_ID_CHAR",
+        "AST_ID",
+        "AST_CODE_BLOCK",
+        "AST_STRING",
+        "AST_THROW_AWAY"
     };
 
-    assert(ast_type < AT_COUNT);
-    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+    assert(ast_type < AST_COUNT);
+    if (ast_type < Ast::AST_START_CUSTOM_TYPES_HERE_)
         return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AST_START_CUSTOM_TYPES_HERE_];
 }
 
 TokenId::~TokenId ()
@@ -483,7 +483,7 @@ Grammar::Grammar (
     FiLoc const &end_preamble_filoc,
     NonterminalList *nonterminal_list)
     :
-    Ast::Base(FiLoc::ms_invalid, AT_GRAMMAR),
+    Ast::Base(FiLoc::ms_invalid, AST_GRAMMAR),
     m_nonterminal_list(nonterminal_list)
 {
     assert(m_nonterminal_list != NULL);
@@ -510,17 +510,17 @@ Grammar::Grammar (
         assert(directive != NULL);
         switch (directive->GetAstType())
         {
-            case AT_PARSER_DIRECTIVE:
+            case AST_PARSER_DIRECTIVE:
                 parser_directive_set->AddDirective(
                     Dsc<ParserDirective *>(directive));
                 break;
 
-            case AT_TOKEN_DIRECTIVE:
+            case AST_TOKEN_DIRECTIVE:
                 token_directive_list->Append(
                     Dsc<TokenDirective *>(directive));
                 break;
 
-            case AT_PRECEDENCE_DIRECTIVE:
+            case AST_PRECEDENCE_DIRECTIVE:
             {
                 PrecedenceDirective *precedence_directive =
                     Dsc<PrecedenceDirective *>(directive);
@@ -529,7 +529,7 @@ Grammar::Grammar (
                 break;
             }
 
-            case AT_START_DIRECTIVE:
+            case AST_START_DIRECTIVE:
                 if (start_directive != NULL)
                     EmitError("duplicate %start directive", directive->GetFiLoc());
                 delete start_directive;

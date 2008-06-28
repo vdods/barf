@@ -98,30 +98,30 @@ Grammar
 
 enum
 {
-    AT_GRAMMAR = Ast::AT_START_CUSTOM_TYPES_HERE_,
-    AT_DIRECTIVE_LIST,
-    AT_PARSER_DIRECTIVE_SET,
-    AT_TOKEN_DIRECTIVE,
-    AT_PRECEDENCE_DIRECTIVE,
-    AT_PARSER_DIRECTIVE,
-    AT_START_DIRECTIVE,
-    AT_TOKEN_DIRECTIVE_LIST,
-    AT_TOKEN_ID_LIST,
-    AT_PRECEDENCE_DIRECTIVE_LIST,
-    AT_NONTERMINAL_LIST,
-    AT_NONTERMINAL,
-    AT_RULE_LIST,
-    AT_RULE,
-    AT_RULE_TOKEN_LIST,
-    AT_RULE_TOKEN,
-    AT_TOKEN_ID_ID,
-    AT_TOKEN_ID_CHAR,
-    AT_ID,
-    AT_CODE_BLOCK,
-    AT_STRING,
-    AT_THROW_AWAY,
+    AST_GRAMMAR = Ast::AST_START_CUSTOM_TYPES_HERE_,
+    AST_DIRECTIVE_LIST,
+    AST_PARSER_DIRECTIVE_SET,
+    AST_TOKEN_DIRECTIVE,
+    AST_PRECEDENCE_DIRECTIVE,
+    AST_PARSER_DIRECTIVE,
+    AST_START_DIRECTIVE,
+    AST_TOKEN_DIRECTIVE_LIST,
+    AST_TOKEN_ID_LIST,
+    AST_PRECEDENCE_DIRECTIVE_LIST,
+    AST_NONTERMINAL_LIST,
+    AST_NONTERMINAL,
+    AST_RULE_LIST,
+    AST_RULE,
+    AST_RULE_TOKEN_LIST,
+    AST_RULE_TOKEN,
+    AST_TOKEN_ID_ID,
+    AST_TOKEN_ID_CHAR,
+    AST_ID,
+    AST_CODE_BLOCK,
+    AST_STRING,
+    AST_THROW_AWAY,
 
-    AT_COUNT
+    AST_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
@@ -130,43 +130,43 @@ class TokenDirectiveList : public Ast::AstList<TokenDirective>
 {
 public:
 
-    TokenDirectiveList () : Ast::AstList<TokenDirective>(AT_TOKEN_DIRECTIVE_LIST) { }
+    TokenDirectiveList () : Ast::AstList<TokenDirective>(AST_TOKEN_DIRECTIVE_LIST) { }
 }; // end of class TokenDirectiveList
 
 class TokenIdList : public Ast::AstList<TokenId>
 {
 public:
 
-    TokenIdList () : Ast::AstList<TokenId>(AT_TOKEN_ID_LIST) { }
+    TokenIdList () : Ast::AstList<TokenId>(AST_TOKEN_ID_LIST) { }
 }; // end of class TokenIdList
 
 class PrecedenceDirectiveList : public Ast::AstList<PrecedenceDirective>
 {
 public:
 
-    PrecedenceDirectiveList () : Ast::AstList<PrecedenceDirective>(AT_PRECEDENCE_DIRECTIVE_LIST) { }
+    PrecedenceDirectiveList () : Ast::AstList<PrecedenceDirective>(AST_PRECEDENCE_DIRECTIVE_LIST) { }
 }; // end of class PrecedenceDirectiveList
 
 class NonterminalList : public Ast::AstList<Nonterminal>
 {
 public:
 
-    NonterminalList () : Ast::AstList<Nonterminal>(AT_NONTERMINAL_LIST) { }
+    NonterminalList () : Ast::AstList<Nonterminal>(AST_NONTERMINAL_LIST) { }
 }; // end of class NonterminalList
 
 class RuleList : public Ast::AstList<Rule>
 {
 public:
 
-    RuleList () : Ast::AstList<Rule>(AT_RULE_LIST) { }
+    RuleList () : Ast::AstList<Rule>(AST_RULE_LIST) { }
 }; // end of class RuleList
 
 class RuleTokenList : public Ast::AstList<RuleToken>
 {
 public:
 
-    RuleTokenList () : Ast::AstList<RuleToken>(AT_RULE_TOKEN_LIST) { }
-    RuleTokenList (FiLoc const &filoc) : Ast::AstList<RuleToken>(filoc, AT_RULE_TOKEN_LIST) { }
+    RuleTokenList () : Ast::AstList<RuleToken>(AST_RULE_TOKEN_LIST) { }
+    RuleTokenList (FiLoc const &filoc) : Ast::AstList<RuleToken>(filoc, AST_RULE_TOKEN_LIST) { }
 }; // end of class RuleTokenList
 
 class TokenId : public Ast::TextBase
@@ -200,7 +200,7 @@ public:
         TokenId(
             id_text,
             filoc,
-            AT_TOKEN_ID_ID)
+            AST_TOKEN_ID_ID)
     { }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -217,7 +217,7 @@ public:
         TokenId(
             GetCharLiteral(id_char),
             filoc,
-            AT_TOKEN_ID_CHAR),
+            AST_TOKEN_ID_CHAR),
         m_id_char(id_char)
     { }
 
@@ -238,7 +238,7 @@ public:
         TokenId const *token_id,
         Ast::Id const *assigned_id)
         :
-        Ast::Base(token_id->GetFiLoc(), AT_RULE_TOKEN),
+        Ast::Base(token_id->GetFiLoc(), AST_RULE_TOKEN),
         m_token_id(token_id),
         m_assigned_id(assigned_id)
     {
@@ -273,7 +273,7 @@ public:
         Associativity associativity,
         Ast::Id const *precedence_directive_id)
         :
-        Ast::Base(rule_token_list->GetFiLoc(), AT_RULE),
+        Ast::Base(rule_token_list->GetFiLoc(), AST_RULE),
         m_rule_token_list(rule_token_list),
         m_associativity(associativity),
         m_precedence_directive_id(precedence_directive_id)
@@ -349,7 +349,7 @@ public:
         Ast::Id const *id,
         Ast::String const *assigned_variable_type)
         :
-        Ast::Base(id->GetFiLoc(), AT_NONTERMINAL),
+        Ast::Base(id->GetFiLoc(), AST_NONTERMINAL),
         m_id(id),
         m_assigned_variable_type(assigned_variable_type)
     {
@@ -400,7 +400,7 @@ public:
 
     PrecedenceDirective (Ast::Id const *id)
         :
-        Ast::Directive("%prec", id->GetFiLoc(), AT_PRECEDENCE_DIRECTIVE),
+        Ast::Directive("%prec", id->GetFiLoc(), AST_PRECEDENCE_DIRECTIVE),
         m_id(id),
         m_precedence_level(0)
     {
@@ -435,7 +435,7 @@ public:
         TokenIdList const *token_id_list,
         Ast::String const *assigned_type)
         :
-        Ast::Directive("%token", token_id_list->GetFiLoc(), AT_TOKEN_DIRECTIVE),
+        Ast::Directive("%token", token_id_list->GetFiLoc(), AST_TOKEN_DIRECTIVE),
         m_token_id_list(token_id_list),
         m_assigned_type(assigned_type)
     {
@@ -468,7 +468,7 @@ public:
         string const &directive_text,
         FiLoc const &filoc)
         :
-        Ast::Directive(directive_text, filoc, AT_PARSER_DIRECTIVE),
+        Ast::Directive(directive_text, filoc, AST_PARSER_DIRECTIVE),
         m_parser_directive_type(GetParserDirectiveType(directive_text))
     {
         assert(m_parser_directive_type < PDT_COUNT);
@@ -510,7 +510,7 @@ public:
 
     StartDirective (Ast::Id const *start_nonterminal_id)
         :
-        Ast::Directive("%start", start_nonterminal_id->GetFiLoc(), AT_START_DIRECTIVE),
+        Ast::Directive("%start", start_nonterminal_id->GetFiLoc(), AST_START_DIRECTIVE),
         m_start_nonterminal_id(start_nonterminal_id)
     {
         assert(m_start_nonterminal_id != NULL);
@@ -535,7 +535,7 @@ public:
 
     ParserDirectiveSet ()
         :
-        Ast::Base(FiLoc::ms_invalid, AT_PARSER_DIRECTIVE_SET)
+        Ast::Base(FiLoc::ms_invalid, AST_PARSER_DIRECTIVE_SET)
     {
         for (Uint32 i = 0; i < PDT_COUNT; ++i)
             m_parser_directive[i] = NULL;

@@ -154,7 +154,7 @@ void <{class_name}::ResetForNewInput_ ()
     {
         // create the initial branch with a rule stack level of 0
         Branch_ *initial_branch = new Branch_(ms_state_table_ + nonterminal_to_parse_);
-        // add the initial nonterminal state as a child to the tree
+        // add the initial branch as a child to the tree
         m_tree_root_->AddChildBranch_(initial_branch);
         // add the initial branch to the action and parser branch lists
         m_tree_root_->m_action_branch_list_.Prepend_(initial_branch);

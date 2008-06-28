@@ -14,21 +14,21 @@ namespace Reflex {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_COUNT-CommonLang::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AST_COUNT-CommonLang::AST_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_PRIMARY_SOURCE",
-        "AT_RULE",
-        "AT_RULE_LIST",
-        "AT_SCANNER_MODE",
-        "AT_SCANNER_MODE_MAP",
-        "AT_START_DIRECTIVE"
+        "AST_PRIMARY_SOURCE",
+        "AST_RULE",
+        "AST_RULE_LIST",
+        "AST_SCANNER_MODE",
+        "AST_SCANNER_MODE_MAP",
+        "AST_START_DIRECTIVE"
     };
 
-    assert(ast_type < AT_COUNT);
-    if (ast_type < CommonLang::AT_START_CUSTOM_TYPES_HERE_)
+    assert(ast_type < AST_COUNT);
+    if (ast_type < CommonLang::AST_START_CUSTOM_TYPES_HERE_)
         return CommonLang::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-CommonLang::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-CommonLang::AST_START_CUSTOM_TYPES_HERE_];
 }
 
 void StartInScannerModeDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const

@@ -27,20 +27,20 @@ namespace CommonLang {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[CommonLang::AT_START_CUSTOM_TYPES_HERE_-Ast::AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[CommonLang::AST_START_CUSTOM_TYPES_HERE_-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_RULE_HANDLER",
-        "AT_RULE_HANDLER_MAP",
-        "AT_TARGET",
-        "AT_TARGET_DIRECTIVE",
-        "AT_TARGET_MAP"
+        "AST_RULE_HANDLER",
+        "AST_RULE_HANDLER_MAP",
+        "AST_TARGET",
+        "AST_TARGET_DIRECTIVE",
+        "AST_TARGET_MAP"
     };
 
-    assert(ast_type < CommonLang::AT_START_CUSTOM_TYPES_HERE_);
-    if (ast_type < Ast::AT_START_CUSTOM_TYPES_HERE_)
+    assert(ast_type < CommonLang::AST_START_CUSTOM_TYPES_HERE_);
+    if (ast_type < Ast::AST_START_CUSTOM_TYPES_HERE_)
         return Ast::GetAstTypeString(ast_type);
     else
-        return s_ast_type_string[ast_type-Ast::AT_START_CUSTOM_TYPES_HERE_];
+        return s_ast_type_string[ast_type-Ast::AST_START_CUSTOM_TYPES_HERE_];
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ void TargetDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32
 
 Target::Target (string const &target_id)
     :
-    Ast::AstMap<TargetDirective>(AT_TARGET),
+    Ast::AstMap<TargetDirective>(AST_TARGET),
     m_target_id(target_id),
     m_is_enabled_for_code_generation(false)
 {
@@ -251,7 +251,7 @@ void Target::CheckAgainstAddDirective (
         if (add_directive.GetIsRequired())
             EmitError("missing required directive %target." + m_target_id + "." + add_directive.m_directive_to_add_id->GetText(), FiLoc(g_options->GetInputFilename()));
     }
-    else if (add_directive.m_param_type == Ast::AT_NONE)
+    else if (add_directive.m_param_type == Ast::AST_NONE)
     {
         if (target_directive->m_directive_value != NULL)
             EmitError("superfluous parameter given for directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " which does not accept a parameter", target_directive->GetFiLoc());

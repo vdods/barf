@@ -32,9 +32,9 @@ string const &GetTransitionTypeString (TransitionType transition_type);
 
 struct ShiftTransition : public Graph::Transition
 {
-    ShiftTransition (Uint32 input_atom, string const &token_label, Uint32 target_index)
+    ShiftTransition (Uint32 transition_token_id, string const &token_label, Uint32 target_index)
         :
-        Graph::Transition(TT_SHIFT, input_atom, input_atom, target_index, token_label)
+        Graph::Transition(TT_SHIFT, transition_token_id, transition_token_id, target_index, token_label)
     { }
 }; // end of struct ShiftTransition
 

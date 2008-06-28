@@ -175,9 +175,9 @@ void GenerateNfa (Atom const &atom, Graph &graph, Uint32 start_index, Uint32 end
 {
     switch (atom.GetAstType())
     {
-        case AT_REGULAR_EXPRESSION:     return GenerateNfa(static_cast<RegularExpression const &>(atom), graph, start_index, end_index);
-        case AT_CHAR:              return GenerateNfa(static_cast<Char const &>(atom), graph, start_index, end_index);
-        case AT_BRACKET_CHAR_SET:  return GenerateNfa(static_cast<BracketCharSet const &>(atom), graph, start_index, end_index);
+        case AST_REGULAR_EXPRESSION:     return GenerateNfa(static_cast<RegularExpression const &>(atom), graph, start_index, end_index);
+        case AST_CHAR:              return GenerateNfa(static_cast<Char const &>(atom), graph, start_index, end_index);
+        case AST_BRACKET_CHAR_SET:  return GenerateNfa(static_cast<BracketCharSet const &>(atom), graph, start_index, end_index);
         default: assert(false && "invalid atom type");
     }
 }

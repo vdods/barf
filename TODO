@@ -2,6 +2,7 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- make FirstContainsSecond(x,y) and FirstDoesntContainSecond(x,y) funcs
 * use BARF_TARGETS_SEARCH_PATH in example app configure.ac files
 - guarantee that errors will be reported such that the line numbers never
   decrease.
@@ -294,3 +295,5 @@
   lookaheads that put it at EOF.  you'll have to go by the lookahead queue
   in the parser.
 - dot graphs and other extras should be generated in the output directory.
+- decouple npda states from trison ASTs -- they should only exist in the
+  graph itself.

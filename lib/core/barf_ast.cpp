@@ -17,23 +17,23 @@ namespace Ast {
 
 string const &GetAstTypeString (AstType ast_type)
 {
-    static string const s_ast_type_string[AT_START_CUSTOM_TYPES_HERE_] =
+    static string const s_ast_type_string[AST_START_CUSTOM_TYPES_HERE_] =
     {
-        "AT_CHAR",
-        "AT_DIRECTIVE",
-        "AT_DIRECTIVE_LIST",
-        "AT_DUMB_CODE_BLOCK",
-        "AT_ID",
-        "AT_ID_LIST",
-        "AT_ID_MAP",
-        "AT_SIGNED_INTEGER",
-        "AT_STRICT_CODE_BLOCK",
-        "AT_STRING",
-        "AT_THROW_AWAY",
-        "AT_UNSIGNED_INTEGER"
+        "AST_CHAR",
+        "AST_DIRECTIVE",
+        "AST_DIRECTIVE_LIST",
+        "AST_DUMB_CODE_BLOCK",
+        "AST_ID",
+        "AST_ID_LIST",
+        "AST_ID_MAP",
+        "AST_SIGNED_INTEGER",
+        "AST_STRICT_CODE_BLOCK",
+        "AST_STRING",
+        "AST_THROW_AWAY",
+        "AST_UNSIGNED_INTEGER"
     };
 
-    assert(ast_type < AT_START_CUSTOM_TYPES_HERE_);
+    assert(ast_type < AST_START_CUSTOM_TYPES_HERE_);
     return s_ast_type_string[ast_type];
 }
 
@@ -84,10 +84,10 @@ TextBase::~TextBase ()
 
 string TextBase::GetDirectiveTypeString (AstType ast_type)
 {
-    if (ast_type == AT_STRING) return "%string";
-    if (ast_type == AT_ID) return "%identifier";
-    if (ast_type == AT_DUMB_CODE_BLOCK) return "%dumb_code_block";
-    if (ast_type == AT_STRICT_CODE_BLOCK) return "%strict_code_block";
+    if (ast_type == AST_STRING) return "%string";
+    if (ast_type == AST_ID) return "%identifier";
+    if (ast_type == AST_DUMB_CODE_BLOCK) return "%dumb_code_block";
+    if (ast_type == AST_STRICT_CODE_BLOCK) return "%strict_code_block";
 
     assert(false && "invalid TextBase AstType");
     return g_empty_string;

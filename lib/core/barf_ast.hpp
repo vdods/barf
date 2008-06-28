@@ -26,25 +26,25 @@ namespace Barf {
 namespace Ast {
 
 // when the parser subsystem is defining its own concrete Base subclasses, it
-// should start its enum values at AT_START_CUSTOM_TYPES_HERE_.
+// should start its enum values at AST_START_CUSTOM_TYPES_HERE_.
 enum
 {
-    AT_CHAR = 0,
-    AT_DIRECTIVE,
-    AT_DIRECTIVE_LIST,
-    AT_DUMB_CODE_BLOCK,
-    AT_ID,
-    AT_ID_LIST,
-    AT_ID_MAP,
-    AT_SIGNED_INTEGER,
-    AT_STRICT_CODE_BLOCK,
-    AT_STRING,
-    AT_THROW_AWAY,
-    AT_UNSIGNED_INTEGER,
+    AST_CHAR = 0,
+    AST_DIRECTIVE,
+    AST_DIRECTIVE_LIST,
+    AST_DUMB_CODE_BLOCK,
+    AST_ID,
+    AST_ID_LIST,
+    AST_ID_MAP,
+    AST_SIGNED_INTEGER,
+    AST_STRICT_CODE_BLOCK,
+    AST_STRING,
+    AST_THROW_AWAY,
+    AST_UNSIGNED_INTEGER,
 
-    AT_START_CUSTOM_TYPES_HERE_,
+    AST_START_CUSTOM_TYPES_HERE_,
 
-    AT_NONE = AstType(-1)
+    AST_NONE = AstType(-1)
 };
 
 string const &GetAstTypeString (AstType ast_type);
@@ -252,7 +252,7 @@ struct ThrowAway : public Base
 {
     ThrowAway (FiLoc const &filoc)
         :
-        Base(filoc, AT_THROW_AWAY)
+        Base(filoc, AST_THROW_AWAY)
     {
         assert(filoc.GetIsValid());
     }
@@ -264,7 +264,7 @@ public:
 
     Char (Uint8 ch, FiLoc const &filoc)
         :
-        Base(filoc, AT_CHAR),
+        Base(filoc, AST_CHAR),
         m_char(ch)
     { }
 
@@ -291,7 +291,7 @@ public:
 
     SignedInteger (Sint32 value, FiLoc const &filoc)
         :
-        Base(filoc, AT_SIGNED_INTEGER),
+        Base(filoc, AST_SIGNED_INTEGER),
         m_value(value)
     { }
 
@@ -313,7 +313,7 @@ public:
 
     UnsignedInteger (Uint32 value, FiLoc const &filoc)
         :
-        Base(filoc, AT_UNSIGNED_INTEGER),
+        Base(filoc, AST_UNSIGNED_INTEGER),
         m_value(value)
     { }
 
@@ -362,11 +362,11 @@ struct String : public TextBase
 {
     String (FiLoc const &filoc)
         :
-        TextBase(filoc, AT_STRING)
+        TextBase(filoc, AST_STRING)
     { }
     String (string const &str, FiLoc const &filoc)
         :
-        TextBase(str, filoc, AT_STRING)
+        TextBase(str, filoc, AST_STRING)
     { }
 
     inline string GetStringLiteral () const { return Barf::GetStringLiteral(GetText()); }
@@ -376,7 +376,7 @@ struct Id : public TextBase
 {
     Id (string const &id_text, FiLoc const &filoc)
         :
-        TextBase(id_text, filoc, AT_ID)
+        TextBase(id_text, filoc, AST_ID)
     {
         assert(!GetText().empty());
     }
@@ -404,12 +404,12 @@ struct CodeBlock : public TextBase
 
 struct DumbCodeBlock : public CodeBlock
 {
-    DumbCodeBlock (FiLoc const &filoc) : CodeBlock(filoc, AT_DUMB_CODE_BLOCK) { }
+    DumbCodeBlock (FiLoc const &filoc) : CodeBlock(filoc, AST_DUMB_CODE_BLOCK) { }
 }; // end of struct DumbCodeBlock
 
 struct StrictCodeBlock : public CodeBlock
 {
-    StrictCodeBlock (FiLoc const &filoc) : CodeBlock(filoc, AT_STRICT_CODE_BLOCK) { }
+    StrictCodeBlock (FiLoc const &filoc) : CodeBlock(filoc, AST_STRICT_CODE_BLOCK) { }
 }; // end of struct StrictCodeBlock
 
 class Directive : public TextBase
@@ -420,7 +420,7 @@ public:
         string const &directive_id,
         FiLoc const &filoc)
         :
-        TextBase(directive_id, filoc, AT_DIRECTIVE)
+        TextBase(directive_id, filoc, AST_DIRECTIVE)
     { }
 
     virtual string GetDirectiveString () const { return GetText(); }
@@ -439,17 +439,17 @@ protected:
 
 struct IdList : public AstList<Id>
 {
-    IdList () : AstList<Id>(AT_ID_LIST) { }
+    IdList () : AstList<Id>(AST_ID_LIST) { }
 }; // end of struct IdList
 
 struct IdMap : public AstMap<Id>
 {
-    IdMap () : AstMap<Id>(AT_ID_MAP) { }
+    IdMap () : AstMap<Id>(AST_ID_MAP) { }
 }; // end of struct IdMap
 
 struct DirectiveList : public AstList<Directive>
 {
-    DirectiveList () : AstList<Directive>(AT_DIRECTIVE_LIST) { }
+    DirectiveList () : AstList<Directive>(AST_DIRECTIVE_LIST) { }
 }; // end of struct DirectiveList
 
 } // end of namespace Ast

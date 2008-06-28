@@ -13,4 +13,10 @@
 
 #include "trison.hpp"
 
+namespace Trison {
+
+void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph);
+
+} // end of namespace Trison
+
 #endif // !defined(_TRISON_DPDA_HPP_)
