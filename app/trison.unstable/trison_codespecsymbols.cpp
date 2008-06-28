@@ -411,7 +411,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
                 npda_transition_type_name->AppendArrayElement(
                     new Preprocessor::Body(GetTransitionTypeString(transition.Type())));
                 npda_transition_data_index->AppendArrayElement(
-                    new Preprocessor::Body(Sint32(transition.Data0())));
+                    new Preprocessor::Body(Sint32(transition.Data(0))));
                 npda_transition_data_name->AppendArrayElement(
                     new Preprocessor::Body(transition.Label()));
                 npda_transition_target_node_index->AppendArrayElement(

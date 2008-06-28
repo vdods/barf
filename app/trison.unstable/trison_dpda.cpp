@@ -40,6 +40,33 @@ struct GraphContext
     }
 }; // end of struct GraphContext
 
+class TransitionIterator
+{
+public:
+
+    enum IterateFlags
+    {
+        IT_NONE         = 0,
+        IT_TERMINALS    = 1 << 0,
+        IT_NONTERMINALS = 1 << 1,
+        IT_ALL          = IT_TERMINALS|IT_NONTERMINALS
+    }; // end of enum IterateOver
+
+    TransitionIterator (DpdaState const &dpda_state, IterateFlags flags)
+        :
+        m_dpda_state(dpda_state),
+        m_flags(flags)
+    { }
+
+    void operator ++ () { /* TODO -- real code */ }
+    bool IsDone () const { return false; /* TODO -- real code */ }
+
+private:
+
+    DpdaState const m_dpda_state;
+    IterateFlags const m_flags;
+}; // end of class TransitionIterator
+
 class Action
 {
 public:
@@ -64,7 +91,7 @@ private:
 
     Type m_type;
     Uint32 m_data;
-};
+}; // end of class Action
 
 // Npda is the actual automaton which simulates a parser.
 class Npda
@@ -72,7 +99,6 @@ class Npda
 public:
 
     typedef Uint32 TokenId;
-    typedef vector<TokenId> LookaheadSequence;
 
     Npda (Nonterminal const *start_nonterminal)
     {
@@ -147,9 +173,9 @@ private:
     bool m_reduce_transitions_were_performed;
     bool m_shift_transitions_were_performed;
     bool m_nonassoc_error_encountered;
-};
+}; // end of class Npda
 
-void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, Npda &npda, Action const &default_action, Npda::LookaheadSequence &lookahead_sequence)
+void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, Npda &npda, Action const &default_action, Graph::Transition::DataArray &lookahead_sequence)
 {
 /*
     for each valid npda.dpda_state terminal transition {
@@ -167,7 +193,7 @@ void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, N
             recurse(child_context, source_dpda_state, lookahead_sequence+transition)
     }
 */
-    for (TransitionIterator it(dpda_state, TI_TERMINALS_ONLY); !it.IsDone(); ++it)
+    for (TransitionIterator it(dpda_state, IT_TERMINALS); !it.IsDone(); ++it)
     {
         Action action;
         // this block of code is entirely for the purpose of determining what lookaheads
@@ -199,14 +225,19 @@ void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, N
             DpdaState target_dpda_state(retry_npda.CurrentDpdaState());
             // make sure that dpda state is generated
             EnsureDpdaStateIsGenerated(graph_context, target_dpda_state);
+
+            // add the iterator token to the lookahead sequence
+            lookahead_sequence.push_back(*it);
             // add a graph transition from this state to that, via the iterator terminal
             assert(graph_context.m_generated_dpda_state_map.find(source_dpda_state) != graph_context.m_generated_dpda_state_map.end());
             graph_context.m_dpda_graph.AddTransition(
                 graph_context.m_generated_dpda_state_map[source_dpda_state],
                 ShiftTransition(
-                    *it, // TODO -- should use lookahead_sequence + *it as the transition token sequence
+                    lookahead_sequence,
                     "TODO -- real label",
                     graph_context.m_generated_dpda_state_map[target_dpda_state]));
+            // pop the iterator token
+            lookahead_sequence.pop_back();
         }
     }
 }
@@ -250,11 +281,11 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, DpdaState const &d
     assert(default_action.Type() == AT_ERROR_PANIC || default_action.Type() == AT_REDUCE);
 
     // now recurse, exploring the states resulting from all valid transitions.
-    Npda::LookaheadSequence lookahead_sequence; // empty
+    Graph::Transition::DataArray lookahead_sequence; // empty
     Recurse(graph_context, dpda_state, npda, default_action, lookahead_sequence);
 
     // generate the shift transitions for the nonterminals at this state
-    for (TransitionIterator it(dpda_state, TI_NONTERMINALS_ONLY); !it.IsDone(); ++it)
+    for (TransitionIterator it(dpda_state, IT_NONTERMINALS); !it.IsDone(); ++it)
     {
         // create a fork of this npda and run it with the iterator nonterminal
         Npda child_npda(npda);

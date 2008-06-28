@@ -34,7 +34,13 @@ struct ShiftTransition : public Graph::Transition
 {
     ShiftTransition (Uint32 transition_token_id, string const &token_label, Uint32 target_index)
         :
-        Graph::Transition(TT_SHIFT, transition_token_id, transition_token_id, target_index, token_label)
+        Graph::Transition(TT_SHIFT, 1, target_index, token_label)
+    {
+        SetData(0, transition_token_id);
+    }
+    ShiftTransition (DataArray const &data_array, string const &token_label, Uint32 target_index)
+        :
+        Graph::Transition(TT_SHIFT, data_array, target_index, token_label)
     { }
 }; // end of struct ShiftTransition
 
@@ -42,15 +48,17 @@ struct ReduceTransition : public Graph::Transition
 {
     ReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name)
         :
-        Graph::Transition(TT_REDUCE, reduction_rule_index, reduction_rule_index, ms_no_target_index, "reduce: " + nonterminal_name, Graph::Color(0x00AA00))
-    { }
+        Graph::Transition(TT_REDUCE, 1, ms_no_target_index, "reduce: " + nonterminal_name, Graph::Color(0x00AA00))
+    {
+        SetData(0, reduction_rule_index);
+    }
 }; // end of struct ReduceTransition
 
 struct ReturnTransition : public Graph::Transition
 {
     ReturnTransition (string const &nonterminal_name)
         :
-        Graph::Transition(TT_RETURN, 0, 0, ms_no_target_index, "return: " + nonterminal_name, Graph::Color(0x0000FF))
+        Graph::Transition(TT_RETURN, 0, ms_no_target_index, "return: " + nonterminal_name, Graph::Color(0x0000FF))
     { }
 }; // end of struct ReturnTransition
 
@@ -58,7 +66,7 @@ struct EpsilonTransition : public Graph::Transition
 {
     EpsilonTransition (Uint32 target_index)
         :
-        Graph::Transition(TT_EPSILON, 0, 0, target_index, "(e)", Graph::Color(0xEF280E))
+        Graph::Transition(TT_EPSILON, 0, target_index, "(e)", Graph::Color(0xEF280E))
     { }
 }; // end of struct EpsilonTransition
 

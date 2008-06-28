@@ -96,11 +96,11 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
             case TT_CONDITIONAL:
             {
                 // get the Conditional value from transition.Type()
-                Conditional transition_conditional(GetConditionalFromConditionalType(transition.Data0()));
+                Conditional transition_conditional(GetConditionalFromConditionalType(transition.Data(0)));
                 // check if it conflicts with the passed-in conditional
                 if (conditional.ConflictsWith(transition_conditional))
                     // TODO: improve this error to include a FiLoc
-                    throw string("conditional ") + GetConditionalTypeString(transition.Data0()) + " conflicts with previous adjacent conditionals";
+                    throw string("conditional ") + GetConditionalTypeString(transition.Data(0)) + " conflicts with previous adjacent conditionals";
                 // compose this transition's conditional with the one passed-in.
                 Conditional transitioned_conditional(
                     conditional.m_mask|transition_conditional.m_mask,
@@ -260,9 +260,9 @@ Uint32 GetDfaStateIndex (GraphContext &graph_context, DfaState const &dfa_state,
                 {
                     Graph::Transition const &transition = *trans_it;
                     if (transition.Type() == TT_INPUT_ATOM)
-                        transition_map[transition.Data0()].insert(transition.TargetIndex());
+                        transition_map[transition.Data(0)].insert(transition.TargetIndex());
                     else if (transition.Type() == TT_INPUT_ATOM_RANGE)
-                        for (Uint32 atom = transition.Data0(); atom <= transition.Data1(); ++atom)
+                        for (Uint32 atom = transition.Data(0); atom <= transition.Data(1); ++atom)
                             transition_map[atom].insert(transition.TargetIndex());
                 }
             }

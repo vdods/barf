@@ -27,7 +27,7 @@ void PopulateAcceptHandlerScannerModeAndRegexSymbols (
 {
     assert(accept_handler_scanner_mode != NULL);
     assert(accept_handler_regex != NULL);
-    
+
     accept_handler_scanner_mode->AppendArrayElement(new Preprocessor::Body(scanner_mode_id));
     accept_handler_regex->AppendArrayElement(new Preprocessor::Body(GetStringLiteral(rule.m_rule_regex_string)));
 }
@@ -48,9 +48,9 @@ void PopulateAcceptHandlerScannerModeAndRegexSymbols (
         Rule const *rule = *it;
         assert(rule != NULL);
         PopulateAcceptHandlerScannerModeAndRegexSymbols(
-            *rule, 
-            scanner_mode.m_scanner_mode_id->GetText(), 
-            accept_handler_scanner_mode, 
+            *rule,
+            scanner_mode.m_scanner_mode_id->GetText(),
+            accept_handler_scanner_mode,
             accept_handler_regex);
     }
 }
@@ -64,7 +64,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
         accept_handler_count->SetScalarBody(
             new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
     }
-    
+
     // _accept_handler_scanner_mode -- the name of the scanner mode this accept handler belongs to
     //
     // _accept_handler_regex -- a string literal of the regex associated with each accept handler
@@ -83,7 +83,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             PopulateAcceptHandlerScannerModeAndRegexSymbols(*scanner_mode, accept_handler_scanner_mode, accept_handler_regex);
         }
     }
-    
+
     // _start_in_scanner_mode -- value of %start_in_scanner_mode -- the name of the initial scanner mode
     {
         assert(primary_source.m_start_in_scanner_mode_directive != NULL);
@@ -191,9 +191,9 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
                 nfa_transition_type_name->AppendArrayElement(
                     new Preprocessor::Body(Regex::GetTransitionTypeString(transition.Type())));
                 nfa_transition_data_0->AppendArrayElement(
-                    new Preprocessor::Body(Sint32(transition.Data0())));
+                    new Preprocessor::Body(Sint32(transition.Data(0))));
                 nfa_transition_data_1->AppendArrayElement(
-                    new Preprocessor::Body(Sint32(transition.Data1())));
+                    new Preprocessor::Body(Sint32(transition.Data(1))));
                 nfa_transition_target_node_index->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.TargetIndex())));
 
@@ -319,9 +319,9 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
                 dfa_transition_type_name->AppendArrayElement(
                     new Preprocessor::Body(Regex::GetTransitionTypeString(transition.Type())));
                 dfa_transition_data_0->AppendArrayElement(
-                    new Preprocessor::Body(Sint32(transition.Data0())));
+                    new Preprocessor::Body(Sint32(transition.Data(0))));
                 dfa_transition_data_1->AppendArrayElement(
-                    new Preprocessor::Body(Sint32(transition.Data1())));
+                    new Preprocessor::Body(Sint32(transition.Data(1))));
                 dfa_transition_target_node_index->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.TargetIndex())));
 

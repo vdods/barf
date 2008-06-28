@@ -31,7 +31,7 @@ string GetDfaTransitionString (Graph::Transition const &transition)
     if (transition.Type() == TT_CONDITIONAL)
     {
         string retval;
-        Conditional conditional(transition.Data0(), transition.Data1());
+        Conditional conditional(transition.Data(0), transition.Data(1));
         while (conditional.m_mask != 0)
         {
             ConditionalType conditional_type = GetConditionalTypeFromConditional(conditional);
@@ -48,7 +48,7 @@ string GetDfaTransitionString (Graph::Transition const &transition)
 string GetNfaTransitionString (Graph::Transition const &transition)
 {
     if (transition.Type() == TT_CONDITIONAL)
-        return GetConditionalTypeString(transition.Data0());
+        return GetConditionalTypeString(transition.Data(0));
     else
         return GetTransitionTypeString(transition.Type());
 }

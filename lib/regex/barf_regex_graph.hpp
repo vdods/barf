@@ -39,8 +39,10 @@ struct InputAtomTransition : public Graph::Transition
 {
     InputAtomTransition (Uint8 input_atom, Uint32 target_index)
         :
-        Graph::Transition(TT_INPUT_ATOM, input_atom, input_atom, target_index, GetCharLiteral(input_atom))
-    { }
+        Graph::Transition(TT_INPUT_ATOM, 1, target_index, GetCharLiteral(input_atom))
+    {
+        SetData(0, input_atom);
+    }
 }; // end of struct InputAtomTransition
 
 struct InputAtomRangeTransition : public Graph::Transition
@@ -49,18 +51,20 @@ struct InputAtomRangeTransition : public Graph::Transition
         :
         Graph::Transition(
             TT_INPUT_ATOM_RANGE,
-            range_lower,
-            range_upper,
+            2,
             target_index,
             string("[") + GetCharLiteral(range_lower, false) + "-" + GetCharLiteral(range_upper, false) + "]")
-    { }
+    {
+        SetData(0, range_lower);
+        SetData(1, range_upper);
+    }
 }; // end of struct InputAtomRangeTransition
 
 struct EpsilonTransition : public Graph::Transition
 {
     EpsilonTransition (Uint32 target_index)
         :
-        Graph::Transition(TT_EPSILON, 0, 0, target_index, "(e)", Graph::Color(0xEF280E))
+        Graph::Transition(TT_EPSILON, 0, target_index, "(e)", Graph::Color(0xEF280E))
     { }
 }; // end of struct EpsilonTransition
 
@@ -68,8 +72,10 @@ struct DfaConditionalTransition : public Graph::Transition
 {
     DfaConditionalTransition (Uint8 mask, Uint8 flags, Uint32 target_index)
         :
-        Graph::Transition(TT_CONDITIONAL, mask, flags, target_index, g_empty_string, Graph::Color(0x0000FF))
+        Graph::Transition(TT_CONDITIONAL, 2, target_index, g_empty_string, Graph::Color(0x0000FF))
     {
+        SetData(0, mask);
+        SetData(1, flags);
         SetLabel(GetDfaTransitionString(*this));
     }
 }; // end of struct ConditionalTransition
@@ -78,8 +84,9 @@ struct NfaConditionalTransition : public Graph::Transition
 {
     NfaConditionalTransition (ConditionalType type, Uint32 target_index)
         :
-        Graph::Transition(TT_CONDITIONAL, type, type, target_index, g_empty_string, Graph::Color(0x0000FF))
+        Graph::Transition(TT_CONDITIONAL, 1, target_index, g_empty_string, Graph::Color(0x0000FF))
     {
+        SetData(0, type);
         SetLabel(GetNfaTransitionString(*this));
     }
 }; // end of struct ConditionalTransition

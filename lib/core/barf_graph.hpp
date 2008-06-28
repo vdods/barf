@@ -38,16 +38,20 @@ public:
         friend ostream &operator << (ostream &stream, Color const &color);
     }; // end of struct Graph::Color
 
+    // Transition is meant to be subclassed for use, but the subclasses shouldn't
+    // require a destructor, since Transition does not have a virtual destructor.
     struct Transition
     {
         typedef string (*Stringify)(Transition const &);
+        typedef vector<Uint32> DataArray;
 
         static Uint32 const ms_no_target_index = UINT32_UPPER_BOUND;
 
         bool HasTarget () const { return m_target_index != ms_no_target_index; }
         TransitionType Type () const { return m_transition_type; }
-        Uint32 Data0 () const { return m_data_0; }
-        Uint32 Data1 () const { return m_data_1; }
+//         DataArray const &Data () const { return m_data_array; }
+        Uint32 DataCount () const { return m_data_array.size(); }
+        Uint32 Data (Uint32 index) const { return (index < m_data_array.size()) ? m_data_array[index] : 0; }
         Uint32 TargetIndex () const { return m_target_index; }
         string const &Label () const { return m_label; }
         Color const &DotGraphColor () const { return m_dot_graph_color; }
@@ -59,38 +63,54 @@ public:
                 return t0.Type() < t1.Type()
                     ||
                     t0.Type() == t1.Type() &&
-                    t0.Data0() < t1.Data0()
+                    t0.m_data_array < t1.m_data_array
                     ||
-                    t0.Data0() == t1.Data0() &&
-                    t0.Data1() < t1.Data1()
-                    ||
-                    t0.Data1() == t1.Data1() &&
+                    t0.m_data_array == t1.m_data_array &&
                     t0.TargetIndex() < t1.TargetIndex();
             }
         }; // end of struct Graph::Transition::Order
 
     protected:
 
-        Transition (TransitionType type, Uint32 data_0, Uint32 data_1, Uint32 target_index, string const &label, Color const &dot_graph_color = Color(0x000000))
+        Transition (
+            TransitionType type,
+            Uint32 data_count,
+            Uint32 target_index,
+            string const &label,
+            Color const &dot_graph_color = Color(0x000000))
             :
             m_transition_type(type),
-            m_data_0(data_0),
-            m_data_1(data_1),
+            m_data_array(data_count, 0),
+            m_target_index(target_index),
+            m_label(label),
+            m_dot_graph_color(dot_graph_color)
+        { }
+        Transition (
+            TransitionType type,
+            DataArray const &data_array,
+            Uint32 target_index,
+            string const &label,
+            Color const &dot_graph_color = Color(0x000000))
+            :
+            m_transition_type(type),
+            m_data_array(data_array),
             m_target_index(target_index),
             m_label(label),
             m_dot_graph_color(dot_graph_color)
         { }
 
+        void SetData (Uint32 index, Uint32 data) { assert(index < m_data_array.size()); m_data_array[index] = data; }
         void SetLabel (string const &label) { m_label = label; }
 
     private:
 
         TransitionType m_transition_type;
-        Uint32 m_data_0;
-        Uint32 m_data_1;
+        DataArray m_data_array;
         Uint32 m_target_index;
         string m_label;
         Color m_dot_graph_color;
+
+        friend struct Order;
     }; // end of struct Graph::Transition
 
     class Node
