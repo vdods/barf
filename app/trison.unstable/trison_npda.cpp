@@ -159,7 +159,7 @@ void GenerateNpda (
     Uint32 start_index,
     Uint32 end_index)
 {
-    Uint32 transition_input = terminal.m_is_id ? graph_context.m_primary_source.GetTokenIndex(terminal.GetText()) : terminal.m_char;
+    Uint32 transition_input = terminal.m_is_id ? terminal.m_token_index : terminal.m_char;
     graph_context.m_npda_graph.AddTransition(start_index, ShiftTransition(transition_input, terminal.GetText(), end_index));
 }
 
@@ -184,7 +184,7 @@ void GenerateNpda (
     {
         // add a transition using the nonterminal's token index (which will
         // be encountered directly after a rule reduction).
-        Uint32 transition_input = graph_context.m_primary_source.GetTokenIndex(nonterminal->GetText());
+        Uint32 transition_input = nonterminal->m_token_index;
         graph_context.m_npda_graph.AddTransition(start_index, ShiftTransition(transition_input, nonterminal->GetText(), end_index));
         // generate the nonterminal's subgraph if not already generated
         EnsureGeneratedNpda(*nonterminal, graph_context);
@@ -265,7 +265,7 @@ void EnsureGeneratedNpda (
     Uint32 graph_head_state = graph_context.m_npda_graph.AddNode(new NonterminalHeadNpdaNodeData(&nonterminal));
     // create the transitions from the start state to the head and return states
     graph_context.m_npda_graph.AddTransition(graph_start_state, EpsilonTransition(graph_head_state));
-    graph_context.m_npda_graph.AddTransition(graph_start_state, ShiftTransition(graph_context.m_primary_source.GetTokenIndex(nonterminal.GetText()), nonterminal.GetText(), graph_return_state));
+    graph_context.m_npda_graph.AddTransition(graph_start_state, ShiftTransition(nonterminal.m_token_index, nonterminal.GetText(), graph_return_state));
     // create the return transition
     graph_context.m_npda_graph.AddTransition(graph_return_state, ReturnTransition(nonterminal.GetText()));
     // record the start, head and return states
@@ -293,7 +293,9 @@ void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph)
     {
         Nonterminal const *nonterminal = *it;
         assert(nonterminal != NULL);
-        EnsureGeneratedNpda(*nonterminal, graph_context);
+        // we don't want to graph the special "none_" nonterminal
+        if (nonterminal->GetText() != "none_")
+            EnsureGeneratedNpda(*nonterminal, graph_context);
     }
 }
 

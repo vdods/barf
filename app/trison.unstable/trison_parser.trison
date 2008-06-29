@@ -40,6 +40,7 @@ namespace Trison {
 struct NonterminalList;
 struct PrecedenceList;
 struct PrecedenceMap;
+struct TerminalList;
 struct TerminalMap;
 %}
 
@@ -57,7 +58,9 @@ private:
 
     CommonLang::Scanner m_scanner;
     CommonLang::TargetMap *m_target_map;
+    TerminalList *m_terminal_list;
     TerminalMap *m_terminal_map;
+    Uint32 m_token_index;
     PrecedenceList *m_precedence_list;
     PrecedenceMap *m_precedence_map;
     NonterminalList *m_nonterminal_list;
@@ -90,7 +93,9 @@ namespace Trison {
 
 %parser_start_of_parse_method_actions{
     m_target_map = NULL;
+    m_terminal_list = NULL;
     m_terminal_map = NULL;
+    m_token_index = 0;
     m_precedence_list = NULL;
     m_precedence_map = NULL;
     m_nonterminal_list = NULL;
@@ -199,6 +204,7 @@ root %type "PrimarySource *"
     {
         assert(m_target_map != NULL);
         assert(target_map == m_target_map);
+        assert(m_terminal_list != NULL);
         assert(m_terminal_map != NULL);
         assert(terminal_map == m_terminal_map);
         assert(m_precedence_list != NULL);
@@ -220,13 +226,14 @@ root %type "PrimarySource *"
         PrimarySource *primary_source =
             new PrimarySource(
                 target_map,
+                m_terminal_list,
                 terminal_map,
                 precedence_map,
                 m_precedence_list,
                 default_parse_nonterminal_id->GetText(),
                 throwaway->GetFiLoc(),
-                nonterminal_map,
-                m_nonterminal_list);
+                m_nonterminal_list,
+                nonterminal_map);
         delete throwaway;
         delete default_parse_nonterminal_id;
         return primary_source;
@@ -358,7 +365,27 @@ terminal_directives %type "TerminalMap *"
 |
     // empty reduction rule
     {
+        m_terminal_list = new TerminalList();
         m_terminal_map = new TerminalMap();
+
+        Ast::Id *id;
+        Terminal *terminal;
+
+        // create and add the special END_ and ERROR_ terminals (with
+        // token_index 0x100 and 0x101 respectively.
+        assert(m_token_index == 0 && "must go from 0 to 0x100, all terminals, then all nonterminals");
+        m_token_index = 0x100;
+
+        id = new Ast::Id("END_", FiLoc::ms_invalid);
+        terminal = new Terminal(id, m_token_index++);
+        m_terminal_list->Append(terminal);
+        m_terminal_map->Add(terminal->GetText(), terminal);
+
+        id = new Ast::Id("ERROR_", FiLoc::ms_invalid);
+        terminal = new Terminal(id, m_token_index++);
+        m_terminal_list->Append(terminal);
+        m_terminal_map->Add(terminal->GetText(), terminal);
+
         return m_terminal_map;
     }
 ;
@@ -378,6 +405,7 @@ terminal_directive
             Trison::Terminal *terminal = *it;
             assert(terminal != NULL);
             terminal->SetAssignedTypeMap(assigned_type_map);
+            m_terminal_list->Append(terminal);
             m_terminal_map->Add(terminal->GetText(), terminal);
         }
         terminal_list->clear();
@@ -516,7 +544,15 @@ nonterminals %type "NonterminalMap *"
     {
         assert(m_nonterminal_list == NULL);
         m_nonterminal_list = new NonterminalList();
-        return new NonterminalMap();
+        NonterminalMap *nonterminal_map = new NonterminalMap();
+
+        // add the special "none_" nonterminal with token_index 0 and empty rule list
+        Nonterminal *nonterminal = new Nonterminal("none_", 0, FiLoc::ms_invalid);
+        nonterminal->SetRuleList(new RuleList());
+        nonterminal_map->Add(nonterminal->GetText(), nonterminal);
+        m_nonterminal_list->Append(nonterminal);
+
+        return nonterminal_map;
     }
 ;
 
@@ -543,6 +579,7 @@ nonterminal_specification %type "Nonterminal *"
     DIRECTIVE_NONTERMINAL:throwaway ID:id type_spec:assigned_type_map
     {
         assert(m_terminal_map != NULL);
+        assert(m_token_index >= 0x100);
         assert(id != NULL);
         assert(assigned_type_map != NULL);
         if (m_terminal_map->GetElement(id->GetText()) != NULL)
@@ -550,6 +587,7 @@ nonterminal_specification %type "Nonterminal *"
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
+                m_token_index++,
                 id->GetFiLoc(),
                 assigned_type_map);
         delete throwaway;
@@ -608,11 +646,16 @@ rule_specification %type "Rule *"
 :
     rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive
     {
-        string const &rule_precedence_id =
-            rule_precedence_directive != NULL ?
-            rule_precedence_directive->GetText() :
-            "DEFAULT_";
-        Rule *rule = new Rule(rule_token_list, rule_precedence_id, m_rule_count++);
+        Precedence *rule_precedence;
+        if (rule_precedence_directive == NULL)
+            rule_precedence = m_precedence_map->GetElement("DEFAULT_");
+        else if ((rule_precedence = m_precedence_map->GetElement(rule_precedence_directive->GetText())) == NULL)
+        {
+            EmitError("undefined %prec value \"" + rule_precedence_directive->GetText() + "\"");
+            rule_precedence = m_precedence_map->GetElement("DEFAULT_");
+        }
+
+        Rule *rule = new Rule(rule_token_list, rule_precedence, m_rule_count++);
         delete rule_precedence_directive;
         return rule;
     }
@@ -753,14 +796,18 @@ token_id %type "TokenId *"
 :
     ID:id
     {
-        TokenId *token_id = new TokenId(id->GetText(), id->GetFiLoc());
+        // here, the token_index doesn't matter, since this rule isn't used
+        // in the terminal declarations.
+        TokenId *token_id = new TokenId(id->GetText(), 0, id->GetFiLoc());
         delete id;
         return token_id;
     }
 |
     CHAR_LITERAL:ch
     {
-        TokenId *token_id = new TokenId(GetCharLiteral(ch->GetChar()), ch->GetFiLoc());
+        // here, the token_index doesn't matter, since this rule isn't used
+        // in the terminal declarations.
+        TokenId *token_id = new TokenId(GetCharLiteral(ch->GetChar()), 0, ch->GetFiLoc());
         delete ch;
         return token_id;
     }
@@ -768,7 +815,7 @@ token_id %type "TokenId *"
 
 terminal %type "Terminal *"
 :
-    ID:id           { return new Terminal(id); }
+    ID:id           { return new Terminal(id, m_token_index++); }
 |
     CHAR_LITERAL:ch { return new Terminal(ch); }
 ;

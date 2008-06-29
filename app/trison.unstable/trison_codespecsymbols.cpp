@@ -124,42 +124,43 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
         Preprocessor::ArraySymbol *nonterminal_name_list =
             symbol_table.DefineArraySymbol("_nonterminal_name_list", FiLoc::ms_invalid);
 
-        Uint32 token_index = 0x100;
-        // add the special END_ and ERROR_ terminal tokens (see also
-        // PrimarySource::GetTokenIndex in trison_ast.cpp)
-        terminal_index_list->AppendArrayElement(new Preprocessor::Body(Sint32(token_index++)));
-        terminal_name_list->AppendArrayElement(new Preprocessor::Body("END_"));
-        terminal_index_list->AppendArrayElement(new Preprocessor::Body(Sint32(token_index++)));
-        terminal_name_list->AppendArrayElement(new Preprocessor::Body("ERROR_"));
+        // these asserts aren't really necessary, but we want to make sure the special
+        // "END_" and "ERROR_" terminals were added with specific token_index values (though
+        // the specific values aren't actually that important either).
+        assert(primary_source.m_terminal_map->GetElement("END_") != NULL);
+        assert(primary_source.m_terminal_map->GetElement("END_")->m_token_index == 0x100);
+        assert(primary_source.m_terminal_map->GetElement("ERROR_") != NULL);
+        assert(primary_source.m_terminal_map->GetElement("ERROR_")->m_token_index == 0x101);
 
-        for (TerminalMap::const_iterator it = primary_source.m_terminal_map->begin(), it_end = primary_source.m_terminal_map->end();
+        for (TerminalList::const_iterator it = primary_source.m_terminal_list->begin(), it_end = primary_source.m_terminal_list->end();
              it != it_end;
              ++it)
         {
-            Terminal const *terminal = it->second;
+            Terminal const *terminal = *it;
             assert(terminal != NULL);
             if (terminal->m_is_id)
             {
                 terminal_index_list->AppendArrayElement(
-                    new Preprocessor::Body(Sint32(token_index++)));
+                    new Preprocessor::Body(terminal->m_token_index));
                 terminal_name_list->AppendArrayElement(
                     new Preprocessor::Body(terminal->GetText()));
             }
         }
 
-        nonterminal_index_list->AppendArrayElement(
-            new Preprocessor::Body(Sint32(0)));
-        nonterminal_name_list->AppendArrayElement(
-            new Preprocessor::Body("none_"));
+        // this assert isn't really necessary, but we want to make sure the special
+        // "none_" nonterminal was added with specific token_index value of 0 (this
+        // value is important).
+        assert(primary_source.m_nonterminal_map->GetElement("none_") != NULL);
+        assert(primary_source.m_nonterminal_map->GetElement("none_")->m_token_index == 0);
 
-        for (NonterminalMap::const_iterator it = primary_source.m_nonterminal_map->begin(), it_end = primary_source.m_nonterminal_map->end();
+        for (NonterminalList::const_iterator it = primary_source.m_nonterminal_list->begin(), it_end = primary_source.m_nonterminal_list->end();
              it != it_end;
              ++it)
         {
-            Nonterminal const *nonterminal = it->second;
+            Nonterminal const *nonterminal = *it;
             assert(nonterminal != NULL);
             nonterminal_index_list->AppendArrayElement(
-                new Preprocessor::Body(Sint32(token_index++)));
+                new Preprocessor::Body(nonterminal->m_token_index));
             nonterminal_name_list->AppendArrayElement(
                 new Preprocessor::Body(nonterminal->GetText()));
         }
@@ -267,16 +268,14 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             Rule const &rule = *primary_source.GetRule(i);
 
             rule_reduction_nonterminal_index->AppendArrayElement(
-                new Preprocessor::Body(Sint32(primary_source.GetTokenIndex(rule.m_owner_nonterminal->GetText()))));
+                new Preprocessor::Body(Sint32(rule.m_owner_nonterminal->m_token_index)));
             rule_reduction_nonterminal_name->AppendArrayElement(
                 new Preprocessor::Body(rule.m_owner_nonterminal->GetText()));
 
-            Precedence const *rule_precedence = primary_source.m_precedence_map->GetElement(rule.m_rule_precedence_id);
-            assert(rule_precedence != NULL);
             rule_precedence_index->AppendArrayElement(
-                new Preprocessor::Body(Sint32(rule_precedence->m_precedence_level)));
+                new Preprocessor::Body(Sint32(rule.m_rule_precedence->m_precedence_level)));
             rule_precedence_name->AppendArrayElement(
-                new Preprocessor::Body(rule.m_rule_precedence_id));
+                new Preprocessor::Body(rule.m_rule_precedence->m_precedence_id));
 
             rule_token_count->AppendArrayElement(
                 new Preprocessor::Body(Sint32(rule.m_rule_token_list->size())));
@@ -312,9 +311,11 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             string const &nonterminal_name = it->first;
             Nonterminal const *nonterminal = it->second;
             assert(nonterminal != NULL);
-            npda_nonterminal_start_state_index->SetMapElement(
-                nonterminal_name,
-                new Preprocessor::Body(Sint32(nonterminal->GetNpdaGraphStartState())));
+            // we don't want to add the special "none_" nonterminal here.
+            if (nonterminal->GetText() != "none_")
+                npda_nonterminal_start_state_index->SetMapElement(
+                    nonterminal_name,
+                    new Preprocessor::Body(Sint32(nonterminal->GetNpdaGraphStartState())));
         }
     }
 
@@ -433,7 +434,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             npda_state_description->AppendArrayElement(
                 new Preprocessor::Body(GetStringLiteral(node_data.GetDescription())));
             npda_state_nonterminal_index->AppendArrayElement(
-                new Preprocessor::Body(Sint32(nonterminal != NULL ? primary_source.GetTokenIndex(nonterminal->GetText()) : 0)));
+                new Preprocessor::Body(Sint32(nonterminal != NULL ? nonterminal->m_token_index : 0)));
             npda_state_nonterminal_name->AppendArrayElement(
                 new Preprocessor::Body(nonterminal != NULL ? nonterminal->GetText() : "none_"));
             npda_state_transition_offset->AppendArrayElement(

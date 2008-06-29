@@ -21,6 +21,7 @@
 namespace Trison {
 
 struct Nonterminal;
+struct Precedence;
 struct PrimarySource;
 
 enum
@@ -54,9 +55,12 @@ struct TypeMap : public Ast::AstMap<Ast::String>
 
 struct TokenId : public Ast::TextBase
 {
-    TokenId (string const &text, FiLoc const &filoc, AstType ast_type = AST_TOKEN_ID)
+    Uint32 const m_token_index;
+
+    TokenId (string const &text, Uint32 token_index, FiLoc const &filoc, AstType ast_type = AST_TOKEN_ID)
         :
-        TextBase(text, filoc, ast_type)
+        TextBase(text, filoc, ast_type),
+        m_token_index(token_index)
     {
         assert(!text.empty());
     }
@@ -67,9 +71,9 @@ struct Terminal : public TokenId
     bool const m_is_id;
     Uint8 const m_char;
 
-    Terminal (Ast::Id const *id)
+    Terminal (Ast::Id const *id, Uint32 token_index)
         :
-        TokenId(id->GetText(), id->GetFiLoc(), AST_TERMINAL),
+        TokenId(id->GetText(), token_index, id->GetFiLoc(), AST_TERMINAL),
         m_is_id(true),
         m_char('\0'),
         m_assigned_type_map(NULL)
@@ -78,7 +82,7 @@ struct Terminal : public TokenId
     }
     Terminal (Ast::Char const *ch)
         :
-        TokenId(GetCharLiteral(ch->GetChar()), ch->GetFiLoc(), AST_TERMINAL),
+        TokenId(GetCharLiteral(ch->GetChar()), (Uint32)ch->GetChar(), ch->GetFiLoc(), AST_TERMINAL),
         m_is_id(false),
         m_char(ch->GetChar()),
         m_assigned_type_map(NULL)
@@ -133,20 +137,21 @@ struct Rule : public Ast::Base
 {
     Nonterminal const *m_owner_nonterminal;
     RuleTokenList const *const m_rule_token_list;
-    string const m_rule_precedence_id;
+    Precedence const *const m_rule_precedence;
     CommonLang::RuleHandlerMap const *m_rule_handler_map;
     Uint32 const m_rule_index;
 
-    Rule (RuleTokenList const *rule_token_list, string const &rule_precedence_id, Uint32 rule_index)
+    Rule (RuleTokenList const *rule_token_list, Precedence const *rule_precedence, Uint32 rule_index)
         :
         Ast::Base(rule_token_list->GetFiLoc(), AST_RULE),
         m_owner_nonterminal(NULL),
         m_rule_token_list(rule_token_list),
-        m_rule_precedence_id(rule_precedence_id),
+        m_rule_precedence(rule_precedence),
         m_rule_handler_map(NULL),
         m_rule_index(rule_index)
     {
         assert(m_rule_token_list != NULL);
+        assert(m_rule_precedence != NULL);
     }
 
     string GetAsText (Uint32 stage = UINT32_UPPER_BOUND) const;
@@ -166,10 +171,11 @@ struct Nonterminal : public TokenId
 
     Nonterminal (
         string const &id,
+        Uint32 token_index,
         FiLoc const &filoc,
         TypeMap const *assigned_type_map = NULL)
         :
-        TokenId(id, filoc, AST_NONTERMINAL),
+        TokenId(id, token_index, filoc, AST_NONTERMINAL),
         m_assigned_type_map(assigned_type_map),
         m_rule_list(NULL),
         m_npda_graph_start_state(UINT32_UPPER_BOUND),
@@ -256,42 +262,45 @@ struct PrecedenceList : public Ast::AstList<Precedence>
 struct PrimarySource : public Ast::Base
 {
     CommonLang::TargetMap const *const m_target_map;
+    TerminalList const *const m_terminal_list;
     TerminalMap const *const m_terminal_map;
     PrecedenceMap const *const m_precedence_map;
     PrecedenceList const *const m_precedence_list;
     string const m_default_parse_nonterminal_id;
-    NonterminalMap const *const m_nonterminal_map;
     NonterminalList const *const m_nonterminal_list;
+    NonterminalMap const *const m_nonterminal_map;
 
     PrimarySource (
         CommonLang::TargetMap const *target_map,
+        TerminalList const *terminal_list,
         TerminalMap const *terminal_map,
         PrecedenceMap const *precedence_map,
         PrecedenceList const *precedence_list,
         string const &default_parse_nonterminal_id,
         FiLoc const &filoc,
-        NonterminalMap const *nonterminal_map,
-        NonterminalList const *nonterminal_list)
+        NonterminalList const *nonterminal_list,
+        NonterminalMap const *nonterminal_map)
         :
         Ast::Base(filoc, AST_PRIMARY_SOURCE),
         m_target_map(target_map),
+        m_terminal_list(terminal_list),
         m_terminal_map(terminal_map),
         m_precedence_map(precedence_map),
         m_precedence_list(precedence_list),
         m_default_parse_nonterminal_id(default_parse_nonterminal_id),
-        m_nonterminal_map(nonterminal_map),
-        m_nonterminal_list(nonterminal_list)
+        m_nonterminal_list(nonterminal_list),
+        m_nonterminal_map(nonterminal_map)
     {
         assert(m_target_map != NULL);
+        assert(m_terminal_list != NULL);
         assert(m_terminal_map != NULL);
         assert(m_precedence_map != NULL);
         assert(m_precedence_list != NULL);
         assert(!m_default_parse_nonterminal_id.empty());
-        assert(m_nonterminal_map != NULL);
         assert(m_nonterminal_list != NULL);
+        assert(m_nonterminal_map != NULL);
     }
 
-    Uint32 GetTokenIndex (string const &token_id) const;
     Uint32 GetRuleCount () const { return m_nonterminal_list->GetRuleCount(); }
     Rule const *GetRule (Uint32 rule_index) const;
     Uint32 GetRuleTokenCount () const;

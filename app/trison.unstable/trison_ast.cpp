@@ -86,7 +86,8 @@ string Rule::GetAsText (Uint32 stage) const
 void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
-    stream << Tabs(indent_level+1) << "precedence: " << m_rule_precedence_id << endl;
+    stream << Tabs(indent_level+1) << endl;
+    m_rule_precedence->Print(stream, Stringify, indent_level+1);
     m_rule_token_list->Print(stream, Stringify, indent_level+1);
     m_rule_handler_map->Print(stream, Stringify, indent_level+1);
 }
@@ -148,46 +149,6 @@ void Precedence::Print (ostream &stream, StringifyAstType Stringify, Uint32 inde
     stream << Tabs(indent_level+1) << "precedence id: " << m_precedence_id << endl;
     stream << Tabs(indent_level+1) << "precedence associativity: " << m_precedence_associativity << endl;
     stream << Tabs(indent_level+1) << "precedence level: " << m_precedence_level << endl;
-}
-
-Uint32 PrimarySource::GetTokenIndex (string const &token_id) const
-{
-    assert(!token_id.empty());
-
-    Uint32 index = 0x100;
-
-    // special terminals (see also GenerateGeneralAutomatonSymbols in trison_codespecsymbols.cpp)
-    if (token_id == "END_")
-        return index;
-    ++index;
-
-    if (token_id == "ERROR_")
-        return index;
-    ++index;
-
-    for (TerminalMap::const_iterator it = m_terminal_map->begin(), it_end = m_terminal_map->end();
-         it != it_end;
-         ++it)
-    {
-        Terminal const *terminal = it->second;
-        assert(terminal != NULL);
-        if (token_id == terminal->GetText())
-            return index;
-        if (terminal->m_is_id)
-            ++index;
-    }
-    for (NonterminalMap::const_iterator it = m_nonterminal_map->begin(), it_end = m_nonterminal_map->end();
-         it != it_end;
-         ++it)
-    {
-        Nonterminal const *nonterminal = it->second;
-        assert(nonterminal != NULL);
-        if (token_id == nonterminal->GetText())
-            return index;
-        ++index;
-    }
-    assert(false && "invalid token id");
-    return UINT32_UPPER_BOUND;
 }
 
 Rule const *PrimarySource::GetRule (Uint32 rule_index) const
