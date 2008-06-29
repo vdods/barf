@@ -279,8 +279,7 @@ void <{class_name}::ResetForNewInput_ ()
             assert(m_doomed_nonreturn_branch_list_.IsEmpty_());
             assert(m_doomed_return_branch_list_.IsEmpty_());
         }
-        // TODO: handle nonassoc errors -- should this be
-        // detected before PerformScheduledTransitions_ ?
+        // TODO: handle nonassoc errors
         assert(!m_nonassoc_error_encountered_ && "nonassoc error handling not implemented yet");
         m_nonassoc_error_encountered_ = false;
         // Because the action tree represents all possible valid parses of the input

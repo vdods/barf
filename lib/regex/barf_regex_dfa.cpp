@@ -74,8 +74,8 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
     }
 
     // iterate over all transitions
-    for (Graph::Node::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                                    it_end = node.GetTransitionSetEnd();
+    for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
+                                              it_end = node.GetTransitionSetEnd();
          it != it_end;
          ++it)
     {
@@ -140,8 +140,8 @@ void PerformEpsilonClosure (GraphContext const &graph_context, Uint32 nfa_state,
     }
 
     // iterate over all transitions
-    for (Graph::Node::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                                    it_end = node.GetTransitionSetEnd();
+    for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
+                                              it_end = node.GetTransitionSetEnd();
          it != it_end;
          ++it)
     {
@@ -253,8 +253,8 @@ Uint32 GetDfaStateIndex (GraphContext &graph_context, DfaState const &dfa_state,
                  ++it)
             {
                 Graph::Node const &from_nfa_node = graph_context.m_nfa_graph.GetNode(*it);
-                for (Graph::Node::TransitionSet::const_iterator trans_it = from_nfa_node.GetTransitionSetBegin(),
-                                                                trans_it_end = from_nfa_node.GetTransitionSetEnd();
+                for (Graph::TransitionSet::const_iterator trans_it = from_nfa_node.GetTransitionSetBegin(),
+                                                          trans_it_end = from_nfa_node.GetTransitionSetEnd();
                      trans_it != trans_it_end;
                      ++trans_it)
                 {

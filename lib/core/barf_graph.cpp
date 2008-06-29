@@ -61,13 +61,13 @@ void Graph::PrintDotGraph (ostream &stream, string const &graph_name) const
     {
         Node const &node = m_node_array[i];
 
-        for (Node::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                                 it_end = node.GetTransitionSetEnd();
+        for (TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
+                                           it_end = node.GetTransitionSetEnd();
              it != it_end;
              ++it)
         {
             Transition const &transition = *it;
-            
+
             stream << "        edge [label=" << GetStringLiteral(transition.Label())
                    << ", fontname=courier, color=\"#" << transition.DotGraphColor()
                    << "\", fontcolor=\"#" << transition.DotGraphColor()

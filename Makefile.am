@@ -495,6 +495,7 @@ trison_unstable_LDADD = \
 trison_unstable_SOURCES = \
 	app/trison.unstable/trison_ast.cpp \
 	app/trison.unstable/trison_codespecsymbols.cpp \
+	app/trison.unstable/trison_dpda.cpp \
 	app/trison.unstable/trison_enums.cpp \
 	app/trison.unstable/trison_graph.cpp \
 	app/trison.unstable/trison_main.cpp \
@@ -563,6 +564,7 @@ noinst_HEADERS = \
 	app/trison.unstable/trison.hpp \
 	app/trison.unstable/trison_ast.hpp \
 	app/trison.unstable/trison_codespecsymbols.hpp \
+	app/trison.unstable/trison_dpda.hpp \
 	app/trison.unstable/trison_enums.hpp \
 	app/trison.unstable/trison_graph.hpp \
 	app/trison.unstable/trison_message.hpp \
@@ -582,12 +584,14 @@ noinst_HEADERS = \
 	lib/core/barf_filoc.hpp \
 	lib/core/barf_graph.hpp \
 	lib/core/barf_inputbase.hpp \
+	lib/core/barf_list.hpp \
 	lib/core/barf_message.hpp \
 	lib/core/barf_optionsbase.hpp \
 	lib/core/barf_pointer.hpp \
 	lib/core/barf_searchpath.hpp \
 	lib/core/barf_types.hpp \
 	lib/core/barf_util.hpp \
+	lib/core/barf_weakreference.hpp \
 	\
 	lib/targetspec/barf_targetspec.hpp \
 	lib/targetspec/barf_targetspec_ast.hpp \

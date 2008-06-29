@@ -400,8 +400,8 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             Sint32 node_transition_offset = total_transition_count;
             Sint32 node_transition_count = 0;
 
-            for (Graph::Node::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                                            it_end = node.GetTransitionSetEnd();
+            for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
+                                                      it_end = node.GetTransitionSetEnd();
                  it != it_end;
                  ++it)
             {

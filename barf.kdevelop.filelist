@@ -12,6 +12,12 @@ app/bpp/bpp.hpp
 app/bpp/bpp_main.cpp
 app/bpp/bpp_options.cpp
 app/bpp/bpp_options.hpp
+app/dev/bootstrap.sh
+app/dev/configure.ac
+app/dev/dumblang_parser.trison
+app/dev/dumblang_scanner.reflex
+app/dev/Makefile.am
+app/example/calculator/bootstrap.sh
 app/example/calculator/calculator.hpp
 app/example/calculator/calculator_main.cpp
 app/example/calculator/calculator_parser.cpp
@@ -20,6 +26,8 @@ app/example/calculator/calculator_parser.trison
 app/example/calculator/calculator_scanner.cpp
 app/example/calculator/calculator_scanner.hpp
 app/example/calculator/calculator_scanner.reflex
+app/example/calculator/configure.ac
+app/example/calculator/Makefile.am
 app/reflex/example.reflex
 app/reflex/reflex.hpp
 app/reflex/reflex_ast.cpp
@@ -118,6 +126,7 @@ lib/core/barf_graph.cpp
 lib/core/barf_graph.hpp
 lib/core/barf_inputbase.cpp
 lib/core/barf_inputbase.hpp
+lib/core/barf_list.hpp
 lib/core/barf_message.cpp
 lib/core/barf_message.hpp
 lib/core/barf_optionsbase.cpp
@@ -128,6 +137,7 @@ lib/core/barf_searchpath.hpp
 lib/core/barf_types.hpp
 lib/core/barf_util.cpp
 lib/core/barf_util.hpp
+lib/core/barf_weakreference.hpp
 lib/preprocessor/barf_preprocessor.hpp
 lib/preprocessor/barf_preprocessor_ast.cpp
 lib/preprocessor/barf_preprocessor_ast_execute.cpp

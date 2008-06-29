@@ -17,7 +17,7 @@
 #include "barf_preprocessor_symboltable.hpp"
 #include "trison_ast.hpp"
 #include "trison_codespecsymbols.hpp"
-// #include "trison_dpda.hpp"
+#include "trison_dpda.hpp"
 #include "trison_npda.hpp"
 #include "trison_options.hpp"
 #include "trison_parser.hpp"
@@ -140,9 +140,8 @@ void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
     // as a program error.  if any errors were accumulated during this
     // section, abort with an error code.
 
-/*  NOTE not implemented yet
     try {
-        Trison::GenerateDpda(npda_graph, dpda_graph);
+        Trison::GenerateDpda(primary_source, npda_graph, dpda_graph);
         PrintDotGraph(dpda_graph, GetOptions().GetDaDotGraphPath(), "DPDA");
     } catch (string const &exception) {
         EmitError(exception);
@@ -150,7 +149,6 @@ void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
 
     if (g_errors_encountered)
         exit(RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR);
-*/
 }
 
 void ParseTargetspecs (Trison::PrimarySource const &primary_source)

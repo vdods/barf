@@ -38,8 +38,11 @@ public:
         friend ostream &operator << (ostream &stream, Color const &color);
     }; // end of struct Graph::Color
 
-    // Transition is meant to be subclassed for use, but the subclasses shouldn't
-    // require a destructor, since Transition does not have a virtual destructor.
+    // Transition is meant to be subclassed for use, but the subclasses should
+    // really only be frontends for constructors -- they shouldn't have any member
+    // variables, and they shouldn't do anything in the destructor (since the
+    // subclass destructor won't be called).  TODO -- change this scheme to
+    // have functions which construct custom Transitions.
     struct Transition
     {
         typedef string (*Stringify)(Transition const &);
@@ -113,11 +116,11 @@ public:
         friend struct Order;
     }; // end of struct Graph::Transition
 
+    typedef set<Transition, Transition::Order> TransitionSet;
+
     class Node
     {
     public:
-
-        typedef set<Transition, Transition::Order> TransitionSet;
 
         // interface class for Graph::Node data
         struct Data

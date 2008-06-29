@@ -13,6 +13,9 @@
 
 #include "trison.hpp"
 
+#include "trison_ast.hpp"
+#include "trison_graph.hpp"
+
 namespace Trison {
 
 void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph);
