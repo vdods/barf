@@ -16,8 +16,6 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	clean-dumblang-parser \
 	clean-dumblang-parser-extras \
 	force-dumblang-parser \
-	dumblang-dpda-dot \
-	dumblang-npda-dot \
 	\
 	dumblang-scanner \
 	clean-dumblang-scanner \
@@ -104,11 +102,11 @@ dumblang-parser force-dumblang-parser:
 	@echo "!!!"
 endif
 
-dumblang-dpda-dot: dumblang_parser.dpda.dot
+dumblang_parser.dpda.png: dumblang_parser.dpda.dot
 	dot dumblang_parser.dpda.dot -Tpng -o dumblang_parser.dpda.png
 	convert dumblang_parser.dpda.png -resize 66%x66% dumblang_parser.dpda.png
 
-dumblang-npda-dot: dumblang_parser.npda.dot
+dumblang_parser.npda.png: dumblang_parser.npda.dot
 	dot dumblang_parser.npda.dot -Tpng -o dumblang_parser.npda.png
 	convert dumblang_parser.npda.png -resize 66%x66% dumblang_parser.npda.png
 

@@ -64,10 +64,11 @@ struct GraphContext
 
 enum IterateFlags
 {
-    IT_NONE         = 0,
-    IT_TERMINALS    = 1 << 0,
-    IT_NONTERMINALS = 1 << 1,
-    IT_ALL          = IT_TERMINALS|IT_NONTERMINALS
+    IT_EPSILON_TRANSITIONS           = 1 << 0,
+    IT_REDUCE_TRANSITIONS            = 1 << 1,
+    IT_RETURN_TRANSITIONS            = 1 << 2,
+    IT_SHIFT_TERMINAL_TRANSITIONS    = 1 << 3,
+    IT_SHIFT_NONTERMINAL_TRANSITIONS = 1 << 4
 }; // end of enum IterateFlags
 
 // the lifetime of an instance of TransitionIterator should never exceed
@@ -77,13 +78,15 @@ class TransitionIterator
 {
 public:
 
-    TransitionIterator (Graph const &npda_graph, DpdaState const &dpda_state, IterateFlags flags, Uint32 lowest_nonterminal_index)
+    TransitionIterator (GraphContext const &graph_context, DpdaState const &dpda_state, IterateFlags flags)
         :
-        m_npda_graph(npda_graph),
+        m_npda_graph(graph_context.m_npda_graph),
         m_dpda_state(dpda_state),
-        m_flags(flags),
-        m_lowest_nonterminal_index(lowest_nonterminal_index)
+        m_flags(flags)
     {
+        assert(!graph_context.m_primary_source.m_terminal_list->empty());
+        m_lowest_nonterminal_index = graph_context.m_primary_source.m_terminal_list->GetElement(graph_context.m_primary_source.m_terminal_list->size()-1)->m_token_index;
+
         assert(m_lowest_nonterminal_index > 0x101); // 0x100 and 0x101 are END_ and ERROR_ respectively
         // start the TransitionIterator's major iterator pointing at the first
         // Graph::Transition of the first nonempty DpdaState Graph::Node (i.e. a
@@ -96,10 +99,15 @@ public:
             PrivateIncrement();
     }
 
-    Uint32 operator * () const
+    Graph::Transition const &operator * () const
     {
         assert(!IsDone() && "can't dereference a 'done' TransitionIterator");
-        return m_transition_it->Data(0);
+        return *m_transition_it;
+    }
+    Graph::Transition const *operator -> () const
+    {
+        assert(!IsDone() && "can't dereference a 'done' TransitionIterator");
+        return &*m_transition_it;
     }
     void operator ++ ()
     {
@@ -120,10 +128,16 @@ private:
     {
         assert(!IsDone());
         bool satisfies_flags = false;
-        if ((m_flags&IT_TERMINALS) != 0)
-            satisfies_flags |= operator*() < m_lowest_nonterminal_index;
-        if ((m_flags&IT_NONTERMINALS) != 0)
-            satisfies_flags |= operator*() >= m_lowest_nonterminal_index;
+        if ((m_flags&IT_EPSILON_TRANSITIONS) != 0)
+            satisfies_flags |= operator*().Type() == TT_EPSILON;
+        if ((m_flags&IT_REDUCE_TRANSITIONS) != 0)
+            satisfies_flags |= operator*().Type() == TT_REDUCE;
+        if ((m_flags&IT_RETURN_TRANSITIONS) != 0)
+            satisfies_flags |= operator*().Type() == TT_RETURN;
+        if ((m_flags&IT_SHIFT_TERMINAL_TRANSITIONS) != 0)
+            satisfies_flags |= operator*().Type() == TT_SHIFT && operator*().Data(0) < m_lowest_nonterminal_index;
+        if ((m_flags&IT_SHIFT_NONTERMINAL_TRANSITIONS) != 0)
+            satisfies_flags |= operator*().Type() == TT_SHIFT && operator*().Data(0) >= m_lowest_nonterminal_index;
         return satisfies_flags;
     }
     void PrivateIncrement ()
@@ -156,7 +170,7 @@ private:
     Graph const &m_npda_graph;
     DpdaState const &m_dpda_state;
     IterateFlags const m_flags;
-    Uint32 const m_lowest_nonterminal_index;
+    Uint32 m_lowest_nonterminal_index;
     // major iterator ("outer loop")
     DpdaState::const_iterator m_dpda_state_it;
     // minor iterator ("inner loop")
@@ -169,6 +183,7 @@ enum ActionType
     AT_SHIFT,
     AT_SHIFT_AND_PUSH_STATE,
     AT_REDUCE,
+    AT_RETURN,
     AT_ERROR_PANIC,
 
     AT_COUNT
@@ -198,6 +213,7 @@ ostream &operator << (ostream &stream, ActionType const &action_type)
         "AT_SHIFT",
         "AT_SHIFT_AND_PUSH_STATE",
         "AT_REDUCE",
+        "AT_RETURN",
         "AT_ERROR_PANIC"
     };
     assert(action_type >= 0 && action_type < AT_COUNT);
@@ -1151,13 +1167,27 @@ public:
 
         return current_dpda_state;
     }
-    ActionSpec DefaultAction () const
+    ActionSpec DefaultAction (GraphContext const &graph_context) const
     {
         assert(m_tree_root != NULL);
+
+        // if a reduce action occurred, then that's the one.
         if (m_tree_root->m_reduce_child != NULL)
             return ActionSpec(AT_REDUCE, m_tree_root->m_reduce_child->m_reduction_rule->m_rule_index);
-        else
-            return ActionSpec(AT_ERROR_PANIC);
+
+        TransitionIterator it(graph_context, CurrentDpdaState(), IT_RETURN_TRANSITIONS);
+        // if there is a return transition, make sure it's the only one (theoretically,
+        // it should only be possible to get to a single return transition at a time).
+        if (!it.IsDone())
+        {
+            Uint32 return_nonterminal_token_index = it->Data(0);
+            ++it;
+            assert(it.IsDone() && "somehow more than one return transition was encountered");
+            return ActionSpec(AT_RETURN, return_nonterminal_token_index);
+        }
+
+        // the last resort is to error panic.
+        return ActionSpec(AT_ERROR_PANIC);
     }
     bool HasTrunk () const
     {
@@ -1718,9 +1748,38 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, DpdaState const &d
         // if there is no action in the trunk, then the default action is error panic.
         // otherwise it is necessarily a reduce action (because there are no tokens
         // to shift yet.
-        ActionSpec default_action(child_npda.DefaultAction());
-        assert(default_action.Type() == AT_ERROR_PANIC || default_action.Type() == AT_REDUCE);
+        ActionSpec default_action(child_npda.DefaultAction(graph_context));
+        assert(default_action.Type() == AT_ERROR_PANIC || default_action.Type() == AT_REDUCE || default_action.Type() == AT_RETURN);
         cerr << endl << "resulting action type: " << default_action.Type() << '(' << default_action.Data() << ')' << endl << endl;
+
+        // add the default action to the dpda graph
+        switch (default_action.Type())
+        {
+            default:
+            case AT_NONE:
+            case AT_SHIFT:
+            case AT_SHIFT_AND_PUSH_STATE:
+                assert(false && "invalid default action");
+                break;
+
+            case AT_REDUCE:
+                graph_context.m_dpda_graph.AddTransition(
+                    graph_context.m_generated_dpda_state_map[dpda_state],
+                    ReduceTransition(default_action.Data(), graph_context.m_primary_source.GetRule(default_action.Data())->m_owner_nonterminal->GetText(), "default: "));
+                break;
+
+            case AT_RETURN:
+                graph_context.m_dpda_graph.AddTransition(
+                    graph_context.m_generated_dpda_state_map[dpda_state],
+                    ReturnTransition(graph_context.m_primary_source.GetTokenId(default_action.Data()), default_action.Data(), "default: "));
+                break;
+
+            case AT_ERROR_PANIC:
+                graph_context.m_dpda_graph.AddTransition(
+                    graph_context.m_generated_dpda_state_map[dpda_state],
+                    ErrorPanicTransition("default: "));
+                break;
+        }
     }
 
 //     // now recurse, exploring the states resulting from all valid transitions.
@@ -1730,13 +1789,11 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, DpdaState const &d
     // generate the shift transitions for the nonterminals at this state.  the fanciness
     // with the set<Uint32> is so we only attempt each transition once, and in order
     // by index.
-    set<Uint32> transition_nonterminal_index;
-    assert(!graph_context.m_primary_source.m_terminal_list->empty());
-    Uint32 lowest_nonterminal_index = graph_context.m_primary_source.m_terminal_list->GetElement(graph_context.m_primary_source.m_terminal_list->size()-1)->m_token_index;
-    for (TransitionIterator it(graph_context.m_npda_graph, dpda_state, IT_NONTERMINALS, lowest_nonterminal_index); !it.IsDone(); ++it)
-        transition_nonterminal_index.insert(*it);
+    set<Uint32> nonterminal_token_index;
+    for (TransitionIterator it(graph_context, dpda_state, IT_SHIFT_NONTERMINAL_TRANSITIONS); !it.IsDone(); ++it)
+        nonterminal_token_index.insert(it->Data(0)); // Data(0) is the nonterminal token index
 
-    for (set<Uint32>::const_iterator it = transition_nonterminal_index.begin(), it_end = transition_nonterminal_index.end();
+    for (set<Uint32>::const_iterator it = nonterminal_token_index.begin(), it_end = nonterminal_token_index.end();
          it != it_end;
          ++it)
     {

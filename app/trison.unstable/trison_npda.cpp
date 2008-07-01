@@ -267,7 +267,7 @@ void EnsureGeneratedNpda (
     graph_context.m_npda_graph.AddTransition(graph_start_state, EpsilonTransition(graph_head_state));
     graph_context.m_npda_graph.AddTransition(graph_start_state, ShiftTransition(nonterminal.m_token_index, nonterminal.GetText(), graph_return_state));
     // create the return transition
-    graph_context.m_npda_graph.AddTransition(graph_return_state, ReturnTransition(nonterminal.GetText()));
+    graph_context.m_npda_graph.AddTransition(graph_return_state, ReturnTransition(nonterminal.GetText(), nonterminal.m_token_index));
     // record the start, head and return states
     nonterminal.SetNpdaGraphStates(graph_start_state, graph_head_state, graph_return_state);
     // the rules are effectively or'ed together

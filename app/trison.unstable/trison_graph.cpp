@@ -19,7 +19,8 @@ string const &GetTransitionTypeString (TransitionType transition_type)
         "TT_EPSILON",
         "TT_REDUCE",
         "TT_RETURN",
-        "TT_SHIFT"
+        "TT_SHIFT",
+        "TT_ERROR_PANIC"
     };
     assert(transition_type < TT_COUNT);
     return s_transition_type_string[transition_type];

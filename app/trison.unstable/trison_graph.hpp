@@ -24,6 +24,7 @@ enum
     TT_REDUCE,
     TT_RETURN,
     TT_SHIFT,
+    TT_ERROR_PANIC,
 
     TT_COUNT
 };
@@ -46,9 +47,9 @@ struct ShiftTransition : public Graph::Transition
 
 struct ReduceTransition : public Graph::Transition
 {
-    ReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name)
+    ReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name, string const &text_prefix = g_empty_string)
         :
-        Graph::Transition(TT_REDUCE, 1, ms_no_target_index, "reduce: " + nonterminal_name, Graph::Color(0x00AA00))
+        Graph::Transition(TT_REDUCE, 1, ms_no_target_index, text_prefix + "reduce " + nonterminal_name, Graph::Color(0x00AA00))
     {
         SetData(0, reduction_rule_index);
     }
@@ -56,10 +57,12 @@ struct ReduceTransition : public Graph::Transition
 
 struct ReturnTransition : public Graph::Transition
 {
-    ReturnTransition (string const &nonterminal_name)
+    ReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index, string const &text_prefix = g_empty_string)
         :
-        Graph::Transition(TT_RETURN, 0, ms_no_target_index, "return: " + nonterminal_name, Graph::Color(0x0000FF))
-    { }
+        Graph::Transition(TT_RETURN, 1, ms_no_target_index, text_prefix + "return " + nonterminal_name, Graph::Color(0x0000FF))
+    {
+        SetData(0, nonterminal_token_index);
+    }
 }; // end of struct ReturnTransition
 
 struct EpsilonTransition : public Graph::Transition
@@ -69,6 +72,14 @@ struct EpsilonTransition : public Graph::Transition
         Graph::Transition(TT_EPSILON, 0, target_index, "(e)", Graph::Color(0xEF280E))
     { }
 }; // end of struct EpsilonTransition
+
+struct ErrorPanicTransition : public Graph::Transition
+{
+    ErrorPanicTransition (string const &text_prefix = g_empty_string)
+        :
+        Graph::Transition(TT_ERROR_PANIC, 0, ms_no_target_index, text_prefix + "error panic", Graph::Color(0xEF280E))
+    { }
+}; // end of struct ErrorPanicTransition
 
 } // end of namespace Trison
 
