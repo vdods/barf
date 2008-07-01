@@ -16,6 +16,8 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	clean-dumblang-parser \
 	clean-dumblang-parser-extras \
 	force-dumblang-parser \
+	dumblang-dpda-dot \
+	dumblang-npda-dot \
 	\
 	dumblang-scanner \
 	clean-dumblang-scanner \
@@ -90,10 +92,10 @@ if TRISON_EXISTS
 dumblang-parser: $(top_srcdir)/dumblang_parser.hpp
 $(top_srcdir)/dumblang_parser.hpp: $(top_srcdir)/dumblang_parser.cpp
 $(top_srcdir)/dumblang_parser.cpp: $(top_srcdir)/dumblang_parser.trison $(TRISON) $(TARGETS_PATH)/trison.cpp_npda.targetspec $(TARGETS_PATH)/trison.cpp_npda.header.codespec $(TARGETS_PATH)/trison.cpp_npda.implementation.codespec
-	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.dot
+	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.npda.dot --generate-dpda-dot-graph dumblang_parser.dpda.dot
 
 force-dumblang-parser: $(top_srcdir)/dumblang_parser.trison $(TRISON)
-	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.dot
+	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.npda.dot --generate-dpda-dot-graph dumblang_parser.dpda.dot
 else # !TRISON_EXISTS
 dumblang-parser force-dumblang-parser:
 	@echo "!!!"
@@ -101,6 +103,14 @@ dumblang-parser force-dumblang-parser:
 	@echo "!!! Use --with-trison configure option."
 	@echo "!!!"
 endif
+
+dumblang-dpda-dot: dumblang_parser.dpda.dot
+	dot dumblang_parser.dpda.dot -Tpng -o dumblang_parser.dpda.png
+	convert dumblang_parser.dpda.png -resize 66%x66% dumblang_parser.dpda.png
+
+dumblang-npda-dot: dumblang_parser.npda.dot
+	dot dumblang_parser.npda.dot -Tpng -o dumblang_parser.npda.png
+	convert dumblang_parser.npda.png -resize 66%x66% dumblang_parser.npda.png
 
 ##############################################################################
 # all the no-install header files for the applications (is this necessary?)

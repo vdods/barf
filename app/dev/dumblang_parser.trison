@@ -214,6 +214,10 @@ int main (int argc, char **argv)
 
 %%
 
+// ///////////////////////////////////////////////////////////////////////////
+// shift/reduce conflicts requiring 3 lookaheads, resolved by precedence
+// ///////////////////////////////////////////////////////////////////////////
+
 %nonterminal st
 :
     exp ';' %target.cpp_npda { return NULL; }
@@ -228,6 +232,38 @@ int main (int argc, char **argv)
     exp '+' '+' '+' exp %prec MULTIPLICATION %target.cpp_npda { return NULL; }
 |
     ID %target.cpp_npda { return NULL; }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// parsing either of these will immediately incur a reduce (empty)
+// ///////////////////////////////////////////////////////////////////////////
+
+%nonterminal outer_empty
+:
+    empty %target.cpp_npda { return NULL; }
+;
+
+%nonterminal empty
+:
+    // empty reduction rule
+    %target.cpp_npda { return NULL; }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// mutually recursive rules
+// ///////////////////////////////////////////////////////////////////////////
+
+%nonterminal odd
+:
+    even ID %target.cpp_npda { return NULL; }
+;
+
+%nonterminal even
+:
+    odd ID %target.cpp_npda { return NULL; }
+|
+    // empty reduction rule
+    %target.cpp_npda { return NULL; }
 ;
 
 /*

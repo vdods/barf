@@ -299,6 +299,21 @@ struct PrimarySource : public Ast::Base
         assert(!m_default_parse_nonterminal_id.empty());
         assert(m_nonterminal_list != NULL);
         assert(m_nonterminal_map != NULL);
+
+        for (Uint32 i = 0; i < m_terminal_list->size(); ++i)
+        {
+            Terminal const *terminal = m_terminal_list->GetElement(i);
+            assert(terminal != NULL);
+            assert(m_token_id_map.find(terminal->m_token_index) == m_token_id_map.end());
+            m_token_id_map[terminal->m_token_index] = terminal->GetText();
+        }
+        for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
+        {
+            Nonterminal const *nonterminal = m_nonterminal_list->GetElement(i);
+            assert(nonterminal != NULL);
+            assert(m_token_id_map.find(nonterminal->m_token_index) == m_token_id_map.end());
+            m_token_id_map[nonterminal->m_token_index] = nonterminal->GetText();
+        }
     }
 
     Uint32 GetRuleCount () const { return m_nonterminal_list->GetRuleCount(); }
@@ -306,12 +321,18 @@ struct PrimarySource : public Ast::Base
     Uint32 GetRuleTokenCount () const;
     RuleToken const *GetRuleToken (Uint32 rule_token_index) const;
     string const &GetAssignedType (string const &token_id, string const &target_id) const;
+    string GetTokenId (Uint32 token_index) const;
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+
+private:
+
+    typedef map<Uint32, string> TokenIdMap;
+    TokenIdMap m_token_id_map;
 }; // end of struct PrimarySource
 
 } // end of namespace Trison

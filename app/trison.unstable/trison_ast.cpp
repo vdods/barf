@@ -224,6 +224,16 @@ string const &PrimarySource::GetAssignedType (string const &token_id, string con
     return assigned_type != NULL ? assigned_type->GetText() : g_empty_string;
 }
 
+string PrimarySource::GetTokenId (Uint32 token_index) const
+{
+    if (token_index < 0x100)
+        return GetCharLiteral(token_index);
+
+    TokenIdMap::const_iterator it = m_token_id_map.find(token_index);
+    assert(it != m_token_id_map.end());
+    return it->second;
+}
+
 void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
 {
     Print(stream, GetAstTypeString, indent_level);
