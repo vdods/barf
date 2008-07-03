@@ -62,6 +62,22 @@ struct GraphContext
     }
 }; // end of struct GraphContext
 
+string GetLookaheadSequenceString (GraphContext const &graph_context, Graph::Transition::DataArray const &lookahead_sequence)
+{
+    string ret;
+    for (Graph::Transition::DataArray::const_iterator it = lookahead_sequence.begin(), it_end = lookahead_sequence.end();
+         it != it_end;
+         ++it)
+    {
+        ret += graph_context.m_primary_source.GetTokenId(*it);
+        Graph::Transition::DataArray::const_iterator next_it = it;
+        ++next_it;
+        if (next_it != it_end)
+            ret += ' ';
+    }
+    return ret;
+}
+
 enum IterateFlags
 {
     IT_EPSILON_TRANSITIONS           = 1 << 0,
@@ -158,7 +174,7 @@ private:
     void SkipEmpties ()
     {
         while (m_dpda_state_it != m_dpda_state.end() &&
-                m_npda_graph.GetNode(*m_dpda_state_it).GetTransitionSetBegin() == m_npda_graph.GetNode(*m_dpda_state_it).GetTransitionSetEnd())
+               m_npda_graph.GetNode(*m_dpda_state_it).GetTransitionSetBegin() == m_npda_graph.GetNode(*m_dpda_state_it).GetTransitionSetEnd())
         {
             ++m_dpda_state_it;
         }
@@ -168,7 +184,7 @@ private:
     }
 
     Graph const &m_npda_graph;
-    DpdaState const &m_dpda_state;
+    DpdaState const m_dpda_state;
     IterateFlags const m_flags;
     Uint32 m_lowest_nonterminal_index;
     // major iterator ("outer loop")
@@ -234,7 +250,7 @@ private:
     struct Shift;
 
     typedef vector<Uint32> StateStack;
-    typedef Uint32 TokenId;
+    typedef Uint32 TokenIndex;
     enum { none__ = 0 }; // single known value for built-in nonterminal
 
     struct ReduceReduceConflict
@@ -295,13 +311,13 @@ private:
         typedef vector<ShiftReference> ShiftReferenceList;
         ShiftReferenceList m_shift_reference_list;
         StateStack m_state_stack;
-        TokenId m_lookahead_nonterminal_token_id;
+        TokenIndex m_lookahead_nonterminal_token_index;
         bool m_is_epsilon_closed;
 
         Branch (Uint32 starting_state)
             :
             TreeNode(BRANCH),
-            m_lookahead_nonterminal_token_id(none__),
+            m_lookahead_nonterminal_token_index(none__),
             m_is_epsilon_closed(false)
         {
             m_state_stack.push_back(starting_state);
@@ -347,7 +363,7 @@ private:
 
         Branch *DeepCopy (DeepCopyShiftReferenceMap &deep_copy_shift_reference_map) const
         {
-            Branch *copied_branch = new Branch(m_state_stack, m_lookahead_nonterminal_token_id);
+            Branch *copied_branch = new Branch(m_state_stack, m_lookahead_nonterminal_token_index);
             DeepCopyGutsInto(*copied_branch, deep_copy_shift_reference_map);
             return copied_branch;
         }
@@ -374,7 +390,7 @@ private:
         }
         Branch *Clone () const
         {
-            Branch *cloned = new Branch(m_state_stack, m_lookahead_nonterminal_token_id);
+            Branch *cloned = new Branch(m_state_stack, m_lookahead_nonterminal_token_index);
             assert(cloned->m_parent == NULL);
             // duplicate the shift reference list
             for (ShiftReferenceList::const_iterator it = m_shift_reference_list.begin(),
@@ -413,19 +429,31 @@ private:
                 Uint32 stack_state = *it;
                 stream << ' ' << stack_state;
             }
-            if (m_lookahead_nonterminal_token_id != none__)
-                stream << " (" << m_lookahead_nonterminal_token_id << ')';
+            if (m_lookahead_nonterminal_token_index != none__)
+                stream << " (" << m_lookahead_nonterminal_token_index << ')';
             stream /*<< " \"" << Top().m_description << '\"'*/ << endl; // TODO -- real description
+            for (ShiftReferenceList::const_iterator it = m_shift_reference_list.begin(),
+                                                    it_end = m_shift_reference_list.end();
+                    it != it_end;
+                    ++it)
+            {
+                ShiftReference const &shift_reference = *it;
+                assert(shift_reference.IsValid());
+                assert(shift_reference.InstanceIsValid());
+                // TODO: make into assert(shift_reference.ReferenceCount() > 1); -- changes in the ref count should cause cleanup in the rule range
+                if (shift_reference.ReferenceCount() > 1)
+                    stream << string(2*(indent_level+1), ' ') << &*shift_reference << endl;
+            }
         }
 
     private:
 
         // for use only by DeepCopy() and Clone()
-        Branch (StateStack const &state_stack, TokenId lookahead_nonterminal_token_id)
+        Branch (StateStack const &state_stack, TokenIndex lookahead_nonterminal_token_index)
             :
             TreeNode(BRANCH),
             m_state_stack(state_stack),
-            m_lookahead_nonterminal_token_id(lookahead_nonterminal_token_id),
+            m_lookahead_nonterminal_token_index(lookahead_nonterminal_token_index),
             m_is_epsilon_closed(false)
         {
             assert(!m_state_stack.empty());
@@ -647,13 +675,10 @@ private:
             // clone the source branch and operate on it
             Branch *reduced_branch = source_branch.Clone();
             assert(reduced_branch != NULL);
+            assert(reduced_branch->m_state_stack.size() > reduction_rule->m_rule_token_list->size() + 2);
 //         //     reduced_branch->m_state_stack.resize(reduced_branch->m_state_stack.size() - (reduction_rule->m_rule_token_list->size() + 1)); // for condensed nonterminal head states
-//             reduced_branch->m_state_stack.resize(reduced_branch->m_state_stack.size() - (reduction_rule->m_rule_token_list->size() + 2)); // for uncondensed nonterminal head states
-            if (reduced_branch->m_state_stack.size() < reduction_rule->m_rule_token_list->size() + 2)
-                reduced_branch->m_state_stack.resize(1); // NOTE -- this 1 is totally artificial, but it just has to be >0
-            else
-                reduced_branch->m_state_stack.resize(reduced_branch->m_state_stack.size() - (reduction_rule->m_rule_token_list->size() + 2)); // for uncondensed nonterminal head states
-            reduced_branch->m_lookahead_nonterminal_token_id = reduction_rule->m_owner_nonterminal->m_token_index;
+            reduced_branch->m_state_stack.resize(reduced_branch->m_state_stack.size() - (reduction_rule->m_rule_token_list->size() + 2)); // for uncondensed nonterminal head states
+            reduced_branch->m_lookahead_nonterminal_token_index = reduction_rule->m_owner_nonterminal->m_token_index;
             // add the reduced branch as a child of the reduce child
             m_reduce_child->AddChildBranch(reduced_branch);
             // add the reduced branch to the proper place in the action and parser
@@ -691,7 +716,7 @@ private:
             Branch *shifted_branch = source_branch.Clone();
             assert(shifted_branch != NULL);
             shifted_branch->m_state_stack.push_back(target_state);
-            shifted_branch->m_lookahead_nonterminal_token_id = none__;
+            shifted_branch->m_lookahead_nonterminal_token_index = none__;
 //             cerr << "adding parser branch " << static_cast<ParserBranch *>(shifted_branch)
 //                       << " which is action branch " << static_cast<ActionBranch *>(shifted_branch)
 //                       << endl;
@@ -963,6 +988,7 @@ private:
             DeepCopyGutsInto(*copied_shift, deep_copy_shift_reference_map, source_parser_branch, target_parser_branch_list);
             // important: record a reference to the cloned shift so we can later
             // clone the shift references in Shift::m_rule_range.
+            assert(deep_copy_shift_reference_map.find(this) == deep_copy_shift_reference_map.end());
             deep_copy_shift_reference_map[this] = ShiftReference(copied_shift);
             return copied_shift;
         }
@@ -978,8 +1004,9 @@ private:
                  ++it)
             {
                 Rule const *rule = it->first;
-                assert(deep_copy_shift_reference_map.find(this) != deep_copy_shift_reference_map.end());
-                copied_shift.m_rule_range[rule] = deep_copy_shift_reference_map[this];
+                ShiftReference const &shift_reference = it->second;
+                assert(deep_copy_shift_reference_map.find(&*shift_reference) != deep_copy_shift_reference_map.end());
+                copied_shift.m_rule_range[rule] = deep_copy_shift_reference_map[&*shift_reference];
             }
         }
 
@@ -1073,7 +1100,7 @@ private:
         }
 
     private:
-
+    
         ShiftReferenceMap m_rule_range;
     }; // end of struct Npda::Shift
 
@@ -1134,7 +1161,36 @@ public:
         {
             DeepCopyShiftReferenceMap deep_copy_shift_reference_map;
             Branch const *source_parser_branch = static_cast<Branch const *>(npda.m_parser_branch_list.Front());
-            m_tree_root = npda.m_tree_root->DeepCopy(deep_copy_shift_reference_map, source_parser_branch, m_parser_branch_list);
+            // TODO make real versoin of this 
+            switch (npda.m_tree_root->m_tree_node_type)
+            {
+                default:
+                case TreeNode::BRANCH:
+                    assert(false && "impossible/invalid case");
+                    break;
+
+                case TreeNode::ACTION:
+                    m_tree_root = npda.m_tree_root->DeepCopy(deep_copy_shift_reference_map, source_parser_branch, m_parser_branch_list);
+                    npda.m_tree_root->DeepCopyShiftReferencesInto(*m_tree_root, deep_copy_shift_reference_map);
+                    break;
+
+                case TreeNode::REDUCE:
+                {
+                    Reduce *tree_root = static_cast<Reduce *>(npda.m_tree_root)->DeepCopy(deep_copy_shift_reference_map, source_parser_branch, m_parser_branch_list);
+                    static_cast<Reduce *>(npda.m_tree_root)->DeepCopyShiftReferencesInto(*tree_root, deep_copy_shift_reference_map);
+                    m_tree_root = static_cast<Action *>(tree_root);
+                    break;
+                }
+
+                case TreeNode::SHIFT:
+                {
+                    Shift *tree_root = static_cast<Shift *>(npda.m_tree_root)->DeepCopy(deep_copy_shift_reference_map, source_parser_branch, m_parser_branch_list);
+                    static_cast<Shift *>(npda.m_tree_root)->DeepCopyShiftReferencesInto(*tree_root, deep_copy_shift_reference_map);
+                    m_tree_root = static_cast<Action *>(tree_root);
+                    break;
+                }
+            }
+            assert(source_parser_branch == NULL);
         }
 
 //         cerr << "TESTING -- original m_tree_root:" << endl;
@@ -1200,50 +1256,83 @@ public:
                ||
                m_tree_root->m_reduce_child == NULL && m_tree_root->m_shift_child != NULL;
     }
-    ActionSpec FirstTrunkAction () const
+    ActionSpec FirstTrunkAction (Uint32 lookahead_token_index) const
     {
-        assert(HasTrunk() && "you can't call this method if there is no trunk");
-        if (m_tree_root->m_reduce_child != NULL)
+        if (!HasTrunk())
+            return ActionSpec(AT_NONE);
+        else if (m_tree_root->m_reduce_child != NULL)
             return ActionSpec(AT_REDUCE, m_tree_root->m_reduce_child->m_reduction_rule->m_rule_index);
         else
-            return ActionSpec(AT_SHIFT); // we don't know the target state at this point
+            return ActionSpec(AT_SHIFT, lookahead_token_index);
+    }
+    void RemoveTrunk ()
+    {
+        Action *action = m_tree_root;
+
+        while (true)
+        {
+            assert(action != NULL);
+
+            // if we're at a branch or a fork, stop iterating
+            TreeNode *single_child = action->SingleChild();
+            if (single_child == NULL || single_child->m_tree_node_type == TreeNode::BRANCH)
+                break;
+
+            action = static_cast<Action *>(single_child);
+        }
+
+        // the trunk has been executed.  now delete it.
+        while (m_tree_root != action)
+        {
+            TreeNode *single_child = m_tree_root->SingleChild();
+            assert(single_child->m_tree_node_type == TreeNode::REDUCE ||
+                   single_child->m_tree_node_type == TreeNode::SHIFT);
+            m_tree_root->RemoveChild(single_child);
+            switch (m_tree_root->m_tree_node_type)
+            {
+                default:
+                case TreeNode::BRANCH: assert(false && "this should never happen"); break;
+                case TreeNode::ACTION: cerr << "deleting TreeNode::ACTION " << m_tree_root << endl; delete m_tree_root; break;
+                case TreeNode::REDUCE: cerr << "deleting TreeNode::REDUCE " << static_cast<Reduce *>(m_tree_root) << endl; delete static_cast<Reduce *>(m_tree_root); break;
+                case TreeNode::SHIFT : cerr << "deleting TreeNode::SHIFT " << static_cast<Shift *>(m_tree_root) << endl; delete static_cast<Shift *>(m_tree_root); break;
+            }
+            m_tree_root = static_cast<Action *>(single_child);
+        }
     }
 
-    enum RunDuration
+    // runs the npda, with no input, until nothing more can be done without more input, or HasTrunk()
+    void Run (GraphContext const &graph_context)
     {
-        RD_AS_LONG_AS_POSSIBLE = 0,
-        RD_UNTIL_NONTRIVIAL_TRUNK
-    };
-
-    // runs the npda, with no input, until nothing more can be done without more input.
-    void Run (GraphContext const &graph_context, RunDuration run_duration)
-    {
-        Run(graph_context, Graph::Transition::DataArray(), run_duration);
+        cerr << __PRETTY_FUNCTION__ << endl;
+        Run(graph_context, Graph::Transition::DataArray());
     }
-    // runs the npda, with a single lookahead token, until nothing more can be done without more input.
-    void Run (GraphContext const &graph_context, TokenId lookahead_token_id, RunDuration run_duration)
+    // runs the npda, with a single lookahead token, until nothing more can be done without more input, or HasTrunk()
+    void Run (GraphContext const &graph_context, TokenIndex lookahead_token_index)
     {
-        Run(graph_context, Graph::Transition::DataArray(1, lookahead_token_id), run_duration);
+        cerr << __PRETTY_FUNCTION__ << endl;
+        Run(graph_context, Graph::Transition::DataArray(1, lookahead_token_index));
     }
-    // runs the npda, with a single lookahead token, until nothing more can be done without more input.
-    void RunUsingNonterminalLookahead (GraphContext const &graph_context, TokenId lookahead_nonterminal_token_id, RunDuration run_duration)
+    // runs the npda, with a single lookahead token, until nothing more can be done without more input, or HasTrunk()
+    void RunUsingNonterminalLookahead (GraphContext const &graph_context, TokenIndex lookahead_nonterminal_token_index)
     {
+        cerr << __PRETTY_FUNCTION__ << endl;
         m_is_shift_blocked = true;
         for (ParserBranch *parser_branch = m_parser_branch_list.Front();
              parser_branch != NULL;
              parser_branch = parser_branch->Next())
         {
             Branch *branch = static_cast<Branch *>(parser_branch);
-            branch->m_lookahead_nonterminal_token_id = lookahead_nonterminal_token_id;
+            branch->m_lookahead_nonterminal_token_index = lookahead_nonterminal_token_index;
         }
-        Run(graph_context, Graph::Transition::DataArray(), run_duration);
+        Run(graph_context, Graph::Transition::DataArray());
     }
-    // runs the npda, with a sequence of lookahead tokens, until nothing more can be done without more input.
-    void Run (GraphContext const &graph_context, Graph::Transition::DataArray lookahead_sequence, RunDuration run_duration)
+    // runs the npda, with a sequence of lookahead tokens, until nothing more can be done without more input, or HasTrunk()
+    void Run (GraphContext const &graph_context, Graph::Transition::DataArray lookahead_sequence)
     {
+        cerr << __PRETTY_FUNCTION__ << ", lookahead_sequence: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
+
         assert(m_tree_root != NULL);
         assert(!m_parser_branch_list.IsEmpty());
-        assert(run_duration == RD_AS_LONG_AS_POSSIBLE || run_duration == RD_UNTIL_NONTRIVIAL_TRUNK);
 
         cerr << "!!! start !!!" << endl;
         m_tree_root->Print(cerr, graph_context, 0);
@@ -1363,20 +1452,78 @@ public:
 
             // here is where the action tree trunk would be executed and then removed.
             assert(m_tree_root->AssertActionAndParserBranchListsAreConsistent(m_parser_branch_list));
-
-            // check the RunDuration conditions
-            if (run_duration == RD_UNTIL_NONTRIVIAL_TRUNK && HasTrunk())
-                break;
-
             assert(!m_parser_branch_list.IsEmpty() || !m_doomed_nonreturn_branch_list.IsEmpty() || !m_doomed_return_branch_list.IsEmpty());
+
+            // if there is an unequivocal action to take, we can stop running the npda.
+            if (HasTrunk())
+                break;
         }
+    }
+    // runs the npda for a single action step -- a shift or a reduce.
+    void Step (GraphContext const &graph_context, ActionSpec action)
+    {
+        cerr << __PRETTY_FUNCTION__ << ", action: " << action.Type() << '(' << action.Data() << ')' << endl;
+
+        assert(m_tree_root != NULL);
+        assert(!m_parser_branch_list.IsEmpty());
+        assert(!m_is_shift_blocked);
+
+        cerr << "!!! step !!!" << endl;
+        m_tree_root->Print(cerr, graph_context, 0);
+        assert(m_tree_root->AssertActionAndParserBranchListsAreConsistent(m_parser_branch_list));
+        // e-closure nodes should not be added for self-recursive rules.  e-closures
+        // should only be done on non-closed branches.  the rule stack level should
+        // be incremented on the transition after an e-closure.
+        cerr << "*** e-close ***" << endl;
+        PerformEpsilonClosure(graph_context);
+        m_tree_root->Print(cerr, graph_context, 0);
+
+        switch (action.Type())
+        {
+            default:
+            case AT_NONE:
+            case AT_SHIFT_AND_PUSH_STATE:
+            case AT_RETURN:
+            case AT_ERROR_PANIC:
+                assert(false && "can't Step() using this action type");
+                return;
+
+            case AT_SHIFT:
+            {
+                Graph::Transition::DataArray lookahead_sequence(1, action.Data());
+                PerformShiftTransitions(graph_context, lookahead_sequence);
+                cerr << "*** shift " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << "***" << endl;
+                m_tree_root->Print(cerr, graph_context, 0);
+                cerr << "*** pruning all doomed branches ***" << endl;
+                assert(!m_parser_branch_list.IsEmpty());
+                // TODO: figure out if deleting these branch lists in this order guarantees
+                // no shift/reduce conflicts will be resolved incorrectly
+                PruneBranchList(graph_context, m_doomed_return_branch_list);
+                PruneBranchList(graph_context, m_doomed_nonreturn_branch_list);
+                m_tree_root->Print(cerr, graph_context, 0);
+                assert(m_tree_root->AssertActionAndParserBranchListsAreConsistent(m_parser_branch_list));
+                break;
+            }
+
+            case AT_REDUCE:
+                PerformStepReduceTransitions(graph_context, action.Data());
+                cerr << "*** reduce " << action.Data() << "***" << endl;
+                m_tree_root->Print(cerr, graph_context, 0);
+                break;
+        }
+
+        cerr << "*** e-close ***" << endl;
+        PerformEpsilonClosure(graph_context);
+        m_tree_root->Print(cerr, graph_context, 0);
+
+        RemoveTrunk();
     }
 
 private:
 
-    static bool TransitionAcceptsTokenId (Graph::Transition const &transition, TokenId token_id)
+    static bool TransitionAcceptsTokenId (Graph::Transition const &transition, TokenIndex token_index)
     {
-        return transition.Type() == TT_SHIFT && transition.Data(0) == token_id;
+        return transition.Type() == TT_SHIFT && transition.Data(0) == token_index;
     }
 
     void PerformEpsilonClosure (GraphContext const &graph_context)
@@ -1481,12 +1628,45 @@ private:
             }
         }
     }
+    void PerformStepReduceTransitions (GraphContext const &graph_context, Uint32 rule_index)
+    {
+        assert(!m_is_shift_blocked);
+        assert(!m_reduce_transitions_were_performed);
+        ParserBranch *parser_branch = m_parser_branch_list.Front();
+        while (parser_branch != NULL)
+        {
+            Branch *branch = static_cast<Branch *>(parser_branch);
+            parser_branch = parser_branch->Next();
+
+            // only attempt to transition from non-transition-fromed branches
+            if (branch->m_is_epsilon_closed)
+            {
+                bool reduce_transitions_were_performed_on_this_branch = false;
+                Uint32 state = branch->Top();
+                for (Graph::TransitionSet::const_iterator it = graph_context.m_npda_graph.GetNode(state).GetTransitionSetBegin(),
+                                                          it_end = graph_context.m_npda_graph.GetNode(state).GetTransitionSetEnd();
+                     it != it_end;
+                     ++it)
+                {
+                    Graph::Transition const &transition = *it;
+                    if (transition.Type() == TT_REDUCE && transition.Data(0) == rule_index)
+                    {
+                        PerformReduceTransition(graph_context, *branch, graph_context.m_primary_source.GetRule(transition.Data(0)));
+                        reduce_transitions_were_performed_on_this_branch = true;
+                    }
+                }
+
+                if (reduce_transitions_were_performed_on_this_branch)
+                    delete branch;
+            }
+        }
+    }
     void PerformReduceTransition (GraphContext const &graph_context, Branch &source_branch, Rule const *reduction_rule)
     {
         assert(reduction_rule != NULL);
-        assert(source_branch.m_lookahead_nonterminal_token_id == none__);
+        assert(source_branch.m_lookahead_nonterminal_token_index == none__);
 //     //     assert(source_branch.m_state_stack.size() > reduction_rule->m_rule_token_list->size() + 1); // for condensed nonterminal head states
-//         assert(source_branch.m_state_stack.size() > reduction_rule->m_rule_token_list->size() + 2); // for uncondensed nonterminal head states
+        assert(source_branch.m_state_stack.size() > reduction_rule->m_rule_token_list->size() + 2); // for uncondensed nonterminal head states
         assert(source_branch.m_parent != NULL);
 
         // only bother with a reduce action if it would actually succeed
@@ -1505,10 +1685,10 @@ private:
         assert(!m_reduce_transitions_were_performed);
         assert(m_doomed_nonreturn_branch_list.IsEmpty());
 
-        TokenId dummy_lookahead_token;
+        TokenIndex dummy_lookahead_token;
         // only shift a lookahead token if we're not blocked waiting to
         // sync up the branch-wise token reading.
-        TokenId const &lookahead_token = m_is_shift_blocked ? dummy_lookahead_token : lookahead_sequence.front();
+        TokenIndex const &lookahead_token = m_is_shift_blocked ? dummy_lookahead_token : lookahead_sequence.front();
         if (!m_is_shift_blocked)
             lookahead_sequence.erase(lookahead_sequence.begin());
 
@@ -1518,10 +1698,10 @@ private:
             Branch *branch = static_cast<Branch *>(parser_branch);
             parser_branch = parser_branch->Next();
     //         cerr << "branch: " << branch << endl;
-            assert(m_is_shift_blocked || branch->m_lookahead_nonterminal_token_id == 0);
+            assert(m_is_shift_blocked || branch->m_lookahead_nonterminal_token_index == 0);
             // if we're shift-blocked, then we only want to transition those
             // branches that have a lookahead nonterminal token.
-            if (m_is_shift_blocked && branch->m_lookahead_nonterminal_token_id == 0)
+            if (m_is_shift_blocked && branch->m_lookahead_nonterminal_token_index == 0)
                 continue;
             // if this branch is not epsilon closed, then it's already transitioned.
             if (!branch->m_is_epsilon_closed)
@@ -1539,8 +1719,8 @@ private:
                 // if we're shift-blocked, only schedule shift-transitions for branches with
                 // nonterminal lookaheads, otherwise schedule any valid shift-transition.
                 if (m_is_shift_blocked &&
-                    branch->m_lookahead_nonterminal_token_id != 0 &&
-                    TransitionAcceptsTokenId(transition, branch->m_lookahead_nonterminal_token_id)
+                    branch->m_lookahead_nonterminal_token_index != 0 &&
+                    TransitionAcceptsTokenId(transition, branch->m_lookahead_nonterminal_token_index)
                     ||
                     !m_is_shift_blocked &&
                     TransitionAcceptsTokenId(transition, lookahead_token))
@@ -1639,25 +1819,11 @@ private:
 // NOTE: temp node data struct
 // NOTE: temp node data struct
 
-/*
-void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, Npda &npda, ActionSpec const &default_action, Graph::Transition::DataArray &lookahead_sequence)
-{
-//     for each valid npda.dpda_state terminal transition {
-//         child_context = context
-//         run child_context npda with transition
-//         if (action tree trunk is nontrivial)
-//         {
-//             first_action = first trunk action
-//             child_context = context
-//             run child_context npda with first_action and e-close it
-//             record first_action on source_dpda_state, as resulting from lookahead_sequence+transition, with child_context's dpda_state as the target
-//             EnsureDpdaStateIsGenerated(child_context's dpda_state);
-//         }
-//         else
-//             recurse(child_context, source_dpda_state, lookahead_sequence+transition)
-//     }
+void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda);
 
-    for (TransitionIterator it(dpda_state, IT_TERMINALS); !it.IsDone(); ++it)
+void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, Npda const &npda, ActionSpec const &default_action, Graph::Transition::DataArray &lookahead_sequence)
+{
+    for (TransitionIterator it(graph_context, npda.CurrentDpdaState(), IT_SHIFT_TERMINAL_TRANSITIONS); !it.IsDone(); ++it)
     {
         ActionSpec action;
         // this block of code is entirely for the purpose of determining what lookaheads
@@ -1665,12 +1831,12 @@ void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, N
         // require a recursion to a depth of 3.
         {
             Npda child_npda(npda);
-            child_npda.Run(*it, Npda::RD_AS_LONG_AS_POSSIBLE);
-            action = child_npda.FirstTrunkAction();
+            child_npda.Run(graph_context, it->Data(0));
+            action = child_npda.FirstTrunkAction(it->Data(0));
             if (action.Type() == AT_NONE)
             {
                 // add the iterator token to the lookahead sequence
-                lookahead_sequence.push_back(*it);
+                lookahead_sequence.push_back(it->Data(0));
                 // recursively explore the states
                 Recurse(graph_context, source_dpda_state, child_npda, default_action, lookahead_sequence);
                 // pop the iterator token
@@ -1682,52 +1848,63 @@ void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, N
         }
         // otherwise there was a real trunk action, so create a transition using it
         {
+            assert(action.Type() == AT_REDUCE || action.Type() == AT_SHIFT);
+
             // create a fork of this npda and run it with the action determined above.
             Npda retry_npda(npda);
-            retry_npda.Run(action); // TODO -- special Run()
+            retry_npda.Step(graph_context, action);
             // figure out what dpda state it's at
             DpdaState target_dpda_state(retry_npda.CurrentDpdaState());
-            // make sure that dpda state is generated
-            EnsureDpdaStateIsGenerated(graph_context, target_dpda_state);
+            // make sure that the resulting npda's dpda state is generated
+            EnsureDpdaStateIsGenerated(graph_context, retry_npda);
 
             // add the iterator token to the lookahead sequence
-            lookahead_sequence.push_back(*it);
+            lookahead_sequence.push_back(it->Data(0));
             // add a graph transition from this state to that, via the iterator terminal
             assert(graph_context.m_generated_dpda_state_map.find(source_dpda_state) != graph_context.m_generated_dpda_state_map.end());
+
             // TODO -- check if this action matches the default action.  if so,
             // then there is no need to add this transition (because it will
             // happen by default)
-            graph_context.m_dpda_graph.AddTransition(
-                graph_context.m_generated_dpda_state_map[source_dpda_state],
-                ShiftTransition(
-                    lookahead_sequence,
-                    "TODO -- real label",
-                    graph_context.m_generated_dpda_state_map[target_dpda_state]));
+            switch (action.Type())
+            {
+                default:
+                case AT_NONE:
+                case AT_SHIFT_AND_PUSH_STATE:
+                case AT_RETURN:
+                case AT_ERROR_PANIC:
+                    assert(false && "invalid trunk action");
+                    break;
+
+                case AT_SHIFT:
+                    graph_context.m_dpda_graph.AddTransition(
+                        graph_context.m_generated_dpda_state_map[source_dpda_state],
+                        ShiftTransition(
+                            lookahead_sequence,
+                            GetLookaheadSequenceString(graph_context, lookahead_sequence),
+                            graph_context.m_generated_dpda_state_map[target_dpda_state]));
+                    break;
+
+                // TODO -- reduce actions in DPDA are different than in NPDA, since they
+                // sometimes occur as the result of lookaheads
+                case AT_REDUCE:
+                    graph_context.m_dpda_graph.AddTransition(
+                        graph_context.m_generated_dpda_state_map[source_dpda_state],
+                        ReduceTransition(
+                            action.Data(),
+                            graph_context.m_primary_source.GetRule(default_action.Data())->m_owner_nonterminal->GetText(),
+                            GetLookaheadSequenceString(graph_context, lookahead_sequence) + ": "));
+                    break;
+            }
             // pop the iterator token
             lookahead_sequence.pop_back();
         }
     }
 }
-*/
-void EnsureDpdaStateIsGenerated (GraphContext &graph_context, DpdaState const &dpda_state)
-{
-//     construct context // action tree root, initial parse branch, token stack, lookahead queue, etc
-//     e-close context
-//     construct dpda_state // set of npda states, identifies each dpda state
-//     if (dpda_state exists in generated_dpda_state_map)
-//         return; // nothing to do
-//     add this dpda_state to generated_dpda_state_map
-//
-//     figure out what the default transition for this dpda_state is // by running the npda without any input.  the default action can either be reduce or error panic
-//     recurse(context, dpda_state, []); // [] signifies the empty sequence
-//
-//     for each valid npda.dpda_state nonterminal transition {
-//         child_context = context
-//         run child_context by shifting that nonterminal
-//         record the shift target state, as resulting from the nonterminal
-//     }
 
-    assert(!dpda_state.empty());
+void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
+{
+    DpdaState dpda_state(npda.CurrentDpdaState());
     // check if this dpda_state has already been generated
     if (graph_context.m_generated_dpda_state_map.find(dpda_state) != graph_context.m_generated_dpda_state_map.end())
         return; // nothing needs to be done
@@ -1736,14 +1913,11 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, DpdaState const &d
     NodeData *node_data = new NodeData(FORMAT(dpda_state)); // TODO -- real NodeData
     graph_context.m_generated_dpda_state_map[dpda_state] = graph_context.m_dpda_graph.AddNode(node_data);
 
-    // construct the npda with dpda_state as its initial conditions
-    Npda npda(graph_context, dpda_state);
-    assert(npda.CurrentDpdaState() == dpda_state && "malformed dpda_state");
-
     // run the npda with no input, so we can decide what the default action is
     {
         Npda child_npda(npda);
-        child_npda.Run(graph_context, Npda::RD_AS_LONG_AS_POSSIBLE);
+        child_npda.RemoveTrunk();
+        child_npda.Run(graph_context);
 
         // if there is no action in the trunk, then the default action is error panic.
         // otherwise it is necessarily a reduce action (because there are no tokens
@@ -1780,11 +1954,13 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, DpdaState const &d
                     ErrorPanicTransition("default: "));
                 break;
         }
-    }
 
-//     // now recurse, exploring the states resulting from all valid transitions.
-//     Graph::Transition::DataArray lookahead_sequence; // empty
-//     Recurse(graph_context, dpda_state, npda, default_action, lookahead_sequence);
+        // now recurse, exploring the states resulting from all valid transitions.
+        {
+            Graph::Transition::DataArray lookahead_sequence; // empty
+            Recurse(graph_context, dpda_state, npda, default_action, lookahead_sequence);
+        }
+    }
 
     // generate the shift transitions for the nonterminals at this state.  the fanciness
     // with the set<Uint32> is so we only attempt each transition once, and in order
@@ -1801,11 +1977,12 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, DpdaState const &d
 
         // create a fork of this npda and run it with the iterator nonterminal
         Npda child_npda(npda);
-        child_npda.RunUsingNonterminalLookahead(graph_context, *it, Npda::RD_UNTIL_NONTRIVIAL_TRUNK);
+        child_npda.RemoveTrunk();
+        child_npda.RunUsingNonterminalLookahead(graph_context, *it);
         // figure out what dpda state it's at
         DpdaState target_dpda_state(child_npda.CurrentDpdaState());
         // make sure that dpda state is generated
-        EnsureDpdaStateIsGenerated(graph_context, target_dpda_state);
+        EnsureDpdaStateIsGenerated(graph_context, child_npda);
         // add a graph transition from this state to that, via the iterator nonterminal
         graph_context.m_dpda_graph.AddTransition(
             graph_context.m_generated_dpda_state_map[dpda_state],
@@ -1834,9 +2011,7 @@ void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph,
         // "none_" is a special nonterminal which isn't real, so skip it.
         if (nonterminal->GetText() == "none_")
             continue;
-        // the Npda(nonterminal).CurrentDpdaState() part gives us the e-closed
-        // dpda_state corresponding to the nonterminal's start state
-        EnsureDpdaStateIsGenerated(graph_context, Npda(graph_context, nonterminal).CurrentDpdaState());
+        EnsureDpdaStateIsGenerated(graph_context, Npda(graph_context, nonterminal));
         /*
         if (nonterminal->GetText() != "none_")
         {

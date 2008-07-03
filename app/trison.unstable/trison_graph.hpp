@@ -49,7 +49,7 @@ struct ReduceTransition : public Graph::Transition
 {
     ReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name, string const &text_prefix = g_empty_string)
         :
-        Graph::Transition(TT_REDUCE, 1, ms_no_target_index, text_prefix + "reduce " + nonterminal_name, Graph::Color(0x00AA00))
+        Graph::Transition(TT_REDUCE, 1, ms_no_target_index, text_prefix + "reduce " + nonterminal_name, Graph::Color(0x008800))
     {
         SetData(0, reduction_rule_index);
     }
