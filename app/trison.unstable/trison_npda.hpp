@@ -21,6 +21,8 @@ struct Nonterminal;
 struct PrimarySource;
 struct Rule;
 
+extern bool const g_minimal_npda_graphing;
+
 struct NpdaNodeData : public Graph::Node::Data
 {
     virtual Nonterminal const *GetAssociatedNonterminal () const { return NULL; }

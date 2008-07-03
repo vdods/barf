@@ -223,6 +223,22 @@ int main (int argc, char **argv)
     exp ';' %target.cpp_npda { return NULL; }
 ;
 
+// arithmetic
+%nonterminal exp
+:
+    exp '+' exp %prec ADDITION %target.cpp_npda { return NULL; }
+|
+    exp '*' exp %prec MULTIPLICATION %target.cpp_npda { return NULL; }
+|
+    exp '^' exp %prec EXPONENTIATION %target.cpp_npda { return NULL; }
+|
+    '(' exp ')' %target.cpp_npda { return NULL; }
+|
+    ID %target.cpp_npda { return NULL; }
+;
+
+/*
+// precedence testing (multiple lookaheads)
 %nonterminal exp
 :
     exp '+' '+' exp %prec COMPARISON %target.cpp_npda { return NULL; }
@@ -233,7 +249,8 @@ int main (int argc, char **argv)
 |
     ID %target.cpp_npda { return NULL; }
 ;
-
+*/
+/*
 // ///////////////////////////////////////////////////////////////////////////
 // parsing either of these will immediately incur a reduce (empty)
 // ///////////////////////////////////////////////////////////////////////////
@@ -265,7 +282,7 @@ int main (int argc, char **argv)
     // empty reduction rule
     %target.cpp_npda { return NULL; }
 ;
-
+*/
 /*
 %nonterminal declaration_list
 :

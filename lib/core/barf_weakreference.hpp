@@ -57,7 +57,7 @@ private:
     {
     public:
 
-        Instance (U *pointer) : m_pointer(pointer), m_reference_count(0) { }
+        Instance (U *pointer) : m_pointer(pointer), m_reference_count(0) { assert(m_pointer != NULL && "invalid (NULL) pointer"); }
         ~Instance () { assert(m_reference_count == 0); }
 
         U &operator * () { assert(m_pointer != NULL && "dereferenced a NULL pointer"); return *m_pointer; }

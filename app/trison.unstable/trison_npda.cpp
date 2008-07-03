@@ -18,6 +18,8 @@
 
 namespace Trison {
 
+bool const g_minimal_npda_graphing = true;
+
 // ///////////////////////////////////////////////////////////////////////////
 // Graph::Node::Data implementations for Nonterminal and Rule (and generic)
 // ///////////////////////////////////////////////////////////////////////////
@@ -202,52 +204,56 @@ void GenerateNpda (
     Uint32 start_index,
     Nonterminal const &owner_nonterminal)
 {
-/*
-    // minimal graphing (same-nonterminal reduction rule head states are collapsed together)
+    if (g_minimal_npda_graphing)
     {
-        // add all the shift transitions
-        Uint32 stage = 0;
-        for (RuleTokenList::const_iterator it = rule.m_rule_token_list->begin(),
-                                           it_end = rule.m_rule_token_list->end();
-            it != it_end;
-            ++it)
+        // minimal graphing (same-nonterminal reduction rule head states are collapsed together)
         {
-            RuleToken const *rule_token = *it;
-            assert(rule_token != NULL);
-            Uint32 end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, ++stage));
-            GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL);
-            start_index = end_index;
+            // add all the shift transitions
+            Uint32 stage = 0;
+            for (RuleTokenList::const_iterator it = rule.m_rule_token_list->begin(),
+                                            it_end = rule.m_rule_token_list->end();
+                it != it_end;
+                ++it)
+            {
+                RuleToken const *rule_token = *it;
+                assert(rule_token != NULL);
+                Uint32 end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, ++stage));
+                GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL);
+                start_index = end_index;
+            }
+
+            // add the reduce transition at the tail of the rule states
+            graph_context.m_npda_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
         }
-
-        // add the reduce transition at the tail of the rule states
-        graph_context.m_npda_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
     }
-*/
-    // separate-rule-style graphing (separate same-nonterminal reduction rule head states)
+    else
     {
-        // add the first state in the rule's state sequence
-        Uint32 stage = 0;
-        Uint32 end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
-        graph_context.m_npda_graph.AddTransition(start_index, EpsilonTransition(end_index));
-        start_index = end_index;
-        ++stage;
-
-        // add all the shift transitions
-        for (RuleTokenList::const_iterator it = rule.m_rule_token_list->begin(),
-                                           it_end = rule.m_rule_token_list->end();
-            it != it_end;
-            ++it)
+        // separate-rule-style graphing (separate same-nonterminal reduction rule head states)
         {
-            RuleToken const *rule_token = *it;
-            assert(rule_token != NULL);
-            end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
-            GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL);
+            // add the first state in the rule's state sequence
+            Uint32 stage = 0;
+            Uint32 end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
+            graph_context.m_npda_graph.AddTransition(start_index, EpsilonTransition(end_index));
             start_index = end_index;
             ++stage;
-        }
 
-        // add the reduce transition at the tail of the rule states
-        graph_context.m_npda_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
+            // add all the shift transitions
+            for (RuleTokenList::const_iterator it = rule.m_rule_token_list->begin(),
+                                            it_end = rule.m_rule_token_list->end();
+                it != it_end;
+                ++it)
+            {
+                RuleToken const *rule_token = *it;
+                assert(rule_token != NULL);
+                end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
+                GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL);
+                start_index = end_index;
+                ++stage;
+            }
+
+            // add the reduce transition at the tail of the rule states
+            graph_context.m_npda_graph.AddTransition(start_index, ReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
+        }
     }
 }
 
