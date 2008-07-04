@@ -1817,7 +1817,7 @@ struct NodeData : public Graph::Node::Data
     {
         return FORMAT("state " << node_index << endl << m_text);
     }
-    virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color(0xFFFFFF); }
+    virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color::ms_white; }
 
 private:
 
@@ -1896,7 +1896,7 @@ void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, N
                     cerr << "%%%%%%%%%%%%%%%%%%%% adding shift transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
                     graph_context.m_dpda_graph.AddTransition(
                         graph_context.m_generated_dpda_state_map[source_dpda_state],
-                        ShiftTransition(
+                        DpdaShiftTransition(
                             lookahead_sequence,
                             GetLookaheadSequenceString(graph_context, lookahead_sequence),
                             graph_context.m_generated_dpda_state_map[target_dpda_state]));
@@ -1908,10 +1908,11 @@ void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, N
                     cerr << "%%%%%%%%%%%%%%%%%%%% adding reduce transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
                     graph_context.m_dpda_graph.AddTransition(
                         graph_context.m_generated_dpda_state_map[source_dpda_state],
-                        ReduceTransition(
+                        DpdaReduceTransition(
+                            lookahead_sequence,
+                            GetLookaheadSequenceString(graph_context, lookahead_sequence),
                             action.Data(),
-                            graph_context.m_primary_source.GetRule(default_action.Data())->m_owner_nonterminal->GetText(),
-                            GetLookaheadSequenceString(graph_context, lookahead_sequence) + ": "));
+                            graph_context.m_primary_source.GetRule(default_action.Data())->m_owner_nonterminal->GetText()));
                     break;
             }
             // pop the iterator token
@@ -1957,19 +1958,23 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
             case AT_REDUCE:
                 graph_context.m_dpda_graph.AddTransition(
                     graph_context.m_generated_dpda_state_map[dpda_state],
-                    ReduceTransition(default_action.Data(), graph_context.m_primary_source.GetRule(default_action.Data())->m_owner_nonterminal->GetText(), "default: "));
+                    DpdaReduceTransition(
+                        default_action.Data(),
+                        graph_context.m_primary_source.GetRule(default_action.Data())->m_owner_nonterminal->GetText()));
                 break;
 
             case AT_RETURN:
                 graph_context.m_dpda_graph.AddTransition(
                     graph_context.m_generated_dpda_state_map[dpda_state],
-                    ReturnTransition(graph_context.m_primary_source.GetTokenId(default_action.Data()), default_action.Data(), "default: "));
+                    DpdaReturnTransition(
+                        graph_context.m_primary_source.GetTokenId(default_action.Data()),
+                        default_action.Data()));
                 break;
 
             case AT_ERROR_PANIC:
                 graph_context.m_dpda_graph.AddTransition(
                     graph_context.m_generated_dpda_state_map[dpda_state],
-                    ErrorPanicTransition("default: "));
+                    DpdaErrorPanicTransition());
                 break;
         }
 
@@ -2004,11 +2009,12 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
         // make sure that dpda state is generated
         EnsureDpdaStateIsGenerated(graph_context, child_npda);
         // add a graph transition from this state to that, via the iterator nonterminal
+        Graph::Transition::DataArray lookahead_sequence(1, *it);
         graph_context.m_dpda_graph.AddTransition(
             graph_context.m_generated_dpda_state_map[dpda_state],
-            ShiftTransition(
-                *it,
-                graph_context.m_primary_source.GetTokenId(*it),
+            DpdaShiftTransition(
+                lookahead_sequence,
+                GetLookaheadSequenceString(graph_context, lookahead_sequence),
                 graph_context.m_generated_dpda_state_map[target_dpda_state]));
     }
 }

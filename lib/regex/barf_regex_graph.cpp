@@ -53,5 +53,47 @@ string GetNfaTransitionString (Graph::Transition const &transition)
         return GetTransitionTypeString(transition.Type());
 }
 
+Graph::Transition InputAtomTransition (Uint8 input_atom, Uint32 target_index)
+{
+    Graph::Transition transition(TT_INPUT_ATOM, 1, target_index, GetCharLiteral(input_atom));
+    transition.SetData(0, input_atom);
+    return transition;
+}
+
+Graph::Transition InputAtomRangeTransition (Uint8 range_lower, Uint8 range_upper, Uint32 target_index)
+{
+    Graph::Transition
+        transition(
+            TT_INPUT_ATOM_RANGE,
+            2,
+            target_index,
+            string("[") + GetCharLiteral(range_lower, false) + "-" + GetCharLiteral(range_upper, false) + "]");
+    transition.SetData(0, range_lower);
+    transition.SetData(1, range_upper);
+    return transition;
+}
+
+Graph::Transition EpsilonTransition (Uint32 target_index)
+{
+    return Graph::Transition(TT_EPSILON, 0, target_index, "(e)", Graph::Color::ms_red);
+}
+
+Graph::Transition DfaConditionalTransition (Uint8 mask, Uint8 flags, Uint32 target_index)
+{
+    Graph::Transition transition(TT_CONDITIONAL, 2, target_index, g_empty_string, Graph::Color::ms_blue);
+    transition.SetData(0, mask);
+    transition.SetData(1, flags);
+    transition.SetLabel(GetDfaTransitionString(transition));
+    return transition;
+}
+
+Graph::Transition NfaConditionalTransition (ConditionalType type, Uint32 target_index)
+{
+    Graph::Transition transition(TT_CONDITIONAL, 1, target_index, g_empty_string, Graph::Color::ms_blue);
+    transition.SetData(0, type);
+    transition.SetLabel(GetNfaTransitionString(transition));
+    return transition;
+}
+
 } // end of namespace Regex
 } // end of namespace Barf

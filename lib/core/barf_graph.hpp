@@ -29,6 +29,12 @@ public:
 
     struct Color
     {
+        static Color const ms_black;
+        static Color const ms_white;
+        static Color const ms_red;
+        static Color const ms_green;
+        static Color const ms_blue;
+
         explicit Color (Uint32 hex_value) : m_hex_value(hex_value) { assert(m_hex_value <= 0xFFFFFF); }
 
     private:
@@ -38,11 +44,6 @@ public:
         friend ostream &operator << (ostream &stream, Color const &color);
     }; // end of struct Graph::Color
 
-    // Transition is meant to be subclassed for use, but the subclasses should
-    // really only be frontends for constructors -- they shouldn't have any member
-    // variables, and they shouldn't do anything in the destructor (since the
-    // subclass destructor won't be called).  TODO -- change this scheme to
-    // have functions which construct custom Transitions.
     struct Transition
     {
         typedef string (*Stringify)(Transition const &);
@@ -50,14 +51,52 @@ public:
 
         static Uint32 const ms_no_target_index = UINT32_UPPER_BOUND;
 
+        Transition (
+            TransitionType type,
+            Uint32 data_count,
+            Uint32 target_index,
+            string const &label,
+            Color const &dot_graph_color = Color::ms_black)
+            :
+            m_transition_type(type),
+            m_data_array(data_count, 0),
+            m_target_index(target_index),
+            m_label(label),
+            m_dot_graph_color(dot_graph_color)
+        { }
+        Transition (
+            TransitionType type,
+            DataArray const &data_array,
+            Uint32 target_index,
+            string const &label,
+            Color const &dot_graph_color = Color::ms_black)
+            :
+            m_transition_type(type),
+            m_data_array(data_array),
+            m_target_index(target_index),
+            m_label(label),
+            m_dot_graph_color(dot_graph_color)
+        { }
+        Transition (Transition const &transition)
+            :
+            m_transition_type(transition.m_transition_type),
+            m_data_array(transition.m_data_array),
+            m_target_index(transition.m_target_index),
+            m_label(transition.m_label),
+            m_dot_graph_color(transition.m_dot_graph_color)
+        { }
+
         bool HasTarget () const { return m_target_index != ms_no_target_index; }
         TransitionType Type () const { return m_transition_type; }
-//         DataArray const &Data () const { return m_data_array; }
+//         DataArray const &Data () const { return m_data_array; } // this might be unnecessary
         Uint32 DataCount () const { return m_data_array.size(); }
         Uint32 Data (Uint32 index) const { return (index < m_data_array.size()) ? m_data_array[index] : 0; }
         Uint32 TargetIndex () const { return m_target_index; }
         string const &Label () const { return m_label; }
         Color const &DotGraphColor () const { return m_dot_graph_color; }
+
+        void SetData (Uint32 index, Uint32 data) { assert(index < m_data_array.size()); m_data_array[index] = data; }
+        void SetLabel (string const &label) { m_label = label; }
 
         struct Order
         {
@@ -72,38 +111,6 @@ public:
                     t0.TargetIndex() < t1.TargetIndex();
             }
         }; // end of struct Graph::Transition::Order
-
-    protected:
-
-        Transition (
-            TransitionType type,
-            Uint32 data_count,
-            Uint32 target_index,
-            string const &label,
-            Color const &dot_graph_color = Color(0x000000))
-            :
-            m_transition_type(type),
-            m_data_array(data_count, 0),
-            m_target_index(target_index),
-            m_label(label),
-            m_dot_graph_color(dot_graph_color)
-        { }
-        Transition (
-            TransitionType type,
-            DataArray const &data_array,
-            Uint32 target_index,
-            string const &label,
-            Color const &dot_graph_color = Color(0x000000))
-            :
-            m_transition_type(type),
-            m_data_array(data_array),
-            m_target_index(target_index),
-            m_label(label),
-            m_dot_graph_color(dot_graph_color)
-        { }
-
-        void SetData (Uint32 index, Uint32 data) { assert(index < m_data_array.size()); m_data_array[index] = data; }
-        void SetLabel (string const &label) { m_label = label; }
 
     private:
 

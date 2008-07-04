@@ -31,55 +31,24 @@ enum
 
 string const &GetTransitionTypeString (TransitionType transition_type);
 
-struct ShiftTransition : public Graph::Transition
-{
-    ShiftTransition (Uint32 transition_token_id, string const &token_label, Uint32 target_index)
-        :
-        Graph::Transition(TT_SHIFT, 1, target_index, token_label)
-    {
-        SetData(0, transition_token_id);
-    }
-    ShiftTransition (DataArray const &data_array, string const &token_label, Uint32 target_index)
-        :
-        Graph::Transition(TT_SHIFT, data_array, target_index, token_label)
-    { }
-}; // end of struct ShiftTransition
+// ///////////////////////////////////////////////////////////////////////////
+// NPDA transitions
+// ///////////////////////////////////////////////////////////////////////////
 
-struct ReduceTransition : public Graph::Transition
-{
-    ReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name, string const &text_prefix = g_empty_string)
-        :
-        Graph::Transition(TT_REDUCE, 1, ms_no_target_index, text_prefix + "reduce " + nonterminal_name, Graph::Color(0x008800))
-    {
-        SetData(0, reduction_rule_index);
-    }
-}; // end of struct ReduceTransition
+Graph::Transition NpdaReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name);
+Graph::Transition NpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index);
+Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &token_label, Uint32 target_index);
+Graph::Transition NpdaEpsilonTransition (Uint32 target_index);
 
-struct ReturnTransition : public Graph::Transition
-{
-    ReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index, string const &text_prefix = g_empty_string)
-        :
-        Graph::Transition(TT_RETURN, 1, ms_no_target_index, text_prefix + "return " + nonterminal_name, Graph::Color(0x0000FF))
-    {
-        SetData(0, nonterminal_token_index);
-    }
-}; // end of struct ReturnTransition
+// ///////////////////////////////////////////////////////////////////////////
+// DPDA transitions
+// ///////////////////////////////////////////////////////////////////////////
 
-struct EpsilonTransition : public Graph::Transition
-{
-    EpsilonTransition (Uint32 target_index)
-        :
-        Graph::Transition(TT_EPSILON, 0, target_index, "(e)", Graph::Color(0xEF280E))
-    { }
-}; // end of struct EpsilonTransition
-
-struct ErrorPanicTransition : public Graph::Transition
-{
-    ErrorPanicTransition (string const &text_prefix = g_empty_string)
-        :
-        Graph::Transition(TT_ERROR_PANIC, 0, ms_no_target_index, text_prefix + "error panic", Graph::Color(0xEF280E))
-    { }
-}; // end of struct ErrorPanicTransition
+Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name);
+Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, string const &nonterminal_name);
+Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index);
+Graph::Transition DpdaShiftTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 target_index);
+Graph::Transition DpdaErrorPanicTransition ();
 
 } // end of namespace Trison
 
