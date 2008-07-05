@@ -26,7 +26,7 @@ typedef map<DpdaState, Uint32> GeneratedDpdaStateMap;
 
 ostream &operator << (ostream &stream, DpdaState const &dpda_state)
 {
-    stream << '[';
+    stream << '(';
     for (DpdaState::const_iterator it = dpda_state.begin(), it_end = dpda_state.end();
          it != it_end;
          ++it)
@@ -37,7 +37,7 @@ ostream &operator << (ostream &stream, DpdaState const &dpda_state)
         if (next_it != it_end)
             stream << ' ';
     }
-    stream << ']';
+    stream << ')';
     return stream;
 }
 
@@ -430,7 +430,8 @@ private:
             }
             if (m_lookahead_nonterminal_token_index != none__)
                 stream << " (" << m_lookahead_nonterminal_token_index << ')';
-            stream /*<< " \"" << Top().m_description << '\"'*/ << endl; // TODO -- real description
+            NpdaNodeData const &top_state_npda_node_data = graph_context.m_npda_graph.GetNode(Top()).GetDataAs<NpdaNodeData>();
+            stream << " \"" << top_state_npda_node_data.GetOneLineDescription() << '\"' << endl;
             for (ShiftReferenceList::const_iterator it = m_shift_reference_list.begin(),
                                                     it_end = m_shift_reference_list.end();
                     it != it_end;
@@ -976,7 +977,7 @@ private:
         void Print (ostream &stream, GraphContext const &graph_context, Uint32 indent_level) const
         {
             stream << string(2*indent_level, ' ') << (m_parent != NULL ? "reduce " : "root ") << this
-                   //<< " \"" << m_reduction_rule->m_description << '\"' // TODO -- real rule description
+                   << " \"" << m_reduction_rule->GetAsText() << '\"'
                    << ", precedence = " << m_reduction_rule->m_rule_precedence->m_precedence_level
                    << ", associativity = " << m_reduction_rule->m_rule_precedence->m_precedence_associativity
                    << ", rule index = " << m_reduction_rule->m_rule_index << endl;
@@ -1093,11 +1094,11 @@ private:
                 {
                     stream << string(2*(indent_level+2), ' ') << rule;
                     if (rule != NULL)
-                        stream /*<< " \"" << rule->m_description << '\"' TODO -- real description */
-                            << ", precedence = " << rule->m_rule_precedence->m_precedence_level
-                            << ", associativity = " << rule->m_rule_precedence->m_precedence_associativity
-                            << ", rule index = " << rule->m_rule_index
-                            << ", ref count = " << shift_reference.ReferenceCount();
+                        stream << " \"" << rule->GetAsText() << '\"'
+                               << ", precedence = " << rule->m_rule_precedence->m_precedence_level
+                               << ", associativity = " << rule->m_rule_precedence->m_precedence_associativity
+                               << ", rule index = " << rule->m_rule_index
+                               << ", ref count = " << shift_reference.ReferenceCount();
                     stream << endl;
                 }
             }
@@ -1796,42 +1797,54 @@ private:
     bool m_nonassoc_error_encountered;
 }; // end of class Npda
 
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-
-struct NodeData : public Graph::Node::Data
+struct DpdaNodeData : public Graph::Node::Data
 {
-    NodeData (string const &text)
-        :
-        m_text(text)
-    { }
+    DpdaNodeData (GraphContext const &graph_context, DpdaState const &dpda_state)
+    {
+        // first figure out the max width of all the lines of the output
+        Uint32 max_width = 0;
+        for (DpdaState::const_iterator it = dpda_state.begin(), it_end = dpda_state.end();
+             it != it_end;
+             ++it)
+        {
+            NpdaNodeData const &npda_node_data = graph_context.m_npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
+            string const text(npda_node_data.GetFullDescription(0));
+            Uint32 line_width_count = 0;
+            for (string::const_iterator str_it = text.begin(), str_it_end = text.end();
+                 str_it != str_it_end;
+                 ++str_it)
+            {
+                if (*str_it == '\n')
+                {
+                    max_width = max(max_width, line_width_count);
+                    line_width_count = 0;
+                }
+                else
+                    ++line_width_count;
+            }
+            max_width = max(max_width, line_width_count);
+        }
+
+        m_text += FORMAT(dpda_state) + "\n";
+        for (DpdaState::const_iterator it = dpda_state.begin(), it_end = dpda_state.end();
+             it != it_end;
+             ++it)
+        {
+            NpdaNodeData const &npda_node_data = graph_context.m_npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
+            m_text += npda_node_data.GetFullDescription(max_width);
+        }
+    }
 
     virtual string GetAsText (Uint32 node_index) const
     {
-        return FORMAT("state " << node_index << endl << m_text);
+        return FORMAT("state " << node_index << ' ' << m_text);
     }
-    virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color::ms_white; }
+//     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color::ms_white; }
 
 private:
 
-    string const m_text;
+    string m_text;
 };
-
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
-// NOTE: temp node data struct
 
 void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda);
 
@@ -1880,41 +1893,43 @@ void Recurse (GraphContext &graph_context, DpdaState const &source_dpda_state, N
             // add a graph transition from this state to that, via the iterator terminal
             assert(graph_context.m_generated_dpda_state_map.find(source_dpda_state) != graph_context.m_generated_dpda_state_map.end());
 
-            // TODO -- check if this action matches the default action.  if so,
-            // then there is no need to add this transition (because it will
-            // happen by default)
-            switch (action.Type())
+            // only add the action to the node if it doesn't match the default action,
+            // since the default is a catch-all.
+            if (action.Type() != default_action.Type() || action.Data() != default_action.Data())
             {
-                default:
-                case AT_NONE:
-                case AT_RETURN:
-                case AT_ERROR_PANIC:
-                    assert(false && "invalid trunk action");
-                    break;
+                switch (action.Type())
+                {
+                    default:
+                    case AT_NONE:
+                    case AT_RETURN:
+                    case AT_ERROR_PANIC:
+                        assert(false && "invalid trunk action");
+                        break;
 
-                case AT_SHIFT:
-                    cerr << "%%%%%%%%%%%%%%%%%%%% adding shift transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
-                    graph_context.m_dpda_graph.AddTransition(
-                        graph_context.m_generated_dpda_state_map[source_dpda_state],
-                        DpdaShiftTransition(
-                            lookahead_sequence,
-                            GetLookaheadSequenceString(graph_context, lookahead_sequence),
-                            graph_context.m_generated_dpda_state_map[target_dpda_state]));
-                    break;
+                    case AT_SHIFT:
+                        cerr << "++ (at " << source_dpda_state << ") adding shift (" << target_dpda_state << ") transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
+                        graph_context.m_dpda_graph.AddTransition(
+                            graph_context.m_generated_dpda_state_map[source_dpda_state],
+                            DpdaShiftTransition(
+                                lookahead_sequence,
+                                GetLookaheadSequenceString(graph_context, lookahead_sequence),
+                                graph_context.m_generated_dpda_state_map[target_dpda_state]));
+                        break;
 
-                // TODO -- reduce actions in DPDA are different than in NPDA, since they
-                // sometimes occur as the result of lookaheads
-                case AT_REDUCE:
-                    cerr << "%%%%%%%%%%%%%%%%%%%% adding reduce transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
-                    graph_context.m_dpda_graph.AddTransition(
-                        graph_context.m_generated_dpda_state_map[source_dpda_state],
-                        DpdaReduceTransition(
-                            lookahead_sequence,
-                            GetLookaheadSequenceString(graph_context, lookahead_sequence),
-                            action.Data(),
-                            graph_context.m_primary_source.GetRule(default_action.Data())->m_owner_nonterminal->GetText()));
-                    break;
+                    case AT_REDUCE:
+                        cerr << "++ (at " << source_dpda_state << ") adding reduce \"" << graph_context.m_primary_source.GetRule(action.Data())->GetAsText() << "\" transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
+                        assert(false && "i think the default action will necessarily preclude this case from ever happening");
+                        graph_context.m_dpda_graph.AddTransition(
+                            graph_context.m_generated_dpda_state_map[source_dpda_state],
+                            DpdaReduceTransition(
+                                lookahead_sequence,
+                                GetLookaheadSequenceString(graph_context, lookahead_sequence),
+                                action.Data(),
+                                graph_context.m_primary_source.GetRule(action.Data())->GetAsText()));
+                        break;
+                }
             }
+
             // pop the iterator token
             lookahead_sequence.pop_back();
         }
@@ -1931,7 +1946,7 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
         return; // nothing needs to be done
     cerr << "EnsureDpdaStateIsGenerated(); generating " << dpda_state << endl;
     // dpda_state is now considered "generated"
-    NodeData *node_data = new NodeData(FORMAT(dpda_state)); // TODO -- real NodeData
+    DpdaNodeData *node_data = new DpdaNodeData(graph_context, dpda_state);
     graph_context.m_generated_dpda_state_map[dpda_state] = graph_context.m_dpda_graph.AddNode(node_data);
 
     // run the npda with no input, so we can decide what the default action is
@@ -1960,7 +1975,7 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
                     graph_context.m_generated_dpda_state_map[dpda_state],
                     DpdaReduceTransition(
                         default_action.Data(),
-                        graph_context.m_primary_source.GetRule(default_action.Data())->m_owner_nonterminal->GetText()));
+                        graph_context.m_primary_source.GetRule(default_action.Data())->GetAsText()));
                 break;
 
             case AT_RETURN:
@@ -2038,13 +2053,6 @@ void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph,
         if (nonterminal->GetText() == "none_")
             continue;
         EnsureDpdaStateIsGenerated(graph_context, Npda(graph_context, nonterminal));
-        /*
-        if (nonterminal->GetText() != "none_")
-        {
-            DpdaState dpda_state = Npda(npda_graph, nonterminal).CurrentDpdaState();
-            cerr << nonterminal->GetText() << " : " << dpda_state << endl;
-        }
-        */
     }
 }
 

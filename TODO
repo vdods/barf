@@ -238,7 +238,6 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
-- dot graphs and other extras should be generated in the output directory.
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -294,7 +293,6 @@
   the scanner to check this, because the parser might have read in extra
   lookaheads that put it at EOF.  you'll have to go by the lookahead queue
   in the parser.
-- dot graphs and other extras should be generated in the output directory.
 - decouple npda states from trison ASTs -- they should only exist in the
   graph itself.
 - add an unbounded grammar app/dev test case

@@ -134,7 +134,7 @@ public:
         {
             virtual ~Data () { }
             virtual string GetAsText (Uint32 node_index) const = 0;
-            virtual Color DotGraphColor (Uint32 node_index) const = 0;
+            virtual Color DotGraphColor (Uint32 node_index) const { return Color::ms_white; }
             virtual Uint32 GetNodePeripheries (Uint32 node_index) const { return 1; }
         };
 
@@ -148,7 +148,11 @@ public:
         TransitionSet::const_iterator GetTransitionSetBegin () const { return m_transition_set.begin(); }
         TransitionSet::const_iterator GetTransitionSetEnd () const { return m_transition_set.end(); }
 
-        inline void AddTransition (Transition const &transition) { m_transition_set.insert(transition); }
+        inline void AddTransition (Transition const &transition)
+        {
+            assert(m_transition_set.find(transition) == m_transition_set.end() && "you can't add the same transition twice");
+            m_transition_set.insert(transition);
+        }
 
     private:
 

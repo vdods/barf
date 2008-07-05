@@ -87,24 +87,24 @@ void OptionsBase::WithoutLineDirectives ()
     m_with_line_directives = false;
 }
 
-void OptionsBase::GenerateNaDotGraph (string const &na_dot_graph_path)
+void OptionsBase::GenerateNaDotGraph (string const &na_dot_graph_filename)
 {
-    m_na_dot_graph_path = na_dot_graph_path;
+    m_na_dot_graph_filename = na_dot_graph_filename;
 }
 
 void OptionsBase::DontGenerateNaDotGraph ()
 {
-    m_na_dot_graph_path.clear();
+    m_na_dot_graph_filename.clear();
 }
 
-void OptionsBase::GenerateDaDotGraph (string const &da_dot_graph_path)
+void OptionsBase::GenerateDaDotGraph (string const &da_dot_graph_filename)
 {
-    m_da_dot_graph_path = da_dot_graph_path;
+    m_da_dot_graph_filename = da_dot_graph_filename;
 }
 
 void OptionsBase::DontGenerateDaDotGraph ()
 {
-    m_da_dot_graph_path.clear();
+    m_da_dot_graph_filename.clear();
 }
 
 void OptionsBase::Predefine (string const &arg)

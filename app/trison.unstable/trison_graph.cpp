@@ -69,8 +69,10 @@ Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, string cons
 
 Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, string const &nonterminal_name)
 {
-    Graph::Transition transition(TT_REDUCE, 1, Graph::Transition::ms_no_target_index, lookahead_sequence_string + ": reduce " + nonterminal_name, Graph::Color::ms_green);
+    Graph::Transition transition(TT_REDUCE, 1+lookahead_sequence.size(), Graph::Transition::ms_no_target_index, lookahead_sequence_string + ": reduce " + nonterminal_name, Graph::Color::ms_green);
     transition.SetData(0, reduction_rule_index);
+    for (Uint32 i = 0; i < lookahead_sequence.size(); ++i)
+        transition.SetData(i+1, lookahead_sequence[i]);
     return transition;
 }
 

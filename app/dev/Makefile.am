@@ -24,21 +24,27 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	\
 	spotless
 
-spotless: clean clean-dumblang-parser clean-dumblang-scanner
+spotless: clean clean-dumblang-parser clean-dumblang-scanner clean-dumblang-parser-extras clean-dumblang-scanner-extras
 
 clean-dumblang-parser: clean-dumblang-parser-extras
 	rm -f $(top_srcdir)/dumblang_parser.cpp
 	rm -f $(top_srcdir)/dumblang_parser.hpp
 
 clean-dumblang-parser-extras:
-	rm -f $(top_srcdir)/dumblang_parser.states
+	rm -f $(top_srcdir)/dumblang_parser.dpda.dot
+	rm -f $(top_srcdir)/dumblang_parser.dpda.png
+	rm -f $(top_srcdir)/dumblang_parser.npda.dot
+	rm -f $(top_srcdir)/dumblang_parser.npda.png
 
 clean-dumblang-scanner: clean-dumblang-scanner-extras
 	rm -f $(top_srcdir)/dumblang_scanner.cpp
 	rm -f $(top_srcdir)/dumblang_scanner.hpp
 
-clean-scanner-extras:
-
+clean-dumblang-scanner-extras:
+	rm -f $(top_srcdir)/dumblang_scanner.dfa.dot
+	rm -f $(top_srcdir)/dumblang_scanner.dfa.png
+	rm -f $(top_srcdir)/dumblang_scanner.nfa.dot
+	rm -f $(top_srcdir)/dumblang_scanner.nfa.png
 
 bin_PROGRAMS = dumblang
 
@@ -74,16 +80,34 @@ if REFLEX_EXISTS
 dumblang-scanner: $(top_srcdir)/dumblang_scanner.hpp
 $(top_srcdir)/dumblang_scanner.hpp: $(top_srcdir)/dumblang_scanner.cpp
 $(top_srcdir)/dumblang_scanner.cpp: $(top_srcdir)/dumblang_scanner.reflex $(REFLEX) $(TARGETS_PATH)/reflex.cpp.targetspec $(TARGETS_PATH)/reflex.cpp.header.codespec $(TARGETS_PATH)/reflex.cpp.implementation.codespec
-	$(REFLEX) $(top_srcdir)/dumblang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/
+	$(REFLEX) $(top_srcdir)/dumblang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-nfa-dot-graph dumblang_scanner.nfa.dot --generate-dfa-dot-graph dumblang_scanner.dfa.dot
 
 force-dumblang-scanner:
-	$(REFLEX) $(top_srcdir)/dumblang_scanner.reflex --include-targets-search-path $(TARGETS_PATH)  --warnings-as-errors --output-directory $(top_srcdir)/
+	$(REFLEX) $(top_srcdir)/dumblang_scanner.reflex --include-targets-search-path $(TARGETS_PATH)  --warnings-as-errors --output-directory $(top_srcdir)/ --generate-nfa-dot-graph dumblang_scanner.nfa.dot --generate-dfa-dot-graph dumblang_scanner.dfa.dot
 else # !REFLEX_EXISTS
 dumblang-scanner force-dumblang-scanner:
 	@echo "!!!"
 	@echo "!!! Can't build dumblang scanner without reflex binary."
 	@echo "!!! Use --with-reflex configure option."
 	@echo "!!!"
+endif
+
+if DOT_EXISTS
+if CONVERT_EXISTS
+$(top_srcdir)/dumblang_scanner.dfa.png: $(top_srcdir)/dumblang_scanner.dfa.dot
+	$(DOT) $(top_srcdir)/dumblang_scanner.dfa.dot -Tpng -o $(top_srcdir)/dumblang_scanner.dfa.png
+	$(CONVERT) $(top_srcdir)/dumblang_scanner.dfa.png -resize 66%x66% $(top_srcdir)/dumblang_scanner.dfa.png
+
+$(top_srcdir)/dumblang_scanner.nfa.png: $(top_srcdir)/dumblang_scanner.nfa.dot
+	$(DOT) $(top_srcdir)/dumblang_scanner.nfa.dot -Tpng -o $(top_srcdir)/dumblang_scanner.nfa.png
+	$(CONVERT) $(top_srcdir)/dumblang_scanner.nfa.png -resize 66%x66% $(top_srcdir)/dumblang_scanner.nfa.png
+else
+$(top_srcdir)/dumblang_scanner.dfa.png: $(top_srcdir)/dumblang_scanner.dfa.dot
+	$(DOT) $(top_srcdir)/dumblang_scanner.dfa.dot -Tpng -o $(top_srcdir)/dumblang_scanner.dfa.png
+
+$(top_srcdir)/dumblang_scanner.nfa.png: $(top_srcdir)/dumblang_scanner.nfa.dot
+	$(DOT) $(top_srcdir)/dumblang_scanner.nfa.dot -Tpng -o $(top_srcdir)/dumblang_scanner.nfa.png
+endif
 endif
 
 if TRISON_EXISTS
@@ -102,13 +126,13 @@ dumblang-parser force-dumblang-parser:
 	@echo "!!!"
 endif
 
-dumblang_parser.dpda.png: dumblang_parser.dpda.dot
-	dot dumblang_parser.dpda.dot -Tpng -o dumblang_parser.dpda.png
-	convert dumblang_parser.dpda.png -resize 66%x66% dumblang_parser.dpda.png
+$(top_srcdir)/dumblang_parser.dpda.png: $(top_srcdir)/dumblang_parser.dpda.dot
+	dot $(top_srcdir)/dumblang_parser.dpda.dot -Tpng -o $(top_srcdir)/dumblang_parser.dpda.png
+	convert $(top_srcdir)/dumblang_parser.dpda.png -resize 66%x66% $(top_srcdir)/dumblang_parser.dpda.png
 
-dumblang_parser.npda.png: dumblang_parser.npda.dot
-	dot dumblang_parser.npda.dot -Tpng -o dumblang_parser.npda.png
-	convert dumblang_parser.npda.png -resize 66%x66% dumblang_parser.npda.png
+$(top_srcdir)/dumblang_parser.npda.png: $(top_srcdir)/dumblang_parser.npda.dot
+	dot $(top_srcdir)/dumblang_parser.npda.dot -Tpng -o $(top_srcdir)/dumblang_parser.npda.png
+	convert $(top_srcdir)/dumblang_parser.npda.png -resize 66%x66% $(top_srcdir)/dumblang_parser.npda.png
 
 ##############################################################################
 # all the no-install header files for the applications (is this necessary?)

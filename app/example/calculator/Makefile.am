@@ -24,7 +24,7 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	\
 	spotless
 
-spotless: clean clean-calculator-parser clean-calculator-scanner
+spotless: clean clean-calculator-parser clean-calculator-scanner clean-calculator-parser-extras clean-calculator-scanner-extras
 
 clean-calculator-parser: clean-calculator-parser-extras
 	rm -f $(top_srcdir)/calculator_parser.cpp
@@ -37,8 +37,11 @@ clean-calculator-scanner: clean-calculator-scanner-extras
 	rm -f $(top_srcdir)/calculator_scanner.cpp
 	rm -f $(top_srcdir)/calculator_scanner.hpp
 
-clean-scanner-extras:
-
+clean-calculator-scanner-extras:
+	rm -f $(top_srcdir)/calculator_scanner.dfa.dot
+	rm -f $(top_srcdir)/calculator_scanner.dfa.png
+	rm -f $(top_srcdir)/calculator_scanner.nfa.dot
+	rm -f $(top_srcdir)/calculator_scanner.nfa.png
 
 bin_PROGRAMS = calculator
 
@@ -78,7 +81,7 @@ $(top_srcdir)/calculator_scanner.hpp: $(top_srcdir)/calculator_scanner.cpp
 $(top_srcdir)/calculator_scanner.cpp: $(top_srcdir)/calculator_scanner.reflex $(REFLEX)
 	$(REFLEX) $(top_srcdir)/calculator_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/
 
-force-calculator-scanner: $(top_srcdir)/calculator_scanner.reflex $(REFLEX)
+force-calculator-scanner:
 	$(REFLEX) $(top_srcdir)/calculator_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/
 else # !REFLEX_EXISTS
 calculator-scanner force-calculator-scanner:
@@ -88,13 +91,21 @@ calculator-scanner force-calculator-scanner:
 	@echo "!!!"
 endif
 
+if DOT_EXISTS
+$(top_srcdir)/calculator_scanner.dfa.png: $(top_srcdir)/calculator_scanner.dfa.dot
+	$(DOT) $(top_srcdir)/calculator_scanner.dfa.dot -Tpng -o $(top_srcdir)/calculator_scanner.dfa.png
+
+$(top_srcdir)/calculator_scanner.nfa.png: $(top_srcdir)/calculator_scanner.nfa.dot
+	$(DOT) $(top_srcdir)/calculator_scanner.nfa.dot -Tpng -o $(top_srcdir)/calculator_scanner.nfa.png
+endif
+
 if TRISON_EXISTS
 calculator-parser: $(top_srcdir)/calculator_parser.hpp
 $(top_srcdir)/calculator_parser.hpp: $(top_srcdir)/calculator_parser.cpp
 $(top_srcdir)/calculator_parser.cpp: $(top_srcdir)/calculator_parser.trison $(TRISON)
 	$(TRISON) $(top_srcdir)/calculator_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/calculator_parser --generate-states-file $(top_srcdir)/calculator_parser.states
 
-force-calculator-parser: $(top_srcdir)/calculator_parser.trison $(TRISON)
+force-calculator-parser:
 	$(TRISON) $(top_srcdir)/calculator_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/calculator_parser --generate-states-file $(top_srcdir)/calculator_parser.states
 else # !TRISON_EXISTS
 calculator-parser force-calculator-parser:

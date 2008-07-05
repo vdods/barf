@@ -120,8 +120,8 @@ public:
     // output options
     string GetOutputDirectory () const { return m_output_directory; }
     bool GetWithLineDirectives () const { return m_with_line_directives; }
-    string const &GetNaDotGraphPath () const { return m_na_dot_graph_path; }
-    string const &GetDaDotGraphPath () const { return m_da_dot_graph_path; }
+    string GetNaDotGraphPath () const { return GetOutputDirectory() + m_na_dot_graph_filename; }
+    string GetDaDotGraphPath () const { return GetOutputDirectory() + m_da_dot_graph_filename; }
     // target-related options
     vector<string>::size_type GetPredefineCount () const { return m_predefine.size(); }
     string const &GetPredefine (vector<string>::size_type index) const { assert(index < m_predefine.size()); return m_predefine[index]; }
@@ -151,9 +151,9 @@ public:
     void SetOutputDirectory (string const &output_directory);
     void WithLineDirectives ();
     void WithoutLineDirectives ();
-    void GenerateNaDotGraph (string const &na_dot_graph_path);
+    void GenerateNaDotGraph (string const &na_dot_graph_filename);
     void DontGenerateNaDotGraph ();
-    void GenerateDaDotGraph (string const &da_dot_graph_path);
+    void GenerateDaDotGraph (string const &da_dot_graph_filename);
     void DontGenerateDaDotGraph ();
     // target-related options
     void Predefine (string const &arg);
@@ -184,8 +184,8 @@ protected:
     // output option values
     string m_output_directory;
     bool m_with_line_directives;
-    string m_na_dot_graph_path;
-    string m_da_dot_graph_path;
+    string m_na_dot_graph_filename;
+    string m_da_dot_graph_filename;
     // target-related options
     vector<string> m_predefine;
     vector<string> m_postdefine;

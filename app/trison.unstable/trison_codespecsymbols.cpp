@@ -432,7 +432,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             npda_state_rule_stage->AppendArrayElement(
                 new Preprocessor::Body(rule != NULL ? Sint32(node_data.GetRuleStage()) : 0));
             npda_state_description->AppendArrayElement(
-                new Preprocessor::Body(GetStringLiteral(node_data.GetDescription())));
+                new Preprocessor::Body(GetStringLiteral(node_data.GetOneLineDescription())));
             npda_state_nonterminal_index->AppendArrayElement(
                 new Preprocessor::Body(Sint32(nonterminal != NULL ? nonterminal->m_token_index : 0)));
             npda_state_nonterminal_name->AppendArrayElement(

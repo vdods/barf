@@ -25,6 +25,7 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	clean-all-parsers \
 	clean-all-scanners \
 	clean-parser-extras \
+	clean-scanner-extras \
 	doc \
 	force-all-parsers \
 	force-all-scanners \
@@ -79,6 +80,14 @@ clean-all-parsers: clean-parser-extras
 	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.hpp
 
 clean-scanner-extras:
+	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.dot
+	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.png
+	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.dot
+	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.png
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.dot
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.png
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png
 
 clean-all-scanners:
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
@@ -244,18 +253,18 @@ if STABLE_REFLEX_EXISTS
 barf-commonlang-scanner: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
+	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/ --generate-nfa-dot-graph barf_commonlang_scanner.nfa.dot --generate-dfa-dot-graph barf_commonlang_scanner.dfa.dot
 
-force-barf-commonlang-scanner: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/
+force-barf-commonlang-scanner:
+	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/ --generate-nfa-dot-graph barf_commonlang_scanner.nfa.dot --generate-dfa-dot-graph barf_commonlang_scanner.dfa.dot
 
 barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/
+	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner.dfa.dot
 
-force-barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX)
-	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/
+force-barf-preprocessor-scanner:
+	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner.dfa.dot
 else # !STABLE_REFLEX_EXISTS
 barf-commonlang-scanner force-barf-commonlang-scanner:
 	@echo "!!!"
@@ -270,13 +279,27 @@ barf-preprocessor-scanner force-barf-preprocessor-scanner:
 	@echo "!!!"
 endif
 
+if DOT_EXISTS
+$(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.png: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.dot
+	$(DOT) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.dot -Tpng -o $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.png
+
+$(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.png: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.dot
+	$(DOT) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.dot -Tpng -o $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.png
+
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.dot
+	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.png
+
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot
+	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png
+endif
+
 if STABLE_TRISON_EXISTS
 barf-targetspec-parser: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp
 $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp
 $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 
-force-barf-targetspec-parser: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
+force-barf-targetspec-parser:
 	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
 
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
@@ -284,7 +307,7 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp: $(top_srcdir)/lib/p
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser --generate-states-file $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.states
 
-force-barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
+force-barf-preprocessor-parser:
 	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser --generate-states-file $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.states
 
 barf-regex-parser: $(top_srcdir)/lib/regex/barf_regex_parser.hpp
@@ -292,7 +315,7 @@ $(top_srcdir)/lib/regex/barf_regex_parser.hpp: $(top_srcdir)/lib/regex/barf_rege
 $(top_srcdir)/lib/regex/barf_regex_parser.cpp: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
 
-force-barf-regex-parser: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
+force-barf-regex-parser:
 	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
 else # !STABLE_TRISON_EXISTS
 barf-targetspec-parser force-barf-targetspec-parser:
@@ -394,7 +417,7 @@ $(top_srcdir)/app/reflex/reflex_parser.hpp: $(top_srcdir)/app/reflex/reflex_pars
 $(top_srcdir)/app/reflex/reflex_parser.cpp: $(top_srcdir)/app/reflex/reflex_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/reflex/reflex_parser --generate-states-file $(top_srcdir)/app/reflex/reflex_parser.states
 
-force-reflex-parser: $(top_srcdir)/app/reflex/reflex_parser.trison $(STABLE_TRISON)
+force-reflex-parser:
 	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/reflex/reflex_parser --generate-states-file $(top_srcdir)/app/reflex/reflex_parser.states
 else # !STABLE_TRISON_EXISTS
 reflex-parser force-reflex-parser:
@@ -442,7 +465,7 @@ $(top_srcdir)/app/trison/trison_parser.hpp: $(top_srcdir)/app/trison/trison_pars
 $(top_srcdir)/app/trison/trison_parser.cpp: $(top_srcdir)/app/trison/trison_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison/trison_parser --generate-states-file $(top_srcdir)/app/trison/trison_parser.states
 
-force-trison-parser: $(top_srcdir)/app/trison/trison_parser.trison $(STABLE_TRISON)
+force-trison-parser:
 	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison/trison_parser --generate-states-file $(top_srcdir)/app/trison/trison_parser.states
 else # !STABLE_TRISON_EXISTS
 trison-parser force-trison-parser:
@@ -511,7 +534,7 @@ $(top_srcdir)/app/trison.unstable/trison_parser.hpp: $(top_srcdir)/app/trison.un
 $(top_srcdir)/app/trison.unstable/trison_parser.cpp: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON)
 	$(STABLE_TRISON) $(top_srcdir)/app/trison.unstable/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison.unstable/trison_parser --generate-states-file $(top_srcdir)/app/trison.unstable/trison_parser.states
 
-force-trison-unstable-parser: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON)
+force-trison-unstable-parser:
 	$(STABLE_TRISON) $(top_srcdir)/app/trison.unstable/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison.unstable/trison_parser --generate-states-file $(top_srcdir)/app/trison.unstable/trison_parser.states
 else # !STABLE_TRISON_EXISTS
 trison-unstable-parser force-trison-unstable-parser:

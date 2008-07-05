@@ -27,8 +27,15 @@ struct NpdaNodeData : public Graph::Node::Data
 {
     virtual Nonterminal const *GetAssociatedNonterminal () const { return NULL; }
     virtual Rule const *GetAssociatedRule () const { return NULL; }
+    // returns the index of the "stage" of the rule (e.g. "exp <- . exp '+' exp"
+    // gives rule stage of 0, while "exp <- exp '+' . exp" gives rule stage of 2)
     virtual Uint32 GetRuleStage () const { return UINT32_UPPER_BOUND; }
-    virtual string GetDescription () const = 0;
+    // return a one-line description of this node, without terminating newline.
+    virtual string GetOneLineDescription () const = 0;
+    // return a full description of this node, with terminating newline.
+    // min_width gives the minimum width of the output (it should be left-
+    // justified, padded with whitespace ' ').
+    virtual string GetFullDescription (Uint32 min_width) const;
 }; // end of struct NpdaNodeData
 
 void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph);

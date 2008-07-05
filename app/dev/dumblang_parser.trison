@@ -231,8 +231,8 @@ int main (int argc, char **argv)
     exp '*' exp %prec MULTIPLICATION %target.cpp_npda { return NULL; }
 |
     exp '^' exp %prec EXPONENTIATION %target.cpp_npda { return NULL; }
-|
-    '(' exp ')' %target.cpp_npda { return NULL; }
+// |
+//     '(' exp ')' %target.cpp_npda { return NULL; }
 |
     ID %target.cpp_npda { return NULL; }
 ;

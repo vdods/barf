@@ -15,6 +15,8 @@ AC_CHECK_TOOL(STRIP, strip)
 AC_CHECK_TOOL(DOXYGEN, doxygen)
 # checks for perl (which seems to be used by doxygen)
 AC_CHECK_TOOL(PERL, perl)
+# checks for dot (used to turn .dot graphs into images)
+AC_CHECK_TOOL(DOT, dot)
 
 ##############################################################################
 # configure script commandline options
@@ -69,7 +71,7 @@ AC_ARG_ENABLE(
     [ENABLE_TRISON_UNSTABLE="no"])
 
 ##############################################################################
-# processing for above commandline options
+# processing for above commandline options and AC_CHECK_TOOL applications
 ##############################################################################
 
 if test "${ENABLE_DEBUG}" = "yes"; then
@@ -87,6 +89,9 @@ fi
 if test "${ARCH_TYPE}" != ""; then
     CXXFLAGS="${CXXFLAGS} -march=${ARCH_TYPE}"
 fi
+
+AM_CONDITIONAL(DOT_EXISTS, [test "${DOT}" != ""])
+AC_SUBST(DOT)
 
 AM_CONDITIONAL(STABLE_REFLEX_EXISTS, [test "${STABLE_REFLEX}" != ""])
 AC_SUBST(STABLE_REFLEX)

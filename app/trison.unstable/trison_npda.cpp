@@ -21,6 +21,19 @@ namespace Trison {
 bool const g_minimal_npda_graphing = true;
 
 // ///////////////////////////////////////////////////////////////////////////
+// NpdaNodeData
+// ///////////////////////////////////////////////////////////////////////////
+
+string NpdaNodeData::GetFullDescription (Uint32 min_width) const
+{
+    ostringstream out;
+    out.width(min_width);
+    out.setf(ios_base::left);
+    out << GetOneLineDescription() << endl;
+    return out.str();
+}
+
+// ///////////////////////////////////////////////////////////////////////////
 // Graph::Node::Data implementations for Nonterminal and Rule (and generic)
 // ///////////////////////////////////////////////////////////////////////////
 
@@ -52,7 +65,7 @@ struct RuleNpdaNodeData : public NpdaNodeData
     virtual Nonterminal const *GetAssociatedNonterminal () const { return m_rule->m_owner_nonterminal; }
     virtual Rule const *GetAssociatedRule () const { return m_rule; }
     virtual Uint32 GetRuleStage () const { return m_stage; }
-    virtual string GetDescription () const { return m_rule->GetAsText(m_stage); }
+    virtual string GetOneLineDescription () const { return m_rule->GetAsText(m_stage); }
 }; // end of struct RuleNpdaNodeData
 
 struct NonterminalHeadNpdaNodeData : public NpdaNodeData
@@ -99,7 +112,23 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
 
     // NpdaNodeData interface methods
     virtual Nonterminal const *GetAssociatedNonterminal () const { return m_nonterminal; }
-    virtual string GetDescription () const { return "head of: " + m_nonterminal->GetText(); }
+    virtual string GetOneLineDescription () const { return "head of: " + m_nonterminal->GetText(); }
+    virtual string GetFullDescription (Uint32 min_width) const
+    {
+        ostringstream out;
+        for (RuleList::const_iterator it = m_nonterminal->m_rule_list->begin(),
+                                      it_end = m_nonterminal->m_rule_list->end();
+             it != it_end;
+             ++it)
+        {
+            Rule const *rule = *it;
+            assert(rule != NULL);
+            out.width(min_width);
+            out.setf(ios_base::left);
+            out << rule->GetAsText(0) << endl;
+        }
+        return out.str();
+    }
 }; // end of class NonterminalHeadNpdaNodeData
 
 struct GenericNpdaNodeData : public NpdaNodeData
@@ -128,7 +157,7 @@ struct GenericNpdaNodeData : public NpdaNodeData
     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return m_dot_graph_color; }
 
     // NpdaNodeData interface methods
-    virtual string GetDescription () const { return m_text; }
+    virtual string GetOneLineDescription () const { return m_text; }
 }; // end of class GenericNpdaNodeData
 
 // ///////////////////////////////////////////////////////////////////////////
