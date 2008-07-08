@@ -686,8 +686,8 @@ protected:
             // clone the source branch and operate on it
             Branch_ *reduced_branch = source_branch.Clone_();
             assert(reduced_branch != NULL);
-//             reduced_branch->m_state_stack_.resize(reduced_branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 1)); // for condensed nonterminal head states
-            reduced_branch->m_state_stack_.resize(reduced_branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 2)); // for uncondensed nonterminal head states
+            reduced_branch->m_state_stack_.resize(reduced_branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 1)); // for condensed nonterminal head states
+//             reduced_branch->m_state_stack_.resize(reduced_branch->m_state_stack_.size() - (reduction_rule->m_token_count_ + 2)); // for uncondensed nonterminal head states
             reduced_branch->m_lookahead_nonterminal_token_id_ = reduction_rule->m_reduction_nonterminal_token_id_;
             // add the reduced branch as a child of the reduce child
             m_reduce_child_->AddChildBranch_(reduced_branch);
