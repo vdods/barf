@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// trison.cpp_npda.targetspec by Victor Dods, created 2007/01/25
+// trison.cpp.targetspec by Victor Dods, created 2008/07/09
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,21 +8,21 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-// This is a trison targetspec file for a C++ unbounded LALR parser class
-// using a nondeterministic pushdown automaton (NPDA).
-%target cpp_npda
+// This is a trison targetspec file for a C++ (bounded) LALR(k) parser class
+// using a deterministic pushdown automaton (DPDA).
+%target cpp
 
 // The value of this directive specifies the filename to use when generating
 // the header file (it is used by the below add_codespec directive).
 %add_required_directive header_filename %string
-// This refers to the file trison.cpp_npda.header.codespec in the data
+// This refers to the file trison.cpp.header.codespec in the data
 // directory.  See that file for the header template code.
 %add_codespec "header" header_filename
 
 // The value of this directive specifies the filename to use when generating
 // the implementation file (it is used by the below add_codespec directive).
 %add_required_directive implementation_filename %string
-// This refers to the file trison.cpp_npda.implementation.codespec in the data
+// This refers to the file trison.cpp.implementation.codespec in the data
 // directory.  See that file for the implementation template code.
 %add_codespec "implementation" implementation_filename
 

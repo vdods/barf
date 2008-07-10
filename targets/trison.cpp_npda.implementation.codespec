@@ -136,9 +136,14 @@ void <{class_name}::ResetForNewInput_ ()
 <|end_if
 }
 
+<{class_name}::Token_ <{class_name}::Scan_ ()
+{
+<|scan_actions
+}
+
 <{class_name}::ParserReturnCode <{class_name}::Parse_ (<{return_token_type} *return_token_, ParseNonterminal::Name nonterminal_to_parse_)
 {
-    assert(return_token_ != NULL && "the return-token pointer must be valid");
+    assert(return_token_ != NULL && "the return-token pointer must be non-NULL");
 
     ParserReturnCode parser_return_code_ = PRC_SUCCESS;
 
@@ -308,7 +313,7 @@ void <{class_name}::ResetForNewInput_ ()
 {
     assert(m_lookahead_token_queue_cursor_ <= m_lookahead_token_queue_.size());
     if (m_lookahead_token_queue_cursor_ == m_lookahead_token_queue_.size())
-        m_lookahead_token_queue_.push_back(Scan());
+        m_lookahead_token_queue_.push_back(Scan_());
     return m_lookahead_token_queue_[m_lookahead_token_queue_cursor_++];
 }
 
@@ -632,7 +637,9 @@ void <{class_name}::ExecuteAndRemoveTrunk_ ()
 <|end_loop
     }
 
+<|if(!is_defined(dont_assert_if_reduction_rule_code_doesnt_return))
     assert(false && "no value returned from reduction rule code block");
+<|end_if
     return <{token_data_type_sentinel};
 }
 
@@ -690,9 +697,9 @@ TrisonCpp_::Npda_::Transition_ const <{class_name}::ms_transition_table_[] =
     { <|
 TrisonCpp_::Npda_::Transition_::<{_npda_transition_type_name[i]}_<|", "
 <|if(_npda_transition_type_name[i] == "TT_SHIFT")
-<|if(sizeof(_terminal_index_list) > 0 && _npda_transition_data_index[i] >= _terminal_index_list[0] && _npda_transition_data_index[i] <= _terminal_index_list[sizeof(_terminal_index_list)-1])
+<|if(_npda_transition_data_index[i] >= _terminal_index_list[0] && _npda_transition_data_index[i] <= _terminal_index_list[sizeof(_terminal_index_list)-1])
 <{class_name}::Terminal::<|
-<|else_if(sizeof(_nonterminal_index_list) > 0 && (_npda_transition_data_index[i] == 0 || _npda_transition_data_index[i] >= 256 && _npda_transition_data_index[i] <= _nonterminal_index_list[sizeof(_nonterminal_index_list)-1]))
+<|else_if(_npda_transition_data_index[i] == 0 || _npda_transition_data_index[i] >= 256 && _npda_transition_data_index[i] <= _nonterminal_index_list[sizeof(_nonterminal_index_list)-1])
 <{class_name}::Nonterminal::<|
 <|end_if
 <|_npda_transition_data_name[i]

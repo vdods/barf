@@ -135,12 +135,12 @@ struct GenericNpdaNodeData : public NpdaNodeData
 {
     string const m_text;
     Graph::Color const m_dot_graph_color;
-    bool const m_is_return_state;
 
-    GenericNpdaNodeData (string const &text, Graph::Color const &dot_graph_color, bool is_return_state = false)
+    GenericNpdaNodeData (string const &text, Graph::Color const &dot_graph_color, bool is_start_state = false, bool is_return_state = false)
         :
         m_text(text),
         m_dot_graph_color(dot_graph_color),
+        m_is_start_state(is_start_state),
         m_is_return_state(is_return_state)
     {
         assert(!m_text.empty());
@@ -158,6 +158,13 @@ struct GenericNpdaNodeData : public NpdaNodeData
 
     // NpdaNodeData interface methods
     virtual string GetOneLineDescription () const { return m_text; }
+    virtual bool IsStartState () const { return m_is_start_state; }
+    virtual bool IsReturnState () const { return m_is_return_state; }
+
+private:
+
+    bool const m_is_start_state;
+    bool const m_is_return_state;
 }; // end of class GenericNpdaNodeData
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -295,8 +302,8 @@ void EnsureGeneratedNpda (
         return;
 
     // create the start, head and return states for this nonterminal
-    Uint32 graph_start_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("start: " + nonterminal.GetText(), Graph::Color(0xAEC3FF)));
-    Uint32 graph_return_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("return: " + nonterminal.GetText(), Graph::Color(0xC9AEFF), true));
+    Uint32 graph_start_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("start: " + nonterminal.GetText(), Graph::Color(0xAEC3FF), true, false));
+    Uint32 graph_return_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("return: " + nonterminal.GetText(), Graph::Color(0xC9AEFF), false, true));
     Uint32 graph_head_state = graph_context.m_npda_graph.AddNode(new NonterminalHeadNpdaNodeData(&nonterminal));
     // create the transitions from the start state to the head and return states
     graph_context.m_npda_graph.AddTransition(graph_start_state, NpdaEpsilonTransition(graph_head_state));

@@ -36,6 +36,8 @@ struct NpdaNodeData : public Graph::Node::Data
     // min_width gives the minimum width of the output (it should be left-
     // justified, padded with whitespace ' ').
     virtual string GetFullDescription (Uint32 min_width) const;
+    virtual bool IsStartState () const { return false; }
+    virtual bool IsReturnState () const { return false; }
 }; // end of struct NpdaNodeData
 
 void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph);

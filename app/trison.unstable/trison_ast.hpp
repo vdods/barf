@@ -180,29 +180,37 @@ struct Nonterminal : public TokenId
         m_rule_list(NULL),
         m_npda_graph_start_state(UINT32_UPPER_BOUND),
         m_npda_graph_head_state(UINT32_UPPER_BOUND),
-        m_npda_graph_return_state(UINT32_UPPER_BOUND)
+        m_npda_graph_return_state(UINT32_UPPER_BOUND),
+        m_dpda_graph_start_state(UINT32_UPPER_BOUND)
     {
         assert(!id.empty());
     }
 
+    // TODO: these shouldn't be in here, they should be in some separate thing associated with the npda/dpda graphs
     bool GetIsNpdaGraphed () const { return m_npda_graph_start_state != UINT32_UPPER_BOUND; }
     Uint32 GetNpdaGraphStartState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_start_state; }
     Uint32 GetNpdaGraphHeadState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_head_state; }
     Uint32 GetNpdaGraphReturnState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_return_state; }
+    bool GetIsDpdaGraphed () const { return m_dpda_graph_start_state != UINT32_UPPER_BOUND; }
+    Uint32 GetDpdaGraphStartState () const { assert(GetIsDpdaGraphed()); return m_dpda_graph_start_state; }
 
     void SetRuleList (RuleList *rule_list);
     void SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda_graph_head_state, Uint32 npda_graph_return_state) const;
+    void SetDpdaGraphStates (Uint32 dpda_graph_start_state) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    // the separate start state (with epsilon transition into the head state)
+    // the separate npda start state (with epsilon transition into the head state)
     mutable Uint32 m_npda_graph_start_state;
-    // the first state for all rules contained within this nonterminal
+    // the first npda state for all rules contained within this nonterminal
     mutable Uint32 m_npda_graph_head_state;
-    // the return state for this nonterminal
+    // the return npda state for this nonterminal
     mutable Uint32 m_npda_graph_return_state;
+
+    // the dpda start state for this nonterminal
+    mutable Uint32 m_dpda_graph_start_state;
 }; // end of struct Nonterminal
 
 struct NonterminalList : public Ast::AstList<Nonterminal>

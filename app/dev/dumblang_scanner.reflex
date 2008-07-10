@@ -24,7 +24,7 @@
 %}
 
 
-%target.cpp.return_type "Parser::Token_"
+%target.cpp.return_type "Parser::Token"
 %target.cpp.return_true_iff_input_is_at_end {
     return cin.peek() == char_traits<char>::eof();
 }
@@ -64,49 +64,49 @@
         if (accepted_string == "if")
         {
             SPEW("++ scanner is returning KEYWORD_IF ++");
-            return Parser::Token_(Parser::Terminal::KEYWORD_IF);
+            return Parser::Token(Parser::Terminal::KEYWORD_IF);
         }
         if (accepted_string == "else")
         {
             SPEW("++ scanner is returning KEYWORD_ELSE ++");
-            return Parser::Token_(Parser::Terminal::KEYWORD_ELSE);
+            return Parser::Token(Parser::Terminal::KEYWORD_ELSE);
         }
         if (accepted_string == "var")
         {
             SPEW("++ scanner is returning KEYWORD_VAR ++");
-            return Parser::Token_(Parser::Terminal::KEYWORD_VAR);
+            return Parser::Token(Parser::Terminal::KEYWORD_VAR);
         }
         if (accepted_string == "func")
         {
             SPEW("++ scanner is returning KEYWORD_FUNC ++");
-            return Parser::Token_(Parser::Terminal::KEYWORD_FUNC);
+            return Parser::Token(Parser::Terminal::KEYWORD_FUNC);
         }
         if (accepted_string == "return")
         {
             SPEW("++ scanner is returning KEYWORD_RETURN ++");
-            return Parser::Token_(Parser::Terminal::KEYWORD_RETURN);
+            return Parser::Token(Parser::Terminal::KEYWORD_RETURN);
         }
 
         SPEW("++ scanner is returning ID ++");
-        return Parser::Token_(Parser::Terminal::ID, new Ast(Ast::ID, 0, accepted_string));
+        return Parser::Token(Parser::Terminal::ID, new Ast(Ast::ID, 0, accepted_string));
     }
 |
     ({OPERATOR}) // operator
     %target.cpp {
         SPEW("++ scanner is returning '" << accepted_string[0] << "' ++");
-        return Parser::Token_(static_cast<Parser::Terminal::Name>(accepted_string[0]));
+        return Parser::Token(static_cast<Parser::Terminal::Name>(accepted_string[0]));
     }
 |
     ([1-9][0-9]*) // integer literal
     %target.cpp {
         SPEW("++ scanner is returning INTEGER_LITERAL ++");
-        return Parser::Token_(Parser::Terminal::INTEGER_LITERAL, new Ast(Ast::INTEGER_LITERAL, 6));
+        return Parser::Token(Parser::Terminal::INTEGER_LITERAL, new Ast(Ast::INTEGER_LITERAL, 6));
     }
 |
     ({END_OF_FILE})
     %target.cpp {
         SPEW("++ scanner is returning END_ ++");
-        return Parser::Token_(Parser::Terminal::END_);
+        return Parser::Token(Parser::Terminal::END_);
     }
 ;
 

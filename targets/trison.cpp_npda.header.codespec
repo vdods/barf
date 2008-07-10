@@ -55,10 +55,6 @@ public:
 };
 template <> struct Integer_<0> { }; // empty for intentional compile errors
 
-// /////////////////////////////////////////////////////////////////////////////
-// typedefs for the integer types used in the "cpp_npda" trison target
-// /////////////////////////////////////////////////////////////////////////////
-
 typedef Integer_<8> ::Signed_   Sint8_;
 typedef Integer_<8> ::Unsigned_ Uint8_;
 typedef Integer_<16>::Signed_   Sint16_;
@@ -1129,7 +1125,7 @@ public:
             <{key} = <{_npda_nonterminal_start_state_index[key]},
 <|end_for_each
             // default parse nonterminal
-            DEFAULT_ = <{_default_parse_nonterminal}
+            default_ = <{_default_parse_nonterminal}
         }; // end of enum <{class_name}::ParseNonterminal::Name
     }; // end of struct <{class_name}::ParseNonterminal
 
@@ -1196,6 +1192,7 @@ private:
 */
     void ThrowAwayToken_ (TokenData_ &token);
     void ResetForNewInput_ ();
+    Token_ Scan_ ();
 
 
     // blah

@@ -14,6 +14,7 @@
 #include "barf_preprocessor_ast.hpp"
 #include "barf_preprocessor_symboltable.hpp"
 #include "trison_ast.hpp"
+#include "trison_dpda.hpp"
 #include "trison_graph.hpp"
 #include "trison_npda.hpp"
 
@@ -39,13 +40,7 @@ void PopulateRuleCodeArraySymbol (Rule const &rule, string const &target_id, Pre
 void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Preprocessor::SymbolTable &symbol_table)
 {
     // _rule_count -- gives the total number of rules (from all nonterminals combined).
-    {
-        Preprocessor::ScalarSymbol *rule_count =
-            symbol_table.DefineScalarSymbol("_rule_count", FiLoc::ms_invalid);
-        rule_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
-    }
-
+    //
     // _rule_total_token_count -- specifies the total number of rule tokens from all
     // rules, summed together.
     //
@@ -59,6 +54,13 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     //
     // _rule_token_table_count[_rule_count]
     {
+        {
+            Preprocessor::ScalarSymbol *rule_count =
+                symbol_table.DefineScalarSymbol("_rule_count", FiLoc::ms_invalid);
+            rule_count->SetScalarBody(
+                new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
+        }
+
         Preprocessor::ScalarSymbol *rule_total_token_count =
             symbol_table.DefineScalarSymbol("_rule_total_token_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *rule_token_assigned_id =
@@ -67,6 +69,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             symbol_table.DefineArraySymbol("_rule_token_table_offset", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *rule_token_table_count =
             symbol_table.DefineArraySymbol("_rule_token_table_count", FiLoc::ms_invalid);
+
 
         Uint32 rule_total_token_count_value = primary_source.GetRuleTokenCount();
         rule_total_token_count->SetScalarBody(
@@ -291,14 +294,6 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
 {
     assert(npda_graph.GetNodeCount() > 0);
 
-    // _npda_state_count -- the number of nodes in the nondeterministic pushdown automaton (NPDA)
-    {
-        Preprocessor::ScalarSymbol *npda_state_count =
-            symbol_table.DefineScalarSymbol("_npda_state_count", FiLoc::ms_invalid);
-        npda_state_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(npda_graph.GetNodeCount())));
-    }
-
     // _npda_nonterminal_start_state_index[nonterminal name] -- maps nonterminal name => node index
     {
         Preprocessor::MapSymbol *npda_nonterminal_start_state_index =
@@ -319,6 +314,8 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
         }
     }
 
+    // _npda_state_count -- the number of nodes in the nondeterministic pushdown automaton (NPDA)
+    //
     // _npda_state_rule_index[_npda_state_count] -- the index of the rule which this state
     // is a part of, or _rule_count if this state is not part of a rule.
     //
@@ -364,6 +361,8 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
     // the node which to transition to if this transition is exercised, or -1 if
     // not applicable.
     {
+        Preprocessor::ScalarSymbol *npda_state_count =
+            symbol_table.DefineScalarSymbol("_npda_state_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_state_rule_index =
             symbol_table.DefineArraySymbol("_npda_state_rule_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_state_rule_stage =
@@ -378,6 +377,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             symbol_table.DefineArraySymbol("_npda_state_transition_offset", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_state_transition_count =
             symbol_table.DefineArraySymbol("_npda_state_transition_count", FiLoc::ms_invalid);
+
         Preprocessor::ScalarSymbol *npda_transition_count =
             symbol_table.DefineScalarSymbol("_npda_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_type_index =
@@ -390,6 +390,9 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             symbol_table.DefineArraySymbol("_npda_transition_data_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_target_node_index =
             symbol_table.DefineArraySymbol("_npda_transition_target_node_index", FiLoc::ms_invalid);
+
+        npda_state_count->SetScalarBody(
+            new Preprocessor::Body(Sint32(npda_graph.GetNodeCount())));
 
         Sint32 total_transition_count = 0;
 
@@ -450,10 +453,202 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
 
 void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda_graph, Preprocessor::SymbolTable &symbol_table)
 {
-    // not implemented yet
+    assert(dpda_graph.GetNodeCount() > 0);
+
+    // _dpda_lalr_lookahead_count -- the number of lookaheads required for this LALR grammar
+    {
+//         Preprocessor::ScalarSymbol *dpda_lalr_lookahead_count =
+//             symbol_table.DefineScalarSymbol("_dpda_lalr_lookahead_count", FiLoc::ms_invalid);
+//         npda_state_count->SetScalarBody(
+//             new Preprocessor::Body(Sint32(// TODOnpda_graph.GetNodeCount() )));
+    }
+
+    // _dpda_nonterminal_start_state_index[nonterminal name] -- maps nonterminal name => node index
+    {
+        Preprocessor::MapSymbol *dpda_nonterminal_start_state_index =
+            symbol_table.DefineMapSymbol("_dpda_nonterminal_start_state_index", FiLoc::ms_invalid);
+        for (NonterminalMap::const_iterator it = primary_source.m_nonterminal_map->begin(),
+                                            it_end = primary_source.m_nonterminal_map->end();
+             it != it_end;
+             ++it)
+        {
+            string const &nonterminal_name = it->first;
+            Nonterminal const *nonterminal = it->second;
+            assert(nonterminal != NULL);
+            // we don't want to add the special "none_" nonterminal here.
+            if (nonterminal->GetText() != "none_")
+                dpda_nonterminal_start_state_index->SetMapElement(
+                    nonterminal_name,
+                    new Preprocessor::Body(Sint32(nonterminal->GetDpdaGraphStartState())));
+        }
+    }
+
+    // _dpda_state_count -- the number of nodes in the deterministic pushdown automaton (DPDA)
+    //
+    // _dpda_state_description[_dpda_state_count] -- the description of this node (e.g.
+    // "start using xxx" for a start state, "return xxx" for a return state,
+    // "exp <- exp . '+' exp" if a part of a rule, or "head of xxx" for a nonterminal
+    // head state).
+    //
+    // _dpda_state_transition_offset[_dpda_state_count] -- gives the first index of the
+    // contiguous set of transitions for this node, with the "default" transition
+    // first.
+    //
+    // _dpda_state_transition_count[_dpda_state_count] -- gives the number of transitions for
+    // this node (the number of contiguous transitions which apply to this node), which
+    // always includes the "default" transition (so it is at least 1).
+    //
+    // _dpda_lookahead_count -- number of elements in _dpda_lookahead_index and _dpda_lookahead_name
+    //
+    // _dpda_lookahead_name[_dpda_lookahead_count] -- gives the identifier name (e.g.
+    // '+', END_, etc) of the lookahead sequences.  this is a big array into which
+    // the transitions point for their lookahead sequences.
+    //
+    // _dpda_lookahead_index[_dpda_lookahead_count] -- just like _dpda_lookahead_name
+    // but uses the numerical index of the lookahead tokens.
+    //
+    // _dpda_transition_count -- gives the number of transitions in this DPDA.
+    //
+    // _dpda_transition_type_index[_dpda_transition_count] -- gives the integer value
+    // of the transition type.  valid values are 1 (TT_REDUCE), 2 (TT_RETURN),
+    // 3 (TT_SHIFT), 4 (TT_ERROR_PANIC) -- defined in trison_graph.hpp
+    //
+    // _dpda_transition_type_name[_dpda_transition_count] -- gives the text name
+    // of the transition type (i.e. "TT_EPSILON", etc).
+    //
+    // _dpda_transition_data[_dpda_transition_count] -- if the transition type is
+    // TT_SHIFT, then this is the target state index.  if the transition type is
+    // TT_REDUCE, then this is the reduction rule index.  otherwise this is -1.
+    //
+    // _dpda_transition_lookahead_offset[_dpda_transition_count] -- gives the index
+    // (into _dpda_lookahead_index and _dpda_lookahead_name) of the lookahead
+    // sequence (contiguously).
+    //
+    // _dpda_transition_lookahead_count[_dpda_transition_count] -- gives the number
+    // of lookaheads required by this transition; i.e. the number of lookaheads pointed
+    // to by _dpda_transition_lookahead_offset
+    {
+        Preprocessor::ScalarSymbol *dpda_state_count =
+            symbol_table.DefineScalarSymbol("_dpda_state_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_state_description =
+            symbol_table.DefineArraySymbol("_dpda_state_description", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_state_transition_offset =
+            symbol_table.DefineArraySymbol("_dpda_state_transition_offset", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_state_transition_count =
+            symbol_table.DefineArraySymbol("_dpda_state_transition_count", FiLoc::ms_invalid);
+
+        Preprocessor::ScalarSymbol *dpda_lookahead_count =
+            symbol_table.DefineScalarSymbol("_dpda_lookahead_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_lookahead_name =
+            symbol_table.DefineArraySymbol("_dpda_lookahead_name", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_lookahead_index =
+            symbol_table.DefineArraySymbol("_dpda_lookahead_index", FiLoc::ms_invalid);
+
+        Preprocessor::ScalarSymbol *dpda_transition_count =
+            symbol_table.DefineScalarSymbol("_dpda_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_transition_type_index =
+            symbol_table.DefineArraySymbol("_dpda_transition_type_index", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_transition_type_name =
+            symbol_table.DefineArraySymbol("_dpda_transition_type_name", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_transition_data =
+            symbol_table.DefineArraySymbol("_dpda_transition_data", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_transition_lookahead_offset =
+            symbol_table.DefineArraySymbol("_dpda_transition_lookahead_offset", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dpda_transition_lookahead_count =
+            symbol_table.DefineArraySymbol("_dpda_transition_lookahead_count", FiLoc::ms_invalid);
+
+        dpda_state_count->SetScalarBody(
+            new Preprocessor::Body(Sint32(dpda_graph.GetNodeCount())));
+
+        Sint32 total_lookahead_count = 0;
+        Sint32 total_transition_count = 0;
+
+        for (Uint32 node_index = 0; node_index < dpda_graph.GetNodeCount(); ++node_index)
+        {
+            cerr << "codespecsymbols'ing dpda node: " << node_index << endl;
+            Graph::Node const &node = dpda_graph.GetNode(node_index);
+            DpdaNodeData const &node_data = node.GetDataAs<DpdaNodeData>();
+            Sint32 node_transition_offset = total_transition_count;
+            Sint32 node_transition_count = 0;
+
+            for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
+                                                      it_end = node.GetTransitionSetEnd();
+                 it != it_end;
+                 ++it)
+            {
+                Graph::Transition const &transition = *it;
+
+                cerr << "  transition: " << GetTransitionTypeString(transition.Type());
+
+                dpda_transition_type_index->AppendArrayElement(
+                    new Preprocessor::Body(Sint32(transition.Type())));
+                dpda_transition_type_name->AppendArrayElement(
+                    new Preprocessor::Body(GetTransitionTypeString(transition.Type())));
+                dpda_transition_data->AppendArrayElement(
+                    new Preprocessor::Body(Sint32(transition.Data(0))));
+                dpda_transition_lookahead_offset->AppendArrayElement(
+                    new Preprocessor::Body(total_lookahead_count));
+
+                if (transition.Type() == TT_SHIFT)
+                {
+                    dpda_transition_lookahead_count->AppendArrayElement(
+                        new Preprocessor::Body(Sint32(transition.DataCount())));
+                    for (Uint32 i = 0; i < transition.DataCount(); ++i)
+                    {
+                        cerr << ' ' << primary_source.GetTokenId(transition.Data(i));
+                        dpda_lookahead_name->AppendArrayElement(
+                            new Preprocessor::Body(primary_source.GetTokenId(transition.Data(i))));
+                        dpda_lookahead_index->AppendArrayElement(
+                            new Preprocessor::Body(Sint32(transition.Data(i))));
+                        ++total_lookahead_count;
+                    }
+                }
+                else if (transition.Type() == TT_REDUCE)
+                {
+                    // -1 because the reduce lookaheads come after element 0.
+                    dpda_transition_lookahead_count->AppendArrayElement(
+                        new Preprocessor::Body(Sint32(transition.DataCount())-1));
+                    for (Uint32 i = 1; i < transition.DataCount(); ++i)
+                    {
+                        cerr << ' ' << primary_source.GetTokenId(transition.Data(i));
+                        dpda_lookahead_name->AppendArrayElement(
+                            new Preprocessor::Body(primary_source.GetTokenId(transition.Data(i))));
+                        dpda_lookahead_index->AppendArrayElement(
+                            new Preprocessor::Body(Sint32(transition.Data(i))));
+                        ++total_lookahead_count;
+                    }
+                }
+                else
+                {
+                    // dummy value in dpda_transition_lookahead_count
+                    dpda_transition_lookahead_count->AppendArrayElement(
+                        new Preprocessor::Body(Sint32(0)));
+                }
+                cerr << endl;
+
+                assert(node_transition_count < SINT32_UPPER_BOUND);
+                ++node_transition_count;
+                assert(total_transition_count < SINT32_UPPER_BOUND);
+                ++total_transition_count;
+            }
+
+            // figure out all the values for _dpda_state_*
+            dpda_state_description->AppendArrayElement(
+                new Preprocessor::Body(GetStringLiteral(node_data.GetDescription())));
+            dpda_state_transition_offset->AppendArrayElement(
+                new Preprocessor::Body(Sint32(node_transition_offset)));
+            dpda_state_transition_count->AppendArrayElement(
+                new Preprocessor::Body(Sint32(node_transition_count)));
+        }
+
+        dpda_lookahead_count->SetScalarBody(
+            new Preprocessor::Body(Sint32(total_lookahead_count)));
+        dpda_transition_count->SetScalarBody(
+            new Preprocessor::Body(Sint32(total_transition_count)));
+    }
 }
 
-void GenerateTargetDependentSymbols(PrimarySource const &primary_source, string const &target_id, Preprocessor::SymbolTable &symbol_table)
+void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string const &target_id, Preprocessor::SymbolTable &symbol_table)
 {
     // _rule_code[_rule_count] -- specifies code for each rule.
     {

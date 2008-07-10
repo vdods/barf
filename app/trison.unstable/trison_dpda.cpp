@@ -11,7 +11,6 @@
 #include "trison_dpda.hpp"
 
 #include <map>
-#include <set>
 #include <vector>
 
 #include "barf_list.hpp"
@@ -19,10 +18,6 @@
 #include "trison_npda.hpp"
 
 namespace Trison {
-
-// a set of npda states constitutes a single dpda state
-typedef set<Uint32> DpdaState;
-typedef map<DpdaState, Uint32> GeneratedDpdaStateMap;
 
 ostream &operator << (ostream &stream, DpdaState const &dpda_state)
 {
@@ -41,54 +36,79 @@ ostream &operator << (ostream &stream, DpdaState const &dpda_state)
     return stream;
 }
 
-struct DpdaNodeData : public Graph::Node::Data
+DpdaNodeData::DpdaNodeData (Graph const &npda_graph, DpdaState const &dpda_state)
+    :
+    m_dpda_state_string(FORMAT(dpda_state)),
+    m_is_start_state(false),
+    m_is_return_state(false)
 {
-    DpdaNodeData (Graph const &npda_graph, DpdaState const &dpda_state)
+    // first figure out the max width of all the lines of the output
+    Uint32 max_width = 0;
+    for (DpdaState::const_iterator it = dpda_state.begin(), it_end = dpda_state.end();
+            it != it_end;
+            ++it)
     {
-        // first figure out the max width of all the lines of the output
-        Uint32 max_width = 0;
-        for (DpdaState::const_iterator it = dpda_state.begin(), it_end = dpda_state.end();
-             it != it_end;
-             ++it)
+        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
+        string const text(npda_node_data.GetFullDescription(0));
+        Uint32 line_width_count = 0;
+        for (string::const_iterator str_it = text.begin(), str_it_end = text.end();
+                str_it != str_it_end;
+                ++str_it)
         {
-            NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
-            string const text(npda_node_data.GetFullDescription(0));
-            Uint32 line_width_count = 0;
-            for (string::const_iterator str_it = text.begin(), str_it_end = text.end();
-                 str_it != str_it_end;
-                 ++str_it)
+            if (*str_it == '\n')
             {
-                if (*str_it == '\n')
-                {
-                    max_width = max(max_width, line_width_count);
-                    line_width_count = 0;
-                }
-                else
-                    ++line_width_count;
+                max_width = max(max_width, line_width_count);
+                line_width_count = 0;
             }
-            max_width = max(max_width, line_width_count);
+            else
+                ++line_width_count;
         }
-
-        m_text += FORMAT(dpda_state) + "\n";
-        for (DpdaState::const_iterator it = dpda_state.begin(), it_end = dpda_state.end();
-             it != it_end;
-             ++it)
-        {
-            NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
-            m_text += npda_node_data.GetFullDescription(max_width);
-        }
+        max_width = max(max_width, line_width_count);
     }
 
-    virtual string GetAsText (Uint32 node_index) const
+    // generate the justified description text
+    for (DpdaState::const_iterator it = dpda_state.begin(), it_end = dpda_state.end();
+            it != it_end;
+            ++it)
     {
-        return FORMAT("state " << node_index << ' ' << m_text);
+        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
+        m_description += npda_node_data.GetFullDescription(max_width);
     }
-//     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color::ms_white; }
 
-private:
+    // remove the newline at the end of the description string, if it exists
+    if (!m_description.empty() && m_description[m_description.size()-1] == '\n')
+        m_description.resize(m_description.size()-1);
 
-    string m_text;
-}; // end of struct DpdaNodeData
+    // figure out if this is a start/return state
+    for (DpdaState::const_iterator it = dpda_state.begin(), it_end = dpda_state.end();
+            it != it_end;
+            ++it)
+    {
+        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
+        m_is_start_state = m_is_start_state || npda_node_data.IsStartState();
+        m_is_return_state = m_is_return_state || npda_node_data.IsReturnState();
+    }
+}
+
+string DpdaNodeData::GetAsText (Uint32 node_index) const
+{
+    return FORMAT("state " << node_index << ' ' << m_dpda_state_string << '\n' << m_description);
+}
+
+Graph::Color DpdaNodeData::DotGraphColor (Uint32 node_index) const
+{
+    if (m_is_return_state)
+        return Graph::Color(0xB6FFAE);
+    else
+        return Graph::Color(0xFCFFAE);
+}
+
+Uint32 DpdaNodeData::GetNodePeripheries (Uint32 node_index) const
+{
+    return m_is_start_state ? 2 : 1;
+}
+
+typedef map<DpdaState, Uint32> GeneratedDpdaStateMap;
 
 struct GraphContext
 {
@@ -134,6 +154,11 @@ struct GraphContext
             RecordLalrLookaheadCount(transition.DataCount()-1);
 
         m_dpda_graph.AddTransition(DpdaStateIndex(source_dpda_state), transition);
+    }
+    Uint32 TransitionCount (DpdaState const &source_dpda_state)
+    {
+        assert(DpdaStateIsGenerated(source_dpda_state));
+        return m_dpda_graph.GetNode(DpdaStateIndex(source_dpda_state)).GetTransitionCount();
     }
 
 private:
@@ -2035,6 +2060,9 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
         assert(default_action.Type() == AT_ERROR_PANIC || default_action.Type() == AT_REDUCE || default_action.Type() == AT_RETURN);
         cerr << "++ (at " << dpda_state << ") adding default action: " << default_action.Type() << '(' << default_action.Data() << ')' << endl;
 
+        // the default transition better be the first one
+        assert(graph_context.TransitionCount(dpda_state) == 0);
+
         // add the default action to the dpda graph
         switch (default_action.Type())
         {
@@ -2124,7 +2152,9 @@ void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph,
         // "none_" is a special nonterminal which isn't real, so skip it.
         if (nonterminal->GetText() == "none_")
             continue;
-        EnsureDpdaStateIsGenerated(graph_context, Npda(graph_context, nonterminal));
+        Npda nonterminal_start_npda(graph_context, nonterminal);
+        EnsureDpdaStateIsGenerated(graph_context, nonterminal_start_npda);
+        nonterminal->SetDpdaGraphStates(graph_context.DpdaStateIndex(nonterminal_start_npda.CurrentDpdaState()));
     }
 
     cerr << "LALR(" << graph_context.LalrLookaheadCount() << ')' << endl;

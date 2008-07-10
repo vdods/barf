@@ -119,6 +119,13 @@ void Nonterminal::SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda
     m_npda_graph_return_state = npda_graph_return_state;
 }
 
+void Nonterminal::SetDpdaGraphStates (Uint32 dpda_graph_start_state) const
+{
+    assert(dpda_graph_start_state != UINT32_UPPER_BOUND);
+    assert(!GetIsDpdaGraphed() && "already has states");
+    m_dpda_graph_start_state = dpda_graph_start_state;
+}
+
 void Nonterminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);

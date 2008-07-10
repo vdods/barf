@@ -13,10 +13,33 @@
 
 #include "trison.hpp"
 
+#include <set>
+
 #include "trison_ast.hpp"
 #include "trison_graph.hpp"
 
 namespace Trison {
+
+// a set of npda states constitutes a single dpda state
+typedef set<Uint32> DpdaState;
+
+struct DpdaNodeData : public Graph::Node::Data
+{
+    DpdaNodeData (Graph const &npda_graph, DpdaState const &dpda_state);
+
+    virtual string GetAsText (Uint32 node_index) const;
+    virtual Graph::Color DotGraphColor (Uint32 node_index) const;
+    virtual Uint32 GetNodePeripheries (Uint32 node_index) const;
+
+    string const &GetDescription () const { return m_description; }
+
+private:
+
+    string m_dpda_state_string;
+    string m_description;
+    bool m_is_start_state;
+    bool m_is_return_state;
+}; // end of struct DpdaNodeData
 
 void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph);
 

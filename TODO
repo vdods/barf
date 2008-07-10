@@ -238,6 +238,8 @@
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
+- in the codespecsymbols, add some sort of "description" property so that
+  when you dump the symbols, it's self documenting.
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -296,3 +298,5 @@
 - decouple npda states from trison ASTs -- they should only exist in the
   graph itself.
 - add an unbounded grammar app/dev test case
+- in the codespecsymbols, add some sort of "description" property so that
+  when you dump the symbols, it's self documenting.

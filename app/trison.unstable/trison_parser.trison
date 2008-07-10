@@ -378,11 +378,13 @@ terminal_directives %type "TerminalMap *"
 
         id = new Ast::Id("END_", FiLoc::ms_invalid);
         terminal = new Terminal(id, m_token_index++);
+        terminal->SetAssignedTypeMap(new TypeMap()); // default type
         m_terminal_list->Append(terminal);
         m_terminal_map->Add(terminal->GetText(), terminal);
 
         id = new Ast::Id("ERROR_", FiLoc::ms_invalid);
         terminal = new Terminal(id, m_token_index++);
+        terminal->SetAssignedTypeMap(new TypeMap()); // default type
         m_terminal_list->Append(terminal);
         m_terminal_map->Add(terminal->GetText(), terminal);
 

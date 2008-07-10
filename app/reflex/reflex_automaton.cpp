@@ -27,17 +27,18 @@ void GenerateNfa (Rule const &rule, Graph &graph, Uint32 start_index, Uint32 end
 
 void GenerateNfa (
     ScannerMode const &scanner_mode,
-    Graph &nfa_graph,
-    vector<Uint32> &nfa_start_state_index,
+    Automaton &nfa,
+//     Graph &nfa_graph,
+//     vector<Uint32> &nfa_start_state_index,
     Uint32 &next_accept_handler_index)
 {
     Uint32 master_start_state_index =
-        nfa_graph.AddNode(
+        nfa.m_graph.AddNode(
             new Regex::NodeData(
                 Regex::IS_START_NODE,
                 Regex::NOT_ACCEPT_NODE,
                 scanner_mode.m_scanner_mode_id->GetText()));
-    nfa_start_state_index.push_back(master_start_state_index);
+    nfa.m_start_state_index.push_back(master_start_state_index);
 
     // each rule is effectively or'ed together (i.e. using regex operator '|')
     // except that each rule ends alone at its own accept state.
@@ -48,7 +49,7 @@ void GenerateNfa (
     {
         Rule const *rule = *it;
         assert(rule != NULL);
-        GenerateNfa(*rule, nfa_graph, master_start_state_index, next_accept_handler_index++);
+        GenerateNfa(*rule, nfa.m_graph, master_start_state_index, next_accept_handler_index++);
     }
 }
 
@@ -80,7 +81,7 @@ void GenerateNfa (PrimarySource const &primary_source, Automaton &nfa)
     {
         ScannerMode const *scanner_mode = it->second;
         assert(scanner_mode != NULL);
-        GenerateNfa(*scanner_mode, nfa.m_graph, nfa.m_start_state_index, next_accept_handler_index);
+        GenerateNfa(*scanner_mode, nfa, next_accept_handler_index);
     }
 
     assert(nfa.m_graph.GetNodeCount() >= primary_source.m_scanner_mode_map->size());

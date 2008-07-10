@@ -105,6 +105,9 @@ public:
                 return t0.Type() < t1.Type()
                     ||
                     t0.Type() == t1.Type() &&
+                    t0.m_data_array.size() < t1.m_data_array.size()
+                    ||
+                    t0.m_data_array.size() == t1.m_data_array.size() &&
                     t0.m_data_array < t1.m_data_array
                     ||
                     t0.m_data_array == t1.m_data_array &&

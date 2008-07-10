@@ -1,10 +1,10 @@
-%targets cpp_npda
+%targets cpp
 
-%target.cpp_npda.header_filename "dumblang_parser.hpp"
-%target.cpp_npda.implementation_filename "dumblang_parser.cpp"
+%target.cpp.header_filename "dumblang_parser.hpp"
+%target.cpp.implementation_filename "dumblang_parser.cpp"
 
 
-%target.cpp_npda.top_of_header_file %{
+%target.cpp.top_of_header_file %{
 #if !defined(DUMBLANG_PARSER_HPP_)
 #define DUMBLANG_PARSER_HPP_
 
@@ -85,20 +85,18 @@ private:
     string m_string_data;
 };
 %}
-%target.cpp_npda.class_name Parser
-%target.cpp_npda.bottom_of_class {
-    Token_ Scan ();
-
+%target.cpp.class_name Parser
+%target.cpp.bottom_of_class {
 private:
 
     Scanner *m_scanner;
 }
-%target.cpp_npda.bottom_of_header_file %{
+%target.cpp.bottom_of_header_file %{
 #endif // !defined(DUMBLANG_PARSER_HPP_)
 %}
 
 
-%target.cpp_npda.top_of_implementation_file %{
+%target.cpp.top_of_implementation_file %{
 #include "dumblang_scanner.hpp"
 
 string const g_empty_string;
@@ -159,20 +157,14 @@ void Ast::Print (uint indent_level) const
         (*it)->Print(indent_level+1);
 }
 %}
-%target.cpp_npda.constructor_actions {
+%target.cpp.constructor_actions {
     m_scanner = new Scanner();
 }
-%target.cpp_npda.destructor_actions {
+%target.cpp.destructor_actions {
     delete m_scanner;
     m_scanner = NULL;
 }
-%target.cpp_npda.bottom_of_implementation_file %{
-Parser::Token_ Parser::Scan ()
-{
-    assert(m_scanner != NULL);
-    return m_scanner->Scan();
-}
-
+%target.cpp.bottom_of_implementation_file %{
 int main (int argc, char **argv)
 {
     Parser parser;
@@ -189,9 +181,13 @@ int main (int argc, char **argv)
 %}
 
 
-%target.cpp_npda.token_data_type "Ast *"
-%target.cpp_npda.token_data_type_sentinel "NULL"
-%target.cpp_npda.return_token_type "Ast *"
+%target.cpp.token_data_type "Ast *"
+%target.cpp.token_data_type_sentinel "NULL"
+%target.cpp.return_token_type "Ast *"
+%target.cpp.scan_actions {
+    assert(m_scanner != NULL);
+    return m_scanner->Scan();
+}
 
 %terminal '+' '-' '*' '/' '^' '(' ')'
 %terminal '>' '<' '=' '!'
@@ -220,34 +216,36 @@ int main (int argc, char **argv)
 
 %nonterminal st
 :
-    exp ';' %target.cpp_npda { return NULL; }
+    exp ';' %target.cpp { return NULL; }
+|
+    %error ';' %target.cpp { return NULL; }
 ;
 /*
 // arithmetic
 %nonterminal exp
 :
-    exp '+' exp %prec ADDITION %target.cpp_npda { return NULL; }
+    exp '+' exp %prec ADDITION %target.cpp { return NULL; }
 |
-    exp '*' exp %prec MULTIPLICATION %target.cpp_npda { return NULL; }
+    exp '*' exp %prec MULTIPLICATION %target.cpp { return NULL; }
 |
-    exp '^' exp %prec EXPONENTIATION %target.cpp_npda { return NULL; }
+    exp '^' exp %prec EXPONENTIATION %target.cpp { return NULL; }
 |
-    '(' exp ')' %target.cpp_npda { return NULL; }
+    '(' exp ')' %target.cpp { return NULL; }
 |
-    ID %target.cpp_npda { return NULL; }
+    ID %target.cpp { return NULL; }
 ;
 */
 
 // precedence testing (multiple lookaheads)
 %nonterminal exp
 :
-    exp '+' '+' exp %prec COMPARISON %target.cpp_npda { return NULL; }
+    exp '+' '+' exp %prec COMPARISON %target.cpp { return NULL; }
 |
-    exp '+' exp %prec ADDITION %target.cpp_npda { return NULL; }
+    exp '+' exp %prec ADDITION %target.cpp { return NULL; }
 |
-    exp '+' '+' '+' exp %prec MULTIPLICATION %target.cpp_npda { return NULL; }
+    exp '+' '+' '+' exp %prec MULTIPLICATION %target.cpp { return NULL; }
 |
-    ID %target.cpp_npda { return NULL; }
+    ID %target.cpp { return NULL; }
 ;
 
 /*
@@ -257,13 +255,13 @@ int main (int argc, char **argv)
 
 %nonterminal outer_empty
 :
-    empty %target.cpp_npda { return NULL; }
+    empty %target.cpp { return NULL; }
 ;
 
 %nonterminal empty
 :
     // empty reduction rule
-    %target.cpp_npda { return NULL; }
+    %target.cpp { return NULL; }
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -272,29 +270,29 @@ int main (int argc, char **argv)
 
 %nonterminal odd
 :
-    even ID %target.cpp_npda { return NULL; }
+    even ID %target.cpp { return NULL; }
 ;
 
 %nonterminal even
 :
-    odd ID %target.cpp_npda { return NULL; }
+    odd ID %target.cpp { return NULL; }
 |
     // empty reduction rule
-    %target.cpp_npda { return NULL; }
+    %target.cpp { return NULL; }
 ;
 */
 /*
 %nonterminal declaration_list
 :
     declaration_list:list declaration:decl
-    %target.cpp_npda
+    %target.cpp
     {
         list->push_back(decl);
         return list;
     }
 |
     // empty reduction rule
-    %target.cpp_npda
+    %target.cpp
     {
         return new Ast(Ast::DECLARATION_LIST);
     }
@@ -303,7 +301,7 @@ int main (int argc, char **argv)
 %nonterminal declaration
 :
     KEYWORD_VAR ID:id ';'
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *decl = new Ast(Ast::VAR_DECLARATION);
         decl->push_back(id);
@@ -311,7 +309,7 @@ int main (int argc, char **argv)
     }
 |
     KEYWORD_FUNC ID:id '(' function_parameters:params ')' '{' code_block:code '}'
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *decl = new Ast(Ast::FUNC_DECLARATION);
         decl->push_back(id);
@@ -324,23 +322,23 @@ int main (int argc, char **argv)
 %nonterminal function_parameters
 :
     parameter_list:list
-    %target.cpp_npda { return list; }
+    %target.cpp { return list; }
 |
     // empty reduction rule
-    %target.cpp_npda { return new Ast(Ast::PARAMETER_LIST); }
+    %target.cpp { return new Ast(Ast::PARAMETER_LIST); }
 ;
 
 %nonterminal parameter_list
 :
     parameter_list:list ',' KEYWORD_VAR ID:id
-    %target.cpp_npda
+    %target.cpp
     {
         list->push_back(id);
         return list;
     }
 |
     KEYWORD_VAR ID:id
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *list = new Ast(Ast::PARAMETER_LIST);
         list->push_back(id);
@@ -351,7 +349,7 @@ int main (int argc, char **argv)
 %nonterminal code_block
 :
     code_block:code KEYWORD_VAR ID:id ';'
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *decl = new Ast(Ast::VAR_DECLARATION);
         decl->push_back(id);
@@ -360,14 +358,14 @@ int main (int argc, char **argv)
     }
 |
     code_block:code statement:st
-    %target.cpp_npda
+    %target.cpp
     {
         code->push_back(st);
         return code;
     }
 |
     // empty reduction rule
-    %target.cpp_npda
+    %target.cpp
     {
         return new Ast(Ast::CODE_BLOCK);
     }
@@ -376,13 +374,13 @@ int main (int argc, char **argv)
 %nonterminal statement
 :
     '{' code_block:code '}'
-    %target.cpp_npda { return code; }
+    %target.cpp { return code; }
 |
     expression:exp ';'
-    %target.cpp_npda { return exp; }
+    %target.cpp { return exp; }
 |
     KEYWORD_RETURN expression:exp ';'
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *ret = new Ast(Ast::RETURN_STATEMENT);
         ret->push_back(exp);
@@ -390,10 +388,10 @@ int main (int argc, char **argv)
     }
 |
     ';'
-    %target.cpp_npda { return new Ast(Ast::EMPTY_STATEMENT); }
+    %target.cpp { return new Ast(Ast::EMPTY_STATEMENT); }
 |
     KEYWORD_IF '(' expression:cond ')' statement:then %prec IF
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *if_statement = new Ast(Ast::IF_STATEMENT);
         if_statement->push_back(cond);
@@ -402,7 +400,7 @@ int main (int argc, char **argv)
     }
 |
     KEYWORD_IF '(' expression:cond ')' statement:then KEYWORD_ELSE statement:otherwise %prec IF_ELSE
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *if_else_statement = new Ast(Ast::IF_ELSE_STATEMENT);
         if_else_statement->push_back(cond);
@@ -415,7 +413,7 @@ int main (int argc, char **argv)
 %nonterminal expression
 :
     ID:id '=' expression:val %prec ASSIGNMENT
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::ASSIGNMENT);
         exp->push_back(id);
@@ -424,7 +422,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '<' expression:r %prec COMPARISON
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::LESS_THAN);
         exp->push_back(l);
@@ -433,7 +431,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '<' '=' expression:r %prec COMPARISON
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::LESS_THAN_OR_EQUAL);
         exp->push_back(l);
@@ -442,7 +440,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '>' expression:r %prec COMPARISON
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::GREATER_THAN);
         exp->push_back(l);
@@ -451,7 +449,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '>' '=' expression:r %prec COMPARISON
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::GREATER_THAN_OR_EQUAL);
         exp->push_back(l);
@@ -460,7 +458,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '=' '=' expression:r %prec COMPARISON
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::EQUAL);
         exp->push_back(l);
@@ -469,7 +467,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '!' '=' expression:r %prec COMPARISON
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::NOT_EQUAL);
         exp->push_back(l);
@@ -478,7 +476,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '+' expression:r %prec ADDITION
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::ADD);
         exp->push_back(l);
@@ -487,7 +485,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '-' expression:r %prec ADDITION
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::SUBTRACT);
         exp->push_back(l);
@@ -496,7 +494,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '*' expression:r %prec MULTIPLICATION
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::MULTIPLY);
         exp->push_back(l);
@@ -505,7 +503,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '/' expression:r %prec MULTIPLICATION
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::DIVIDE);
         exp->push_back(l);
@@ -514,7 +512,7 @@ int main (int argc, char **argv)
     }
 |
     '-' expression:r %prec UNARY
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::NEGATIVE);
         exp->push_back(r);
@@ -522,7 +520,7 @@ int main (int argc, char **argv)
     }
 |
     '!' expression:r %prec UNARY
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::NOT);
         exp->push_back(r);
@@ -530,7 +528,7 @@ int main (int argc, char **argv)
     }
 |
     expression:l '^' expression:r %prec EXPONENTIATION
-    %target.cpp_npda
+    %target.cpp
     {
         Ast *exp = new Ast(Ast::EXPONENTIATE);
         exp->push_back(l);
@@ -539,12 +537,12 @@ int main (int argc, char **argv)
     }
 |
     '(' expression:exp ')'
-    %target.cpp_npda { return exp; }
+    %target.cpp { return exp; }
 |
     ID:id
-    %target.cpp_npda { return id; }
+    %target.cpp { return id; }
 |
     INTEGER_LITERAL:value
-    %target.cpp_npda { return value; }
+    %target.cpp { return value; }
 ;
 */
