@@ -11,6 +11,9 @@
 
 #include <cassert>
 #include <deque>
+<|if(is_defined(generate_debug_spew_code))
+#include <iostream>
+<|end_if
 
 #if !defined(TrisonCpp_namespace_)
 #define TrisonCpp_namespace_
@@ -203,6 +206,10 @@ private:
     void ThrowAwayToken_ (Token::Data &token);
     void ResetForNewInput_ ();
     Token Scan_ ();
+<|if(is_defined(generate_debug_spew_code))
+    void PrintParserStatus_ (ostream &stream) const;
+    static void PrintIndented_ (ostream &stream, char const *string);
+<|end_if
 
     ParserReturnCode Parse_ (<{return_token_type} *return_token_, ParseNonterminal::Name nonterminal_to_parse_);
     void ClearStack_ ();
@@ -239,7 +246,6 @@ private:
     bool m_is_in_error_panic_;
 <|if(is_defined(generate_debug_spew_code))
     bool m_debug_spew_;
-
 <|end_if
 
     static Rule_ const ms_rule_table_[];

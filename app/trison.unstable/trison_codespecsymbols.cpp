@@ -565,7 +565,7 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
 
         for (Uint32 node_index = 0; node_index < dpda_graph.GetNodeCount(); ++node_index)
         {
-            cerr << "codespecsymbols'ing dpda node: " << node_index << endl;
+//             cerr << "codespecsymbols'ing dpda node: " << node_index << endl;
             Graph::Node const &node = dpda_graph.GetNode(node_index);
             DpdaNodeData const &node_data = node.GetDataAs<DpdaNodeData>();
             Sint32 node_transition_offset = total_transition_count;
@@ -578,24 +578,24 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
             {
                 Graph::Transition const &transition = *it;
 
-                cerr << "  transition: " << GetTransitionTypeString(transition.Type());
+//                 cerr << "  transition: " << GetTransitionTypeString(transition.Type());
 
                 dpda_transition_type_index->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Type())));
                 dpda_transition_type_name->AppendArrayElement(
                     new Preprocessor::Body(GetTransitionTypeString(transition.Type())));
-                dpda_transition_data->AppendArrayElement(
-                    new Preprocessor::Body(Sint32(transition.Data(0))));
                 dpda_transition_lookahead_offset->AppendArrayElement(
                     new Preprocessor::Body(total_lookahead_count));
 
                 if (transition.Type() == TT_SHIFT)
                 {
+                    dpda_transition_data->AppendArrayElement(
+                        new Preprocessor::Body(Sint32(transition.TargetIndex())));
                     dpda_transition_lookahead_count->AppendArrayElement(
                         new Preprocessor::Body(Sint32(transition.DataCount())));
                     for (Uint32 i = 0; i < transition.DataCount(); ++i)
                     {
-                        cerr << ' ' << primary_source.GetTokenId(transition.Data(i));
+//                         cerr << ' ' << primary_source.GetTokenId(transition.Data(i));
                         dpda_lookahead_name->AppendArrayElement(
                             new Preprocessor::Body(primary_source.GetTokenId(transition.Data(i))));
                         dpda_lookahead_index->AppendArrayElement(
@@ -605,12 +605,14 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
                 }
                 else if (transition.Type() == TT_REDUCE)
                 {
+                    dpda_transition_data->AppendArrayElement(
+                        new Preprocessor::Body(Sint32(transition.Data(0))));
                     // -1 because the reduce lookaheads come after element 0.
                     dpda_transition_lookahead_count->AppendArrayElement(
                         new Preprocessor::Body(Sint32(transition.DataCount())-1));
                     for (Uint32 i = 1; i < transition.DataCount(); ++i)
                     {
-                        cerr << ' ' << primary_source.GetTokenId(transition.Data(i));
+//                         cerr << ' ' << primary_source.GetTokenId(transition.Data(i));
                         dpda_lookahead_name->AppendArrayElement(
                             new Preprocessor::Body(primary_source.GetTokenId(transition.Data(i))));
                         dpda_lookahead_index->AppendArrayElement(
@@ -620,11 +622,13 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
                 }
                 else
                 {
-                    // dummy value in dpda_transition_lookahead_count
+                    // dummy values in dpda_transition_lookahead_count and dpda_transition_data
+                    dpda_transition_data->AppendArrayElement(
+                        new Preprocessor::Body(Sint32(0)));
                     dpda_transition_lookahead_count->AppendArrayElement(
                         new Preprocessor::Body(Sint32(0)));
                 }
-                cerr << endl;
+//                 cerr << endl;
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);
                 ++node_transition_count;

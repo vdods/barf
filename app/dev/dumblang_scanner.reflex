@@ -41,6 +41,7 @@
 %macro ID                   ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
 %macro OPERATOR             ([,;(){}\-+*/\^=<>!])
 %macro WHITESPACE           ([ \t\n])
+%macro ANYCHAR              (.|\n)
 %macro END_OF_FILE          (\z)
 
 %start_in_scanner_mode MAIN
@@ -107,6 +108,12 @@
     %target.cpp {
         SPEW("++ scanner is returning END_ ++");
         return Parser::Token(Parser::Terminal::END_);
+    }
+|
+    ({ANYCHAR}) // last-resort garbage input
+    %target.cpp {
+        SPEW("++ scanner got an unknown char ++");
+        return Parser::Token(static_cast<Parser::Terminal::Name>(accepted_string[0]));
     }
 ;
 

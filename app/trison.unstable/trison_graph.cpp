@@ -60,26 +60,33 @@ Graph::Transition NpdaEpsilonTransition (Uint32 target_index)
 // DPDA transitions
 // ///////////////////////////////////////////////////////////////////////////
 
-Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name)
+Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name, bool is_default_transition)
 {
     Graph::Transition transition(TT_REDUCE, 1, Graph::Transition::ms_no_target_index, "default: reduce " + nonterminal_name, Graph::Color::ms_green);
     transition.SetData(0, reduction_rule_index);
+    if (is_default_transition)
+        transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
+
     return transition;
 }
 
-Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, string const &nonterminal_name)
+Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, string const &nonterminal_name, bool is_default_transition)
 {
     Graph::Transition transition(TT_REDUCE, 1+lookahead_sequence.size(), Graph::Transition::ms_no_target_index, lookahead_sequence_string + ": reduce " + nonterminal_name, Graph::Color::ms_green);
     transition.SetData(0, reduction_rule_index);
     for (Uint32 i = 0; i < lookahead_sequence.size(); ++i)
         transition.SetData(i+1, lookahead_sequence[i]);
+    if (is_default_transition)
+        transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
     return transition;
 }
 
-Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index)
+Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index, bool is_default_transition)
 {
     Graph::Transition transition(TT_RETURN, 1, Graph::Transition::ms_no_target_index, "default: return " + nonterminal_name, Graph::Color::ms_blue);
     transition.SetData(0, nonterminal_token_index);
+    if (is_default_transition)
+        transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
     return transition;
 }
 
@@ -88,9 +95,12 @@ Graph::Transition DpdaShiftTransition (Graph::Transition::DataArray const &looka
     return Graph::Transition(TT_SHIFT, lookahead_sequence, target_index, lookahead_sequence_string);
 }
 
-Graph::Transition DpdaErrorPanicTransition ()
+Graph::Transition DpdaErrorPanicTransition (bool is_default_transition)
 {
-    return Graph::Transition(TT_ERROR_PANIC, 0, Graph::Transition::ms_no_target_index, "default: error panic", Graph::Color::ms_red);
+    Graph::Transition transition(TT_ERROR_PANIC, 0, Graph::Transition::ms_no_target_index, "default: error panic", Graph::Color::ms_red);
+    if (is_default_transition)
+        transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
+    return transition;
 }
 
 } // end of namespace Trison

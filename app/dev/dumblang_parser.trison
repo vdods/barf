@@ -168,6 +168,7 @@ void Ast::Print (uint indent_level) const
 int main (int argc, char **argv)
 {
     Parser parser;
+    parser.DebugSpew(true);
     Ast *return_token;
     if (Parser::PRC_SUCCESS == parser.Parse(&return_token))
     {
@@ -188,6 +189,8 @@ int main (int argc, char **argv)
     assert(m_scanner != NULL);
     return m_scanner->Scan();
 }
+
+%target.cpp.generate_debug_spew_code
 
 %terminal '+' '-' '*' '/' '^' '(' ')'
 %terminal '>' '<' '=' '!'
@@ -216,9 +219,9 @@ int main (int argc, char **argv)
 
 %nonterminal st
 :
-    exp ';' %target.cpp { return NULL; }
+    exp ';' %target.cpp { cerr << "HIPPO: st <- exp ';'" << endl; return NULL; }
 |
-    %error ';' %target.cpp { return NULL; }
+    %error ';' %target.cpp { cerr << "HIPPO: st <- %error ';'" << endl; return NULL; }
 ;
 /*
 // arithmetic
@@ -239,13 +242,13 @@ int main (int argc, char **argv)
 // precedence testing (multiple lookaheads)
 %nonterminal exp
 :
-    exp '+' '+' exp %prec COMPARISON %target.cpp { return NULL; }
+    exp '+' '+' exp %prec COMPARISON %target.cpp { cerr << "HIPPO: exp <- exp '+' '+' exp" << endl; return NULL; }
 |
-    exp '+' exp %prec ADDITION %target.cpp { return NULL; }
+    exp '+' exp %prec ADDITION %target.cpp { cerr << "HIPPO: exp <- exp '+' exp" << endl; return NULL; }
 |
-    exp '+' '+' '+' exp %prec MULTIPLICATION %target.cpp { return NULL; }
+    exp '+' '+' '+' exp %prec MULTIPLICATION %target.cpp { cerr << "HIPPO: exp <- exp '+' '+' '+' exp" << endl; return NULL; }
 |
-    ID %target.cpp { return NULL; }
+    ID %target.cpp { cerr << "HIPPO: exp <- ID" << endl; return NULL; }
 ;
 
 /*

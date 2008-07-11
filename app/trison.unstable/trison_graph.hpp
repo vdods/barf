@@ -44,11 +44,11 @@ Graph::Transition NpdaEpsilonTransition (Uint32 target_index);
 // DPDA transitions
 // ///////////////////////////////////////////////////////////////////////////
 
-Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name);
-Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, string const &nonterminal_name);
-Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index);
+Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name, bool is_default_transition);
+Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, string const &nonterminal_name, bool is_default_transition);
+Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index, bool is_default_transition);
 Graph::Transition DpdaShiftTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 target_index);
-Graph::Transition DpdaErrorPanicTransition ();
+Graph::Transition DpdaErrorPanicTransition (bool is_default_transition);
 
 } // end of namespace Trison
 

@@ -2007,7 +2007,7 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                         break;
 
                     case AT_SHIFT:
-                        cerr << "++ (at " << source_dpda_state << ") adding shift (" << target_dpda_state << ") transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
+//                         cerr << "++ (at " << source_dpda_state << ") adding shift (" << target_dpda_state << ") transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
                         graph_context.AddTransition(
                             source_dpda_state,
                             DpdaShiftTransition(
@@ -2017,7 +2017,7 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                         break;
 
                     case AT_REDUCE:
-                        cerr << "++ (at " << source_dpda_state << ") adding reduce \"" << graph_context.m_primary_source.GetRule(action.Data())->GetAsText() << "\" transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
+//                         cerr << "++ (at " << source_dpda_state << ") adding reduce \"" << graph_context.m_primary_source.GetRule(action.Data())->GetAsText() << "\" transition with lookaheads: " << GetLookaheadSequenceString(graph_context, lookahead_sequence) << endl;
                         assert(false && "i think the default action will necessarily preclude this case from ever happening");
                         graph_context.AddTransition(
                             source_dpda_state,
@@ -2025,7 +2025,8 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                                 lookahead_sequence,
                                 GetLookaheadSequenceString(graph_context, lookahead_sequence),
                                 action.Data(),
-                                graph_context.m_primary_source.GetRule(action.Data())->GetAsText()));
+                                graph_context.m_primary_source.GetRule(action.Data())->GetAsText(),
+                                false));
                         break;
                 }
             }
@@ -2044,7 +2045,7 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
     // check if this dpda_state has already been generated
     if (graph_context.DpdaStateIsGenerated(dpda_state))
         return; // nothing needs to be done
-    cerr << "EnsureDpdaStateIsGenerated(); generating " << dpda_state << endl;
+//     cerr << "EnsureDpdaStateIsGenerated(); generating " << dpda_state << endl;
     // dpda_state is now considered "generated"
     graph_context.AddDpdaState(dpda_state, new DpdaNodeData(graph_context.m_npda_graph, dpda_state));
 
@@ -2058,7 +2059,7 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
         // to shift yet.
         ActionSpec default_action(child_npda.DefaultAction(graph_context));
         assert(default_action.Type() == AT_ERROR_PANIC || default_action.Type() == AT_REDUCE || default_action.Type() == AT_RETURN);
-        cerr << "++ (at " << dpda_state << ") adding default action: " << default_action.Type() << '(' << default_action.Data() << ')' << endl;
+//         cerr << "++ (at " << dpda_state << ") adding default action: " << default_action.Type() << '(' << default_action.Data() << ')' << endl;
 
         // the default transition better be the first one
         assert(graph_context.TransitionCount(dpda_state) == 0);
@@ -2077,7 +2078,8 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
                     dpda_state,
                     DpdaReduceTransition(
                         default_action.Data(),
-                        graph_context.m_primary_source.GetRule(default_action.Data())->GetAsText()));
+                        graph_context.m_primary_source.GetRule(default_action.Data())->GetAsText(),
+                        true));
                 break;
 
             case AT_RETURN:
@@ -2085,13 +2087,14 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
                     dpda_state,
                     DpdaReturnTransition(
                         graph_context.m_primary_source.GetTokenId(default_action.Data()),
-                        default_action.Data()));
+                        default_action.Data(),
+                        true));
                 break;
 
             case AT_ERROR_PANIC:
                 graph_context.AddTransition(
                     dpda_state,
-                    DpdaErrorPanicTransition());
+                    DpdaErrorPanicTransition(true));
                 break;
         }
 
