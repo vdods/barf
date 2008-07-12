@@ -11,14 +11,15 @@
 #define DUMBLANG_SCANNER_HPP_
 
 #include "dumblang_parser.hpp"
-
-#define SPEW(x) cerr << x << endl
 %}
 %target.cpp.bottom_of_header_file %{
 #endif // !defined(DUMBLANG_SCANNER_HPP_)
 %}
 
 
+%target.cpp.top_of_implementation_file %{
+#define SPEW(x) cerr << x << endl
+%}
 %target.cpp.end_of_scan_method_actions %{
     assert(false && "you didn't handle EOF properly");
 %}

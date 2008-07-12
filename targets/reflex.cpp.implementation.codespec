@@ -14,30 +14,28 @@
 <|if(is_defined(generate_debug_spew_code))
 #include <iostream>
 
-#define REFLEX_CPP_DEBUG_SPEW_(spew_code) if (DebugSpew()) { spew_code; }
+#define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
 
 <|end_if
 <|top_of_implementation_file?
 
 <{class_name}::<{class_name} (<{if(is_defined(constructor_definition_parameters))}<{constructor_definition_parameters}<{else}<{constructor_parameters?}<{end_if})
     :
-    ReflexCpp_::AutomatonApparatus_(
+    ReflexCpp_::AutomatonApparatus(
         ms_state_table_,
         ms_state_count_,
         ms_transition_table_,
         ms_transition_count_,
         ms_accept_handler_count_,
-        static_cast<ReflexCpp_::InputApparatus_::IsInputAtEndMethod_>(&<{class_name}::IsInputAtEnd_),
-        static_cast<ReflexCpp_::InputApparatus_::ReadNextAtomMethod_>(&<{class_name}::ReadNextAtom_))<{if(is_defined(superclass_and_member_constructors))},
+        static_cast<ReflexCpp_::InputApparatus::IsInputAtEndMethod>(&<{class_name}::IsInputAtEnd_),
+        static_cast<ReflexCpp_::InputApparatus::ReadNextAtomMethod>(&<{class_name}::ReadNextAtom_))<{if(is_defined(superclass_and_member_constructors))},
 <|superclass_and_member_constructors
 <{end_if}
 {
 <|if(is_defined(generate_debug_spew_code))
-    // one-time initializations
     DebugSpew(false);
 <|end_if
-    // per-input initializations
-    ResetForNewInput_();
+    ResetForNewInput();
 
 <|constructor_actions?
 }
@@ -50,7 +48,7 @@
 <{class_name}::Mode::Name <{class_name}::ScannerMode () const
 {
     assert(InitialState_() != NULL);
-    ReflexCpp_::Size_ initial_node_index = InitialState_() - ms_state_table_;
+    ReflexCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
     assert(initial_node_index < ms_state_count_);
     switch (initial_node_index)
     {
@@ -70,14 +68,21 @@ void <{class_name}::ScannerMode (Mode::Name mode)
         (false && "invalid Mode::Name"));
     InitialState_(ms_state_table_ + mode);
 <|if(is_defined(generate_debug_spew_code))
-    REFLEX_CPP_DEBUG_SPEW_(std::cerr << "*** scanner: transitioning to mode ")
+    REFLEX_CPP_DEBUG_CODE_(std::cerr << "*** scanner: transitioning to mode ")
     if (false) { }
 <|for_each(key, _dfa_initial_node_index)
-    else if (mode == Mode::<{key}) { REFLEX_CPP_DEBUG_SPEW_(std::cerr << "<{key}") }
+    else if (mode == Mode::<{key}) { REFLEX_CPP_DEBUG_CODE_(std::cerr << "<{key}") }
 <|end_for_each
-    REFLEX_CPP_DEBUG_SPEW_(std::cerr << std::endl)
+    REFLEX_CPP_DEBUG_CODE_(std::cerr << std::endl)
 <|end_if
     assert(ScannerMode() == mode);
+}
+
+void <{class_name}::ResetForNewInput ()
+{
+    ReflexCpp_::AutomatonApparatus::ResetForNewInput_(ms_state_table_ + Mode::START_);
+
+<|reset_for_new_input_actions?
 }
 
 <{return_type} <{class_name}::Scan (<{if(is_defined(scan_method_definition_parameters))}<{scan_method_definition_parameters}<{else}<{scan_method_parameters?}<{end_if})
@@ -92,7 +97,7 @@ void <{class_name}::ScannerMode (Mode::Name mode)
     {
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
-        ReflexCpp_::Uint32_ accept_handler_index_ = RunDfa_(accepted_string);
+        ReflexCpp_::Uint32 accept_handler_index_ = RunDfa_(accepted_string);
         // if no valid accept_handler_index_ was returned, then accepted_string
         // was filled with the first unaccepted input atom (i.e. the rejected
         // atom).  we'll call the HandleUnmatchedCharacter_ method on it.
@@ -104,9 +109,9 @@ void <{class_name}::ScannerMode (Mode::Name mode)
                 break;
 
             assert(accepted_string.length() == 1);
-            ReflexCpp_::Uint8_ rejected_atom = accepted_string[0];
+            ReflexCpp_::Uint8 rejected_atom = accepted_string[0];
 <|if(is_defined(generate_debug_spew_code))
-            REFLEX_CPP_DEBUG_SPEW_(
+            REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << "*** scanner: rejecting atom '";
                 DebugPrintAtom_(rejected_atom);
                 std::cerr << '\'' << std::endl)
@@ -125,7 +130,7 @@ void <{class_name}::ScannerMode (Mode::Name mode)
         else
         {
 <|if(is_defined(generate_debug_spew_code))
-            REFLEX_CPP_DEBUG_SPEW_(
+            REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << "*** scanner: accepting string ";
                 DebugPrintString_(accepted_string);
                 std::cerr << std::endl)
@@ -155,20 +160,13 @@ bool <{class_name}::IsInputAtEnd_ ()
 <|return_true_iff_input_is_at_end
 }
 
-ReflexCpp_::Uint8_ <{class_name}::ReadNextAtom_ ()
+ReflexCpp_::Uint8 <{class_name}::ReadNextAtom_ ()
 {
 <|return_next_input_char
 }
 
-void <{class_name}::ResetForNewInput_ ()
-{
-    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + Mode::START_);
-
-<|reset_for_new_input_actions?
-}
-
 <|if(is_defined(generate_debug_spew_code))
-void <{class_name}::DebugPrintAtom_ (ReflexCpp_::Uint8_ atom)
+void <{class_name}::DebugPrintAtom_ (ReflexCpp_::Uint8 atom)
 {
     if (atom == '\\')                    std::cerr << "\\\\";
     else if (atom == '"')                std::cerr << "\\\"";
@@ -179,7 +177,7 @@ void <{class_name}::DebugPrintAtom_ (ReflexCpp_::Uint8_ atom)
     else
     {
         std::cerr.width(2);
-        std::cerr << "\\x" << std::hex << std::uppercase << ReflexCpp_::Uint16_(atom);
+        std::cerr << "\\x" << std::hex << std::uppercase << ReflexCpp_::Uint16(atom);
         std::cerr.width(1);
     }
 }
@@ -218,22 +216,22 @@ void <{class_name}::DebugPrintString_ (std::string const &s)
 <|end_if
 // the order of the states indicates priority (only for accept states).
 // the lower the state's index in this array, the higher its priority.
-ReflexCpp_::AutomatonApparatus_::DfaState_ const <{class_name}::ms_state_table_[] =
+ReflexCpp_::AutomatonApparatus::DfaState_ const <{class_name}::ms_state_table_[] =
 {
 <|loop(i, _dfa_state_count)
     { <{_dfa_state_accept_handler_index[i]}, <{_dfa_state_transition_count[i]}, ms_transition_table_+<{_dfa_state_transition_offset[i]} }<{if(i < _dfa_state_count-1)},<{end_if}
 <|end_loop
 };
-ReflexCpp_::Size_ const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::AutomatonApparatus_::DfaState_);
+ReflexCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaState_);
 
-ReflexCpp_::AutomatonApparatus_::DfaTransition_ const <{class_name}::ms_transition_table_[] =
+ReflexCpp_::AutomatonApparatus::DfaTransition_ const <{class_name}::ms_transition_table_[] =
 {
 <|loop(i, _dfa_transition_count)
-    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::<{_dfa_transition_type_name[i]}_, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::<{_dfa_transition_type_name[i]}, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
 <|end_loop
 };
-ReflexCpp_::Size_ const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(ReflexCpp_::AutomatonApparatus_::DfaTransition_);
+ReflexCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaTransition_);
 
-ReflexCpp_::Uint32_ const <{class_name}::ms_accept_handler_count_ = <{_accept_handler_count};
+ReflexCpp_::Uint32 const <{class_name}::ms_accept_handler_count_ = <{_accept_handler_count};
 
 <|bottom_of_implementation_file?

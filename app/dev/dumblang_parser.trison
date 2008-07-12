@@ -183,7 +183,7 @@ int main (int argc, char **argv)
 
 
 %target.cpp.token_data_type "Ast *"
-%target.cpp.token_data_type_sentinel "NULL"
+%target.cpp.token_data_default "NULL"
 %target.cpp.return_token_type "Ast *"
 %target.cpp.scan_actions {
     assert(m_scanner != NULL);

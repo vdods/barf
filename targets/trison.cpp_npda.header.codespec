@@ -20,8 +20,8 @@
 namespace TrisonCpp_ {
 
 // /////////////////////////////////////////////////////////////////////////////
-// a bunch of template metaprogramming to intelligently determine
-// what type to use for an integer of the given bit width
+// a bunch of template metaprogramming to intelligently determine what type to
+// use for an integer of the given bit width or value range.
 // /////////////////////////////////////////////////////////////////////////////
 
 template <bool condition_, typename Then_, typename Else_> struct If_;
@@ -55,26 +55,26 @@ public:
 };
 template <> struct Integer_<0> { }; // empty for intentional compile errors
 
-typedef Integer_<8> ::Signed_   Sint8_;
-typedef Integer_<8> ::Unsigned_ Uint8_;
-typedef Integer_<16>::Signed_   Sint16_;
-typedef Integer_<16>::Unsigned_ Uint16_;
-typedef Integer_<32>::Signed_   Sint32_;
-typedef Integer_<32>::Unsigned_ Uint32_;
+typedef Integer_<8> ::Signed_                Sint8_;
+typedef Integer_<8> ::Unsigned_              Uint8_;
+typedef Integer_<16>::Signed_                Sint16_;
+typedef Integer_<16>::Unsigned_              Uint16_;
+typedef Integer_<32>::Signed_                Sint32_;
+typedef Integer_<32>::Unsigned_              Uint32_;
 typedef Integer_<8*sizeof(void*)>::Signed_   Diff_;
 typedef Integer_<8*sizeof(void*)>::Unsigned_ Size_;
 
 enum
 {
     TYPE_SIZE_ASSERTIONS_ =
-        Assert_<sizeof(Sint8_) == 1>::v_ &&
-        Assert_<sizeof(Uint8_) == 1>::v_ &&
+        Assert_<sizeof(Sint8_)  == 1>::v_ &&
+        Assert_<sizeof(Uint8_)  == 1>::v_ &&
         Assert_<sizeof(Sint16_) == 2>::v_ &&
         Assert_<sizeof(Uint16_) == 2>::v_ &&
         Assert_<sizeof(Sint32_) == 4>::v_ &&
         Assert_<sizeof(Uint32_) == 4>::v_ &&
-        Assert_<sizeof(Diff_) == sizeof(void*)>::v_ &&
-        Assert_<sizeof(Size_) == sizeof(void*)>::v_
+        Assert_<sizeof(Diff_)   == sizeof(void*)>::v_ &&
+        Assert_<sizeof(Size_)   == sizeof(void*)>::v_
 };
 
 template <typename T_>

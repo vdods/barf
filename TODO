@@ -145,6 +145,7 @@
 - includes should use some sort of search path
 - add boolean property for wether or not a particular symbol was referenced
   during preprocessing.
+- add function for making string literals and char literals
 
 // ///////////////////////////////////////////////////////////////////////////
 // regex
@@ -240,6 +241,7 @@
   case.
 - in the codespecsymbols, add some sort of "description" property so that
   when you dump the symbols, it's self documenting.
+- get rid of ResetForNewInput from the perspective of the user?
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -300,3 +302,22 @@
 - add an unbounded grammar app/dev test case
 - in the codespecsymbols, add some sort of "description" property so that
   when you dump the symbols, it's self documenting.
+- rename TT_RETURN, TT_SHIFT, etc to just RETURN, SHIFT, etc
+- compactify lookaheads in dpda
+
+template <Sint32 low, Sint32 high> struct SmallestSint {
+    typedef
+        typename If<(low >= -128   && high <= 127),   Sint8,
+        typename If<(low >= -32768 && high <= 32767), Sint16,
+        Sint32
+        >::T >::T Type;
+};
+
+template <Uint32 high> struct SmallestUint {
+    typedef
+        typename If<(high <= 255),   Uint8,
+        typename If<(high <= 65535), Uint16,
+        Uint32
+        >::T >::T Type;
+};
+
