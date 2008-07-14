@@ -681,118 +681,96 @@ Ast::Base * Parser::ReductionRuleHandler0014 ()
 #line 682 "barf_preprocessor_parser.cpp"
 }
 
-// rule 15: code_body <- TO_CHARACTER_LITERAL '(' expression:character_index_expression ')'    
+// rule 15: code_body <- UNDEFINE '(' ID:id ')'    
 Ast::Base * Parser::ReductionRuleHandler0015 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    Expression * character_index_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 219 "barf_preprocessor_parser.trison"
- return new ToCharacterLiteral(character_index_expression); 
+ return new Undefine(id); 
 #line 693 "barf_preprocessor_parser.cpp"
 }
 
-// rule 16: code_body <- TO_STRING_LITERAL '(' expression:string_expression ')'    
+// rule 16: code_body <- DECLARE_ARRAY '(' ID:id ')'    
 Ast::Base * Parser::ReductionRuleHandler0016 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    Expression * string_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 222 "barf_preprocessor_parser.trison"
- return new ToStringLiteral(string_expression); 
+ return new DeclareArray(id); 
 #line 704 "barf_preprocessor_parser.cpp"
 }
 
-// rule 17: code_body <- UNDEFINE '(' ID:id ')'    
+// rule 17: code_body <- DECLARE_MAP '(' ID:id ')'    
 Ast::Base * Parser::ReductionRuleHandler0017 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 225 "barf_preprocessor_parser.trison"
- return new Undefine(id); 
+ return new DeclareMap(id); 
 #line 715 "barf_preprocessor_parser.cpp"
 }
 
-// rule 18: code_body <- DECLARE_ARRAY '(' ID:id ')'    
+// rule 18: code_body <- INCLUDE '(' expression:include_filename_expression ')'    
 Ast::Base * Parser::ReductionRuleHandler0018 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Expression * include_filename_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 228 "barf_preprocessor_parser.trison"
- return new DeclareArray(id); 
+ return new Include(include_filename_expression, false); 
 #line 726 "barf_preprocessor_parser.cpp"
 }
 
-// rule 19: code_body <- DECLARE_MAP '(' ID:id ')'    
+// rule 19: code_body <- SANDBOX_INCLUDE '(' expression:include_filename_expression ')'    
 Ast::Base * Parser::ReductionRuleHandler0019 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Expression * include_filename_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 231 "barf_preprocessor_parser.trison"
- return new DeclareMap(id); 
+ return new Include(include_filename_expression, true); 
 #line 737 "barf_preprocessor_parser.cpp"
 }
 
-// rule 20: code_body <- INCLUDE '(' expression:include_filename_expression ')'    
+// rule 20: code_body <- WARNING '(' expression:message_expression ')'    
 Ast::Base * Parser::ReductionRuleHandler0020 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    Expression * include_filename_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Expression * message_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 234 "barf_preprocessor_parser.trison"
- return new Include(include_filename_expression, false); 
+ return new Message(message_expression, Message::WARNING); 
 #line 748 "barf_preprocessor_parser.cpp"
 }
 
-// rule 21: code_body <- SANDBOX_INCLUDE '(' expression:include_filename_expression ')'    
+// rule 21: code_body <- ERROR '(' expression:message_expression ')'    
 Ast::Base * Parser::ReductionRuleHandler0021 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    Expression * include_filename_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Expression * message_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 237 "barf_preprocessor_parser.trison"
- return new Include(include_filename_expression, true); 
+ return new Message(message_expression, Message::ERROR); 
 #line 759 "barf_preprocessor_parser.cpp"
 }
 
-// rule 22: code_body <- WARNING '(' expression:message_expression ')'    
+// rule 22: code_body <- FATAL_ERROR '(' expression:message_expression ')'    
 Ast::Base * Parser::ReductionRuleHandler0022 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * message_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 240 "barf_preprocessor_parser.trison"
- return new Message(message_expression, Message::WARNING); 
+ return new Message(message_expression, Message::FATAL_ERROR); 
 #line 770 "barf_preprocessor_parser.cpp"
 }
 
-// rule 23: code_body <- ERROR '(' expression:message_expression ')'    
+// rule 23: conditional_series <- if_statement:conditional body:if_body conditional_series_end:else_body    
 Ast::Base * Parser::ReductionRuleHandler0023 ()
-{
-    assert(2 < m_reduction_rule_token_count);
-    Expression * message_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
-
-#line 243 "barf_preprocessor_parser.trison"
- return new Message(message_expression, Message::ERROR); 
-#line 781 "barf_preprocessor_parser.cpp"
-}
-
-// rule 24: code_body <- FATAL_ERROR '(' expression:message_expression ')'    
-Ast::Base * Parser::ReductionRuleHandler0024 ()
-{
-    assert(2 < m_reduction_rule_token_count);
-    Expression * message_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
-
-#line 246 "barf_preprocessor_parser.trison"
- return new Message(message_expression, Message::FATAL_ERROR); 
-#line 792 "barf_preprocessor_parser.cpp"
-}
-
-// rule 25: conditional_series <- if_statement:conditional body:if_body conditional_series_end:else_body    
-Ast::Base * Parser::ReductionRuleHandler0025 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Conditional * conditional = Dsc< Conditional * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -801,37 +779,37 @@ Ast::Base * Parser::ReductionRuleHandler0025 ()
     assert(2 < m_reduction_rule_token_count);
     Body * else_body = Dsc< Body * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 252 "barf_preprocessor_parser.trison"
+#line 246 "barf_preprocessor_parser.trison"
 
         conditional->SetIfBody(if_body);
         conditional->SetElseBody(else_body);
         return conditional;
     
-#line 811 "barf_preprocessor_parser.cpp"
+#line 789 "barf_preprocessor_parser.cpp"
 }
 
-// rule 26: conditional_series_end <- end_if    
-Ast::Base * Parser::ReductionRuleHandler0026 ()
+// rule 24: conditional_series_end <- end_if    
+Ast::Base * Parser::ReductionRuleHandler0024 ()
 {
 
-#line 261 "barf_preprocessor_parser.trison"
+#line 255 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 820 "barf_preprocessor_parser.cpp"
+#line 798 "barf_preprocessor_parser.cpp"
 }
 
-// rule 27: conditional_series_end <- else_statement body:body end_if    
-Ast::Base * Parser::ReductionRuleHandler0027 ()
+// rule 25: conditional_series_end <- else_statement body:body end_if    
+Ast::Base * Parser::ReductionRuleHandler0025 ()
 {
     assert(1 < m_reduction_rule_token_count);
     Body * body = Dsc< Body * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
-#line 263 "barf_preprocessor_parser.trison"
+#line 257 "barf_preprocessor_parser.trison"
  return body; 
-#line 831 "barf_preprocessor_parser.cpp"
+#line 809 "barf_preprocessor_parser.cpp"
 }
 
-// rule 28: conditional_series_end <- else_if_statement:conditional body:if_body conditional_series_end:else_body    
-Ast::Base * Parser::ReductionRuleHandler0028 ()
+// rule 26: conditional_series_end <- else_if_statement:conditional body:if_body conditional_series_end:else_body    
+Ast::Base * Parser::ReductionRuleHandler0026 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Conditional * conditional = Dsc< Conditional * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
@@ -840,7 +818,7 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
     assert(2 < m_reduction_rule_token_count);
     Body * else_body = Dsc< Body * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 266 "barf_preprocessor_parser.trison"
+#line 260 "barf_preprocessor_parser.trison"
 
         conditional->SetIfBody(if_body);
         conditional->SetElseBody(else_body);
@@ -848,361 +826,383 @@ Ast::Base * Parser::ReductionRuleHandler0028 ()
         body->Append(conditional);
         return body;
     
+#line 830 "barf_preprocessor_parser.cpp"
+}
+
+// rule 27: if_statement <- START_CODE IF '(' expression:expression ')' END_CODE    
+Ast::Base * Parser::ReductionRuleHandler0027 ()
+{
+    assert(3 < m_reduction_rule_token_count);
+    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+
+#line 272 "barf_preprocessor_parser.trison"
+ return new Conditional(expression); 
+#line 841 "barf_preprocessor_parser.cpp"
+}
+
+// rule 28: if_statement <- CODE_LINE IF '(' expression:expression ')' CODE_NEWLINE    
+Ast::Base * Parser::ReductionRuleHandler0028 ()
+{
+    assert(3 < m_reduction_rule_token_count);
+    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+
+#line 275 "barf_preprocessor_parser.trison"
+ return new Conditional(expression); 
 #line 852 "barf_preprocessor_parser.cpp"
 }
 
-// rule 29: if_statement <- START_CODE IF '(' expression:expression ')' END_CODE    
+// rule 29: else_statement <- START_CODE ELSE END_CODE    
 Ast::Base * Parser::ReductionRuleHandler0029 ()
 {
-    assert(3 < m_reduction_rule_token_count);
-    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 278 "barf_preprocessor_parser.trison"
- return new Conditional(expression); 
-#line 863 "barf_preprocessor_parser.cpp"
+#line 280 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 861 "barf_preprocessor_parser.cpp"
 }
 
-// rule 30: if_statement <- CODE_LINE IF '(' expression:expression ')' CODE_NEWLINE    
+// rule 30: else_statement <- CODE_LINE ELSE CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0030 ()
 {
+
+#line 282 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 870 "barf_preprocessor_parser.cpp"
+}
+
+// rule 31: else_if_statement <- START_CODE ELSE_IF '(' expression:expression ')' END_CODE    
+Ast::Base * Parser::ReductionRuleHandler0031 ()
+{
     assert(3 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 281 "barf_preprocessor_parser.trison"
+#line 288 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 874 "barf_preprocessor_parser.cpp"
+#line 881 "barf_preprocessor_parser.cpp"
 }
 
-// rule 31: else_statement <- START_CODE ELSE END_CODE    
-Ast::Base * Parser::ReductionRuleHandler0031 ()
-{
-
-#line 286 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 883 "barf_preprocessor_parser.cpp"
-}
-
-// rule 32: else_statement <- CODE_LINE ELSE CODE_NEWLINE    
+// rule 32: else_if_statement <- CODE_LINE ELSE_IF '(' expression:expression ')' CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0032 ()
 {
+    assert(3 < m_reduction_rule_token_count);
+    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 288 "barf_preprocessor_parser.trison"
- return NULL; 
+#line 291 "barf_preprocessor_parser.trison"
+ return new Conditional(expression); 
 #line 892 "barf_preprocessor_parser.cpp"
 }
 
-// rule 33: else_if_statement <- START_CODE ELSE_IF '(' expression:expression ')' END_CODE    
+// rule 33: end_if <- START_CODE END_IF END_CODE    
 Ast::Base * Parser::ReductionRuleHandler0033 ()
 {
-    assert(3 < m_reduction_rule_token_count);
-    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 294 "barf_preprocessor_parser.trison"
- return new Conditional(expression); 
-#line 903 "barf_preprocessor_parser.cpp"
+#line 296 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 901 "barf_preprocessor_parser.cpp"
 }
 
-// rule 34: else_if_statement <- CODE_LINE ELSE_IF '(' expression:expression ')' CODE_NEWLINE    
+// rule 34: end_if <- CODE_LINE END_IF CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0034 ()
 {
-    assert(3 < m_reduction_rule_token_count);
-    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 297 "barf_preprocessor_parser.trison"
- return new Conditional(expression); 
-#line 914 "barf_preprocessor_parser.cpp"
+#line 298 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 910 "barf_preprocessor_parser.cpp"
 }
 
-// rule 35: end_if <- START_CODE END_IF END_CODE    
+// rule 35: define <- define_scalar:define    
 Ast::Base * Parser::ReductionRuleHandler0035 ()
 {
+    assert(0 < m_reduction_rule_token_count);
+    Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 302 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 923 "barf_preprocessor_parser.cpp"
+#line 303 "barf_preprocessor_parser.trison"
+ return define; 
+#line 921 "barf_preprocessor_parser.cpp"
 }
 
-// rule 36: end_if <- CODE_LINE END_IF CODE_NEWLINE    
+// rule 36: define <- define_array_element:define    
 Ast::Base * Parser::ReductionRuleHandler0036 ()
 {
+    assert(0 < m_reduction_rule_token_count);
+    Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 304 "barf_preprocessor_parser.trison"
- return NULL; 
+#line 305 "barf_preprocessor_parser.trison"
+ return define; 
 #line 932 "barf_preprocessor_parser.cpp"
 }
 
-// rule 37: define <- define_scalar:define    
+// rule 37: define <- define_map_element:define    
 Ast::Base * Parser::ReductionRuleHandler0037 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 309 "barf_preprocessor_parser.trison"
+#line 307 "barf_preprocessor_parser.trison"
  return define; 
 #line 943 "barf_preprocessor_parser.cpp"
 }
 
-// rule 38: define <- define_array_element:define    
+// rule 38: define_scalar <- START_CODE DEFINE '(' ID:id ')' END_CODE    
 Ast::Base * Parser::ReductionRuleHandler0038 ()
 {
-    assert(0 < m_reduction_rule_token_count);
-    Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    assert(3 < m_reduction_rule_token_count);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 311 "barf_preprocessor_parser.trison"
- return define; 
+#line 313 "barf_preprocessor_parser.trison"
+ return new Define(id); 
 #line 954 "barf_preprocessor_parser.cpp"
 }
 
-// rule 39: define <- define_map_element:define    
+// rule 39: define_scalar <- CODE_LINE DEFINE '(' ID:id ')' CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0039 ()
 {
-    assert(0 < m_reduction_rule_token_count);
-    Define * define = Dsc< Define * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
+    assert(3 < m_reduction_rule_token_count);
+    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 313 "barf_preprocessor_parser.trison"
- return define; 
+#line 316 "barf_preprocessor_parser.trison"
+ return new Define(id); 
 #line 965 "barf_preprocessor_parser.cpp"
 }
 
-// rule 40: define_scalar <- START_CODE DEFINE '(' ID:id ')' END_CODE    
+// rule 40: define_array_element <- START_CODE DEFINE '(' ID:id '[' ']' ')' END_CODE    
 Ast::Base * Parser::ReductionRuleHandler0040 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 319 "barf_preprocessor_parser.trison"
- return new Define(id); 
+#line 322 "barf_preprocessor_parser.trison"
+ return new DefineArrayElement(id); 
 #line 976 "barf_preprocessor_parser.cpp"
 }
 
-// rule 41: define_scalar <- CODE_LINE DEFINE '(' ID:id ')' CODE_NEWLINE    
+// rule 41: define_array_element <- CODE_LINE DEFINE '(' ID:id '[' ']' ')' CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0041 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
 
-#line 322 "barf_preprocessor_parser.trison"
- return new Define(id); 
+#line 325 "barf_preprocessor_parser.trison"
+ return new DefineArrayElement(id); 
 #line 987 "barf_preprocessor_parser.cpp"
 }
 
-// rule 42: define_array_element <- START_CODE DEFINE '(' ID:id '[' ']' ')' END_CODE    
+// rule 42: define_map_element <- START_CODE DEFINE '(' ID:id '[' STRING_LITERAL:key ']' ')' END_CODE    
 Ast::Base * Parser::ReductionRuleHandler0042 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    assert(5 < m_reduction_rule_token_count);
+    Text * key = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 328 "barf_preprocessor_parser.trison"
- return new DefineArrayElement(id); 
-#line 998 "barf_preprocessor_parser.cpp"
+#line 331 "barf_preprocessor_parser.trison"
+ return new DefineMapElement(id, key); 
+#line 1000 "barf_preprocessor_parser.cpp"
 }
 
-// rule 43: define_array_element <- CODE_LINE DEFINE '(' ID:id '[' ']' ')' CODE_NEWLINE    
+// rule 43: define_map_element <- CODE_LINE DEFINE '(' ID:id '[' STRING_LITERAL:key ']' ')' CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0043 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
-
-#line 331 "barf_preprocessor_parser.trison"
- return new DefineArrayElement(id); 
-#line 1009 "barf_preprocessor_parser.cpp"
-}
-
-// rule 44: define_map_element <- START_CODE DEFINE '(' ID:id '[' STRING_LITERAL:key ']' ')' END_CODE    
-Ast::Base * Parser::ReductionRuleHandler0044 ()
-{
-    assert(3 < m_reduction_rule_token_count);
-    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Text * key = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 337 "barf_preprocessor_parser.trison"
+#line 334 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
+#line 1013 "barf_preprocessor_parser.cpp"
+}
+
+// rule 44: end_define <- START_CODE END_DEFINE END_CODE    
+Ast::Base * Parser::ReductionRuleHandler0044 ()
+{
+
+#line 339 "barf_preprocessor_parser.trison"
+ return NULL; 
 #line 1022 "barf_preprocessor_parser.cpp"
 }
 
-// rule 45: define_map_element <- CODE_LINE DEFINE '(' ID:id '[' STRING_LITERAL:key ']' ')' CODE_NEWLINE    
+// rule 45: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0045 ()
 {
-    assert(3 < m_reduction_rule_token_count);
-    Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
-    assert(5 < m_reduction_rule_token_count);
-    Text * key = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 340 "barf_preprocessor_parser.trison"
- return new DefineMapElement(id, key); 
-#line 1035 "barf_preprocessor_parser.cpp"
+#line 341 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1031 "barf_preprocessor_parser.cpp"
 }
 
-// rule 46: end_define <- START_CODE END_DEFINE END_CODE    
+// rule 46: loop <- START_CODE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' END_CODE    
 Ast::Base * Parser::ReductionRuleHandler0046 ()
 {
+    assert(3 < m_reduction_rule_token_count);
+    Ast::Id * iterator_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    assert(5 < m_reduction_rule_token_count);
+    Expression * iteration_count_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 345 "barf_preprocessor_parser.trison"
- return NULL; 
+#line 347 "barf_preprocessor_parser.trison"
+ return new Loop(iterator_id, iteration_count_expression); 
 #line 1044 "barf_preprocessor_parser.cpp"
 }
 
-// rule 47: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE    
+// rule 47: loop <- CODE_LINE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0047 ()
-{
-
-#line 347 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1053 "barf_preprocessor_parser.cpp"
-}
-
-// rule 48: loop <- START_CODE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' END_CODE    
-Ast::Base * Parser::ReductionRuleHandler0048 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Ast::Id * iterator_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Expression * iteration_count_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 353 "barf_preprocessor_parser.trison"
+#line 350 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
+#line 1057 "barf_preprocessor_parser.cpp"
+}
+
+// rule 48: end_loop <- START_CODE END_LOOP END_CODE    
+Ast::Base * Parser::ReductionRuleHandler0048 ()
+{
+
+#line 355 "barf_preprocessor_parser.trison"
+ return NULL; 
 #line 1066 "barf_preprocessor_parser.cpp"
 }
 
-// rule 49: loop <- CODE_LINE LOOP '(' ID:iterator_id ',' expression:iteration_count_expression ')' CODE_NEWLINE    
+// rule 49: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0049 ()
 {
-    assert(3 < m_reduction_rule_token_count);
-    Ast::Id * iterator_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
-    assert(5 < m_reduction_rule_token_count);
-    Expression * iteration_count_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 356 "barf_preprocessor_parser.trison"
- return new Loop(iterator_id, iteration_count_expression); 
-#line 1079 "barf_preprocessor_parser.cpp"
+#line 357 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1075 "barf_preprocessor_parser.cpp"
 }
 
-// rule 50: end_loop <- START_CODE END_LOOP END_CODE    
+// rule 50: for_each <- START_CODE FOR_EACH '(' ID:key_id ',' ID:map_id ')' END_CODE    
 Ast::Base * Parser::ReductionRuleHandler0050 ()
 {
+    assert(3 < m_reduction_rule_token_count);
+    Ast::Id * key_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
+    assert(5 < m_reduction_rule_token_count);
+    Ast::Id * map_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 361 "barf_preprocessor_parser.trison"
- return NULL; 
+#line 363 "barf_preprocessor_parser.trison"
+ return new ForEach(key_id, map_id); 
 #line 1088 "barf_preprocessor_parser.cpp"
 }
 
-// rule 51: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE    
+// rule 51: for_each <- CODE_LINE FOR_EACH '(' ID:key_id ',' ID:map_id ')' CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0051 ()
-{
-
-#line 363 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1097 "barf_preprocessor_parser.cpp"
-}
-
-// rule 52: for_each <- START_CODE FOR_EACH '(' ID:key_id ',' ID:map_id ')' END_CODE    
-Ast::Base * Parser::ReductionRuleHandler0052 ()
 {
     assert(3 < m_reduction_rule_token_count);
     Ast::Id * key_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
     assert(5 < m_reduction_rule_token_count);
     Ast::Id * map_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 369 "barf_preprocessor_parser.trison"
+#line 366 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
+#line 1101 "barf_preprocessor_parser.cpp"
+}
+
+// rule 52: end_for_each <- START_CODE END_FOR_EACH END_CODE    
+Ast::Base * Parser::ReductionRuleHandler0052 ()
+{
+
+#line 371 "barf_preprocessor_parser.trison"
+ return NULL; 
 #line 1110 "barf_preprocessor_parser.cpp"
 }
 
-// rule 53: for_each <- CODE_LINE FOR_EACH '(' ID:key_id ',' ID:map_id ')' CODE_NEWLINE    
+// rule 53: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE    
 Ast::Base * Parser::ReductionRuleHandler0053 ()
 {
-    assert(3 < m_reduction_rule_token_count);
-    Ast::Id * key_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 3]);
-    assert(5 < m_reduction_rule_token_count);
-    Ast::Id * map_id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 5]);
 
-#line 372 "barf_preprocessor_parser.trison"
- return new ForEach(key_id, map_id); 
-#line 1123 "barf_preprocessor_parser.cpp"
+#line 373 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1119 "barf_preprocessor_parser.cpp"
 }
 
-// rule 54: end_for_each <- START_CODE END_FOR_EACH END_CODE    
+// rule 54: expression <- STRING_LITERAL:str    
 Ast::Base * Parser::ReductionRuleHandler0054 ()
-{
-
-#line 377 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1132 "barf_preprocessor_parser.cpp"
-}
-
-// rule 55: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE    
-Ast::Base * Parser::ReductionRuleHandler0055 ()
-{
-
-#line 379 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1141 "barf_preprocessor_parser.cpp"
-}
-
-// rule 56: expression <- STRING_LITERAL:str    
-Ast::Base * Parser::ReductionRuleHandler0056 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Text * str = Dsc< Text * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 385 "barf_preprocessor_parser.trison"
+#line 379 "barf_preprocessor_parser.trison"
  return str; 
-#line 1152 "barf_preprocessor_parser.cpp"
+#line 1130 "barf_preprocessor_parser.cpp"
 }
 
-// rule 57: expression <- INTEGER_LITERAL:integer    
-Ast::Base * Parser::ReductionRuleHandler0057 ()
+// rule 55: expression <- INTEGER_LITERAL:integer    
+Ast::Base * Parser::ReductionRuleHandler0055 ()
 {
     assert(0 < m_reduction_rule_token_count);
     Integer * integer = Dsc< Integer * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 0]);
 
-#line 388 "barf_preprocessor_parser.trison"
+#line 382 "barf_preprocessor_parser.trison"
  return integer; 
-#line 1163 "barf_preprocessor_parser.cpp"
+#line 1141 "barf_preprocessor_parser.cpp"
 }
 
-// rule 58: expression <- SIZEOF '(' ID:id ')'    
-Ast::Base * Parser::ReductionRuleHandler0058 ()
+// rule 56: expression <- SIZEOF '(' ID:id ')'    
+Ast::Base * Parser::ReductionRuleHandler0056 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Ast::Id * id = Dsc< Ast::Id * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
-#line 391 "barf_preprocessor_parser.trison"
+#line 385 "barf_preprocessor_parser.trison"
  return new Sizeof(id); 
+#line 1152 "barf_preprocessor_parser.cpp"
+}
+
+// rule 57: expression <- KEYWORD_INT '(' expression:expression ')'    
+Ast::Base * Parser::ReductionRuleHandler0057 ()
+{
+    assert(2 < m_reduction_rule_token_count);
+    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+
+#line 388 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::INT_CAST, expression); 
+#line 1163 "barf_preprocessor_parser.cpp"
+}
+
+// rule 58: expression <- KEYWORD_STRING '(' expression:expression ')'    
+Ast::Base * Parser::ReductionRuleHandler0058 ()
+{
+    assert(2 < m_reduction_rule_token_count);
+    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+
+#line 391 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::STRING_CAST, expression); 
 #line 1174 "barf_preprocessor_parser.cpp"
 }
 
-// rule 59: expression <- KEYWORD_INT '(' expression:expression ')'    
+// rule 59: expression <- STRING_LENGTH '(' expression:expression ')'    
 Ast::Base * Parser::ReductionRuleHandler0059 ()
 {
     assert(2 < m_reduction_rule_token_count);
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 394 "barf_preprocessor_parser.trison"
- return new Operation(Operation::INT_CAST, expression); 
+ return new Operation(Operation::STRING_LENGTH, expression); 
 #line 1185 "barf_preprocessor_parser.cpp"
 }
 
-// rule 60: expression <- KEYWORD_STRING '(' expression:expression ')'    
+// rule 60: expression <- TO_CHARACTER_LITERAL '(' expression:character_index_expression ')'    
 Ast::Base * Parser::ReductionRuleHandler0060 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Expression * character_index_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 397 "barf_preprocessor_parser.trison"
- return new Operation(Operation::STRING_CAST, expression); 
+ return new Operation(Operation::TO_CHARACTER_LITERAL, character_index_expression); 
 #line 1196 "barf_preprocessor_parser.cpp"
 }
 
-// rule 61: expression <- STRING_LENGTH '(' expression:expression ')'    
+// rule 61: expression <- TO_STRING_LITERAL '(' expression:string_expression ')'    
 Ast::Base * Parser::ReductionRuleHandler0061 ()
 {
     assert(2 < m_reduction_rule_token_count);
-    Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
+    Expression * string_expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 2]);
 
 #line 400 "barf_preprocessor_parser.trison"
- return new Operation(Operation::STRING_LENGTH, expression); 
+ return new Operation(Operation::TO_STRING_LITERAL, string_expression); 
 #line 1207 "barf_preprocessor_parser.cpp"
 }
 
@@ -1467,7 +1467,7 @@ Ast::Base * Parser::ReductionRuleHandler0082 ()
     Expression * expression = Dsc< Expression * >(m_token_stack[m_token_stack.size() - m_reduction_rule_token_count + 1]);
 
 #line 463 "barf_preprocessor_parser.trison"
- return new Operation(Operation::MINUS, expression); 
+ return new Operation(Operation::NEGATIVE, expression); 
 #line 1472 "barf_preprocessor_parser.cpp"
 }
 
@@ -1516,53 +1516,53 @@ Parser::ReductionRule const Parser::ms_reduction_rule[] =
     {            Token::code_body__,  0, &Parser::ReductionRuleHandler0012, "rule 12: code_body <-     "},
     {            Token::code_body__,  1, &Parser::ReductionRuleHandler0013, "rule 13: code_body <- expression    "},
     {            Token::code_body__,  3, &Parser::ReductionRuleHandler0014, "rule 14: code_body <- DUMP_SYMBOL_TABLE '(' ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0015, "rule 15: code_body <- TO_CHARACTER_LITERAL '(' expression ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0016, "rule 16: code_body <- TO_STRING_LITERAL '(' expression ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0017, "rule 17: code_body <- UNDEFINE '(' ID ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0018, "rule 18: code_body <- DECLARE_ARRAY '(' ID ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0019, "rule 19: code_body <- DECLARE_MAP '(' ID ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0020, "rule 20: code_body <- INCLUDE '(' expression ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0021, "rule 21: code_body <- SANDBOX_INCLUDE '(' expression ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0022, "rule 22: code_body <- WARNING '(' expression ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0023, "rule 23: code_body <- ERROR '(' expression ')'    "},
-    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0024, "rule 24: code_body <- FATAL_ERROR '(' expression ')'    "},
-    {   Token::conditional_series__,  3, &Parser::ReductionRuleHandler0025, "rule 25: conditional_series <- if_statement body conditional_series_end    "},
-    {Token::conditional_series_end__,  1, &Parser::ReductionRuleHandler0026, "rule 26: conditional_series_end <- end_if    "},
-    {Token::conditional_series_end__,  3, &Parser::ReductionRuleHandler0027, "rule 27: conditional_series_end <- else_statement body end_if    "},
-    {Token::conditional_series_end__,  3, &Parser::ReductionRuleHandler0028, "rule 28: conditional_series_end <- else_if_statement body conditional_series_end    "},
-    {         Token::if_statement__,  6, &Parser::ReductionRuleHandler0029, "rule 29: if_statement <- START_CODE IF '(' expression ')' END_CODE    "},
-    {         Token::if_statement__,  6, &Parser::ReductionRuleHandler0030, "rule 30: if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE    "},
-    {       Token::else_statement__,  3, &Parser::ReductionRuleHandler0031, "rule 31: else_statement <- START_CODE ELSE END_CODE    "},
-    {       Token::else_statement__,  3, &Parser::ReductionRuleHandler0032, "rule 32: else_statement <- CODE_LINE ELSE CODE_NEWLINE    "},
-    {    Token::else_if_statement__,  6, &Parser::ReductionRuleHandler0033, "rule 33: else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE    "},
-    {    Token::else_if_statement__,  6, &Parser::ReductionRuleHandler0034, "rule 34: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE    "},
-    {               Token::end_if__,  3, &Parser::ReductionRuleHandler0035, "rule 35: end_if <- START_CODE END_IF END_CODE    "},
-    {               Token::end_if__,  3, &Parser::ReductionRuleHandler0036, "rule 36: end_if <- CODE_LINE END_IF CODE_NEWLINE    "},
-    {               Token::define__,  1, &Parser::ReductionRuleHandler0037, "rule 37: define <- define_scalar    "},
-    {               Token::define__,  1, &Parser::ReductionRuleHandler0038, "rule 38: define <- define_array_element    "},
-    {               Token::define__,  1, &Parser::ReductionRuleHandler0039, "rule 39: define <- define_map_element    "},
-    {        Token::define_scalar__,  6, &Parser::ReductionRuleHandler0040, "rule 40: define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE    "},
-    {        Token::define_scalar__,  6, &Parser::ReductionRuleHandler0041, "rule 41: define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE    "},
-    { Token::define_array_element__,  8, &Parser::ReductionRuleHandler0042, "rule 42: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE    "},
-    { Token::define_array_element__,  8, &Parser::ReductionRuleHandler0043, "rule 43: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE    "},
-    {   Token::define_map_element__,  9, &Parser::ReductionRuleHandler0044, "rule 44: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE    "},
-    {   Token::define_map_element__,  9, &Parser::ReductionRuleHandler0045, "rule 45: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE    "},
-    {           Token::end_define__,  3, &Parser::ReductionRuleHandler0046, "rule 46: end_define <- START_CODE END_DEFINE END_CODE    "},
-    {           Token::end_define__,  3, &Parser::ReductionRuleHandler0047, "rule 47: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE    "},
-    {                 Token::loop__,  8, &Parser::ReductionRuleHandler0048, "rule 48: loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE    "},
-    {                 Token::loop__,  8, &Parser::ReductionRuleHandler0049, "rule 49: loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE    "},
-    {             Token::end_loop__,  3, &Parser::ReductionRuleHandler0050, "rule 50: end_loop <- START_CODE END_LOOP END_CODE    "},
-    {             Token::end_loop__,  3, &Parser::ReductionRuleHandler0051, "rule 51: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE    "},
-    {             Token::for_each__,  8, &Parser::ReductionRuleHandler0052, "rule 52: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE    "},
-    {             Token::for_each__,  8, &Parser::ReductionRuleHandler0053, "rule 53: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE    "},
-    {         Token::end_for_each__,  3, &Parser::ReductionRuleHandler0054, "rule 54: end_for_each <- START_CODE END_FOR_EACH END_CODE    "},
-    {         Token::end_for_each__,  3, &Parser::ReductionRuleHandler0055, "rule 55: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE    "},
-    {           Token::expression__,  1, &Parser::ReductionRuleHandler0056, "rule 56: expression <- STRING_LITERAL    "},
-    {           Token::expression__,  1, &Parser::ReductionRuleHandler0057, "rule 57: expression <- INTEGER_LITERAL    "},
-    {           Token::expression__,  4, &Parser::ReductionRuleHandler0058, "rule 58: expression <- SIZEOF '(' ID ')'    "},
-    {           Token::expression__,  4, &Parser::ReductionRuleHandler0059, "rule 59: expression <- KEYWORD_INT '(' expression ')'    "},
-    {           Token::expression__,  4, &Parser::ReductionRuleHandler0060, "rule 60: expression <- KEYWORD_STRING '(' expression ')'    "},
-    {           Token::expression__,  4, &Parser::ReductionRuleHandler0061, "rule 61: expression <- STRING_LENGTH '(' expression ')'    "},
+    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0015, "rule 15: code_body <- UNDEFINE '(' ID ')'    "},
+    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0016, "rule 16: code_body <- DECLARE_ARRAY '(' ID ')'    "},
+    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0017, "rule 17: code_body <- DECLARE_MAP '(' ID ')'    "},
+    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0018, "rule 18: code_body <- INCLUDE '(' expression ')'    "},
+    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0019, "rule 19: code_body <- SANDBOX_INCLUDE '(' expression ')'    "},
+    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0020, "rule 20: code_body <- WARNING '(' expression ')'    "},
+    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0021, "rule 21: code_body <- ERROR '(' expression ')'    "},
+    {            Token::code_body__,  4, &Parser::ReductionRuleHandler0022, "rule 22: code_body <- FATAL_ERROR '(' expression ')'    "},
+    {   Token::conditional_series__,  3, &Parser::ReductionRuleHandler0023, "rule 23: conditional_series <- if_statement body conditional_series_end    "},
+    {Token::conditional_series_end__,  1, &Parser::ReductionRuleHandler0024, "rule 24: conditional_series_end <- end_if    "},
+    {Token::conditional_series_end__,  3, &Parser::ReductionRuleHandler0025, "rule 25: conditional_series_end <- else_statement body end_if    "},
+    {Token::conditional_series_end__,  3, &Parser::ReductionRuleHandler0026, "rule 26: conditional_series_end <- else_if_statement body conditional_series_end    "},
+    {         Token::if_statement__,  6, &Parser::ReductionRuleHandler0027, "rule 27: if_statement <- START_CODE IF '(' expression ')' END_CODE    "},
+    {         Token::if_statement__,  6, &Parser::ReductionRuleHandler0028, "rule 28: if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE    "},
+    {       Token::else_statement__,  3, &Parser::ReductionRuleHandler0029, "rule 29: else_statement <- START_CODE ELSE END_CODE    "},
+    {       Token::else_statement__,  3, &Parser::ReductionRuleHandler0030, "rule 30: else_statement <- CODE_LINE ELSE CODE_NEWLINE    "},
+    {    Token::else_if_statement__,  6, &Parser::ReductionRuleHandler0031, "rule 31: else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE    "},
+    {    Token::else_if_statement__,  6, &Parser::ReductionRuleHandler0032, "rule 32: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE    "},
+    {               Token::end_if__,  3, &Parser::ReductionRuleHandler0033, "rule 33: end_if <- START_CODE END_IF END_CODE    "},
+    {               Token::end_if__,  3, &Parser::ReductionRuleHandler0034, "rule 34: end_if <- CODE_LINE END_IF CODE_NEWLINE    "},
+    {               Token::define__,  1, &Parser::ReductionRuleHandler0035, "rule 35: define <- define_scalar    "},
+    {               Token::define__,  1, &Parser::ReductionRuleHandler0036, "rule 36: define <- define_array_element    "},
+    {               Token::define__,  1, &Parser::ReductionRuleHandler0037, "rule 37: define <- define_map_element    "},
+    {        Token::define_scalar__,  6, &Parser::ReductionRuleHandler0038, "rule 38: define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE    "},
+    {        Token::define_scalar__,  6, &Parser::ReductionRuleHandler0039, "rule 39: define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE    "},
+    { Token::define_array_element__,  8, &Parser::ReductionRuleHandler0040, "rule 40: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE    "},
+    { Token::define_array_element__,  8, &Parser::ReductionRuleHandler0041, "rule 41: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE    "},
+    {   Token::define_map_element__,  9, &Parser::ReductionRuleHandler0042, "rule 42: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE    "},
+    {   Token::define_map_element__,  9, &Parser::ReductionRuleHandler0043, "rule 43: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE    "},
+    {           Token::end_define__,  3, &Parser::ReductionRuleHandler0044, "rule 44: end_define <- START_CODE END_DEFINE END_CODE    "},
+    {           Token::end_define__,  3, &Parser::ReductionRuleHandler0045, "rule 45: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE    "},
+    {                 Token::loop__,  8, &Parser::ReductionRuleHandler0046, "rule 46: loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE    "},
+    {                 Token::loop__,  8, &Parser::ReductionRuleHandler0047, "rule 47: loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE    "},
+    {             Token::end_loop__,  3, &Parser::ReductionRuleHandler0048, "rule 48: end_loop <- START_CODE END_LOOP END_CODE    "},
+    {             Token::end_loop__,  3, &Parser::ReductionRuleHandler0049, "rule 49: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE    "},
+    {             Token::for_each__,  8, &Parser::ReductionRuleHandler0050, "rule 50: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE    "},
+    {             Token::for_each__,  8, &Parser::ReductionRuleHandler0051, "rule 51: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE    "},
+    {         Token::end_for_each__,  3, &Parser::ReductionRuleHandler0052, "rule 52: end_for_each <- START_CODE END_FOR_EACH END_CODE    "},
+    {         Token::end_for_each__,  3, &Parser::ReductionRuleHandler0053, "rule 53: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE    "},
+    {           Token::expression__,  1, &Parser::ReductionRuleHandler0054, "rule 54: expression <- STRING_LITERAL    "},
+    {           Token::expression__,  1, &Parser::ReductionRuleHandler0055, "rule 55: expression <- INTEGER_LITERAL    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0056, "rule 56: expression <- SIZEOF '(' ID ')'    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0057, "rule 57: expression <- KEYWORD_INT '(' expression ')'    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0058, "rule 58: expression <- KEYWORD_STRING '(' expression ')'    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0059, "rule 59: expression <- STRING_LENGTH '(' expression ')'    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0060, "rule 60: expression <- TO_CHARACTER_LITERAL '(' expression ')'    "},
+    {           Token::expression__,  4, &Parser::ReductionRuleHandler0061, "rule 61: expression <- TO_STRING_LITERAL '(' expression ')'    "},
     {           Token::expression__,  4, &Parser::ReductionRuleHandler0062, "rule 62: expression <- IS_DEFINED '(' ID ')'    "},
     {           Token::expression__,  7, &Parser::ReductionRuleHandler0063, "rule 63: expression <- IS_DEFINED '(' ID '[' expression ']' ')'    "},
     {           Token::expression__,  1, &Parser::ReductionRuleHandler0064, "rule 64: expression <- ID    "},
@@ -1640,222 +1640,222 @@ Parser::State const Parser::ms_state[] =
     { 118,    1,    0,    0,    0}, // state   36
     { 119,    1,    0,    0,    0}, // state   37
     { 120,    1,    0,    0,    0}, // state   38
-    { 121,   11,    0,  132,    1}, // state   39
-    { 133,   11,    0,  144,    1}, // state   40
-    { 145,   11,    0,  156,    1}, // state   41
-    { 157,    1,    0,    0,    0}, // state   42
-    { 158,   12,  170,    0,    0}, // state   43
-    { 171,    1,    0,    0,    0}, // state   44
-    { 172,    1,    0,    0,    0}, // state   45
-    { 173,    1,    0,    0,    0}, // state   46
-    { 174,    1,    0,    0,    0}, // state   47
-    { 175,    1,    0,    0,    0}, // state   48
-    {   0,    0,  176,    0,    0}, // state   49
-    { 177,    2,    0,  179,   14}, // state   50
-    { 193,    2,    0,  195,   11}, // state   51
-    { 206,    2,    0,  208,   11}, // state   52
-    { 219,    2,    0,  221,   11}, // state   53
-    { 232,   11,    0,  243,    1}, // state   54
-    {   0,    0,  244,    0,    0}, // state   55
-    { 245,    1,    0,    0,    0}, // state   56
-    { 246,   11,    0,  257,    1}, // state   57
-    { 258,    1,    0,    0,    0}, // state   58
-    { 259,    1,    0,    0,    0}, // state   59
-    { 260,    1,    0,    0,    0}, // state   60
-    { 261,    1,    0,    0,    0}, // state   61
-    { 262,    1,    0,    0,    0}, // state   62
-    { 263,    1,    0,    0,    0}, // state   63
-    { 264,   11,    0,  275,    1}, // state   64
-    { 276,   11,    0,  287,    1}, // state   65
-    { 288,   11,    0,  299,    1}, // state   66
-    { 300,   11,    0,  311,    1}, // state   67
-    { 312,   11,    0,  323,    1}, // state   68
-    { 324,    1,    0,    0,    0}, // state   69
-    { 325,    1,    0,    0,    0}, // state   70
-    { 326,   11,    0,  337,    1}, // state   71
-    { 338,   11,    0,  349,    1}, // state   72
-    { 350,   11,    0,  361,    1}, // state   73
-    { 362,   11,    0,  373,    1}, // state   74
-    { 374,   11,    0,  385,    1}, // state   75
-    { 386,   13,    0,    0,    0}, // state   76
-    {   0,    0,  399,    0,    0}, // state   77
-    {   0,    0,  400,    0,    0}, // state   78
-    {   0,    0,  401,    0,    0}, // state   79
-    { 402,   11,    0,  413,    1}, // state   80
-    { 414,   11,    0,  425,    1}, // state   81
-    { 426,   11,    0,  437,    1}, // state   82
-    { 438,   11,    0,  449,    1}, // state   83
-    { 450,   11,    0,  461,    1}, // state   84
-    { 462,   11,    0,  473,    1}, // state   85
-    { 474,    1,    0,    0,    0}, // state   86
-    { 475,    1,    0,    0,    0}, // state   87
-    { 476,    1,    0,    0,    0}, // state   88
-    { 477,    1,    0,    0,    0}, // state   89
-    { 478,   12,    0,  490,    1}, // state   90
-    { 491,   12,    0,  503,    1}, // state   91
-    { 504,   11,    0,  515,    1}, // state   92
-    { 516,    1,    0,    0,    0}, // state   93
-    { 517,    1,    0,    0,    0}, // state   94
-    { 518,    1,    0,    0,    0}, // state   95
-    {   0,    0,  519,    0,    0}, // state   96
-    { 520,   29,  549,  550,    2}, // state   97
-    { 552,   29,  581,  582,    2}, // state   98
-    {   0,    0,  584,    0,    0}, // state   99
-    { 585,    1,  586,  587,    1}, // state  100
-    { 588,    1,  589,  590,    1}, // state  101
-    {   0,    0,  591,    0,    0}, // state  102
-    { 592,   27,  619,  620,    2}, // state  103
-    { 622,   27,  649,  650,    2}, // state  104
-    {   0,    0,  652,    0,    0}, // state  105
-    { 653,   27,  680,  681,    2}, // state  106
-    { 683,   27,  710,  711,    2}, // state  107
-    {   0,    0,  713,    0,    0}, // state  108
-    { 714,   27,  741,  742,    2}, // state  109
-    { 744,   27,  771,  772,    2}, // state  110
-    {   0,    0,  774,    0,    0}, // state  111
-    { 775,   13,    0,    0,    0}, // state  112
-    {   0,    0,  788,    0,    0}, // state  113
-    { 789,   13,    0,    0,    0}, // state  114
-    { 802,    1,    0,    0,    0}, // state  115
-    { 803,    1,    0,    0,    0}, // state  116
-    { 804,    1,    0,    0,    0}, // state  117
-    { 805,    2,    0,    0,    0}, // state  118
-    { 807,    1,    0,    0,    0}, // state  119
-    { 808,    1,    0,    0,    0}, // state  120
-    { 809,   13,    0,    0,    0}, // state  121
-    { 822,   13,    0,    0,    0}, // state  122
-    { 835,   13,    0,    0,    0}, // state  123
-    { 848,   13,    0,    0,    0}, // state  124
-    { 861,   13,    0,    0,    0}, // state  125
-    { 874,    1,    0,    0,    0}, // state  126
-    { 875,    2,    0,    0,    0}, // state  127
-    { 877,   13,    0,    0,    0}, // state  128
-    { 890,   13,    0,    0,    0}, // state  129
-    { 903,   13,    0,    0,    0}, // state  130
-    { 916,   13,    0,    0,    0}, // state  131
-    { 929,   13,    0,    0,    0}, // state  132
-    {   0,    0,  942,    0,    0}, // state  133
-    { 943,    5,  948,    0,    0}, // state  134
-    { 949,    3,  952,    0,    0}, // state  135
-    { 953,    3,  956,    0,    0}, // state  136
-    {   0,    0,  957,    0,    0}, // state  137
-    {   0,    0,  958,    0,    0}, // state  138
-    {   0,    0,  959,    0,    0}, // state  139
-    { 960,   11,    0,  971,    1}, // state  140
-    { 972,   11,    0,  983,    1}, // state  141
-    { 984,   11,    0,  995,    1}, // state  142
-    { 996,   11,    0, 1007,    1}, // state  143
-    {1008,   11,    0, 1019,    1}, // state  144
-    {1020,    6, 1026,    0,    0}, // state  145
-    {1027,   11,    0, 1038,    1}, // state  146
-    {1039,    6, 1045,    0,    0}, // state  147
-    {1046,   13,    0,    0,    0}, // state  148
-    {1059,    2,    0,    0,    0}, // state  149
-    {1061,    1,    0,    0,    0}, // state  150
-    {1062,    1,    0,    0,    0}, // state  151
-    {1063,    1,    0,    0,    0}, // state  152
-    {1064,    1,    0,    0,    0}, // state  153
-    {1065,    1,    0,    0,    0}, // state  154
-    {1066,    1,    0,    0,    0}, // state  155
-    {1067,    1,    0,    0,    0}, // state  156
-    {1068,    1,    0,    0,    0}, // state  157
-    {1069,    2,    0, 1071,   11}, // state  158
-    {1082,    2,    0, 1084,   14}, // state  159
-    {1098,    1,    0,    0,    0}, // state  160
-    {1099,    1,    0,    0,    0}, // state  161
-    {1100,    1,    0,    0,    0}, // state  162
-    {1101,    1,    0,    0,    0}, // state  163
-    {1102,    1,    0,    0,    0}, // state  164
-    {1103,    1,    0,    0,    0}, // state  165
-    {1104,    1, 1105,    0,    0}, // state  166
-    {1106,    1,    0,    0,    0}, // state  167
-    {   0,    0, 1107,    0,    0}, // state  168
-    {   0,    0, 1108,    0,    0}, // state  169
-    {   0,    0, 1109,    0,    0}, // state  170
-    {1110,    1,    0,    0,    0}, // state  171
-    {1111,    2,    0,    0,    0}, // state  172
-    {1113,   11,    0, 1124,    1}, // state  173
-    {1125,    1,    0,    0,    0}, // state  174
-    {   0,    0, 1126,    0,    0}, // state  175
-    {   0,    0, 1127,    0,    0}, // state  176
-    {   0,    0, 1128,    0,    0}, // state  177
-    {   0,    0, 1129,    0,    0}, // state  178
-    {   0,    0, 1130,    0,    0}, // state  179
-    {   0,    0, 1131,    0,    0}, // state  180
-    {   0,    0, 1132,    0,    0}, // state  181
-    {1133,   11,    0, 1144,    1}, // state  182
-    {   0,    0, 1145,    0,    0}, // state  183
-    {   0,    0, 1146,    0,    0}, // state  184
-    {   0,    0, 1147,    0,    0}, // state  185
-    {   0,    0, 1148,    0,    0}, // state  186
-    {   0,    0, 1149,    0,    0}, // state  187
-    {1150,   10, 1160,    0,    0}, // state  188
-    {1161,   11, 1172,    0,    0}, // state  189
-    {1173,   12, 1185,    0,    0}, // state  190
-    {1186,   10, 1196,    0,    0}, // state  191
-    {1197,    8, 1205,    0,    0}, // state  192
-    {1206,    8, 1214,    0,    0}, // state  193
-    {1215,    1,    0,    0,    0}, // state  194
-    {1216,    1,    0,    0,    0}, // state  195
-    {1217,    2,    0,    0,    0}, // state  196
-    {1219,   11,    0, 1230,    1}, // state  197
-    {1231,    1,    0,    0,    0}, // state  198
-    {   0,    0, 1232,    0,    0}, // state  199
-    {1233,   11,    0, 1244,    1}, // state  200
-    {   0,    0, 1245,    0,    0}, // state  201
-    {   0,    0, 1246,    0,    0}, // state  202
-    {1247,   11,    0, 1258,    1}, // state  203
-    {   0,    0, 1259,    0,    0}, // state  204
-    {1260,   27, 1287, 1288,    2}, // state  205
-    {1290,   27, 1317, 1318,    2}, // state  206
-    {   0,    0, 1320,    0,    0}, // state  207
-    {   0,    0, 1321,    0,    0}, // state  208
-    {   0,    0, 1322,    0,    0}, // state  209
-    {   0,    0, 1323,    0,    0}, // state  210
-    {   0,    0, 1324,    0,    0}, // state  211
-    {   0,    0, 1325,    0,    0}, // state  212
-    {   0,    0, 1326,    0,    0}, // state  213
-    {   0,    0, 1327,    0,    0}, // state  214
-    {   0,    0, 1328,    0,    0}, // state  215
-    {   0,    0, 1329,    0,    0}, // state  216
-    {   0,    0, 1330,    0,    0}, // state  217
-    {1331,    1,    0,    0,    0}, // state  218
-    {1332,    1,    0,    0,    0}, // state  219
-    {1333,   13,    0,    0,    0}, // state  220
-    {1346,    1,    0,    0,    0}, // state  221
-    {1347,   13,    0,    0,    0}, // state  222
-    {   0,    0, 1360,    0,    0}, // state  223
-    {   0,    0, 1361,    0,    0}, // state  224
-    {1362,    1,    0,    0,    0}, // state  225
-    {1363,    1,    0,    0,    0}, // state  226
-    {1364,   13,    0,    0,    0}, // state  227
-    {1377,    1,    0,    0,    0}, // state  228
-    {1378,   13,    0,    0,    0}, // state  229
-    {1391,   13,    0,    0,    0}, // state  230
-    {1404,    1,    0,    0,    0}, // state  231
-    {1405,    1,    0,    0,    0}, // state  232
-    {1406,    1,    0,    0,    0}, // state  233
-    {1407,    1,    0,    0,    0}, // state  234
-    {1408,    1,    0,    0,    0}, // state  235
-    {1409,    1,    0,    0,    0}, // state  236
-    {1410,    1,    0,    0,    0}, // state  237
-    {1411,    1,    0,    0,    0}, // state  238
-    {1412,    1,    0,    0,    0}, // state  239
-    {1413,    1,    0,    0,    0}, // state  240
-    {1414,    1,    0,    0,    0}, // state  241
-    {1415,    1,    0,    0,    0}, // state  242
-    {   0,    0, 1416,    0,    0}, // state  243
-    {   0,    0, 1417,    0,    0}, // state  244
-    {   0,    0, 1418,    0,    0}, // state  245
-    {   0,    0, 1419,    0,    0}, // state  246
-    {1420,    1,    0,    0,    0}, // state  247
-    {   0,    0, 1421,    0,    0}, // state  248
-    {   0,    0, 1422,    0,    0}, // state  249
-    {   0,    0, 1423,    0,    0}, // state  250
-    {   0,    0, 1424,    0,    0}, // state  251
-    {   0,    0, 1425,    0,    0}, // state  252
-    {   0,    0, 1426,    0,    0}, // state  253
-    {   0,    0, 1427,    0,    0}  // state  254
+    { 121,   13,    0,  134,    1}, // state   39
+    { 135,   13,    0,  148,    1}, // state   40
+    { 149,   13,    0,  162,    1}, // state   41
+    { 163,    1,    0,    0,    0}, // state   42
+    { 164,   12,  176,    0,    0}, // state   43
+    { 177,    1,    0,    0,    0}, // state   44
+    { 178,    1,    0,    0,    0}, // state   45
+    { 179,    1,    0,    0,    0}, // state   46
+    { 180,    1,    0,    0,    0}, // state   47
+    { 181,    1,    0,    0,    0}, // state   48
+    {   0,    0,  182,    0,    0}, // state   49
+    { 183,    2,    0,  185,   14}, // state   50
+    { 199,    2,    0,  201,   11}, // state   51
+    { 212,    2,    0,  214,   11}, // state   52
+    { 225,    2,    0,  227,   11}, // state   53
+    { 238,   13,    0,  251,    1}, // state   54
+    {   0,    0,  252,    0,    0}, // state   55
+    { 253,    1,    0,    0,    0}, // state   56
+    { 254,   13,    0,  267,    1}, // state   57
+    { 268,    1,    0,    0,    0}, // state   58
+    { 269,    1,    0,    0,    0}, // state   59
+    { 270,    1,    0,    0,    0}, // state   60
+    { 271,    1,    0,    0,    0}, // state   61
+    { 272,    1,    0,    0,    0}, // state   62
+    { 273,    1,    0,    0,    0}, // state   63
+    { 274,   13,    0,  287,    1}, // state   64
+    { 288,   13,    0,  301,    1}, // state   65
+    { 302,   13,    0,  315,    1}, // state   66
+    { 316,   13,    0,  329,    1}, // state   67
+    { 330,   13,    0,  343,    1}, // state   68
+    { 344,    1,    0,    0,    0}, // state   69
+    { 345,    1,    0,    0,    0}, // state   70
+    { 346,   13,    0,  359,    1}, // state   71
+    { 360,   13,    0,  373,    1}, // state   72
+    { 374,   13,    0,  387,    1}, // state   73
+    { 388,   13,    0,  401,    1}, // state   74
+    { 402,   13,    0,  415,    1}, // state   75
+    { 416,   13,    0,    0,    0}, // state   76
+    {   0,    0,  429,    0,    0}, // state   77
+    {   0,    0,  430,    0,    0}, // state   78
+    {   0,    0,  431,    0,    0}, // state   79
+    { 432,   13,    0,  445,    1}, // state   80
+    { 446,   13,    0,  459,    1}, // state   81
+    { 460,   13,    0,  473,    1}, // state   82
+    { 474,   13,    0,  487,    1}, // state   83
+    { 488,   13,    0,  501,    1}, // state   84
+    { 502,   13,    0,  515,    1}, // state   85
+    { 516,    1,    0,    0,    0}, // state   86
+    { 517,    1,    0,    0,    0}, // state   87
+    { 518,    1,    0,    0,    0}, // state   88
+    { 519,    1,    0,    0,    0}, // state   89
+    { 520,   14,    0,  534,    1}, // state   90
+    { 535,   14,    0,  549,    1}, // state   91
+    { 550,   13,    0,  563,    1}, // state   92
+    { 564,    1,    0,    0,    0}, // state   93
+    { 565,    1,    0,    0,    0}, // state   94
+    { 566,    1,    0,    0,    0}, // state   95
+    {   0,    0,  567,    0,    0}, // state   96
+    { 568,   29,  597,  598,    2}, // state   97
+    { 600,   29,  629,  630,    2}, // state   98
+    {   0,    0,  632,    0,    0}, // state   99
+    { 633,    1,  634,  635,    1}, // state  100
+    { 636,    1,  637,  638,    1}, // state  101
+    {   0,    0,  639,    0,    0}, // state  102
+    { 640,   27,  667,  668,    2}, // state  103
+    { 670,   27,  697,  698,    2}, // state  104
+    {   0,    0,  700,    0,    0}, // state  105
+    { 701,   27,  728,  729,    2}, // state  106
+    { 731,   27,  758,  759,    2}, // state  107
+    {   0,    0,  761,    0,    0}, // state  108
+    { 762,   27,  789,  790,    2}, // state  109
+    { 792,   27,  819,  820,    2}, // state  110
+    {   0,    0,  822,    0,    0}, // state  111
+    { 823,   13,    0,    0,    0}, // state  112
+    {   0,    0,  836,    0,    0}, // state  113
+    { 837,   13,    0,    0,    0}, // state  114
+    { 850,    1,    0,    0,    0}, // state  115
+    { 851,    1,    0,    0,    0}, // state  116
+    { 852,    1,    0,    0,    0}, // state  117
+    { 853,    2,    0,    0,    0}, // state  118
+    { 855,    1,    0,    0,    0}, // state  119
+    { 856,    1,    0,    0,    0}, // state  120
+    { 857,   13,    0,    0,    0}, // state  121
+    { 870,   13,    0,    0,    0}, // state  122
+    { 883,   13,    0,    0,    0}, // state  123
+    { 896,   13,    0,    0,    0}, // state  124
+    { 909,   13,    0,    0,    0}, // state  125
+    { 922,    1,    0,    0,    0}, // state  126
+    { 923,    2,    0,    0,    0}, // state  127
+    { 925,   13,    0,    0,    0}, // state  128
+    { 938,   13,    0,    0,    0}, // state  129
+    { 951,   13,    0,    0,    0}, // state  130
+    { 964,   13,    0,    0,    0}, // state  131
+    { 977,   13,    0,    0,    0}, // state  132
+    {   0,    0,  990,    0,    0}, // state  133
+    { 991,    5,  996,    0,    0}, // state  134
+    { 997,    3, 1000,    0,    0}, // state  135
+    {1001,    3, 1004,    0,    0}, // state  136
+    {   0,    0, 1005,    0,    0}, // state  137
+    {   0,    0, 1006,    0,    0}, // state  138
+    {   0,    0, 1007,    0,    0}, // state  139
+    {1008,   13,    0, 1021,    1}, // state  140
+    {1022,   13,    0, 1035,    1}, // state  141
+    {1036,   13,    0, 1049,    1}, // state  142
+    {1050,   13,    0, 1063,    1}, // state  143
+    {1064,   13,    0, 1077,    1}, // state  144
+    {1078,    6, 1084,    0,    0}, // state  145
+    {1085,   13,    0, 1098,    1}, // state  146
+    {1099,    6, 1105,    0,    0}, // state  147
+    {1106,   13,    0,    0,    0}, // state  148
+    {1119,    2,    0,    0,    0}, // state  149
+    {1121,    1,    0,    0,    0}, // state  150
+    {1122,    1,    0,    0,    0}, // state  151
+    {1123,    1,    0,    0,    0}, // state  152
+    {1124,    1,    0,    0,    0}, // state  153
+    {1125,    1,    0,    0,    0}, // state  154
+    {1126,    1,    0,    0,    0}, // state  155
+    {1127,    1,    0,    0,    0}, // state  156
+    {1128,    1,    0,    0,    0}, // state  157
+    {1129,    2,    0, 1131,   11}, // state  158
+    {1142,    2,    0, 1144,   14}, // state  159
+    {1158,    1,    0,    0,    0}, // state  160
+    {1159,    1,    0,    0,    0}, // state  161
+    {1160,    1,    0,    0,    0}, // state  162
+    {1161,    1,    0,    0,    0}, // state  163
+    {1162,    1,    0,    0,    0}, // state  164
+    {1163,    1,    0,    0,    0}, // state  165
+    {1164,    1, 1165,    0,    0}, // state  166
+    {1166,    1,    0,    0,    0}, // state  167
+    {   0,    0, 1167,    0,    0}, // state  168
+    {   0,    0, 1168,    0,    0}, // state  169
+    {   0,    0, 1169,    0,    0}, // state  170
+    {1170,    1,    0,    0,    0}, // state  171
+    {1171,    2,    0,    0,    0}, // state  172
+    {1173,   13,    0, 1186,    1}, // state  173
+    {1187,    1,    0,    0,    0}, // state  174
+    {   0,    0, 1188,    0,    0}, // state  175
+    {   0,    0, 1189,    0,    0}, // state  176
+    {   0,    0, 1190,    0,    0}, // state  177
+    {   0,    0, 1191,    0,    0}, // state  178
+    {   0,    0, 1192,    0,    0}, // state  179
+    {   0,    0, 1193,    0,    0}, // state  180
+    {   0,    0, 1194,    0,    0}, // state  181
+    {1195,   13,    0, 1208,    1}, // state  182
+    {   0,    0, 1209,    0,    0}, // state  183
+    {   0,    0, 1210,    0,    0}, // state  184
+    {   0,    0, 1211,    0,    0}, // state  185
+    {   0,    0, 1212,    0,    0}, // state  186
+    {   0,    0, 1213,    0,    0}, // state  187
+    {1214,   10, 1224,    0,    0}, // state  188
+    {1225,   11, 1236,    0,    0}, // state  189
+    {1237,   12, 1249,    0,    0}, // state  190
+    {1250,   10, 1260,    0,    0}, // state  191
+    {1261,    8, 1269,    0,    0}, // state  192
+    {1270,    8, 1278,    0,    0}, // state  193
+    {1279,    1,    0,    0,    0}, // state  194
+    {1280,    1,    0,    0,    0}, // state  195
+    {1281,    2,    0,    0,    0}, // state  196
+    {1283,   13,    0, 1296,    1}, // state  197
+    {1297,    1,    0,    0,    0}, // state  198
+    {   0,    0, 1298,    0,    0}, // state  199
+    {1299,   13,    0, 1312,    1}, // state  200
+    {   0,    0, 1313,    0,    0}, // state  201
+    {   0,    0, 1314,    0,    0}, // state  202
+    {1315,   13,    0, 1328,    1}, // state  203
+    {   0,    0, 1329,    0,    0}, // state  204
+    {1330,   27, 1357, 1358,    2}, // state  205
+    {1360,   27, 1387, 1388,    2}, // state  206
+    {   0,    0, 1390,    0,    0}, // state  207
+    {   0,    0, 1391,    0,    0}, // state  208
+    {   0,    0, 1392,    0,    0}, // state  209
+    {   0,    0, 1393,    0,    0}, // state  210
+    {   0,    0, 1394,    0,    0}, // state  211
+    {   0,    0, 1395,    0,    0}, // state  212
+    {   0,    0, 1396,    0,    0}, // state  213
+    {   0,    0, 1397,    0,    0}, // state  214
+    {   0,    0, 1398,    0,    0}, // state  215
+    {   0,    0, 1399,    0,    0}, // state  216
+    {   0,    0, 1400,    0,    0}, // state  217
+    {1401,    1,    0,    0,    0}, // state  218
+    {1402,    1,    0,    0,    0}, // state  219
+    {1403,   13,    0,    0,    0}, // state  220
+    {1416,    1,    0,    0,    0}, // state  221
+    {1417,   13,    0,    0,    0}, // state  222
+    {   0,    0, 1430,    0,    0}, // state  223
+    {   0,    0, 1431,    0,    0}, // state  224
+    {1432,    1,    0,    0,    0}, // state  225
+    {1433,    1,    0,    0,    0}, // state  226
+    {1434,   13,    0,    0,    0}, // state  227
+    {1447,    1,    0,    0,    0}, // state  228
+    {1448,   13,    0,    0,    0}, // state  229
+    {1461,   13,    0,    0,    0}, // state  230
+    {1474,    1,    0,    0,    0}, // state  231
+    {1475,    1,    0,    0,    0}, // state  232
+    {1476,    1,    0,    0,    0}, // state  233
+    {1477,    1,    0,    0,    0}, // state  234
+    {1478,    1,    0,    0,    0}, // state  235
+    {1479,    1,    0,    0,    0}, // state  236
+    {1480,    1,    0,    0,    0}, // state  237
+    {1481,    1,    0,    0,    0}, // state  238
+    {1482,    1,    0,    0,    0}, // state  239
+    {1483,    1,    0,    0,    0}, // state  240
+    {1484,    1,    0,    0,    0}, // state  241
+    {1485,    1,    0,    0,    0}, // state  242
+    {   0,    0, 1486,    0,    0}, // state  243
+    {   0,    0, 1487,    0,    0}, // state  244
+    {   0,    0, 1488,    0,    0}, // state  245
+    {   0,    0, 1489,    0,    0}, // state  246
+    {1490,    1,    0,    0,    0}, // state  247
+    {   0,    0, 1491,    0,    0}, // state  248
+    {   0,    0, 1492,    0,    0}, // state  249
+    {   0,    0, 1493,    0,    0}, // state  250
+    {   0,    0, 1494,    0,    0}, // state  251
+    {   0,    0, 1495,    0,    0}, // state  252
+    {   0,    0, 1496,    0,    0}, // state  253
+    {   0,    0, 1497,    0,    0}  // state  254
 
 };
 
@@ -2029,19 +2029,19 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   11
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   37}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   35}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   12
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   38}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   36}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   13
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   39}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   37}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   14
@@ -2166,13 +2166,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   32
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   57}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   55}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   33
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   56}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   54}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state   34
@@ -2216,6 +2216,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2234,6 +2236,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2252,6 +2256,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2410,6 +2416,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2440,6 +2448,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2494,6 +2504,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2512,6 +2524,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2530,6 +2544,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2548,6 +2564,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2566,6 +2584,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2596,6 +2616,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2614,6 +2636,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2632,6 +2656,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2650,6 +2676,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2668,6 +2696,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2722,6 +2752,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2740,6 +2772,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2758,6 +2792,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2776,6 +2812,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2794,6 +2832,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2812,6 +2852,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2854,6 +2896,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2873,6 +2917,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -2892,6 +2938,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -3004,7 +3052,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state   99
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   25}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   23}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  100
@@ -3030,7 +3078,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  102
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   26}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   24}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  103
@@ -3612,6 +3660,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -3630,6 +3680,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -3648,6 +3700,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -3666,6 +3720,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -3684,6 +3740,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -3715,6 +3773,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -3902,19 +3962,19 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  168
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   17}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   15}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  169
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   18}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   16}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  170
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   19}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   17}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  171
@@ -3941,6 +4001,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -3957,37 +4019,37 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  175
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   20}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   18}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  176
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   21}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   19}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  177
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   22}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   20}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  178
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   23}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   21}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  179
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   24}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   22}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  180
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   58}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   56}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  181
@@ -4007,6 +4069,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -4017,31 +4081,31 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  183
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   59}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   57}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  184
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   60}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   58}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  185
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   61}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   59}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  186
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   15}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   60}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  187
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   16}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   61}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  188
@@ -4175,6 +4239,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -4191,7 +4257,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  199
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   31}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   29}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  200
@@ -4205,6 +4271,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -4215,13 +4283,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  201
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   35}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   33}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  202
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   32}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   30}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  203
@@ -4235,6 +4303,8 @@ Parser::StateTransition const Parser::ms_state_transition[] =
     {            Token::KEYWORD_INT, {        TA_SHIFT_AND_PUSH_STATE,   34}},
     {         Token::KEYWORD_STRING, {        TA_SHIFT_AND_PUSH_STATE,   35}},
     {          Token::STRING_LENGTH, {        TA_SHIFT_AND_PUSH_STATE,   36}},
+    {   Token::TO_CHARACTER_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   37}},
+    {      Token::TO_STRING_LITERAL, {        TA_SHIFT_AND_PUSH_STATE,   38}},
     {              Token::Type('('), {        TA_SHIFT_AND_PUSH_STATE,   39}},
     {              Token::Type('-'), {        TA_SHIFT_AND_PUSH_STATE,   40}},
     {              Token::Type('!'), {        TA_SHIFT_AND_PUSH_STATE,   41}},
@@ -4245,7 +4315,7 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  204
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   36}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   34}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  205
@@ -4325,49 +4395,49 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  207
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   27}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   25}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  208
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   28}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   26}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  209
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   46}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   44}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  210
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   47}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   45}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  211
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   50}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   48}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  212
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   51}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   49}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  213
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   54}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   52}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  214
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   55}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   53}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  215
@@ -4379,13 +4449,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  216
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   29}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   27}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  217
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   40}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   38}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  218
@@ -4445,13 +4515,13 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  223
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   30}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   28}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  224
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   41}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   39}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  225
@@ -4601,19 +4671,19 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  243
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   42}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   40}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  244
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   48}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   46}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  245
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   52}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   50}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  246
@@ -4631,43 +4701,43 @@ Parser::StateTransition const Parser::ms_state_transition[] =
 // state  248
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   43}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   41}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  249
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   49}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   47}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  250
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   53}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   51}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  251
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   33}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   31}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  252
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   34}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   32}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  253
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   44}},
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   42}},
 
 // ///////////////////////////////////////////////////////////////////////////
 // state  254
 // ///////////////////////////////////////////////////////////////////////////
     // default transition
-    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   45}}
+    {               Token::DEFAULT_, {           TA_REDUCE_USING_RULE,   43}}
 
 };
 
@@ -4705,5 +4775,5 @@ Parser::Token::Type Parser::Scan ()
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 4709 "barf_preprocessor_parser.cpp"
+#line 4779 "barf_preprocessor_parser.cpp"
 

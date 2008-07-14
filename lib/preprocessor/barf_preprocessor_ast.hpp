@@ -21,69 +21,6 @@
 namespace Barf {
 namespace Preprocessor {
 
-class Textifier;
-
-/*
-
-// ///////////////////////////////////////////////////////////////////////////
-// class hierarchy
-// ///////////////////////////////////////////////////////////////////////////
-
-ExecutableAstList
-
-Executable (abstract)
-
-ExecutableAstList, Executable
-    Body
-
-Ast::Base, Executable
-    ExecutableAst (abstract)
-        Directive (abstract)
-            DeclareArray
-            DeclareMap
-            Define
-                DefineArrayElement
-                DefineMapElement
-            Undefine
-            Loop
-            Include
-        Expression (abstract)
-            Text
-            Integer
-            Sizeof
-            Dereference
-
-// ///////////////////////////////////////////////////////////////////////////
-// class composition
-// ///////////////////////////////////////////////////////////////////////////
-
-Body
-    Executable[]
-
-Define
-    Ast::Id (macro id)
-    Body (macro body)
-
-Undefine
-    Ast::Id (macro id)
-
-Loop
-    Ast::Id (iterator id)
-    Expression (iteration count expression)
-    Body (loop body)
-
-Include
-    Expression (include filename expression)
-
-Sizeof
-    Ast::Id (operand id)
-
-Dereference
-    Ast::Id (operand id)
-    Expression (element index expression)
-
-*/
-
 class Body;
 class BodyList;
 class Conditional;
@@ -103,8 +40,7 @@ class Operation;
 class Sizeof;
 class StringCast;
 class Text;
-class ToCharacterLiteral;
-class ToStringLiteral;
+class Textifier;
 class Undefine;
 
 enum DereferenceType
@@ -138,8 +74,6 @@ enum
     AST_SIZEOF,
     AST_STRING_CAST,
     AST_TEXT,
-    AST_TO_CHARACTER_LITERAL,
-    AST_TO_STRING_LITERAL,
     AST_UNDEFINE,
 
     AST_COUNT
@@ -274,46 +208,6 @@ public:
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
 }; // end of class DumpSymbolTable
-
-class ToCharacterLiteral : public ExecutableAst
-{
-public:
-
-    ToCharacterLiteral (Expression const *character_index_expression)
-        :
-        ExecutableAst(FiLoc::ms_invalid, AST_TO_CHARACTER_LITERAL),
-        m_character_index_expression(character_index_expression)
-    {
-        assert(m_character_index_expression != NULL);
-    }
-
-    virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
-    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-
-private:
-
-    Expression const *const m_character_index_expression;
-}; // end of class ToCharacterLiteral
-
-class ToStringLiteral : public ExecutableAst
-{
-public:
-
-    ToStringLiteral (Expression const *string_expression)
-        :
-        ExecutableAst(FiLoc::ms_invalid, AST_TO_STRING_LITERAL),
-        m_string_expression(string_expression)
-    {
-        assert(m_string_expression != NULL);
-    }
-
-    virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
-    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-
-private:
-
-    Expression const *const m_string_expression;
-}; // end of class ToStringLiteral
 
 class DeclareArray : public Directive
 {
@@ -760,11 +654,14 @@ public:
         LOGICAL_OR,
         MINUS,
         MULTIPLY,
+        NEGATIVE,
         NOT_EQUAL,
         PLUS,
         REMAINDER,
         STRING_CAST,
         STRING_LENGTH,
+        TO_CHARACTER_LITERAL,
+        TO_STRING_LITERAL,
 
         OPERATOR_COUNT
     }; // end of enum Operation::Operator
@@ -804,7 +701,13 @@ public:
 
 private:
 
-    inline bool GetIsTextOperation () const { return m_op == CONCATENATE || m_op == STRING_CAST; }
+    inline bool GetIsTextOperation () const
+    {
+        return m_op == CONCATENATE ||
+               m_op == STRING_CAST ||
+               m_op == TO_CHARACTER_LITERAL ||
+               m_op == TO_STRING_LITERAL;
+    }
 
     void ValidateOperands ();
 

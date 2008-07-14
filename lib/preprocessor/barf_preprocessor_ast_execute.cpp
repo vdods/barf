@@ -41,19 +41,6 @@ void DumpSymbolTable::Execute (Textifier &textifier, SymbolTable &symbol_table) 
     textifier << out.str();
 }
 
-void ToCharacterLiteral::Execute (Textifier &textifier, SymbolTable &symbol_table) const
-{
-    Sint32 character_index = m_character_index_expression->GetIntegerValue(symbol_table);
-    if (character_index < 0 || character_index > 255)
-        EmitWarning(FORMAT("truncating character literal index (" << character_index << ") to within 0-255"), m_character_index_expression->GetFiLoc());
-    textifier << GetCharLiteral(Uint8(character_index));
-}
-
-void ToStringLiteral::Execute (Textifier &textifier, SymbolTable &symbol_table) const
-{
-    textifier << GetStringLiteral(m_string_expression->GetTextValue(symbol_table));
-}
-
 void DeclareArray::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
     ArraySymbol *symbol = symbol_table.DefineArraySymbol(m_id->GetText(), m_id->GetFiLoc());

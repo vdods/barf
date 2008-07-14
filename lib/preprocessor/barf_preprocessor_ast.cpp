@@ -55,8 +55,6 @@ string const &GetAstTypeString (AstType ast_type)
         "AST_SIZEOF",
         "AST_STRING_CAST",
         "AST_TEXT",
-        "AST_TO_CHARACTER_LITERAL",
-        "AST_TO_STRING_LITERAL",
         "AST_UNDEFINE"
     };
 
@@ -412,23 +410,26 @@ bool Operation::GetIsNativeIntegerValue (SymbolTable &symbol_table) const
     {
         case CONCATENATE:
         case STRING_CAST:
+        case TO_CHARACTER_LITERAL:
+        case TO_STRING_LITERAL:
             return false;
 
-        case LOGICAL_OR:
-        case LOGICAL_AND:
+        case DIVIDE:
         case EQUAL:
-        case NOT_EQUAL:
-        case LESS_THAN:
-        case LESS_THAN_OR_EQUAL:
         case GREATER_THAN:
         case GREATER_THAN_OR_EQUAL:
-        case PLUS:
+        case INT_CAST:
+        case LESS_THAN:
+        case LESS_THAN_OR_EQUAL:
+        case LOGICAL_AND:
+        case LOGICAL_NOT:
+        case LOGICAL_OR:
         case MINUS:
         case MULTIPLY:
-        case DIVIDE:
+        case NEGATIVE:
+        case NOT_EQUAL:
+        case PLUS:
         case REMAINDER:
-        case LOGICAL_NOT:
-        case INT_CAST:
         case STRING_LENGTH:
             return true;
 
@@ -442,6 +443,7 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
 {
     if (GetIsTextOperation())
     {
+        EmitWarning("retrieving integer value from non-integer expression", GetFiLoc());
         istringstream in(GetTextValue(symbol_table));
         Sint32 retval = 0;
         in >> retval;
@@ -454,10 +456,10 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
             return m_left->GetIntegerValue(symbol_table) + m_right->GetIntegerValue(symbol_table);
 
         case MINUS:
-            if (m_left == NULL)
-                return -m_right->GetIntegerValue(symbol_table);
-            else
-                return m_left->GetIntegerValue(symbol_table) - m_right->GetIntegerValue(symbol_table);
+            return m_left->GetIntegerValue(symbol_table) - m_right->GetIntegerValue(symbol_table);
+
+        case NEGATIVE:
+            return -m_right->GetIntegerValue(symbol_table);
 
         case MULTIPLY:
             return m_left->GetIntegerValue(symbol_table) * m_right->GetIntegerValue(symbol_table);
@@ -551,6 +553,7 @@ string Operation::GetTextValue (SymbolTable &symbol_table) const
 {
     if (!GetIsTextOperation())
     {
+        EmitWarning("retrieving text value from non-text expression", GetFiLoc());
         ostringstream out;
         out << GetIntegerValue(symbol_table);
         return out.str();
@@ -564,6 +567,17 @@ string Operation::GetTextValue (SymbolTable &symbol_table) const
         case STRING_CAST:
             return m_right->GetTextValue(symbol_table);
 
+        case TO_CHARACTER_LITERAL:
+        {
+            Sint32 character_index = m_right->GetIntegerValue(symbol_table);
+            if (character_index < 0 || character_index > 255)
+                EmitWarning(FORMAT("truncating character literal index (" << character_index << ") to within 0-255"), GetFiLoc());
+            return GetCharLiteral(Uint8(character_index));
+        }
+
+        case TO_STRING_LITERAL:
+            return GetStringLiteral(m_right->GetTextValue(symbol_table));
+
         default:
             assert(false && "invalid operator");
             return 0;
@@ -574,31 +588,33 @@ void Operation::ValidateOperands ()
 {
     switch (m_op)
     {
+        // binary ops
         case CONCATENATE:
-        case PLUS:
-        case MULTIPLY:
         case DIVIDE:
-        case REMAINDER:
-        case LOGICAL_AND:
-        case LOGICAL_OR:
         case EQUAL:
-        case NOT_EQUAL:
-        case LESS_THAN:
-        case LESS_THAN_OR_EQUAL:
         case GREATER_THAN:
         case GREATER_THAN_OR_EQUAL:
+        case LESS_THAN:
+        case LESS_THAN_OR_EQUAL:
+        case LOGICAL_AND:
+        case LOGICAL_OR:
+        case MINUS:
+        case MULTIPLY:
+        case NOT_EQUAL:
+        case PLUS:
+        case REMAINDER:
             assert(m_left != NULL);
             assert(m_right != NULL);
             break;
 
-        case MINUS:
-            assert(m_right != NULL);
-            break;
-
+        // unary ops
         case LOGICAL_NOT:
+        case NEGATIVE:
         case INT_CAST:
         case STRING_CAST:
         case STRING_LENGTH:
+        case TO_CHARACTER_LITERAL:
+        case TO_STRING_LITERAL:
             assert(m_left == NULL);
             assert(m_right != NULL);
             break;
@@ -626,11 +642,14 @@ ostream &operator << (ostream &stream, Operation::Operator op)
         "LOGICAL_OR",
         "MINUS",
         "MULTIPLY",
+        "NEGATIVE",
         "NOT_EQUAL",
         "PLUS",
         "REMAINDER",
         "STRING_CAST",
-        "STRING_LENGTH"
+        "STRING_LENGTH",
+        "TO_CHARACTER_LITERAL",
+        "TO_STRING_LITERAL"
     };
     assert(op >= 0 && op < Operation::OPERATOR_COUNT);
     return stream << s_operator_string[op];

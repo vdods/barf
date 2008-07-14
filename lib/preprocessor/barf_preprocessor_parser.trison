@@ -215,12 +215,6 @@ code_body %type "ExecutableAst *"
     DUMP_SYMBOL_TABLE '(' ')'
     { return new DumpSymbolTable(); }
 |
-    TO_CHARACTER_LITERAL '(' expression:character_index_expression ')'
-    { return new ToCharacterLiteral(character_index_expression); }
-|
-    TO_STRING_LITERAL '(' expression:string_expression ')'
-    { return new ToStringLiteral(string_expression); }
-|
     UNDEFINE '(' ID:id ')'
     { return new Undefine(id); }
 |
@@ -399,6 +393,12 @@ expression %type "Expression *"
     STRING_LENGTH '(' expression:expression ')'
     { return new Operation(Operation::STRING_LENGTH, expression); }
 |
+    TO_CHARACTER_LITERAL '(' expression:character_index_expression ')'
+    { return new Operation(Operation::TO_CHARACTER_LITERAL, character_index_expression); }
+|
+    TO_STRING_LITERAL '(' expression:string_expression ')'
+    { return new Operation(Operation::TO_STRING_LITERAL, string_expression); }
+|
     IS_DEFINED '(' ID:id ')'
     { return new IsDefined(id, NULL); }
 |
@@ -460,7 +460,7 @@ expression %type "Expression *"
     { return new Operation(left, Operation::REMAINDER, right); }
 |
     '-' expression:expression            %prec UNARY
-    { return new Operation(Operation::MINUS, expression); }
+    { return new Operation(Operation::NEGATIVE, expression); }
 |
     '!' expression:expression            %prec UNARY
     { return new Operation(Operation::LOGICAL_NOT, expression); }
