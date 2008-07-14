@@ -55,6 +55,8 @@ string const &GetAstTypeString (AstType ast_type)
         "AST_SIZEOF",
         "AST_STRING_CAST",
         "AST_TEXT",
+        "AST_TO_CHARACTER_LITERAL",
+        "AST_TO_STRING_LITERAL",
         "AST_UNDEFINE"
     };
 

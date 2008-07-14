@@ -84,25 +84,27 @@ Dereference
 
 */
 
-class IsDefined;
-class Dereference;
-class Operation;
-class Sizeof;
-class IntegerCast;
-class StringCast;
-class ExecutableAstList;
 class Body;
 class BodyList;
 class Conditional;
 class Define;
+class Dereference;
 class Directive;
 class DumpSymbolTable;
 class Executable;
 class ExecutableAst;
+class ExecutableAstList;
 class Expression;
 class Integer;
+class IntegerCast;
+class IsDefined;
 class Loop;
+class Operation;
+class Sizeof;
+class StringCast;
 class Text;
+class ToCharacterLiteral;
+class ToStringLiteral;
 class Undefine;
 
 enum DereferenceType
@@ -136,6 +138,8 @@ enum
     AST_SIZEOF,
     AST_STRING_CAST,
     AST_TEXT,
+    AST_TO_CHARACTER_LITERAL,
+    AST_TO_STRING_LITERAL,
     AST_UNDEFINE,
 
     AST_COUNT
@@ -270,6 +274,46 @@ public:
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
 }; // end of class DumpSymbolTable
+
+class ToCharacterLiteral : public ExecutableAst
+{
+public:
+
+    ToCharacterLiteral (Expression const *character_index_expression)
+        :
+        ExecutableAst(FiLoc::ms_invalid, AST_TO_CHARACTER_LITERAL),
+        m_character_index_expression(character_index_expression)
+    {
+        assert(m_character_index_expression != NULL);
+    }
+
+    virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+
+private:
+
+    Expression const *const m_character_index_expression;
+}; // end of class ToCharacterLiteral
+
+class ToStringLiteral : public ExecutableAst
+{
+public:
+
+    ToStringLiteral (Expression const *string_expression)
+        :
+        ExecutableAst(FiLoc::ms_invalid, AST_TO_STRING_LITERAL),
+        m_string_expression(string_expression)
+    {
+        assert(m_string_expression != NULL);
+    }
+
+    virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+
+private:
+
+    Expression const *const m_string_expression;
+}; // end of class ToStringLiteral
 
 class DeclareArray : public Directive
 {

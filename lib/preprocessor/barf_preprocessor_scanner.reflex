@@ -82,20 +82,20 @@ bool ScannerNew::OpenFile (string const &input_filename)
 {
     bool open_succeeded = InputBase::OpenFile(input_filename);
     if (open_succeeded)
-        ResetForNewInput_();
+        ResetForNewInput();
     return open_succeeded;
 }
 
 void ScannerNew::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenString(input_string, input_name, use_line_numbers);
-    ResetForNewInput_();
+    ResetForNewInput();
 }
 
 void ScannerNew::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
-    ResetForNewInput_();
+    ResetForNewInput();
 }
 
 Parser::Token::Type ScannerNew::ParseKeyword (string const &accepted_string, Ast::Base **token)
@@ -103,30 +103,32 @@ Parser::Token::Type ScannerNew::ParseKeyword (string const &accepted_string, Ast
     assert(token != NULL);
     assert(*token == NULL);
 
-    if (accepted_string == "undefine") return Parser::Token::UNDEFINE;
-    if (accepted_string == "declare_array") return Parser::Token::DECLARE_ARRAY;
-    if (accepted_string == "declare_map") return Parser::Token::DECLARE_MAP;
-    if (accepted_string == "define") return Parser::Token::DEFINE;
-    if (accepted_string == "end_define") return Parser::Token::END_DEFINE;
-    if (accepted_string == "loop") return Parser::Token::LOOP;
-    if (accepted_string == "end_loop") return Parser::Token::END_LOOP;
-    if (accepted_string == "for_each") return Parser::Token::FOR_EACH;
-    if (accepted_string == "end_for_each") return Parser::Token::END_FOR_EACH;
-    if (accepted_string == "include") return Parser::Token::INCLUDE;
-    if (accepted_string == "sandbox_include") return Parser::Token::SANDBOX_INCLUDE;
-    if (accepted_string == "sizeof") return Parser::Token::SIZEOF;
-    if (accepted_string == "is_defined") return Parser::Token::IS_DEFINED;
-    if (accepted_string == "dump_symbol_table") return Parser::Token::DUMP_SYMBOL_TABLE;
-    if (accepted_string == "if") return Parser::Token::IF;
-    if (accepted_string == "else") return Parser::Token::ELSE;
-    if (accepted_string == "else_if") return Parser::Token::ELSE_IF;
-    if (accepted_string == "end_if") return Parser::Token::END_IF;
-    if (accepted_string == "int") return Parser::Token::KEYWORD_INT;
-    if (accepted_string == "string") return Parser::Token::KEYWORD_STRING;
-    if (accepted_string == "string_length") return Parser::Token::STRING_LENGTH;
-    if (accepted_string == "warning") return Parser::Token::WARNING;
-    if (accepted_string == "error") return Parser::Token::ERROR;
-    if (accepted_string == "fatal_error") return Parser::Token::FATAL_ERROR;
+    if (accepted_string == "declare_array")         return Parser::Token::DECLARE_ARRAY;
+    if (accepted_string == "declare_map")           return Parser::Token::DECLARE_MAP;
+    if (accepted_string == "define")                return Parser::Token::DEFINE;
+    if (accepted_string == "dump_symbol_table")     return Parser::Token::DUMP_SYMBOL_TABLE;
+    if (accepted_string == "else")                  return Parser::Token::ELSE;
+    if (accepted_string == "else_if")               return Parser::Token::ELSE_IF;
+    if (accepted_string == "end_define")            return Parser::Token::END_DEFINE;
+    if (accepted_string == "end_for_each")          return Parser::Token::END_FOR_EACH;
+    if (accepted_string == "end_if")                return Parser::Token::END_IF;
+    if (accepted_string == "end_loop")              return Parser::Token::END_LOOP;
+    if (accepted_string == "error")                 return Parser::Token::ERROR;
+    if (accepted_string == "fatal_error")           return Parser::Token::FATAL_ERROR;
+    if (accepted_string == "for_each")              return Parser::Token::FOR_EACH;
+    if (accepted_string == "if")                    return Parser::Token::IF;
+    if (accepted_string == "include")               return Parser::Token::INCLUDE;
+    if (accepted_string == "int")                   return Parser::Token::KEYWORD_INT;
+    if (accepted_string == "is_defined")            return Parser::Token::IS_DEFINED;
+    if (accepted_string == "loop")                  return Parser::Token::LOOP;
+    if (accepted_string == "sandbox_include")       return Parser::Token::SANDBOX_INCLUDE;
+    if (accepted_string == "sizeof")                return Parser::Token::SIZEOF;
+    if (accepted_string == "string")                return Parser::Token::KEYWORD_STRING;
+    if (accepted_string == "string_length")         return Parser::Token::STRING_LENGTH;
+    if (accepted_string == "to_character_literal")  return Parser::Token::TO_STRING_LITERAL;
+    if (accepted_string == "to_string_literal")     return Parser::Token::TO_STRING_LITERAL;
+    if (accepted_string == "undefine")              return Parser::Token::UNDEFINE;
+    if (accepted_string == "warning")               return Parser::Token::WARNING;
 
     *token = new Ast::Id(accepted_string, GetFiLoc());
     return Parser::Token::ID;

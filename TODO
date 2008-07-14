@@ -145,7 +145,6 @@
 - includes should use some sort of search path
 - add boolean property for wether or not a particular symbol was referenced
   during preprocessing.
-- add function for making string literals and char literals
 
 // ///////////////////////////////////////////////////////////////////////////
 // regex

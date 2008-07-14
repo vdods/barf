@@ -38,6 +38,18 @@ void Conditional::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
     }
 }
 
+void ToCharacterLiteral::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
+    m_character_index_expression->Print(stream, Stringify, indent_level+1);
+}
+
+void ToStringLiteral::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
+    m_string_expression->Print(stream, Stringify, indent_level+1);
+}
+
 void DeclareArray::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_id->GetText() << endl;

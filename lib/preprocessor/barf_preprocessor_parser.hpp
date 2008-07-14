@@ -64,6 +64,8 @@ public:
             STRING_LENGTH,
             STRING_LITERAL,
             TEXT,
+            TO_CHARACTER_LITERAL,
+            TO_STRING_LITERAL,
             UNDEFINE,
             WARNING,
 
@@ -138,7 +140,7 @@ private:
 
     Scanner *m_scanner;
 
-#line 142 "barf_preprocessor_parser.hpp"
+#line 144 "barf_preprocessor_parser.hpp"
 
 private:
 
@@ -334,6 +336,8 @@ private:
     Ast::Base * ReductionRuleHandler0080 ();
     Ast::Base * ReductionRuleHandler0081 ();
     Ast::Base * ReductionRuleHandler0082 ();
+    Ast::Base * ReductionRuleHandler0083 ();
+    Ast::Base * ReductionRuleHandler0084 ();
 
 }; // end of class Parser
 
@@ -347,4 +351,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token::Type token_type)
 
 #endif // !defined(_BARF_PREPROCESSOR_PARSER_HPP_)
 
-#line 351 "barf_preprocessor_parser.hpp"
+#line 355 "barf_preprocessor_parser.hpp"
