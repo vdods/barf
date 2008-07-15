@@ -31,17 +31,19 @@ struct DpdaNodeData : public Graph::Node::Data
     virtual Graph::Color DotGraphColor (Uint32 node_index) const;
     virtual Uint32 GetNodePeripheries (Uint32 node_index) const;
 
+    DpdaState const &GetDpdaState () const { return m_dpda_state; }
     string const &GetDescription () const { return m_description; }
 
 private:
 
-    string m_dpda_state_string;
+    DpdaState const m_dpda_state;
     string m_description;
     bool m_is_start_state;
     bool m_is_return_state;
 }; // end of struct DpdaNodeData
 
 void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph);
+void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_state, ostream &stream);
 
 } // end of namespace Trison
 

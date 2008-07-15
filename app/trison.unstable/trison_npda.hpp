@@ -34,8 +34,8 @@ struct NpdaNodeData : public Graph::Node::Data
     virtual string GetOneLineDescription () const = 0;
     // return a full description of this node, with terminating newline.
     // min_width gives the minimum width of the output (it should be left-
-    // justified, padded with whitespace ' ').
-    virtual string GetFullDescription (Uint32 min_width) const;
+    // justified, padded with whitespace ' '), and it must not end with a newline.
+    virtual string GetFullDescription (Uint32 min_width = 0) const;
     virtual bool IsStartState () const { return false; }
     virtual bool IsReturnState () const { return false; }
 }; // end of struct NpdaNodeData

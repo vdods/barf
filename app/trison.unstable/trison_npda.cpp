@@ -29,7 +29,7 @@ string NpdaNodeData::GetFullDescription (Uint32 min_width) const
     ostringstream out;
     out.width(min_width);
     out.setf(ios_base::left);
-    out << GetOneLineDescription() << endl;
+    out << GetOneLineDescription();
     return out.str();
 }
 
@@ -56,7 +56,7 @@ struct RuleNpdaNodeData : public NpdaNodeData
     {
         ostringstream out;
         out << "state " << node_index << endl;
-        out << m_rule->GetAsText(m_stage);
+        out << "rule " << m_rule->m_rule_index << ": " << m_rule->GetAsText(m_stage);
         return out.str();
     }
     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color(0xB6FFAE); }
@@ -65,7 +65,7 @@ struct RuleNpdaNodeData : public NpdaNodeData
     virtual Nonterminal const *GetAssociatedNonterminal () const { return m_rule->m_owner_nonterminal; }
     virtual Rule const *GetAssociatedRule () const { return m_rule; }
     virtual Uint32 GetRuleStage () const { return m_stage; }
-    virtual string GetOneLineDescription () const { return m_rule->GetAsText(m_stage); }
+    virtual string GetOneLineDescription () const { return FORMAT("rule " << m_rule->m_rule_index << ": " << m_rule->GetAsText(m_stage)); }
 }; // end of struct RuleNpdaNodeData
 
 struct NonterminalHeadNpdaNodeData : public NpdaNodeData
@@ -102,6 +102,7 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
         {
             Rule const *rule = *it;
             assert(rule != NULL);
+            out << "rule " << rule->m_rule_index << ": ";
             out.width(max_width);
             out.setf(ios_base::left);
             out << rule->GetAsText(0) << endl;
@@ -125,7 +126,11 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
             assert(rule != NULL);
             out.width(min_width);
             out.setf(ios_base::left);
-            out << rule->GetAsText(0) << endl;
+            out << FORMAT("rule " << rule->m_rule_index << ": " << rule->GetAsText(0));
+            RuleList::const_iterator next_it = it;
+            ++next_it;
+            if (next_it != it_end)
+                out << endl;
         }
         return out.str();
     }

@@ -24,18 +24,18 @@ public:
     Options (string const &executable_filename);
 
     // output behavior option accessors
-    inline string GetStateMachineFilename () const { return m_state_machine_filename; }
+    inline string GetDpdaStatesPath () const { return m_dpda_states_filename.empty() ? g_empty_string : GetOutputDirectory() + m_dpda_states_filename; }
 
     // output behavior options
-    void GenerateStateMachineFile (string const &state_machine_filename);
-    void DontGenerateStateMachineFile ();
+    void GenerateDpdaStatesFile (string const &dpda_states_filename);
+    void DontGenerateDpdaStatesFile ();
 
     virtual void Parse (int argc, char const *const *argv);
 
 private:
 
     // output behavior option values
-    string m_state_machine_filename;
+    string m_dpda_states_filename;
 
     static CommandLineOption const ms_option[];
     static Uint32 const ms_option_count;

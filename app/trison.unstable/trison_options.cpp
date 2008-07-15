@@ -89,22 +89,6 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::SetOutputDirectory,
         "    Specifies the target directory for generated code.  The default is the\n"
         "    current working directory."),
-    /*
-    CommandLineOption(
-        'S',
-        "generate-states-file",
-        &Options::GenerateStateMachineFile,
-        "    Output a human-readable state machine description to the file specified.\n"
-        "    Useful in debugging and resolving conflicts in the grammar.  Specifying\n"
-        "    - (hyphen) as the filename indicates that the output should be to stdout.\n"
-        "    See also option -s."),
-    CommandLineOption(
-        's',
-        "dont-generate-states-file",
-        &Options::DontGenerateStateMachineFile,
-        "    Do not output a human-readable state machine description text file.\n"
-        "    This is the default behavior.  See also option -S."),
-    */
     CommandLineOption(
         'L',
         "with-line-directives",
@@ -145,6 +129,20 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DontGenerateDaDotGraph,
         "    Do not create a `dot` graph file for the DPDA.  This is the default\n"
         "    behavior.  See also option --generate-dpda-dot-graph."),
+    CommandLineOption(
+        'S',
+        "generate-dpda-states-file",
+        &Options::GenerateDpdaStatesFile,
+        "    Output a human-readable specification of the DPDA state machine to the file\n"
+        "    specified.  Useful in debugging and resolving conflicts in the grammar.\n"
+        "    Specifying - (hyphen) as the filename indicates that the output should be\n"
+        "    to stdout.  See also option -s."),
+    CommandLineOption(
+        's',
+        "dont-generate-dpda-states-file",
+        &Options::DontGenerateDpdaStatesFile,
+        "    Do not output a human-readable specification of the DPDA state machine text\n"
+        "    file.  This is the default behavior.  See also option -S."),
 
 
     CommandLineOption("Target-related options"),
@@ -218,14 +216,14 @@ Options::Options (string const &executable_filename)
         "[options] <input_filename>")
 { }
 
-void Options::GenerateStateMachineFile (string const &state_machine_filename)
+void Options::GenerateDpdaStatesFile (string const &dpda_states_filename)
 {
-    m_state_machine_filename = state_machine_filename;
+    m_dpda_states_filename = dpda_states_filename;
 }
 
-void Options::DontGenerateStateMachineFile ()
+void Options::DontGenerateDpdaStatesFile ()
 {
-    m_state_machine_filename.clear();
+    m_dpda_states_filename.clear();
 }
 
 void Options::Parse (int const argc, char const *const *const argv)
