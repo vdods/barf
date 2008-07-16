@@ -560,7 +560,10 @@ private:
                 assert(shift_reference.IsValid());
                 // TODO: make into assert(shift_reference.ReferenceCount() > 1); -- changes in the ref count should cause cleanup in the rule range
                 if (shift_reference.ReferenceCount() > 1)
+                {
+                    assert(shift_reference.InstanceIsValid());
                     stream << string(2*(indent_level+1), ' ') << "RuleShiftReferencePair -- rule = " << it->first << ", shift* = " << &*shift_reference << ", ref count = " << shift_reference.ReferenceCount() << endl;
+                }
             }
         }
 
@@ -1216,6 +1219,7 @@ private:
                 // TODO: make into assert(shift_reference.ReferenceCount() > 1); -- changes in the ref count should cause cleanup in the rule range
                 if (shift_reference.ReferenceCount() > 1)
                 {
+                    assert(shift_reference.InstanceIsValid());
                     stream << string(2*(indent_level+2), ' ') << rule;
                     if (rule != NULL)
                         stream << " \"" << rule->GetAsText() << '\"'
@@ -1568,19 +1572,22 @@ public:
                         // so mutually recursive rules will produce redundant branches.
                         //assert(!m_doomed_return_branch_list.IsEmpty() && // TODO: enable this assert when appropriate
                         //       m_doomed_return_branch_list.Front() == m_doomed_return_branch_list.Back());
+
+                        // no need to e-close here, since return branches will have no e-closure
                         break;
                     }
                     // if none of the above, go into error handling mode
                     else
                     {
-//                         assert(m_parser_branch_list.IsEmpty());
-//                         assert(m_doomed_return_branch_list.IsEmpty());
+                        assert(m_parser_branch_list.IsEmpty());
+                        assert(m_doomed_return_branch_list.IsEmpty());
 //                         m_parser_branch_list.List<ParserBranch>::Prepend(m_doomed_nonreturn_branch_list);
 //                         assert(false && "this should never happen");
 //                         assert(false && "error handling mode not implemented yet");
 
                         DEBUG_CODE(cerr << "*** quitting ***" << endl;)
                         DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
+                        // no need to e-close here, since we're "dead" already
                         break;
                     }
                 }
@@ -1599,7 +1606,13 @@ public:
 
             // if there is an unequivocal action to take, we can stop running the npda.
             if (HasTrunk())
+            {
+                // we want to e-close before quitting,
+                DEBUG_CODE(cerr << "*** e-close ***" << endl;)
+                PerformEpsilonClosure(graph_context);
+                DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
                 break;
+            }
         }
     }
     // runs the npda for a single action step -- a shift or a reduce.
@@ -1951,6 +1964,9 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
 {
 //     cerr << "Recurse(); lookahead_sequence: " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;
 
+    if (recurse_npda.CurrentDpdaState().empty())
+        return;
+
     set<Uint32> transition_token_index;
     for (TransitionIterator it(graph_context, recurse_npda.CurrentDpdaState(), IT_SHIFT_TERMINAL_TRANSITIONS); !it.IsDone(); ++it)
         transition_token_index.insert(it->Data(0));
@@ -2030,7 +2046,6 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                                 lookahead_sequence,
                                 GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence),
                                 action.Data(),
-                                graph_context.m_primary_source.GetRule(action.Data())->GetAsText(),
                                 false));
                         break;
                 }
@@ -2083,7 +2098,6 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
                     dpda_state,
                     DpdaReduceTransition(
                         default_action.Data(),
-                        graph_context.m_primary_source.GetRule(default_action.Data())->GetAsText(),
                         true));
                 break;
 
@@ -2233,7 +2247,13 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
              ++it)
         {
             Graph::Transition const &transition = *it;
-            stream << "    " << transition.Label();
+            // indent
+            stream << "    ";
+            // we want to indicate the default transition to avoid ambiguity.
+            if (it == dpda_node.GetTransitionSetBegin())
+                stream << "Default transition: ";
+            // print the lookaheads and action
+            stream << transition.Label();
             // if it's a shift transition, the label doesn't have the ": SHIFT blah blah" part
             if (transition.Type() == TT_SHIFT)
                 stream << ": SHIFT " << GetLookaheadSequenceString(primary_source, Graph::Transition::DataArray(1, transition.Data(0))) << ", then push state " << transition.TargetIndex();

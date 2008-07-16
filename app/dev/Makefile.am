@@ -35,6 +35,7 @@ clean-dumblang-parser-extras:
 	rm -f $(top_srcdir)/dumblang_parser.dpda.png
 	rm -f $(top_srcdir)/dumblang_parser.npda.dot
 	rm -f $(top_srcdir)/dumblang_parser.npda.png
+	rm -f $(top_srcdir)/dumblang_parser.dpda.states
 
 clean-dumblang-scanner: clean-dumblang-scanner-extras
 	rm -f $(top_srcdir)/dumblang_scanner.cpp
@@ -114,10 +115,10 @@ if TRISON_EXISTS
 dumblang-parser: $(top_srcdir)/dumblang_parser.hpp
 $(top_srcdir)/dumblang_parser.hpp: $(top_srcdir)/dumblang_parser.cpp
 $(top_srcdir)/dumblang_parser.cpp: $(top_srcdir)/dumblang_parser.trison $(TRISON) $(TARGETS_PATH)/trison.cpp_npda.targetspec $(TARGETS_PATH)/trison.cpp_npda.header.codespec $(TARGETS_PATH)/trison.cpp_npda.implementation.codespec
-	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.npda.dot --generate-dpda-dot-graph dumblang_parser.dpda.dot
+	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.npda.dot --generate-dpda-dot-graph dumblang_parser.dpda.dot --generate-dpda-states-file dumblang_parser.dpda.states
 
 force-dumblang-parser:
-	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.npda.dot --generate-dpda-dot-graph dumblang_parser.dpda.dot
+	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.npda.dot --generate-dpda-dot-graph dumblang_parser.dpda.dot --generate-dpda-states-file dumblang_parser.dpda.states
 else # !TRISON_EXISTS
 dumblang-parser force-dumblang-parser:
 	@echo "!!!"
@@ -126,13 +127,23 @@ dumblang-parser force-dumblang-parser:
 	@echo "!!!"
 endif
 
+if DOT_EXISTS
+if CONVERT_EXISTS
 $(top_srcdir)/dumblang_parser.dpda.png: $(top_srcdir)/dumblang_parser.dpda.dot
-	dot $(top_srcdir)/dumblang_parser.dpda.dot -Tpng -o $(top_srcdir)/dumblang_parser.dpda.png
-	convert $(top_srcdir)/dumblang_parser.dpda.png -resize 66%x66% $(top_srcdir)/dumblang_parser.dpda.png
+	$(DOT) $(top_srcdir)/dumblang_parser.dpda.dot -Tpng -o $(top_srcdir)/dumblang_parser.dpda.png
+	$(CONVERT) $(top_srcdir)/dumblang_parser.dpda.png -resize 66%x66% $(top_srcdir)/dumblang_parser.dpda.png
 
 $(top_srcdir)/dumblang_parser.npda.png: $(top_srcdir)/dumblang_parser.npda.dot
-	dot $(top_srcdir)/dumblang_parser.npda.dot -Tpng -o $(top_srcdir)/dumblang_parser.npda.png
-	convert $(top_srcdir)/dumblang_parser.npda.png -resize 66%x66% $(top_srcdir)/dumblang_parser.npda.png
+	$(DOT) $(top_srcdir)/dumblang_parser.npda.dot -Tpng -o $(top_srcdir)/dumblang_parser.npda.png
+	$(CONVERT) $(top_srcdir)/dumblang_parser.npda.png -resize 66%x66% $(top_srcdir)/dumblang_parser.npda.png
+else
+$(top_srcdir)/dumblang_parser.dpda.png: $(top_srcdir)/dumblang_parser.dpda.dot
+	$(DOT) $(top_srcdir)/dumblang_parser.dpda.dot -Tpng -o $(top_srcdir)/dumblang_parser.dpda.png
+
+$(top_srcdir)/dumblang_parser.npda.png: $(top_srcdir)/dumblang_parser.npda.dot
+	$(DOT) $(top_srcdir)/dumblang_parser.npda.dot -Tpng -o $(top_srcdir)/dumblang_parser.npda.png
+endif
+endif
 
 ##############################################################################
 # all the no-install header files for the applications (is this necessary?)

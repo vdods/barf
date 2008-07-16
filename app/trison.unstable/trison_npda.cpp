@@ -18,7 +18,7 @@
 
 namespace Trison {
 
-bool const g_minimal_npda_graphing = true;
+bool const g_minimal_npda_graphing = false;
 
 // ///////////////////////////////////////////////////////////////////////////
 // NpdaNodeData
@@ -264,7 +264,7 @@ void GenerateNpda (
             }
 
             // add the reduce transition at the tail of the rule states
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(rule.m_rule_index));
         }
     }
     else
@@ -293,7 +293,7 @@ void GenerateNpda (
             }
 
             // add the reduce transition at the tail of the rule states
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(rule.m_rule_index, FORMAT(rule.m_rule_index)));
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(rule.m_rule_index));
         }
     }
 }
@@ -307,8 +307,8 @@ void EnsureGeneratedNpda (
         return;
 
     // create the start, head and return states for this nonterminal
-    Uint32 graph_start_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("start: " + nonterminal.GetText(), Graph::Color(0xAEC3FF), true, false));
-    Uint32 graph_return_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("return: " + nonterminal.GetText(), Graph::Color(0xC9AEFF), false, true));
+    Uint32 graph_start_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("START: " + nonterminal.GetText(), Graph::Color(0xAEC3FF), true, false));
+    Uint32 graph_return_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("RETURN: " + nonterminal.GetText(), Graph::Color(0xC9AEFF), false, true));
     Uint32 graph_head_state = graph_context.m_npda_graph.AddNode(new NonterminalHeadNpdaNodeData(&nonterminal));
     // create the transitions from the start state to the head and return states
     graph_context.m_npda_graph.AddTransition(graph_start_state, NpdaEpsilonTransition(graph_head_state));

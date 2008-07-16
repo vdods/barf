@@ -61,6 +61,7 @@
   by the compiler.
 - the help display for trison and reflex is getting pretty long, consider
   making a help system more like svn
+- make Barf::OptionsBase protected member variables private (as many as possible)
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
@@ -230,7 +231,7 @@
   (in C++, this can be done easily with templates)
 - add _reflex_version to the code generator (_barf_version?)
 - the rule handler code block type should be specifiable by the targetspec
-- add --predefine (-d) and --postdefine (-D) options for defining crap in the
+- add --predefine (-D) and --postdefine (-d) options for defining crap in the
   preprocessor stage -- before and after the .reflex source is read (e.g. to
   override the output filenames).  this could even be used to be able to
   omit the output filenames in the primary source itself (probably preferable)
@@ -246,6 +247,9 @@
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+- figure out why non-minimal graphing isn't working (the right lookaheads
+  aren't being generated).
+- if possible, make the dpda.states file put the states' rules in order.
 - issue warnings for unused nonterminals (and make this warning an option)
 - add a max token stack depth in each parser implementation
 - allow "--predefine targets=" ?
@@ -280,7 +284,7 @@
   destructor and at the end of the parse method (maybe not at the end of the
   parse method, since it might be desirable to parse multiple times with
   the same parser/input stream)
-- add --predefine (-d) and --postdefine (-D) options for defining crap in the
+- add --predefine (-D) and --postdefine (-d) options for defining crap in the
   preprocessor stage -- before and after the .trison source is read (e.g. to
   override the output filenames).  this could even be used to be able to
   omit the output filenames in the primary source itself (probably preferable)
@@ -303,6 +307,8 @@
   when you dump the symbols, it's self documenting.
 - rename TT_RETURN, TT_SHIFT, etc to just RETURN, SHIFT, etc
 - compactify lookaheads in dpda
+- make sure lookahead sequences are alphabetized, allowing for a binary search
+  instead of a linear search (in the dpda target)
 
 template <Sint32 low, Sint32 high> struct SmallestSint {
     typedef

@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// reflex_parser.trison by Victor Dods, created 2006/10/18
+// reflex_parser.trison by Victor Dods, created 2008/07/14
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -8,9 +8,14 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-%parser_class_name "Parser"
+%targets cpp
 
-%parser_header_file_top%{
+
+%target.cpp.header_filename "reflex_parser.hpp"
+%target.cpp.implementation_filename "reflex_parser.cpp"
+
+
+%target.cpp.top_of_header_file %{
 #if !defined(_REFLEX_PARSER_HPP_)
 #define _REFLEX_PARSER_HPP_
 
@@ -18,6 +23,7 @@
 
 #include "barf_commonlang_scanner.hpp"
 #include "barf_message.hpp"
+#include "reflex_ast.hpp"
 
 namespace Barf {
 namespace Ast {
@@ -41,8 +47,8 @@ class RegularExpressionMap;
 
 namespace Reflex {
 %}
-
-%parser_class_methods_and_members{
+%target.cpp.class_name Parser
+%target.cpp.bottom_of_class {
     FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
@@ -52,71 +58,71 @@ namespace Reflex {
 
 private:
 
-    Token::Type Scan ();
-
     CommonLang::Scanner m_scanner;
     CommonLang::TargetMap *m_target_map;
     Regex::RegularExpressionMap *m_regex_macro_map;
 }
-
-%parser_header_file_bottom%{
+%target.cpp.bottom_of_header_file%{
 } // end of namespace Reflex
 
 #endif // !defined(_REFLEX_PARSER_HPP_)
 %}
 
-%parser_implementation_file_top%{
+
+%target.cpp.top_of_implementation_file %{
 #include <sstream>
 
 #include "barf_optionsbase.hpp"
 #include "barf_regex_ast.hpp"
 #include "barf_regex_parser.hpp"
-#include "reflex_ast.hpp"
 
 namespace Reflex {
 %}
-
-%parser_constructor_actions{
+%target.cpp.constructor_actions {
     m_target_map = NULL;
     m_regex_macro_map = NULL;
 }
-
-%parser_destructor_actions{
+%target.cpp.destructor_actions {
 }
-
-%parser_throw_away_token_actions{
-    delete token;
-}
-
-%parser_implementation_file_bottom%{
+%target.cpp.bottom_of_implementation_file %{
 bool Parser::OpenFile (string const &input_filename)
 {
     return m_scanner.OpenFile(input_filename);
 }
 
-Parser::Token::Type Parser::Scan ()
-{
-    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&m_lookahead_token);
+} // end of namespace Reflex
+%}
+
+
+%target.cpp.token_data_type "Ast::Base *"
+%target.cpp.token_data_default "NULL"
+%target.cpp.custom_token_data_type_cast Dsc
+%target.cpp.throw_away_token_actions {
+    delete token_data;
+}
+%target.cpp.scan_actions {
+    Ast::Base *lookahead_token_data = NULL;
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&lookahead_token_data);
     assert(scanner_token_type >= 0);
     if (scanner_token_type < 0x100)
-        return Parser::Token::Type(scanner_token_type);
+        return Token(Parser::Token::Id(scanner_token_type), lookahead_token_data);
     switch (scanner_token_type)
     {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                 return Parser::Token::END_;
-        case CommonLang::Scanner::Token::BAD_TOKEN:                       return Parser::Token::BAD_TOKEN;
-        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                 return Parser::Token::DIRECTIVE_MACRO;
-        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_SCANNER_MODE: return Parser::Token::DIRECTIVE_START_IN_SCANNER_MODE;
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE:                 return Parser::Token::DIRECTIVE_STATE;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                return Parser::Token::DIRECTIVE_TARGET;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:               return Parser::Token::DIRECTIVE_TARGETS;
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                 return Parser::Token::DUMB_CODE_BLOCK;
-        case CommonLang::Scanner::Token::END_OF_FILE:                     return Parser::Token::END_;
-        case CommonLang::Scanner::Token::END_PREAMBLE:                    return Parser::Token::END_PREAMBLE;
-        case CommonLang::Scanner::Token::ID:                              return Parser::Token::ID;
-        case CommonLang::Scanner::Token::NEWLINE:                         return Parser::Token::NEWLINE;
-        case CommonLang::Scanner::Token::REGEX:                           return Parser::Token::REGEX;
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:               return Parser::Token::STRICT_CODE_BLOCK;
-        case CommonLang::Scanner::Token::STRING_LITERAL:                  return Parser::Token::STRING_LITERAL;
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                 return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::BAD_TOKEN:                       return Token(Terminal::BAD_TOKEN, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                 return Token(Terminal::DIRECTIVE_MACRO, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_SCANNER_MODE: return Token(Terminal::DIRECTIVE_START_IN_SCANNER_MODE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE:                 return Token(Terminal::DIRECTIVE_STATE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:               return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                 return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_OF_FILE:                     return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_PREAMBLE:                    return Token(Terminal::END_PREAMBLE, lookahead_token_data);
+        case CommonLang::Scanner::Token::ID:                              return Token(Terminal::ID, lookahead_token_data);
+        case CommonLang::Scanner::Token::NEWLINE:                         return Token(Terminal::NEWLINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::REGEX:                           return Token(Terminal::REGEX, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:               return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRING_LITERAL:                  return Token(Terminal::STRING_LITERAL, lookahead_token_data);
 
         case CommonLang::Scanner::Token::CHAR_LITERAL:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
@@ -133,41 +139,41 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
         case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
-            assert(m_lookahead_token != NULL);
-            EmitError("unrecognized token encountered in targetspec", m_lookahead_token->GetFiLoc());
-            delete m_lookahead_token;
-            m_lookahead_token = NULL;
-            return Parser::Token::BAD_TOKEN;
+            assert(lookahead_token_data != NULL);
+            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
+            delete lookahead_token_data;
+            return Token(Terminal::BAD_TOKEN);
 
         default:
             assert(false && "this should never happen");
-            return Parser::Token::BAD_TOKEN;
+            if (lookahead_token_data != NULL)
+                delete lookahead_token_data;
+            return Token(Terminal::BAD_TOKEN);
     }
 }
 
-} // end of namespace Reflex
-%}
 
-%parser_base_assigned_type "Ast::Base *"
-%parser_base_assigned_type_sentinel "NULL"
-%parser_custom_cast "Dsc"
+%target.cpp.generate_debug_spew_code
+%target.cpp.debug_spew_prefix %{"Parser (at " << GetFiLoc() << "): "%}
 
-%token BAD_TOKEN
-%token DIRECTIVE_MACRO %type "Ast::ThrowAway *"
-%token DIRECTIVE_START_IN_SCANNER_MODE %type "Ast::ThrowAway *"
-%token DIRECTIVE_STATE %type "Ast::ThrowAway *"
-%token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
-%token DIRECTIVE_TARGETS %type "Ast::ThrowAway *"
-%token DUMB_CODE_BLOCK %type "Ast::DumbCodeBlock *"
-%token END_PREAMBLE %type "Ast::ThrowAway *"
-%token ID %type "Ast::Id *"
-%token NEWLINE
-%token REGEX %type "Ast::String *"
-%token STRICT_CODE_BLOCK %type "Ast::StrictCodeBlock *"
-%token STRING_LITERAL %type "Ast::String *"
-%token '.' ':' '|' ';'
 
-%start root
+%terminal BAD_TOKEN
+%terminal DIRECTIVE_MACRO %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_START_IN_SCANNER_MODE %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_STATE %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_TARGET %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_TARGETS %type.cpp "Ast::ThrowAway *"
+%terminal DUMB_CODE_BLOCK %type.cpp "Ast::DumbCodeBlock *"
+%terminal END_PREAMBLE %type.cpp "Ast::ThrowAway *"
+%terminal ID %type.cpp "Ast::Id *"
+%terminal NEWLINE
+%terminal REGEX %type.cpp "Ast::String *"
+%terminal STRICT_CODE_BLOCK %type.cpp "Ast::StrictCodeBlock *"
+%terminal STRING_LITERAL %type.cpp "Ast::String *"
+%terminal '.' ':' '|' ';'
+
+
+%default_parse_nonterminal root
 
 %%
 
@@ -175,7 +181,7 @@ Parser::Token::Type Parser::Scan ()
 // root rule
 // ///////////////////////////////////////////////////////////////////////////
 
-root %type "PrimarySource *"
+%nonterminal root %type.cpp "PrimarySource *"
 :
     at_least_zero_newlines
     targets_directive:target_map
@@ -184,7 +190,7 @@ root %type "PrimarySource *"
     start_in_scanner_mode_directive:start_in_scanner_mode_directive
     END_PREAMBLE:throwaway
     scanner_modes:scanner_mode_map
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         assert(target_map == m_target_map);
 
@@ -215,10 +221,10 @@ root %type "PrimarySource *"
 // targets directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-targets_directive %type "CommonLang::TargetMap *"
+%nonterminal targets_directive %type.cpp "CommonLang::TargetMap *"
 :
     DIRECTIVE_TARGETS:throwaway target_ids:target_map at_least_one_newline
-    {
+    %target.cpp {
         assert(m_target_map == NULL);
         m_target_map = target_map;
         delete throwaway;
@@ -226,14 +232,14 @@ targets_directive %type "CommonLang::TargetMap *"
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         assert(m_target_map == NULL);
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     }
 |
     DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
-    {
+    %target.cpp {
         assert(m_target_map == NULL);
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         m_target_map = new CommonLang::TargetMap();
@@ -241,10 +247,10 @@ targets_directive %type "CommonLang::TargetMap *"
     }
 ;
 
-target_ids %type "CommonLang::TargetMap *"
+%nonterminal target_ids %type.cpp "CommonLang::TargetMap *"
 :
     target_ids:target_map ID:target_id
-    {
+    %target.cpp {
         CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
         target->EnableCodeGeneration();
         target_map->Add(target_id->GetText(), target);
@@ -252,7 +258,7 @@ target_ids %type "CommonLang::TargetMap *"
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         assert(m_target_map == NULL);
         return new CommonLang::TargetMap();
     }
@@ -262,10 +268,10 @@ target_ids %type "CommonLang::TargetMap *"
 // target directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-target_directives
+%nonterminal target_directives
 :
     target_directives target_directive:target_directive
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         if (target_directive != NULL)
             m_target_map->AddTargetDirective(target_directive);
@@ -273,23 +279,23 @@ target_directives
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         if (m_target_map == NULL)
             m_target_map = new CommonLang::TargetMap();
         return NULL;
     }
 ;
 
-target_directive %type "CommonLang::TargetDirective *"
+%nonterminal target_directive %type.cpp "CommonLang::TargetDirective *"
 :
     DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive target_directive_param:param at_least_one_newline
-    {
+    %target.cpp {
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     }
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
@@ -298,7 +304,7 @@ target_directive %type "CommonLang::TargetDirective *"
     }
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
@@ -306,30 +312,30 @@ target_directive %type "CommonLang::TargetDirective *"
     }
 |
     DIRECTIVE_TARGET:throwaway %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
 ;
 
-target_directive_param %type "Ast::TextBase *"
+%nonterminal target_directive_param %type.cpp "Ast::TextBase *"
 :
-    ID:value                    { return value; }
-|   STRING_LITERAL:value        { return value; }
-|   STRICT_CODE_BLOCK:value     { return value; }
-|   DUMB_CODE_BLOCK:value       { return value; }
-|   /* empty reduction rule */  { return NULL; }
+    ID:value                    %target.cpp { return value; }
+|   STRING_LITERAL:value        %target.cpp { return value; }
+|   STRICT_CODE_BLOCK:value     %target.cpp { return value; }
+|   DUMB_CODE_BLOCK:value       %target.cpp { return value; }
+|   /* empty reduction rule */  %target.cpp { return NULL; }
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
 // macro directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-macro_directives %type "Regex::RegularExpressionMap *"
+%nonterminal macro_directives %type.cpp "Regex::RegularExpressionMap *"
 :
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id REGEX:macro_regex_string at_least_one_newline
-    {
+    %target.cpp {
         Regex::Parser parser;
         parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
         if (g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER))
@@ -356,7 +362,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         // we save the regex macro map in a member var, so that the reduction
         // rule handler for the scanner mode rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
@@ -364,7 +370,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
     }
 |
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete macro_id;
@@ -372,7 +378,7 @@ macro_directives %type "Regex::RegularExpressionMap *"
     }
 |
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
         return regular_expression_map;
@@ -383,16 +389,16 @@ macro_directives %type "Regex::RegularExpressionMap *"
 // start directive rule
 // ///////////////////////////////////////////////////////////////////////////
 
-start_in_scanner_mode_directive %type "StartInScannerModeDirective *"
+%nonterminal start_in_scanner_mode_directive %type.cpp "StartInScannerModeDirective *"
 :
     DIRECTIVE_START_IN_SCANNER_MODE:throwaway ID:scanner_mode_id at_least_one_newline
-    {
+    %target.cpp {
         delete throwaway;
         return new StartInScannerModeDirective(scanner_mode_id);
     }
 |
     DIRECTIVE_START_IN_SCANNER_MODE:throwaway %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in directive %start_in_scanner_mode", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
@@ -403,38 +409,38 @@ start_in_scanner_mode_directive %type "StartInScannerModeDirective *"
 // scanner mode rules
 // ///////////////////////////////////////////////////////////////////////////
 
-scanner_modes %type "ScannerModeMap *"
+%nonterminal scanner_modes %type.cpp "ScannerModeMap *"
 :
     scanner_modes:scanner_mode_map scanner_mode:scanner_mode
-    {
+    %target.cpp {
         if (scanner_mode != NULL)
             scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
         return scanner_mode_map;
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         return new ScannerModeMap();
     }
 ;
 
-scanner_mode %type "ScannerMode *"
+%nonterminal scanner_mode %type.cpp "ScannerMode *"
 :
     DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' scanner_mode_rules:rule_list ';'
-    {
+    %target.cpp {
         delete throwaway;
         return new ScannerMode(scanner_mode_id, rule_list);
     }
 |
     DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' %error ';'
-    {
+    %target.cpp {
         EmitError("parse error in scanner mode rule list", throwaway->GetFiLoc());
         delete throwaway;
         return new ScannerMode(scanner_mode_id, new RuleList());
     }
 |
     DIRECTIVE_STATE:throwaway %error ':' scanner_mode_rules:rule_list ';'
-    {
+    %target.cpp {
         EmitError("parse error in scanner mode id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
@@ -442,39 +448,39 @@ scanner_mode %type "ScannerMode *"
     }
 ;
 
-scanner_mode_rules %type "RuleList *"
+%nonterminal scanner_mode_rules %type.cpp "RuleList *"
 :
     rule_list:rule_list
-    {
+    %target.cpp {
         return rule_list;
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         return new RuleList();
     }
 ;
 
-rule_list %type "RuleList *"
+%nonterminal rule_list %type.cpp "RuleList *"
 :
     rule_list:rule_list '|' rule:rule
-    {
+    %target.cpp {
         rule_list->Append(rule);
         return rule_list;
     }
 |
     rule:rule
-    {
+    %target.cpp {
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
     }
 ;
 
-rule %type "Rule *"
+%nonterminal rule %type.cpp "Rule *"
 :
     REGEX:regex_string rule_handlers:rule_handler_map
-    {
+    %target.cpp {
         assert(m_regex_macro_map != NULL);
 
         // parse the rule regex
@@ -537,25 +543,25 @@ rule %type "Rule *"
     }
 ;
 
-rule_handlers %type "CommonLang::RuleHandlerMap *"
+%nonterminal rule_handlers %type.cpp "CommonLang::RuleHandlerMap *"
 :
     rule_handlers:rule_handler_map rule_handler:rule_handler
-    {
+    %target.cpp {
         if (rule_handler != NULL)
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         return new CommonLang::RuleHandlerMap();
     }
 ;
 
-rule_handler %type "CommonLang::RuleHandler *"
+%nonterminal rule_handler %type.cpp "CommonLang::RuleHandler *"
 :
     DIRECTIVE_TARGET:throwaway '.' ID:target_id any_type_of_code_block:code_block
-    {
+    %target.cpp {
         delete throwaway;
         assert(m_target_map != NULL);
         if (m_target_map->GetElement(target_id->GetText()) == NULL)
@@ -566,7 +572,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     }
 |
     DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -575,7 +581,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     }
 |
     DIRECTIVE_TARGET:throwaway %error
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -583,7 +589,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     }
 |
     %error any_type_of_code_block:code_block
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
@@ -595,23 +601,23 @@ rule_handler %type "CommonLang::RuleHandler *"
 // misc rules
 // ///////////////////////////////////////////////////////////////////////////
 
-any_type_of_code_block %type "Ast::CodeBlock *"
+%nonterminal any_type_of_code_block %type.cpp "Ast::CodeBlock *"
 :
-    DUMB_CODE_BLOCK:dumb_code_block { return dumb_code_block; }
+    DUMB_CODE_BLOCK:dumb_code_block %target.cpp { return dumb_code_block; }
 |
-    STRICT_CODE_BLOCK:strict_code_block { return strict_code_block; }
+    STRICT_CODE_BLOCK:strict_code_block %target.cpp { return strict_code_block; }
 ;
 
-at_least_zero_newlines
+%nonterminal at_least_zero_newlines
 :
-    at_least_zero_newlines NEWLINE  { return NULL; }
+    at_least_zero_newlines NEWLINE %target.cpp { return NULL; }
 |
-    /* empty reduction rule */  { return NULL; }
+    /* empty reduction rule */ %target.cpp { return NULL; }
 ;
 
-at_least_one_newline
+%nonterminal at_least_one_newline
 :
-    at_least_one_newline NEWLINE { return NULL; }
+    at_least_one_newline NEWLINE %target.cpp { return NULL; }
 |
-    NEWLINE { return NULL; }
+    NEWLINE %target.cpp { return NULL; }
 ;

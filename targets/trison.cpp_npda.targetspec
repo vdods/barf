@@ -128,12 +128,10 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 %add_optional_directive token_data_type                     %string             %default "int"
-%add_optional_directive token_data_type_sentinel            %string             %default "0"
-%add_optional_directive custom_token_data_cast              %identifier         %default static_cast
-// this will take its default value from token_data_type
-%add_optional_directive return_token_type                   %string
+%add_optional_directive token_data_default                  %string             %default "0"
+%add_optional_directive custom_token_data_type_cast         %identifier         %default static_cast
 // operates on variable "token" of type token_data_type
-%add_optional_directive token_throw_away_actions            %strict_code_block
+%add_optional_directive throw_away_token_actions            %strict_code_block
 // This specifies code to be executed when the parser object is being reset
 // to start scanning from a new source.  This code is executed in addition to
 // various internal state-machine-related initialization that is required.

@@ -120,8 +120,8 @@ public:
     // output options
     string GetOutputDirectory () const { return m_output_directory; }
     bool GetWithLineDirectives () const { return m_with_line_directives; }
-    string GetNaDotGraphPath () const { return GetOutputDirectory() + m_na_dot_graph_filename; }
-    string GetDaDotGraphPath () const { return GetOutputDirectory() + m_da_dot_graph_filename; }
+    string GetNaDotGraphPath () const { return m_na_dot_graph_filename.empty() ? g_empty_string : GetOutputDirectory() + m_na_dot_graph_filename; }
+    string GetDaDotGraphPath () const { return m_da_dot_graph_filename.empty() ? g_empty_string : GetOutputDirectory() + m_da_dot_graph_filename; }
     // target-related options
     vector<string>::size_type GetPredefineCount () const { return m_predefine.size(); }
     string const &GetPredefine (vector<string>::size_type index) const { assert(index < m_predefine.size()); return m_predefine[index]; }

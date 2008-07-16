@@ -35,7 +35,7 @@ string const &GetTransitionTypeString (TransitionType transition_type);
 // NPDA transitions
 // ///////////////////////////////////////////////////////////////////////////
 
-Graph::Transition NpdaReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name);
+Graph::Transition NpdaReduceTransition (Uint32 reduction_rule_index);
 Graph::Transition NpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index);
 Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &token_label, Uint32 target_index);
 Graph::Transition NpdaEpsilonTransition (Uint32 target_index);
@@ -44,8 +44,8 @@ Graph::Transition NpdaEpsilonTransition (Uint32 target_index);
 // DPDA transitions
 // ///////////////////////////////////////////////////////////////////////////
 
-Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, string const &nonterminal_name, bool is_default_transition);
-Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, string const &nonterminal_name, bool is_default_transition);
+Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, bool is_default_transition);
+Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, bool is_default_transition);
 Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index, bool is_default_transition);
 Graph::Transition DpdaShiftTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 target_index);
 Graph::Transition DpdaErrorPanicTransition (bool is_default_transition);

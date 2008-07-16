@@ -1,5 +1,6 @@
 %targets cpp
 
+
 %target.cpp.header_filename "dumblang_parser.hpp"
 %target.cpp.implementation_filename "dumblang_parser.cpp"
 
@@ -184,13 +185,14 @@ int main (int argc, char **argv)
 
 %target.cpp.token_data_type "Ast *"
 %target.cpp.token_data_default "NULL"
-%target.cpp.return_token_type "Ast *"
 %target.cpp.scan_actions {
     assert(m_scanner != NULL);
     return m_scanner->Scan();
 }
 
+
 %target.cpp.generate_debug_spew_code
+
 
 %terminal '+' '-' '*' '/' '^' '(' ')'
 %terminal '>' '<' '=' '!'

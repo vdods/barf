@@ -56,7 +56,11 @@ doc:
 spotless: clean clean-parser-extras clean-scanner-extras
 
 clean-parser-extras:
-	rm -f $(top_srcdir)/app/reflex/reflex_parser.states
+	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.dot
+	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.png
+	rm -f $(top_srcdir)/app/reflex/reflex_parser.dpda.dot
+	rm -f $(top_srcdir)/app/reflex/reflex_parser.dpda.png
+	rm -f $(top_srcdir)/app/reflex/reflex_parser.dpda.states
 	rm -f $(top_srcdir)/app/trison/trison_parser.states
 	rm -f $(top_srcdir)/app/trison/trison_parser_header.cpp
 	rm -f $(top_srcdir)/app/trison/trison_parser_implementation.cpp
@@ -411,20 +415,29 @@ reflex_SOURCES = \
 	app/reflex/reflex_parser.cpp \
 	app/reflex/reflex_parser.trison
 
-if STABLE_TRISON_EXISTS
+
+if STABLE_TRISON_UNSTABLE_EXISTS
 reflex-parser: $(top_srcdir)/app/reflex/reflex_parser.hpp
 $(top_srcdir)/app/reflex/reflex_parser.hpp: $(top_srcdir)/app/reflex/reflex_parser.cpp
-$(top_srcdir)/app/reflex/reflex_parser.cpp: $(top_srcdir)/app/reflex/reflex_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/reflex/reflex_parser --generate-states-file $(top_srcdir)/app/reflex/reflex_parser.states
+$(top_srcdir)/app/reflex/reflex_parser.cpp: $(top_srcdir)/app/reflex/reflex_parser.trison $(TRISON_UNSTABLE) $(TARGETS_PATH)/trison.cpp.targetspec $(TARGETS_PATH)/trison.cpp.header.codespec $(TARGETS_PATH)/trison.cpp.implementation.codespec
+	$(STABLE_TRISON_UNSTABLE) $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/reflex --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
 
 force-reflex-parser:
-	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/reflex/reflex_parser --generate-states-file $(top_srcdir)/app/reflex/reflex_parser.states
-else # !STABLE_TRISON_EXISTS
+	$(STABLE_TRISON_UNSTABLE) $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/reflex --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
+else # !STABLE_TRISON_UNSTABLE_EXISTS
 reflex-parser force-reflex-parser:
 	@echo "!!!"
-	@echo "!!! Can't build reflex parser without stable reflex binary."
-	@echo "!!! Use --with-stable-reflex configure option."
+	@echo "!!! Can't build reflex parser without stable trison binary."
+	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
+endif
+
+if DOT_EXISTS
+$(top_srcdir)/app/reflex/reflex_parser.dpda.png: $(top_srcdir)/app/reflex/reflex_parser.dpda.dot
+	$(DOT) $(top_srcdir)/app/reflex/reflex_parser.dpda.dot -Tpng -o $(top_srcdir)/app/reflex/reflex_parser.dpda.png
+
+$(top_srcdir)/app/reflex/reflex_parser.npda.png: $(top_srcdir)/app/reflex/reflex_parser.npda.dot
+	$(DOT) $(top_srcdir)/app/reflex/reflex_parser.npda.dot -Tpng -o $(top_srcdir)/app/reflex/reflex_parser.npda.png
 endif
 
 ##############################################################################

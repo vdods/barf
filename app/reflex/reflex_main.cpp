@@ -80,8 +80,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     Ast::Base *parsed_tree_root = NULL;
     Reflex::Parser parser;
     parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
-    if (GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER))
-        parser.SetDebugSpewLevel(2);
+    parser.DebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER));
 
     if (!parser.OpenFile(GetOptions().GetInputFilename()))
         EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
