@@ -61,17 +61,25 @@ clean-all-parser-extras:
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.dpda.states
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.dot
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.png
-	rm -f $(top_srcdir)/app/trison/trison_parser.states
 	rm -f $(top_srcdir)/app/trison/trison_parser_header.cpp
 	rm -f $(top_srcdir)/app/trison/trison_parser_implementation.cpp
+	rm -f $(top_srcdir)/app/trison/trison_parser.states
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.states
-	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.states
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.dot
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.png
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.states
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.dot
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.png
+	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.dpda.dot
+	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.dpda.png
+	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.dpda.states
+	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.npda.dot
+	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.npda.png
 	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.dot
 	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.png
+	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.states
 	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.dot
 	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.states
-	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.states
 
 clean-all-parsers: clean-all-parser-extras
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.cpp
@@ -301,28 +309,6 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png: $(top_srcdir)/
 	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png
 endif
 
-if STABLE_TRISON_EXISTS
-barf-regex-parser: $(top_srcdir)/lib/regex/barf_regex_parser.hpp
-$(top_srcdir)/lib/regex/barf_regex_parser.hpp: $(top_srcdir)/lib/regex/barf_regex_parser.cpp
-$(top_srcdir)/lib/regex/barf_regex_parser.cpp: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
-
-force-barf-regex-parser:
-	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
-else # !STABLE_TRISON_EXISTS
-barf-preprocessor-parser force-barf-preprocessor-parser:
-	@echo "!!!"
-	@echo "!!! Can't build barf preprocessor parser without stable trison binary."
-	@echo "!!! Use --with-stable-trison configure option."
-	@echo "!!!"
-
-barf-regex-parser force-barf-regex-parser:
-	@echo "!!!"
-	@echo "!!! Can't build barf regex parser without stable trison binary."
-	@echo "!!! Use --with-stable-trison configure option."
-	@echo "!!!"
-endif
-
 if STABLE_TRISON_UNSTABLE_EXISTS
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp
@@ -331,6 +317,14 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp: $(top_srcdir)/lib/p
 
 force-barf-preprocessor-parser:
 	$(STABLE_TRISON_UNSTABLE) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-dpda-dot-graph barf_preprocessor_parser.dpda.dot --generate-dpda-states-file barf_preprocessor_parser.dpda.states
+
+barf-regex-parser: $(top_srcdir)/lib/regex/barf_regex_parser.hpp
+$(top_srcdir)/lib/regex/barf_regex_parser.hpp: $(top_srcdir)/lib/regex/barf_regex_parser.cpp
+$(top_srcdir)/lib/regex/barf_regex_parser.cpp: $(top_srcdir)/lib/regex/barf_regex_parser.trison $(STABLE_TRISON_UNSTABLE) $(TARGETS_PATH)/trison.cpp.targetspec $(TARGETS_PATH)/trison.cpp.header.codespec $(TARGETS_PATH)/trison.cpp.implementation.codespec
+	$(STABLE_TRISON_UNSTABLE) $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/regex --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-dpda-dot-graph barf_regex_parser.dpda.dot --generate-dpda-states-file barf_regex_parser.dpda.states
+
+force-barf-regex-parser:
+	$(STABLE_TRISON_UNSTABLE) $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/regex --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-dpda-dot-graph barf_regex_parser.dpda.dot --generate-dpda-states-file barf_regex_parser.dpda.states
 
 barf-targetspec-parser: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp
 $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp
@@ -346,6 +340,12 @@ barf-preprocessor-parser force-barf-preprocessor-parser:
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 
+barf-regex-parser force-barf-regex-parser:
+	@echo "!!!"
+	@echo "!!! Can't build barf regex parser without stable trison binary."
+	@echo "!!! Use --with-stable-trison configure option."
+	@echo "!!!"
+
 barf-targetspec-parser force-barf-targetspec-parser:
 	@echo "!!!"
 	@echo "!!! Can't build barf targetspec parser without stable trison binary."
@@ -354,6 +354,18 @@ barf-targetspec-parser force-barf-targetspec-parser:
 endif
 
 if DOT_EXISTS
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.dot
+	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.png
+
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.dot
+	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.png
+
+$(top_srcdir)/lib/regex/barf_regex_parser.dpda.png: $(top_srcdir)/lib/regex/barf_regex_parser.dpda.dot
+	$(DOT) $(top_srcdir)/lib/regex/barf_regex_parser.dpda.dot -Tpng -o $(top_srcdir)/lib/regex/barf_regex_parser.dpda.png
+
+$(top_srcdir)/lib/regex/barf_regex_parser.npda.png: $(top_srcdir)/lib/regex/barf_regex_parser.npda.dot
+	$(DOT) $(top_srcdir)/lib/regex/barf_regex_parser.npda.dot -Tpng -o $(top_srcdir)/lib/regex/barf_regex_parser.npda.png
+
 $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.png: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.dot
 	$(DOT) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.dot -Tpng -o $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.png
 

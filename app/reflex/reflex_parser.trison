@@ -340,8 +340,7 @@ bool Parser::OpenFile (string const &input_filename)
     %target.cpp {
         Regex::Parser parser;
         parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
-        if (g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER))
-            parser.SetDebugSpewLevel(2);
+        parser.DebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER));
         istringstream in(macro_regex_string->GetText());
         parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
         try {
@@ -490,8 +489,7 @@ bool Parser::OpenFile (string const &input_filename)
         {
             Regex::Parser parser;
             parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
-            if (g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER))
-                parser.SetDebugSpewLevel(2);
+            parser.DebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER));
             istringstream in(regex_string->GetText());
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {

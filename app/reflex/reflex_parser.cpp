@@ -812,8 +812,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
 
         Regex::Parser parser;
         parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
-        if (g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER))
-            parser.SetDebugSpewLevel(2);
+        parser.DebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER));
         istringstream in(macro_regex_string->GetText());
         parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
         try {
@@ -834,7 +833,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         delete macro_regex_string;
         return regular_expression_map;
     
-#line 838 "reflex_parser.cpp"
+#line 837 "reflex_parser.cpp"
             break;
         }
 
@@ -842,14 +841,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 367 "reflex_parser.trison"
+#line 366 "reflex_parser.trison"
 
         // we save the regex macro map in a member var, so that the reduction
         // rule handler for the scanner mode rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
         return m_regex_macro_map;
     
-#line 853 "reflex_parser.cpp"
+#line 852 "reflex_parser.cpp"
             break;
         }
 
@@ -860,14 +859,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token_data));
             Ast::Id * macro_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 375 "reflex_parser.trison"
+#line 374 "reflex_parser.trison"
 
         EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete macro_id;
         return regular_expression_map;
     
-#line 871 "reflex_parser.cpp"
+#line 870 "reflex_parser.cpp"
             break;
         }
 
@@ -877,13 +876,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Regex::RegularExpressionMap * regular_expression_map(Dsc<Regex::RegularExpressionMap *>(m_stack_[m_stack_.size()-4].m_token_data));
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 383 "reflex_parser.trison"
+#line 382 "reflex_parser.trison"
 
         EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
         return regular_expression_map;
     
-#line 887 "reflex_parser.cpp"
+#line 886 "reflex_parser.cpp"
             break;
         }
 
@@ -893,12 +892,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 397 "reflex_parser.trison"
+#line 396 "reflex_parser.trison"
 
         delete throwaway;
         return new StartInScannerModeDirective(scanner_mode_id);
     
-#line 902 "reflex_parser.cpp"
+#line 901 "reflex_parser.cpp"
             break;
         }
 
@@ -907,13 +906,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 403 "reflex_parser.trison"
+#line 402 "reflex_parser.trison"
 
         EmitError("parse error in directive %start_in_scanner_mode", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 917 "reflex_parser.cpp"
+#line 916 "reflex_parser.cpp"
             break;
         }
 
@@ -923,13 +922,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             ScannerModeMap * scanner_mode_map(Dsc<ScannerModeMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             ScannerMode * scanner_mode(Dsc<ScannerMode *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 417 "reflex_parser.trison"
+#line 416 "reflex_parser.trison"
 
         if (scanner_mode != NULL)
             scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
         return scanner_mode_map;
     
-#line 933 "reflex_parser.cpp"
+#line 932 "reflex_parser.cpp"
             break;
         }
 
@@ -937,11 +936,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 424 "reflex_parser.trison"
+#line 423 "reflex_parser.trison"
 
         return new ScannerModeMap();
     
-#line 945 "reflex_parser.cpp"
+#line 944 "reflex_parser.cpp"
             break;
         }
 
@@ -952,12 +951,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 432 "reflex_parser.trison"
+#line 431 "reflex_parser.trison"
 
         delete throwaway;
         return new ScannerMode(scanner_mode_id, rule_list);
     
-#line 961 "reflex_parser.cpp"
+#line 960 "reflex_parser.cpp"
             break;
         }
 
@@ -967,13 +966,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
 
-#line 438 "reflex_parser.trison"
+#line 437 "reflex_parser.trison"
 
         EmitError("parse error in scanner mode rule list", throwaway->GetFiLoc());
         delete throwaway;
         return new ScannerMode(scanner_mode_id, new RuleList());
     
-#line 977 "reflex_parser.cpp"
+#line 976 "reflex_parser.cpp"
             break;
         }
 
@@ -983,14 +982,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 445 "reflex_parser.trison"
+#line 444 "reflex_parser.trison"
 
         EmitError("parse error in scanner mode id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
     
-#line 994 "reflex_parser.cpp"
+#line 993 "reflex_parser.cpp"
             break;
         }
 
@@ -999,11 +998,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 456 "reflex_parser.trison"
+#line 455 "reflex_parser.trison"
 
         return rule_list;
     
-#line 1007 "reflex_parser.cpp"
+#line 1006 "reflex_parser.cpp"
             break;
         }
 
@@ -1011,11 +1010,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 461 "reflex_parser.trison"
+#line 460 "reflex_parser.trison"
 
         return new RuleList();
     
-#line 1019 "reflex_parser.cpp"
+#line 1018 "reflex_parser.cpp"
             break;
         }
 
@@ -1025,12 +1024,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-3].m_token_data));
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 469 "reflex_parser.trison"
+#line 468 "reflex_parser.trison"
 
         rule_list->Append(rule);
         return rule_list;
     
-#line 1034 "reflex_parser.cpp"
+#line 1033 "reflex_parser.cpp"
             break;
         }
 
@@ -1039,13 +1038,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 475 "reflex_parser.trison"
+#line 474 "reflex_parser.trison"
 
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
     
-#line 1049 "reflex_parser.cpp"
+#line 1048 "reflex_parser.cpp"
             break;
         }
 
@@ -1055,7 +1054,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::String * regex_string(Dsc<Ast::String *>(m_stack_[m_stack_.size()-2].m_token_data));
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 485 "reflex_parser.trison"
+#line 484 "reflex_parser.trison"
 
         assert(m_regex_macro_map != NULL);
 
@@ -1064,8 +1063,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             Regex::Parser parser;
             parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
-            if (g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER))
-                parser.SetDebugSpewLevel(2);
+            parser.DebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER));
             istringstream in(regex_string->GetText());
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
@@ -1117,7 +1115,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         delete regex_string;
         return rule;
     
-#line 1121 "reflex_parser.cpp"
+#line 1119 "reflex_parser.cpp"
             break;
         }
 
@@ -1127,13 +1125,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             CommonLang::RuleHandler * rule_handler(Dsc<CommonLang::RuleHandler *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 551 "reflex_parser.trison"
+#line 549 "reflex_parser.trison"
 
         if (rule_handler != NULL)
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
     
-#line 1137 "reflex_parser.cpp"
+#line 1135 "reflex_parser.cpp"
             break;
         }
 
@@ -1141,11 +1139,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 558 "reflex_parser.trison"
+#line 556 "reflex_parser.trison"
 
         return new CommonLang::RuleHandlerMap();
     
-#line 1149 "reflex_parser.cpp"
+#line 1147 "reflex_parser.cpp"
             break;
         }
 
@@ -1156,7 +1154,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 566 "reflex_parser.trison"
+#line 564 "reflex_parser.trison"
 
         delete throwaway;
         assert(m_target_map != NULL);
@@ -1166,7 +1164,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
                 target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     
-#line 1170 "reflex_parser.cpp"
+#line 1168 "reflex_parser.cpp"
             break;
         }
 
@@ -1176,7 +1174,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 577 "reflex_parser.trison"
+#line 575 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -1184,7 +1182,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         delete code_block;
         return NULL;
     
-#line 1188 "reflex_parser.cpp"
+#line 1186 "reflex_parser.cpp"
             break;
         }
 
@@ -1193,14 +1191,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 586 "reflex_parser.trison"
+#line 584 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 1204 "reflex_parser.cpp"
+#line 1202 "reflex_parser.cpp"
             break;
         }
 
@@ -1209,14 +1207,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 594 "reflex_parser.trison"
+#line 592 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     
-#line 1220 "reflex_parser.cpp"
+#line 1218 "reflex_parser.cpp"
             break;
         }
 
@@ -1225,9 +1223,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 608 "reflex_parser.trison"
+#line 606 "reflex_parser.trison"
  return dumb_code_block; 
-#line 1231 "reflex_parser.cpp"
+#line 1229 "reflex_parser.cpp"
             break;
         }
 
@@ -1236,9 +1234,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 610 "reflex_parser.trison"
+#line 608 "reflex_parser.trison"
  return strict_code_block; 
-#line 1242 "reflex_parser.cpp"
+#line 1240 "reflex_parser.cpp"
             break;
         }
 
@@ -1246,9 +1244,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 615 "reflex_parser.trison"
+#line 613 "reflex_parser.trison"
  return NULL; 
-#line 1252 "reflex_parser.cpp"
+#line 1250 "reflex_parser.cpp"
             break;
         }
 
@@ -1256,9 +1254,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 617 "reflex_parser.trison"
+#line 615 "reflex_parser.trison"
  return NULL; 
-#line 1262 "reflex_parser.cpp"
+#line 1260 "reflex_parser.cpp"
             break;
         }
 
@@ -1266,9 +1264,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 622 "reflex_parser.trison"
+#line 620 "reflex_parser.trison"
  return NULL; 
-#line 1272 "reflex_parser.cpp"
+#line 1270 "reflex_parser.cpp"
             break;
         }
 
@@ -1276,9 +1274,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 624 "reflex_parser.trison"
+#line 622 "reflex_parser.trison"
  return NULL; 
-#line 1282 "reflex_parser.cpp"
+#line 1280 "reflex_parser.cpp"
             break;
         }
 
@@ -1295,7 +1293,7 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << 
 #line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 1299 "reflex_parser.cpp"
+#line 1297 "reflex_parser.cpp"
  << " parser stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -1316,7 +1314,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     stream << 
 #line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 1320 "reflex_parser.cpp"
+#line 1318 "reflex_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -1324,7 +1322,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 1328 "reflex_parser.cpp"
+#line 1326 "reflex_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -2255,4 +2253,4 @@ bool Parser::OpenFile (string const &input_filename)
 
 } // end of namespace Reflex
 
-#line 2259 "reflex_parser.cpp"
+#line 2257 "reflex_parser.cpp"

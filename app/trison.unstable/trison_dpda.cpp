@@ -2192,7 +2192,7 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
            << endl;
     for (Uint32 i = 0; i < primary_source.GetRuleCount(); ++i)
     {
-        stream << "  rule ";
+        stream << "    rule ";
         stream.width(max_rule_index_width);
         stream.setf(ios_base::right);
         stream << i << ": " << primary_source.GetRule(i)->GetAsText() << endl;
@@ -2210,7 +2210,7 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
         // print the state index and corresponding NPDA state indices
         Graph::Node const &dpda_node = dpda_graph.GetNode(i);
         DpdaNodeData const &dpda_node_data = dpda_node.GetDataAs<DpdaNodeData>();
-        stream << "  State " << i << " - Corresponding NPDA states: " << dpda_node_data.GetDpdaState() << endl;
+        stream << "State " << i << " - Corresponding NPDA states: " << dpda_node_data.GetDpdaState() << endl;
 
         // print the staged rules at this state
         for (DpdaState::const_iterator it = dpda_node_data.GetDpdaState().begin(),
@@ -2248,10 +2248,13 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
             Graph::Transition const &transition = *it;
 
             // indent
-            stream << "    ";
+            stream << "   "; // 7 spaces, the 8th is '8' or ' ' depending
+                                 // on if this is the default transition.
             // we want to indicate the default transition to avoid ambiguity.
             if (it == dpda_node.GetTransitionSetBegin())
-                stream << "Default transition: ";
+                stream << "*Default transition: ";
+            else
+                stream << " ";
             // print the lookaheads and action
             stream << transition.Label();
             // if it's a shift transition, the label doesn't have the ": SHIFT blah blah" part
