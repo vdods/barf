@@ -30,7 +30,6 @@ namespace Calculator {
 %}
 %target.cpp.constructor_parameters { string const &input_string }
 %target.cpp.class_name Scanner
-%target.cpp.scan_method_parameters { cl_N &token }
 %target.cpp.bottom_of_class {
     istringstream m_input;
 }
@@ -54,7 +53,7 @@ namespace Calculator {
     m_input.str(input_string);
 }
 %target.cpp.end_of_scan_method_actions %{
-    return Parser::Token::BAD_TOKEN;
+    return Parser::Token(Parser::Terminal::BAD_TOKEN);
 %}
 %target.cpp.bottom_of_implementation_file %{
 } // end of namespace Calculator
@@ -64,7 +63,7 @@ namespace Calculator {
 // cpp scanner I/O parameters
 // ///////////////////////////////////////////////////////////////////////////
 
-%target.cpp.return_type "Parser::Token::Type"
+%target.cpp.return_type "Parser::Token::Token"
 %target.cpp.return_true_iff_input_is_at_end {
     return m_input.peek() == char_traits<char>::eof();
 }
@@ -113,57 +112,53 @@ namespace Calculator {
 :
     ({INTEGER})
     %target.cpp {
-        token = cl_I(accepted_string.c_str());
-        return Parser::Token::NUMBER;
+        return Parser::Token(Parser::Terminal::NUMBER, cl_I(accepted_string.c_str()));
     }
 |
     ({FLOAT})
     %target.cpp {
-        token = cl_F(accepted_string.c_str());
-        return Parser::Token::NUMBER;
+        return Parser::Token(Parser::Terminal::NUMBER, cl_F(accepted_string.c_str()));
     }
 |
     (pi)
     %target.cpp {
-        token = pi(float_format(FLOAT_DIGITS));
-        return Parser::Token::NUMBER;
+        return Parser::Token(Parser::Terminal::NUMBER, pi(float_format(FLOAT_DIGITS)));
     }
 |
     (e)
     %target.cpp {
-        token = exp1(float_format(FLOAT_DIGITS));
-        return Parser::Token::NUMBER;
+        return Parser::Token(Parser::Terminal::NUMBER, exp1(float_format(FLOAT_DIGITS)));
     }
 |
     (i)
     %target.cpp {
-        token = sqrt(cl_N(-1)); // TODO -- find better way of returning I.
-        return Parser::Token::NUMBER;
+        // TODO -- find better way of returning I.
+        return Parser::Token(Parser::Terminal::NUMBER, sqrt(cl_N(-1)));
     }
 |
     (r)
     %target.cpp {
-        return Parser::Token::RESULT;
+        return Parser::Token(Parser::Terminal::RESULT);
     }
 |
     (float)
     %target.cpp {
-        return Parser::Token::FLOAT;
+        return Parser::Token(Parser::Terminal::FLOAT);
     }
 |
     (help)
     %target.cpp {
-        return Parser::Token::HELP;
+        return Parser::Token(Parser::Terminal::HELP);
     }
 |
     (mod)
     %target.cpp {
-        return Parser::Token::MOD;
+        return Parser::Token(Parser::Terminal::MOD);
     }
 |
     ({OPERATOR})
     %target.cpp {
-        return Parser::Token::Type(accepted_string[0]);
+        return Parser::Token(Parser::Token::Id(accepted_string[0]));
     }
 |
     ({WHITESPACE})
@@ -173,16 +168,16 @@ namespace Calculator {
 |
     ({NEWLINE})
     %target.cpp {
-        return Parser::Token::NEWLINE;
+        return Parser::Token(Parser::Terminal::NEWLINE);
     }
 |
     ({END_OF_FILE})
     %target.cpp {
-        return Parser::Token::END_;
+        return Parser::Token(Parser::Terminal::END_);
     }
 |
     (.) // catch-all rule -- any other char is unrecognized
     %target.cpp {
-        return Parser::Token::BAD_TOKEN;
+        return Parser::Token(Parser::Terminal::BAD_TOKEN);
     }
 ;

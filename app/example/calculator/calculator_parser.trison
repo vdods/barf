@@ -8,9 +8,14 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-%parser_class_name "Parser"
+%targets cpp
 
-%parser_header_file_top%{
+
+%target.cpp.header_filename "calculator_parser.hpp"
+%target.cpp.implementation_filename "calculator_parser.cpp"
+
+
+%target.cpp.top_of_header_file %{
 #if !defined(_CALCULATOR_PARSER_HPP_)
 #define _CALCULATOR_PARSER_HPP_
 
@@ -20,17 +25,13 @@ namespace Calculator {
 
 class Scanner;
 %}
-
-%parser_class_methods_and_members{
-public:
-
+%target.cpp.class_name Parser
+%target.cpp.bottom_of_class {
     bool ShouldPrintResult () const { return m_should_print_result; }
 
     void SetInputString (string const &input_string);
 
 private:
-
-    Token::Type Scan ();
 
     Scanner *m_scanner;
     cl_N m_last_result;
@@ -38,85 +39,84 @@ private:
     bool m_should_print_result;
 }
 
-%parser_header_file_bottom%{
+%target.cpp.bottom_of_header_file %{
 } // end of namespace Calculator
 
 #endif // !defined(_CALCULATOR_PARSER_HPP_)
 %}
 
-%parser_implementation_file_top%{
+
+%target.cpp.top_of_implementation_file %{
 #include "calculator_scanner.hpp"
 
 #define MODULO(x) (zerop(m_modulus) ? x : cl_N(mod(realpart(x), m_modulus)))
 
 namespace Calculator {
 %}
-
-%parser_constructor_actions{
+%target.cpp.constructor_actions {
     m_scanner = NULL;
     m_last_result = cl_I(0);
     m_modulus = cl_I(0);
     m_should_print_result = true;
 }
-
-%parser_destructor_actions{
+%target.cpp.destructor_actions {
     delete m_scanner;
     m_scanner = NULL;
 }
-
-%parser_start_of_parse_method_actions{
+%target.cpp.start_of_parse_method_actions %{
     m_should_print_result = true;
-}
-
-%parser_throw_away_token_actions{
-}
-
-%parser_implementation_file_bottom%{
+%}
+%target.cpp.bottom_of_implementation_file %{
 void Parser::SetInputString (string const &input_string)
 {
     if (m_scanner != NULL)
         delete m_scanner;
     m_scanner = new Scanner(input_string);
-}
-
-Parser::Token::Type Parser::Scan ()
-{
-    assert(m_scanner != NULL);
-    return m_scanner->Scan(m_lookahead_token);
+    ResetForNewInput();
 }
 
 } // end of namespace Calculator
 %}
 
-%parser_base_assigned_type "cl_N"
-%parser_base_assigned_type_sentinel "0"
 
-%token BAD_TOKEN
-%token NEWLINE
-%token NUMBER
-%token RESULT
-%token FLOAT HELP MOD
-%token '+' '-' '*' '/' '^' '(' ')' '\\'
+%target.cpp.token_data_type "cl_N"
+%target.cpp.token_data_default "0"
+%target.cpp.scan_actions {
+    assert(m_scanner != NULL);
+    return m_scanner->Scan();
+}
 
-%prec ADDITION
-%prec MULTIPLICATION
-%prec UNARY
-%prec EXPONENTIATION
 
-%start root
+%target.cpp.generate_debug_spew_code
+%target.cpp.dont_generate_timestamps
+
+
+%terminal BAD_TOKEN
+%terminal NEWLINE
+%terminal NUMBER
+%terminal RESULT
+%terminal FLOAT HELP MOD
+%terminal '+' '-' '*' '/' '^' '(' ')' '\\'
+
+%prec.left ADDITION
+%prec.left MULTIPLICATION
+%prec.right UNARY
+%prec.right EXPONENTIATION
+
+%default_parse_nonterminal root
 
 %%
 
-root
+%nonterminal root
 :
     // empty reduction rule
-    {
+    %target.cpp {
         m_should_print_result = false;
         return 0;
     }
 |
     expression:result
-    {
+    %target.cpp {
         result = MODULO(result);
         if (m_should_print_result)
             m_last_result = result;
@@ -124,22 +124,22 @@ root
     }
 |
     command
-    {
+    %target.cpp {
         m_should_print_result = false;
         return 0;
     }
 ;
 
-expression
+%nonterminal expression
 :
-    expression:lhs '+' expression:rhs %left %prec ADDITION { return MODULO(lhs + rhs); }
+    expression:lhs '+' expression:rhs %prec ADDITION %target.cpp { return MODULO(lhs + rhs); }
 |
-    expression:lhs '-' expression:rhs %left %prec ADDITION { return MODULO(lhs - rhs); }
+    expression:lhs '-' expression:rhs %prec ADDITION %target.cpp { return MODULO(lhs - rhs); }
 |
-    expression:lhs '*' expression:rhs %left %prec MULTIPLICATION { return MODULO(lhs * rhs); }
+    expression:lhs '*' expression:rhs %prec MULTIPLICATION %target.cpp { return MODULO(lhs * rhs); }
 |
-    expression:lhs '/' expression:rhs %left %prec MULTIPLICATION
-    {
+    expression:lhs '/' expression:rhs %prec MULTIPLICATION
+    %target.cpp {
         if (zerop(rhs))
         {
             cerr << "error: divide by zero" << endl;
@@ -150,12 +150,12 @@ expression
             return lhs / rhs;
     }
 |
-    '+' expression:exp %right %prec UNARY { return MODULO(exp); }
+    '+' expression:exp %prec UNARY %target.cpp { return MODULO(exp); }
 |
-    '-' expression:exp %right %prec UNARY { return MODULO(-exp); }
+    '-' expression:exp %prec UNARY %target.cpp { return MODULO(-exp); }
 |
-    expression:base '^' expression:power %right %prec EXPONENTIATION
-    {
+    expression:base '^' expression:power %prec EXPONENTIATION
+    %target.cpp {
         if (zerop(base) && zerop(power))
         {
             cerr << "error: taking 0 to the 0 power" << endl;
@@ -166,17 +166,17 @@ expression
             return MODULO(expt(base, power));
     }
 |
-    '(' expression:exp ')' { return exp; }
+    '(' expression:exp ')' %target.cpp { return exp; }
 |
-    NUMBER:number { return MODULO(number); }
+    NUMBER:number %target.cpp { return MODULO(number); }
 |
-    RESULT { return m_last_result; }
+    RESULT %target.cpp { return m_last_result; }
 ;
 
-command
+%nonterminal command
 :
     '\\' FLOAT
-    {
+    %target.cpp {
         cout << "last result in floating-point: " << cl_float(realpart(m_last_result), float_format(FLOAT_DIGITS));
         if (!zerop(imagpart(m_last_result)))
             cout << " + " << cl_float(imagpart(m_last_result)) << "i";
@@ -185,7 +185,7 @@ command
     }
 |
     '\\' HELP
-    {
+    %target.cpp {
         cout << "Operators\n"
                 "  + - * / ^ ( )\n"
                 "Symbols\n"
@@ -203,7 +203,7 @@ command
     }
 |
     '\\' MOD NUMBER:number
-    {
+    %target.cpp {
         if (realpart(number) >= 0 && zerop(imagpart(number)))
         {
             m_modulus = realpart(number);
@@ -215,15 +215,15 @@ command
     }
 |
     '\\' MOD
-    {
+    %target.cpp {
         cout << "current modulus: " << m_modulus << endl;
         return 0;
     }
 ;
 
-at_least_zero_newlines
+%nonterminal at_least_zero_newlines
 :
-    at_least_zero_newlines NEWLINE { return 0; }
+    at_least_zero_newlines NEWLINE %target.cpp { return 0; }
 |
-    /* empty reduction rule */ { return 0; }
+    /* empty reduction rule */ %target.cpp { return 0; }
 ;

@@ -117,7 +117,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix %{"Preprocessor::Parser (at " << GetFiLoc() << "): "%}
+%target.cpp.debug_spew_prefix %{"Preprocessor::Parser (at " << GetFiLoc() << "):"%}
 %target.cpp.dont_generate_timestamps
 
 

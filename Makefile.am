@@ -268,7 +268,7 @@ lib_libbarf_regex_la_SOURCES = \
 if STABLE_REFLEX_EXISTS
 barf-commonlang-scanner: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
-$(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX)
+$(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex $(STABLE_REFLEX) $(TARGETS_PATH)/reflex.cpp.targetspec $(TARGETS_PATH)/reflex.cpp.header.codespec $(TARGETS_PATH)/reflex.cpp.implementation.codespec
 	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/ --generate-nfa-dot-graph barf_commonlang_scanner.nfa.dot --generate-dfa-dot-graph barf_commonlang_scanner.dfa.dot
 
 force-barf-commonlang-scanner:
@@ -276,7 +276,7 @@ force-barf-commonlang-scanner:
 
 barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp
-$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX)
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX) $(TARGETS_PATH)/reflex.cpp.targetspec $(TARGETS_PATH)/reflex.cpp.header.codespec $(TARGETS_PATH)/reflex.cpp.implementation.codespec
 	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner.dfa.dot
 
 force-barf-preprocessor-scanner:

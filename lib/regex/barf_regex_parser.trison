@@ -266,7 +266,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix %{"Regex::Parser (at " << GetFiLoc() << "): "%}
+%target.cpp.debug_spew_prefix %{"Regex::Parser (at " << GetFiLoc() << "):"%}
 %target.cpp.dont_generate_timestamps
 
 
