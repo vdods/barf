@@ -134,7 +134,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             {
                 // get the current state (top of the stack)
                 assert(!m_stack_.empty());
-                TrisonCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+                BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
                 assert(current_state_index < ms_state_count_);
                 State_ const &current_state = ms_state_table_[current_state_index];
                 TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr);)
@@ -212,7 +212,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
         {
             // get the current state (top of the stack)
             assert(!m_stack_.empty());
-            TrisonCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+            BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
             assert(current_state_index < ms_state_count_);
             State_ const &current_state = ms_state_table_[current_state_index];
             TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr);)
@@ -221,7 +221,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
             // loop through the current state's transitions and see if any match
             bool transition_exercised = false;
-            TrisonCpp_::Uint32 tested_lookahead_count = 0;
+            BarfCpp_::Uint32 tested_lookahead_count = 0;
             for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
                                    *transition_end = current_state.m_transition_table+current_state.m_transition_count;
                 transition != transition_end;
@@ -232,7 +232,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
                 // check if the lookaheads match those of this transition.
                 bool lookahead_sequence_matched = true;
-                for (TrisonCpp_::Uint32 i = 0; i < transition->m_lookahead_count; ++i)
+                for (BarfCpp_::Uint32 i = 0; i < transition->m_lookahead_count; ++i)
                 {
                     if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
                     {
@@ -255,7 +255,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 "Reflex::Parser (at " << GetFiLoc() << "):"
 #line 257 "reflex_parser.cpp"
  << " current (relevant) lookahead(s):";)
-                    for (TrisonCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                    for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i);)
                     }
@@ -275,7 +275,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 "Reflex::Parser (at " << GetFiLoc() << "):"
 #line 277 "reflex_parser.cpp"
  << " current (relevant) lookahead(s):";)
-                for (TrisonCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i);)
                 }
@@ -293,7 +293,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
                     // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == TrisonCpp_::Uint32(nonterminal_to_parse));
+                    assert(m_stack_[0].m_state_index == BarfCpp_::Uint32(nonterminal_to_parse));
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
                     *return_token = m_stack_.rbegin()->m_token_data;
@@ -518,7 +518,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
     }
 }
 
-Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule_index_)
+Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_)
 {
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
@@ -1387,7 +1387,7 @@ Parser::Rule_ const Parser::ms_rule_table_[] =
     { Parser::Nonterminal_::at_least_one_newline, 2, "at_least_one_newline <- at_least_one_newline NEWLINE" },
     { Parser::Nonterminal_::at_least_one_newline, 1, "at_least_one_newline <- NEWLINE" }
 };
-TrisonCpp_::Size const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
+BarfCpp_::Size const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
@@ -1504,7 +1504,7 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 3, ms_transition_table_+260, "START at_least_one_newline                                     \nrule 43: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 44: at_least_one_newline <- . NEWLINE                     " },
     { 2, ms_transition_table_+263, "RETURN at_least_one_newline                                    \nrule 43: at_least_one_newline <- at_least_one_newline . NEWLINE" }
 };
-TrisonCpp_::Size const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
+BarfCpp_::Size const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
 
 Parser::Transition_ const Parser::ms_transition_table_[] =
 {
@@ -1774,7 +1774,7 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+152 },
     { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+152 }
 };
-TrisonCpp_::Size const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
+BarfCpp_::Size const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
 
 Parser::Token::Id const Parser::ms_lookahead_table_[] =
 {
@@ -1932,7 +1932,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Nonterminal_::at_least_one_newline,
     Parser::Terminal::NEWLINE
 };
-TrisonCpp_::Size const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
+BarfCpp_::Size const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
 
 char const *const Parser::ms_token_name_table_[] =
 {
@@ -2226,16 +2226,16 @@ char const *const Parser::ms_token_name_table_[] =
     "at_least_zero_newlines",
     "at_least_one_newline"
 };
-TrisonCpp_::Size const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
+BarfCpp_::Size const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
 
 enum
 {
     TABLE_SIZE_ASSERTIONS_ =
-        TrisonCpp_::Assert<Parser::ms_rule_count_ == 45>::v &&
-        TrisonCpp_::Assert<Parser::ms_state_count_ == 112>::v &&
-        TrisonCpp_::Assert<Parser::ms_transition_count_ == 265>::v &&
-        TrisonCpp_::Assert<Parser::ms_lookahead_count_ == 153>::v &&
-        TrisonCpp_::Assert<Parser::ms_token_name_count_ == 289>::v
+        BarfCpp_::Assert<Parser::ms_rule_count_ == 45>::v &&
+        BarfCpp_::Assert<Parser::ms_state_count_ == 112>::v &&
+        BarfCpp_::Assert<Parser::ms_transition_count_ == 265>::v &&
+        BarfCpp_::Assert<Parser::ms_lookahead_count_ == 153>::v &&
+        BarfCpp_::Assert<Parser::ms_token_name_count_ == 289>::v
 };
 
 // ///////////////////////////////////////////////////////////////////////

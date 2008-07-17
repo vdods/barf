@@ -1,0 +1,76 @@
+#if !defined(BarfCpp_namespace_)
+#define BarfCpp_namespace_
+namespace BarfCpp_ {
+
+// /////////////////////////////////////////////////////////////////////////////
+// a bunch of template metaprogramming to intelligently determine what type to
+// use for an integer of the given bit width or value range.
+// /////////////////////////////////////////////////////////////////////////////
+
+template <bool condition, typename Then, typename Else> struct If;
+template <typename Then, typename Else> struct If<true,Then,Else> { typedef Then T; };
+template <typename Then, typename Else> struct If<false,Then,Else> { typedef Else T; };
+
+template <bool condition> struct Assert;
+template <> struct Assert<true> { static bool const v = true; operator bool () { return v; } };
+
+template <typename Sint, typename Uint> struct IntPair { typedef Sint S; typedef Uint U; };
+
+template <int bits> struct Integer
+{
+private:
+
+    typedef
+        typename If<bits == 8*sizeof(char),      IntPair<char,unsigned char>,
+        typename If<bits == 8*sizeof(short),     IntPair<short,unsigned short>,
+        typename If<bits == 8*sizeof(int),       IntPair<int,unsigned int>,
+        typename If<bits == 8*sizeof(long),      IntPair<long,unsigned long>,
+        typename If<bits == 8*sizeof(long long), IntPair<long long,unsigned long long>,
+        Integer<0> // if no match, cause a compile error
+        >::T >::T >::T >::T >::T PrivateIntPair;
+    static bool const assert_size =
+        Assert<bits == 8*sizeof(typename PrivateIntPair::S) &&
+               bits == 8*sizeof(typename PrivateIntPair::U)>::v;
+
+public:
+
+    typedef typename PrivateIntPair::S Signed;
+    typedef typename PrivateIntPair::U Unsigned;
+};
+template <> struct Integer<0> { }; // empty for intentional compile errors
+
+// /////////////////////////////////////////////////////////////////////////////
+// use the above to define specific integer types.  you could trivially add
+// 64-bit integers here, but for the purposes of this file, there is no reason
+// to use them (though on a 64-bit machine, Diff and Size WILL be 64-bit).
+// /////////////////////////////////////////////////////////////////////////////
+
+typedef Integer<8> ::Signed                Sint8;
+typedef Integer<8> ::Unsigned              Uint8;
+typedef Integer<16>::Signed                Sint16;
+typedef Integer<16>::Unsigned              Uint16;
+typedef Integer<32>::Signed                Sint32;
+typedef Integer<32>::Unsigned              Uint32;
+typedef Integer<8*sizeof(void*)>::Signed   Diff; // difference between pointers
+typedef Integer<8*sizeof(void*)>::Unsigned Size; // size of blocks of memory
+
+// /////////////////////////////////////////////////////////////////////////////
+// here are a few compile-time assertions to check that the integers actually
+// turned out to be the right sizes.
+// /////////////////////////////////////////////////////////////////////////////
+
+enum
+{
+    TYPE_SIZE_ASSERTIONS =
+        Assert<sizeof(Sint8)  == 1>::v &&
+        Assert<sizeof(Uint8)  == 1>::v &&
+        Assert<sizeof(Sint16) == 2>::v &&
+        Assert<sizeof(Uint16) == 2>::v &&
+        Assert<sizeof(Sint32) == 4>::v &&
+        Assert<sizeof(Uint32) == 4>::v &&
+        Assert<sizeof(Diff)   == sizeof(void*)>::v &&
+        Assert<sizeof(Size)   == sizeof(void*)>::v
+};
+
+} // end of namespace BarfCpp_
+#endif // !defined(BarfCpp_namespace_)

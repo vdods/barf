@@ -22,70 +22,7 @@
 #include <iostream>
 <|end_if
 
-#if !defined(TrisonCpp_namespace_)
-#define TrisonCpp_namespace_
-namespace TrisonCpp_ {
-
-// /////////////////////////////////////////////////////////////////////////////
-// a bunch of template metaprogramming to intelligently determine what type to
-// use for an integer of the given bit width or value range.
-// /////////////////////////////////////////////////////////////////////////////
-
-template <bool condition, typename Then, typename Else> struct If;
-template <typename Then, typename Else> struct If<true,Then,Else> { typedef Then T; };
-template <typename Then, typename Else> struct If<false,Then,Else> { typedef Else T; };
-
-template <bool condition> struct Assert;
-template <> struct Assert<true> { static bool const v = true; operator bool () { return v; } };
-
-template <typename Sint, typename Uint> struct IntPair { typedef Sint S; typedef Uint U; };
-
-template <int bits> struct Integer {
-private:
-
-    typedef
-        typename If<bits == 8*sizeof(char),      IntPair<char,unsigned char>,
-        typename If<bits == 8*sizeof(short),     IntPair<short,unsigned short>,
-        typename If<bits == 8*sizeof(int),       IntPair<int,unsigned int>,
-        typename If<bits == 8*sizeof(long),      IntPair<long,unsigned long>,
-        typename If<bits == 8*sizeof(long long), IntPair<long long,unsigned long long>,
-        Integer<0> // if no match, cause a compile error
-        >::T >::T >::T >::T >::T PrivateIntPair;
-    static bool const assert_size =
-        Assert<bits == 8*sizeof(typename PrivateIntPair::S) &&
-               bits == 8*sizeof(typename PrivateIntPair::U)>::v;
-
-public:
-
-    typedef typename PrivateIntPair::S Signed;
-    typedef typename PrivateIntPair::U Unsigned;
-};
-template <> struct Integer<0> { }; // empty for intentional compile errors
-
-typedef Integer<8> ::Signed                Sint8;
-typedef Integer<8> ::Unsigned              Uint8;
-typedef Integer<16>::Signed                Sint16;
-typedef Integer<16>::Unsigned              Uint16;
-typedef Integer<32>::Signed                Sint32;
-typedef Integer<32>::Unsigned              Uint32;
-typedef Integer<8*sizeof(void*)>::Signed   Diff;
-typedef Integer<8*sizeof(void*)>::Unsigned Size;
-
-enum
-{
-    TYPE_SIZE_ASSERTIONS =
-        Assert<sizeof(Sint8)  == 1>::v &&
-        Assert<sizeof(Uint8)  == 1>::v &&
-        Assert<sizeof(Sint16) == 2>::v &&
-        Assert<sizeof(Uint16) == 2>::v &&
-        Assert<sizeof(Sint32) == 4>::v &&
-        Assert<sizeof(Uint32) == 4>::v &&
-        Assert<sizeof(Diff)   == sizeof(void*)>::v &&
-        Assert<sizeof(Size)   == sizeof(void*)>::v
-};
-
-} // end of namespace TrisonCpp_
-#endif // !defined(TrisonCpp_namespace_)
+<|include("barf.cpp.include.codespec")
 
 <|top_of_header_file?
 
@@ -181,7 +118,7 @@ public:
       */
     struct Token
     {
-        typedef TrisonCpp_::Uint32 Id; // TODO -- smallest int
+        typedef BarfCpp_::Uint32 Id; // TODO -- smallest int
         typedef <{token_data_type} Data;
 
         Id m_id;
@@ -378,15 +315,15 @@ private:
 
     struct StackElement_
     {
-        TrisonCpp_::Uint32 m_state_index;
+        BarfCpp_::Uint32 m_state_index;
         Token::Data m_token_data;
 
         StackElement_ ()
             :
-            m_state_index(TrisonCpp_::Uint32(-1)),
+            m_state_index(BarfCpp_::Uint32(-1)),
             m_token_data(<{token_data_default})
         { }
-        StackElement_ (TrisonCpp_::Uint32 state_index, Token::Data token_data)
+        StackElement_ (BarfCpp_::Uint32 state_index, Token::Data token_data)
             :
             m_state_index(state_index),
             m_token_data(token_data)
@@ -404,7 +341,7 @@ private:
     void ClearLookaheadQueue_ () throw();
     Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
     bool ExerciseTransition_ (Transition_ const &transition);
-    Token::Data ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule_index_);
+    Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_);
 <|if(is_defined(generate_debug_spew_code))
     // debug spew methods
     void PrintParserStatus_ (std::ostream &stream) const;
@@ -414,7 +351,7 @@ private:
     struct Rule_
     {
         Token::Id m_reduction_nonterminal_token_id;
-        TrisonCpp_::Uint32 m_token_count;
+        BarfCpp_::Uint32 m_token_count;
 <|if(is_defined(generate_debug_spew_code))
         char const *m_description;
 <|end_if
@@ -422,7 +359,7 @@ private:
 
     struct State_
     {
-        TrisonCpp_::Size const m_transition_count; // TODO: smallest int
+        BarfCpp_::Size const m_transition_count; // TODO: smallest int
         Transition_ const *m_transition_table;
 <|if(is_defined(generate_debug_spew_code))
         char const *m_description;
@@ -432,9 +369,9 @@ private:
     struct Transition_
     {
         enum Type { ERROR_PANIC = 0, RETURN, REDUCE, SHIFT };
-        TrisonCpp_::Uint8 m_type;
-        TrisonCpp_::Uint32 m_data; // TODO: smallest int
-        TrisonCpp_::Uint32 m_lookahead_count; // TODO smallest int
+        BarfCpp_::Uint8 m_type;
+        BarfCpp_::Uint32 m_data; // TODO: smallest int
+        BarfCpp_::Uint32 m_lookahead_count; // TODO smallest int
         Token::Id const *m_lookahead_sequence;
     }; // end of struct <{class_name}::Transition_
 
@@ -446,16 +383,16 @@ private:
 <|end_if
 
     static Rule_ const ms_rule_table_[];
-    static TrisonCpp_::Size const ms_rule_count_;
+    static BarfCpp_::Size const ms_rule_count_;
     static State_ const ms_state_table_[];
-    static TrisonCpp_::Size const ms_state_count_;
+    static BarfCpp_::Size const ms_state_count_;
     static Transition_ const ms_transition_table_[];
-    static TrisonCpp_::Size const ms_transition_count_;
+    static BarfCpp_::Size const ms_transition_count_;
     static Token::Id const ms_lookahead_table_[];
-    static TrisonCpp_::Size const ms_lookahead_count_;
+    static BarfCpp_::Size const ms_lookahead_count_;
 <|if(is_defined(generate_debug_spew_code))
     static char const *const ms_token_name_table_[];
-    static TrisonCpp_::Size const ms_token_name_count_;
+    static BarfCpp_::Size const ms_token_name_count_;
 
     friend std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
 <|end_if

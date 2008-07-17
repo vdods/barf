@@ -135,7 +135,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             {
                 // get the current state (top of the stack)
                 assert(!m_stack_.empty());
-                TrisonCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+                BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
                 assert(current_state_index < ms_state_count_);
                 State_ const &current_state = ms_state_table_[current_state_index];
                 TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr);)
@@ -213,7 +213,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
         {
             // get the current state (top of the stack)
             assert(!m_stack_.empty());
-            TrisonCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+            BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
             assert(current_state_index < ms_state_count_);
             State_ const &current_state = ms_state_table_[current_state_index];
             TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr);)
@@ -222,7 +222,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
             // loop through the current state's transitions and see if any match
             bool transition_exercised = false;
-            TrisonCpp_::Uint32 tested_lookahead_count = 0;
+            BarfCpp_::Uint32 tested_lookahead_count = 0;
             for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
                                    *transition_end = current_state.m_transition_table+current_state.m_transition_count;
                 transition != transition_end;
@@ -233,7 +233,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
                 // check if the lookaheads match those of this transition.
                 bool lookahead_sequence_matched = true;
-                for (TrisonCpp_::Uint32 i = 0; i < transition->m_lookahead_count; ++i)
+                for (BarfCpp_::Uint32 i = 0; i < transition->m_lookahead_count; ++i)
                 {
                     if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
                     {
@@ -256,7 +256,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 "Preprocessor::Parser (at " << GetFiLoc() << "):"
 #line 258 "barf_preprocessor_parser.cpp"
  << " current (relevant) lookahead(s):";)
-                    for (TrisonCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                    for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i);)
                     }
@@ -276,7 +276,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 "Preprocessor::Parser (at " << GetFiLoc() << "):"
 #line 278 "barf_preprocessor_parser.cpp"
  << " current (relevant) lookahead(s):";)
-                for (TrisonCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i);)
                 }
@@ -294,7 +294,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
                     // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == TrisonCpp_::Uint32(nonterminal_to_parse));
+                    assert(m_stack_[0].m_state_index == BarfCpp_::Uint32(nonterminal_to_parse));
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
                     *return_token = m_stack_.rbegin()->m_token_data;
@@ -473,7 +473,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
     }
 }
 
-Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule_index_)
+Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_)
 {
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
@@ -1614,7 +1614,7 @@ Parser::Rule_ const Parser::ms_rule_table_[] =
     { Parser::Nonterminal_::expression, 2, "expression <- '!' expression" },
     { Parser::Nonterminal_::expression, 3, "expression <- '(' expression ')'" }
 };
-TrisonCpp_::Size const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
+BarfCpp_::Size const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
@@ -1964,7 +1964,7 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 15, ms_transition_table_+1934, "START expression                                                 \nrule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
     { 13, ms_transition_table_+1949, "RETURN expression                                     \nrule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " }
 };
-TrisonCpp_::Size const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
+BarfCpp_::Size const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
 
 Parser::Transition_ const Parser::ms_transition_table_[] =
 {
@@ -3931,7 +3931,7 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+1615 },
     { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+1616 }
 };
-TrisonCpp_::Size const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
+BarfCpp_::Size const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
 
 Parser::Token::Id const Parser::ms_lookahead_table_[] =
 {
@@ -5553,7 +5553,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     '>',
     '|'
 };
-TrisonCpp_::Size const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
+BarfCpp_::Size const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
 
 char const *const Parser::ms_token_name_table_[] =
 {
@@ -5871,16 +5871,16 @@ char const *const Parser::ms_token_name_table_[] =
     "end_for_each",
     "expression"
 };
-TrisonCpp_::Size const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
+BarfCpp_::Size const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
 
 enum
 {
     TABLE_SIZE_ASSERTIONS_ =
-        TrisonCpp_::Assert<Parser::ms_rule_count_ == 84>::v &&
-        TrisonCpp_::Assert<Parser::ms_state_count_ == 345>::v &&
-        TrisonCpp_::Assert<Parser::ms_transition_count_ == 1962>::v &&
-        TrisonCpp_::Assert<Parser::ms_lookahead_count_ == 1617>::v &&
-        TrisonCpp_::Assert<Parser::ms_token_name_count_ == 313>::v
+        BarfCpp_::Assert<Parser::ms_rule_count_ == 84>::v &&
+        BarfCpp_::Assert<Parser::ms_state_count_ == 345>::v &&
+        BarfCpp_::Assert<Parser::ms_transition_count_ == 1962>::v &&
+        BarfCpp_::Assert<Parser::ms_lookahead_count_ == 1617>::v &&
+        BarfCpp_::Assert<Parser::ms_token_name_count_ == 313>::v
 };
 
 // ///////////////////////////////////////////////////////////////////////

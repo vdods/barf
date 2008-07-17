@@ -7,9 +7,9 @@
 #include <deque>
 #include <string>
 
-#if !defined(ReflexCpp_namespace_)
-#define ReflexCpp_namespace_
-namespace ReflexCpp_ {
+#if !defined(BarfCpp_namespace_)
+#define BarfCpp_namespace_
+namespace BarfCpp_ {
 
 // /////////////////////////////////////////////////////////////////////////////
 // a bunch of template metaprogramming to intelligently determine what type to
@@ -25,7 +25,8 @@ template <> struct Assert<true> { static bool const v = true; operator bool () {
 
 template <typename Sint, typename Uint> struct IntPair { typedef Sint S; typedef Uint U; };
 
-template <int bits> struct Integer {
+template <int bits> struct Integer
+{
 private:
 
     typedef
@@ -47,14 +48,25 @@ public:
 };
 template <> struct Integer<0> { }; // empty for intentional compile errors
 
+// /////////////////////////////////////////////////////////////////////////////
+// use the above to define specific integer types.  you could trivially add
+// 64-bit integers here, but for the purposes of this file, there is no reason
+// to use them (though on a 64-bit machine, Diff and Size WILL be 64-bit).
+// /////////////////////////////////////////////////////////////////////////////
+
 typedef Integer<8> ::Signed                Sint8;
 typedef Integer<8> ::Unsigned              Uint8;
 typedef Integer<16>::Signed                Sint16;
 typedef Integer<16>::Unsigned              Uint16;
 typedef Integer<32>::Signed                Sint32;
 typedef Integer<32>::Unsigned              Uint32;
-typedef Integer<8*sizeof(void*)>::Signed   Diff;
-typedef Integer<8*sizeof(void*)>::Unsigned Size;
+typedef Integer<8*sizeof(void*)>::Signed   Diff; // difference between pointers
+typedef Integer<8*sizeof(void*)>::Unsigned Size; // size of blocks of memory
+
+// /////////////////////////////////////////////////////////////////////////////
+// here are a few compile-time assertions to check that the integers actually
+// turned out to be the right sizes.
+// /////////////////////////////////////////////////////////////////////////////
 
 enum
 {
@@ -69,6 +81,13 @@ enum
         Assert<sizeof(Size)   == sizeof(void*)>::v
 };
 
+} // end of namespace BarfCpp_
+#endif // !defined(BarfCpp_namespace_)
+
+#if !defined(ReflexCpp_namespace_)
+#define ReflexCpp_namespace_
+namespace ReflexCpp_ {
+
 // /////////////////////////////////////////////////////////////////////////////
 // implements the InputApparatus interface as described in the documentation
 // /////////////////////////////////////////////////////////////////////////////
@@ -78,7 +97,7 @@ class InputApparatus
 public:
 
     typedef bool (InputApparatus::*IsInputAtEndMethod)();
-    typedef Uint8 (InputApparatus::*ReadNextAtomMethod)();
+    typedef BarfCpp_::Uint8 (InputApparatus::*ReadNextAtomMethod)();
 
     InputApparatus (IsInputAtEndMethod IsInputAtEnd, ReadNextAtomMethod ReadNextAtom)
         :
@@ -92,12 +111,12 @@ public:
 
 protected:
 
-    Uint8 GetCurrentConditionalFlags ()
+    BarfCpp_::Uint8 GetCurrentConditionalFlags ()
     {
         UpdateConditionalFlags();
         return m_current_conditional_flags;
     }
-    Uint8 GetInputAtom ()
+    BarfCpp_::Uint8 GetInputAtom ()
     {
         FillBuffer();
         assert(m_read_cursor > 0);
@@ -156,7 +175,7 @@ protected:
         assert(m_read_cursor < m_buffer.size());
         assert(m_buffer.size() >= 2);
         // only pop the front of the buffer if we're not at EOF.
-        Uint8 rejected_atom = m_buffer[1];
+        BarfCpp_::Uint8 rejected_atom = m_buffer[1];
         if (m_buffer[1] != '\0')
             m_buffer.pop_front();
         // reset the read cursor and return the rejected atom
@@ -184,7 +203,7 @@ private:
         CF_WORD_BOUNDARY      = (1 << 4)
     }; // end of enum ReflexCpp_::InputApparatus::ConditionalFlag
 
-    bool IsConditionalMet (Uint8 conditional_mask, Uint8 conditional_flags)
+    bool IsConditionalMet (BarfCpp_::Uint8 conditional_mask, BarfCpp_::Uint8 conditional_flags)
     {
         UpdateConditionalFlags();
         // return true iff no bits indicated by conditional_mask differ between
@@ -213,7 +232,7 @@ private:
         // otherwise retrieve and push the next input atom
         else
         {
-            Uint8 atom = (this->*m_ReadNextAtom)();
+            BarfCpp_::Uint8 atom = (this->*m_ReadNextAtom)();
             assert(atom != '\0' && "may not return '\\0' from return_next_input_char");
             m_buffer.push_back(atom);
         }
@@ -235,11 +254,11 @@ private:
         if (m_buffer[m_read_cursor] == '\0' || m_buffer[m_read_cursor] == '\n')           m_current_conditional_flags |= CF_END_OF_LINE;
         if (IsWordChar(m_buffer[m_read_cursor-1]) != IsWordChar(m_buffer[m_read_cursor])) m_current_conditional_flags |= CF_WORD_BOUNDARY;
     }
-    static bool IsWordChar (Uint8 c) { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_'; }
+    static bool IsWordChar (BarfCpp_::Uint8 c) { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_'; }
 
-    typedef std::deque<Uint8> Buffer;
+    typedef std::deque<BarfCpp_::Uint8> Buffer;
 
-    Uint8 m_current_conditional_flags;
+    BarfCpp_::Uint8 m_current_conditional_flags;
     Buffer m_buffer;
     Buffer::size_type m_read_cursor;
     Buffer::size_type m_accept_cursor;
@@ -259,8 +278,8 @@ public:
     struct DfaTransition_;
     struct DfaState_
     {
-        Uint32 m_accept_handler_index;
-        Size m_transition_count;
+        BarfCpp_::Uint32 m_accept_handler_index;
+        BarfCpp_::Size m_transition_count;
         DfaTransition_ const *m_transition;
     }; // end of struct ReflexCpp_::AutomatonApparatus::DfaState_
     struct DfaTransition_
@@ -270,12 +289,12 @@ public:
             INPUT_ATOM = 0, INPUT_ATOM_RANGE, CONDITIONAL
         }; // end of enum ReflexCpp_::AutomatonApparatus::DfaTransition_::Type
 
-        Uint8 m_transition_type;
-        Uint8 m_data_0;
-        Uint8 m_data_1;
+        BarfCpp_::Uint8 m_transition_type;
+        BarfCpp_::Uint8 m_data_0;
+        BarfCpp_::Uint8 m_data_1;
         DfaState_ const *m_target_dfa_state;
 
-        bool AcceptsInputAtom (Uint8 input_atom) const
+        bool AcceptsInputAtom (BarfCpp_::Uint8 input_atom) const
         {
             assert(m_transition_type == INPUT_ATOM || m_transition_type == INPUT_ATOM_RANGE);
             // returns true iff this transition is INPUT_ATOM and input_atom
@@ -287,7 +306,7 @@ public:
                    m_transition_type == INPUT_ATOM_RANGE &&
                    m_data_0 <= input_atom && input_atom <= m_data_1;
         }
-        bool AcceptsConditionalFlags (Uint8 conditional_flags) const
+        bool AcceptsConditionalFlags (BarfCpp_::Uint8 conditional_flags) const
         {
             assert(m_transition_type == CONDITIONAL);
             // returns true iff this transition is CONDITIONAL and no relevant bits
@@ -299,10 +318,10 @@ public:
 
     AutomatonApparatus (
         DfaState_ const *state_table,
-        Size state_count,
+        BarfCpp_::Size state_count,
         DfaTransition_ const *transition_table,
-        Size transition_count,
-        Uint32 accept_handler_count,
+        BarfCpp_::Size transition_count,
+        BarfCpp_::Uint32 accept_handler_count,
         IsInputAtEndMethod IsInputAtEnd,
         ReadNextAtomMethod ReadNextAtom)
         :
@@ -331,7 +350,7 @@ protected:
         m_current_state = NULL;
         m_accept_state = NULL;
     }
-    Uint32 RunDfa_ (std::string &s)
+    BarfCpp_::Uint32 RunDfa_ (std::string &s)
     {
         // clear the destination string
         s.clear();
@@ -362,7 +381,7 @@ protected:
             // extract the accepted string from the buffer
             Accept(s);
             // save off the accept handler index
-            Uint32 accept_handler_index = m_accept_state->m_accept_handler_index;
+            BarfCpp_::Uint32 accept_handler_index = m_accept_state->m_accept_handler_index;
             // clear the accept state for next time
             m_accept_state = NULL;
             // return accept_handler_index to indicate which handler to call
@@ -385,8 +404,8 @@ private:
     {
         assert(m_current_state != NULL);
         // get the current conditional flags and input atom once before looping
-        Uint8 current_conditional_flags = GetCurrentConditionalFlags();
-        Uint8 input_atom = GetInputAtom();
+        BarfCpp_::Uint8 current_conditional_flags = GetCurrentConditionalFlags();
+        BarfCpp_::Uint8 input_atom = GetInputAtom();
         // iterate through the current state's transitions, exercising the first
         // acceptable one and returning the target state
         for (DfaTransition_ const *transition = m_current_state->m_transition,
@@ -421,9 +440,9 @@ private:
     }
     void CheckDfa (
         DfaState_ const *state_table,
-        Size state_count,
+        BarfCpp_::Size state_count,
         DfaTransition_ const *transition_table,
-        Size transition_count)
+        BarfCpp_::Size transition_count)
     {
         // if any assertions in this method fail, the state and/or
         // transition tables were created incorrectly.
@@ -474,7 +493,7 @@ private:
         }
     }
 
-    Uint32 const m_accept_handler_count;
+    BarfCpp_::Uint32 const m_accept_handler_count;
     DfaState_ const *m_initial_state;
     DfaState_ const *m_current_state;
     DfaState_ const *m_accept_state;
@@ -504,12 +523,12 @@ class Base;
 
 namespace CommonLang {
 
-#line 508 "barf_commonlang_scanner.hpp"
+#line 527 "barf_commonlang_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
-#line 513 "barf_commonlang_scanner.hpp"
+#line 532 "barf_commonlang_scanner.hpp"
 
 {
 public:
@@ -578,7 +597,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 582 "barf_commonlang_scanner.hpp"
+#line 601 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -596,7 +615,7 @@ public:
     Scanner::Token::Type Scan (
 #line 80 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
-#line 600 "barf_commonlang_scanner.hpp"
+#line 619 "barf_commonlang_scanner.hpp"
 );
 
 public:
@@ -624,7 +643,7 @@ private:
     Uint32 m_code_block_bracket_level;
     Mode::Name m_return_state;
 
-#line 628 "barf_commonlang_scanner.hpp"
+#line 647 "barf_commonlang_scanner.hpp"
 
 
 private:
@@ -634,18 +653,18 @@ private:
     // ///////////////////////////////////////////////////////////////////////
 
     bool IsInputAtEnd_ ();
-    ReflexCpp_::Uint8 ReadNextAtom_ ();
+    BarfCpp_::Uint8 ReadNextAtom_ ();
 
-    static void DebugPrintAtom_ (ReflexCpp_::Uint8 atom);
+    static void DebugPrintAtom_ (BarfCpp_::Uint8 atom);
     static void DebugPrintString_ (std::string const &s);
 
     bool m_debug_spew_;
 
     static AutomatonApparatus::DfaState_ const ms_state_table_[];
-    static ReflexCpp_::Size const ms_state_count_;
+    static BarfCpp_::Size const ms_state_count_;
     static AutomatonApparatus::DfaTransition_ const ms_transition_table_[];
-    static ReflexCpp_::Size const ms_transition_count_;
-    static ReflexCpp_::Uint32 const ms_accept_handler_count_;
+    static BarfCpp_::Size const ms_transition_count_;
+    static BarfCpp_::Uint32 const ms_accept_handler_count_;
 
     // ///////////////////////////////////////////////////////////////////////
     // end of internal trison-generated parser guts
@@ -662,4 +681,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(_BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 666 "barf_commonlang_scanner.hpp"
+#line 685 "barf_commonlang_scanner.hpp"

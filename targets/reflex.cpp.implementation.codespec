@@ -48,7 +48,7 @@
 <{class_name}::Mode::Name <{class_name}::ScannerMode () const
 {
     assert(InitialState_() != NULL);
-    ReflexCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
+    BarfCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
     assert(initial_node_index < ms_state_count_);
     switch (initial_node_index)
     {
@@ -97,7 +97,7 @@ void <{class_name}::ResetForNewInput ()
     {
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
-        ReflexCpp_::Uint32 accept_handler_index_ = RunDfa_(accepted_string);
+        BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(accepted_string);
         // if no valid accept_handler_index_ was returned, then accepted_string
         // was filled with the first unaccepted input atom (i.e. the rejected
         // atom).  we'll call the HandleUnmatchedCharacter_ method on it.
@@ -109,7 +109,7 @@ void <{class_name}::ResetForNewInput ()
                 break;
 
             assert(accepted_string.length() == 1);
-            ReflexCpp_::Uint8 rejected_atom = accepted_string[0];
+            BarfCpp_::Uint8 rejected_atom = accepted_string[0];
 <|if(is_defined(generate_debug_spew_code))
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << "*** scanner: rejecting atom '";
@@ -160,13 +160,13 @@ bool <{class_name}::IsInputAtEnd_ ()
 <|return_true_iff_input_is_at_end
 }
 
-ReflexCpp_::Uint8 <{class_name}::ReadNextAtom_ ()
+BarfCpp_::Uint8 <{class_name}::ReadNextAtom_ ()
 {
 <|return_next_input_char
 }
 
 <|if(is_defined(generate_debug_spew_code))
-void <{class_name}::DebugPrintAtom_ (ReflexCpp_::Uint8 atom)
+void <{class_name}::DebugPrintAtom_ (BarfCpp_::Uint8 atom)
 {
     if (atom == '\\')                    std::cerr << "\\\\";
     else if (atom == '"')                std::cerr << "\\\"";
@@ -177,7 +177,7 @@ void <{class_name}::DebugPrintAtom_ (ReflexCpp_::Uint8 atom)
     else
     {
         std::cerr.width(2);
-        std::cerr << "\\x" << std::hex << std::uppercase << ReflexCpp_::Uint16(atom);
+        std::cerr << "\\x" << std::hex << std::uppercase << BarfCpp_::Uint16(atom);
         std::cerr.width(1);
     }
 }
@@ -222,7 +222,7 @@ ReflexCpp_::AutomatonApparatus::DfaState_ const <{class_name}::ms_state_table_[]
     { <{_dfa_state_accept_handler_index[i]}, <{_dfa_state_transition_count[i]}, ms_transition_table_+<{_dfa_state_transition_offset[i]} }<{if(i < _dfa_state_count-1)},<{end_if}
 <|end_loop
 };
-ReflexCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaState_);
+BarfCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaState_);
 
 ReflexCpp_::AutomatonApparatus::DfaTransition_ const <{class_name}::ms_transition_table_[] =
 {
@@ -230,8 +230,8 @@ ReflexCpp_::AutomatonApparatus::DfaTransition_ const <{class_name}::ms_transitio
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::<{_dfa_transition_type_name[i]}, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
 <|end_loop
 };
-ReflexCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaTransition_);
+BarfCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaTransition_);
 
-ReflexCpp_::Uint32 const <{class_name}::ms_accept_handler_count_ = <{_accept_handler_count};
+BarfCpp_::Uint32 const <{class_name}::ms_accept_handler_count_ = <{_accept_handler_count};
 
 <|bottom_of_implementation_file?

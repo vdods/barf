@@ -110,7 +110,7 @@ ScannerNew::~ScannerNew ()
 ScannerNew::Mode::Name ScannerNew::ScannerMode () const
 {
     assert(InitialState_() != NULL);
-    ReflexCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
+    BarfCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
     assert(initial_node_index < ms_state_count_);
     switch (initial_node_index)
     {
@@ -166,7 +166,7 @@ Parser::Token ScannerNew::Scan ()
     {
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
-        ReflexCpp_::Uint32 accept_handler_index_ = RunDfa_(accepted_string);
+        BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(accepted_string);
         // if no valid accept_handler_index_ was returned, then accepted_string
         // was filled with the first unaccepted input atom (i.e. the rejected
         // atom).  we'll call the HandleUnmatchedCharacter_ method on it.
@@ -178,7 +178,7 @@ Parser::Token ScannerNew::Scan ()
                 break;
 
             assert(accepted_string.length() == 1);
-            ReflexCpp_::Uint8 rejected_atom = accepted_string[0];
+            BarfCpp_::Uint8 rejected_atom = accepted_string[0];
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << "*** scanner: rejecting atom '";
                 DebugPrintAtom_(rejected_atom);
@@ -613,7 +613,7 @@ bool ScannerNew::IsInputAtEnd_ ()
 #line 614 "barf_preprocessor_scanner_new.cpp"
 }
 
-ReflexCpp_::Uint8 ScannerNew::ReadNextAtom_ ()
+BarfCpp_::Uint8 ScannerNew::ReadNextAtom_ ()
 {
 
 #line 153 "barf_preprocessor_scanner.reflex"
@@ -623,7 +623,7 @@ ReflexCpp_::Uint8 ScannerNew::ReadNextAtom_ ()
 #line 624 "barf_preprocessor_scanner_new.cpp"
 }
 
-void ScannerNew::DebugPrintAtom_ (ReflexCpp_::Uint8 atom)
+void ScannerNew::DebugPrintAtom_ (BarfCpp_::Uint8 atom)
 {
     if (atom == '\\')                    std::cerr << "\\\\";
     else if (atom == '"')                std::cerr << "\\\"";
@@ -634,7 +634,7 @@ void ScannerNew::DebugPrintAtom_ (ReflexCpp_::Uint8 atom)
     else
     {
         std::cerr.width(2);
-        std::cerr << "\\x" << std::hex << std::uppercase << ReflexCpp_::Uint16(atom);
+        std::cerr << "\\x" << std::hex << std::uppercase << BarfCpp_::Uint16(atom);
         std::cerr.width(1);
     }
 }
@@ -718,7 +718,7 @@ ReflexCpp_::AutomatonApparatus::DfaState_ const ScannerNew::ms_state_table_[] =
     { 21, 9, ms_transition_table_+139 },
     { 23, 0, ms_transition_table_+148 }
 };
-ReflexCpp_::Size const ScannerNew::ms_state_count_ = sizeof(ScannerNew::ms_state_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaState_);
+BarfCpp_::Size const ScannerNew::ms_state_count_ = sizeof(ScannerNew::ms_state_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaState_);
 
 ReflexCpp_::AutomatonApparatus::DfaTransition_ const ScannerNew::ms_transition_table_[] =
 {
@@ -871,9 +871,9 @@ ReflexCpp_::AutomatonApparatus::DfaTransition_ const ScannerNew::ms_transition_t
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+29 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+28 }
 };
-ReflexCpp_::Size const ScannerNew::ms_transition_count_ = sizeof(ScannerNew::ms_transition_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaTransition_);
+BarfCpp_::Size const ScannerNew::ms_transition_count_ = sizeof(ScannerNew::ms_transition_table_) / sizeof(ReflexCpp_::AutomatonApparatus::DfaTransition_);
 
-ReflexCpp_::Uint32 const ScannerNew::ms_accept_handler_count_ = 24;
+BarfCpp_::Uint32 const ScannerNew::ms_accept_handler_count_ = 24;
 
 
 #line 140 "barf_preprocessor_scanner.reflex"

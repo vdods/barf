@@ -12,6 +12,7 @@
 
 #include <sstream>
 
+#include "barf_optionsbase.hpp"
 #include "barf_preprocessor_parser.hpp"
 #include "barf_preprocessor_textifier.hpp"
 
@@ -219,7 +220,10 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
     if (m_include_body_root == NULL)
     {
         Parser parser;
-        string filename(m_include_filename_expression->GetTextValue(symbol_table));
+        // figure out the pathname from the targets search path
+        string filename(
+            g_options->GetTargetsSearchPath().GetFilePath(
+                m_include_filename_expression->GetTextValue(symbol_table)));
         if (!parser.OpenFile(filename))
         {
             EmitError("file \"" + filename + "\" not found", GetFiLoc());

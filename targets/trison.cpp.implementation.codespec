@@ -142,7 +142,7 @@ void <{class_name}::ResetForNewInput ()
             {
                 // get the current state (top of the stack)
                 assert(!m_stack_.empty());
-                TrisonCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+                BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
                 assert(current_state_index < ms_state_count_);
                 State_ const &current_state = ms_state_table_[current_state_index];
 <|if(is_defined(generate_debug_spew_code))
@@ -214,7 +214,7 @@ void <{class_name}::ResetForNewInput ()
         {
             // get the current state (top of the stack)
             assert(!m_stack_.empty());
-            TrisonCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+            BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
             assert(current_state_index < ms_state_count_);
             State_ const &current_state = ms_state_table_[current_state_index];
 <|if(is_defined(generate_debug_spew_code))
@@ -226,7 +226,7 @@ void <{class_name}::ResetForNewInput ()
             // loop through the current state's transitions and see if any match
             bool transition_exercised = false;
 <|if(is_defined(generate_debug_spew_code))
-            TrisonCpp_::Uint32 tested_lookahead_count = 0;
+            BarfCpp_::Uint32 tested_lookahead_count = 0;
 <|end_if
             for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
                                    *transition_end = current_state.m_transition_table+current_state.m_transition_count;
@@ -238,7 +238,7 @@ void <{class_name}::ResetForNewInput ()
 
                 // check if the lookaheads match those of this transition.
                 bool lookahead_sequence_matched = true;
-                for (TrisonCpp_::Uint32 i = 0; i < transition->m_lookahead_count; ++i)
+                for (BarfCpp_::Uint32 i = 0; i < transition->m_lookahead_count; ++i)
                 {
                     if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
                     {
@@ -260,7 +260,7 @@ void <{class_name}::ResetForNewInput ()
                 {
 <|if(is_defined(generate_debug_spew_code))
                     TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " current (relevant) lookahead(s):";)
-                    for (TrisonCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                    for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i);)
                     }
@@ -278,7 +278,7 @@ void <{class_name}::ResetForNewInput ()
             {
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " current (relevant) lookahead(s):";)
-                for (TrisonCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i);)
                 }
@@ -293,7 +293,7 @@ void <{class_name}::ResetForNewInput ()
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
                     // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == TrisonCpp_::Uint32(nonterminal_to_parse));
+                    assert(m_stack_[0].m_state_index == BarfCpp_::Uint32(nonterminal_to_parse));
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
                     *return_token = m_stack_.rbegin()->m_token_data;
@@ -452,7 +452,7 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
     }
 }
 
-<{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule_index_)
+<{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_)
 {
     assert(rule_index_ < ms_rule_count_);
 <|if(is_defined(generate_debug_spew_code))
@@ -535,7 +535,7 @@ std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &tok
     { <{class_name}::Nonterminal_::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
 <|end_loop
 };
-TrisonCpp_::Size const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(*<{class_name}::ms_rule_table_);
+BarfCpp_::Size const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(*<{class_name}::ms_rule_table_);
 
 <{class_name}::State_ const <{class_name}::ms_state_table_[] =
 {
@@ -543,7 +543,7 @@ TrisonCpp_::Size const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_
     { <{_dpda_state_transition_count[i]}, ms_transition_table_+<{_dpda_state_transition_offset[i]}<{if(is_defined(generate_debug_spew_code))}, <{_dpda_state_description[i]}<{end_if} }<{if(i < _dpda_state_count-1)},<{end_if}
 <|end_loop
 };
-TrisonCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
+BarfCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
 
 <{class_name}::Transition_ const <{class_name}::ms_transition_table_[] =
 {
@@ -551,7 +551,7 @@ TrisonCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms
     { <{class_name}::Transition_::<{_dpda_transition_type_name[i]}, <{_dpda_transition_data[i]}, <{_dpda_transition_lookahead_count[i]}, ms_lookahead_table_+<{_dpda_transition_lookahead_offset[i]} }<{if(i < _dpda_transition_count-1)},<{end_if}
 <|end_loop
 };
-TrisonCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
+BarfCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
 
 <{class_name}::Token::Id const <{class_name}::ms_lookahead_table_[] =
 {
@@ -565,7 +565,7 @@ TrisonCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name
 <{if(i < _dpda_lookahead_count-1)},<{end_if}
 <|end_loop
 };
-TrisonCpp_::Size const <{class_name}::ms_lookahead_count_ = sizeof(<{class_name}::ms_lookahead_table_) / sizeof(*<{class_name}::ms_lookahead_table_);
+BarfCpp_::Size const <{class_name}::ms_lookahead_count_ = sizeof(<{class_name}::ms_lookahead_table_) / sizeof(*<{class_name}::ms_lookahead_table_);
 
 <|if(is_defined(generate_debug_spew_code))
 char const *const <{class_name}::ms_token_name_table_[] =
@@ -581,17 +581,17 @@ char const *const <{class_name}::ms_token_name_table_[] =
 <{if(i < 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1-1)},<{end_if}
 <|end_loop
 };
-TrisonCpp_::Size const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
+BarfCpp_::Size const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
 
 <|end_if
 enum
 {
     TABLE_SIZE_ASSERTIONS_ =
-        TrisonCpp_::Assert<<{class_name}::ms_rule_count_ == <{_rule_count}>::v &&
-        TrisonCpp_::Assert<<{class_name}::ms_state_count_ == <{_dpda_state_count}>::v &&
-        TrisonCpp_::Assert<<{class_name}::ms_transition_count_ == <{_dpda_transition_count}>::v &&
-        TrisonCpp_::Assert<<{class_name}::ms_lookahead_count_ == <{_dpda_lookahead_count}>::v<{if(is_defined(generate_debug_spew_code))} &&
-        TrisonCpp_::Assert<<{class_name}::ms_token_name_count_ == <{256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1}>::v<{end_if}
+        BarfCpp_::Assert<<{class_name}::ms_rule_count_ == <{_rule_count}>::v &&
+        BarfCpp_::Assert<<{class_name}::ms_state_count_ == <{_dpda_state_count}>::v &&
+        BarfCpp_::Assert<<{class_name}::ms_transition_count_ == <{_dpda_transition_count}>::v &&
+        BarfCpp_::Assert<<{class_name}::ms_lookahead_count_ == <{_dpda_lookahead_count}>::v<{if(is_defined(generate_debug_spew_code))} &&
+        BarfCpp_::Assert<<{class_name}::ms_token_name_count_ == <{256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1}>::v<{end_if}
 };
 
 // ///////////////////////////////////////////////////////////////////////

@@ -2,6 +2,8 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- hide g_options in barf_optionsbase.cpp and make a GetOptions() accessor
+  which returns a (const?) reference.
 - make FirstContainsSecond(x,y) and FirstDoesntContainSecond(x,y) funcs
 * use BARF_TARGETS_SEARCH_PATH in example app configure.ac files
 - guarantee that errors will be reported such that the line numbers never
@@ -261,14 +263,14 @@
   overridable by the primary source
 - add --emit-[only-]targets and --omit-targets to control generation of
   specific targets (e.g. if you wanted to not generate code for anything,
-  but you did want a dot graph of the NPDA).
+  but you did want a dot graph of the NPDA).  maybe do this with
+  pre/postdefine targets
 - add commandline option to describe the return codes (?)
 - hopefully merge some of the master trison_main.cpp and reflex_main.cpp stuff
 - clean up the parsing so that it's less about passing crap around and more
   about using member variables of the parser (assign rule indices on the fly,
   etc)
-- figure out how to guarantee branch uniqueness per Action_ branch list in
-  C++ npda target.
+- figure out how to guarantee branch uniqueness per Action_ branch list in npda.
 - add default values in trison cpp targetspec for Scan implementation (i.e.
   just returning the ascii char values from stdin)
 - you shouldn't have to specify %terminal 'X' for ascii chars.  you should
