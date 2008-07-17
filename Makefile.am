@@ -136,9 +136,6 @@ bin_PROGRAMS = \
 	trison \
 	trison.unstable
 
-noinst_PROGRAMS = \
-	playground
-
 EXTRA_DIST = \
     bootstrap.sh \
 	configure.ac \
@@ -393,30 +390,6 @@ bpp_LDADD = \
 bpp_SOURCES = \
 	app/bpp/bpp_main.cpp \
 	app/bpp/bpp_options.cpp
-
-##############################################################################
-# playground (app for testing stuff)
-##############################################################################
-
-playground_CPPFLAGS = \
-	$(AM_CPPFLAGS) \
-	-I$(top_srcdir)/app \
-    -I$(top_srcdir)/lib/commonlang \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/targetspec \
-    -I$(top_srcdir)/lib/preprocessor \
-    -I$(top_srcdir)/lib/regex
-
-playground_LDADD = \
-    $(LDADD) \
-    $(top_builddir)/lib/libbarf-targetspec.la \
-    $(top_builddir)/lib/libbarf-commonlang.la \
-    $(top_builddir)/lib/libbarf-preprocessor.la \
-    $(top_builddir)/lib/libbarf-regex.la \
-    $(top_builddir)/lib/libbarf-core.la
-
-playground_SOURCES = \
-	app/playground.cpp
 
 ##############################################################################
 # reflex
