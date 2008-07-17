@@ -17,10 +17,10 @@ string const &GetTransitionTypeString (TransitionType transition_type)
 {
     static string const s_transition_type_string[TT_COUNT] =
     {
-        "TT_INPUT_ATOM",
-        "TT_INPUT_ATOM_RANGE",
-        "TT_CONDITIONAL",
-        "TT_EPSILON"
+        "INPUT_ATOM",
+        "INPUT_ATOM_RANGE",
+        "CONDITIONAL",
+        "EPSILON"
     };
     assert(transition_type < TT_COUNT);
     return s_transition_type_string[transition_type];

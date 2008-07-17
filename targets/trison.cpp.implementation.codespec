@@ -157,7 +157,7 @@ void <{class_name}::ResetForNewInput ()
                      transition != transition_end;
                      ++transition)
                 {
-                    if (transition->m_type == Transition_::TT_SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
+                    if (transition->m_type == Transition_::SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
                     {
                         accepts_error = true;
                         break;
@@ -233,8 +233,8 @@ void <{class_name}::ResetForNewInput ()
                 transition != transition_end;
                 ++transition)
             {
-                // the non-default transitions can only be TT_REDUCE or TT_SHIFT
-                assert(transition->m_type == Transition_::TT_REDUCE || transition->m_type == Transition_::TT_SHIFT);
+                // the non-default transitions can only be REDUCE or SHIFT
+                assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
 
                 // check if the lookaheads match those of this transition.
                 bool lookahead_sequence_matched = true;
@@ -397,7 +397,7 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
 {
     switch (transition.m_type)
     {
-        case Transition_::TT_REDUCE:
+        case Transition_::REDUCE:
         {
             // execute the indicated reduction rule, push the returned Token
             // onto the front of the lookahead queue, then pop the corresponding
@@ -420,13 +420,13 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
             return false; // indicating the parser isn't returning
         }
 
-        case Transition_::TT_RETURN:
+        case Transition_::RETURN:
 <|if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " RETURN" << std::endl;)
 <|end_if
             return true; // indicating the parser is returning
 
-        case Transition_::TT_SHIFT:
+        case Transition_::SHIFT:
             // push the state (indicated by the shift transition) and token data
             // onto the stack, then pop the corresponding lookahead.
             assert(transition.m_data < ms_state_count_);
@@ -439,7 +439,7 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
             m_lookahead_queue_.pop_front();
             return false; // indicating the parser isn't returning
 
-        case Transition_::TT_ERROR_PANIC:
+        case Transition_::ERROR_PANIC:
 <|if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " ERROR_PANIC" << std::endl;)
 <|end_if

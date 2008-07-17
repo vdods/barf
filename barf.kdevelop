@@ -136,19 +136,22 @@
   <kdevfileview>
     <groups>
       <group pattern="app/bpp/*" name="/app/bpp" />
+      <group pattern="app/dev/*" name="/app/dev" />
+      <group pattern="app/example/calculator/*" name="/app/example/calculator" />
+      <group pattern="app/example/*" name="/app/example" />
       <group pattern="app/reflex/*" name="/app/reflex" />
-      <group pattern="app/trison/*" name="/app/trison" />
       <group pattern="app/trison.unstable/*" name="/app/trison.unstable" />
       <group pattern="app/*" name="/app" />
-      <group pattern="targets/*" name="/targets" />
       <group pattern="doc/doxygen_pages/*" name="/doc/doxygen_pages" />
       <group pattern="doc/*" name="/doc" />
+      <group pattern="extra/*" name="/extra" />
       <group pattern="lib/commonlang/*" name="/lib/commonlang" />
       <group pattern="lib/core/*" name="/lib/core" />
       <group pattern="lib/preprocessor/*" name="/lib/preprocessor" />
       <group pattern="lib/regex/*" name="/lib/regex" />
       <group pattern="lib/targetspec/*" name="/lib/targetspec" />
       <group pattern="lib/*" name="/lib" />
+      <group pattern="targets/*" name="/targets" />
       <group pattern="*" name="/" />
       <hidenonprojectfiles>true</hidenonprojectfiles>
       <hidenonlocation>true</hidenonlocation>

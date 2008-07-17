@@ -267,7 +267,7 @@ public:
     {
         enum Type
         {
-            TT_INPUT_ATOM = 0, TT_INPUT_ATOM_RANGE, TT_CONDITIONAL
+            INPUT_ATOM = 0, INPUT_ATOM_RANGE, CONDITIONAL
         }; // end of enum ReflexCpp_::AutomatonApparatus::DfaTransition_::Type
 
         Uint8 m_transition_type;
@@ -277,20 +277,20 @@ public:
 
         bool AcceptsInputAtom (Uint8 input_atom) const
         {
-            assert(m_transition_type == TT_INPUT_ATOM || m_transition_type == TT_INPUT_ATOM_RANGE);
-            // returns true iff this transition is TT_INPUT_ATOM and input_atom
-            // matches m_data_0, or this transition is TT_INPUT_ATOM_RANGE and
+            assert(m_transition_type == INPUT_ATOM || m_transition_type == INPUT_ATOM_RANGE);
+            // returns true iff this transition is INPUT_ATOM and input_atom
+            // matches m_data_0, or this transition is INPUT_ATOM_RANGE and
             // input_atom is within the range [m_data_0, m_data_1] inclusive.
-            return m_transition_type == TT_INPUT_ATOM &&
+            return m_transition_type == INPUT_ATOM &&
                    m_data_0 == input_atom
                    ||
-                   m_transition_type == TT_INPUT_ATOM_RANGE &&
+                   m_transition_type == INPUT_ATOM_RANGE &&
                    m_data_0 <= input_atom && input_atom <= m_data_1;
         }
         bool AcceptsConditionalFlags (Uint8 conditional_flags) const
         {
-            assert(m_transition_type == TT_CONDITIONAL);
-            // returns true iff this transition is TT_CONDITIONAL and no relevant bits
+            assert(m_transition_type == CONDITIONAL);
+            // returns true iff this transition is CONDITIONAL and no relevant bits
             // in conditional_flags conflict with this transition's conditional mask
             // (m_data_0) and flags (m_data_1).
             return ((conditional_flags ^ m_data_1) & m_data_0) == 0;
@@ -394,12 +394,12 @@ private:
              transition != transition_end;
              ++transition)
         {
-            assert(transition->m_transition_type == DfaTransition_::TT_INPUT_ATOM ||
-                   transition->m_transition_type == DfaTransition_::TT_INPUT_ATOM_RANGE ||
-                   transition->m_transition_type == DfaTransition_::TT_CONDITIONAL);
+            assert(transition->m_transition_type == DfaTransition_::INPUT_ATOM ||
+                   transition->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE ||
+                   transition->m_transition_type == DfaTransition_::CONDITIONAL);
             // if it's an atomic transition, check if it accepts input_atom.
-            if (transition->m_transition_type == DfaTransition_::TT_INPUT_ATOM ||
-                transition->m_transition_type == DfaTransition_::TT_INPUT_ATOM_RANGE)
+            if (transition->m_transition_type == DfaTransition_::INPUT_ATOM ||
+                transition->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE)
             {
                 if (transition->AcceptsInputAtom(input_atom))
                 {
@@ -449,21 +449,21 @@ private:
              t != t_end;
              ++t)
         {
-            assert((t->m_transition_type == DfaTransition_::TT_INPUT_ATOM ||
-                    t->m_transition_type == DfaTransition_::TT_INPUT_ATOM_RANGE ||
-                    t->m_transition_type == DfaTransition_::TT_CONDITIONAL)
+            assert((t->m_transition_type == DfaTransition_::INPUT_ATOM ||
+                    t->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE ||
+                    t->m_transition_type == DfaTransition_::CONDITIONAL)
                    &&
                    "invalid DfaTransition_::Type");
             assert(t->m_target_dfa_state >= state_table &&
                    t->m_target_dfa_state < state_table + state_count &&
                    "transition target state out of range "
                    "(does not point to a valid state)");
-            if (t->m_transition_type == DfaTransition_::TT_INPUT_ATOM_RANGE)
+            if (t->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE)
             {
                 assert(t->m_data_0 < t->m_data_1 &&
                        "can't specify a single-element range of atoms");
             }
-            else if (t->m_transition_type == DfaTransition_::TT_CONDITIONAL)
+            else if (t->m_transition_type == DfaTransition_::CONDITIONAL)
             {
                 assert(t->m_data_0 != 0 &&
                        "can't have a conditional with a mask of zero");

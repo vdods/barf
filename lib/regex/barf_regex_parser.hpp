@@ -389,7 +389,7 @@ private:
 
     struct Transition_
     {
-        enum Type { TT_REDUCE = 1, TT_RETURN, TT_SHIFT, TT_ERROR_PANIC };
+        enum Type { ERROR_PANIC = 0, RETURN, REDUCE, SHIFT };
         TrisonCpp_::Uint8 m_type;
         TrisonCpp_::Uint32 m_data; // TODO: smallest int
         TrisonCpp_::Uint32 m_lookahead_count; // TODO smallest int

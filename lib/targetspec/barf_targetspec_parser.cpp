@@ -142,7 +142,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                      transition != transition_end;
                      ++transition)
                 {
-                    if (transition->m_type == Transition_::TT_SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
+                    if (transition->m_type == Transition_::SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
                     {
                         accepts_error = true;
                         break;
@@ -222,8 +222,8 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 transition != transition_end;
                 ++transition)
             {
-                // the non-default transitions can only be TT_REDUCE or TT_SHIFT
-                assert(transition->m_type == Transition_::TT_REDUCE || transition->m_type == Transition_::TT_SHIFT);
+                // the non-default transitions can only be REDUCE or SHIFT
+                assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
 
                 // check if the lookaheads match those of this transition.
                 bool lookahead_sequence_matched = true;
@@ -447,7 +447,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
 {
     switch (transition.m_type)
     {
-        case Transition_::TT_REDUCE:
+        case Transition_::REDUCE:
         {
             // execute the indicated reduction rule, push the returned Token
             // onto the front of the lookahead queue, then pop the corresponding
@@ -474,7 +474,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             return false; // indicating the parser isn't returning
         }
 
-        case Transition_::TT_RETURN:
+        case Transition_::RETURN:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 147 "barf_targetspec_parser.trison"
 "TargetSpec::Parser (at " << GetFiLoc() << "):"
@@ -482,7 +482,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
  << " RETURN" << std::endl;)
             return true; // indicating the parser is returning
 
-        case Transition_::TT_SHIFT:
+        case Transition_::SHIFT:
             // push the state (indicated by the shift transition) and token data
             // onto the stack, then pop the corresponding lookahead.
             assert(transition.m_data < ms_state_count_);
@@ -497,7 +497,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             m_lookahead_queue_.pop_front();
             return false; // indicating the parser isn't returning
 
-        case Transition_::TT_ERROR_PANIC:
+        case Transition_::ERROR_PANIC:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 147 "barf_targetspec_parser.trison"
 "TargetSpec::Parser (at " << GetFiLoc() << "):"
@@ -986,125 +986,125 @@ TrisonCpp_::Size const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_)
 
 Parser::Transition_ const Parser::ms_transition_table_[] =
 {
-    { Parser::Transition_::TT_REDUCE, 19, 0, ms_lookahead_table_+0 },
-    { Parser::Transition_::TT_SHIFT, 1, 1, ms_lookahead_table_+0 },
-    { Parser::Transition_::TT_SHIFT, 2, 1, ms_lookahead_table_+1 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+2 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+2 },
-    { Parser::Transition_::TT_SHIFT, 3, 1, ms_lookahead_table_+2 },
-    { Parser::Transition_::TT_SHIFT, 8, 1, ms_lookahead_table_+3 },
-    { Parser::Transition_::TT_SHIFT, 9, 1, ms_lookahead_table_+4 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+5 },
-    { Parser::Transition_::TT_SHIFT, 4, 1, ms_lookahead_table_+5 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+6 },
-    { Parser::Transition_::TT_SHIFT, 5, 1, ms_lookahead_table_+6 },
-    { Parser::Transition_::TT_SHIFT, 6, 1, ms_lookahead_table_+7 },
-    { Parser::Transition_::TT_REDUCE, 21, 0, ms_lookahead_table_+8 },
-    { Parser::Transition_::TT_REDUCE, 1, 0, ms_lookahead_table_+8 },
-    { Parser::Transition_::TT_SHIFT, 7, 1, ms_lookahead_table_+8 },
-    { Parser::Transition_::TT_REDUCE, 20, 0, ms_lookahead_table_+9 },
-    { Parser::Transition_::TT_REDUCE, 18, 0, ms_lookahead_table_+9 },
-    { Parser::Transition_::TT_REDUCE, 4, 0, ms_lookahead_table_+9 },
-    { Parser::Transition_::TT_SHIFT, 10, 1, ms_lookahead_table_+9 },
-    { Parser::Transition_::TT_REDUCE, 0, 0, ms_lookahead_table_+10 },
-    { Parser::Transition_::TT_SHIFT, 11, 1, ms_lookahead_table_+10 },
-    { Parser::Transition_::TT_SHIFT, 14, 1, ms_lookahead_table_+11 },
-    { Parser::Transition_::TT_SHIFT, 27, 1, ms_lookahead_table_+12 },
-    { Parser::Transition_::TT_SHIFT, 30, 1, ms_lookahead_table_+13 },
-    { Parser::Transition_::TT_SHIFT, 32, 1, ms_lookahead_table_+14 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+15 },
-    { Parser::Transition_::TT_SHIFT, 12, 1, ms_lookahead_table_+15 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+16 },
-    { Parser::Transition_::TT_SHIFT, 13, 1, ms_lookahead_table_+16 },
-    { Parser::Transition_::TT_REDUCE, 5, 0, ms_lookahead_table_+17 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+17 },
-    { Parser::Transition_::TT_SHIFT, 15, 1, ms_lookahead_table_+17 },
-    { Parser::Transition_::TT_REDUCE, 9, 0, ms_lookahead_table_+18 },
-    { Parser::Transition_::TT_SHIFT, 16, 1, ms_lookahead_table_+18 },
-    { Parser::Transition_::TT_SHIFT, 17, 1, ms_lookahead_table_+19 },
-    { Parser::Transition_::TT_SHIFT, 18, 1, ms_lookahead_table_+20 },
-    { Parser::Transition_::TT_SHIFT, 19, 1, ms_lookahead_table_+21 },
-    { Parser::Transition_::TT_SHIFT, 20, 1, ms_lookahead_table_+22 },
-    { Parser::Transition_::TT_REDUCE, 12, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::TT_REDUCE, 10, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::TT_REDUCE, 13, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::TT_REDUCE, 11, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::TT_REDUCE, 6, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::TT_SHIFT, 21, 1, ms_lookahead_table_+23 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+24 },
-    { Parser::Transition_::TT_SHIFT, 22, 1, ms_lookahead_table_+24 },
-    { Parser::Transition_::TT_SHIFT, 23, 1, ms_lookahead_table_+25 },
-    { Parser::Transition_::TT_SHIFT, 24, 1, ms_lookahead_table_+26 },
-    { Parser::Transition_::TT_SHIFT, 25, 1, ms_lookahead_table_+27 },
-    { Parser::Transition_::TT_SHIFT, 26, 1, ms_lookahead_table_+28 },
-    { Parser::Transition_::TT_REDUCE, 16, 0, ms_lookahead_table_+29 },
-    { Parser::Transition_::TT_REDUCE, 14, 0, ms_lookahead_table_+29 },
-    { Parser::Transition_::TT_REDUCE, 17, 0, ms_lookahead_table_+29 },
-    { Parser::Transition_::TT_REDUCE, 15, 0, ms_lookahead_table_+29 },
-    { Parser::Transition_::TT_REDUCE, 7, 0, ms_lookahead_table_+29 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+29 },
-    { Parser::Transition_::TT_SHIFT, 28, 1, ms_lookahead_table_+29 },
-    { Parser::Transition_::TT_REDUCE, 9, 0, ms_lookahead_table_+30 },
-    { Parser::Transition_::TT_SHIFT, 16, 1, ms_lookahead_table_+30 },
-    { Parser::Transition_::TT_SHIFT, 17, 1, ms_lookahead_table_+31 },
-    { Parser::Transition_::TT_SHIFT, 18, 1, ms_lookahead_table_+32 },
-    { Parser::Transition_::TT_SHIFT, 19, 1, ms_lookahead_table_+33 },
-    { Parser::Transition_::TT_SHIFT, 29, 1, ms_lookahead_table_+34 },
-    { Parser::Transition_::TT_REDUCE, 8, 0, ms_lookahead_table_+35 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+35 },
-    { Parser::Transition_::TT_SHIFT, 5, 1, ms_lookahead_table_+35 },
-    { Parser::Transition_::TT_SHIFT, 31, 1, ms_lookahead_table_+36 },
-    { Parser::Transition_::TT_REDUCE, 2, 0, ms_lookahead_table_+37 },
-    { Parser::Transition_::TT_SHIFT, 7, 1, ms_lookahead_table_+37 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+38 },
-    { Parser::Transition_::TT_SHIFT, 5, 1, ms_lookahead_table_+38 },
-    { Parser::Transition_::TT_SHIFT, 33, 1, ms_lookahead_table_+39 },
-    { Parser::Transition_::TT_REDUCE, 3, 0, ms_lookahead_table_+40 },
-    { Parser::Transition_::TT_SHIFT, 7, 1, ms_lookahead_table_+40 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+41 },
-    { Parser::Transition_::TT_SHIFT, 3, 1, ms_lookahead_table_+41 },
-    { Parser::Transition_::TT_SHIFT, 35, 1, ms_lookahead_table_+42 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+43 },
-    { Parser::Transition_::TT_REDUCE, 4, 0, ms_lookahead_table_+43 },
-    { Parser::Transition_::TT_SHIFT, 37, 1, ms_lookahead_table_+43 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+44 },
-    { Parser::Transition_::TT_SHIFT, 11, 1, ms_lookahead_table_+44 },
-    { Parser::Transition_::TT_SHIFT, 14, 1, ms_lookahead_table_+45 },
-    { Parser::Transition_::TT_SHIFT, 27, 1, ms_lookahead_table_+46 },
-    { Parser::Transition_::TT_SHIFT, 30, 1, ms_lookahead_table_+47 },
-    { Parser::Transition_::TT_SHIFT, 32, 1, ms_lookahead_table_+48 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+49 },
-    { Parser::Transition_::TT_SHIFT, 11, 1, ms_lookahead_table_+49 },
-    { Parser::Transition_::TT_SHIFT, 39, 1, ms_lookahead_table_+50 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+51 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+51 },
-    { Parser::Transition_::TT_SHIFT, 14, 1, ms_lookahead_table_+51 },
-    { Parser::Transition_::TT_SHIFT, 27, 1, ms_lookahead_table_+52 },
-    { Parser::Transition_::TT_SHIFT, 41, 1, ms_lookahead_table_+53 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+54 },
-    { Parser::Transition_::TT_REDUCE, 9, 0, ms_lookahead_table_+54 },
-    { Parser::Transition_::TT_SHIFT, 16, 1, ms_lookahead_table_+54 },
-    { Parser::Transition_::TT_SHIFT, 17, 1, ms_lookahead_table_+55 },
-    { Parser::Transition_::TT_SHIFT, 18, 1, ms_lookahead_table_+56 },
-    { Parser::Transition_::TT_SHIFT, 19, 1, ms_lookahead_table_+57 },
-    { Parser::Transition_::TT_SHIFT, 43, 1, ms_lookahead_table_+58 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+59 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+59 },
-    { Parser::Transition_::TT_SHIFT, 22, 1, ms_lookahead_table_+59 },
-    { Parser::Transition_::TT_SHIFT, 23, 1, ms_lookahead_table_+60 },
-    { Parser::Transition_::TT_SHIFT, 24, 1, ms_lookahead_table_+61 },
-    { Parser::Transition_::TT_SHIFT, 25, 1, ms_lookahead_table_+62 },
-    { Parser::Transition_::TT_SHIFT, 45, 1, ms_lookahead_table_+63 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+64 },
-    { Parser::Transition_::TT_REDUCE, 19, 0, ms_lookahead_table_+64 },
-    { Parser::Transition_::TT_SHIFT, 47, 1, ms_lookahead_table_+64 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+65 },
-    { Parser::Transition_::TT_SHIFT, 8, 1, ms_lookahead_table_+65 },
-    { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+66 },
-    { Parser::Transition_::TT_SHIFT, 5, 1, ms_lookahead_table_+66 },
-    { Parser::Transition_::TT_SHIFT, 49, 1, ms_lookahead_table_+67 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+68 },
-    { Parser::Transition_::TT_SHIFT, 7, 1, ms_lookahead_table_+68 }
+    { Parser::Transition_::REDUCE, 19, 0, ms_lookahead_table_+0 },
+    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+0 },
+    { Parser::Transition_::SHIFT, 2, 1, ms_lookahead_table_+1 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+2 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+2 },
+    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+2 },
+    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+3 },
+    { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+4 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+5 },
+    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+5 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+6 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+6 },
+    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+7 },
+    { Parser::Transition_::REDUCE, 21, 0, ms_lookahead_table_+8 },
+    { Parser::Transition_::REDUCE, 1, 0, ms_lookahead_table_+8 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+8 },
+    { Parser::Transition_::REDUCE, 20, 0, ms_lookahead_table_+9 },
+    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+9 },
+    { Parser::Transition_::REDUCE, 4, 0, ms_lookahead_table_+9 },
+    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+9 },
+    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+10 },
+    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+10 },
+    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+11 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+12 },
+    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+13 },
+    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+14 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+15 },
+    { Parser::Transition_::SHIFT, 12, 1, ms_lookahead_table_+15 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+16 },
+    { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+16 },
+    { Parser::Transition_::REDUCE, 5, 0, ms_lookahead_table_+17 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+17 },
+    { Parser::Transition_::SHIFT, 15, 1, ms_lookahead_table_+17 },
+    { Parser::Transition_::REDUCE, 9, 0, ms_lookahead_table_+18 },
+    { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+18 },
+    { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+19 },
+    { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+20 },
+    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+21 },
+    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+22 },
+    { Parser::Transition_::REDUCE, 12, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 10, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 13, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 6, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+23 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+24 },
+    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+24 },
+    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+25 },
+    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+26 },
+    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+27 },
+    { Parser::Transition_::SHIFT, 26, 1, ms_lookahead_table_+28 },
+    { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+29 },
+    { Parser::Transition_::REDUCE, 14, 0, ms_lookahead_table_+29 },
+    { Parser::Transition_::REDUCE, 17, 0, ms_lookahead_table_+29 },
+    { Parser::Transition_::REDUCE, 15, 0, ms_lookahead_table_+29 },
+    { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+29 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+29 },
+    { Parser::Transition_::SHIFT, 28, 1, ms_lookahead_table_+29 },
+    { Parser::Transition_::REDUCE, 9, 0, ms_lookahead_table_+30 },
+    { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+30 },
+    { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+31 },
+    { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+32 },
+    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+33 },
+    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+34 },
+    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+35 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+35 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+35 },
+    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+36 },
+    { Parser::Transition_::REDUCE, 2, 0, ms_lookahead_table_+37 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+37 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+38 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+38 },
+    { Parser::Transition_::SHIFT, 33, 1, ms_lookahead_table_+39 },
+    { Parser::Transition_::REDUCE, 3, 0, ms_lookahead_table_+40 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+40 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+41 },
+    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+41 },
+    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+42 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+43 },
+    { Parser::Transition_::REDUCE, 4, 0, ms_lookahead_table_+43 },
+    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+43 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+44 },
+    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+44 },
+    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+45 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+46 },
+    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+47 },
+    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+48 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+49 },
+    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+49 },
+    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+50 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+51 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+51 },
+    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+51 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+52 },
+    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+53 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+54 },
+    { Parser::Transition_::REDUCE, 9, 0, ms_lookahead_table_+54 },
+    { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+54 },
+    { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+55 },
+    { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+56 },
+    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+57 },
+    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+58 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+59 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+59 },
+    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+59 },
+    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+60 },
+    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+61 },
+    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+62 },
+    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+63 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+64 },
+    { Parser::Transition_::REDUCE, 19, 0, ms_lookahead_table_+64 },
+    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+64 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+65 },
+    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+65 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+66 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+66 },
+    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+67 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+68 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+68 }
 };
 TrisonCpp_::Size const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
 

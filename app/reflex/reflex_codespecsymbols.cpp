@@ -136,11 +136,12 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
     // _nfa_transition_count -- gives the number of transitions in this NFA
     //
     // _nfa_transition_type_integer[_nfa_transition_count] -- gives the integer value
-    // of the transition type -- 0 (TT_INPUT_ATOM), 1 (TT_INPUT_ATOM_RANGE),
-    // 2 (TT_CONDITIONAL), or 3 (TT_EPSILON).
+    // of the transition type.  valid values are INPUT_ATOM=0, INPUT_ATOM_RANGE=1,
+    // CONDITIONAL=2, EPSILON=3.
     //
     // _nfa_transition_type_name[_nfa_transition_count] -- gives the text name
-    // of the transition type (i.e. "TT_EPSILON", etc).
+    // of the transition type.  valid values are "INPUT_ATOM", "INPUT_ATOM_RANGE",
+    // "CONDITIONAL", "EPSILON".
     //
     // _nfa_transition_data_0[_nfa_transition_count] and
     // _nfa_transition_data_1[_nfa_transition_count] give the applicable associated
@@ -259,10 +260,12 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
     // _dfa_transition_count -- gives the number of transitions in this DFA
     //
     // _dfa_transition_type_integer[_dfa_transition_count] -- gives the integer value
-    // of the transition type (i.e. the enum value of TT_EPSILON (3), etc).
+    // of the transition type.  valid values are INPUT_ATOM=0, INPUT_ATOM_RANGE=1,
+    // CONDITIONAL=2.
     //
     // _dfa_transition_type_name[_dfa_transition_count] -- gives the text name
-    // of the transition type (i.e. "TT_EPSILON", etc).
+    // of the transition type.  valid values are "INPUT_ATOM", "INPUT_ATOM_RANGE",
+    // "CONDITIONAL".
     //
     // _dfa_transition_data_0[_dfa_transition_count] and
     // _dfa_transition_data_1[_dfa_transition_count] give the data needed by

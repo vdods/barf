@@ -39,7 +39,20 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	force-reflex-parser \
 	spotless \
 	trison-parser \
-	force-trison-parser
+	force-trison-parser \
+	\
+	all-test-scanners \
+	test-barf-commonlang-scanner \
+	test-barf-preprocessor-scanner \
+	clean-all-test-scanners \
+	\
+	all-test-parsers \
+	test-barf-preprocessor-parser \
+	test-barf-regex-parser \
+	test-barf-targetspec-parser \
+	test-reflex-parser \
+	test-trison-parser \
+	clean-all-test-parsers
 
 libbarf-all: libbarf-commonlang libbarf-core libbarf-targetspec libbarf-preprocessor libbarf-regex
 libbarf-commonlang: lib/libbarf-commonlang.la
@@ -97,10 +110,10 @@ clean-all-scanner-extras:
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.png
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.dot
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.png
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.dot
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.png
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.dfa.dot
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.dfa.png
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.nfa.dot
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.nfa.png
 
 clean-all-scanners: clean-all-scanner-extras
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
@@ -118,6 +131,28 @@ force-all-parsers: \
 force-all-scanners: \
 	force-barf-commonlang-scanner \
 	force-barf-preprocessor-scanner
+
+all-test-scanners: \
+	test-barf-commonlang-scanner \
+	test-barf-preprocessor-scanner
+
+clean-all-test-scanners:
+	rm -f test/barf_commonlang_scanner.*
+	rm -f test/barf_preprocessor_scanner_new.*
+
+all-test-parsers: \
+	test-barf-preprocessor-parser \
+	test-barf-regex-parser \
+	test-barf-targetspec-parser \
+	test-reflex-parser \
+	test-trison-parser
+
+clean-all-test-parsers:
+	rm -f test/barf_preprocessor_parser.*
+	rm -f test/barf_regex_parser.*
+	rm -f test/barf_targetspec_parser.*
+	rm -f test/reflex_parser.*
+	rm -f test/trison_parser.*
 
 noinst_LTLIBRARIES = \
 	lib/libbarf-commonlang.la \
@@ -270,10 +305,18 @@ force-barf-commonlang-scanner:
 barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex $(STABLE_REFLEX) $(TARGETS_PATH)/reflex.cpp.targetspec $(TARGETS_PATH)/reflex.cpp.header.codespec $(TARGETS_PATH)/reflex.cpp.implementation.codespec
-	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner.dfa.dot
+	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner_new.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner_new.dfa.dot
 
 force-barf-preprocessor-scanner:
-	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner.dfa.dot
+	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner_new.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner_new.dfa.dot
+
+test-barf-commonlang-scanner: reflex
+	mkdir -p test
+	./reflex $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-nfa-dot-graph barf_commonlang_scanner.nfa.dot --generate-dfa-dot-graph barf_commonlang_scanner.dfa.dot
+
+test-barf-preprocessor-scanner: reflex
+	mkdir -p test
+	./reflex $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-nfa-dot-graph barf_preprocessor_scanner_new.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner_new.dfa.dot
 else # !STABLE_REFLEX_EXISTS
 barf-commonlang-scanner force-barf-commonlang-scanner:
 	@echo "!!!"
@@ -284,6 +327,18 @@ barf-commonlang-scanner force-barf-commonlang-scanner:
 barf-preprocessor-scanner force-barf-preprocessor-scanner:
 	@echo "!!!"
 	@echo "!!! Can't build barf preprocessor scanner without stable reflex binary."
+	@echo "!!! Use --with-stable-reflex configure option."
+	@echo "!!!"
+
+test-barf-commonlang-scanner:
+	@echo "!!!"
+	@echo "!!! Can't make test-barf-commonlang-scanner without stable reflex binary."
+	@echo "!!! Use --with-stable-reflex configure option."
+	@echo "!!!"
+
+test-barf-preprocessor-scanner:
+	@echo "!!!"
+	@echo "!!! Can't make test-barf-preprocessor-scanner without stable reflex binary."
 	@echo "!!! Use --with-stable-reflex configure option."
 	@echo "!!!"
 endif
@@ -326,6 +381,18 @@ $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/targe
 
 force-barf-targetspec-parser:
 	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/targetspec --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-dpda-dot-graph barf_targetspec_parser.dpda.dot --generate-dpda-states-file barf_targetspec_parser.dpda.states
+
+test-barf-preprocessor-parser: trison
+	mkdir -p test
+	./trison $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-dpda-dot-graph barf_preprocessor_parser.dpda.dot --generate-dpda-states-file barf_preprocessor_parser.dpda.states
+
+test-barf-regex-parser: trison
+	mkdir -p test
+	./trison $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-dpda-dot-graph barf_regex_parser.dpda.dot --generate-dpda-states-file barf_regex_parser.dpda.states
+
+test-barf-targetspec-parser: trison
+	mkdir -p test
+	./trison $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-dpda-dot-graph barf_targetspec_parser.dpda.dot --generate-dpda-states-file barf_targetspec_parser.dpda.states
 else # !STABLE_TRISON_EXISTS
 barf-preprocessor-parser force-barf-preprocessor-parser:
 	@echo "!!!"
@@ -342,6 +409,24 @@ barf-regex-parser force-barf-regex-parser:
 barf-targetspec-parser force-barf-targetspec-parser:
 	@echo "!!!"
 	@echo "!!! Can't build barf targetspec parser without stable trison binary."
+	@echo "!!! Use --with-stable-trison configure option."
+	@echo "!!!"
+
+test-barf-preprocessor-parser:
+	@echo "!!!"
+	@echo "!!! Can't make test-barf-preprocessor-parser without stable trison binary."
+	@echo "!!! Use --with-stable-trison configure option."
+	@echo "!!!"
+
+test-barf-regex-parser:
+	@echo "!!!"
+	@echo "!!! Can't make test-barf-regex-parser without stable trison binary."
+	@echo "!!! Use --with-stable-trison configure option."
+	@echo "!!!"
+
+test-barf-targetspec-parser:
+	@echo "!!!"
+	@echo "!!! Can't make test-barf-targetspec-parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 endif
@@ -426,10 +511,20 @@ $(top_srcdir)/app/reflex/reflex_parser.cpp: $(top_srcdir)/app/reflex/reflex_pars
 
 force-reflex-parser:
 	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/reflex --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
+
+test-reflex-parser: trison
+	mkdir -p test
+	./trison $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
 else # !STABLE_TRISON_EXISTS
 reflex-parser force-reflex-parser:
 	@echo "!!!"
 	@echo "!!! Can't build reflex parser without stable trison binary."
+	@echo "!!! Use --with-stable-trison configure option."
+	@echo "!!!"
+
+test-reflex-parser:
+	@echo "!!!"
+	@echo "!!! Can't make test-reflex-parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 endif
@@ -482,10 +577,20 @@ $(top_srcdir)/app/trison/trison_parser.cpp: $(top_srcdir)/app/trison/trison_pars
 
 force-trison-parser:
 	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/trison --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
+
+test-trison-parser: trison
+	mkdir -p test
+	./trison $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
 else # !STABLE_TRISON_EXISTS
 trison-parser force-trison-parser:
 	@echo "!!!"
 	@echo "!!! Can't build trison parser without stable trison binary."
+	@echo "!!! Use --with-stable-trison configure option."
+	@echo "!!!"
+
+test-trison-parser:
+	@echo "!!!"
+	@echo "!!! Can't make test-trison-parser without stable trison binary."
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 endif

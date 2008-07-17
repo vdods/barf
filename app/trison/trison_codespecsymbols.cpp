@@ -343,11 +343,10 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
     // _npda_transition_count -- gives the number of transitions in this NPDA.
     //
     // _npda_transition_type_index[_npda_transition_count] -- gives the integer value
-    // of the transition type.  valid values are 0 (TT_EPSILON), 1 (TT_REDUCE),
-    // 2 (TT_RETURN), and 3 (TT_SHIFT)
+    // of the transition type.  valid values are RETURN=1, REDUCE=2, SHIFT=3, EPSILON=4.
     //
     // _npda_transition_type_name[_npda_transition_count] -- gives the text name
-    // of the transition type (i.e. "TT_EPSILON", etc).
+    // of the transition type.  valid values are "RETURN", "REDUCE", "SHIFT", "EPSILON".
     //
     // _npda_transition_data_index[_npda_transition_count] gives the numeric value of the
     // token which this transition accepts if the transition type is TT_SHIFT,
@@ -510,11 +509,10 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
     // _dpda_transition_count -- gives the number of transitions in this DPDA.
     //
     // _dpda_transition_type_index[_dpda_transition_count] -- gives the integer value
-    // of the transition type.  valid values are 1 (TT_REDUCE), 2 (TT_RETURN),
-    // 3 (TT_SHIFT), 4 (TT_ERROR_PANIC) -- defined in trison_graph.hpp
+    // of the transition type.  valid values are ERROR_PANIC=0, RETURN=1, REDUCE=2, SHIFT=3.
     //
     // _dpda_transition_type_name[_dpda_transition_count] -- gives the text name
-    // of the transition type (i.e. "TT_EPSILON", etc).
+    // of the transition type.  valid values are "ERROR_PANIC", "RETURN", "REDUCE", "SHIFT".
     //
     // _dpda_transition_data[_dpda_transition_count] -- if the transition type is
     // TT_SHIFT, then this is the target state index.  if the transition type is

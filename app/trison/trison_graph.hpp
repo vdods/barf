@@ -20,11 +20,11 @@ namespace Trison {
 // Barf::TransitionType values
 enum
 {
-    TT_EPSILON = 0,
-    TT_REDUCE,
+    TT_ERROR_PANIC = 0,
     TT_RETURN,
+    TT_REDUCE,
     TT_SHIFT,
-    TT_ERROR_PANIC,
+    TT_EPSILON,
 
     TT_COUNT
 };
