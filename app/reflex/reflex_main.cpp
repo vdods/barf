@@ -154,8 +154,7 @@ void ParseTargetspecs (Reflex::PrimarySource const &primary_source)
 
     Targetspec::Parser parser;
     parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER));
-    if (GetOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_PARSER))
-        parser.SetDebugSpewLevel(2);
+    parser.DebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_PARSER));
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
                                                it_end = primary_source.m_target_map->end();

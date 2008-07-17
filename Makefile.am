@@ -298,14 +298,6 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png: $(top_srcdir)/
 endif
 
 if STABLE_TRISON_EXISTS
-barf-targetspec-parser: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp
-$(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp
-$(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
-
-force-barf-targetspec-parser:
-	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/targetspec/barf_targetspec_parser --generate-states-file $(top_srcdir)/lib/targetspec/barf_targetspec_parser.states
-
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison $(STABLE_TRISON)
@@ -322,12 +314,6 @@ $(top_srcdir)/lib/regex/barf_regex_parser.cpp: $(top_srcdir)/lib/regex/barf_rege
 force-barf-regex-parser:
 	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/lib/regex/barf_regex_parser --generate-states-file $(top_srcdir)/lib/regex/barf_regex_parser.states
 else # !STABLE_TRISON_EXISTS
-barf-targetspec-parser force-barf-targetspec-parser:
-	@echo "!!!"
-	@echo "!!! Can't build barf targetspec parser without stable trison binary."
-	@echo "!!! Use --with-stable-trison configure option."
-	@echo "!!!"
-
 barf-preprocessor-parser force-barf-preprocessor-parser:
 	@echo "!!!"
 	@echo "!!! Can't build barf preprocessor parser without stable trison binary."
@@ -340,6 +326,30 @@ barf-regex-parser force-barf-regex-parser:
 	@echo "!!! Use --with-stable-trison configure option."
 	@echo "!!!"
 endif
+
+if STABLE_TRISON_UNSTABLE_EXISTS
+barf-targetspec-parser: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp
+$(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp
+$(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison $(STABLE_TRISON_UNSTABLE) force-barf-targetspec-parser
+
+force-barf-targetspec-parser:
+	$(STABLE_TRISON_UNSTABLE) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/targetspec --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-dpda-dot-graph barf_targetspec_parser.dpda.dot --generate-dpda-states-file barf_targetspec_parser.dpda.states
+else # !STABLE_TRISON_UNSTABLE_EXISTS
+barf-targetspec-parser force-barf-targetspec-parser:
+	@echo "!!!"
+	@echo "!!! Can't build barf targetspec parser without stable trison binary."
+	@echo "!!! Use --with-stable-trison configure option."
+	@echo "!!!"
+endif
+
+if DOT_EXISTS
+$(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.png: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.dot
+	$(DOT) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.dot -Tpng -o $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.png
+
+$(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.dot
+	$(DOT) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.dot -Tpng -o $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png
+endif
+
 
 ##############################################################################
 # bpp (BARF preprocessor)

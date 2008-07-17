@@ -154,7 +154,8 @@ bool Parser::OpenFile (string const &input_filename)
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix %{"Parser (at " << GetFiLoc() << "): "%}
+%target.cpp.debug_spew_prefix %{"Reflex::Parser (at " << GetFiLoc() << "): "%}
+%target.cpp.dont_generate_timestamps
 
 
 %terminal BAD_TOKEN

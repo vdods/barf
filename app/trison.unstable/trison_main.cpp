@@ -184,8 +184,7 @@ void ParseTargetspecs (Trison::PrimarySource const &primary_source)
 
     Targetspec::Parser parser;
     parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_SCANNER));
-    if (GetOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_PARSER))
-        parser.SetDebugSpewLevel(2);
+    parser.DebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_PARSER));
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
                                                it_end = primary_source.m_target_map->end();

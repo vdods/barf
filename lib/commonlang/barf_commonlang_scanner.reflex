@@ -176,20 +176,20 @@ bool Scanner::OpenFile (string const &input_filename)
 {
     bool open_succeeded = InputBase::OpenFile(input_filename);
     if (open_succeeded)
-        ResetForNewInput_();
+        ResetForNewInput();
     return open_succeeded;
 }
 
 void Scanner::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenString(input_string, input_name, use_line_numbers);
-    ResetForNewInput_();
+    ResetForNewInput();
 }
 
 void Scanner::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
-    ResetForNewInput_();
+    ResetForNewInput();
 }
 
 Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast::Base **token)

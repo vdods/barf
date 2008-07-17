@@ -525,7 +525,7 @@ std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &tok
 <{class_name}::Rule_ const <{class_name}::ms_rule_table_[] =
 {
 <|loop(i, _rule_count)
-    { <{class_name}::Nonterminal_::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}, <{_rule_description[i]} }<{if(i < _rule_count-1)},<{end_if}
+    { <{class_name}::Nonterminal_::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
 <|end_loop
 };
 TrisonCpp_::Size const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(*<{class_name}::ms_rule_table_);
@@ -533,7 +533,7 @@ TrisonCpp_::Size const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_
 <{class_name}::State_ const <{class_name}::ms_state_table_[] =
 {
 <|loop(i, _dpda_state_count)
-    { <{_dpda_state_transition_count[i]}, ms_transition_table_+<{_dpda_state_transition_offset[i]}, <{_dpda_state_description[i]} }<{if(i < _dpda_state_count-1)},<{end_if}
+    { <{_dpda_state_transition_count[i]}, ms_transition_table_+<{_dpda_state_transition_offset[i]}<{if(is_defined(generate_debug_spew_code))}, <{_dpda_state_description[i]}<{end_if} }<{if(i < _dpda_state_count-1)},<{end_if}
 <|end_loop
 };
 TrisonCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
