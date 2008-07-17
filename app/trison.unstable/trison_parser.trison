@@ -8,9 +8,14 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-%parser_class_name "Parser"
+%targets cpp
 
-%parser_header_file_top%{
+
+%target.cpp.header_filename "trison_parser.hpp"
+%target.cpp.implementation_filename "trison_parser.cpp"
+
+
+%target.cpp.top_of_header_file %{
 #if !defined(_TRISON_PARSER_HPP_)
 #define _TRISON_PARSER_HPP_
 
@@ -43,8 +48,8 @@ struct PrecedenceMap;
 struct TerminalList;
 struct TerminalMap;
 %}
-
-%parser_class_methods_and_members{
+%target.cpp.class_name Parser
+%target.cpp.bottom_of_class {
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
@@ -53,8 +58,6 @@ struct TerminalMap;
     bool OpenFile (string const &input_filename);
 
 private:
-
-    Token::Type Scan ();
 
     CommonLang::Scanner m_scanner;
     CommonLang::TargetMap *m_target_map;
@@ -66,32 +69,21 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 }
-
-%parser_header_file_bottom%{
+%target.cpp.bottom_of_header_file %{
 } // end of namespace Trison
 
 #endif // !defined(_TRISON_PARSER_HPP_)
 %}
 
-%parser_implementation_file_top%{
+
+%target.cpp.top_of_implementation_file %{
 #include <sstream>
 
 #include "trison_ast.hpp"
 
 namespace Trison {
 %}
-
-%parser_constructor_actions{
-}
-
-%parser_destructor_actions{
-}
-
-%parser_throw_away_token_actions{
-    delete token;
-}
-
-%parser_start_of_parse_method_actions{
+%target.cpp.start_of_parse_method_actions %{
     m_target_map = NULL;
     m_terminal_list = NULL;
     m_terminal_map = NULL;
@@ -100,40 +92,49 @@ namespace Trison {
     m_precedence_map = NULL;
     m_nonterminal_list = NULL;
     m_rule_count = 0;
-}
-
-%parser_implementation_file_bottom%{
+%}
+%target.cpp.bottom_of_implementation_file %{
 bool Parser::OpenFile (string const &input_filename)
 {
     return m_scanner.OpenFile(input_filename);
 }
 
-Parser::Token::Type Parser::Scan ()
-{
-    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&m_lookahead_token);
+} // end of namespace Trison
+%}
+
+
+%target.cpp.token_data_type "Ast::Base *"
+%target.cpp.token_data_default "NULL"
+%target.cpp.custom_token_data_type_cast Dsc
+%target.cpp.throw_away_token_actions {
+    delete token_data;
+}
+%target.cpp.scan_actions {
+    Ast::Base *lookahead_token_data = NULL;
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&lookahead_token_data);
     assert(scanner_token_type >= 0);
     if (scanner_token_type < 0x100)
-        return Parser::Token::Type(scanner_token_type);
+        return Token(Parser::Token::Id(scanner_token_type), lookahead_token_data);
     switch (scanner_token_type)
     {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                     return Parser::Token::END_;
-        case CommonLang::Scanner::Token::BAD_TOKEN:                           return Parser::Token::BAD_TOKEN;
-        case CommonLang::Scanner::Token::CHAR_LITERAL:                        return Parser::Token::CHAR_LITERAL;
-        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Parser::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL;
-        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:                     return Parser::Token::DIRECTIVE_ERROR;
-        case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:               return Parser::Token::DIRECTIVE_NONTERMINAL;
-        case CommonLang::Scanner::Token::DIRECTIVE_PREC:                      return Parser::Token::DIRECTIVE_PREC;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                    return Parser::Token::DIRECTIVE_TARGET;
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                   return Parser::Token::DIRECTIVE_TARGETS;
-        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:                  return Parser::Token::DIRECTIVE_TERMINAL;
-        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:                      return Parser::Token::DIRECTIVE_TYPE;
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                     return Parser::Token::DUMB_CODE_BLOCK;
-        case CommonLang::Scanner::Token::END_OF_FILE:                         return Parser::Token::END_;
-        case CommonLang::Scanner::Token::END_PREAMBLE:                        return Parser::Token::END_PREAMBLE;
-        case CommonLang::Scanner::Token::ID:                                  return Parser::Token::ID;
-        case CommonLang::Scanner::Token::NEWLINE:                             return Parser::Token::NEWLINE;
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                   return Parser::Token::STRICT_CODE_BLOCK;
-        case CommonLang::Scanner::Token::STRING_LITERAL:                      return Parser::Token::STRING_LITERAL;
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                     return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::BAD_TOKEN:                           return Token(Terminal::BAD_TOKEN, lookahead_token_data);
+        case CommonLang::Scanner::Token::CHAR_LITERAL:                        return Token(Terminal::CHAR_LITERAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Token(Terminal::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:                     return Token(Terminal::DIRECTIVE_ERROR, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:               return Token(Terminal::DIRECTIVE_NONTERMINAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_PREC:                      return Token(Terminal::DIRECTIVE_PREC, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                    return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                   return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:                  return Token(Terminal::DIRECTIVE_TERMINAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:                      return Token(Terminal::DIRECTIVE_TYPE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                     return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_OF_FILE:                         return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_PREAMBLE:                        return Token(Terminal::END_PREAMBLE, lookahead_token_data);
+        case CommonLang::Scanner::Token::ID:                                  return Token(Terminal::ID, lookahead_token_data);
+        case CommonLang::Scanner::Token::NEWLINE:                             return Token(Terminal::NEWLINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                   return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRING_LITERAL:                      return Token(Terminal::STRING_LITERAL, lookahead_token_data);
 
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
@@ -146,44 +147,44 @@ Parser::Token::Type Parser::Scan ()
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
         case CommonLang::Scanner::Token::REGEX:
-            assert(m_lookahead_token != NULL);
-            EmitError("unrecognized token encountered in targetspec", m_lookahead_token->GetFiLoc());
-            delete m_lookahead_token;
-            m_lookahead_token = NULL;
-            return Parser::Token::BAD_TOKEN;
+            assert(lookahead_token_data != NULL);
+            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
+            delete lookahead_token_data;
+            return Token(Terminal::BAD_TOKEN);
 
         default:
             assert(false && "this should never happen");
-            return Parser::Token::BAD_TOKEN;
+            if (lookahead_token_data != NULL)
+                delete lookahead_token_data;
+            return Token(Terminal::BAD_TOKEN);
     }
 }
 
-} // end of namespace Trison
-%}
 
-%parser_base_assigned_type "Ast::Base *"
-%parser_base_assigned_type_sentinel "NULL"
-%parser_custom_cast "Dsc"
+%target.cpp.generate_debug_spew_code
+%target.cpp.debug_spew_prefix %{"Trison::Parser (at " << GetFiLoc() << "):"%}
+%target.cpp.dont_generate_timestamps
 
-%token BAD_TOKEN
-%token CHAR_LITERAL %type "Ast::Char *"
-%token DIRECTIVE_DEFAULT_PARSE_NONTERMINAL %type "Ast::ThrowAway *"
-%token DIRECTIVE_ERROR %type "Ast::ThrowAway *"
-%token DIRECTIVE_NONTERMINAL %type "Ast::ThrowAway *"
-%token DIRECTIVE_PREC %type "Ast::ThrowAway *"
-%token DIRECTIVE_TARGET %type "Ast::ThrowAway *"
-%token DIRECTIVE_TARGETS %type "Ast::ThrowAway *"
-%token DIRECTIVE_TERMINAL %type "Ast::ThrowAway *"
-%token DIRECTIVE_TYPE %type "Ast::ThrowAway *"
-%token DUMB_CODE_BLOCK %type "Ast::DumbCodeBlock *"
-%token END_PREAMBLE %type "Ast::ThrowAway *"
-%token ID %type "Ast::Id *"
-%token NEWLINE
-%token STRICT_CODE_BLOCK %type "Ast::StrictCodeBlock *"
-%token STRING_LITERAL %type "Ast::String *"
-%token '.' ':' ';' '|'
 
-%start root
+%terminal BAD_TOKEN
+%terminal CHAR_LITERAL %type.cpp "Ast::Char *"
+%terminal DIRECTIVE_DEFAULT_PARSE_NONTERMINAL %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_ERROR %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_NONTERMINAL %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_PREC %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_TARGET %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_TARGETS %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_TERMINAL %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_TYPE %type.cpp "Ast::ThrowAway *"
+%terminal DUMB_CODE_BLOCK %type.cpp "Ast::DumbCodeBlock *"
+%terminal END_PREAMBLE %type.cpp "Ast::ThrowAway *"
+%terminal ID %type.cpp "Ast::Id *"
+%terminal NEWLINE
+%terminal STRICT_CODE_BLOCK %type.cpp "Ast::StrictCodeBlock *"
+%terminal STRING_LITERAL %type.cpp "Ast::String *"
+%terminal '.' ':' ';' '|'
+
+%default_parse_nonterminal root
 
 %%
 
@@ -191,7 +192,7 @@ Parser::Token::Type Parser::Scan ()
 // root rule
 // ///////////////////////////////////////////////////////////////////////////
 
-root %type "PrimarySource *"
+%nonterminal root %type.cpp "PrimarySource *"
 :
     at_least_zero_newlines
     targets_directive:target_map
@@ -201,7 +202,7 @@ root %type "PrimarySource *"
     start_directive:default_parse_nonterminal_id
     END_PREAMBLE:throwaway
     nonterminals:nonterminal_map
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         assert(target_map == m_target_map);
         assert(m_terminal_list != NULL);
@@ -244,10 +245,10 @@ root %type "PrimarySource *"
 // targets directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-targets_directive %type "CommonLang::TargetMap *"
+%nonterminal targets_directive %type.cpp "CommonLang::TargetMap *"
 :
     DIRECTIVE_TARGETS:throwaway target_ids:target_map at_least_one_newline
-    {
+    %target.cpp {
         assert(m_target_map == NULL);
         m_target_map = target_map;
         delete throwaway;
@@ -255,14 +256,14 @@ targets_directive %type "CommonLang::TargetMap *"
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         assert(m_target_map == NULL);
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     }
 |
     DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
-    {
+    %target.cpp {
         assert(m_target_map == NULL);
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         m_target_map = new CommonLang::TargetMap();
@@ -270,10 +271,10 @@ targets_directive %type "CommonLang::TargetMap *"
     }
 ;
 
-target_ids %type "CommonLang::TargetMap *"
+%nonterminal target_ids %type.cpp "CommonLang::TargetMap *"
 :
     target_ids:target_map ID:target_id
-    {
+    %target.cpp {
         CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
         target->EnableCodeGeneration();
         target_map->Add(target_id->GetText(), target);
@@ -281,7 +282,7 @@ target_ids %type "CommonLang::TargetMap *"
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         assert(m_target_map == NULL);
         return new CommonLang::TargetMap();
     }
@@ -291,10 +292,10 @@ target_ids %type "CommonLang::TargetMap *"
 // target directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-target_directives
+%nonterminal target_directives
 :
     target_directives target_directive:target_directive
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         if (target_directive != NULL)
             m_target_map->AddTargetDirective(target_directive);
@@ -302,23 +303,23 @@ target_directives
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         if (m_target_map == NULL)
             m_target_map = new CommonLang::TargetMap();
         return NULL;
     }
 ;
 
-target_directive %type "CommonLang::TargetDirective *"
+%nonterminal target_directive %type.cpp "CommonLang::TargetDirective *"
 :
     DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive target_directive_param:param at_least_one_newline
-    {
+    %target.cpp {
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     }
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
@@ -327,7 +328,7 @@ target_directive %type "CommonLang::TargetDirective *"
     }
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
@@ -335,41 +336,41 @@ target_directive %type "CommonLang::TargetDirective *"
     }
 |
     DIRECTIVE_TARGET:throwaway %error at_least_one_newline
-    {
+    %target.cpp {
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
 ;
 
-target_directive_param %type "Ast::TextBase *"
+%nonterminal target_directive_param %type.cpp "Ast::TextBase *"
 :
-    ID:value                    { return value; }
-|   STRING_LITERAL:value        { return value; }
-|   STRICT_CODE_BLOCK:value     { return value; }
-|   DUMB_CODE_BLOCK:value       { return value; }
-|   /* empty reduction rule */  { return NULL; }
+    ID:value                    %target.cpp { return value; }
+|   STRING_LITERAL:value        %target.cpp { return value; }
+|   STRICT_CODE_BLOCK:value     %target.cpp { return value; }
+|   DUMB_CODE_BLOCK:value       %target.cpp { return value; }
+|   /* empty reduction rule */  %target.cpp { return NULL; }
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
 // terminal directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-terminal_directives %type "TerminalMap *"
+%nonterminal terminal_directives %type.cpp "TerminalMap *"
 :
     terminal_directives:terminal_map terminal_directive
-    {
+    %target.cpp {
         assert(terminal_map == m_terminal_map);
         return terminal_map;
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         m_terminal_list = new TerminalList();
         m_terminal_map = new TerminalMap();
 
         Ast::Id *id;
-        Terminal *terminal;
+        Trison::Terminal *terminal;
 
         // create and add the special END_ and ERROR_ terminals (with
         // token_index 0x100 and 0x101 respectively.
@@ -377,13 +378,13 @@ terminal_directives %type "TerminalMap *"
         m_token_index = 0x100;
 
         id = new Ast::Id("END_", FiLoc::ms_invalid);
-        terminal = new Terminal(id, m_token_index++);
+        terminal = new Trison::Terminal(id, m_token_index++);
         terminal->SetAssignedTypeMap(new TypeMap()); // default type
         m_terminal_list->Append(terminal);
         m_terminal_map->Add(terminal->GetText(), terminal);
 
         id = new Ast::Id("ERROR_", FiLoc::ms_invalid);
-        terminal = new Terminal(id, m_token_index++);
+        terminal = new Trison::Terminal(id, m_token_index++);
         terminal->SetAssignedTypeMap(new TypeMap()); // default type
         m_terminal_list->Append(terminal);
         m_terminal_map->Add(terminal->GetText(), terminal);
@@ -392,10 +393,10 @@ terminal_directives %type "TerminalMap *"
     }
 ;
 
-terminal_directive
+%nonterminal terminal_directive
 :
     DIRECTIVE_TERMINAL:throwaway terminals:terminal_list type_spec:assigned_type_map at_least_one_newline
-    {
+    %target.cpp {
         assert(m_terminal_map != NULL);
         assert(terminal_list != NULL);
         assert(assigned_type_map != NULL);
@@ -417,17 +418,17 @@ terminal_directive
     }
 ;
 
-terminals %type "TerminalList *"
+%nonterminal terminals %type.cpp "TerminalList *"
 :
     terminals:terminal_list terminal:terminal
-    {
+    %target.cpp {
         if (terminal != NULL)
             terminal_list->Append(terminal);
         return terminal_list;
     }
 |
     terminal:terminal
-    {
+    %target.cpp {
         TerminalList *terminal_list = new TerminalList();
         if (terminal != NULL)
             terminal_list->Append(terminal);
@@ -439,10 +440,10 @@ terminals %type "TerminalList *"
 // precedence directive rules
 // ///////////////////////////////////////////////////////////////////////////
 
-precedence_directives %type "PrecedenceMap *"
+%nonterminal precedence_directives %type.cpp "PrecedenceMap *"
 :
     precedence_directives:precedence_map precedence_directive
-    {
+    %target.cpp {
         assert(precedence_map != NULL);
         assert(m_precedence_map == precedence_map);
         assert(m_precedence_list != NULL);
@@ -450,7 +451,7 @@ precedence_directives %type "PrecedenceMap *"
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         assert(m_precedence_list == NULL);
         assert(m_precedence_map == NULL);
         Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FiLoc::ms_invalid, 0);
@@ -462,10 +463,10 @@ precedence_directives %type "PrecedenceMap *"
     }
 ;
 
-precedence_directive %type "PrecedenceMap *"
+%nonterminal precedence_directive %type.cpp "PrecedenceMap *"
 :
     DIRECTIVE_PREC:throwaway ID:id at_least_one_newline
-    {
+    %target.cpp {
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
         Precedence *precedence =
@@ -482,7 +483,7 @@ precedence_directive %type "PrecedenceMap *"
     }
 |
     DIRECTIVE_PREC:throwaway '.' ID:associativity_id ID:id at_least_one_newline
-    {
+    %target.cpp {
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
         assert(associativity_id != NULL);
@@ -515,10 +516,10 @@ precedence_directive %type "PrecedenceMap *"
 // start directive rule
 // ///////////////////////////////////////////////////////////////////////////
 
-start_directive %type "Ast::Id *"
+%nonterminal start_directive %type.cpp "Ast::Id *"
 :
     DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:throwaway ID:id at_least_one_newline
-    {
+    %target.cpp {
         delete throwaway;
         return id;
     }
@@ -528,10 +529,10 @@ start_directive %type "Ast::Id *"
 // nonterminal rules
 // ///////////////////////////////////////////////////////////////////////////
 
-nonterminals %type "NonterminalMap *"
+%nonterminal nonterminals %type.cpp "NonterminalMap *"
 :
     nonterminals:nonterminal_map nonterminal:nonterminal
-    {
+    %target.cpp {
         assert(m_terminal_map != NULL);
         assert(m_nonterminal_list != NULL);
         if (nonterminal != NULL)
@@ -543,7 +544,7 @@ nonterminals %type "NonterminalMap *"
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         assert(m_nonterminal_list == NULL);
         m_nonterminal_list = new NonterminalList();
         NonterminalMap *nonterminal_map = new NonterminalMap();
@@ -558,10 +559,10 @@ nonterminals %type "NonterminalMap *"
     }
 ;
 
-nonterminal %type "Nonterminal *"
+%nonterminal nonterminal %type.cpp "Nonterminal *"
 :
     nonterminal_specification:nonterminal ':' rules:rule_list ';'
-    {
+    %target.cpp {
         if (nonterminal != NULL)
             nonterminal->SetRuleList(rule_list);
         else
@@ -570,16 +571,16 @@ nonterminal %type "Nonterminal *"
     }
 |
     %error ';'
-    {
+    %target.cpp {
         EmitError("syntax error in nonterminal definition", GetFiLoc());
         return NULL;
     }
 ;
 
-nonterminal_specification %type "Nonterminal *"
+%nonterminal nonterminal_specification %type.cpp "Nonterminal *"
 :
     DIRECTIVE_NONTERMINAL:throwaway ID:id type_spec:assigned_type_map
-    {
+    %target.cpp {
         assert(m_terminal_map != NULL);
         assert(m_token_index >= 0x100);
         assert(id != NULL);
@@ -598,7 +599,7 @@ nonterminal_specification %type "Nonterminal *"
     }
 |
     DIRECTIVE_NONTERMINAL:throwaway %error
-    {
+    %target.cpp {
         assert(throwaway != NULL);
         EmitError("syntax error while parsing nonterminal specification", throwaway->GetFiLoc());
         delete throwaway;
@@ -606,7 +607,7 @@ nonterminal_specification %type "Nonterminal *"
     }
 |
     DIRECTIVE_NONTERMINAL:throwaway ID:id %error
-    {
+    %target.cpp {
         assert(id != NULL);
         EmitError("syntax error in %nonterminal directive", id->GetFiLoc());
         delete throwaway;
@@ -619,35 +620,35 @@ nonterminal_specification %type "Nonterminal *"
 // rule rules
 // ///////////////////////////////////////////////////////////////////////////
 
-rules %type "RuleList *"
+%nonterminal rules %type.cpp "RuleList *"
 :
     rules:rule_list '|' rule:rule
-    {
+    %target.cpp {
         rule_list->Append(rule);
         return rule_list;
     }
 |
     rule:rule
-    {
+    %target.cpp {
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
     }
 ;
 
-rule %type "Rule *"
+%nonterminal rule %type.cpp "Rule *"
 :
     rule_specification:rule rule_handlers:rule_handler_map
-    {
+    %target.cpp {
         rule->m_rule_handler_map = rule_handler_map;
         return rule;
     }
 ;
 
-rule_specification %type "Rule *"
+%nonterminal rule_specification %type.cpp "Rule *"
 :
     rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive
-    {
+    %target.cpp {
         Precedence *rule_precedence;
         if (rule_precedence_directive == NULL)
             rule_precedence = m_precedence_map->GetElement("DEFAULT_");
@@ -663,25 +664,25 @@ rule_specification %type "Rule *"
     }
 ;
 
-rule_handlers %type "CommonLang::RuleHandlerMap *"
+%nonterminal rule_handlers %type.cpp "CommonLang::RuleHandlerMap *"
 :
     rule_handlers:rule_handler_map rule_handler:rule_handler
-    {
+    %target.cpp {
         if (rule_handler != NULL)
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         return new CommonLang::RuleHandlerMap();
     }
 ;
 
-rule_handler %type "CommonLang::RuleHandler *"
+%nonterminal rule_handler %type.cpp "CommonLang::RuleHandler *"
 :
     DIRECTIVE_TARGET:throwaway '.' ID:target_id any_type_of_code_block:code_block
-    {
+    %target.cpp {
         delete throwaway;
         assert(m_target_map != NULL);
         if (m_target_map->GetElement(target_id->GetText()) == NULL)
@@ -692,7 +693,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     }
 |
     DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -701,7 +702,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     }
 |
     DIRECTIVE_TARGET:throwaway %error
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -709,7 +710,7 @@ rule_handler %type "CommonLang::RuleHandler *"
     }
 |
     %error any_type_of_code_block:code_block
-    {
+    %target.cpp {
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
@@ -717,24 +718,24 @@ rule_handler %type "CommonLang::RuleHandler *"
     }
 ;
 
-rule_token_list %type "RuleTokenList *"
+%nonterminal rule_token_list %type.cpp "RuleTokenList *"
 :
     rule_token_list:rule_token_list rule_token:rule_token
-    {
+    %target.cpp {
         rule_token_list->Append(rule_token);
         return rule_token_list;
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         return new RuleTokenList();
     }
 ;
 
-rule_token %type "RuleToken *"
+%nonterminal rule_token %type.cpp "RuleToken *"
 :
     token_id:token_id ':' ID:assigned_id
-    {
+    %target.cpp {
         RuleToken *rule_token =
             token_id != NULL ?
             new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id->GetText()) :
@@ -745,7 +746,7 @@ rule_token %type "RuleToken *"
     }
 |
     token_id:token_id
-    {
+    %target.cpp {
         RuleToken *rule_token =
             token_id != NULL ?
             new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
@@ -755,23 +756,23 @@ rule_token %type "RuleToken *"
     }
 |
     DIRECTIVE_ERROR:throwaway
-    {
+    %target.cpp {
         RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
         delete throwaway;
         return rule_token;
     }
 ;
 
-rule_precedence_directive %type "Ast::Id *"
+%nonterminal rule_precedence_directive %type.cpp "Ast::Id *"
 :
     DIRECTIVE_PREC:throwaway ID:id
-    {
+    %target.cpp {
         delete throwaway;
         return id;
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         return NULL;
     }
 ;
@@ -780,24 +781,24 @@ rule_precedence_directive %type "Ast::Id *"
 // misc rules
 // ///////////////////////////////////////////////////////////////////////////
 
-at_least_zero_newlines
+%nonterminal at_least_zero_newlines
 :
-    at_least_zero_newlines NEWLINE  { return NULL; }
+    at_least_zero_newlines NEWLINE %target.cpp { return NULL; }
 |
-    /* empty reduction rule */ { return NULL; }
+    /* empty reduction rule */ %target.cpp { return NULL; }
 ;
 
-at_least_one_newline
+%nonterminal at_least_one_newline
 :
-    at_least_one_newline NEWLINE { return NULL; }
+    at_least_one_newline NEWLINE %target.cpp { return NULL; }
 |
-    NEWLINE { return NULL; }
+    NEWLINE %target.cpp { return NULL; }
 ;
 
-token_id %type "TokenId *"
+%nonterminal token_id %type.cpp "TokenId *"
 :
     ID:id
-    {
+    %target.cpp {
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
         TokenId *token_id = new TokenId(id->GetText(), 0, id->GetFiLoc());
@@ -806,7 +807,7 @@ token_id %type "TokenId *"
     }
 |
     CHAR_LITERAL:ch
-    {
+    %target.cpp {
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
         TokenId *token_id = new TokenId(GetCharLiteral(ch->GetChar()), 0, ch->GetFiLoc());
@@ -815,24 +816,24 @@ token_id %type "TokenId *"
     }
 ;
 
-terminal %type "Terminal *"
+%nonterminal terminal %type.cpp "Trison::Terminal *"
 :
-    ID:id           { return new Terminal(id, m_token_index++); }
+    ID:id           %target.cpp { return new Trison::Terminal(id, m_token_index++); }
 |
-    CHAR_LITERAL:ch { return new Terminal(ch); }
+    CHAR_LITERAL:ch %target.cpp { return new Trison::Terminal(ch); }
 ;
 
-any_type_of_code_block %type "Ast::CodeBlock *"
+%nonterminal any_type_of_code_block %type.cpp "Ast::CodeBlock *"
 :
-    DUMB_CODE_BLOCK:dumb_code_block { return dumb_code_block; }
+    DUMB_CODE_BLOCK:dumb_code_block %target.cpp { return dumb_code_block; }
 |
-    STRICT_CODE_BLOCK:strict_code_block { return strict_code_block; }
+    STRICT_CODE_BLOCK:strict_code_block %target.cpp { return strict_code_block; }
 ;
 
-type_spec %type "TypeMap *"
+%nonterminal type_spec %type.cpp "TypeMap *"
 :
     type_spec:type_map DIRECTIVE_TYPE:throwaway '.' ID:target_id STRING_LITERAL:assigned_type
-    {
+    %target.cpp {
         assert(type_map != NULL);
         assert(target_id != NULL);
         assert(assigned_type != NULL);
@@ -843,7 +844,7 @@ type_spec %type "TypeMap *"
     }
 |
     // empty reduction rule
-    {
+    %target.cpp {
         return new TypeMap();
     }
 ;

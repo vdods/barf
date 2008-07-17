@@ -130,18 +130,11 @@ noinst_LTLIBRARIES = \
 	lib/libbarf-preprocessor.la \
     lib/libbarf-regex.la
 
-if BUILD_TRISON_UNSTABLE
 bin_PROGRAMS = \
 	bpp \
 	reflex \
 	trison \
 	trison.unstable
-else # !BUILD_TRISON_UNSTABLE
-bin_PROGRAMS = \
-	bpp \
-	reflex \
-	trison
-endif
 
 noinst_PROGRAMS = \
 	playground
@@ -544,8 +537,6 @@ $(top_srcdir)/app/trison/trison_parser_implementation.cpp: $(top_srcdir)/app/tri
 # trison.unstable
 ##############################################################################
 
-if BUILD_TRISON_UNSTABLE
-
 trison_unstable_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-I$(top_srcdir)/app/trison.unstable \
@@ -574,15 +565,15 @@ trison_unstable_SOURCES = \
 	app/trison.unstable/trison_parser.cpp \
 	app/trison.unstable/trison_parser.trison
 
-if STABLE_TRISON_EXISTS
+if STABLE_TRISON_UNSTABLE_EXISTS
 trison-unstable-parser: $(top_srcdir)/app/trison.unstable/trison_parser.hpp
 $(top_srcdir)/app/trison.unstable/trison_parser.hpp: $(top_srcdir)/app/trison.unstable/trison_parser.cpp
-$(top_srcdir)/app/trison.unstable/trison_parser.cpp: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/app/trison.unstable/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison.unstable/trison_parser --generate-states-file $(top_srcdir)/app/trison.unstable/trison_parser.states
+$(top_srcdir)/app/trison.unstable/trison_parser.cpp: $(top_srcdir)/app/trison.unstable/trison_parser.trison $(STABLE_TRISON_UNSTABLE) $(TARGETS_PATH)/trison.cpp.targetspec $(TARGETS_PATH)/trison.cpp.header.codespec $(TARGETS_PATH)/trison.cpp.implementation.codespec
+	$(STABLE_TRISON_UNSTABLE) $(top_srcdir)/app/trison.unstable/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/trison.unstable --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
 
 force-trison-unstable-parser:
-	$(STABLE_TRISON) $(top_srcdir)/app/trison.unstable/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison.unstable/trison_parser --generate-states-file $(top_srcdir)/app/trison.unstable/trison_parser.states
-else # !STABLE_TRISON_EXISTS
+	$(STABLE_TRISON_UNSTABLE) $(top_srcdir)/app/trison.unstable/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/trison.unstable --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
+else # !STABLE_TRISON_UNSTABLE_EXISTS
 trison-unstable-parser force-trison-unstable-parser:
 	@echo "!!!"
 	@echo "!!! Can't build trison.unstable parser without stable trison binary."
@@ -590,13 +581,12 @@ trison-unstable-parser force-trison-unstable-parser:
 	@echo "!!!"
 endif
 
-else # !BUILD_TRISON_UNSTABLE
+if DOT_EXISTS
+$(top_srcdir)/app/trison.unstable/trison_parser.dpda.png: $(top_srcdir)/app/trison.unstable/trison_parser.dpda.dot
+	$(DOT) $(top_srcdir)/app/trison.unstable/trison_parser.dpda.dot -Tpng -o $(top_srcdir)/app/trison.unstable/trison_parser.dpda.png
 
-trison-unstable-parser force-trison-unstable-parser:
-	@echo "!!!"
-	@echo "!!! These targets are disabled without configuring using --enable-trison-unstable."
-	@echo "!!!"
-
+$(top_srcdir)/app/trison.unstable/trison_parser.npda.png: $(top_srcdir)/app/trison.unstable/trison_parser.npda.dot
+	$(DOT) $(top_srcdir)/app/trison.unstable/trison_parser.npda.dot -Tpng -o $(top_srcdir)/app/trison.unstable/trison_parser.npda.png
 endif
 
 ##############################################################################

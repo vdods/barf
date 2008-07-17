@@ -70,14 +70,6 @@ AC_ARG_WITH(
     [STABLE_TRISON_UNSTABLE=$withval],
     [STABLE_TRISON_UNSTABLE=])
 
-AC_ARG_ENABLE(
-    [trison-unstable],
-    AC_HELP_STRING(
-        [--enable-trison-unstable],
-        [enables the make targets for the unstable development branch of trison]),
-    [ENABLE_TRISON_UNSTABLE=$enableval],
-    [ENABLE_TRISON_UNSTABLE="no"])
-
 ##############################################################################
 # processing for above commandline options and AC_CHECK_TOOL applications
 ##############################################################################
@@ -109,8 +101,6 @@ AC_SUBST(STABLE_TRISON)
 
 AM_CONDITIONAL(STABLE_TRISON_UNSTABLE_EXISTS, [test "${STABLE_TRISON_UNSTABLE}" != ""])
 AC_SUBST(STABLE_TRISON_UNSTABLE)
-
-AM_CONDITIONAL(BUILD_TRISON_UNSTABLE, [test "${ENABLE_TRISON_UNSTABLE}" = "yes"])
 
 ##############################################################################
 # add some good stuff to the compiler flags
