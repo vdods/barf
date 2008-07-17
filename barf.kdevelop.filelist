@@ -7,7 +7,6 @@ LICENSE
 Makefile.am
 README
 TODO
-app/playground.cpp
 app/bpp/bpp.hpp
 app/bpp/bpp_main.cpp
 app/bpp/bpp_options.cpp
@@ -28,7 +27,6 @@ app/example/calculator/calculator_scanner.hpp
 app/example/calculator/calculator_scanner.reflex
 app/example/calculator/configure.ac
 app/example/calculator/Makefile.am
-app/reflex/example.reflex
 app/reflex/reflex.hpp
 app/reflex/reflex_ast.cpp
 app/reflex/reflex_ast.hpp
@@ -95,6 +93,7 @@ app/trison.unstable/trison_parser.cpp
 app/trison.unstable/trison_parser.hpp
 app/trison.unstable/trison_parser.trison
 doc/doxygen_pages/acknowledgements.dox
+doc/doxygen_pages/footer.html
 doc/doxygen_pages/generic_regexes.dox
 doc/doxygen_pages/targetspec_and_codespec.dox
 doc/doxygen_pages/language_theory.dox

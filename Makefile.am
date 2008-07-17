@@ -147,15 +147,23 @@ EXTRA_DIST = \
     LICENSE \
     README \
     TODO \
+    app/example/calculator/bootstrap.sh \
+    app/example/calculator/calculator.hpp \
+    app/example/calculator/calculator_main.cpp \
+    app/example/calculator/calculator_parser.trison \
+    app/example/calculator/calculator_scanner.reflex \
+    app/example/calculator/configure.ac \
+    app/example/calculator/Makefile.am \
     doc/doxygen_pages/acknowledgements.dox \
+    doc/doxygen_pages/footer.html \
     doc/doxygen_pages/generic_regexes.dox \
-    doc/doxygen_pages/targetspec_and_codespec.dox \
     doc/doxygen_pages/language_theory.dox \
     doc/doxygen_pages/main.dox \
     doc/doxygen_pages/references.dox \
     doc/doxygen_pages/reflex.dox \
     doc/doxygen_pages/reflex_guts.dox \
     doc/doxygen_pages/regexes_in_barf.dox \
+    doc/doxygen_pages/targetspec_and_codespec.dox \
     extra/barf.xml \
     targets/reflex.cpp.header.codespec \
     targets/reflex.cpp.implementation.codespec \
@@ -652,11 +660,6 @@ noinst_HEADERS = \
 	lib/core/barf_util.hpp \
 	lib/core/barf_weakreference.hpp \
 	\
-	lib/targetspec/barf_targetspec.hpp \
-	lib/targetspec/barf_targetspec_ast.hpp \
-	lib/targetspec/barf_targetspec_enums.hpp \
-	lib/targetspec/barf_targetspec_parser.hpp \
-	\
 	lib/preprocessor/barf_preprocessor.hpp \
 	lib/preprocessor/barf_preprocessor_ast.hpp \
 	lib/preprocessor/barf_preprocessor_parser.hpp \
@@ -670,4 +673,9 @@ noinst_HEADERS = \
 	lib/regex/barf_regex_dfa.hpp \
 	lib/regex/barf_regex_graph.hpp \
 	lib/regex/barf_regex_nfa.hpp \
-	lib/regex/barf_regex_parser.hpp
+	lib/regex/barf_regex_parser.hpp \
+	\
+	lib/targetspec/barf_targetspec.hpp \
+	lib/targetspec/barf_targetspec_ast.hpp \
+	lib/targetspec/barf_targetspec_enums.hpp \
+	lib/targetspec/barf_targetspec_parser.hpp
