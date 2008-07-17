@@ -38,8 +38,6 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	reflex-parser \
 	force-reflex-parser \
 	spotless \
-	trison-parser \
-	force-trison-parser \
 	trison-unstable-parser \
 	force-trison-unstable-parser
 
@@ -61,9 +59,6 @@ clean-all-parser-extras:
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.dpda.states
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.dot
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.png
-	rm -f $(top_srcdir)/app/trison/trison_parser_header.cpp
-	rm -f $(top_srcdir)/app/trison/trison_parser_implementation.cpp
-	rm -f $(top_srcdir)/app/trison/trison_parser.states
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.dpda.dot
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.dpda.png
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.dpda.states
@@ -88,8 +83,6 @@ clean-all-parser-extras:
 clean-all-parsers: clean-all-parser-extras
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.cpp
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.hpp
-	rm -f $(top_srcdir)/app/trison/trison_parser.cpp
-	rm -f $(top_srcdir)/app/trison/trison_parser.hpp
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.cpp
 	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.hpp
 	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp
@@ -120,7 +113,6 @@ force-all-parsers: \
 	force-barf-preprocessor-parser \
 	force-barf-regex-parser \
 	force-reflex-parser \
-	force-trison-parser \
 	force-trison-unstable-parser
 
 force-all-scanners: \
@@ -137,7 +129,6 @@ noinst_LTLIBRARIES = \
 bin_PROGRAMS = \
 	bpp \
 	reflex \
-	trison \
 	trison.unstable
 
 EXTRA_DIST = \
@@ -228,17 +219,6 @@ lib_libbarf_core_la_SOURCES = \
     lib/core/barf_searchpath.cpp \
     lib/core/barf_util.cpp
 
-lib_libbarf_targetspec_la_CPPFLAGS = \
-    $(AM_CPPFLAGS) \
-    -I$(top_srcdir)/lib/commonlang \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/targetspec
-lib_libbarf_targetspec_la_SOURCES = \
-    lib/targetspec/barf_targetspec_ast.cpp \
-    lib/targetspec/barf_targetspec_enums.cpp \
-    lib/targetspec/barf_targetspec_parser.cpp \
-    lib/targetspec/barf_targetspec_parser.trison
-
 lib_libbarf_preprocessor_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \
     -I$(top_srcdir)/lib/core \
@@ -266,6 +246,17 @@ lib_libbarf_regex_la_SOURCES = \
     lib/regex/barf_regex_nfa.cpp \
     lib/regex/barf_regex_parser.cpp \
     lib/regex/barf_regex_parser.trison
+
+lib_libbarf_targetspec_la_CPPFLAGS = \
+    $(AM_CPPFLAGS) \
+    -I$(top_srcdir)/lib/commonlang \
+    -I$(top_srcdir)/lib/core \
+    -I$(top_srcdir)/lib/targetspec
+lib_libbarf_targetspec_la_SOURCES = \
+    lib/targetspec/barf_targetspec_ast.cpp \
+    lib/targetspec/barf_targetspec_enums.cpp \
+    lib/targetspec/barf_targetspec_parser.cpp \
+    lib/targetspec/barf_targetspec_parser.trison
 
 if STABLE_REFLEX_EXISTS
 barf-commonlang-scanner: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
@@ -452,73 +443,6 @@ $(top_srcdir)/app/reflex/reflex_parser.npda.png: $(top_srcdir)/app/reflex/reflex
 endif
 
 ##############################################################################
-# trison
-##############################################################################
-
-trison_CPPFLAGS = \
-	$(AM_CPPFLAGS) \
-	-I$(top_srcdir)/app/trison \
-    -I$(top_srcdir)/lib/core
-
-trison_LDADD = \
-    $(LDADD) \
-    $(top_builddir)/lib/libbarf-core.la
-
-trison_SOURCES = \
-	app/trison/trison_ast.cpp \
-	app/trison/trison_enums.cpp \
-	app/trison/trison_main.cpp \
-	app/trison/trison_message.cpp \
-	app/trison/trison_options.cpp \
-	app/trison/trison_parser.cpp \
-	app/trison/trison_parser.trison \
-	app/trison/trison_parser_header.cpp \
-	app/trison/trison_parser_header.cpp.template \
-	app/trison/trison_parser_implementation.cpp \
-	app/trison/trison_parser_implementation.cpp.template \
-	app/trison/trison_preprocessor.cpp \
-	app/trison/trison_scanner.cpp \
-	app/trison/trison_state.cpp \
-	app/trison/trison_stateid.cpp \
-	app/trison/trison_statemachine.cpp \
-	app/trison/trison_transition.cpp
-
-if STABLE_TRISON_EXISTS
-trison-parser: $(top_srcdir)/app/trison/trison_parser.hpp
-$(top_srcdir)/app/trison/trison_parser.hpp: $(top_srcdir)/app/trison/trison_parser.cpp
-$(top_srcdir)/app/trison/trison_parser.cpp: $(top_srcdir)/app/trison/trison_parser.trison $(STABLE_TRISON)
-	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison/trison_parser --generate-states-file $(top_srcdir)/app/trison/trison_parser.states
-
-force-trison-parser:
-	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --warnings-as-errors --output-basename $(top_srcdir)/app/trison/trison_parser --generate-states-file $(top_srcdir)/app/trison/trison_parser.states
-else # !STABLE_TRISON_EXISTS
-trison-parser force-trison-parser:
-	@echo "!!!"
-	@echo "!!! Can't build trison parser without stable trison binary."
-	@echo "!!! Use --with-stable-trison configure option."
-	@echo "!!!"
-endif
-
-# custom rules for the "template" files (this is going away soon)
-$(top_srcdir)/app/trison/trison_parser_header.cpp: $(top_srcdir)/app/trison/trison_parser_header.cpp.template
-	echo "#include \"trison_statemachine.hpp\"" > $(top_srcdir)/app/trison/trison_parser_header.cpp
-	echo "" >> $(top_srcdir)/app/trison/trison_parser_header.cpp
-	echo "string const Trison::StateMachine::ms_header_file_template =" >> $(top_srcdir)/app/trison/trison_parser_header.cpp
-	echo "\"\\" >> $(top_srcdir)/app/trison/trison_parser_header.cpp
-	cat $(top_srcdir)/app/trison/trison_parser_header.cpp.template | sed "s#\\\\#\\\\\\\\#g" | sed "s#\\\"#\\\\\"#g" | sed "s#.*#&\\\\n\\\\#g" >> $(top_srcdir)/app/trison/trison_parser_header.cpp
-	echo "\";" >> $(top_srcdir)/app/trison/trison_parser_header.cpp
-	echo "" >> $(top_srcdir)/app/trison/trison_parser_header.cpp
-
-$(top_srcdir)/app/trison/trison_parser_implementation.cpp: $(top_srcdir)/app/trison/trison_parser_implementation.cpp.template
-	echo "#include \"trison_statemachine.hpp\"" > $(top_srcdir)/app/trison/trison_parser_implementation.cpp
-	echo "" >> $(top_srcdir)/app/trison/trison_parser_implementation.cpp
-	echo "string const Trison::StateMachine::ms_implementation_file_template =" >> $(top_srcdir)/app/trison/trison_parser_implementation.cpp
-	echo "\"\\" >> $(top_srcdir)/app/trison/trison_parser_implementation.cpp
-	cat $(top_srcdir)/app/trison/trison_parser_implementation.cpp.template | sed "s#\\\\#\\\\\\\\#g" | sed "s#\\\"#\\\\\"#g" | sed "s#.*#&\\\\n\\\\#g" >> $(top_srcdir)/app/trison/trison_parser_implementation.cpp
-	echo "\";" >> $(top_srcdir)/app/trison/trison_parser_implementation.cpp
-	echo "" >> $(top_srcdir)/app/trison/trison_parser_implementation.cpp
-
-##############################################################################
 # trison.unstable
 ##############################################################################
 
@@ -589,21 +513,6 @@ noinst_HEADERS = \
 	app/reflex/reflex_enums.hpp \
 	app/reflex/reflex_options.hpp \
 	app/reflex/reflex_parser.hpp \
-	\
-	app/trison/trison.hpp \
-	app/trison/trison_ast.hpp \
-	app/trison/trison_enums.hpp \
-	app/trison/trison_message.hpp \
-	app/trison/trison_options.hpp \
-	app/trison/trison_parser.hpp \
-	app/trison/trison_preprocessor.hpp \
-	app/trison/trison_rulephase.hpp \
-	app/trison/trison_scanner.hpp \
-	app/trison/trison_state.hpp \
-	app/trison/trison_stateid.hpp \
-	app/trison/trison_statemachine.hpp \
-	app/trison/trison_terminal.hpp \
-	app/trison/trison_transition.hpp \
 	\
 	app/trison.unstable/trison.hpp \
 	app/trison.unstable/trison_ast.hpp \

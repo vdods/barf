@@ -55,14 +55,6 @@ AC_ARG_WITH(
     [STABLE_REFLEX=])
 
 AC_ARG_WITH(
-    [stable-trison],
-    AC_HELP_STRING(
-        [--with-stable-trison=full/path/to/trison.stable],
-        [specify a stable, external trison binary to compile BARF's own trison-based parsers -- make sure not to specify the trison build target of this package.  This option is really only useful if you're developing BARF itself.]),
-    [STABLE_TRISON=$withval],
-    [STABLE_TRISON=])
-
-AC_ARG_WITH(
     [stable-trison-unstable],
     AC_HELP_STRING(
         [--with-stable-trison-unstable=full/path/to/trison.unstable.stable],
@@ -95,9 +87,6 @@ AC_SUBST(DOT)
 
 AM_CONDITIONAL(STABLE_REFLEX_EXISTS, [test "${STABLE_REFLEX}" != ""])
 AC_SUBST(STABLE_REFLEX)
-
-AM_CONDITIONAL(STABLE_TRISON_EXISTS, [test "${STABLE_TRISON}" != ""])
-AC_SUBST(STABLE_TRISON)
 
 AM_CONDITIONAL(STABLE_TRISON_UNSTABLE_EXISTS, [test "${STABLE_TRISON_UNSTABLE}" != ""])
 AC_SUBST(STABLE_TRISON_UNSTABLE)
