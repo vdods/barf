@@ -64,7 +64,11 @@ clean-all-parser-extras:
 	rm -f $(top_srcdir)/app/trison/trison_parser_header.cpp
 	rm -f $(top_srcdir)/app/trison/trison_parser_implementation.cpp
 	rm -f $(top_srcdir)/app/trison/trison_parser.states
-	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.states
+	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.dpda.dot
+	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.dpda.png
+	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.dpda.states
+	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.npda.dot
+	rm -f $(top_srcdir)/app/trison.unstable/trison_parser.npda.png
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.dot
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.png
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.states
