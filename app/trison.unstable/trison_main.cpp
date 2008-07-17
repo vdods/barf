@@ -208,8 +208,7 @@ void ParseCodespecs (Trison::PrimarySource const &primary_source)
 
     Preprocessor::Parser parser;
     parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_CODESPEC_SCANNER));
-    if (GetOptions().GetIsVerbose(Trison::Options::V_CODESPEC_PARSER))
-        parser.SetDebugSpewLevel(2);
+    parser.DebugSpew(GetOptions().GetIsVerbose(Trison::Options::V_CODESPEC_PARSER));
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
                                                it_end = primary_source.m_target_map->end();

@@ -550,7 +550,7 @@ public:
 
     void ResetForNewInput ();
 
-    Parser::Token::Type Scan (
+    Parser::Token::Id Scan (
 #line 43 "barf_preprocessor_scanner.reflex"
  Ast::Base **token 
 #line 557 "barf_preprocessor_scanner_new.hpp"
@@ -573,7 +573,7 @@ public:
 
 private:
 
-    Parser::Token::Type ParseKeyword (string const &accepted_string, Ast::Base **token);
+    Parser::Token::Id ParseKeyword (string const &accepted_string, Ast::Base **token);
 
     bool m_is_reading_newline_sensitive_code;
 

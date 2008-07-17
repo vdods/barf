@@ -48,21 +48,34 @@ Parser::~Parser ()
 #line 49 "reflex_parser.cpp"
 }
 
-Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token_, ParseNonterminal::Name nonterminal_to_parse_)
+void Parser::ResetForNewInput ()
 {
-    return Parse_(return_token_, nonterminal_to_parse_);
+    // clean up stuff that might be hanging around from the last parse's input.
+    ClearStack_();
+    ClearLookaheadQueue_();
+}
+
+Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
+{
+    return Parse_(return_token, nonterminal_to_parse);
 }
 
 // ///////////////////////////////////////////////////////////////////////
 // begin internal trison-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonterminal::Name nonterminal_to_parse_)
+Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
 {
-    assert(return_token_ != NULL && "the return-token pointer must be non-NULL");
+    assert(return_token != NULL && "the return-token pointer must be non-NULL");
+
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 158 "reflex_parser.trison"
+"Reflex::Parser (at " << GetFiLoc() << "): "
+#line 75 "reflex_parser.cpp"
+ << " starting parse" << std::endl;)
 
     ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
-    *return_token_ = NULL;
+    *return_token = NULL;
 
     // make sure all our structures are empty and variables initialized.
     // we don't clear the lookahead queue here because we might want to
@@ -73,52 +86,46 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
 
     // push the initial state of the DPDA.
     assert((false
-           || nonterminal_to_parse_ == ParseNonterminal::any_type_of_code_block
-           || nonterminal_to_parse_ == ParseNonterminal::at_least_one_newline
-           || nonterminal_to_parse_ == ParseNonterminal::at_least_zero_newlines
-           || nonterminal_to_parse_ == ParseNonterminal::macro_directives
-           || nonterminal_to_parse_ == ParseNonterminal::root
-           || nonterminal_to_parse_ == ParseNonterminal::rule
-           || nonterminal_to_parse_ == ParseNonterminal::rule_handler
-           || nonterminal_to_parse_ == ParseNonterminal::rule_handlers
-           || nonterminal_to_parse_ == ParseNonterminal::rule_list
-           || nonterminal_to_parse_ == ParseNonterminal::scanner_mode
-           || nonterminal_to_parse_ == ParseNonterminal::scanner_mode_rules
-           || nonterminal_to_parse_ == ParseNonterminal::scanner_modes
-           || nonterminal_to_parse_ == ParseNonterminal::start_in_scanner_mode_directive
-           || nonterminal_to_parse_ == ParseNonterminal::target_directive
-           || nonterminal_to_parse_ == ParseNonterminal::target_directive_param
-           || nonterminal_to_parse_ == ParseNonterminal::target_directives
-           || nonterminal_to_parse_ == ParseNonterminal::target_ids
-           || nonterminal_to_parse_ == ParseNonterminal::targets_directive
-           ) && "invalid nonterminal_to_parse_");
-    m_stack_.push_back(StackElement_(nonterminal_to_parse_, NULL));
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
-"Reflex::Parser (at " << GetFiLoc() << "): "
-#line 100 "reflex_parser.cpp"
- << " starting parse" << std::endl;)
-
+           || nonterminal_to_parse == ParseNonterminal::any_type_of_code_block
+           || nonterminal_to_parse == ParseNonterminal::at_least_one_newline
+           || nonterminal_to_parse == ParseNonterminal::at_least_zero_newlines
+           || nonterminal_to_parse == ParseNonterminal::macro_directives
+           || nonterminal_to_parse == ParseNonterminal::root
+           || nonterminal_to_parse == ParseNonterminal::rule
+           || nonterminal_to_parse == ParseNonterminal::rule_handler
+           || nonterminal_to_parse == ParseNonterminal::rule_handlers
+           || nonterminal_to_parse == ParseNonterminal::rule_list
+           || nonterminal_to_parse == ParseNonterminal::scanner_mode
+           || nonterminal_to_parse == ParseNonterminal::scanner_mode_rules
+           || nonterminal_to_parse == ParseNonterminal::scanner_modes
+           || nonterminal_to_parse == ParseNonterminal::start_in_scanner_mode_directive
+           || nonterminal_to_parse == ParseNonterminal::target_directive
+           || nonterminal_to_parse == ParseNonterminal::target_directive_param
+           || nonterminal_to_parse == ParseNonterminal::target_directives
+           || nonterminal_to_parse == ParseNonterminal::target_ids
+           || nonterminal_to_parse == ParseNonterminal::targets_directive
+           ) && "invalid nonterminal_to_parse");
+    m_stack_.push_back(StackElement_(nonterminal_to_parse, NULL));
     // main parser loop
     while (true)
     {
         if (m_is_in_error_panic_)
         {
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 111 "reflex_parser.cpp"
+#line 118 "reflex_parser.cpp"
  << " begin error panic" << std::endl;)
 
             // the special Terminal::END_ can not be eaten by error panic.
             if (Lookahead_(0).m_id == Terminal::END_)
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 120 "reflex_parser.cpp"
+#line 127 "reflex_parser.cpp"
  << " end error panic; abort (error panic can't eat Terminal::END_)" << std::endl;)
-                // parser_return_code_ and return_token_ are already appropriately
+                // parser_return_code_ and return_token are already appropriately
                 // set, so just break out of the main loop.
                 break;
             }
@@ -150,9 +157,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
                 if (accepts_error)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 156 "reflex_parser.cpp"
+#line 163 "reflex_parser.cpp"
  << " end error panic; success (current state accepts ERROR_ token)" << std::endl;)
                     // if the current state accepts error, throw away the first lookahead data
                     // (but don't pop the front of the lookahead queue).  then clear the thrown-
@@ -169,17 +176,17 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
                     if (m_stack_.size() > 1)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 175 "reflex_parser.cpp"
+#line 182 "reflex_parser.cpp"
  << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl;)
                     }
                     else
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 183 "reflex_parser.cpp"
+#line 190 "reflex_parser.cpp"
  << " end error panic; abort (stack is empty)" << std::endl;)
                     }
                     // otherwise throw away the data at the top of the stack, and pop the stack.
@@ -188,7 +195,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
                     m_stack_.resize(m_stack_.size()-1);
                     if (m_stack_.empty())
                     {
-                        // parser_return_code_ and return_token_ are already appropriately
+                        // parser_return_code_ and return_token are already appropriately
                         // set, so just break out of the inner loop.
                         break;
                     }
@@ -244,9 +251,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
                 if (lookahead_sequence_matched)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 250 "reflex_parser.cpp"
+#line 257 "reflex_parser.cpp"
  << " current (relevant) lookahead(s):";)
                     for (TrisonCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
@@ -264,9 +271,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
             if (!transition_exercised)
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 270 "reflex_parser.cpp"
+#line 277 "reflex_parser.cpp"
  << " current (relevant) lookahead(s):";)
                 for (TrisonCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
@@ -275,9 +282,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
                 TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl;)
 
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 281 "reflex_parser.cpp"
+#line 288 "reflex_parser.cpp"
  << " exercising default transition" << std::endl;)
                 // exercise the default transition.  a return value of true indicates
                 // that the parser should return.
@@ -285,11 +292,11 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
                 {
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
-                    // *return_token_ and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == TrisonCpp_::Uint32(nonterminal_to_parse_));
+                    // *return_token and then break out of the main parser loop.
+                    assert(m_stack_[0].m_state_index == TrisonCpp_::Uint32(nonterminal_to_parse));
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
-                    *return_token_ = m_stack_.rbegin()->m_token_data;
+                    *return_token = m_stack_.rbegin()->m_token_data;
                     // take the return token out of the stack, so it's not thrown away
                     // when we clear the stack later.
                     m_stack_.rbegin()->m_token_data = NULL;
@@ -306,14 +313,14 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
     ClearStack_();
 
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 312 "reflex_parser.cpp"
+#line 319 "reflex_parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl;)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 317 "reflex_parser.cpp"
+#line 324 "reflex_parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl;)
 
     return parser_return_code_;
@@ -322,23 +329,23 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token_, ParseNonter
 void Parser::ThrowAwayToken_ (Token::Data &token_data) throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 328 "reflex_parser.cpp"
+#line 335 "reflex_parser.cpp"
  << " executing throw-away-token actions" << std::endl;)
 
 
-#line 100 "reflex_parser.trison"
+#line 101 "reflex_parser.trison"
 
     delete token_data;
 
-#line 336 "reflex_parser.cpp"
+#line 343 "reflex_parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
 {
 
-#line 103 "reflex_parser.trison"
+#line 104 "reflex_parser.trison"
 
     Ast::Base *lookahead_token_data = NULL;
     CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&lookahead_token_data);
@@ -390,7 +397,7 @@ Parser::Token Parser::Scan_ () throw()
             return Token(Terminal::BAD_TOKEN);
     }
 
-#line 394 "reflex_parser.cpp"
+#line 401 "reflex_parser.cpp"
 }
 
 void Parser::ClearStack_ () throw()
@@ -399,9 +406,9 @@ void Parser::ClearStack_ () throw()
         return; // nothing to do
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 405 "reflex_parser.cpp"
+#line 412 "reflex_parser.cpp"
  << " clearing the stack" << std::endl;)
 
     Stack_::iterator it = m_stack_.begin();
@@ -417,9 +424,9 @@ void Parser::ClearStack_ () throw()
 void Parser::ClearLookaheadQueue_ () throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 423 "reflex_parser.cpp"
+#line 430 "reflex_parser.cpp"
  << " clearing the lookahead queue" << std::endl;)
 
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
@@ -434,9 +441,9 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
         m_lookahead_queue_.push_back(Scan_());
 
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 440 "reflex_parser.cpp"
+#line 447 "reflex_parser.cpp"
  << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl;)
     }
     return m_lookahead_queue_[index];
@@ -454,9 +461,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             assert(transition.m_data < ms_rule_count_);
             Rule_ const &rule = ms_rule_table_[transition.m_data];
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 460 "reflex_parser.cpp"
+#line 467 "reflex_parser.cpp"
  << " REDUCE " << rule.m_description << std::endl;)
             assert(m_stack_.size() > rule.m_token_count);
             m_lookahead_queue_.push_front(
@@ -466,18 +473,18 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             m_stack_.resize(m_stack_.size() - rule.m_token_count);
             assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 472 "reflex_parser.cpp"
+#line 479 "reflex_parser.cpp"
  << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl;)
             return false; // indicating the parser isn't returning
         }
 
         case Transition_::TT_RETURN:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 481 "reflex_parser.cpp"
+#line 488 "reflex_parser.cpp"
  << " RETURN" << std::endl;)
             return true; // indicating the parser is returning
 
@@ -488,9 +495,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
                                                                // client error, so asserting here is ok.
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 494 "reflex_parser.cpp"
+#line 501 "reflex_parser.cpp"
  << " SHIFT " << Lookahead_(0) << std::endl;)
             m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0).m_data));
             m_lookahead_queue_.pop_front();
@@ -498,9 +505,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
 
         case Transition_::TT_ERROR_PANIC:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 504 "reflex_parser.cpp"
+#line 511 "reflex_parser.cpp"
  << " ERROR_PANIC" << std::endl;)
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
@@ -515,9 +522,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
 {
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 521 "reflex_parser.cpp"
+#line 528 "reflex_parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl;)
     switch (rule_index_)
     {
@@ -534,7 +541,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
             ScannerModeMap * scanner_mode_map(Dsc<ScannerModeMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 194 "reflex_parser.trison"
+#line 195 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         assert(target_map == m_target_map);
@@ -560,7 +567,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         delete throwaway;
         return primary_source;
     
-#line 564 "reflex_parser.cpp"
+#line 571 "reflex_parser.cpp"
             break;
         }
 
@@ -570,14 +577,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             CommonLang::TargetMap * target_map(Dsc<CommonLang::TargetMap *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 228 "reflex_parser.trison"
+#line 229 "reflex_parser.trison"
 
         assert(m_target_map == NULL);
         m_target_map = target_map;
         delete throwaway;
         return target_map;
     
-#line 581 "reflex_parser.cpp"
+#line 588 "reflex_parser.cpp"
             break;
         }
 
@@ -585,13 +592,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 236 "reflex_parser.trison"
+#line 237 "reflex_parser.trison"
 
         assert(m_target_map == NULL);
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     
-#line 595 "reflex_parser.cpp"
+#line 602 "reflex_parser.cpp"
             break;
         }
 
@@ -600,14 +607,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 243 "reflex_parser.trison"
+#line 244 "reflex_parser.trison"
 
         assert(m_target_map == NULL);
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     
-#line 611 "reflex_parser.cpp"
+#line 618 "reflex_parser.cpp"
             break;
         }
 
@@ -617,14 +624,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             CommonLang::TargetMap * target_map(Dsc<CommonLang::TargetMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 254 "reflex_parser.trison"
+#line 255 "reflex_parser.trison"
 
         CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
         target->EnableCodeGeneration();
         target_map->Add(target_id->GetText(), target);
         return target_map;
     
-#line 628 "reflex_parser.cpp"
+#line 635 "reflex_parser.cpp"
             break;
         }
 
@@ -632,12 +639,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 262 "reflex_parser.trison"
+#line 263 "reflex_parser.trison"
 
         assert(m_target_map == NULL);
         return new CommonLang::TargetMap();
     
-#line 641 "reflex_parser.cpp"
+#line 648 "reflex_parser.cpp"
             break;
         }
 
@@ -646,14 +653,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             CommonLang::TargetDirective * target_directive(Dsc<CommonLang::TargetDirective *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 275 "reflex_parser.trison"
+#line 276 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         if (target_directive != NULL)
             m_target_map->AddTargetDirective(target_directive);
         return NULL;
     
-#line 657 "reflex_parser.cpp"
+#line 664 "reflex_parser.cpp"
             break;
         }
 
@@ -661,13 +668,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 283 "reflex_parser.trison"
+#line 284 "reflex_parser.trison"
 
         if (m_target_map == NULL)
             m_target_map = new CommonLang::TargetMap();
         return NULL;
     
-#line 671 "reflex_parser.cpp"
+#line 678 "reflex_parser.cpp"
             break;
         }
 
@@ -679,12 +686,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::TextBase * param(Dsc<Ast::TextBase *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 293 "reflex_parser.trison"
+#line 294 "reflex_parser.trison"
 
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     
-#line 688 "reflex_parser.cpp"
+#line 695 "reflex_parser.cpp"
             break;
         }
 
@@ -695,7 +702,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
             Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 299 "reflex_parser.trison"
+#line 300 "reflex_parser.trison"
 
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -703,7 +710,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         delete target_directive;
         return NULL;
     
-#line 707 "reflex_parser.cpp"
+#line 714 "reflex_parser.cpp"
             break;
         }
 
@@ -713,14 +720,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 308 "reflex_parser.trison"
+#line 309 "reflex_parser.trison"
 
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
     
-#line 724 "reflex_parser.cpp"
+#line 731 "reflex_parser.cpp"
             break;
         }
 
@@ -729,13 +736,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 316 "reflex_parser.trison"
+#line 317 "reflex_parser.trison"
 
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 739 "reflex_parser.cpp"
+#line 746 "reflex_parser.cpp"
             break;
         }
 
@@ -744,9 +751,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Id * value(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 325 "reflex_parser.trison"
+#line 326 "reflex_parser.trison"
  return value; 
-#line 750 "reflex_parser.cpp"
+#line 757 "reflex_parser.cpp"
             break;
         }
 
@@ -755,9 +762,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::String * value(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 326 "reflex_parser.trison"
+#line 327 "reflex_parser.trison"
  return value; 
-#line 761 "reflex_parser.cpp"
+#line 768 "reflex_parser.cpp"
             break;
         }
 
@@ -766,9 +773,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 327 "reflex_parser.trison"
+#line 328 "reflex_parser.trison"
  return value; 
-#line 772 "reflex_parser.cpp"
+#line 779 "reflex_parser.cpp"
             break;
         }
 
@@ -777,9 +784,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 328 "reflex_parser.trison"
+#line 329 "reflex_parser.trison"
  return value; 
-#line 783 "reflex_parser.cpp"
+#line 790 "reflex_parser.cpp"
             break;
         }
 
@@ -787,9 +794,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 329 "reflex_parser.trison"
+#line 330 "reflex_parser.trison"
  return NULL; 
-#line 793 "reflex_parser.cpp"
+#line 800 "reflex_parser.cpp"
             break;
         }
 
@@ -801,7 +808,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::Id * macro_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::String * macro_regex_string(Dsc<Ast::String *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 339 "reflex_parser.trison"
+#line 340 "reflex_parser.trison"
 
         Regex::Parser parser;
         parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
@@ -827,7 +834,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         delete macro_regex_string;
         return regular_expression_map;
     
-#line 831 "reflex_parser.cpp"
+#line 838 "reflex_parser.cpp"
             break;
         }
 
@@ -835,14 +842,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 366 "reflex_parser.trison"
+#line 367 "reflex_parser.trison"
 
         // we save the regex macro map in a member var, so that the reduction
         // rule handler for the scanner mode rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
         return m_regex_macro_map;
     
-#line 846 "reflex_parser.cpp"
+#line 853 "reflex_parser.cpp"
             break;
         }
 
@@ -853,14 +860,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token_data));
             Ast::Id * macro_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 374 "reflex_parser.trison"
+#line 375 "reflex_parser.trison"
 
         EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete macro_id;
         return regular_expression_map;
     
-#line 864 "reflex_parser.cpp"
+#line 871 "reflex_parser.cpp"
             break;
         }
 
@@ -870,13 +877,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Regex::RegularExpressionMap * regular_expression_map(Dsc<Regex::RegularExpressionMap *>(m_stack_[m_stack_.size()-4].m_token_data));
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 382 "reflex_parser.trison"
+#line 383 "reflex_parser.trison"
 
         EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
         return regular_expression_map;
     
-#line 880 "reflex_parser.cpp"
+#line 887 "reflex_parser.cpp"
             break;
         }
 
@@ -886,12 +893,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 396 "reflex_parser.trison"
+#line 397 "reflex_parser.trison"
 
         delete throwaway;
         return new StartInScannerModeDirective(scanner_mode_id);
     
-#line 895 "reflex_parser.cpp"
+#line 902 "reflex_parser.cpp"
             break;
         }
 
@@ -900,13 +907,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 402 "reflex_parser.trison"
+#line 403 "reflex_parser.trison"
 
         EmitError("parse error in directive %start_in_scanner_mode", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 910 "reflex_parser.cpp"
+#line 917 "reflex_parser.cpp"
             break;
         }
 
@@ -916,13 +923,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             ScannerModeMap * scanner_mode_map(Dsc<ScannerModeMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             ScannerMode * scanner_mode(Dsc<ScannerMode *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 416 "reflex_parser.trison"
+#line 417 "reflex_parser.trison"
 
         if (scanner_mode != NULL)
             scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
         return scanner_mode_map;
     
-#line 926 "reflex_parser.cpp"
+#line 933 "reflex_parser.cpp"
             break;
         }
 
@@ -930,11 +937,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 423 "reflex_parser.trison"
+#line 424 "reflex_parser.trison"
 
         return new ScannerModeMap();
     
-#line 938 "reflex_parser.cpp"
+#line 945 "reflex_parser.cpp"
             break;
         }
 
@@ -945,12 +952,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 431 "reflex_parser.trison"
+#line 432 "reflex_parser.trison"
 
         delete throwaway;
         return new ScannerMode(scanner_mode_id, rule_list);
     
-#line 954 "reflex_parser.cpp"
+#line 961 "reflex_parser.cpp"
             break;
         }
 
@@ -960,13 +967,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
 
-#line 437 "reflex_parser.trison"
+#line 438 "reflex_parser.trison"
 
         EmitError("parse error in scanner mode rule list", throwaway->GetFiLoc());
         delete throwaway;
         return new ScannerMode(scanner_mode_id, new RuleList());
     
-#line 970 "reflex_parser.cpp"
+#line 977 "reflex_parser.cpp"
             break;
         }
 
@@ -976,14 +983,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 444 "reflex_parser.trison"
+#line 445 "reflex_parser.trison"
 
         EmitError("parse error in scanner mode id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
     
-#line 987 "reflex_parser.cpp"
+#line 994 "reflex_parser.cpp"
             break;
         }
 
@@ -992,11 +999,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 455 "reflex_parser.trison"
+#line 456 "reflex_parser.trison"
 
         return rule_list;
     
-#line 1000 "reflex_parser.cpp"
+#line 1007 "reflex_parser.cpp"
             break;
         }
 
@@ -1004,11 +1011,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 460 "reflex_parser.trison"
+#line 461 "reflex_parser.trison"
 
         return new RuleList();
     
-#line 1012 "reflex_parser.cpp"
+#line 1019 "reflex_parser.cpp"
             break;
         }
 
@@ -1018,12 +1025,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-3].m_token_data));
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 468 "reflex_parser.trison"
+#line 469 "reflex_parser.trison"
 
         rule_list->Append(rule);
         return rule_list;
     
-#line 1027 "reflex_parser.cpp"
+#line 1034 "reflex_parser.cpp"
             break;
         }
 
@@ -1032,13 +1039,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 474 "reflex_parser.trison"
+#line 475 "reflex_parser.trison"
 
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
     
-#line 1042 "reflex_parser.cpp"
+#line 1049 "reflex_parser.cpp"
             break;
         }
 
@@ -1048,7 +1055,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::String * regex_string(Dsc<Ast::String *>(m_stack_[m_stack_.size()-2].m_token_data));
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 484 "reflex_parser.trison"
+#line 485 "reflex_parser.trison"
 
         assert(m_regex_macro_map != NULL);
 
@@ -1110,7 +1117,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         delete regex_string;
         return rule;
     
-#line 1114 "reflex_parser.cpp"
+#line 1121 "reflex_parser.cpp"
             break;
         }
 
@@ -1120,13 +1127,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             CommonLang::RuleHandler * rule_handler(Dsc<CommonLang::RuleHandler *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 550 "reflex_parser.trison"
+#line 551 "reflex_parser.trison"
 
         if (rule_handler != NULL)
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
     
-#line 1130 "reflex_parser.cpp"
+#line 1137 "reflex_parser.cpp"
             break;
         }
 
@@ -1134,11 +1141,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 557 "reflex_parser.trison"
+#line 558 "reflex_parser.trison"
 
         return new CommonLang::RuleHandlerMap();
     
-#line 1142 "reflex_parser.cpp"
+#line 1149 "reflex_parser.cpp"
             break;
         }
 
@@ -1149,7 +1156,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 565 "reflex_parser.trison"
+#line 566 "reflex_parser.trison"
 
         delete throwaway;
         assert(m_target_map != NULL);
@@ -1159,7 +1166,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
                 target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     
-#line 1163 "reflex_parser.cpp"
+#line 1170 "reflex_parser.cpp"
             break;
         }
 
@@ -1169,7 +1176,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 576 "reflex_parser.trison"
+#line 577 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -1177,7 +1184,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         delete code_block;
         return NULL;
     
-#line 1181 "reflex_parser.cpp"
+#line 1188 "reflex_parser.cpp"
             break;
         }
 
@@ -1186,14 +1193,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 585 "reflex_parser.trison"
+#line 586 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 1197 "reflex_parser.cpp"
+#line 1204 "reflex_parser.cpp"
             break;
         }
 
@@ -1202,14 +1209,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 593 "reflex_parser.trison"
+#line 594 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     
-#line 1213 "reflex_parser.cpp"
+#line 1220 "reflex_parser.cpp"
             break;
         }
 
@@ -1218,9 +1225,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 607 "reflex_parser.trison"
+#line 608 "reflex_parser.trison"
  return dumb_code_block; 
-#line 1224 "reflex_parser.cpp"
+#line 1231 "reflex_parser.cpp"
             break;
         }
 
@@ -1229,9 +1236,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 609 "reflex_parser.trison"
+#line 610 "reflex_parser.trison"
  return strict_code_block; 
-#line 1235 "reflex_parser.cpp"
+#line 1242 "reflex_parser.cpp"
             break;
         }
 
@@ -1239,9 +1246,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 614 "reflex_parser.trison"
+#line 615 "reflex_parser.trison"
  return NULL; 
-#line 1245 "reflex_parser.cpp"
+#line 1252 "reflex_parser.cpp"
             break;
         }
 
@@ -1249,9 +1256,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 616 "reflex_parser.trison"
+#line 617 "reflex_parser.trison"
  return NULL; 
-#line 1255 "reflex_parser.cpp"
+#line 1262 "reflex_parser.cpp"
             break;
         }
 
@@ -1259,9 +1266,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 621 "reflex_parser.trison"
+#line 622 "reflex_parser.trison"
  return NULL; 
-#line 1265 "reflex_parser.cpp"
+#line 1272 "reflex_parser.cpp"
             break;
         }
 
@@ -1269,9 +1276,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (TrisonCpp_::Uint32 const rule
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 623 "reflex_parser.trison"
+#line 624 "reflex_parser.trison"
  return NULL; 
-#line 1275 "reflex_parser.cpp"
+#line 1282 "reflex_parser.cpp"
             break;
         }
 
@@ -1286,9 +1293,9 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     assert(!m_stack_.empty());
 
     stream << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 1292 "reflex_parser.cpp"
+#line 1299 "reflex_parser.cpp"
  << " parser stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -1307,17 +1314,17 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
 {
     assert(string != NULL);
     stream << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 1313 "reflex_parser.cpp"
+#line 1320 "reflex_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
         if (*string == '\n')
             stream << '\n' << 
-#line 157 "reflex_parser.trison"
+#line 158 "reflex_parser.trison"
 "Reflex::Parser (at " << GetFiLoc() << "): "
-#line 1321 "reflex_parser.cpp"
+#line 1328 "reflex_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -1386,8 +1393,8 @@ TrisonCpp_::Size const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) /
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
-    { 3, ms_transition_table_+0, "START: root                                                                                                                                             \nrule 0: root <- . at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 41: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE                                                                                     \nrule 42: at_least_zero_newlines <- .                                                                                                                    " },
-    { 1, ms_transition_table_+3, "RETURN: root" },
+    { 3, ms_transition_table_+0, "START root                                                                                                                                              \nrule 0: root <- . at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 41: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE                                                                                     \nrule 42: at_least_zero_newlines <- .                                                                                                                    " },
+    { 1, ms_transition_table_+3, "RETURN root" },
     { 4, ms_transition_table_+4, "rule 0: root <- at_least_zero_newlines . targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 41: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE                                                                                     \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline                                                                        \nrule 2: targets_directive <- .                                                                                                                          \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline                                                                            " },
     { 3, ms_transition_table_+8, "rule 1: targets_directive <- DIRECTIVE_TARGETS . target_ids at_least_one_newline\nrule 4: target_ids <- . target_ids ID                                           \nrule 5: target_ids <- .                                                         \nrule 3: targets_directive <- DIRECTIVE_TARGETS . ERROR_ at_least_one_newline    " },
     { 3, ms_transition_table_+11, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE             \nrule 44: at_least_one_newline <- . NEWLINE                                  \nrule 3: targets_directive <- DIRECTIVE_TARGETS ERROR_ . at_least_one_newline" },
@@ -1464,40 +1471,40 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 2, ms_transition_table_+179, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules . ';'" },
     { 1, ms_transition_table_+181, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules ';' ." },
     { 1, ms_transition_table_+182, "rule 23: scanner_modes <- scanner_modes scanner_mode ." },
-    { 3, ms_transition_table_+183, "START: targets_directive                                                        \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline\nrule 2: targets_directive <- .                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline    " },
-    { 1, ms_transition_table_+186, "RETURN: targets_directive" },
-    { 2, ms_transition_table_+187, "START: target_ids                    \nrule 4: target_ids <- . target_ids ID\nrule 5: target_ids <- .              " },
-    { 2, ms_transition_table_+189, "RETURN: target_ids                   \nrule 4: target_ids <- target_ids . ID" },
-    { 2, ms_transition_table_+191, "START: target_directives                                         \nrule 6: target_directives <- . target_directives target_directive\nrule 7: target_directives <- .                                   " },
-    { 3, ms_transition_table_+193, "RETURN: target_directives                                                                               \nrule 6: target_directives <- target_directives . target_directive                                       \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_ at_least_one_newline                             " },
-    { 3, ms_transition_table_+196, "START: target_directive                                                                                 \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_ at_least_one_newline                             " },
-    { 1, ms_transition_table_+199, "RETURN: target_directive" },
-    { 6, ms_transition_table_+200, "START: target_directive_param                         \nrule 12: target_directive_param <- . ID               \nrule 13: target_directive_param <- . STRING_LITERAL   \nrule 14: target_directive_param <- . STRICT_CODE_BLOCK\nrule 15: target_directive_param <- . DUMB_CODE_BLOCK  \nrule 16: target_directive_param <- .                  " },
-    { 1, ms_transition_table_+206, "RETURN: target_directive_param" },
-    { 2, ms_transition_table_+207, "START: macro_directives                                                                       \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 18: macro_directives <- .                                                                \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
-    { 2, ms_transition_table_+209, "RETURN: macro_directives                                                                      \nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
-    { 3, ms_transition_table_+211, "START: start_in_scanner_mode_directive                                                                   \nrule 21: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline    \nrule 22: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline" },
-    { 1, ms_transition_table_+214, "RETURN: start_in_scanner_mode_directive" },
-    { 2, ms_transition_table_+215, "START: scanner_modes                                  \nrule 23: scanner_modes <- . scanner_modes scanner_mode\nrule 24: scanner_modes <- .                           " },
-    { 3, ms_transition_table_+217, "RETURN: scanner_modes                                                       \nrule 23: scanner_modes <- scanner_modes . scanner_mode                      \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
-    { 3, ms_transition_table_+220, "START: scanner_mode                                                         \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
-    { 1, ms_transition_table_+223, "RETURN: scanner_mode" },
-    { 5, ms_transition_table_+224, "START: scanner_mode_rules                 \nrule 28: scanner_mode_rules <- . rule_list\nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              \nrule 29: scanner_mode_rules <- .          " },
-    { 1, ms_transition_table_+229, "RETURN: scanner_mode_rules" },
-    { 4, ms_transition_table_+230, "START: rule_list                          \nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              " },
-    { 2, ms_transition_table_+234, "RETURN: rule_list                         \nrule 30: rule_list <- rule_list . '|' rule" },
-    { 3, ms_transition_table_+236, "START: rule                           \nrule 32: rule <- . REGEX rule_handlers" },
-    { 1, ms_transition_table_+239, "RETURN: rule" },
-    { 2, ms_transition_table_+240, "START: rule_handlers                                  \nrule 33: rule_handlers <- . rule_handlers rule_handler\nrule 34: rule_handlers <- .                           " },
-    { 4, ms_transition_table_+242, "RETURN: rule_handlers                                                    \nrule 33: rule_handlers <- rule_handlers . rule_handler                   \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
-    { 4, ms_transition_table_+246, "START: rule_handler                                                      \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
-    { 1, ms_transition_table_+250, "RETURN: rule_handler" },
-    { 4, ms_transition_table_+251, "START: any_type_of_code_block                         \nrule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK  \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK" },
-    { 1, ms_transition_table_+255, "RETURN: any_type_of_code_block" },
-    { 2, ms_transition_table_+256, "START: at_least_zero_newlines                                      \nrule 41: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 42: at_least_zero_newlines <- .                               " },
-    { 2, ms_transition_table_+258, "RETURN: at_least_zero_newlines                                     \nrule 41: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE" },
-    { 3, ms_transition_table_+260, "START: at_least_one_newline                                    \nrule 43: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 44: at_least_one_newline <- . NEWLINE                     " },
-    { 2, ms_transition_table_+263, "RETURN: at_least_one_newline                                   \nrule 43: at_least_one_newline <- at_least_one_newline . NEWLINE" }
+    { 3, ms_transition_table_+183, "START targets_directive                                                         \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline\nrule 2: targets_directive <- .                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline    " },
+    { 1, ms_transition_table_+186, "RETURN targets_directive" },
+    { 2, ms_transition_table_+187, "START target_ids                     \nrule 4: target_ids <- . target_ids ID\nrule 5: target_ids <- .              " },
+    { 2, ms_transition_table_+189, "RETURN target_ids                    \nrule 4: target_ids <- target_ids . ID" },
+    { 2, ms_transition_table_+191, "START target_directives                                          \nrule 6: target_directives <- . target_directives target_directive\nrule 7: target_directives <- .                                   " },
+    { 3, ms_transition_table_+193, "RETURN target_directives                                                                                \nrule 6: target_directives <- target_directives . target_directive                                       \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_ at_least_one_newline                             " },
+    { 3, ms_transition_table_+196, "START target_directive                                                                                  \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_ at_least_one_newline                             " },
+    { 1, ms_transition_table_+199, "RETURN target_directive" },
+    { 6, ms_transition_table_+200, "START target_directive_param                          \nrule 12: target_directive_param <- . ID               \nrule 13: target_directive_param <- . STRING_LITERAL   \nrule 14: target_directive_param <- . STRICT_CODE_BLOCK\nrule 15: target_directive_param <- . DUMB_CODE_BLOCK  \nrule 16: target_directive_param <- .                  " },
+    { 1, ms_transition_table_+206, "RETURN target_directive_param" },
+    { 2, ms_transition_table_+207, "START macro_directives                                                                        \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 18: macro_directives <- .                                                                \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
+    { 2, ms_transition_table_+209, "RETURN macro_directives                                                                       \nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
+    { 3, ms_transition_table_+211, "START start_in_scanner_mode_directive                                                                    \nrule 21: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline    \nrule 22: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline" },
+    { 1, ms_transition_table_+214, "RETURN start_in_scanner_mode_directive" },
+    { 2, ms_transition_table_+215, "START scanner_modes                                   \nrule 23: scanner_modes <- . scanner_modes scanner_mode\nrule 24: scanner_modes <- .                           " },
+    { 3, ms_transition_table_+217, "RETURN scanner_modes                                                        \nrule 23: scanner_modes <- scanner_modes . scanner_mode                      \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
+    { 3, ms_transition_table_+220, "START scanner_mode                                                          \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
+    { 1, ms_transition_table_+223, "RETURN scanner_mode" },
+    { 5, ms_transition_table_+224, "START scanner_mode_rules                  \nrule 28: scanner_mode_rules <- . rule_list\nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              \nrule 29: scanner_mode_rules <- .          " },
+    { 1, ms_transition_table_+229, "RETURN scanner_mode_rules" },
+    { 4, ms_transition_table_+230, "START rule_list                           \nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              " },
+    { 2, ms_transition_table_+234, "RETURN rule_list                          \nrule 30: rule_list <- rule_list . '|' rule" },
+    { 3, ms_transition_table_+236, "START rule                            \nrule 32: rule <- . REGEX rule_handlers" },
+    { 1, ms_transition_table_+239, "RETURN rule" },
+    { 2, ms_transition_table_+240, "START rule_handlers                                   \nrule 33: rule_handlers <- . rule_handlers rule_handler\nrule 34: rule_handlers <- .                           " },
+    { 4, ms_transition_table_+242, "RETURN rule_handlers                                                     \nrule 33: rule_handlers <- rule_handlers . rule_handler                   \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
+    { 4, ms_transition_table_+246, "START rule_handler                                                       \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
+    { 1, ms_transition_table_+250, "RETURN rule_handler" },
+    { 4, ms_transition_table_+251, "START any_type_of_code_block                          \nrule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK  \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK" },
+    { 1, ms_transition_table_+255, "RETURN any_type_of_code_block" },
+    { 2, ms_transition_table_+256, "START at_least_zero_newlines                                       \nrule 41: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 42: at_least_zero_newlines <- .                               " },
+    { 2, ms_transition_table_+258, "RETURN at_least_zero_newlines                                      \nrule 41: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE" },
+    { 3, ms_transition_table_+260, "START at_least_one_newline                                     \nrule 43: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 44: at_least_one_newline <- . NEWLINE                     " },
+    { 2, ms_transition_table_+263, "RETURN at_least_one_newline                                    \nrule 43: at_least_one_newline <- at_least_one_newline . NEWLINE" }
 };
 TrisonCpp_::Size const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
 
@@ -1692,12 +1699,12 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+107 },
     { Parser::Transition_::TT_REDUCE, 5, 0, ms_lookahead_table_+107 },
     { Parser::Transition_::TT_SHIFT, 81, 1, ms_lookahead_table_+107 },
+    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+108 },
     { Parser::Transition_::TT_SHIFT, 9, 1, ms_lookahead_table_+108 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+109 },
     { Parser::Transition_::TT_REDUCE, 7, 0, ms_lookahead_table_+109 },
     { Parser::Transition_::TT_SHIFT, 83, 1, ms_lookahead_table_+109 },
+    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+110 },
     { Parser::Transition_::TT_SHIFT, 14, 1, ms_lookahead_table_+110 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+111 },
     { Parser::Transition_::TT_SHIFT, 31, 1, ms_lookahead_table_+111 },
     { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+112 },
     { Parser::Transition_::TT_SHIFT, 14, 1, ms_lookahead_table_+112 },
@@ -1712,16 +1719,16 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+119 },
     { Parser::Transition_::TT_REDUCE, 18, 0, ms_lookahead_table_+119 },
     { Parser::Transition_::TT_SHIFT, 89, 1, ms_lookahead_table_+119 },
+    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+120 },
     { Parser::Transition_::TT_SHIFT, 33, 1, ms_lookahead_table_+120 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+121 },
     { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+121 },
     { Parser::Transition_::TT_SHIFT, 41, 1, ms_lookahead_table_+121 },
     { Parser::Transition_::TT_SHIFT, 91, 1, ms_lookahead_table_+122 },
     { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+123 },
     { Parser::Transition_::TT_REDUCE, 24, 0, ms_lookahead_table_+123 },
     { Parser::Transition_::TT_SHIFT, 93, 1, ms_lookahead_table_+123 },
+    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+124 },
     { Parser::Transition_::TT_SHIFT, 49, 1, ms_lookahead_table_+124 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+125 },
     { Parser::Transition_::TT_SHIFT, 77, 1, ms_lookahead_table_+125 },
     { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+126 },
     { Parser::Transition_::TT_SHIFT, 49, 1, ms_lookahead_table_+126 },
@@ -1737,17 +1744,17 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::TT_SHIFT, 52, 1, ms_lookahead_table_+132 },
     { Parser::Transition_::TT_SHIFT, 99, 1, ms_lookahead_table_+133 },
     { Parser::Transition_::TT_SHIFT, 70, 1, ms_lookahead_table_+134 },
+    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+135 },
     { Parser::Transition_::TT_SHIFT, 68, 1, ms_lookahead_table_+135 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+136 },
     { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+136 },
     { Parser::Transition_::TT_SHIFT, 52, 1, ms_lookahead_table_+136 },
     { Parser::Transition_::TT_SHIFT, 101, 1, ms_lookahead_table_+137 },
     { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+138 },
     { Parser::Transition_::TT_REDUCE, 34, 0, ms_lookahead_table_+138 },
     { Parser::Transition_::TT_SHIFT, 103, 1, ms_lookahead_table_+138 },
+    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+139 },
     { Parser::Transition_::TT_SHIFT, 54, 1, ms_lookahead_table_+139 },
     { Parser::Transition_::TT_SHIFT, 58, 1, ms_lookahead_table_+140 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+141 },
     { Parser::Transition_::TT_SHIFT, 64, 1, ms_lookahead_table_+141 },
     { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+142 },
     { Parser::Transition_::TT_SHIFT, 54, 1, ms_lookahead_table_+142 },
@@ -1761,13 +1768,13 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+148 },
     { Parser::Transition_::TT_REDUCE, 42, 0, ms_lookahead_table_+148 },
     { Parser::Transition_::TT_SHIFT, 109, 1, ms_lookahead_table_+148 },
+    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+149 },
     { Parser::Transition_::TT_SHIFT, 11, 1, ms_lookahead_table_+149 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+150 },
     { Parser::Transition_::TT_ERROR_PANIC, 0, 0, ms_lookahead_table_+150 },
     { Parser::Transition_::TT_SHIFT, 5, 1, ms_lookahead_table_+150 },
     { Parser::Transition_::TT_SHIFT, 111, 1, ms_lookahead_table_+151 },
-    { Parser::Transition_::TT_SHIFT, 7, 1, ms_lookahead_table_+152 },
-    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+153 }
+    { Parser::Transition_::TT_RETURN, 0, 0, ms_lookahead_table_+152 },
+    { Parser::Transition_::TT_SHIFT, 7, 1, ms_lookahead_table_+152 }
 };
 TrisonCpp_::Size const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
 
@@ -2242,9 +2249,10 @@ enum
 
 bool Parser::OpenFile (string const &input_filename)
 {
+    ResetForNewInput();
     return m_scanner.OpenFile(input_filename);
 }
 
 } // end of namespace Reflex
 
-#line 2251 "reflex_parser.cpp"
+#line 2259 "reflex_parser.cpp"

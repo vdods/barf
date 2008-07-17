@@ -53,7 +53,7 @@ public:
 
     bool Close ();
 
-    Parser::Token::Type Scan (Ast::Base **scanned_token);
+    Parser::Token::Id Scan (Ast::Base **scanned_token);
 
 protected:
 
@@ -82,8 +82,8 @@ private:
         }
     }
 
-    Parser::Token::Type ScanBody (Ast::Base **scanned_token);
-    Parser::Token::Type ScanCode (Ast::Base **scanned_token);
+    Parser::Token::Id ScanBody (Ast::Base **scanned_token);
+    Parser::Token::Id ScanCode (Ast::Base **scanned_token);
 
     enum State
     {

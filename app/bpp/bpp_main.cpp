@@ -37,8 +37,7 @@ int main (int argc, char **argv)
 
         Preprocessor::Parser parser;
         parser.ScannerDebugSpew(Bpp::Options::V_PRIMARY_SOURCE_SCANNER);
-        if (GetOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER))
-            parser.SetDebugSpewLevel(2);
+        parser.DebugSpew(GetOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
 
         if (GetOptions().GetInputFilename() == "-" || GetOptions().GetInputFilename().empty())
         {

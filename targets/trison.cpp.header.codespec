@@ -238,6 +238,16 @@ public:
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
 <|end_if
+    /** This parser is capable of attempting multiple contiguous parses from the
+      * same input source.  The lookahead queue is preserved between calls to
+      * Parse().  Therefore, if the input source changes, the lookahead queue
+      * must be cleared so that the new input source can be read.  The client
+      * must call this method if the input source changes.
+      *
+      * @brief This method must be called if the input source changes.
+      */
+    void ResetForNewInput ();
+
 <|if(parse_method_access == "public:")
     /** The %target.cpp.parse_method_access directive can be used to specify the
       * access level of this method.
@@ -252,11 +262,11 @@ public:
       * thrown in reduction rule code, allowing it to clean up dynamically allocated
       * memory, etc.
       *
-      * @param return_token_ A pointer to the value which will be assigned to upon
+      * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
       *        the value of the %target.cpp.token_data_default directive will
       *        be assigned.
-      * @param nonterminal_to_parse_ The Parse() method can attempt to parse any
+      * @param nonterminal_to_parse The Parse() method can attempt to parse any
       *        nonterminal declared in the primary source.  If unspecified, the
       *        Parse() method will attempt to parse the nonterminal specified by the
       *        %default_parse_nonterminal directive.
@@ -268,7 +278,7 @@ public:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (<{token_data_type} *return_token_, ParseNonterminal::Name nonterminal_to_parse_ = ParseNonterminal::<{_default_parse_nonterminal});
+    ParserReturnCode Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::<{_default_parse_nonterminal});
 
 <|end_if
 <|if(is_defined(bottom_of_class))
@@ -291,11 +301,11 @@ protected:
       * thrown in reduction rule code, allowing it to clean up dynamically allocated
       * memory, etc.
       *
-      * @param return_token_ A pointer to the value which will be assigned to upon
+      * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
       *        the value of the %target.cpp.token_data_default directive will
       *        be assigned.
-      * @param nonterminal_to_parse_ The Parse() method can attempt to parse any
+      * @param nonterminal_to_parse The Parse() method can attempt to parse any
       *        nonterminal declared in the primary source.  If unspecified, the
       *        Parse() method will attempt to parse the nonterminal specified by the
       *        %default_parse_nonterminal directive.
@@ -307,7 +317,7 @@ protected:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (<{token_data_type} *return_token_, ParseNonterminal::Name nonterminal_to_parse_ = ParseNonterminal::<{_default_parse_nonterminal});
+    ParserReturnCode Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::<{_default_parse_nonterminal});
 
 <|end_if
 private:
@@ -326,11 +336,11 @@ private:
       * thrown in reduction rule code, allowing it to clean up dynamically allocated
       * memory, etc.
       *
-      * @param return_token_ A pointer to the value which will be assigned to upon
+      * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
       *        the value of the %target.cpp.token_data_default directive will
       *        be assigned.
-      * @param nonterminal_to_parse_ The Parse() method can attempt to parse any
+      * @param nonterminal_to_parse The Parse() method can attempt to parse any
       *        nonterminal declared in the primary source.  If unspecified, the
       *        Parse() method will attempt to parse the nonterminal specified by the
       *        %default_parse_nonterminal directive.
@@ -342,7 +352,7 @@ private:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (<{token_data_type} *return_token_, ParseNonterminal::Name nonterminal_to_parse_ = ParseNonterminal::<{_default_parse_nonterminal});
+    ParserReturnCode Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::<{_default_parse_nonterminal});
 
 <|end_if
     // ///////////////////////////////////////////////////////////////////////
@@ -386,7 +396,7 @@ private:
     typedef std::deque<StackElement_> Stack_;
     typedef std::deque<Token> LookaheadQueue_;
 
-    ParserReturnCode Parse_ (<{token_data_type} *return_token_, ParseNonterminal::Name nonterminal_to_parse_);
+    ParserReturnCode Parse_ (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token::Data &token_data) throw();
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();

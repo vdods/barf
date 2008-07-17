@@ -178,8 +178,7 @@ void ParseCodespecs (Reflex::PrimarySource const &primary_source)
 
     Preprocessor::Parser parser;
     parser.ScannerDebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_SCANNER));
-    if (GetOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_PARSER))
-        parser.SetDebugSpewLevel(2);
+    parser.DebugSpew(GetOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_PARSER));
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
                                                it_end = primary_source.m_target_map->end();

@@ -82,19 +82,19 @@ bool Scanner::Close ()
     return close_succeeded;
 }
 
-Parser::Token::Type Scanner::Scan (Ast::Base **const scanned_token)
+Parser::Token::Id Scanner::Scan (Ast::Base **const scanned_token)
 {
     assert(scanned_token != NULL);
     assert(*scanned_token == NULL);
 
     if (m_current_position == m_text.length())
-        return Parser::Token::END_;
+        return Parser::Terminal::END_;
 
     switch (m_state)
     {
         case READING_BODY: return ScanBody(scanned_token);
         case READING_CODE: return ScanCode(scanned_token);
-        default: assert(false && "this should never happen"); return Parser::Token::BAD_TOKEN;
+        default: assert(false && "this should never happen"); return Parser::Terminal::BAD_TOKEN;
     }
 }
 
@@ -120,7 +120,7 @@ void Scanner::HandleClosed ()
     m_text.clear();
 }
 
-Parser::Token::Type Scanner::ScanBody (Ast::Base **scanned_token)
+Parser::Token::Id Scanner::ScanBody (Ast::Base **scanned_token)
 {
     assert(m_state == READING_BODY);
     assert(m_bracket_level == 0);
@@ -135,7 +135,7 @@ Parser::Token::Type Scanner::ScanBody (Ast::Base **scanned_token)
         m_current_position += m_start_code_delimiter.length();
         m_state = READING_CODE;
         m_is_reading_code_line = false;
-        return Parser::Token::START_CODE;
+        return Parser::Terminal::START_CODE;
     }
     else if (code_line_delimiter_position == m_current_position)
     {
@@ -143,7 +143,7 @@ Parser::Token::Type Scanner::ScanBody (Ast::Base **scanned_token)
         m_current_position += m_code_line_delimiter.length();
         m_state = READING_CODE;
         m_is_reading_code_line = true;
-        return Parser::Token::CODE_LINE;
+        return Parser::Terminal::CODE_LINE;
     }
     else
     {
@@ -151,11 +151,11 @@ Parser::Token::Type Scanner::ScanBody (Ast::Base **scanned_token)
         *scanned_token = new Text(matched_text, GetFiLoc());
         IncrementLineNumber(GetNewlineCount(matched_text));
         m_current_position = end_of_text_position;
-        return Parser::Token::TEXT;
+        return Parser::Terminal::TEXT;
     }
 }
 
-Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
+Parser::Token::Id Scanner::ScanCode (Ast::Base **scanned_token)
 {
     assert(m_state == READING_CODE);
 
@@ -169,7 +169,7 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
                 ++m_current_position;
                 m_state = READING_BODY;
                 m_is_reading_code_line = false;
-                return Parser::Token::CODE_NEWLINE;
+                return Parser::Terminal::CODE_NEWLINE;
             }
         }
         ++m_current_position;
@@ -178,22 +178,22 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
     if (m_current_position >= m_text.length())
     {
         if (m_is_reading_code_line)
-            return Parser::Token::CODE_NEWLINE;
+            return Parser::Terminal::CODE_NEWLINE;
         else
-            return Parser::Token::END_;
+            return Parser::Terminal::END_;
     }
     else if (m_bracket_level == 0 && m_text.substr(m_current_position, m_end_code_delimiter.length()) == m_end_code_delimiter)
     {
         m_state = READING_BODY;
         m_current_position += m_end_code_delimiter.length();
-        return Parser::Token::END_CODE;
+        return Parser::Terminal::END_CODE;
     }
     else if (m_bracket_level > 0 && m_text[m_current_position] == *m_bracket.rbegin())
     {
         assert(m_bracket.size() == m_bracket_level);
         --m_bracket_level;
         m_bracket.pop_back();
-        return Parser::Token::Type(m_text[m_current_position++]);
+        return Parser::Token::Id(m_text[m_current_position++]);
     }
     else if (IsBracket(m_text[m_current_position]))
     {
@@ -213,11 +213,11 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
                 m_bracket.clear();
                 break;
         }
-        return Parser::Token::Type(m_text[m_current_position++]);
+        return Parser::Token::Id(m_text[m_current_position++]);
     }
     else if (IsOperator(m_text[m_current_position]))
     {
-        return Parser::Token::Type(m_text[m_current_position++]);
+        return Parser::Token::Id(m_text[m_current_position++]);
     }
     else if (IsAlpha(m_text[m_current_position]))
     {
@@ -230,35 +230,35 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
         string id = m_text.substr(m_current_position, id_end-m_current_position);
         m_current_position = id_end;
 
-        if (id == "declare_array")          return Parser::Token::DECLARE_ARRAY;
-        if (id == "declare_map")            return Parser::Token::DECLARE_MAP;
-        if (id == "define")                 return Parser::Token::DEFINE;
-        if (id == "dump_symbol_table")      return Parser::Token::DUMP_SYMBOL_TABLE;
-        if (id == "else")                   return Parser::Token::ELSE;
-        if (id == "else_if")                return Parser::Token::ELSE_IF;
-        if (id == "end_define")             return Parser::Token::END_DEFINE;
-        if (id == "end_for_each")           return Parser::Token::END_FOR_EACH;
-        if (id == "end_if")                 return Parser::Token::END_IF;
-        if (id == "end_loop")               return Parser::Token::END_LOOP;
-        if (id == "error")                  return Parser::Token::ERROR;
-        if (id == "fatal_error")            return Parser::Token::FATAL_ERROR;
-        if (id == "for_each")               return Parser::Token::FOR_EACH;
-        if (id == "if")                     return Parser::Token::IF;
-        if (id == "include")                return Parser::Token::INCLUDE;
-        if (id == "int")                    return Parser::Token::KEYWORD_INT;
-        if (id == "is_defined")             return Parser::Token::IS_DEFINED;
-        if (id == "loop")                   return Parser::Token::LOOP;
-        if (id == "sandbox_include")        return Parser::Token::SANDBOX_INCLUDE;
-        if (id == "sizeof")                 return Parser::Token::SIZEOF;
-        if (id == "string")                 return Parser::Token::KEYWORD_STRING;
-        if (id == "string_length")          return Parser::Token::STRING_LENGTH;
-        if (id == "to_character_literal")   return Parser::Token::TO_CHARACTER_LITERAL;
-        if (id == "to_string_literal")      return Parser::Token::TO_STRING_LITERAL;
-        if (id == "undefine")               return Parser::Token::UNDEFINE;
-        if (id == "warning")                return Parser::Token::WARNING;
+        if (id == "declare_array")          return Parser::Terminal::DECLARE_ARRAY;
+        if (id == "declare_map")            return Parser::Terminal::DECLARE_MAP;
+        if (id == "define")                 return Parser::Terminal::DEFINE;
+        if (id == "dump_symbol_table")      return Parser::Terminal::DUMP_SYMBOL_TABLE;
+        if (id == "else")                   return Parser::Terminal::ELSE;
+        if (id == "else_if")                return Parser::Terminal::ELSE_IF;
+        if (id == "end_define")             return Parser::Terminal::END_DEFINE;
+        if (id == "end_for_each")           return Parser::Terminal::END_FOR_EACH;
+        if (id == "end_if")                 return Parser::Terminal::END_IF;
+        if (id == "end_loop")               return Parser::Terminal::END_LOOP;
+        if (id == "error")                  return Parser::Terminal::ERROR;
+        if (id == "fatal_error")            return Parser::Terminal::FATAL_ERROR;
+        if (id == "for_each")               return Parser::Terminal::FOR_EACH;
+        if (id == "if")                     return Parser::Terminal::IF;
+        if (id == "include")                return Parser::Terminal::INCLUDE;
+        if (id == "int")                    return Parser::Terminal::KEYWORD_INT;
+        if (id == "is_defined")             return Parser::Terminal::IS_DEFINED;
+        if (id == "loop")                   return Parser::Terminal::LOOP;
+        if (id == "sandbox_include")        return Parser::Terminal::SANDBOX_INCLUDE;
+        if (id == "sizeof")                 return Parser::Terminal::SIZEOF;
+        if (id == "string")                 return Parser::Terminal::KEYWORD_STRING;
+        if (id == "string_length")          return Parser::Terminal::STRING_LENGTH;
+        if (id == "to_character_literal")   return Parser::Terminal::TO_CHARACTER_LITERAL;
+        if (id == "to_string_literal")      return Parser::Terminal::TO_STRING_LITERAL;
+        if (id == "undefine")               return Parser::Terminal::UNDEFINE;
+        if (id == "warning")                return Parser::Terminal::WARNING;
 
         *scanned_token = new Ast::Id(id, GetFiLoc());
-        return Parser::Token::ID;
+        return Parser::Terminal::ID;
     }
     else if (IsDigit(m_text[m_current_position]))
     {
@@ -270,7 +270,7 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
         istringstream in(integer_text);
         in >> value;
         *scanned_token = new Integer(value, GetFiLoc());
-        return Parser::Token::INTEGER_LITERAL;
+        return Parser::Terminal::INTEGER_LITERAL;
     }
     else if (m_text[m_current_position] == '\"')
     {
@@ -285,7 +285,7 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
         if (m_current_position >= m_text.length())
         {
             EmitError("unterminated string literal", GetFiLoc());
-            return Parser::Token::END_;
+            return Parser::Terminal::END_;
         }
         else
         {
@@ -299,12 +299,12 @@ Parser::Token::Type Scanner::ScanCode (Ast::Base **scanned_token)
         ++m_current_position;
         *scanned_token = new Text(GetEscapedString(string_literal), GetFiLoc());
         IncrementLineNumber(GetNewlineCount(string_literal));
-        return Parser::Token::STRING_LITERAL;
+        return Parser::Terminal::STRING_LITERAL;
     }
     else
     {
         ++m_current_position;
-        return Parser::Token::BAD_TOKEN;
+        return Parser::Terminal::BAD_TOKEN;
     }
 }
 

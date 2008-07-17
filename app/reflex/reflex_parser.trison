@@ -87,6 +87,7 @@ namespace Reflex {
 %target.cpp.bottom_of_implementation_file %{
 bool Parser::OpenFile (string const &input_filename)
 {
+    ResetForNewInput();
     return m_scanner.OpenFile(input_filename);
 }
 

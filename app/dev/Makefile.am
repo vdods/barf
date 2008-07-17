@@ -114,7 +114,7 @@ endif
 if TRISON_EXISTS
 dumblang-parser: $(top_srcdir)/dumblang_parser.hpp
 $(top_srcdir)/dumblang_parser.hpp: $(top_srcdir)/dumblang_parser.cpp
-$(top_srcdir)/dumblang_parser.cpp: $(top_srcdir)/dumblang_parser.trison $(TRISON) $(TARGETS_PATH)/trison.cpp_npda.targetspec $(TARGETS_PATH)/trison.cpp_npda.header.codespec $(TARGETS_PATH)/trison.cpp_npda.implementation.codespec
+$(top_srcdir)/dumblang_parser.cpp: $(top_srcdir)/dumblang_parser.trison $(TRISON) $(TARGETS_PATH)/trison.cpp.targetspec $(TARGETS_PATH)/trison.cpp.header.codespec $(TARGETS_PATH)/trison.cpp.implementation.codespec
 	$(TRISON) $(top_srcdir)/dumblang_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph dumblang_parser.npda.dot --generate-dpda-dot-graph dumblang_parser.dpda.dot --generate-dpda-states-file dumblang_parser.dpda.states
 
 force-dumblang-parser:

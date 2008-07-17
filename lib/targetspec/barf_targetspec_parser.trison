@@ -76,6 +76,7 @@ namespace Targetspec {
 %target.cpp.bottom_of_implementation_file %{
 bool Parser::OpenFile (string const &input_filename)
 {
+    ResetForNewInput();
     return m_scanner.OpenFile(input_filename);
 }
 
@@ -143,7 +144,7 @@ bool Parser::OpenFile (string const &input_filename)
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix %{"Barf::TargetSpec::Parser (at " << GetFiLoc() << "): "%}
+%target.cpp.debug_spew_prefix %{"TargetSpec::Parser (at " << GetFiLoc() << "): "%}
 %target.cpp.dont_generate_timestamps
 
 

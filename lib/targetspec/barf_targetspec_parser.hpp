@@ -247,6 +247,16 @@ public:
     /// %target.cpp.generate_debug_spew_code directive from the primary source.
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
+    /** This parser is capable of attempting multiple contiguous parses from the
+      * same input source.  The lookahead queue is preserved between calls to
+      * Parse().  Therefore, if the input source changes, the lookahead queue
+      * must be cleared so that the new input source can be read.  The client
+      * must call this method if the input source changes.
+      *
+      * @brief This method must be called if the input source changes.
+      */
+    void ResetForNewInput ();
+
     /** The %target.cpp.parse_method_access directive can be used to specify the
       * access level of this method.
       *
@@ -260,11 +270,11 @@ public:
       * thrown in reduction rule code, allowing it to clean up dynamically allocated
       * memory, etc.
       *
-      * @param return_token_ A pointer to the value which will be assigned to upon
+      * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
       *        the value of the %target.cpp.token_data_default directive will
       *        be assigned.
-      * @param nonterminal_to_parse_ The Parse() method can attempt to parse any
+      * @param nonterminal_to_parse The Parse() method can attempt to parse any
       *        nonterminal declared in the primary source.  If unspecified, the
       *        Parse() method will attempt to parse the nonterminal specified by the
       *        %default_parse_nonterminal directive.
@@ -276,7 +286,7 @@ public:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (Ast::Base * *return_token_, ParseNonterminal::Name nonterminal_to_parse_ = ParseNonterminal::root);
+    ParserReturnCode Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::root);
 
 
 #line 39 "barf_targetspec_parser.trison"
@@ -294,7 +304,7 @@ private:
     AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 
-#line 298 "barf_targetspec_parser.hpp"
+#line 308 "barf_targetspec_parser.hpp"
 
 
 private:
@@ -341,7 +351,7 @@ private:
     typedef std::deque<StackElement_> Stack_;
     typedef std::deque<Token> LookaheadQueue_;
 
-    ParserReturnCode Parse_ (Ast::Base * *return_token_, ParseNonterminal::Name nonterminal_to_parse_);
+    ParserReturnCode Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token::Data &token_data) throw();
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
@@ -410,4 +420,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 414 "barf_targetspec_parser.hpp"
+#line 424 "barf_targetspec_parser.hpp"
