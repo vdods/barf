@@ -68,10 +68,9 @@ Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, bool is_def
     transition.SetData(0, reduction_rule_index);
     if (is_default_transition)
         transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
-
     return transition;
 }
-
+/*
 Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, bool is_default_transition)
 {
     assert(false && "i think the default transition will preclude this from ever happening.  TODO -- take out sometime");
@@ -83,13 +82,12 @@ Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &look
         transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
     return transition;
 }
-
-Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index, bool is_default_transition)
+*/
+Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index)
 {
     Graph::Transition transition(TT_RETURN, 1, Graph::Transition::ms_no_target_index, "RETURN: " + nonterminal_name, Graph::Color::ms_blue);
     transition.SetData(0, nonterminal_token_index);
-    if (is_default_transition)
-        transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
+    transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
     return transition;
 }
 
@@ -98,11 +96,10 @@ Graph::Transition DpdaShiftTransition (Graph::Transition::DataArray const &looka
     return Graph::Transition(TT_SHIFT, lookahead_sequence, target_index, lookahead_sequence_string);
 }
 
-Graph::Transition DpdaErrorPanicTransition (bool is_default_transition)
+Graph::Transition DpdaErrorPanicTransition ()
 {
     Graph::Transition transition(TT_ERROR_PANIC, 0, Graph::Transition::ms_no_target_index, "ERROR PANIC", Graph::Color::ms_red);
-    if (is_default_transition)
-        transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
+    transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
     return transition;
 }
 

@@ -2040,13 +2040,13 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                     case AT_REDUCE:
                         DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") adding reduce \"" << graph_context.m_primary_source.GetRule(action.Data())->GetAsText() << "\" transition with lookaheads: " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;)
                         assert(false && "i think the default action will necessarily preclude this case from ever happening");
-                        graph_context.AddTransition(
-                            source_dpda_state,
-                            DpdaReduceTransition(
-                                lookahead_sequence,
-                                GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence),
-                                action.Data(),
-                                false));
+//                         graph_context.AddTransition(
+//                             source_dpda_state,
+//                             DpdaReduceTransition(
+//                                 lookahead_sequence,
+//                                 GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence),
+//                                 action.Data(),
+//                                 NOT_DEFAULT_TRANSITION));
                         break;
                 }
             }
@@ -2098,7 +2098,7 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
                     dpda_state,
                     DpdaReduceTransition(
                         default_action.Data(),
-                        true));
+                        IS_DEFAULT_TRANSITION));
                 break;
 
             case AT_RETURN:
@@ -2106,14 +2106,13 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
                     dpda_state,
                     DpdaReturnTransition(
                         graph_context.m_primary_source.GetTokenId(default_action.Data()),
-                        default_action.Data(),
-                        true));
+                        default_action.Data()));
                 break;
 
             case AT_ERROR_PANIC:
                 graph_context.AddTransition(
                     dpda_state,
-                    DpdaErrorPanicTransition(true));
+                    DpdaErrorPanicTransition());
                 break;
         }
 
@@ -2247,6 +2246,7 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
              ++it)
         {
             Graph::Transition const &transition = *it;
+
             // indent
             stream << "    ";
             // we want to indicate the default transition to avoid ambiguity.

@@ -108,19 +108,32 @@ public:
         {
             bool operator () (Transition const &t0, Transition const &t1)
             {
-                return t0.OrderPriority() < t1.OrderPriority()
-                       ||
-                       t0.OrderPriority() == t1.OrderPriority() &&
-                       t0.Type() < t1.Type()
-                       ||
-                       t0.Type() == t1.Type() &&
-                       t0.m_data_array.size() < t1.m_data_array.size()
-                       ||
-                       t0.m_data_array.size() == t1.m_data_array.size() &&
-                       t0.m_data_array < t1.m_data_array
-                       ||
-                       t0.m_data_array == t1.m_data_array &&
-                       t0.TargetIndex() < t1.TargetIndex();
+                if (t0.OrderPriority() < t1.OrderPriority())
+                    return true;
+                if (t0.OrderPriority() > t1.OrderPriority())
+                    return false;
+
+                if (t0.Type() < t1.Type())
+                    return true;
+                if (t0.Type() > t1.Type())
+                    return true;
+
+                if (t0.DataCount() < t1.DataCount())
+                    return true;
+                if (t0.DataCount() > t1.DataCount())
+                    return false;
+
+                if (t0.m_data_array < t1.m_data_array)
+                    return true;
+                if (t0.m_data_array > t1.m_data_array)
+                    return false;
+
+                if (t0.TargetIndex() < t1.TargetIndex())
+                    return true;
+                if (t0.TargetIndex() > t1.TargetIndex())
+                    return false;
+
+                return false;
             }
         }; // end of struct Graph::Transition::Order
 
