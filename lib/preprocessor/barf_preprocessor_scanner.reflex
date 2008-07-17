@@ -28,19 +28,14 @@
 #include "barf_preprocessor_parser.hpp"
 
 namespace Barf {
-namespace Ast {
-
-class Base;
-
-} // end of namespace Ast
-
 namespace Preprocessor {
+
+class Text;
 %}
 %target.cpp.class_name ScannerNew
 %target.cpp.class_inheritance { protected InputBase }
 %target.cpp.top_of_class {
 }
-%target.cpp.scan_method_parameters { Ast::Base **token }
 %target.cpp.bottom_of_class {
     using InputBase::GetIsOpen;
     using InputBase::GetFiLoc;
@@ -54,9 +49,10 @@ namespace Preprocessor {
 
 private:
 
-    Parser::Token::Id ParseKeyword (string const &accepted_string, Ast::Base **token);
+    Parser::Token ParseKeyword (string const &accepted_string);
 
     bool m_is_reading_newline_sensitive_code;
+    Text *m_text;
 }
 %target.cpp.bottom_of_header_file %{
 } // end of namespace Preprocessor
@@ -98,49 +94,48 @@ void ScannerNew::OpenUsingStream (istream *input_stream, string const &input_nam
     ResetForNewInput();
 }
 
-Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::Base **token)
+Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
 {
-    assert(token != NULL);
-    assert(*token == NULL);
+    if (accepted_string == "declare_array")         return Parser::Token(Parser::Terminal::DECLARE_ARRAY);
+    if (accepted_string == "declare_map")           return Parser::Token(Parser::Terminal::DECLARE_MAP);
+    if (accepted_string == "define")                return Parser::Token(Parser::Terminal::DEFINE);
+    if (accepted_string == "dump_symbol_table")     return Parser::Token(Parser::Terminal::DUMP_SYMBOL_TABLE);
+    if (accepted_string == "else")                  return Parser::Token(Parser::Terminal::ELSE);
+    if (accepted_string == "else_if")               return Parser::Token(Parser::Terminal::ELSE_IF);
+    if (accepted_string == "end_define")            return Parser::Token(Parser::Terminal::END_DEFINE);
+    if (accepted_string == "end_for_each")          return Parser::Token(Parser::Terminal::END_FOR_EACH);
+    if (accepted_string == "end_if")                return Parser::Token(Parser::Terminal::END_IF);
+    if (accepted_string == "end_loop")              return Parser::Token(Parser::Terminal::END_LOOP);
+    if (accepted_string == "error")                 return Parser::Token(Parser::Terminal::ERROR);
+    if (accepted_string == "fatal_error")           return Parser::Token(Parser::Terminal::FATAL_ERROR);
+    if (accepted_string == "for_each")              return Parser::Token(Parser::Terminal::FOR_EACH);
+    if (accepted_string == "if")                    return Parser::Token(Parser::Terminal::IF);
+    if (accepted_string == "include")               return Parser::Token(Parser::Terminal::INCLUDE);
+    if (accepted_string == "int")                   return Parser::Token(Parser::Terminal::KEYWORD_INT);
+    if (accepted_string == "is_defined")            return Parser::Token(Parser::Terminal::IS_DEFINED);
+    if (accepted_string == "loop")                  return Parser::Token(Parser::Terminal::LOOP);
+    if (accepted_string == "sandbox_include")       return Parser::Token(Parser::Terminal::SANDBOX_INCLUDE);
+    if (accepted_string == "sizeof")                return Parser::Token(Parser::Terminal::SIZEOF);
+    if (accepted_string == "string")                return Parser::Token(Parser::Terminal::KEYWORD_STRING);
+    if (accepted_string == "string_length")         return Parser::Token(Parser::Terminal::STRING_LENGTH);
+    if (accepted_string == "to_character_literal")  return Parser::Token(Parser::Terminal::TO_STRING_LITERAL);
+    if (accepted_string == "to_string_literal")     return Parser::Token(Parser::Terminal::TO_STRING_LITERAL);
+    if (accepted_string == "undefine")              return Parser::Token(Parser::Terminal::UNDEFINE);
+    if (accepted_string == "warning")               return Parser::Token(Parser::Terminal::WARNING);
 
-    if (accepted_string == "declare_array")         return Parser::Terminal::DECLARE_ARRAY;
-    if (accepted_string == "declare_map")           return Parser::Terminal::DECLARE_MAP;
-    if (accepted_string == "define")                return Parser::Terminal::DEFINE;
-    if (accepted_string == "dump_symbol_table")     return Parser::Terminal::DUMP_SYMBOL_TABLE;
-    if (accepted_string == "else")                  return Parser::Terminal::ELSE;
-    if (accepted_string == "else_if")               return Parser::Terminal::ELSE_IF;
-    if (accepted_string == "end_define")            return Parser::Terminal::END_DEFINE;
-    if (accepted_string == "end_for_each")          return Parser::Terminal::END_FOR_EACH;
-    if (accepted_string == "end_if")                return Parser::Terminal::END_IF;
-    if (accepted_string == "end_loop")              return Parser::Terminal::END_LOOP;
-    if (accepted_string == "error")                 return Parser::Terminal::ERROR;
-    if (accepted_string == "fatal_error")           return Parser::Terminal::FATAL_ERROR;
-    if (accepted_string == "for_each")              return Parser::Terminal::FOR_EACH;
-    if (accepted_string == "if")                    return Parser::Terminal::IF;
-    if (accepted_string == "include")               return Parser::Terminal::INCLUDE;
-    if (accepted_string == "int")                   return Parser::Terminal::KEYWORD_INT;
-    if (accepted_string == "is_defined")            return Parser::Terminal::IS_DEFINED;
-    if (accepted_string == "loop")                  return Parser::Terminal::LOOP;
-    if (accepted_string == "sandbox_include")       return Parser::Terminal::SANDBOX_INCLUDE;
-    if (accepted_string == "sizeof")                return Parser::Terminal::SIZEOF;
-    if (accepted_string == "string")                return Parser::Terminal::KEYWORD_STRING;
-    if (accepted_string == "string_length")         return Parser::Terminal::STRING_LENGTH;
-    if (accepted_string == "to_character_literal")  return Parser::Terminal::TO_STRING_LITERAL;
-    if (accepted_string == "to_string_literal")     return Parser::Terminal::TO_STRING_LITERAL;
-    if (accepted_string == "undefine")              return Parser::Terminal::UNDEFINE;
-    if (accepted_string == "warning")               return Parser::Terminal::WARNING;
-
-    *token = new Ast::Id(accepted_string, GetFiLoc());
-    return Parser::Terminal::ID;
+    return Parser::Token(Parser::Terminal::ID, new Ast::Id(accepted_string, GetFiLoc()));
 }
 %}
-%target.cpp.start_of_scan_method_actions %{
-    assert(token != NULL);
-    assert(*token == NULL);
-%}
+%target.cpp.constructor_actions {
+    m_text = NULL;
+}
+%target.cpp.destructor_actions {
+    delete m_text;
+    m_text = NULL;
+}
 %target.cpp.end_of_scan_method_actions %{
     assert(false && "you didn't handle EOF properly");
-    return Parser::Terminal::END_;
+    return Parser::Token(Parser::Terminal::END_);
 %}
 %target.cpp.bottom_of_implementation_file %{
 } // end of namespace Preprocessor
@@ -151,7 +146,7 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
 // cpp scanner I/O parameters
 // ///////////////////////////////////////////////////////////////////////////
 
-%target.cpp.return_type "Parser::Token::Id"
+%target.cpp.return_type "Parser::Token"
 %target.cpp.return_true_iff_input_is_at_end {
     return In().peek() == char_traits<char>::eof();
 }
@@ -225,32 +220,32 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
     %target.cpp {
         SPEW("READING_BODY - (([^<]|<[^<|{])*<?<\\|) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(accepted_string.length() >= 2);
-        *token = new Text(accepted_string.c_str(), accepted_string.length()-2, GetFiLoc());
+        Ast::Base *token = new Text(accepted_string.c_str(), accepted_string.length()-2, GetFiLoc());
         IncrementLineNumber(GetNewlineCount(accepted_string));
         m_is_reading_newline_sensitive_code = true;
         ScannerMode(Mode::TRANSITION_TO_CODE);
-        return Parser::Terminal::TEXT;
+        return Parser::Token(Parser::Terminal::TEXT, token);
     }
 |
     (([^<]|<[^<|{])*<?<\{)
     %target.cpp {
         SPEW("READING_BODY - (([^<]|<[^<|{])*<?<\\{) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(accepted_string.length() >= 2);
-        *token = new Text(accepted_string.c_str(), accepted_string.length()-2, GetFiLoc());
+        Ast::Base *token = new Text(accepted_string.c_str(), accepted_string.length()-2, GetFiLoc());
         IncrementLineNumber(GetNewlineCount(accepted_string));
         m_is_reading_newline_sensitive_code = false;
         ScannerMode(Mode::TRANSITION_TO_CODE);
-        return Parser::Terminal::TEXT;
+        return Parser::Token(Parser::Terminal::TEXT, token);
     }
 |
     (([^<]|<[^<|{])*<?{END_OF_FILE})
     %target.cpp {
         SPEW("READING_BODY - (([^<]|<[^<|{])*<?{END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(accepted_string.length() >= 0);
-        *token = new Text(accepted_string.c_str(), accepted_string.length(), GetFiLoc());
+        Ast::Base *token = new Text(accepted_string.c_str(), accepted_string.length(), GetFiLoc());
         IncrementLineNumber(GetNewlineCount(accepted_string));
         ScannerMode(Mode::EXPECTING_END_OF_FILE);
-        return Parser::Terminal::END_;
+        return Parser::Token(Parser::Terminal::END_, token);
     }
 ;
 
@@ -263,9 +258,9 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
         SPEW("TRANSITION_TO_CODE - () = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         ScannerMode(Mode::READING_CODE);
         if (m_is_reading_newline_sensitive_code)
-            return Parser::Terminal::CODE_LINE;
+            return Parser::Token(Parser::Terminal::CODE_LINE);
         else
-            return Parser::Terminal::START_CODE;
+            return Parser::Token(Parser::Terminal::START_CODE);
     }
 ;
 
@@ -284,7 +279,7 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
         if (m_is_reading_newline_sensitive_code)
         {
             ScannerMode(Mode::READING_BODY);
-            return Parser::Terminal::CODE_NEWLINE;
+            return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         }
     }
 |
@@ -293,7 +288,7 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
         SPEW("READING_CODE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         ScannerMode(Mode::EXPECTING_END_OF_FILE);
         if (m_is_reading_newline_sensitive_code)
-            return Parser::Terminal::CODE_NEWLINE;
+            return Parser::Token(Parser::Terminal::CODE_NEWLINE);
     }
 |
     (\})
@@ -302,19 +297,19 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
         if (!m_is_reading_newline_sensitive_code)
             return Parser::Terminal::END_CODE;
         EmitError("unexpected '}' encountered", GetFiLoc());
-        return Parser::Terminal::BAD_TOKEN;
+        return Parser::Token(Parser::Terminal::BAD_TOKEN);
     }
 |
     ({OPERATOR})
     %target.cpp {
         SPEW("READING_CODE - ({OPERATOR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        return Parser::Token::Id(accepted_string[0]);
+        return Parser::Token(Parser::Token::Id(accepted_string[0]));
     }
 |
     ({ID})
     %target.cpp {
         SPEW("READING_CODE - ({ID}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        return ParseKeyword(accepted_string, token);
+        return ParseKeyword(accepted_string);
     }
 |
     ({INTEGER_LITERAL})
@@ -323,14 +318,14 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
         Sint32 value = 0;
         istringstream in(accepted_string);
         in >> value;
-        *token = new Integer(value, GetFiLoc());
-        return Parser::Terminal::INTEGER_LITERAL;
+        return Parser::Token(Parser::Terminal::INTEGER_LITERAL, new Integer(value, GetFiLoc()));
     }
 |
     (")
     %target.cpp {
         SPEW("READING_CODE - (\") = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        *token = new Text("", GetFiLoc());
+        assert(m_text == NULL);
+        m_text = new Text("", GetFiLoc());
         ScannerMode(Mode::READING_CODE_STRING_LITERAL_GUTS);
     }
 |
@@ -338,14 +333,14 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
     %target.cpp {
         SPEW("READING_CODE - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         EmitError("unexpected end of file encountered within preprocessor code section", GetFiLoc());
-        return Parser::Terminal::END_;
+        return Parser::Token(Parser::Terminal::END_);
     }
 |
     (.)
     %target.cpp {
         SPEW("READING_CODE - (.) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         EmitError("unrecognized character encountered within preprocessor code section", GetFiLoc());
-        return Parser::Terminal::BAD_TOKEN;
+        return Parser::Token(Parser::Terminal::BAD_TOKEN);
     }
 ;
 
@@ -354,42 +349,42 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
     ({OCT_CHAR})
     %target.cpp {
         SPEW("READING_CODE_STRING_LITERAL_GUTS - ({OCT_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        assert(*token != NULL);
+        assert(m_text != NULL);
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
         assert(accepted_string[1] == '0');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
         if (value >= 0x100)
             EmitError("octal character literal value out of range (" + accepted_string + ")", GetFiLoc());
-        Dsc<Text *>(*token)->AppendChar(Uint8(value));
+        m_text->AppendChar(Uint8(value));
     }
 |
     ({HEX_CHAR})
     %target.cpp {
         SPEW("READING_CODE_STRING_LITERAL_GUTS - ({HEX_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        assert(*token != NULL);
+        assert(m_text != NULL);
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
             EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", GetFiLoc());
-        Dsc<Text *>(*token)->AppendChar(Uint8(value));
+        m_text->AppendChar(Uint8(value));
     }
 |
     ({STRING_ESC_CHAR})
     %target.cpp {
         SPEW("READING_CODE_STRING_LITERAL_GUTS - ({STRING_ESC_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        assert(*token != NULL);
+        assert(m_text != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        Dsc<Text *>(*token)->AppendChar(GetEscapedChar(Uint8(accepted_string[1])));
+        m_text->AppendChar(GetEscapedChar(Uint8(accepted_string[1])));
     }
 |
     ({STRING_BAD_ESC_CHAR})
     %target.cpp {
         SPEW("READING_CODE_STRING_LITERAL_GUTS - ({STRING_BAD_ESC_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        assert(*token != NULL);
+        assert(m_text != NULL);
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
         EmitError("malformed string literal escape code -- backslash followed by " + GetCharLiteral(accepted_string[1]), GetFiLoc());
@@ -398,33 +393,35 @@ Parser::Token::Id ScannerNew::ParseKeyword (string const &accepted_string, Ast::
     ({STRING_NORMAL_CHAR}+)
     %target.cpp {
         SPEW("READING_CODE_STRING_LITERAL_GUTS - ({STRING_NORMAL_CHAR}+) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        assert(*token != NULL);
+        assert(m_text != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        Dsc<Text *>(*token)->AppendText(accepted_string);
+        m_text->AppendText(accepted_string);
     }
 |
     (") // the closing quote for the string literal
     %target.cpp {
         SPEW("READING_CODE_STRING_LITERAL_GUTS - (\") = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        assert(*token != NULL);
+        assert(m_text != NULL);
         ScannerMode(Mode::READING_CODE);
-        return Parser::Terminal::STRING_LITERAL;
+        Ast::Base *token = m_text;
+        m_text = NULL;
+        return Parser::Token(Parser::Terminal::STRING_LITERAL, token);
     }
 |
     (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
     %target.cpp {
         SPEW("READING_CODE_STRING_LITERAL_GUTS - (\\\\?{END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         EmitError("unterminated string literal", GetFiLoc());
-        assert(*token != NULL);
-        delete *token;
-        *token = NULL;
-        return Parser::Terminal::END_;
+        assert(m_text != NULL);
+        delete m_text;
+        m_text = NULL;
+        return Parser::Token(Parser::Terminal::END_);
     }
 |
     ({ANYTHING}) // anything else is an unexpected char
     %target.cpp {
         SPEW("READING_CODE_STRING_LITERAL_GUTS - ({ANYTHING}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        assert(*token != NULL);
+        assert(m_text != NULL);
         EmitError("ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal", GetFiLoc());
     }
 ;

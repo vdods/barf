@@ -69,6 +69,7 @@ namespace Preprocessor {
 }
 %target.cpp.destructor_actions {
     delete m_scanner;
+    m_scanner = NULL;
 }
 %target.cpp.bottom_of_implementation_file %{
 FiLoc const &Parser::GetFiLoc () const

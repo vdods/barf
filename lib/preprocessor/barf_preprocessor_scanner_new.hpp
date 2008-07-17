@@ -497,20 +497,16 @@ private:
 #include "barf_preprocessor_parser.hpp"
 
 namespace Barf {
-namespace Ast {
-
-class Base;
-
-} // end of namespace Ast
-
 namespace Preprocessor {
 
-#line 509 "barf_preprocessor_scanner_new.hpp"
+class Text;
+
+#line 505 "barf_preprocessor_scanner_new.hpp"
 
 class ScannerNew : private ReflexCpp_::AutomatonApparatus, 
-#line 40 "barf_preprocessor_scanner.reflex"
+#line 36 "barf_preprocessor_scanner.reflex"
  protected InputBase 
-#line 514 "barf_preprocessor_scanner_new.hpp"
+#line 510 "barf_preprocessor_scanner_new.hpp"
 
 {
 public:
@@ -532,10 +528,10 @@ public:
     }; // end of struct ScannerNew::Mode
 
 
-#line 41 "barf_preprocessor_scanner.reflex"
+#line 37 "barf_preprocessor_scanner.reflex"
 
 
-#line 539 "barf_preprocessor_scanner_new.hpp"
+#line 535 "barf_preprocessor_scanner_new.hpp"
 
 public:
 
@@ -550,16 +546,12 @@ public:
 
     void ResetForNewInput ();
 
-    Parser::Token::Id Scan (
-#line 43 "barf_preprocessor_scanner.reflex"
- Ast::Base **token 
-#line 557 "barf_preprocessor_scanner_new.hpp"
-);
+    Parser::Token Scan ();
 
 public:
 
 
-#line 44 "barf_preprocessor_scanner.reflex"
+#line 39 "barf_preprocessor_scanner.reflex"
 
     using InputBase::GetIsOpen;
     using InputBase::GetFiLoc;
@@ -573,11 +565,12 @@ public:
 
 private:
 
-    Parser::Token::Id ParseKeyword (string const &accepted_string, Ast::Base **token);
+    Parser::Token ParseKeyword (string const &accepted_string);
 
     bool m_is_reading_newline_sensitive_code;
+    Text *m_text;
 
-#line 581 "barf_preprocessor_scanner_new.hpp"
+#line 574 "barf_preprocessor_scanner_new.hpp"
 
 
 private:
@@ -606,11 +599,11 @@ private:
 }; // end of class ScannerNew
 
 
-#line 61 "barf_preprocessor_scanner.reflex"
+#line 57 "barf_preprocessor_scanner.reflex"
 
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
 #endif // !defined(_BARF_PREPROCESSOR_SCANNER_NEW_HPP_)
 
-#line 617 "barf_preprocessor_scanner_new.hpp"
+#line 610 "barf_preprocessor_scanner_new.hpp"
