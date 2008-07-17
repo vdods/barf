@@ -248,8 +248,6 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - make NPDA states file (?)
-- change numerical assignments for TT_REDUCE, TT_SHIFT, etc, so SHIFT
-  comes last, and then Graph::Transition::OrderPriority can be rid of (maybe)
 - correctly determine LALR(0) (which is when all shift transitions have
   exactly one lookahead, and no lookahead is ever required for a reduce
   transition.

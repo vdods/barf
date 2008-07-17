@@ -17,7 +17,12 @@
 
 namespace Trison {
 
-// Barf::TransitionType values
+// Barf::TransitionType values.  The order of these is critical to the order
+// in Barf::Graph::Transition::Order.  We require that TT_ERROR_PANIC,
+// TT_RETURN, and TT_REDUCE come before TT_SHIFT, so that they appear before
+// TT_SHIFT, because the default transition must come first (and a transition
+// is TT_ERROR_PANIC, TT_RETURN, or TT_REDUCE if and only if it is a default
+// transition).
 enum
 {
     TT_ERROR_PANIC = 0,
@@ -50,8 +55,7 @@ enum
     NOT_DEFAULT_TRANSITION = false
 };
 
-Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, bool is_default_transition);
-// Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, bool is_default_transition);
+Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index);
 Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index);
 Graph::Transition DpdaShiftTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 target_index);
 Graph::Transition DpdaErrorPanicTransition ();

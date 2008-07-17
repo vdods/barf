@@ -62,33 +62,17 @@ Graph::Transition NpdaEpsilonTransition (Uint32 target_index)
 // DPDA transitions
 // ///////////////////////////////////////////////////////////////////////////
 
-Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index, bool is_default_transition)
+Graph::Transition DpdaReduceTransition (Uint32 reduction_rule_index)
 {
     Graph::Transition transition(TT_REDUCE, 1, Graph::Transition::ms_no_target_index, FORMAT("REDUCE rule " << reduction_rule_index), Graph::Color::ms_green);
     transition.SetData(0, reduction_rule_index);
-    if (is_default_transition)
-        transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
     return transition;
 }
-/*
-Graph::Transition DpdaReduceTransition (Graph::Transition::DataArray const &lookahead_sequence, string const &lookahead_sequence_string, Uint32 reduction_rule_index, bool is_default_transition)
-{
-    assert(false && "i think the default transition will preclude this from ever happening.  TODO -- take out sometime");
-    Graph::Transition transition(TT_REDUCE, 1+lookahead_sequence.size(), Graph::Transition::ms_no_target_index, FORMAT(lookahead_sequence_string << ": REDUCE: rule " << reduction_rule_index), Graph::Color::ms_green);
-    transition.SetData(0, reduction_rule_index);
-    for (Uint32 i = 0; i < lookahead_sequence.size(); ++i)
-        transition.SetData(i+1, lookahead_sequence[i]);
-    if (is_default_transition)
-        transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
-    return transition;
-}
-*/
+
 Graph::Transition DpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index)
 {
     Graph::Transition transition(TT_RETURN, 1, Graph::Transition::ms_no_target_index, "RETURN " + nonterminal_name, Graph::Color::ms_blue);
     transition.SetData(0, nonterminal_token_index);
-    // return transitions can only occur as the default transition
-    transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
     return transition;
 }
 
@@ -99,10 +83,7 @@ Graph::Transition DpdaShiftTransition (Graph::Transition::DataArray const &looka
 
 Graph::Transition DpdaErrorPanicTransition ()
 {
-    Graph::Transition transition(TT_ERROR_PANIC, 0, Graph::Transition::ms_no_target_index, "ERROR PANIC", Graph::Color::ms_red);
-    // error panic transitions can only occur as the default transition
-    transition.SetOrderPriority(Graph::Transition::ORDER_PRIORITY_FIRST);
-    return transition;
+    return Graph::Transition(TT_ERROR_PANIC, 0, Graph::Transition::ms_no_target_index, "ERROR PANIC", Graph::Color::ms_red);
 }
 
 } // end of namespace Trison

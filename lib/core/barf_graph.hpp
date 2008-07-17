@@ -51,8 +51,6 @@ public:
 
         static Uint32 const ms_no_target_index = UINT32_UPPER_BOUND;
 
-        enum { ORDER_PRIORITY_FIRST = 0, ORDER_PRIORITY_LAST = 1 };
-
         Transition (
             TransitionType type,
             Uint32 data_count,
@@ -64,8 +62,7 @@ public:
             m_data_array(data_count, 0),
             m_target_index(target_index),
             m_label(label),
-            m_dot_graph_color(dot_graph_color),
-            m_order_priority(ORDER_PRIORITY_LAST)
+            m_dot_graph_color(dot_graph_color)
         { }
         Transition (
             TransitionType type,
@@ -78,8 +75,7 @@ public:
             m_data_array(data_array),
             m_target_index(target_index),
             m_label(label),
-            m_dot_graph_color(dot_graph_color),
-            m_order_priority(ORDER_PRIORITY_LAST)
+            m_dot_graph_color(dot_graph_color)
         { }
         Transition (Transition const &transition)
             :
@@ -87,8 +83,7 @@ public:
             m_data_array(transition.m_data_array),
             m_target_index(transition.m_target_index),
             m_label(transition.m_label),
-            m_dot_graph_color(transition.m_dot_graph_color),
-            m_order_priority(transition.m_order_priority)
+            m_dot_graph_color(transition.m_dot_graph_color)
         { }
 
         bool HasTarget () const { return m_target_index != ms_no_target_index; }
@@ -98,25 +93,18 @@ public:
         Uint32 TargetIndex () const { return m_target_index; }
         string const &Label () const { return m_label; }
         Color const &DotGraphColor () const { return m_dot_graph_color; }
-        Uint8 OrderPriority () const { return m_order_priority; }
 
         void SetData (Uint32 index, Uint32 data) { assert(index < m_data_array.size()); m_data_array[index] = data; }
         void SetLabel (string const &label) { m_label = label; }
-        void SetOrderPriority (Uint8 order_priority) { m_order_priority = order_priority; }
 
         struct Order
         {
             bool operator () (Transition const &t0, Transition const &t1)
             {
-                if (t0.OrderPriority() < t1.OrderPriority())
-                    return true;
-                if (t0.OrderPriority() > t1.OrderPriority())
-                    return false;
-
                 if (t0.Type() < t1.Type())
                     return true;
                 if (t0.Type() > t1.Type())
-                    return true;
+                    return false;
 
                 if (t0.DataCount() < t1.DataCount())
                     return true;
@@ -144,7 +132,6 @@ public:
         Uint32 m_target_index;
         string m_label;
         Color m_dot_graph_color;
-        Uint8 m_order_priority;
 
         friend struct Order;
     }; // end of struct Graph::Transition

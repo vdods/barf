@@ -2040,13 +2040,6 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                     case AT_REDUCE:
                         DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") adding reduce \"" << graph_context.m_primary_source.GetRule(action.Data())->GetAsText() << "\" transition with lookaheads: " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;)
                         assert(false && "i think the default action will necessarily preclude this case from ever happening");
-//                         graph_context.AddTransition(
-//                             source_dpda_state,
-//                             DpdaReduceTransition(
-//                                 lookahead_sequence,
-//                                 GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence),
-//                                 action.Data(),
-//                                 NOT_DEFAULT_TRANSITION));
                         break;
                 }
             }
@@ -2096,9 +2089,7 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
             case AT_REDUCE:
                 graph_context.AddTransition(
                     dpda_state,
-                    DpdaReduceTransition(
-                        default_action.Data(),
-                        IS_DEFAULT_TRANSITION));
+                    DpdaReduceTransition(default_action.Data()));
                 break;
 
             case AT_RETURN:
