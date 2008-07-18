@@ -24,8 +24,9 @@ class OptionsBase;
 
 } // end of namespace Barf
 
-// the application must define in the global namespace the following symbol(s):
-extern Barf::OptionsBase *g_options;
+// the application must define in the global namespace the following functions:
+extern bool OptionsAreInitialized ();
+extern Barf::OptionsBase const &GetOptions ();
 
 namespace Barf {
 

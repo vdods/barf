@@ -33,10 +33,6 @@ private:
 
 } // end of namespace Reflex
 
-inline Reflex::Options &GetOptions ()
-{
-    assert(g_options != NULL && "g_options has not been initialized");
-    return *Dsc<Reflex::Options *>(g_options);
-}
+inline Reflex::Options const &GetReflexOptions () { return *Dsc<Reflex::Options const *>(&GetOptions()); }
 
 #endif // !defined(_REFLEX_OPTIONS_HPP_)

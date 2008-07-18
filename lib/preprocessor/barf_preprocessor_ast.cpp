@@ -287,7 +287,7 @@ Sint32 Dereference::GetIntegerValue (SymbolTable &symbol_table) const
 
     ostringstream out;
     Textifier textifier(out);
-    textifier.SetGeneratesLineDirectives(g_options->GetWithLineDirectives());
+    textifier.SetGeneratesLineDirectives(GetOptions().GetWithLineDirectives());
     dereferenced_body->Execute(textifier, symbol_table);
     istringstream in(out.str());
     Sint32 retval = 0;
@@ -303,7 +303,7 @@ string Dereference::GetTextValue (SymbolTable &symbol_table) const
 
     ostringstream out;
     Textifier textifier(out);
-    textifier.SetGeneratesLineDirectives(g_options->GetWithLineDirectives());
+    textifier.SetGeneratesLineDirectives(GetOptions().GetWithLineDirectives());
     dereferenced_body->Execute(textifier, symbol_table);
     return out.str();
 }

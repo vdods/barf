@@ -19,7 +19,7 @@ namespace Barf {
 
 void EmitWarning (string const &message, FiLoc const &filoc)
 {
-    if (g_options != NULL && g_options->GetTreatWarningsAsErrors())
+    if (OptionsAreInitialized() && GetOptions().GetTreatWarningsAsErrors())
         EmitError(message, filoc);
     else if (filoc.GetIsValid())
         cerr << filoc << ": warning: " << message << endl;
@@ -30,12 +30,12 @@ void EmitWarning (string const &message, FiLoc const &filoc)
 void EmitError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
-    if (g_options != NULL && g_options->GetHaltOnFirstError())
+    if (OptionsAreInitialized() && GetOptions().GetHaltOnFirstError())
         EmitFatalError(message, filoc);
     else
     {
 #if DEBUG
-        if (g_options != NULL && g_options->GetAssertOnError())
+        if (OptionsAreInitialized() && GetOptions().GetAssertOnError())
             assert(false && "you have requested to assert on error, human, and here it is");
 #endif
         if (filoc.GetIsValid())
@@ -49,7 +49,7 @@ void EmitFatalError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
 #if DEBUG
-    if (g_options != NULL && g_options->GetAssertOnError())
+    if (OptionsAreInitialized() && GetOptions().GetAssertOnError())
         assert(false && "you have requested to assert on error, human, and here it is");
 #endif
     if (filoc.GetIsValid())

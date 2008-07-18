@@ -94,19 +94,19 @@ void Target::ParseTargetspec (string const &tool_prefix, Targetspec::Parser &par
 {
     try {
         string filename(tool_prefix + '.' + m_target_id + ".targetspec");
-        m_targetspec.m_source_path = g_options->GetTargetsSearchPath().GetFilePath(filename);
+        m_targetspec.m_source_path = GetOptions().GetTargetsSearchPath().GetFilePath(filename);
         Ast::Base *parsed_tree_root = NULL;
         if (m_targetspec.m_source_path.empty())
-            EmitError("file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString(), FiLoc(g_options->GetInputFilename()));
+            EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetTargetsSearchPath().GetAsString(), FiLoc(GetOptions().GetInputFilename()));
         else if (!parser.OpenFile(m_targetspec.m_source_path))
-            EmitError("unable to open file \"" + m_targetspec.m_source_path + "\" for reading", FiLoc(g_options->GetInputFilename()));
+            EmitError("unable to open file \"" + m_targetspec.m_source_path + "\" for reading", FiLoc(GetOptions().GetInputFilename()));
         else if (parser.Parse(&parsed_tree_root) != Targetspec::Parser::PRC_SUCCESS)
             EmitError("general targetspec parse error", FiLoc(m_targetspec.m_source_path));
         else
         {
             m_targetspec.m_specification = Dsc<Targetspec::Specification *>(parsed_tree_root);
             assert(m_targetspec.m_specification != NULL);
-            if (g_options->GetIsVerbose(OptionsBase::V_TARGETSPEC_AST))
+            if (GetOptions().GetIsVerbose(OptionsBase::V_TARGETSPEC_AST))
                 m_targetspec.m_specification->Print(cerr);
             if (!g_errors_encountered)
                 CheckAgainstTargetspec(*m_targetspec.m_specification);
@@ -132,10 +132,10 @@ void Target::ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &pa
 
         try {
             string filename(tool_prefix + '.' + m_target_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
-            string codespec_filename(g_options->GetTargetsSearchPath().GetFilePath(filename));
+            string codespec_filename(GetOptions().GetTargetsSearchPath().GetFilePath(filename));
             Ast::Base *parsed_tree_root = NULL;
             if (codespec_filename.empty())
-                EmitError("file \"" + filename + "\" not found in search path " + g_options->GetTargetsSearchPath().GetAsString(), FiLoc(m_targetspec.m_source_path));
+                EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetTargetsSearchPath().GetAsString(), FiLoc(m_targetspec.m_source_path));
             else if (!parser.OpenFile(codespec_filename))
                 EmitError("unable to open file \"" + codespec_filename + "\" for reading", FiLoc(m_targetspec.m_source_path));
             else if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
@@ -145,7 +145,7 @@ void Target::ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &pa
                 Preprocessor::Body *codespec_body = Dsc<Preprocessor::Body *>(parsed_tree_root);
                 assert(codespec_body != NULL);
                 m_codespec_list.push_back(ParsedCodespec(add_codespec, codespec_body, codespec_filename));
-                if (g_options->GetIsVerbose(OptionsBase::V_CODESPEC_AST))
+                if (GetOptions().GetIsVerbose(OptionsBase::V_CODESPEC_AST))
                     codespec_body->Print(cerr);
             }
         } catch (string const &exception) {
@@ -178,11 +178,11 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
         ParsedCodespec const &codespec = *it;
 
         string filename_directive_id(codespec.m_add_codespec->m_filename_directive_id->GetText());
-        string filename(g_options->GetOutputDirectory() + GetElement(filename_directive_id)->m_directive_value->GetText());
+        string filename(GetOptions().GetOutputDirectory() + GetElement(filename_directive_id)->m_directive_value->GetText());
         ofstream stream;
         stream.open(filename.c_str());
         if (!stream.is_open())
-            EmitError("could not open file \"" + filename + "\" for writing", FiLoc(g_options->GetInputFilename()));
+            EmitError("could not open file \"" + filename + "\" for writing", FiLoc(GetOptions().GetInputFilename()));
         else
         {
             Preprocessor::SymbolTable codespec_symbol_table(target_symbol_table);
@@ -249,7 +249,7 @@ void Target::CheckAgainstAddDirective (
     if (target_directive == NULL)
     {
         if (add_directive.GetIsRequired())
-            EmitError("missing required directive %target." + m_target_id + "." + add_directive.m_directive_to_add_id->GetText(), FiLoc(g_options->GetInputFilename()));
+            EmitError("missing required directive %target." + m_target_id + "." + add_directive.m_directive_to_add_id->GetText(), FiLoc(GetOptions().GetInputFilename()));
     }
     else if (add_directive.m_param_type == Ast::AST_NONE)
     {
@@ -270,7 +270,7 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
     symbol_table.DefineScalarSymbolAsText("_targetspec_directory", FiLoc::ms_invalid, GetDirectoryPortion(m_targetspec.m_source_path));
     symbol_table.DefineScalarSymbolAsText("_targetspec_filename", FiLoc::ms_invalid, GetFilenamePortion(m_targetspec.m_source_path));
 
-    symbol_table.DefineScalarSymbolAsText("_output_directory", FiLoc::ms_invalid, g_options->GetOutputDirectory());
+    symbol_table.DefineScalarSymbolAsText("_output_directory", FiLoc::ms_invalid, GetOptions().GetOutputDirectory());
 
     // define symbols for each of the specified target directives
     for (const_iterator it = begin(),

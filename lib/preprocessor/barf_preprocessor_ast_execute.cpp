@@ -222,7 +222,7 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         Parser parser;
         // figure out the pathname from the targets search path
         string filename(
-            g_options->GetTargetsSearchPath().GetFilePath(
+            GetOptions().GetTargetsSearchPath().GetFilePath(
                 m_include_filename_expression->GetTextValue(symbol_table)));
         if (!parser.OpenFile(filename))
         {

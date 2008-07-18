@@ -17,8 +17,20 @@
 #include "barf_preprocessor_parser.hpp"
 #include "barf_preprocessor_textifier.hpp"
 
-// these globals are required by barf_message.h
-OptionsBase *g_options = NULL;
+// unnamed namespace to hide g_options from other files
+namespace {
+Bpp::Options *g_options = NULL;
+}
+
+// required by barf_optionsbase.hpp
+bool OptionsAreInitialized () { return g_options != NULL; }
+OptionsBase const &GetOptions ()
+{
+    assert(g_options != NULL && "g_options not initialized yet");
+    return *g_options;
+}
+
+// required by barf_message.hpp
 bool g_errors_encountered = false;
 
 int main (int argc, char **argv)
@@ -26,44 +38,44 @@ int main (int argc, char **argv)
     try
     {
         g_options = new Bpp::Options(argv[0]);
-        GetOptions().Parse(argc, argv);
-        if (GetOptions().GetAbort())
+        g_options->Parse(argc, argv);
+        if (GetBppOptions().GetAbort())
             return 1;
-        else if (GetOptions().GetIsHelpRequested())
+        else if (GetBppOptions().GetIsHelpRequested())
         {
-            GetOptions().PrintHelpMessage(cerr);
+            GetBppOptions().PrintHelpMessage(cerr);
             return 0;
         }
 
         Preprocessor::Parser parser;
         parser.ScannerDebugSpew(Bpp::Options::V_PRIMARY_SOURCE_SCANNER);
-        parser.DebugSpew(GetOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
+        parser.DebugSpew(GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
 
-        if (GetOptions().GetInputFilename() == "-" || GetOptions().GetInputFilename().empty())
+        if (GetBppOptions().GetInputFilename() == "-" || GetBppOptions().GetInputFilename().empty())
         {
-            GetOptions().SetInputFilename("<stdin>");
-            parser.OpenUsingStream(&cin, GetOptions().GetInputFilename(), true);
+            g_options->SetInputFilename("<stdin>");
+            parser.OpenUsingStream(&cin, GetBppOptions().GetInputFilename(), true);
         }
 
-        else if (!parser.OpenFile(GetOptions().GetInputFilename()))
+        else if (!parser.OpenFile(GetBppOptions().GetInputFilename()))
         {
-            EmitError("file not found: \"" + GetOptions().GetInputFilename() + "\"");
+            EmitError("file not found: \"" + GetBppOptions().GetInputFilename() + "\"");
             return 2;
         }
 
         ostream *out = NULL;
         ofstream out_fstream;
-        if (GetOptions().GetOutputFilename() == "-" || GetOptions().GetOutputFilename().empty())
+        if (GetBppOptions().GetOutputFilename() == "-" || GetBppOptions().GetOutputFilename().empty())
         {
-            GetOptions().SetOutputFilename("<stdout>");
+            g_options->SetOutputFilename("<stdout>");
             out = &cout;
         }
         else
         {
-            out_fstream.open(GetOptions().GetOutputFilename().c_str(), ofstream::out|ofstream::trunc);
+            out_fstream.open(GetBppOptions().GetOutputFilename().c_str(), ofstream::out|ofstream::trunc);
             if (!out_fstream.is_open())
             {
-                EmitError("unable to open file \"" + GetOptions().GetOutputFilename() + "\" for writing");
+                EmitError("unable to open file \"" + GetBppOptions().GetOutputFilename() + "\" for writing");
                 return 3;
             }
             out = &out_fstream;
@@ -73,7 +85,7 @@ int main (int argc, char **argv)
         Ast::Base *parsed_tree_root = NULL;
         if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
         {
-            EmitError("general preprocessor parse error", FiLoc(GetOptions().GetInputFilename()));
+            EmitError("general preprocessor parse error", FiLoc(GetBppOptions().GetInputFilename()));
             return 4;
         }
 
@@ -83,10 +95,10 @@ int main (int argc, char **argv)
         Preprocessor::Body const *body = Dsc<Preprocessor::Body const *>(parsed_tree_root);
         assert(body != NULL);
 
-        if (GetOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_AST))
+        if (GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_AST))
             body->Print(cerr);
 
-        Preprocessor::Textifier textifier(*out, GetOptions().GetOutputFilename());
+        Preprocessor::Textifier textifier(*out, GetBppOptions().GetOutputFilename());
         textifier.SetGeneratesLineDirectives(false);
         Preprocessor::SymbolTable symbol_table;
         body->Execute(textifier, symbol_table);

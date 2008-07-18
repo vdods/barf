@@ -43,10 +43,6 @@ private:
 
 } // end of namespace Trison
 
-inline Trison::Options &GetOptions ()
-{
-    assert(g_options != NULL && "g_options has not been initialized");
-    return *Dsc<Trison::Options *>(g_options);
-}
+inline Trison::Options const &GetTrisonOptions () { return *Dsc<Trison::Options const *>(&GetOptions()); }
 
 #endif // !defined(_TRISON_OPTIONS_HPP_)

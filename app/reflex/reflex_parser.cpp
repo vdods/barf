@@ -811,15 +811,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 #line 340 "reflex_parser.trison"
 
         Regex::Parser parser;
-        parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
-        parser.DebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER));
+        parser.ScannerDebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
+        parser.DebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_PARSER));
         istringstream in(macro_regex_string->GetText());
         parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
         try {
             Regex::RegularExpression *regex = NULL;
             if (parser.Parse(&regex, regular_expression_map) == Regex::Parser::PRC_SUCCESS)
             {
-                if (g_options->GetIsVerbose(OptionsBase::V_REGEX_AST))
+                if (GetOptions().GetIsVerbose(OptionsBase::V_REGEX_AST))
                     regex->Print(cerr);
                 regular_expression_map->Add(macro_id->GetText(), regex);
             }
@@ -1062,14 +1062,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         Regex::RegularExpression *regex = NULL;
         {
             Regex::Parser parser;
-            parser.ScannerDebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
-            parser.DebugSpew(g_options->GetIsVerbose(OptionsBase::V_REGEX_PARSER));
+            parser.ScannerDebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
+            parser.DebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_PARSER));
             istringstream in(regex_string->GetText());
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
                 if (parser.Parse(&regex, m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
                 {
-                    if (g_options->GetIsVerbose(OptionsBase::V_REGEX_AST))
+                    if (GetOptions().GetIsVerbose(OptionsBase::V_REGEX_AST))
                         regex->Print(cerr);
                 }
                 else

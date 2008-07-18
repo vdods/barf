@@ -63,8 +63,8 @@ CommandLineOption const Options::ms_option[] =
         "    Optionally specifies a file path to write output to.  Default behavior\n"
         "    is to write to stdout.  Specifying \"-\" will also send output to stdout\n"
         "    Warning and error messages are always to stderr."),
-        
-        
+
+
     CommandLineOption("Macro-related options"),
     CommandLineOption(
         'D',
@@ -74,8 +74,8 @@ CommandLineOption const Options::ms_option[] =
         "    specified in the input file will override values defined via this\n"
         "    commandline option.  The argument is of the form:\n"
         "        <macro_id>=<value>"),
-        
-        
+
+
     CommandLineOption("Verbosity options"),
     CommandLineOption(
         'V',
@@ -94,8 +94,8 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::DisableVerbosity,
         "    Disables the specified verbosity option.  See option -V for\n"
         "    valid parameters and their descriptions."),
-        
-        
+
+
     CommandLineOption(""),
     CommandLineOption(
         'h',

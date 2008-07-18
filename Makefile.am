@@ -44,6 +44,9 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	all-test-scanners \
 	test-barf-commonlang-scanner \
 	test-barf-preprocessor-scanner \
+	diff-all-test-scanners \
+	diff-test-barf-commonlang-scanner \
+	diff-test-barf-preprocessor-scanner \
 	clean-all-test-scanners \
 	\
 	all-test-parsers \
@@ -52,6 +55,12 @@ AUTOMAKE_OPTIONS = subdir-objects foreign 1.4
 	test-barf-targetspec-parser \
 	test-reflex-parser \
 	test-trison-parser \
+	diff-all-test-parsers \
+	diff-test-barf-preprocessor-parser \
+	diff-test-barf-regex-parser \
+	diff-test-barf-targetspec-parser \
+	diff-test-reflex-parser \
+	diff-test-trison-parser \
 	clean-all-test-parsers
 
 libbarf-all: libbarf-commonlang libbarf-core libbarf-targetspec libbarf-preprocessor libbarf-regex
@@ -136,9 +145,13 @@ all-test-scanners: \
 	test-barf-commonlang-scanner \
 	test-barf-preprocessor-scanner
 
+diff-all-test-scanners: \
+	diff-test-barf-commonlang-scanner \
+	diff-test-barf-preprocessor-scanner
+
 clean-all-test-scanners:
-	rm -f test/barf_commonlang_scanner.*
-	rm -f test/barf_preprocessor_scanner_new.*
+	rm -f $(top_builddir)/test/barf_commonlang_scanner.*
+	rm -f $(top_builddir)/test/barf_preprocessor_scanner_new.*
 
 all-test-parsers: \
 	test-barf-preprocessor-parser \
@@ -147,12 +160,19 @@ all-test-parsers: \
 	test-reflex-parser \
 	test-trison-parser
 
+diff-all-test-parsers: \
+	diff-test-barf-preprocessor-parser \
+	diff-test-barf-regex-parser \
+	diff-test-barf-targetspec-parser \
+	diff-test-reflex-parser \
+	diff-test-trison-parser
+
 clean-all-test-parsers:
-	rm -f test/barf_preprocessor_parser.*
-	rm -f test/barf_regex_parser.*
-	rm -f test/barf_targetspec_parser.*
-	rm -f test/reflex_parser.*
-	rm -f test/trison_parser.*
+	rm -f $(top_builddir)/test/barf_preprocessor_parser.*
+	rm -f $(top_builddir)/test/barf_regex_parser.*
+	rm -f $(top_builddir)/test/barf_targetspec_parser.*
+	rm -f $(top_builddir)/test/reflex_parser.*
+	rm -f $(top_builddir)/test/trison_parser.*
 
 noinst_LTLIBRARIES = \
 	lib/libbarf-commonlang.la \
@@ -312,11 +332,11 @@ force-barf-preprocessor-scanner:
 
 test-barf-commonlang-scanner:
 	mkdir -p test
-	./reflex $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-nfa-dot-graph barf_commonlang_scanner.nfa.dot --generate-dfa-dot-graph barf_commonlang_scanner.dfa.dot
+	./reflex $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-nfa-dot-graph barf_commonlang_scanner.nfa.dot --generate-dfa-dot-graph barf_commonlang_scanner.dfa.dot
 
 test-barf-preprocessor-scanner:
 	mkdir -p test
-	./reflex $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-nfa-dot-graph barf_preprocessor_scanner_new.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner_new.dfa.dot
+	./reflex $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-nfa-dot-graph barf_preprocessor_scanner_new.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner_new.dfa.dot
 else # !STABLE_REFLEX_EXISTS
 barf-commonlang-scanner force-barf-commonlang-scanner:
 	@echo "!!!"
@@ -357,6 +377,14 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png: $(top_srcdir)/
 	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png
 endif
 
+diff-test-barf-commonlang-scanner:
+	diff $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp $(top_builddir)/test/barf_commonlang_scanner.hpp
+	diff $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp $(top_builddir)/test/barf_commonlang_scanner.cpp
+
+diff-test-barf-preprocessor-scanner:
+	diff $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp $(top_builddir)/test/barf_preprocessor_scanner_new.hpp
+	diff $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp $(top_builddir)/test/barf_preprocessor_scanner_new.cpp
+
 if STABLE_TRISON_EXISTS
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp
@@ -384,15 +412,15 @@ force-barf-targetspec-parser:
 
 test-barf-preprocessor-parser:
 	mkdir -p test
-	./trison $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-dpda-dot-graph barf_preprocessor_parser.dpda.dot --generate-dpda-states-file barf_preprocessor_parser.dpda.states
+	./trison $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-dpda-dot-graph barf_preprocessor_parser.dpda.dot --generate-dpda-states-file barf_preprocessor_parser.dpda.states
 
 test-barf-regex-parser:
 	mkdir -p test
-	./trison $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-dpda-dot-graph barf_regex_parser.dpda.dot --generate-dpda-states-file barf_regex_parser.dpda.states
+	./trison $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-dpda-dot-graph barf_regex_parser.dpda.dot --generate-dpda-states-file barf_regex_parser.dpda.states
 
 test-barf-targetspec-parser:
 	mkdir -p test
-	./trison $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-dpda-dot-graph barf_targetspec_parser.dpda.dot --generate-dpda-states-file barf_targetspec_parser.dpda.states
+	./trison $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-dpda-dot-graph barf_targetspec_parser.dpda.dot --generate-dpda-states-file barf_targetspec_parser.dpda.states
 else # !STABLE_TRISON_EXISTS
 barf-preprocessor-parser force-barf-preprocessor-parser:
 	@echo "!!!"
@@ -451,6 +479,17 @@ $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png: $(top_srcdir)/lib/
 	$(DOT) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.dot -Tpng -o $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png
 endif
 
+diff-test-barf-preprocessor-parser:
+	diff $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp $(top_builddir)/test/barf_preprocessor_parser.hpp
+	diff $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp $(top_builddir)/test/barf_preprocessor_parser.cpp
+
+diff-test-barf-regex-parser:
+	diff $(top_srcdir)/lib/regex/barf_regex_parser.hpp $(top_builddir)/test/barf_regex_parser.hpp
+	diff $(top_srcdir)/lib/regex/barf_regex_parser.cpp $(top_builddir)/test/barf_regex_parser.cpp
+
+diff-test-barf-targetspec-parser:
+	diff $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp $(top_builddir)/test/barf_targetspec_parser.hpp
+	diff $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp $(top_builddir)/test/barf_targetspec_parser.cpp
 
 ##############################################################################
 # bpp (BARF preprocessor)
@@ -514,7 +553,7 @@ force-reflex-parser:
 
 test-reflex-parser:
 	mkdir -p test
-	./trison $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
+	./trison $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
 else # !STABLE_TRISON_EXISTS
 reflex-parser force-reflex-parser:
 	@echo "!!!"
@@ -536,6 +575,10 @@ $(top_srcdir)/app/reflex/reflex_parser.dpda.png: $(top_srcdir)/app/reflex/reflex
 $(top_srcdir)/app/reflex/reflex_parser.npda.png: $(top_srcdir)/app/reflex/reflex_parser.npda.dot
 	$(DOT) $(top_srcdir)/app/reflex/reflex_parser.npda.dot -Tpng -o $(top_srcdir)/app/reflex/reflex_parser.npda.png
 endif
+
+diff-test-reflex-parser:
+	diff $(top_srcdir)/app/reflex/reflex_parser.hpp $(top_builddir)/test/reflex_parser.hpp
+	diff $(top_srcdir)/app/reflex/reflex_parser.cpp $(top_builddir)/test/reflex_parser.cpp
 
 ##############################################################################
 # trison
@@ -580,7 +623,7 @@ force-trison-parser:
 
 test-trison-parser:
 	mkdir -p test
-	./trison $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory test/ --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
+	./trison $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
 else # !STABLE_TRISON_EXISTS
 trison-parser force-trison-parser:
 	@echo "!!!"
@@ -602,6 +645,10 @@ $(top_srcdir)/app/trison/trison_parser.dpda.png: $(top_srcdir)/app/trison/trison
 $(top_srcdir)/app/trison/trison_parser.npda.png: $(top_srcdir)/app/trison/trison_parser.npda.dot
 	$(DOT) $(top_srcdir)/app/trison/trison_parser.npda.dot -Tpng -o $(top_srcdir)/app/trison/trison_parser.npda.png
 endif
+
+diff-test-trison-parser:
+	diff $(top_srcdir)/app/trison/trison_parser.hpp $(top_builddir)/test/trison_parser.hpp
+	diff $(top_srcdir)/app/trison/trison_parser.cpp $(top_builddir)/test/trison_parser.cpp
 
 ##############################################################################
 # all the no-install header files for the applications (is this necessary?)
