@@ -188,15 +188,14 @@ public:
           */
         enum Name
         {
-            add_codespec = 38,
-            add_directive = 40,
-            at_least_one_newline = 48,
-            at_least_zero_newlines = 46,
-            default_value = 44,
-            directives = 36,
-            param_spec = 42,
+            add_codespec = 32,
+            add_directive = 34,
+            at_least_one_newline = 42,
+            at_least_zero_newlines = 40,
+            default_value = 38,
+            directives = 30,
+            param_spec = 36,
             root = 0,
-            target = 34,
             /// Nonterminal which will be attempted to be parsed by the Parse()
             /// method by default (specified by the %default_parse_nonterminal
             /// directive).
@@ -308,10 +307,11 @@ public:
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
     void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
 
-    bool OpenFile (string const &input_filename);
+    bool OpenTargetspec (string const &input_filename, string const &target_id);
 
 private:
 
+    string m_target_id;
     CommonLang::Scanner m_scanner;
     AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
@@ -331,14 +331,13 @@ private:
         {
             none_ = 0,
             root = 273,
-            target = 274,
-            directives = 275,
-            add_codespec = 276,
-            add_directive = 277,
-            param_spec = 278,
-            default_value = 279,
-            at_least_zero_newlines = 280,
-            at_least_one_newline = 281
+            directives = 274,
+            add_codespec = 275,
+            add_directive = 276,
+            param_spec = 277,
+            default_value = 278,
+            at_least_zero_newlines = 279,
+            at_least_one_newline = 280
         }; // end of enum Parser::Nonterminal_::Name
     }; // end of struct Parser::Nonterminal_
     struct Transition_;
@@ -425,11 +424,11 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 
-#line 53 "barf_targetspec_parser.trison"
+#line 54 "barf_targetspec_parser.trison"
 
 } // end of namespace Targetspec
 } // end of namespace Barf
 
 #endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 436 "barf_targetspec_parser.hpp"
+#line 435 "barf_targetspec_parser.hpp"

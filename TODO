@@ -2,15 +2,16 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+* get automake install stuff working (including for the example apps)
 - make FirstContainsSecond(x,y) and FirstDoesntContainSecond(x,y) funcs
 * use BARF_TARGETS_SEARCH_PATH in example app configure.ac files
+* config.h-specified search path which is where the targetspecs/codespecs
+  will be installed.
 - guarantee that errors will be reported such that the line numbers never
   decrease.
 - improve the parser/scanner/ast verbosity (i.e. prefix each line with a label)
 - bug: getting "file not found" error when a file exists but the permissions
   are such that the user can't read it.
-* change "general XXX parse error" into "general XXX parse error -- please
-  report to xxx@yyy.com" so error reporting can be better
 * add lots of error rules to all parser grammars
 - add optional-argument commandline options, and account for empty-argument
   required-argument options (e.g. `./reflex -I ""` will assert)
@@ -18,15 +19,11 @@
   "pushdown-automaton-based parsers"
 - error when any output file is the same as an input file, or when any two
   output files are the same.
-* shorten the enabled_verbosity names (and rename scanning/parsing spew to
-  scanner/parser)
 - add recursive block comments into barf_commonlang_scanner.reflex (think
   about how this will interact with other-languaged code blocks)
 - add _barf_version to preprocessor shit?
 - add targetspec versions -- so you can have multiple coexisting versions of
   the same target but at different versions.
-* config.h-specified search path which is where the targetspecs/codespecs
-  will be installed.
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
@@ -35,11 +32,13 @@
   OR
   do comprehensive deleting of stuff (which would probably set a better
   example for people who read the source code of the parsers/scanners).
+  THEN
+  do memory leak checking (valgrind)
 - get rid of AST hierarchy overviews once doxygen docs are to some decent state
 - use Ast::Directive::GetDirectiveString in error messages instead of
   creating the error messages by hand -- make all directives derive from
   Ast::Directive
-- add "execution debug spew" mode for each program, which says what it's doing,
+* add "execution debug spew" mode for each program, which says what it's doing,
   e.g. opening files, doing type checking, env vars it's using, etc
 - file locations should be "2d range" -- a starting line/column and an ending
   line/column (or starting line/column and a number of bytes following).
@@ -94,8 +93,6 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - allow using the value of previously declared directive ids as default values
-* confirm that the declared name matches the filename -- or, should the
-  targetspec's %target directive be removed (it is redundant) -- probably remove
 - add new "add_optional_codespec" directive which requires the directive
   id of an add_optional_directive, for optional output files (like
   baseclasses which could be common to multiple parsers/scanners), then change
@@ -193,6 +190,7 @@
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
+* make ResetForNewInput() protected
 * get rid of STL usage in C++ target (and do Continue() and Unaccept())
 - add interactive/noninteractive option to target -- interactive will do
   char-by-char input, while noninteractive will do the faster chunk reading
@@ -234,6 +232,7 @@ $ add --predefine (-D) and --postdefine (-d) options for defining crap in the
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+* make ResetForNewInput() protected
 ! refactor the DPDA generation to be simpler and faster (difficult)
 - make NPDA states file (?)
 - correctly determine LALR(0) (which is when all shift transitions have

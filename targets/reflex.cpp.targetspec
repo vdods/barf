@@ -8,9 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-// This is a reflex targetspec file for a C++ lexical scanner class using a
+// This is a reflex targetspec file for a lexical scanner C++ class using a
 // deterministic finite automaton (DFA).
-%target cpp
 
 // The value of this directive specifies the filename to use when generating
 // the header file (it is used by the below add_codespec directive).
@@ -175,7 +174,7 @@
 %add_optional_directive generate_debug_spew_code
 // When present, will prevent the timestamp from being added to the top of
 // the generated source code files (useful when the generated files are
-// checked into a version control system).  The default behavior is to 
+// checked into a version control system).  The default behavior is to
 // put a timestamp in the generated header and implementation files.
 %add_optional_directive dont_generate_timestamps
 

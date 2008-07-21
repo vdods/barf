@@ -42,10 +42,11 @@ struct AddDirectiveMap;
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
     void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
 
-    bool OpenFile (string const &input_filename);
+    bool OpenTargetspec (string const &input_filename, string const &target_id);
 
 private:
 
+    string m_target_id;
     CommonLang::Scanner m_scanner;
     AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
@@ -74,10 +75,18 @@ namespace Targetspec {
     m_add_directive_map = new AddDirectiveMap();
 %}
 %target.cpp.bottom_of_implementation_file %{
-bool Parser::OpenFile (string const &input_filename)
+bool Parser::OpenTargetspec (string const &input_filename, string const &target_id)
 {
+    assert(!target_id.empty());
+    m_target_id.empty();
     ResetForNewInput();
-    return m_scanner.OpenFile(input_filename);
+    if (m_scanner.OpenFile(input_filename))
+    {
+        m_target_id = target_id;
+        return true;
+    }
+    else
+        return false;
 }
 
 } // end of namespace Targetspec
@@ -174,29 +183,14 @@ bool Parser::OpenFile (string const &input_filename)
 
 %nonterminal root %type.cpp "Specification *"
 :
-    at_least_zero_newlines
-    target:target
-    directives
+    at_least_zero_newlines directives
     %target.cpp {
         assert(m_add_codespec_list != NULL);
         assert(m_add_directive_map != NULL);
         return new Specification(
-            target,
+            new Ast::Id(m_target_id, FiLoc::ms_invalid),
             m_add_codespec_list,
             m_add_directive_map);
-    }
-;
-
-// ///////////////////////////////////////////////////////////////////////////
-// target rules
-// ///////////////////////////////////////////////////////////////////////////
-
-%nonterminal target %type.cpp "Ast::Id *"
-:
-    DIRECTIVE_TARGET:throwaway ID:target_id at_least_one_newline
-    %target.cpp {
-        delete throwaway;
-        return target_id;
     }
 ;
 

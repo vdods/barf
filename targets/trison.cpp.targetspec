@@ -8,9 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-// This is a trison targetspec file for a C++ (bounded) LALR(k) parser class
-// using a deterministic pushdown automaton (DPDA).
-%target cpp
+// This is a trison targetspec file for a LALR(k) (i.e. bounded lookahead)
+// parser C++ class using a deterministic pushdown automaton (DPDA).
 
 // The value of this directive specifies the filename to use when generating
 // the header file (it is used by the below add_codespec directive).

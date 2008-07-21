@@ -377,12 +377,12 @@ $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png: $(top_srcdir)/
 endif
 
 diff-test-barf-commonlang-scanner:
-	diff $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp $(top_builddir)/test/barf_commonlang_scanner.hpp
-	diff $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp $(top_builddir)/test/barf_commonlang_scanner.cpp
+	diff -q $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp $(top_builddir)/test/barf_commonlang_scanner.hpp
+	diff -q $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp $(top_builddir)/test/barf_commonlang_scanner.cpp
 
 diff-test-barf-preprocessor-scanner:
-	diff $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp $(top_builddir)/test/barf_preprocessor_scanner_new.hpp
-	diff $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp $(top_builddir)/test/barf_preprocessor_scanner_new.cpp
+	diff -q $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp $(top_builddir)/test/barf_preprocessor_scanner_new.hpp
+	diff -q $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp $(top_builddir)/test/barf_preprocessor_scanner_new.cpp
 
 if STABLE_TRISON_EXISTS
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
@@ -479,16 +479,16 @@ $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png: $(top_srcdir)/lib/
 endif
 
 diff-test-barf-preprocessor-parser:
-	diff $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp $(top_builddir)/test/barf_preprocessor_parser.hpp
-	diff $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp $(top_builddir)/test/barf_preprocessor_parser.cpp
+	diff -q $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp $(top_builddir)/test/barf_preprocessor_parser.hpp
+	diff -q $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp $(top_builddir)/test/barf_preprocessor_parser.cpp
 
 diff-test-barf-regex-parser:
-	diff $(top_srcdir)/lib/regex/barf_regex_parser.hpp $(top_builddir)/test/barf_regex_parser.hpp
-	diff $(top_srcdir)/lib/regex/barf_regex_parser.cpp $(top_builddir)/test/barf_regex_parser.cpp
+	diff -q $(top_srcdir)/lib/regex/barf_regex_parser.hpp $(top_builddir)/test/barf_regex_parser.hpp
+	diff -q $(top_srcdir)/lib/regex/barf_regex_parser.cpp $(top_builddir)/test/barf_regex_parser.cpp
 
 diff-test-barf-targetspec-parser:
-	diff $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp $(top_builddir)/test/barf_targetspec_parser.hpp
-	diff $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp $(top_builddir)/test/barf_targetspec_parser.cpp
+	diff -q $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp $(top_builddir)/test/barf_targetspec_parser.hpp
+	diff -q $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp $(top_builddir)/test/barf_targetspec_parser.cpp
 
 ##############################################################################
 # bpp (BARF preprocessor)
@@ -575,8 +575,8 @@ $(top_srcdir)/app/reflex/reflex_parser.npda.png: $(top_srcdir)/app/reflex/reflex
 endif
 
 diff-test-reflex-parser:
-	diff $(top_srcdir)/app/reflex/reflex_parser.hpp $(top_builddir)/test/reflex_parser.hpp
-	diff $(top_srcdir)/app/reflex/reflex_parser.cpp $(top_builddir)/test/reflex_parser.cpp
+	diff -q $(top_srcdir)/app/reflex/reflex_parser.hpp $(top_builddir)/test/reflex_parser.hpp
+	diff -q $(top_srcdir)/app/reflex/reflex_parser.cpp $(top_builddir)/test/reflex_parser.cpp
 
 ##############################################################################
 # trison
@@ -645,8 +645,8 @@ $(top_srcdir)/app/trison/trison_parser.npda.png: $(top_srcdir)/app/trison/trison
 endif
 
 diff-test-trison-parser:
-	diff $(top_srcdir)/app/trison/trison_parser.hpp $(top_builddir)/test/trison_parser.hpp
-	diff $(top_srcdir)/app/trison/trison_parser.cpp $(top_builddir)/test/trison_parser.cpp
+	diff -q $(top_srcdir)/app/trison/trison_parser.hpp $(top_builddir)/test/trison_parser.hpp
+	diff -q $(top_srcdir)/app/trison/trison_parser.cpp $(top_builddir)/test/trison_parser.cpp
 
 ##############################################################################
 # all the no-install header files for the applications (is this necessary?)

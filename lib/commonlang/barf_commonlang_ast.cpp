@@ -98,7 +98,7 @@ void Target::ParseTargetspec (string const &tool_prefix, Targetspec::Parser &par
         Ast::Base *parsed_tree_root = NULL;
         if (m_targetspec.m_source_path.empty())
             EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetTargetsSearchPath().GetAsString(), FiLoc(GetOptions().GetInputFilename()));
-        else if (!parser.OpenFile(m_targetspec.m_source_path))
+        else if (!parser.OpenTargetspec(m_targetspec.m_source_path, m_target_id))
             EmitError("unable to open file \"" + m_targetspec.m_source_path + "\" for reading", FiLoc(GetOptions().GetInputFilename()));
         else if (parser.Parse(&parsed_tree_root) != Targetspec::Parser::PRC_SUCCESS)
             EmitError("general targetspec parse error -- " + GetOptions().HowtoReportError(), FiLoc(m_targetspec.m_source_path));
