@@ -14,6 +14,12 @@
 
 namespace Barf {
 
+string const &OptionsBase::HowtoReportError () const
+{
+    static string const s_howto_report_error("please make a bug report, containing exact reproduction instructions, in the tracker system at http://sourceforge.net/projects/barf/");
+    return s_howto_report_error;
+}
+
 void OptionsBase::SetInputFilename (string const &input_filename)
 {
     if (!m_input_filename.empty())
@@ -152,7 +158,7 @@ void OptionsBase::ReportErrorAndSetAbortFlag (string const &error_message)
 {
     assert(!error_message.empty());
     cerr << "error: " << error_message << endl;
-    m_abort = true;
+    m_abort_flag = true;
 }
 
 void OptionsBase::AddTargetsSearchPath (string const &search_path, string const &set_by)

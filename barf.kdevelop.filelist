@@ -34,8 +34,6 @@ app/reflex/reflex_automaton.cpp
 app/reflex/reflex_automaton.hpp
 app/reflex/reflex_codespecsymbols.cpp
 app/reflex/reflex_codespecsymbols.hpp
-app/reflex/reflex_enums.cpp
-app/reflex/reflex_enums.hpp
 app/reflex/reflex_main.cpp
 app/reflex/reflex_options.cpp
 app/reflex/reflex_options.hpp
@@ -141,8 +139,6 @@ lib/regex/barf_regex_parser.trison
 lib/targetspec/barf_targetspec.hpp
 lib/targetspec/barf_targetspec_ast.cpp
 lib/targetspec/barf_targetspec_ast.hpp
-lib/targetspec/barf_targetspec_enums.cpp
-lib/targetspec/barf_targetspec_enums.hpp
 lib/targetspec/barf_targetspec_parser.cpp
 lib/targetspec/barf_targetspec_parser.hpp
 lib/targetspec/barf_targetspec_parser.trison

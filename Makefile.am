@@ -309,7 +309,6 @@ lib_libbarf_targetspec_la_CPPFLAGS = \
     -I$(top_srcdir)/lib/targetspec
 lib_libbarf_targetspec_la_SOURCES = \
     lib/targetspec/barf_targetspec_ast.cpp \
-    lib/targetspec/barf_targetspec_enums.cpp \
     lib/targetspec/barf_targetspec_parser.cpp \
     lib/targetspec/barf_targetspec_parser.trison
 
@@ -535,7 +534,6 @@ reflex_SOURCES = \
 	app/reflex/reflex_ast.cpp \
 	app/reflex/reflex_automaton.cpp \
 	app/reflex/reflex_codespecsymbols.cpp \
-	app/reflex/reflex_enums.cpp \
 	app/reflex/reflex_main.cpp \
 	app/reflex/reflex_options.cpp \
 	app/reflex/reflex_parser.cpp \
@@ -662,7 +660,6 @@ noinst_HEADERS = \
 	app/reflex/reflex_ast.hpp \
 	app/reflex/reflex_automaton.hpp \
 	app/reflex/reflex_codespecsymbols.hpp \
-	app/reflex/reflex_enums.hpp \
 	app/reflex/reflex_options.hpp \
 	app/reflex/reflex_parser.hpp \
 	\
@@ -715,5 +712,4 @@ noinst_HEADERS = \
 	\
 	lib/targetspec/barf_targetspec.hpp \
 	lib/targetspec/barf_targetspec_ast.hpp \
-	lib/targetspec/barf_targetspec_enums.hpp \
 	lib/targetspec/barf_targetspec_parser.hpp

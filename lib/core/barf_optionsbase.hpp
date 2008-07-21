@@ -90,7 +90,7 @@ public:
         m_with_line_directives(false),
         m_enabled_verbosity(V_NONE),
         m_is_help_requested(false),
-        m_abort(false),
+        m_abort_flag(false),
         m_allowed_verbosity(allowed_verbosity)
     {
         assert((m_allowed_verbosity & ~V_ALL) == 0 && "allowed_verbosity contains invalid Verbosity flags");
@@ -105,7 +105,11 @@ public:
 
     // indicates if there were problems with the specified options
     // and that the program should not continue executing.
-    bool GetAbort () const { return m_abort || !GetParseSucceeded(); }
+    bool GetAbort () const { return m_abort_flag || !GetParseSucceeded(); }
+
+    // returns a string containing instructions on how to report an error
+    // in the application.
+    string const &HowtoReportError () const;
 
     // non-option argument accessor
     string const &GetInputFilename () const { return m_input_filename; }
@@ -169,7 +173,13 @@ public:
 
 protected:
 
+    bool AbortFlag () const { return m_abort_flag; }
     void ReportErrorAndSetAbortFlag (string const &error_message);
+
+private:
+
+    void AddTargetsSearchPath (string const &search_path, string const &set_by);
+    Verbosity ParseVerbosityString (string const &verbosity_string);
 
     // non-option argument value
     string m_input_filename;
@@ -195,13 +205,8 @@ protected:
     // help option value
     bool m_is_help_requested;
     // indicates program should abort
-    bool m_abort;
-
-private:
-
-    void AddTargetsSearchPath (string const &search_path, string const &set_by);
-    Verbosity ParseVerbosityString (string const &verbosity_string);
-
+    bool m_abort_flag;
+    // stores the verbosity flags (e.g. show parser debug spew, etc)
     Uint32 const m_allowed_verbosity;
 }; // end of class OptionsBase
 

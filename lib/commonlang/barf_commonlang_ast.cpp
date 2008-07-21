@@ -101,7 +101,7 @@ void Target::ParseTargetspec (string const &tool_prefix, Targetspec::Parser &par
         else if (!parser.OpenFile(m_targetspec.m_source_path))
             EmitError("unable to open file \"" + m_targetspec.m_source_path + "\" for reading", FiLoc(GetOptions().GetInputFilename()));
         else if (parser.Parse(&parsed_tree_root) != Targetspec::Parser::PRC_SUCCESS)
-            EmitError("general targetspec parse error", FiLoc(m_targetspec.m_source_path));
+            EmitError("general targetspec parse error -- " + GetOptions().HowtoReportError(), FiLoc(m_targetspec.m_source_path));
         else
         {
             m_targetspec.m_specification = Dsc<Targetspec::Specification *>(parsed_tree_root);
@@ -139,7 +139,7 @@ void Target::ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &pa
             else if (!parser.OpenFile(codespec_filename))
                 EmitError("unable to open file \"" + codespec_filename + "\" for reading", FiLoc(m_targetspec.m_source_path));
             else if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
-                EmitError("general preprocessor parse error", FiLoc(codespec_filename));
+                EmitError("general preprocessor parse error -- " + GetOptions().HowtoReportError(), FiLoc(codespec_filename));
             else
             {
                 Preprocessor::Body *codespec_body = Dsc<Preprocessor::Body *>(parsed_tree_root);

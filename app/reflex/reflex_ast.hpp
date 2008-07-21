@@ -21,7 +21,6 @@
 #include "barf_graph.hpp"
 #include "barf_regex_ast.hpp"
 #include "barf_util.hpp"
-#include "reflex_enums.hpp"
 
 namespace Barf {
 namespace Preprocessor {

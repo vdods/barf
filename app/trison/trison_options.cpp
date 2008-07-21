@@ -144,10 +144,10 @@ CommandLineOption const Options::ms_option[] =
         "    Do not output a human-readable specification of the DPDA state machine text\n"
         "    file.  This is the default behavior.  See also option -S."),
 
-
+/* TODO: implement
     CommandLineOption("Target-related options"),
     CommandLineOption(
-        'D',
+        'd',
         "predefine",
         &OptionsBase::Predefine,
         "    Defines a targetspec directive value for a given target before parsing\n"
@@ -157,16 +157,16 @@ CommandLineOption const Options::ms_option[] =
         "        target.<target_id>.<directive_id>=<value>\n"
         "    The <value> portion of the argument must include the delimiters appropriate\n"
         "    to the targetspec directive (e.g. %string directives require a double-quote-\n"
-        "    delimited <value>, etc)."),
+        "    delimited <value>, etc).  See also option -D."),
     CommandLineOption(
-        'd',
+        'D',
         "postdefine",
         &OptionsBase::Postdefine,
         "    Defines a targetspec directive value for a given target after parsing\n"
         "    the primary source.  Directive values specified in the primary source will\n"
         "    be overridden by values defined via this commandline option.  See option\n"
         "    -d for details on the form of the argument."),
-
+*/
 
     CommandLineOption("Verbosity options"),
     CommandLineOption(
@@ -232,7 +232,7 @@ void Options::Parse (int const argc, char const *const *const argv)
 
     // only check for commandline option consistency if no output-and-quit
     // option was specified (e.g. help or print-targets-search-path)
-    if (!m_abort &&
+    if (!AbortFlag() &&
         !GetIsHelpRequested() &&
         GetPrintTargetsSearchPathRequest() == PTSPR_NONE)
     {
