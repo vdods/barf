@@ -83,7 +83,7 @@ CommandLineOption const Options::ms_option[] =
         &OptionsBase::EnableVerbosity,
         "    Enables the specified verbosity option.  Valid parameters are\n"
         "        \"execution\" - Print general application activity to stderr. (not currently implemented)\n" // TODO: implement
-        "        \"scanner\" - Print scanner activity to stderr. (not currently implemented)\n" // TODO: implement
+        "        \"scanner\" - Print scanner activity to stderr. (not currently implemented)\n"
         "        \"parser\" - Print parser activity to stderr.\n"
         "        \"ast\" - Print the parsed abstract syntax tree to stderr.\n"
         "        \"all\" - Enable all above verbosity options.\n"

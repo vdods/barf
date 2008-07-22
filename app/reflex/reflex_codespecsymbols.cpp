@@ -29,7 +29,7 @@ void PopulateAcceptHandlerScannerModeAndRegexSymbols (
     assert(accept_handler_regex != NULL);
 
     accept_handler_scanner_mode->AppendArrayElement(new Preprocessor::Body(scanner_mode_id));
-    accept_handler_regex->AppendArrayElement(new Preprocessor::Body(GetStringLiteral(rule.m_rule_regex_string)));
+    accept_handler_regex->AppendArrayElement(new Preprocessor::Body(rule.m_rule_regex_string));
 }
 
 void PopulateAcceptHandlerScannerModeAndRegexSymbols (

@@ -72,9 +72,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 77 "barf_regex_parser.cpp"
- << " starting parse" << std::endl;)
+ << " starting parse" << std::endl)
 
     ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
     *return_token = NULL;
@@ -112,18 +112,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
         {
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 117 "barf_regex_parser.cpp"
- << " begin error panic" << std::endl;)
+ << " begin error panic" << std::endl)
 
             // the special Terminal::END_ can not be eaten by error panic.
             if (Lookahead_(0).m_id == Terminal::END_)
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 126 "barf_regex_parser.cpp"
- << " end error panic; abort (error panic can't eat Terminal::END_)" << std::endl;)
+ << " end error panic; abort (error panic can't eat Terminal::END_)" << std::endl)
                 // parser_return_code_ and return_token are already appropriately
                 // set, so just break out of the main loop.
                 break;
@@ -136,7 +136,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
                 assert(current_state_index < ms_state_count_);
                 State_ const &current_state = ms_state_table_[current_state_index];
-                TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr);)
+                TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
 
                 // check if the current state accepts ERROR_ (only need to check the
                 // non-default transitions, since the default transition can't be a shift).
@@ -157,9 +157,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 162 "barf_regex_parser.cpp"
- << " end error panic; success (current state accepts ERROR_ token)" << std::endl;)
+ << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
                     // if the current state accepts error, throw away the first lookahead data
                     // (but don't pop the front of the lookahead queue).  then clear the thrown-
                     // away token data, and set the token id to ERROR_.
@@ -176,17 +176,17 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 181 "barf_regex_parser.cpp"
- << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl;)
+ << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
                     }
                     else
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 189 "barf_regex_parser.cpp"
- << " end error panic; abort (stack is empty)" << std::endl;)
+ << " end error panic; abort (stack is empty)" << std::endl)
                     }
                     // otherwise throw away the data at the top of the stack, and pop the stack.
                     // then if the stack is empty, an unhandled parse error occurred.
@@ -214,7 +214,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
             assert(current_state_index < ms_state_count_);
             State_ const &current_state = ms_state_table_[current_state_index];
-            TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr);)
+            TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
 
             // TODO -- binary search for faster transition matching?
 
@@ -251,14 +251,14 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 256 "barf_regex_parser.cpp"
- << " current (relevant) lookahead(s):";)
+ << " current (relevant) lookahead(s):")
                     for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i);)
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
                     }
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl;)
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
 
                     ExerciseTransition_(*transition);
                     transition_exercised = true;
@@ -271,20 +271,20 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 276 "barf_regex_parser.cpp"
- << " current (relevant) lookahead(s):";)
+ << " current (relevant) lookahead(s):")
                 for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i);)
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
                 }
-                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl;)
+                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
 
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 287 "barf_regex_parser.cpp"
- << " exercising default transition" << std::endl;)
+ << " exercising default transition" << std::endl)
                 // exercise the default transition.  a return value of true indicates
                 // that the parser should return.
                 if (ExerciseTransition_(*current_state.m_transition_table))
@@ -313,14 +313,14 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 318 "barf_regex_parser.cpp"
- << " Parse() is returning PRC_SUCCESS" << std::endl;)
+ << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 323 "barf_regex_parser.cpp"
- << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl;)
+ << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
     return parser_return_code_;
 }
@@ -329,9 +329,9 @@ void Parser::ThrowAwayToken_ (Token::Data &token_data) throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 334 "barf_regex_parser.cpp"
- << " executing throw-away-token actions" << std::endl;)
+ << " executing throw-away-token actions" << std::endl)
 
 
 #line 124 "barf_regex_parser.trison"
@@ -494,9 +494,9 @@ void Parser::ClearStack_ () throw()
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 499 "barf_regex_parser.cpp"
- << " clearing the stack" << std::endl;)
+ << " clearing the stack" << std::endl)
 
     Stack_::iterator it = m_stack_.begin();
     Stack_::iterator it_end = m_stack_.end();
@@ -512,9 +512,9 @@ void Parser::ClearLookaheadQueue_ () throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 517 "barf_regex_parser.cpp"
- << " clearing the lookahead queue" << std::endl;)
+ << " clearing the lookahead queue" << std::endl)
 
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
         ThrowAwayToken_(it->m_data);
@@ -529,9 +529,9 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
 
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 534 "barf_regex_parser.cpp"
- << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl;)
+ << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl)
     }
     return m_lookahead_queue_[index];
 }
@@ -549,9 +549,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             Rule_ const &rule = ms_rule_table_[transition.m_data];
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 554 "barf_regex_parser.cpp"
- << " REDUCE " << rule.m_description << std::endl;)
+ << " REDUCE " << rule.m_description << std::endl)
             assert(m_stack_.size() > rule.m_token_count);
             m_lookahead_queue_.push_front(
                 Token(
@@ -561,18 +561,18 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 566 "barf_regex_parser.cpp"
- << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl;)
+ << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
             return false; // indicating the parser isn't returning
         }
 
         case Transition_::RETURN:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 575 "barf_regex_parser.cpp"
- << " RETURN" << std::endl;)
+ << " RETURN" << std::endl)
             return true; // indicating the parser is returning
 
         case Transition_::SHIFT:
@@ -583,9 +583,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
                                                                // client error, so asserting here is ok.
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 588 "barf_regex_parser.cpp"
- << " SHIFT " << Lookahead_(0) << std::endl;)
+ << " SHIFT " << Lookahead_(0) << std::endl)
             m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0).m_data));
             m_lookahead_queue_.pop_front();
             return false; // indicating the parser isn't returning
@@ -593,9 +593,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
         case Transition_::ERROR_PANIC:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 598 "barf_regex_parser.cpp"
- << " ERROR_PANIC" << std::endl;)
+ << " ERROR_PANIC" << std::endl)
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
 
@@ -610,9 +610,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 615 "barf_regex_parser.cpp"
- << " executing reduction rule " << rule_index_ << std::endl;)
+ << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
         default:
@@ -1620,7 +1620,7 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
 
     stream << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 1625 "barf_regex_parser.cpp"
  << " parser stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
@@ -1641,7 +1641,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     assert(string != NULL);
     stream << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 1646 "barf_regex_parser.cpp"
  << "    ";
     while (*string != '\0')
@@ -1649,7 +1649,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
         if (*string == '\n')
             stream << '\n' << 
 #line 269 "barf_regex_parser.trison"
-"Regex::Parser (at " << GetFiLoc() << "):"
+"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 1654 "barf_regex_parser.cpp"
  << "    ";
         else
@@ -3304,16 +3304,6 @@ char const *const Parser::ms_token_name_table_[] =
 };
 BarfCpp_::Size const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
 
-enum
-{
-    TABLE_SIZE_ASSERTIONS_ =
-        BarfCpp_::Assert<Parser::ms_rule_count_ == 81>::v &&
-        BarfCpp_::Assert<Parser::ms_state_count_ == 132>::v &&
-        BarfCpp_::Assert<Parser::ms_transition_count_ == 627>::v &&
-        BarfCpp_::Assert<Parser::ms_lookahead_count_ == 495>::v &&
-        BarfCpp_::Assert<Parser::ms_token_name_count_ == 277>::v
-};
-
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
 // ///////////////////////////////////////////////////////////////////////
@@ -3359,4 +3349,4 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 } // end of namespace Regex
 } // end of namespace Barf
 
-#line 3363 "barf_regex_parser.cpp"
+#line 3353 "barf_regex_parser.cpp"

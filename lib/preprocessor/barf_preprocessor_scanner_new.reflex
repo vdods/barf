@@ -164,6 +164,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
 // ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.generate_debug_spew_code
+%target.cpp.debug_spew_prefix {"Preprocessor::ScannerNew" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 // ///////////////////////////////////////////////////////////////////////////

@@ -595,14 +595,16 @@ private:
 private:
 
     // ///////////////////////////////////////////////////////////////////////
-    // begin internal trison-generated parser guts -- don't use
+    // begin internal reflex-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
     bool IsInputAtEnd_ ();
     BarfCpp_::Uint8 ReadNextAtom_ ();
 
-    static void DebugPrintAtom_ (BarfCpp_::Uint8 atom);
-    static void DebugPrintString_ (std::string const &s);
+    // debug spew methods
+    static void PrintAtom_ (BarfCpp_::Uint8 atom);
+    static void PrintString_ (std::string const &s);
+    static void PrintScannerMode_ (Mode::Name mode);
 
     bool m_debug_spew_;
 
@@ -610,10 +612,11 @@ private:
     static BarfCpp_::Size const ms_state_count_;
     static AutomatonApparatus::DfaTransition_ const ms_transition_table_[];
     static BarfCpp_::Size const ms_transition_count_;
+    static char const *const ms_accept_handler_regex_[];
     static BarfCpp_::Uint32 const ms_accept_handler_count_;
 
     // ///////////////////////////////////////////////////////////////////////
-    // end of internal trison-generated parser guts
+    // end of internal reflex-generated parser guts
     // ///////////////////////////////////////////////////////////////////////
 }; // end of class ScannerNew
 
@@ -625,4 +628,4 @@ private:
 
 #endif // !defined(_BARF_PREPROCESSOR_SCANNER_NEW_HPP_)
 
-#line 629 "barf_preprocessor_scanner_new.hpp"
+#line 632 "barf_preprocessor_scanner_new.hpp"

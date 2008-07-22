@@ -78,15 +78,13 @@ namespace Targetspec {
 bool Parser::OpenTargetspec (string const &input_filename, string const &target_id)
 {
     assert(!target_id.empty());
-    m_target_id.empty();
+
     ResetForNewInput();
-    if (m_scanner.OpenFile(input_filename))
-    {
+    m_target_id.empty();
+    bool scanner_open_file_succeeded = m_scanner.OpenFile(input_filename);
+    if (scanner_open_file_succeeded)
         m_target_id = target_id;
-        return true;
-    }
-    else
-        return false;
+    return scanner_open_file_succeeded;
 }
 
 } // end of namespace Targetspec
@@ -153,7 +151,7 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix %{"TargetSpec::Parser (at " << GetFiLoc() << "):"%}
+%target.cpp.debug_spew_prefix {"TargetSpec::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 

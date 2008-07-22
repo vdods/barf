@@ -192,17 +192,17 @@
 
 * make ResetForNewInput() protected
 * get rid of STL usage in C++ target (and do Continue() and Unaccept())
-- add interactive/noninteractive option to target -- interactive will do
+$ add interactive/noninteractive option to target -- interactive will do
   char-by-char input, while noninteractive will do the faster chunk reading
   and buffering.  flex-like interactive scanner option -- if it's enabled,
   you must specify the "get next char" directive, otherwise you must specify
   the "read chars" directive (which reads a big chunk of input for faster reads)
 - move the --with-line-directives option to be specified by the target, and
   overridable by the primary source
-- add API similar to yymore() for continuing the accepted string -- call it
+$ add API similar to yymore() for continuing the accepted string -- call it
   Continue() or something.
 - add commandline option to describe the return codes (?)
-- add "push accepted string back into buffer" API (call it Unaccept) to the
+$ add "push accepted string back into buffer" API (call it Unaccept) to the
   generated scanner -- it should not be able to push any string, because the
   previous character is required.  this task would be easier implemented
   once the STL classes have been replaced.
