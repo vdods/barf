@@ -126,10 +126,8 @@
 - add 64 bit ints (better) and add whatever the negative-most 64-bit int is
   to the scanner (because the way negative ints are constructed in the parser
   screws this up)
-- add looping construct for arrays?
 - maybe make the Textifier detect if a newline was just printed, so that
   it doesn't print unnecessary newlines when generating line directives
-* get the reflex-based scanner working
 - add boolean property for wether or not a particular symbol was referenced
   during preprocessing.
 

@@ -12,7 +12,7 @@
 #line 60 "barf_preprocessor_parser.trison"
 
 #include "barf_preprocessor_ast.hpp"
-#include "barf_preprocessor_scanner_new.hpp"
+#include "barf_preprocessor_scanner.hpp"
 
 namespace Barf {
 namespace Preprocessor {

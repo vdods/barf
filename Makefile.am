@@ -119,16 +119,16 @@ clean-all-scanner-extras:
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.png
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.dot
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.png
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.dfa.dot
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.dfa.png
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.nfa.dot
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.nfa.png
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.dot
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.png
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png
 
 clean-all-scanners: clean-all-scanner-extras
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp
 	rm -f $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.cpp
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.hpp
 
 force-all-parsers: \
 	force-barf-targetspec-parser \
@@ -151,7 +151,7 @@ diff-all-test-scanners: \
 
 clean-all-test-scanners:
 	rm -f $(top_builddir)/test/barf_commonlang_scanner.*
-	rm -f $(top_builddir)/test/barf_preprocessor_scanner_new.*
+	rm -f $(top_builddir)/test/barf_preprocessor_scanner.*
 
 all-test-parsers: \
 	test-barf-preprocessor-parser \
@@ -284,7 +284,7 @@ lib_libbarf_preprocessor_la_SOURCES = \
     lib/preprocessor/barf_preprocessor_ast_print.cpp \
     lib/preprocessor/barf_preprocessor_parser.cpp \
     lib/preprocessor/barf_preprocessor_parser.trison \
-    lib/preprocessor/barf_preprocessor_scanner_new.cpp \
+    lib/preprocessor/barf_preprocessor_scanner.cpp \
     lib/preprocessor/barf_preprocessor_symboltable.cpp \
     lib/preprocessor/barf_preprocessor_textifier.cpp
 
@@ -320,13 +320,13 @@ $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp: $(top_srcdir)/lib/comm
 force-barf-commonlang-scanner:
 	$(STABLE_REFLEX) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/commonlang/ --generate-nfa-dot-graph barf_commonlang_scanner.nfa.dot --generate-dfa-dot-graph barf_commonlang_scanner.dfa.dot
 
-barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp
-$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp
-$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.reflex
-	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner_new.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner_new.dfa.dot
+barf-preprocessor-scanner: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.hpp
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.cpp
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex
+	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner.dfa.dot
 
 force-barf-preprocessor-scanner:
-	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner_new.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner_new.dfa.dot
+	$(STABLE_REFLEX) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor/ --generate-nfa-dot-graph barf_preprocessor_scanner.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner.dfa.dot
 
 test-barf-commonlang-scanner:
 	mkdir -p test
@@ -334,7 +334,7 @@ test-barf-commonlang-scanner:
 
 test-barf-preprocessor-scanner:
 	mkdir -p test
-	./reflex $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-nfa-dot-graph barf_preprocessor_scanner_new.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner_new.dfa.dot
+	./reflex $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-nfa-dot-graph barf_preprocessor_scanner.nfa.dot --generate-dfa-dot-graph barf_preprocessor_scanner.dfa.dot
 else # !STABLE_REFLEX_EXISTS
 barf-commonlang-scanner force-barf-commonlang-scanner:
 	@echo "!!!"
@@ -368,11 +368,11 @@ $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.dfa.png: $(top_srcdir)/lib/
 $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.png: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.dot
 	$(DOT) $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.dot -Tpng -o $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.nfa.png
 
-$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.dfa.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.dfa.dot
-	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.dfa.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.dfa.png
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.dot
+	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.dfa.png
 
-$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.nfa.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.nfa.dot
-	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.nfa.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.nfa.png
+$(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot
+	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.nfa.png
 endif
 
 diff-test-barf-commonlang-scanner:
@@ -380,8 +380,8 @@ diff-test-barf-commonlang-scanner:
 	diff -q $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.cpp $(top_builddir)/test/barf_commonlang_scanner.cpp
 
 diff-test-barf-preprocessor-scanner:
-	diff -q $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.hpp $(top_builddir)/test/barf_preprocessor_scanner_new.hpp
-	diff -q $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner_new.cpp $(top_builddir)/test/barf_preprocessor_scanner_new.cpp
+	diff -q $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.hpp $(top_builddir)/test/barf_preprocessor_scanner.hpp
+	diff -q $(top_srcdir)/lib/preprocessor/barf_preprocessor_scanner.cpp $(top_builddir)/test/barf_preprocessor_scanner.cpp
 
 if STABLE_TRISON_EXISTS
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
@@ -697,7 +697,7 @@ noinst_HEADERS = \
 	lib/preprocessor/barf_preprocessor.hpp \
 	lib/preprocessor/barf_preprocessor_ast.hpp \
 	lib/preprocessor/barf_preprocessor_parser.hpp \
-	lib/preprocessor/barf_preprocessor_scanner_new.hpp \
+	lib/preprocessor/barf_preprocessor_scanner.hpp \
 	lib/preprocessor/barf_preprocessor_symboltable.hpp \
 	lib/preprocessor/barf_preprocessor_textifier.hpp \
 	\

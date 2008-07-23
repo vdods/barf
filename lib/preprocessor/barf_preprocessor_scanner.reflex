@@ -14,8 +14,8 @@
 // cpp scanner header-file-related directives
 // ///////////////////////////////////////////////////////////////////////////
 
-%target.cpp.header_filename "barf_preprocessor_scanner_new.hpp"
-%target.cpp.implementation_filename "barf_preprocessor_scanner_new.cpp"
+%target.cpp.header_filename "barf_preprocessor_scanner.hpp"
+%target.cpp.implementation_filename "barf_preprocessor_scanner.cpp"
 %target.cpp.top_of_header_file %{
 #if !defined(_BARF_PREPROCESSOR_SCANNER_NEW_HPP_)
 #define _BARF_PREPROCESSOR_SCANNER_NEW_HPP_
