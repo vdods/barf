@@ -257,6 +257,9 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
     // _dfa_state_transition_count[_dfa_state_count] -- gives the number of transitions for
     // this node (the number of contiguous transitions which apply to this node).
     //
+    // _dfa_state_description[_dfa_state_count] -- the description of this graph node
+    // (e.g. "25:SCAN_TEXT, 5, 8").
+    //
     // _dfa_transition_count -- gives the number of transitions in this DFA
     //
     // _dfa_transition_type_integer[_dfa_transition_count] -- gives the integer value
@@ -286,6 +289,8 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
             symbol_table.DefineArraySymbol("_dfa_state_transition_offset", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_state_transition_count =
             symbol_table.DefineArraySymbol("_dfa_state_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_description =
+            symbol_table.DefineArraySymbol("_dfa_state_description", FiLoc::ms_invalid);
         Preprocessor::ScalarSymbol *dfa_transition_count =
             symbol_table.DefineScalarSymbol("_dfa_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_transition_type_integer =
@@ -305,8 +310,9 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
         {
             Graph::Node const &node = dfa_graph.GetNode(node_index);
             assert(node.GetHasData());
-            assert(node.GetDataAs<Regex::NodeData>().m_dfa_accept_handler_index <= SINT32_UPPER_BOUND);
-            Sint32 node_accept_handler_index = node.GetDataAs<Regex::NodeData>().m_dfa_accept_handler_index;
+            Regex::NodeData const &node_data = dfa_graph.GetNode(node_index).GetDataAs<Regex::NodeData>();
+            assert(node_data.m_dfa_accept_handler_index <= SINT32_UPPER_BOUND);
+            Sint32 node_accept_handler_index = node_data.m_dfa_accept_handler_index;
             Sint32 node_transition_offset = total_transition_count;
             Sint32 node_transition_count = 0;
 
@@ -340,6 +346,8 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
                 new Preprocessor::Body(node_transition_offset));
             dfa_state_transition_count->AppendArrayElement(
                 new Preprocessor::Body(node_transition_count));
+            dfa_state_description->AppendArrayElement(
+                new Preprocessor::Body(node_data.GetAsText(node_index)));
         }
 
         dfa_transition_count->SetScalarBody(

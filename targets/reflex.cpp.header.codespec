@@ -340,7 +340,7 @@ private:
         // iterate through the current state's transitions, exercising the first
         // acceptable one and returning the target state
         for (DfaTransition_ const *transition = m_current_state->m_transition,
-                                 *transition_end = transition + m_current_state->m_transition_count;
+                                  *transition_end = transition + m_current_state->m_transition_count;
              transition != transition_end;
              ++transition)
         {
@@ -395,7 +395,7 @@ private:
                    "transitions in the state table");
         }
         for (DfaTransition_ const *t = transition_table,
-                                 *t_end = transition_table + transition_count;
+                                  *t_end = transition_table + transition_count;
              t != t_end;
              ++t)
         {

@@ -227,6 +227,11 @@ $ add --predefine (-D) and --postdefine (-d) options for defining crap in the
   case.
 * in the codespecsymbols, add some sort of "description" property so that
   when you dump the symbols, it's self documenting.
+- once existing C++ target is optimized, make a version of it where the
+  subclasses are virtual and there are interface methods, and see if it
+  doesn't affect performance unacceptably.
+- break dot-graphing up into graphs of separate scanner modes, so the images
+  it produces aren't gigantic
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -258,7 +263,7 @@ $ add a max token stack depth in each parser implementation
 - you shouldn't have to specify %terminal 'X' for ascii chars.  you should
   just be able to use them (or maybe add as option)
 * specifying any %target.xxx directive seems to add the target; stop this
-- add option for line directives referencing codespecs (the default should be
+$ add option for line directives referencing codespecs (the default should be
   to refer to codespecs, for easier development)
 * get rid of STL usage in C++ codespecs (separate target?)
 * the rule handler code block type should be specifiable by the targetspec
@@ -290,6 +295,8 @@ $ add a max token stack depth in each parser implementation
 - compactify lookaheads in dpda
 - make sure lookahead sequences are alphabetized, allowing for a binary search
   instead of a linear search (in the dpda target)
+- break dot-graphing up into graphs of separated graph portions, so the
+  images it produces aren't gigantic (this won't work so well for trison)
 
 template <Sint32 low, Sint32 high> struct SmallestSint {
     typedef

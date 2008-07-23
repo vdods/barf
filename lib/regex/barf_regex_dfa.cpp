@@ -65,13 +65,11 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
 
     Graph::Node const &node = graph_context.m_nfa_graph.GetNode(nfa_state);
 
-    // if this nfa state is an accept-node, or if it has no
-    // transitions, add this nfa state to the target map.
-    if (node.GetTransitionCount() == 0 ||
-        GetNodeData(graph_context.m_nfa_graph, nfa_state).m_is_accept_node)
-    {
+    // if this nfa state is an accept-node, add this nfa state to the target map.
+    assert(GetNodeData(graph_context.m_nfa_graph, nfa_state).m_is_accept_node == (node.GetTransitionCount() == 0) &&
+           "a node has 0 transitions if and only if it's an accept node");
+    if (GetNodeData(graph_context.m_nfa_graph, nfa_state).m_is_accept_node)
         target_state_map[conditional].insert(nfa_state);
-    }
 
     // iterate over all transitions
     for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
@@ -120,7 +118,7 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
     PerformTransitionClosure(graph_context, nfa_state, Conditional(0, 0), target_state_map, visited);
 }
 
-void PerformEpsilonClosure (GraphContext const &graph_context, Uint32 nfa_state, DfaState &dfa_state, DfaState &visited)
+void PerformEpsilonClosure (GraphContext const &graph_context, Uint32 nfa_state, DfaState &dfa_state, DfaState &visited, bool close_at_conditional_transitions)
 {
     // early-out if we've already visited this nfa_state
     if (Contains(visited, nfa_state))
@@ -148,14 +146,21 @@ void PerformEpsilonClosure (GraphContext const &graph_context, Uint32 nfa_state,
         Graph::Transition const &transition = *it;
         // if it's an epsilon transition, recurse.
         if (transition.Type() == TT_EPSILON)
-            PerformEpsilonClosure(graph_context, transition.TargetIndex(), dfa_state, visited);
+            PerformEpsilonClosure(graph_context, transition.TargetIndex(), dfa_state, visited, close_at_conditional_transitions);
+        // if it's a conditional transition, check the close_at_conditional_transitions
+        // flag.  if it's set, then we can add it to the closed dfa state.
+        else if (transition.Type() == TT_CONDITIONAL)
+        {
+            if (close_at_conditional_transitions)
+                dfa_state.insert(nfa_state);
+        }
         // otherwise add it to the closed dfa state
         else
             dfa_state.insert(nfa_state);
     }
 }
 
-void PerformEpsilonClosure (GraphContext const &graph_context, DfaState &dfa_state)
+void PerformEpsilonClosure (GraphContext const &graph_context, DfaState &dfa_state, bool close_at_conditional_transitions)
 {
     if (dfa_state.empty())
         return;
@@ -166,7 +171,7 @@ void PerformEpsilonClosure (GraphContext const &graph_context, DfaState &dfa_sta
          it != it_end;
          ++it)
     {
-        PerformEpsilonClosure(graph_context, *it, new_dfa_state, visited);
+        PerformEpsilonClosure(graph_context, *it, new_dfa_state, visited, close_at_conditional_transitions);
     }
     dfa_state = new_dfa_state;
 }
@@ -209,7 +214,7 @@ Uint32 GetDfaStateIndex (GraphContext &graph_context, DfaState const &dfa_state,
     assert(graph_context.m_dfa_graph.GetNodeCount() == graph_context.m_dfa_state_map.size());
     assert(!dfa_state.empty());
     DfaState closed_dfa_state(dfa_state);
-    PerformEpsilonClosure(graph_context, closed_dfa_state);
+    PerformEpsilonClosure(graph_context, closed_dfa_state, !disallow_transition_closure);
     assert(!closed_dfa_state.empty());
 
     // if the requested state is already in the map, return the index
