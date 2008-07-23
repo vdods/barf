@@ -32,14 +32,14 @@ class Base;
 
 namespace Preprocessor {
 
-class Scanner;
+class ScannerNew;
 %}
 %target.cpp.class_name Parser
 %target.cpp.bottom_of_class {
     FiLoc const &GetFiLoc () const;
 
-    bool ScannerDebugSpew () const { /* TODO: implement */ return false; }
-    void ScannerDebugSpew (bool debug_spew) { /* TODO: implement */ }
+    bool ScannerDebugSpew () const;
+    void ScannerDebugSpew (bool debug_spew);
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -47,7 +47,7 @@ class Scanner;
 
 private:
 
-    Scanner *m_scanner;
+    ScannerNew *m_scanner;
 }
 %target.cpp.bottom_of_header_file %{
 } // end of namespace Preprocessor
@@ -59,13 +59,13 @@ private:
 
 %target.cpp.top_of_implementation_file %{
 #include "barf_preprocessor_ast.hpp"
-#include "barf_preprocessor_scanner.hpp"
+#include "barf_preprocessor_scanner_new.hpp"
 
 namespace Barf {
 namespace Preprocessor {
 %}
 %target.cpp.constructor_actions {
-    m_scanner = new Scanner();
+    m_scanner = new ScannerNew();
 }
 %target.cpp.destructor_actions {
     delete m_scanner;
@@ -76,6 +76,16 @@ FiLoc const &Parser::GetFiLoc () const
 {
     assert(m_scanner != NULL);
     return m_scanner->GetFiLoc();
+}
+
+bool Parser::ScannerDebugSpew () const
+{
+    return m_scanner->DebugSpew();
+}
+
+void Parser::ScannerDebugSpew (bool debug_spew)
+{
+    m_scanner->DebugSpew(debug_spew);
 }
 
 bool Parser::OpenFile (string const &input_filename)
@@ -112,8 +122,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 }
 %target.cpp.scan_actions {
     assert(m_scanner != NULL);
-    Ast::Base *lookahead_token_data = NULL;
-    return Token(m_scanner->Scan(&lookahead_token_data), lookahead_token_data);
+    return m_scanner->Scan();
 }
 
 

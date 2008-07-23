@@ -537,10 +537,10 @@ public:
         enum Name
         {
             EXPECTING_END_OF_FILE = 0,
-            READING_BODY = 3,
-            READING_CODE = 12,
-            READING_CODE_STRING_LITERAL_GUTS = 26,
-            TRANSITION_TO_CODE = 42,
+            READING_BODY = 4,
+            READING_CODE = 16,
+            READING_CODE_STRING_LITERAL_GUTS = 30,
+            TRANSITION_TO_CODE = 46,
             // default starting scanner mode
             START_ = READING_BODY
         }; // end of enum ScannerNew::Mode::Name

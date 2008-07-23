@@ -48,7 +48,7 @@ int main (int argc, char **argv)
         }
 
         Preprocessor::Parser parser;
-        parser.ScannerDebugSpew(Bpp::Options::V_PRIMARY_SOURCE_SCANNER);
+        parser.ScannerDebugSpew(GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER));
         parser.DebugSpew(GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
 
         if (GetBppOptions().GetInputFilename() == "-" || GetBppOptions().GetInputFilename().empty())

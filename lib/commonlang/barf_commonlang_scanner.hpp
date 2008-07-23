@@ -543,13 +543,13 @@ public:
             CHAR_LITERAL_END = 6,
             CHAR_LITERAL_GUTS = 13,
             CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK = 26,
-            DUMB_CODE_BLOCK = 33,
-            MAIN = 39,
-            REGULAR_EXPRESSION = 61,
-            REGULAR_EXPRESSION_BRACKET_EXPRESSION = 72,
-            STRICT_CODE_BLOCK = 82,
-            STRING_LITERAL_GUTS = 93,
-            STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK = 109,
+            DUMB_CODE_BLOCK = 34,
+            MAIN = 40,
+            REGULAR_EXPRESSION = 62,
+            REGULAR_EXPRESSION_BRACKET_EXPRESSION = 73,
+            STRICT_CODE_BLOCK = 83,
+            STRING_LITERAL_GUTS = 94,
+            STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK = 110,
             // default starting scanner mode
             START_ = MAIN
         }; // end of enum Scanner::Mode::Name

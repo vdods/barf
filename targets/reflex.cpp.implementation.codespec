@@ -38,9 +38,10 @@
 <|if(is_defined(generate_debug_spew_code))
     DebugSpew(false);
 <|end_if
-    ResetForNewInput();
 
 <|constructor_actions?
+
+    ResetForNewInput();
 }
 
 <{class_name}::~<{class_name} ()

@@ -103,7 +103,7 @@ class Base;
 
 namespace Preprocessor {
 
-class Scanner;
+class ScannerNew;
 
 #line 109 "barf_preprocessor_parser.hpp"
 
@@ -335,8 +335,8 @@ public:
 
     FiLoc const &GetFiLoc () const;
 
-    bool ScannerDebugSpew () const { /* TODO: implement */ return false; }
-    void ScannerDebugSpew (bool debug_spew) { /* TODO: implement */ }
+    bool ScannerDebugSpew () const;
+    void ScannerDebugSpew (bool debug_spew);
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -344,7 +344,7 @@ public:
 
 private:
 
-    Scanner *m_scanner;
+    ScannerNew *m_scanner;
 
 #line 350 "barf_preprocessor_parser.hpp"
 

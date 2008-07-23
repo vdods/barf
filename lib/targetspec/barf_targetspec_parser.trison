@@ -66,10 +66,6 @@ private:
 namespace Barf {
 namespace Targetspec {
 %}
-%target.cpp.constructor_actions {
-}
-%target.cpp.destructor_actions {
-}
 %target.cpp.start_of_parse_method_actions %{
     m_add_codespec_list = new AddCodespecList();
     m_add_directive_map = new AddDirectiveMap();

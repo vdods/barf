@@ -503,10 +503,17 @@ public:
         m_text(s, char_count)
     { }
 
-    inline string const &GetText () const { return m_text; }
-    inline void SetText (string const &text) { m_text = text; }
-    inline void AppendText (string const &text) { m_text += text; }
-    inline void AppendChar (Uint8 c) { m_text += c; }
+    string const &GetText () const { return m_text; }
+    void SetText (string const &text) { m_text = text; }
+    void AppendText (string const &text) { m_text += text; }
+    void AppendText (char const *s, Uint32 char_count)
+    {
+        assert(s != NULL);
+        for (Uint32 i = 0; i < char_count; ++i)
+            assert(s[i] != '\0');
+        m_text.append(s, char_count);
+    }
+    void AppendChar (Uint8 c) { m_text += c; }
 
     virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return false; }
 
@@ -531,8 +538,8 @@ public:
         m_value(value)
     { }
 
-    inline Sint32 GetValue () const { return m_value; }
-    inline void SetValue (Sint32 value) { m_value = value; }
+    Sint32 GetValue () const { return m_value; }
+    void SetValue (Sint32 value) { m_value = value; }
 
     virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }
 
@@ -701,7 +708,7 @@ public:
 
 private:
 
-    inline bool GetIsTextOperation () const
+    bool GetIsTextOperation () const
     {
         return m_op == CONCATENATE ||
                m_op == STRING_CAST ||

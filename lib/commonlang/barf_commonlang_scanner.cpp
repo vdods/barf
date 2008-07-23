@@ -134,8 +134,9 @@ Scanner::Scanner ()
         static_cast<ReflexCpp_::InputApparatus::ReadNextAtomMethod>(&Scanner::ReadNextAtom_))
 {
     DebugSpew(false);
-    ResetForNewInput();
 
+
+    ResetForNewInput();
 }
 
 Scanner::~Scanner ()
@@ -154,13 +155,13 @@ Scanner::Mode::Name Scanner::ScannerMode () const
         case 6: return Mode::CHAR_LITERAL_END;
         case 13: return Mode::CHAR_LITERAL_GUTS;
         case 26: return Mode::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK;
-        case 33: return Mode::DUMB_CODE_BLOCK;
-        case 39: return Mode::MAIN;
-        case 61: return Mode::REGULAR_EXPRESSION;
-        case 72: return Mode::REGULAR_EXPRESSION_BRACKET_EXPRESSION;
-        case 82: return Mode::STRICT_CODE_BLOCK;
-        case 93: return Mode::STRING_LITERAL_GUTS;
-        case 109: return Mode::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK;
+        case 34: return Mode::DUMB_CODE_BLOCK;
+        case 40: return Mode::MAIN;
+        case 62: return Mode::REGULAR_EXPRESSION;
+        case 73: return Mode::REGULAR_EXPRESSION_BRACKET_EXPRESSION;
+        case 83: return Mode::STRICT_CODE_BLOCK;
+        case 94: return Mode::STRING_LITERAL_GUTS;
+        case 110: return Mode::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK;
     }
 }
 
@@ -184,7 +185,7 @@ void Scanner::ScannerMode (Mode::Name mode)
         std::cerr << 
 #line 262 "barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 188 "barf_commonlang_scanner.cpp"
+#line 189 "barf_commonlang_scanner.cpp"
  << " transitioning to mode ";
         PrintScannerMode_(mode);
         std::cerr << std::endl)
@@ -202,13 +203,13 @@ void Scanner::ResetForNewInput ()
     m_regex_paren_level = 0;
     m_code_block_bracket_level = 0;
 
-#line 206 "barf_commonlang_scanner.cpp"
+#line 207 "barf_commonlang_scanner.cpp"
 }
 
 Scanner::Token::Type Scanner::Scan (
 #line 80 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
-#line 212 "barf_commonlang_scanner.cpp"
+#line 213 "barf_commonlang_scanner.cpp"
 )
 {
 
@@ -217,7 +218,7 @@ Scanner::Token::Type Scanner::Scan (
     assert(token != NULL);
     assert(*token == NULL);
 
-#line 221 "barf_commonlang_scanner.cpp"
+#line 222 "barf_commonlang_scanner.cpp"
 
     std::string accepted_string;
     // this is the main scanner loop.  it only breaks when an accept handler
@@ -244,7 +245,7 @@ Scanner::Token::Type Scanner::Scan (
                 std::cerr << 
 #line 262 "barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 248 "barf_commonlang_scanner.cpp"
+#line 249 "barf_commonlang_scanner.cpp"
  << " rejecting atom '";
                 PrintAtom_(rejected_atom);
                 std::cerr << '\'' << std::endl)
@@ -259,7 +260,7 @@ Scanner::Token::Type Scanner::Scan (
 
     EmitError("unrecognized character " + GetCharLiteral(rejected_atom), GetFiLoc());
 
-#line 263 "barf_commonlang_scanner.cpp"
+#line 264 "barf_commonlang_scanner.cpp"
 
             }
             while (false);
@@ -271,7 +272,7 @@ Scanner::Token::Type Scanner::Scan (
                 std::cerr << 
 #line 262 "barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 275 "barf_commonlang_scanner.cpp"
+#line 276 "barf_commonlang_scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
                 std::cerr << ", corresponding to mode ";
@@ -291,7 +292,7 @@ Scanner::Token::Type Scanner::Scan (
             Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
         ScannerMode(m_return_state);
     
-#line 295 "barf_commonlang_scanner.cpp"
+#line 296 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -306,7 +307,7 @@ Scanner::Token::Type Scanner::Scan (
             Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
         IncrementLineNumber(GetNewlineCount(accepted_string));
     
-#line 310 "barf_commonlang_scanner.cpp"
+#line 311 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -320,7 +321,7 @@ Scanner::Token::Type Scanner::Scan (
         EmitWarning("unterminated block comment", GetFiLoc());
         return Token::END_OF_FILE;
     
-#line 324 "barf_commonlang_scanner.cpp"
+#line 325 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -335,7 +336,7 @@ Scanner::Token::Type Scanner::Scan (
         ScannerMode(Mode::MAIN);
         return Token::CHAR_LITERAL;
     
-#line 339 "barf_commonlang_scanner.cpp"
+#line 340 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -353,7 +354,7 @@ Scanner::Token::Type Scanner::Scan (
         ScannerMode(Mode::MAIN);
         return Token::END_OF_FILE;
     
-#line 357 "barf_commonlang_scanner.cpp"
+#line 358 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -373,7 +374,7 @@ Scanner::Token::Type Scanner::Scan (
         ScannerMode(Mode::MAIN);
         return Token::BAD_TOKEN;
     
-#line 377 "barf_commonlang_scanner.cpp"
+#line 378 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -393,7 +394,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::Char(Uint8(value), GetFiLoc());
         ScannerMode(Mode::CHAR_LITERAL_END);
     
-#line 397 "barf_commonlang_scanner.cpp"
+#line 398 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -413,7 +414,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::Char(Uint8(value), GetFiLoc());
         ScannerMode(Mode::CHAR_LITERAL_END);
     
-#line 417 "barf_commonlang_scanner.cpp"
+#line 418 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -431,7 +432,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = ch;
         ScannerMode(Mode::CHAR_LITERAL_END);
     
-#line 435 "barf_commonlang_scanner.cpp"
+#line 436 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -446,7 +447,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
         ScannerMode(Mode::CHAR_LITERAL_END);
     
-#line 450 "barf_commonlang_scanner.cpp"
+#line 451 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -460,7 +461,7 @@ Scanner::Token::Type Scanner::Scan (
         EmitError("unterminated character literal", GetFiLoc());
         return Token::END_OF_FILE;
     
-#line 464 "barf_commonlang_scanner.cpp"
+#line 465 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -477,7 +478,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
         ScannerMode(Mode::CHAR_LITERAL_END);
     
-#line 481 "barf_commonlang_scanner.cpp"
+#line 482 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -493,7 +494,7 @@ Scanner::Token::Type Scanner::Scan (
         Dsc<Ast::StrictCodeBlock *>(*token)->AppendText(accepted_string);
         ScannerMode(Mode::STRICT_CODE_BLOCK);
     
-#line 497 "barf_commonlang_scanner.cpp"
+#line 498 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -511,7 +512,7 @@ Scanner::Token::Type Scanner::Scan (
         IncrementLineNumber(GetNewlineCount(accepted_string));
         return Token::END_OF_FILE;
     
-#line 515 "barf_commonlang_scanner.cpp"
+#line 516 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -526,7 +527,7 @@ Scanner::Token::Type Scanner::Scan (
         ScannerMode(Mode::MAIN);
         return Token::DUMB_CODE_BLOCK;
     
-#line 530 "barf_commonlang_scanner.cpp"
+#line 531 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -541,7 +542,7 @@ Scanner::Token::Type Scanner::Scan (
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
     
-#line 545 "barf_commonlang_scanner.cpp"
+#line 546 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -558,7 +559,7 @@ Scanner::Token::Type Scanner::Scan (
         EmitError("unterminated %{ %} style code block", GetFiLoc());
         return Token::END_OF_FILE;
     
-#line 562 "barf_commonlang_scanner.cpp"
+#line 563 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -572,7 +573,7 @@ Scanner::Token::Type Scanner::Scan (
         m_return_state = Mode::MAIN;
         ScannerMode(Mode::BLOCK_COMMENT);
     
-#line 576 "barf_commonlang_scanner.cpp"
+#line 577 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -584,7 +585,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("MAIN - (//.*) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
     
-#line 588 "barf_commonlang_scanner.cpp"
+#line 589 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -597,7 +598,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("MAIN - (') = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         ScannerMode(Mode::CHAR_LITERAL_GUTS);
     
-#line 601 "barf_commonlang_scanner.cpp"
+#line 602 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -611,7 +612,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::String(GetFiLoc());
         ScannerMode(Mode::STRING_LITERAL_GUTS);
     
-#line 615 "barf_commonlang_scanner.cpp"
+#line 616 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -625,7 +626,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::String(GetFiLoc());
         ScannerMode(Mode::REGULAR_EXPRESSION);
     
-#line 629 "barf_commonlang_scanner.cpp"
+#line 630 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -639,7 +640,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::DumbCodeBlock(GetFiLoc());
         ScannerMode(Mode::DUMB_CODE_BLOCK);
     
-#line 643 "barf_commonlang_scanner.cpp"
+#line 644 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -653,7 +654,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::StrictCodeBlock(GetFiLoc());
         ScannerMode(Mode::STRICT_CODE_BLOCK);
     
-#line 657 "barf_commonlang_scanner.cpp"
+#line 658 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -666,7 +667,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("MAIN - (%{ID}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         return Scanner::ParseDirective(accepted_string, token);
     
-#line 670 "barf_commonlang_scanner.cpp"
+#line 671 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -681,7 +682,7 @@ Scanner::Token::Type Scanner::Scan (
         m_is_in_preamble = false;
         return Token::END_PREAMBLE;
     
-#line 685 "barf_commonlang_scanner.cpp"
+#line 686 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -695,7 +696,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = new Ast::Id(accepted_string, GetFiLoc());
         return Token::ID;
     
-#line 699 "barf_commonlang_scanner.cpp"
+#line 700 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -708,7 +709,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("MAIN - ({OPERATOR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         return Token::Type(accepted_string[0]);
     
-#line 712 "barf_commonlang_scanner.cpp"
+#line 713 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -721,7 +722,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("MAIN - ({WHITESPACE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         // ignore all whitespace
     
-#line 725 "barf_commonlang_scanner.cpp"
+#line 726 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -736,7 +737,7 @@ Scanner::Token::Type Scanner::Scan (
         if (m_is_in_preamble)
             return Token::NEWLINE;
     
-#line 740 "barf_commonlang_scanner.cpp"
+#line 741 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -749,7 +750,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("MAIN - ({END_OF_FILE}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         return Token::END_OF_FILE;
     
-#line 753 "barf_commonlang_scanner.cpp"
+#line 754 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -763,7 +764,7 @@ Scanner::Token::Type Scanner::Scan (
         EmitError("unexpected character " + GetCharLiteral(accepted_string[0]), GetFiLoc());
         return Token::BAD_TOKEN;
     
-#line 767 "barf_commonlang_scanner.cpp"
+#line 768 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -783,7 +784,7 @@ Scanner::Token::Type Scanner::Scan (
         --m_regex_paren_level;
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
     
-#line 787 "barf_commonlang_scanner.cpp"
+#line 788 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -798,7 +799,7 @@ Scanner::Token::Type Scanner::Scan (
         ++m_regex_paren_level;
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
     
-#line 802 "barf_commonlang_scanner.cpp"
+#line 803 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -814,7 +815,7 @@ Scanner::Token::Type Scanner::Scan (
         m_regex_bracket_level = 0;
         ScannerMode(Mode::REGULAR_EXPRESSION_BRACKET_EXPRESSION);
     
-#line 818 "barf_commonlang_scanner.cpp"
+#line 819 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -829,7 +830,7 @@ Scanner::Token::Type Scanner::Scan (
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
     
-#line 833 "barf_commonlang_scanner.cpp"
+#line 834 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -846,7 +847,7 @@ Scanner::Token::Type Scanner::Scan (
         EmitError("unterminated regular expression", GetFiLoc());
         return Token::END_OF_FILE;
     
-#line 850 "barf_commonlang_scanner.cpp"
+#line 851 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -864,7 +865,7 @@ Scanner::Token::Type Scanner::Scan (
         else
             --m_regex_bracket_level;
     
-#line 868 "barf_commonlang_scanner.cpp"
+#line 869 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -879,7 +880,7 @@ Scanner::Token::Type Scanner::Scan (
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
         ++m_regex_bracket_level;
     
-#line 883 "barf_commonlang_scanner.cpp"
+#line 884 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -894,7 +895,7 @@ Scanner::Token::Type Scanner::Scan (
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
     
-#line 898 "barf_commonlang_scanner.cpp"
+#line 899 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -911,7 +912,7 @@ Scanner::Token::Type Scanner::Scan (
         EmitError("unterminated bracket expression inside regular expression", GetFiLoc());
         return Token::END_OF_FILE;
     
-#line 915 "barf_commonlang_scanner.cpp"
+#line 916 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -931,7 +932,7 @@ Scanner::Token::Type Scanner::Scan (
         --m_code_block_bracket_level;
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
     
-#line 935 "barf_commonlang_scanner.cpp"
+#line 936 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -946,7 +947,7 @@ Scanner::Token::Type Scanner::Scan (
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
         ++m_code_block_bracket_level;
     
-#line 950 "barf_commonlang_scanner.cpp"
+#line 951 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -961,7 +962,7 @@ Scanner::Token::Type Scanner::Scan (
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
         ScannerMode(Mode::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     
-#line 965 "barf_commonlang_scanner.cpp"
+#line 966 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -976,7 +977,7 @@ Scanner::Token::Type Scanner::Scan (
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
         ScannerMode(Mode::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     
-#line 980 "barf_commonlang_scanner.cpp"
+#line 981 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -992,7 +993,7 @@ Scanner::Token::Type Scanner::Scan (
         m_return_state = Mode::STRICT_CODE_BLOCK;
         ScannerMode(Mode::BLOCK_COMMENT);
     
-#line 996 "barf_commonlang_scanner.cpp"
+#line 997 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1006,7 +1007,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
     
-#line 1010 "barf_commonlang_scanner.cpp"
+#line 1011 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1021,7 +1022,7 @@ Scanner::Token::Type Scanner::Scan (
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
     
-#line 1025 "barf_commonlang_scanner.cpp"
+#line 1026 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1038,7 +1039,7 @@ Scanner::Token::Type Scanner::Scan (
         EmitError("unterminated { } style code block", GetFiLoc());
         return Token::END_OF_FILE;
     
-#line 1042 "barf_commonlang_scanner.cpp"
+#line 1043 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1058,7 +1059,7 @@ Scanner::Token::Type Scanner::Scan (
             EmitError("octal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         Dsc<Ast::String *>(*token)->AppendChar(Uint8(value));
     
-#line 1062 "barf_commonlang_scanner.cpp"
+#line 1063 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1078,7 +1079,7 @@ Scanner::Token::Type Scanner::Scan (
             EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         Dsc<Ast::String *>(*token)->AppendChar(Uint8(value));
     
-#line 1082 "barf_commonlang_scanner.cpp"
+#line 1083 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1094,7 +1095,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[0] == '\\');
         Dsc<Ast::String *>(*token)->AppendChar(GetEscapedChar(Uint8(accepted_string[1])));
     
-#line 1098 "barf_commonlang_scanner.cpp"
+#line 1099 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1110,7 +1111,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string[0] == '\\');
         EmitError("malformed string literal escape code -- backslash followed by " + GetCharLiteral(accepted_string[1]), GetFiLoc());
     
-#line 1114 "barf_commonlang_scanner.cpp"
+#line 1115 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1125,7 +1126,7 @@ Scanner::Token::Type Scanner::Scan (
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<Ast::TextBase *>(*token)->AppendText(accepted_string);
     
-#line 1129 "barf_commonlang_scanner.cpp"
+#line 1130 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1140,7 +1141,7 @@ Scanner::Token::Type Scanner::Scan (
         ScannerMode(Mode::MAIN);
         return Token::STRING_LITERAL;
     
-#line 1144 "barf_commonlang_scanner.cpp"
+#line 1145 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1157,7 +1158,7 @@ Scanner::Token::Type Scanner::Scan (
         *token = NULL;
         return Token::END_OF_FILE;
     
-#line 1161 "barf_commonlang_scanner.cpp"
+#line 1162 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1171,7 +1172,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         EmitError("ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal", GetFiLoc());
     
-#line 1175 "barf_commonlang_scanner.cpp"
+#line 1176 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1187,7 +1188,7 @@ Scanner::Token::Type Scanner::Scan (
         IncrementLineNumber(GetNewlineCount(accepted_string));
         ScannerMode(Mode::STRICT_CODE_BLOCK);
     
-#line 1191 "barf_commonlang_scanner.cpp"
+#line 1192 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1205,7 +1206,7 @@ Scanner::Token::Type Scanner::Scan (
         IncrementLineNumber(GetNewlineCount(accepted_string));
         return Token::END_OF_FILE;
     
-#line 1209 "barf_commonlang_scanner.cpp"
+#line 1210 "barf_commonlang_scanner.cpp"
 
                 }
                 break;
@@ -1221,7 +1222,7 @@ Scanner::Token::Type Scanner::Scan (
     assert(false && "you didn't handle EOF properly");
     return Token::BAD_END_OF_FILE;
 
-#line 1225 "barf_commonlang_scanner.cpp"
+#line 1226 "barf_commonlang_scanner.cpp"
 }
 
 // ///////////////////////////////////////////////////////////////////////
@@ -1235,7 +1236,7 @@ bool Scanner::IsInputAtEnd_ ()
 
     return In().peek() == char_traits<char>::eof();
 
-#line 1239 "barf_commonlang_scanner.cpp"
+#line 1240 "barf_commonlang_scanner.cpp"
 }
 
 BarfCpp_::Uint8 Scanner::ReadNextAtom_ ()
@@ -1245,7 +1246,7 @@ BarfCpp_::Uint8 Scanner::ReadNextAtom_ ()
 
     return In().get();
 
-#line 1249 "barf_commonlang_scanner.cpp"
+#line 1250 "barf_commonlang_scanner.cpp"
 }
 
 void Scanner::PrintAtom_ (BarfCpp_::Uint8 atom)
@@ -1343,94 +1344,96 @@ ReflexCpp_::AutomatonApparatus::DfaState_ const Scanner::ms_state_table_[] =
     { 10, 9, ms_transition_table_+56 },
     { 59, 2, ms_transition_table_+65 },
     { 59, 5, ms_transition_table_+67 },
-    { 12, 0, ms_transition_table_+72 },
     { 59, 2, ms_transition_table_+72 },
-    { 59, 1, ms_transition_table_+74 },
-    { 13, 1, ms_transition_table_+75 },
-    { 13, 5, ms_transition_table_+76 },
-    { 59, 2, ms_transition_table_+81 },
-    { 59, 3, ms_transition_table_+83 },
-    { 15, 2, ms_transition_table_+86 },
-    { 15, 1, ms_transition_table_+88 },
-    { 14, 0, ms_transition_table_+89 },
-    { 16, 3, ms_transition_table_+89 },
-    { 59, 2, ms_transition_table_+92 },
-    { 59, 24, ms_transition_table_+94 },
-    { 31, 0, ms_transition_table_+118 },
-    { 28, 0, ms_transition_table_+118 },
-    { 29, 0, ms_transition_table_+118 },
-    { 20, 0, ms_transition_table_+118 },
-    { 31, 4, ms_transition_table_+118 },
-    { 25, 0, ms_transition_table_+122 },
-    { 24, 4, ms_transition_table_+122 },
-    { 59, 4, ms_transition_table_+126 },
-    { 22, 0, ms_transition_table_+130 },
-    { 19, 0, ms_transition_table_+130 },
-    { 21, 0, ms_transition_table_+130 },
-    { 27, 0, ms_transition_table_+130 },
-    { 31, 2, ms_transition_table_+130 },
-    { 17, 0, ms_transition_table_+132 },
-    { 18, 2, ms_transition_table_+132 },
-    { 26, 4, ms_transition_table_+134 },
-    { 26, 4, ms_transition_table_+138 },
-    { 59, 4, ms_transition_table_+142 },
-    { 23, 0, ms_transition_table_+146 },
-    { 30, 24, ms_transition_table_+146 },
-    { 59, 2, ms_transition_table_+170 },
-    { 59, 7, ms_transition_table_+172 },
-    { 35, 4, ms_transition_table_+179 },
-    { 59, 1, ms_transition_table_+183 },
-    { 33, 0, ms_transition_table_+184 },
-    { 32, 0, ms_transition_table_+184 },
-    { 34, 0, ms_transition_table_+184 },
-    { 59, 2, ms_transition_table_+184 },
-    { 59, 1, ms_transition_table_+186 },
-    { 36, 1, ms_transition_table_+187 },
-    { 36, 7, ms_transition_table_+188 },
-    { 59, 2, ms_transition_table_+195 },
-    { 59, 5, ms_transition_table_+197 },
-    { 39, 3, ms_transition_table_+202 },
-    { 59, 1, ms_transition_table_+205 },
-    { 38, 0, ms_transition_table_+206 },
-    { 59, 2, ms_transition_table_+206 },
-    { 59, 1, ms_transition_table_+208 },
-    { 40, 1, ms_transition_table_+209 },
-    { 37, 0, ms_transition_table_+210 },
-    { 40, 5, ms_transition_table_+210 },
-    { 59, 2, ms_transition_table_+215 },
-    { 59, 13, ms_transition_table_+217 },
-    { 47, 6, ms_transition_table_+230 },
-    { 44, 0, ms_transition_table_+236 },
-    { 43, 0, ms_transition_table_+236 },
-    { 47, 2, ms_transition_table_+236 },
-    { 45, 0, ms_transition_table_+238 },
-    { 46, 2, ms_transition_table_+238 },
-    { 42, 0, ms_transition_table_+240 },
-    { 41, 0, ms_transition_table_+240 },
-    { 48, 13, ms_transition_table_+240 },
-    { 59, 2, ms_transition_table_+253 },
-    { 59, 9, ms_transition_table_+255 },
-    { 56, 0, ms_transition_table_+264 },
-    { 53, 4, ms_transition_table_+264 },
-    { 53, 4, ms_transition_table_+268 },
-    { 54, 0, ms_transition_table_+272 },
-    { 56, 2, ms_transition_table_+272 },
-    { 56, 7, ms_transition_table_+274 },
-    { 52, 0, ms_transition_table_+281 },
-    { 51, 0, ms_transition_table_+281 },
-    { 51, 1, ms_transition_table_+281 },
-    { 49, 1, ms_transition_table_+282 },
-    { 51, 3, ms_transition_table_+283 },
-    { 50, 3, ms_transition_table_+286 },
-    { 55, 7, ms_transition_table_+289 },
-    { 55, 9, ms_transition_table_+296 },
-    { 59, 2, ms_transition_table_+305 },
-    { 59, 5, ms_transition_table_+307 },
-    { 57, 0, ms_transition_table_+312 },
-    { 59, 2, ms_transition_table_+312 },
-    { 59, 1, ms_transition_table_+314 },
-    { 58, 1, ms_transition_table_+315 },
-    { 58, 5, ms_transition_table_+316 }
+    { 13, 5, ms_transition_table_+74 },
+    { 12, 0, ms_transition_table_+79 },
+    { 59, 2, ms_transition_table_+79 },
+    { 59, 1, ms_transition_table_+81 },
+    { 13, 1, ms_transition_table_+82 },
+    { 59, 2, ms_transition_table_+83 },
+    { 59, 3, ms_transition_table_+85 },
+    { 15, 2, ms_transition_table_+88 },
+    { 15, 1, ms_transition_table_+90 },
+    { 14, 0, ms_transition_table_+91 },
+    { 16, 3, ms_transition_table_+91 },
+    { 59, 2, ms_transition_table_+94 },
+    { 59, 24, ms_transition_table_+96 },
+    { 31, 0, ms_transition_table_+120 },
+    { 28, 0, ms_transition_table_+120 },
+    { 29, 0, ms_transition_table_+120 },
+    { 20, 0, ms_transition_table_+120 },
+    { 31, 4, ms_transition_table_+120 },
+    { 25, 0, ms_transition_table_+124 },
+    { 24, 4, ms_transition_table_+124 },
+    { 59, 4, ms_transition_table_+128 },
+    { 22, 0, ms_transition_table_+132 },
+    { 19, 0, ms_transition_table_+132 },
+    { 21, 0, ms_transition_table_+132 },
+    { 27, 0, ms_transition_table_+132 },
+    { 31, 2, ms_transition_table_+132 },
+    { 17, 0, ms_transition_table_+134 },
+    { 18, 2, ms_transition_table_+134 },
+    { 26, 4, ms_transition_table_+136 },
+    { 26, 4, ms_transition_table_+140 },
+    { 59, 4, ms_transition_table_+144 },
+    { 23, 0, ms_transition_table_+148 },
+    { 30, 24, ms_transition_table_+148 },
+    { 59, 2, ms_transition_table_+172 },
+    { 59, 7, ms_transition_table_+174 },
+    { 35, 4, ms_transition_table_+181 },
+    { 59, 1, ms_transition_table_+185 },
+    { 33, 0, ms_transition_table_+186 },
+    { 32, 0, ms_transition_table_+186 },
+    { 34, 0, ms_transition_table_+186 },
+    { 59, 2, ms_transition_table_+186 },
+    { 59, 1, ms_transition_table_+188 },
+    { 36, 1, ms_transition_table_+189 },
+    { 36, 7, ms_transition_table_+190 },
+    { 59, 2, ms_transition_table_+197 },
+    { 59, 5, ms_transition_table_+199 },
+    { 39, 3, ms_transition_table_+204 },
+    { 59, 1, ms_transition_table_+207 },
+    { 38, 0, ms_transition_table_+208 },
+    { 59, 2, ms_transition_table_+208 },
+    { 59, 1, ms_transition_table_+210 },
+    { 40, 1, ms_transition_table_+211 },
+    { 37, 0, ms_transition_table_+212 },
+    { 40, 5, ms_transition_table_+212 },
+    { 59, 2, ms_transition_table_+217 },
+    { 59, 13, ms_transition_table_+219 },
+    { 47, 6, ms_transition_table_+232 },
+    { 44, 0, ms_transition_table_+238 },
+    { 43, 0, ms_transition_table_+238 },
+    { 47, 2, ms_transition_table_+238 },
+    { 45, 0, ms_transition_table_+240 },
+    { 46, 2, ms_transition_table_+240 },
+    { 42, 0, ms_transition_table_+242 },
+    { 41, 0, ms_transition_table_+242 },
+    { 48, 13, ms_transition_table_+242 },
+    { 59, 2, ms_transition_table_+255 },
+    { 59, 9, ms_transition_table_+257 },
+    { 56, 0, ms_transition_table_+266 },
+    { 53, 4, ms_transition_table_+266 },
+    { 53, 4, ms_transition_table_+270 },
+    { 54, 0, ms_transition_table_+274 },
+    { 56, 2, ms_transition_table_+274 },
+    { 56, 7, ms_transition_table_+276 },
+    { 52, 0, ms_transition_table_+283 },
+    { 51, 0, ms_transition_table_+283 },
+    { 51, 1, ms_transition_table_+283 },
+    { 49, 1, ms_transition_table_+284 },
+    { 51, 3, ms_transition_table_+285 },
+    { 50, 3, ms_transition_table_+288 },
+    { 55, 7, ms_transition_table_+291 },
+    { 55, 9, ms_transition_table_+298 },
+    { 59, 2, ms_transition_table_+307 },
+    { 59, 5, ms_transition_table_+309 },
+    { 59, 2, ms_transition_table_+314 },
+    { 58, 5, ms_transition_table_+316 },
+    { 57, 0, ms_transition_table_+321 },
+    { 59, 2, ms_transition_table_+321 },
+    { 59, 1, ms_transition_table_+323 },
+    { 58, 1, ms_transition_table_+324 }
 };
 BarfCpp_::Size const Scanner::ms_state_count_ = sizeof(Scanner::ms_state_table_) / sizeof(*Scanner::ms_state_table_);
 
@@ -1502,261 +1505,265 @@ ReflexCpp_::AutomatonApparatus::DfaTransition_ const Scanner::ms_transition_tabl
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+16 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+15 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+32 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+28 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+29 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 38, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 91, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 255, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+30 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+31 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+28 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+29 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 38, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 91, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 255, ms_state_table_+27 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+34 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+38 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+36 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 36, ms_state_table_+35 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 38, 255, ms_state_table_+35 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 36, ms_state_table_+35 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 38, 255, ms_state_table_+35 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 125, 0, ms_state_table_+37 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+36 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 36, ms_state_table_+35 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 38, 255, ms_state_table_+35 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+40 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+60 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 9, 0, ms_state_table_+42 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 10, 0, ms_state_table_+43 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 32, 0, ms_state_table_+42 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 33, 0, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+44 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+45 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 38, 0, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+50 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 40, 0, ms_state_table_+51 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 46, 0, ms_state_table_+52 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+53 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+59 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+52 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 8, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 31, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 36, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 41, 45, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 58, 59, ms_state_table_+52 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 60, 64, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+56 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 91, 96, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+56 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 125, 255, ms_state_table_+41 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+29 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+30 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+31 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 38, ms_state_table_+28 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 91, ms_state_table_+28 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 255, ms_state_table_+28 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+27 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+29 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+30 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+31 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 38, ms_state_table_+28 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 91, ms_state_table_+28 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 255, ms_state_table_+28 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+32 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+33 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+28 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+28 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+35 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+39 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+37 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 36, ms_state_table_+36 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 38, 255, ms_state_table_+36 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 36, ms_state_table_+36 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 38, 255, ms_state_table_+36 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 125, 0, ms_state_table_+38 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+37 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 36, ms_state_table_+36 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 38, 255, ms_state_table_+36 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+41 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+61 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 9, 0, ms_state_table_+43 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 10, 0, ms_state_table_+44 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 32, 0, ms_state_table_+43 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 33, 0, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+45 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+46 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+49 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+47 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+47 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+48 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+47 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+47 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+47 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+48 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+47 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+47 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+47 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 42, 0, ms_state_table_+54 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+55 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 9, ms_state_table_+55 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 255, ms_state_table_+55 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+58 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+57 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 38, 0, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+51 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 40, 0, ms_state_table_+52 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 46, 0, ms_state_table_+53 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+54 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+60 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+53 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 8, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 31, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 36, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 41, 45, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 58, 59, ms_state_table_+53 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 60, 64, ms_state_table_+42 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+57 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 91, 96, ms_state_table_+42 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+57 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+58 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+57 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 125, 255, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+47 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+50 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+48 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+48 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+49 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+48 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+48 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+48 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+49 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+48 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+48 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+48 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 42, 0, ms_state_table_+55 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+56 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 9, ms_state_table_+56 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 255, ms_state_table_+56 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+59 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+59 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+59 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+58 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 9, 0, ms_state_table_+43 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 10, 0, ms_state_table_+44 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 32, 0, ms_state_table_+43 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 33, 0, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+45 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+46 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 38, 0, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+51 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 40, 0, ms_state_table_+52 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 46, 0, ms_state_table_+53 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+54 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+60 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+53 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 8, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 31, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 36, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 41, 45, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 58, 59, ms_state_table_+53 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 60, 64, ms_state_table_+42 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+57 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 91, 96, ms_state_table_+42 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+57 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 95, 0, ms_state_table_+58 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+57 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+57 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+57 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 9, 0, ms_state_table_+42 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 10, 0, ms_state_table_+43 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 32, 0, ms_state_table_+42 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 33, 0, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+44 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 37, 0, ms_state_table_+45 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 38, 0, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+50 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 40, 0, ms_state_table_+51 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 46, 0, ms_state_table_+52 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+53 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+59 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+52 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 8, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 31, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 36, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 41, 45, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 58, 59, ms_state_table_+52 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 60, 64, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 90, ms_state_table_+56 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 91, 96, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 122, ms_state_table_+56 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 125, 255, ms_state_table_+41 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+62 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 125, 255, ms_state_table_+42 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+63 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+72 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 40, 0, ms_state_table_+66 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 41, 0, ms_state_table_+67 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 91, 0, ms_state_table_+68 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+69 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 39, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 42, 90, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+65 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 39, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 42, 90, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+70 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+71 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 40, 0, ms_state_table_+65 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 41, 0, ms_state_table_+66 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 91, 0, ms_state_table_+67 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+68 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 39, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 42, 90, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+64 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 39, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 42, 90, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+69 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+70 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 40, 0, ms_state_table_+65 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 41, 0, ms_state_table_+66 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 91, 0, ms_state_table_+67 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+68 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 39, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 42, 90, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+63 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+73 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+81 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 91, 0, ms_state_table_+76 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+77 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 93, 0, ms_state_table_+80 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 90, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+75 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 90, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+78 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+79 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 91, 0, ms_state_table_+76 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+77 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 93, 0, ms_state_table_+80 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 90, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+74 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+83 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+92 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 10, 0, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+85 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+86 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+87 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+90 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 125, 0, ms_state_table_+91 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 9, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 33, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 38, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 46, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 122, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 126, 255, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 33, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 38, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 46, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 122, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 126, 255, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 42, 0, ms_state_table_+88 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+89 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 9, ms_state_table_+89 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 255, ms_state_table_+89 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 10, 0, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+85 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+86 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+87 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+90 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 125, 0, ms_state_table_+91 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 9, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 33, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 38, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 46, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 122, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 126, 255, ms_state_table_+84 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+94 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 40, 0, ms_state_table_+66 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 41, 0, ms_state_table_+67 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 91, 0, ms_state_table_+68 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+69 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 39, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 42, 90, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+64 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+74 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+82 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 91, 0, ms_state_table_+77 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+78 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 93, 0, ms_state_table_+81 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 90, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+76 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 90, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+79 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+80 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 91, 0, ms_state_table_+77 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+78 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 93, 0, ms_state_table_+81 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 90, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 94, 255, ms_state_table_+75 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+84 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+93 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 10, 0, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+86 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+87 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+88 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+91 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 125, 0, ms_state_table_+92 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 9, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 33, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 38, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 46, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 122, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 126, 255, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 33, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 38, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 46, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 122, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 126, 255, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 42, 0, ms_state_table_+89 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+90 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 9, ms_state_table_+90 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 255, ms_state_table_+90 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 10, 0, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+86 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 39, 0, ms_state_table_+87 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 47, 0, ms_state_table_+88 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 123, 0, ms_state_table_+91 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 124, 0, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 125, 0, ms_state_table_+92 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 9, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 33, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 38, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 40, 46, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 122, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 126, 255, ms_state_table_+85 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+95 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+109 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+99 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+100 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 8, ms_state_table_+96 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 9, 10, ms_state_table_+97 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 31, ms_state_table_+96 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 33, ms_state_table_+97 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+97 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+97 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+96 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 9, 10, ms_state_table_+98 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 33, ms_state_table_+98 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+98 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+98 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 9, 10, ms_state_table_+98 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 33, ms_state_table_+98 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+98 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+98 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+101 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+108 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+98 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+99 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 8, ms_state_table_+95 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 9, 10, ms_state_table_+96 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 31, ms_state_table_+95 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 33, ms_state_table_+96 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+96 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+96 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+95 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 48, 0, ms_state_table_+104 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 120, 0, ms_state_table_+106 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 31, ms_state_table_+102 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 47, ms_state_table_+103 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 49, 119, ms_state_table_+103 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 121, 126, ms_state_table_+103 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+102 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 55, ms_state_table_+105 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 55, ms_state_table_+105 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+107 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 70, ms_state_table_+107 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 102, ms_state_table_+107 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+107 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 70, ms_state_table_+107 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 102, ms_state_table_+107 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 48, 0, ms_state_table_+104 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 120, 0, ms_state_table_+106 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 31, ms_state_table_+102 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 47, ms_state_table_+103 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 49, 119, ms_state_table_+103 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 121, 126, ms_state_table_+103 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+102 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+99 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+100 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 8, ms_state_table_+96 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 9, 10, ms_state_table_+97 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 31, ms_state_table_+96 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 33, ms_state_table_+97 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+97 },
     { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+97 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 9, 10, ms_state_table_+97 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 33, ms_state_table_+97 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+97 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+97 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+100 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+107 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 48, 0, ms_state_table_+103 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 120, 0, ms_state_table_+105 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 31, ms_state_table_+101 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 47, ms_state_table_+102 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 49, 119, ms_state_table_+102 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 121, 126, ms_state_table_+102 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+101 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 55, ms_state_table_+104 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 55, ms_state_table_+104 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+106 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 70, ms_state_table_+106 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 102, ms_state_table_+106 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 48, 57, ms_state_table_+106 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 65, 70, ms_state_table_+106 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 97, 102, ms_state_table_+106 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 48, 0, ms_state_table_+103 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 120, 0, ms_state_table_+105 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 31, ms_state_table_+101 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 47, ms_state_table_+102 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 49, 119, ms_state_table_+102 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 121, 126, ms_state_table_+102 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+101 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+98 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+99 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 8, ms_state_table_+95 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 9, 10, ms_state_table_+96 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 11, 31, ms_state_table_+95 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 32, 33, ms_state_table_+96 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+96 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+96 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+95 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+110 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+115 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+111 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+112 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 33, ms_state_table_+110 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+110 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 255, ms_state_table_+110 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+113 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+114 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+110 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+110 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+111 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+112 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 33, ms_state_table_+110 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+110 },
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 255, ms_state_table_+110 }
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+96 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+111 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+113 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+114 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+115 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 33, ms_state_table_+112 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+112 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 255, ms_state_table_+112 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+111 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+113 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 34, 0, ms_state_table_+114 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM, 92, 0, ms_state_table_+115 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 33, ms_state_table_+112 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 35, 91, ms_state_table_+112 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 93, 255, ms_state_table_+112 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+116 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+117 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+112 },
+    { ReflexCpp_::AutomatonApparatus::DfaTransition_::INPUT_ATOM_RANGE, 1, 255, ms_state_table_+112 }
 };
 BarfCpp_::Size const Scanner::ms_transition_count_ = sizeof(Scanner::ms_transition_table_) / sizeof(*Scanner::ms_transition_table_);
 
@@ -1834,4 +1841,4 @@ BarfCpp_::Uint32 const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_ac
 } // end of namespace CommonLang
 } // end of namespace Barf
 
-#line 1838 "barf_commonlang_scanner.cpp"
+#line 1845 "barf_commonlang_scanner.cpp"
