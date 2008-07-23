@@ -114,8 +114,6 @@ lib/preprocessor/barf_preprocessor_ast.hpp
 lib/preprocessor/barf_preprocessor_parser.cpp
 lib/preprocessor/barf_preprocessor_parser.hpp
 lib/preprocessor/barf_preprocessor_parser.trison
-lib/preprocessor/barf_preprocessor_scanner.cpp
-lib/preprocessor/barf_preprocessor_scanner.hpp
 lib/preprocessor/barf_preprocessor_scanner_new.cpp
 lib/preprocessor/barf_preprocessor_scanner_new.hpp
 lib/preprocessor/barf_preprocessor_scanner_new.reflex

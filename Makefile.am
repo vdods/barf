@@ -284,7 +284,6 @@ lib_libbarf_preprocessor_la_SOURCES = \
     lib/preprocessor/barf_preprocessor_ast_print.cpp \
     lib/preprocessor/barf_preprocessor_parser.cpp \
     lib/preprocessor/barf_preprocessor_parser.trison \
-    lib/preprocessor/barf_preprocessor_scanner.cpp \
     lib/preprocessor/barf_preprocessor_scanner_new.cpp \
     lib/preprocessor/barf_preprocessor_symboltable.cpp \
     lib/preprocessor/barf_preprocessor_textifier.cpp
@@ -698,7 +697,6 @@ noinst_HEADERS = \
 	lib/preprocessor/barf_preprocessor.hpp \
 	lib/preprocessor/barf_preprocessor_ast.hpp \
 	lib/preprocessor/barf_preprocessor_parser.hpp \
-	lib/preprocessor/barf_preprocessor_scanner.hpp \
 	lib/preprocessor/barf_preprocessor_scanner_new.hpp \
 	lib/preprocessor/barf_preprocessor_symboltable.hpp \
 	lib/preprocessor/barf_preprocessor_textifier.hpp \
