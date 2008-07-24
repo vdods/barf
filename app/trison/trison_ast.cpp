@@ -72,7 +72,7 @@ string Rule::GetAsText (Uint32 stage) const
 
     ostringstream out;
     out << m_owner_nonterminal->GetText() << " <-";
-    for (Uint32 s = 0; s < min(stage, m_rule_token_list->size()); ++s)
+    for (Uint32 s = 0; s < min(stage, Uint32(m_rule_token_list->size())); ++s)
         out << ' ' << m_rule_token_list->GetElement(s)->m_token_id;
     if (stage <= m_rule_token_list->size())
     {

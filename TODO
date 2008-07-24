@@ -27,7 +27,7 @@
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
-* move all AST usage to smart pointers to ease-ify stuff and to escape the
+$ move all AST usage to smart pointers to ease-ify stuff and to escape the
   woes of memory leaks (not like it matters that much in this context) --
   OR
   do comprehensive deleting of stuff (which would probably set a better

@@ -30,7 +30,7 @@
   </general>
   <kdevcustomproject>
     <run>
-      <mainprogram>debug/debug</mainprogram>
+      <mainprogram>/home/vdods/files/sf/barf/trunk</mainprogram>
       <directoryradio>executable</directoryradio>
       <customdirectory>/</customdirectory>
       <programargs/>
@@ -38,14 +38,14 @@
       <autocompile>true</autocompile>
       <envvars/>
       <globaldebugarguments/>
-      <globalcwd>debug</globalcwd>
+      <globalcwd>/home/vdods/files/sf/barf/trunk</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
     </run>
     <build>
       <buildtool>make</buildtool>
-      <builddir>debug</builddir>
+      <builddir/>
     </build>
     <make>
       <abortonerror>false</abortonerror>
@@ -60,6 +60,37 @@
         <default/>
       </environments>
     </make>
+    <filetypes>
+      <filetype>*.java</filetype>
+      <filetype>*.h</filetype>
+      <filetype>*.H</filetype>
+      <filetype>*.hh</filetype>
+      <filetype>*.hxx</filetype>
+      <filetype>*.hpp</filetype>
+      <filetype>*.c</filetype>
+      <filetype>*.C</filetype>
+      <filetype>*.cc</filetype>
+      <filetype>*.cpp</filetype>
+      <filetype>*.c++</filetype>
+      <filetype>*.cxx</filetype>
+      <filetype>Makefile</filetype>
+      <filetype>CMakeLists.txt</filetype>
+    </filetypes>
+    <blacklist>
+      <path>debug</path>
+      <path>debug/config.h</path>
+      <path>debug/Makefile</path>
+    </blacklist>
+    <other>
+      <prio>0</prio>
+      <otherbin/>
+      <defaulttarget/>
+      <otheroptions/>
+      <selectedenvironment>default</selectedenvironment>
+      <environments>
+        <default/>
+      </environments>
+    </other>
   </kdevcustomproject>
   <kdevdebugger>
     <general>
@@ -72,6 +103,7 @@
       <breakonloadinglibs>true</breakonloadinglibs>
       <separatetty>false</separatetty>
       <floatingtoolbar>false</floatingtoolbar>
+      <raiseGDBOnStart>false</raiseGDBOnStart>
     </general>
     <display>
       <staticmembers>false</staticmembers>
@@ -140,7 +172,7 @@
       <group pattern="app/example/calculator/*" name="/app/example/calculator" />
       <group pattern="app/example/*" name="/app/example" />
       <group pattern="app/reflex/*" name="/app/reflex" />
-      <group pattern="app/trison.unstable/*" name="/app/trison.unstable" />
+      <group pattern="app/trison/*" name="/app/trison" />
       <group pattern="app/*" name="/app" />
       <group pattern="doc/doxygen_pages/*" name="/doc/doxygen_pages" />
       <group pattern="doc/*" name="/doc" />
@@ -169,8 +201,8 @@
       <includeTypes>false</includeTypes>
       <includeEnums>false</includeEnums>
       <includeTypedefs>false</includeTypedefs>
-      <automaticCodeCompletion>false</automaticCodeCompletion>
-      <automaticArgumentsHint>false</automaticArgumentsHint>
+      <automaticCodeCompletion>true</automaticCodeCompletion>
+      <automaticArgumentsHint>true</automaticArgumentsHint>
       <automaticHeaderCompletion>true</automaticHeaderCompletion>
       <codeCompletionDelay>250</codeCompletionDelay>
       <argumentsHintDelay>400</argumentsHintDelay>
@@ -179,23 +211,25 @@
       <completionBoxItemOrder>0</completionBoxItemOrder>
       <howEvaluationContextMenu>true</howEvaluationContextMenu>
       <showCommentWithArgumentHint>true</showCommentWithArgumentHint>
-      <statusBarTypeEvaluation>false</statusBarTypeEvaluation>
+      <statusBarTypeEvaluation>true</statusBarTypeEvaluation>
       <namespaceAliases>std=_GLIBCXX_STD;__gnu_cxx=std</namespaceAliases>
       <processPrimaryTypes>true</processPrimaryTypes>
-      <processFunctionArguments>false</processFunctionArguments>
+      <processFunctionArguments>true</processFunctionArguments>
       <preProcessAllHeaders>false</preProcessAllHeaders>
       <parseMissingHeaders>false</parseMissingHeaders>
       <resolveIncludePaths>true</resolveIncludePaths>
       <alwaysParseInBackground>true</alwaysParseInBackground>
       <usePermanentCaching>true</usePermanentCaching>
-      <alwaysIncludeNamespaces>false</alwaysIncludeNamespaces>
+      <alwaysIncludeNamespaces>true</alwaysIncludeNamespaces>
       <includePaths>.;</includePaths>
+      <parseMissingHeadersExperimental>false</parseMissingHeadersExperimental>
+      <resolveIncludePathsUsingMakeExperimental>false</resolveIncludePathsUsingMakeExperimental>
     </codecompletion>
     <creategettersetter>
       <prefixGet/>
       <prefixSet>set</prefixSet>
       <prefixVariable>m_,_</prefixVariable>
-      <parameterName>theValue</parameterName>
+      <parameterName>value</parameterName>
       <inlineGet>true</inlineGet>
       <inlineSet>true</inlineSet>
     </creategettersetter>
@@ -210,9 +244,9 @@
       <designerpluginpaths/>
     </qt>
     <splitheadersource>
-      <enabled>false</enabled>
+      <enabled>true</enabled>
       <synchronize>true</synchronize>
-      <orientation>Vertical</orientation>
+      <orientation>Horizontal</orientation>
     </splitheadersource>
   </kdevcppsupport>
   <cppsupportpart>
@@ -249,7 +283,7 @@
   </kdevdocumentation>
   <ctagspart>
     <customArguments/>
-    <customTagfilePath/>
+    <customTagfilePath>/home/vdods/files/sf/barf/trunk/tags</customTagfilePath>
     <activeTagsFiles/>
   </ctagspart>
 </kdevelop>
