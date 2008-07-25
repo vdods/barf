@@ -43,6 +43,7 @@ enum ReturnStatus
 {
     RS_SUCCESS = 0,
     RS_COMMANDLINE_ABORT,
+    RS_INPUT_FILE_ERROR,
     RS_PRIMARY_SOURCE_ERROR,
     RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR,
     RS_TARGETSPEC_ERROR,
@@ -96,7 +97,11 @@ Reflex::PrimarySource const *ParsePrimarySource ()
 
     if (!parser.OpenFile(GetReflexOptions().GetInputFilename()))
         EmitError("file not found: \"" + GetReflexOptions().GetInputFilename() + "\"");
-    else if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
+        
+    if (g_errors_encountered)
+        exit(RS_INPUT_FILE_ERROR);
+        
+    if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
         EmitError("general reflex parse error -- " + GetReflexOptions().HowtoReportError(), FiLoc(GetReflexOptions().GetInputFilename()));
     else
     {
@@ -118,14 +123,21 @@ void PrintDotGraph (Graph const &graph, string const &filename, string const &gr
         return;
 
     if (filename == "-")
+    {
+        EmitExecutionMessage("printing " + graph_name + " graph to <stdout>");
         graph.PrintDotGraph(cout, graph_name);
+    }
     else
     {
+        EmitExecutionMessage("opening file \"" + filename + "\" for output of " + graph_name + " graph");
         ofstream file(filename.c_str());
-        if (!file.is_open())
-            EmitWarning("could not open file \"" + filename + "\" for writing");
-        else
+        if (file.is_open())
+        {
+            EmitExecutionMessage("opened file \"" + filename + "\" successfully");
             graph.PrintDotGraph(file, graph_name);
+        }
+        else
+            EmitError("could not open file \"" + filename + "\" for writing");
     }
 }
 
@@ -134,7 +146,9 @@ void GenerateAndPrintNfaDotGraph (Reflex::PrimarySource const &primary_source, A
     // generate the NFA and print it (if the filename is even specified).
     // no error is possible in this section.
 
+    EmitExecutionMessage("generating NFA graph");
     Reflex::GenerateNfa(primary_source, nfa);
+    EmitExecutionMessage("done generating NFA graph");
     PrintDotGraph(nfa.m_graph, GetReflexOptions().GetNaDotGraphPath(), "NFA");
 }
 
@@ -146,7 +160,9 @@ void GenerateAndPrintDfaDotGraph (Reflex::PrimarySource const &primary_source, A
     // section, abort with an error code.
 
     try {
+        EmitExecutionMessage("attempting to generate DFA graph");
         Reflex::GenerateDfa(primary_source, nfa, primary_source.GetRuleCount(), dfa);
+        EmitExecutionMessage("generated DFA graph successfully");
         PrintDotGraph(dfa.m_graph, GetReflexOptions().GetDaDotGraphPath(), "DFA");
     } catch (string const &exception) {
         EmitError(exception);
@@ -175,7 +191,7 @@ void ParseTargetspecs (Reflex::PrimarySource const &primary_source)
     {
         CommonLang::Target const *target = it->second;
         assert(target != NULL);
-        target->ParseTargetspec("reflex", parser);
+        target->ParseTargetspec(parser);
     }
 
     if (g_errors_encountered)
@@ -199,7 +215,9 @@ void ParseCodespecs (Reflex::PrimarySource const &primary_source)
     {
         CommonLang::Target const *target = it->second;
         assert(target != NULL);
-        target->ParseCodespecs("reflex", parser);
+        EmitExecutionMessage("parsing codespecs for target \"" + target->m_target_id + "\"");
+        target->ParseCodespecs(parser);
+        EmitExecutionMessage("done parsing codespecs for target \"" + target->m_target_id + "\"");
     }
 
     if (g_errors_encountered)
@@ -248,6 +266,7 @@ int main (int argc, char **argv)
         Automaton nfa, dfa;
 
         ParseAndHandleOptions(argc, argv);
+        EmitExecutionMessage("beginning execution");
         primary_source = ParsePrimarySource();
         GenerateAndPrintNfaDotGraph(*primary_source, nfa);
         GenerateAndPrintDfaDotGraph(*primary_source, nfa, dfa);
@@ -256,6 +275,7 @@ int main (int argc, char **argv)
         WriteTargets(*primary_source, nfa, dfa);
 
         delete primary_source;
+        EmitExecutionMessage("ending execution successfully");
         return RS_SUCCESS;
     } catch (string const &exception) {
         // this is the catch block for fatal errors

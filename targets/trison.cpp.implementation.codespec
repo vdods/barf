@@ -69,11 +69,11 @@ void <{class_name}::ResetForNewInput ()
 
 <|end_if
 <|if(is_defined(end_of_parse_method_actions))
-    ParserReturnCode parser_return_code_ = Parse_(return_token, nonterminal_to_parse);
+    ParserReturnCode const parse_return_code = Parse_(return_token, nonterminal_to_parse);
 
 <|end_of_parse_method_actions
 
-    return parser_return_code_;
+    return parse_return_code;
 <|else
     return Parse_(return_token, nonterminal_to_parse);
 <|end_if

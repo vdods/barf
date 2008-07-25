@@ -82,8 +82,8 @@ CommandLineOption const Options::ms_option[] =
         "enable-verbosity",
         &OptionsBase::EnableVerbosity,
         "    Enables the specified verbosity option.  Valid parameters are\n"
-        "        \"execution\" - Print general application activity to stderr. (not currently implemented)\n" // TODO: implement
-        "        \"scanner\" - Print scanner activity to stderr. (not currently implemented)\n"
+        "        \"execution\" - Print general application activity to stderr.\n"
+        "        \"scanner\" - Print scanner activity to stderr.\n"
         "        \"parser\" - Print parser activity to stderr.\n"
         "        \"ast\" - Print the parsed abstract syntax tree to stderr.\n"
         "        \"all\" - Enable all above verbosity options.\n"
@@ -108,6 +108,7 @@ Uint32 const Options::ms_option_count = sizeof(Options::ms_option) / sizeof(Comm
 Options::Options (string const &executable_filename)
     :
     OptionsBase(
+        "bpp",
         &Options::SetInputFilename,
         ms_option,
         ms_option_count,

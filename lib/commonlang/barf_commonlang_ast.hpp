@@ -95,10 +95,10 @@ public:
     // target is not enabled for code generation.
     void Add (TargetDirective *target_directive);
     // parses the targetspec file corresponding to this target.
-    void ParseTargetspec (string const &tool_prefix, Targetspec::Parser &parser) const;
+    void ParseTargetspec (Targetspec::Parser &parser) const;
     // parses all the codespecs specified in m_targetspec and adds the
     // parsed Preprocessor::Body instances to m_codespec_body_list.
-    void ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &parser) const;
+    void ParseCodespecs (Preprocessor::Parser &parser) const;
     // iterates through all codespecs and generates code.
     void GenerateCode (Preprocessor::SymbolTable const &symbol_table) const;
 

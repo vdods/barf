@@ -66,6 +66,7 @@ public:
 
     template <typename OptionsBaseSubclass>
     OptionsBase (
+        string const &program_name,
         void (OptionsBaseSubclass::*non_option_argument_handler_method)(string const &),
         CommandLineOption const *option,
         Uint32 option_count,
@@ -81,6 +82,7 @@ public:
             executable_filename,
             program_description,
             usage_message),
+        m_program_name(program_name),
         m_treat_warnings_as_errors(false),
         m_halt_on_first_error(false),
     #if DEBUG
@@ -93,6 +95,7 @@ public:
         m_abort_flag(false),
         m_allowed_verbosity(allowed_verbosity)
     {
+        assert(!m_program_name.empty());
         assert((m_allowed_verbosity & ~V_ALL) == 0 && "allowed_verbosity contains invalid Verbosity flags");
 
         // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
@@ -103,6 +106,8 @@ public:
             AddTargetsSearchPath(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable");
     }
 
+    // returns the name of this program, e.g. "reflex", "trison", "bpp"
+    string const &GetProgramName () const { return m_program_name; }
     // indicates if there were problems with the specified options
     // and that the program should not continue executing.
     bool GetAbort () const { return m_abort_flag || !GetParseSucceeded(); }
@@ -181,6 +186,8 @@ private:
     void AddTargetsSearchPath (string const &search_path, string const &set_by);
     Verbosity ParseVerbosityString (string const &verbosity_string);
 
+    // the name of this program, e.g. "reflex"
+    string const m_program_name;
     // non-option argument value
     string m_input_filename;
     // warning and error option values

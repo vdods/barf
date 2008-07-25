@@ -108,6 +108,8 @@
 // block within start_of_parse_method_actions, remember to finish it with one
 // or more "catch" blocks (see enable_parse_method_exception_handling).
 // e.g. %{ } catch (...) { std::cout << "caught exception" << std::endl } %}
+// The result of the parse will be stored in a const variable called
+// parse_return_code, which you can check here.
 %add_optional_directive end_of_parse_method_actions         %dumb_code_block
 // If any of the reduction rule code blocks throw an exception, this directive
 // must be specified; this will cause the parser to catch and rethrow any

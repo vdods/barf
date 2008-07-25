@@ -39,6 +39,8 @@ void PopulateRuleCodeArraySymbol (Rule const &rule, string const &target_id, Pre
 
 void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Preprocessor::SymbolTable &symbol_table)
 {
+    EmitExecutionMessage("generating general automaton codespec symbols");
+    
     // _rule_count -- gives the total number of rules (from all nonterminals combined).
     //
     // _rule_total_token_count -- specifies the total number of rule tokens from all
@@ -294,6 +296,8 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
 {
     assert(npda_graph.GetNodeCount() > 0);
 
+    EmitExecutionMessage("generating NPDA codespec symbols");
+    
     // _npda_nonterminal_start_state_index[nonterminal name] -- maps nonterminal name => node index
     {
         Preprocessor::MapSymbol *npda_nonterminal_start_state_index =
@@ -454,6 +458,8 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
 {
     assert(dpda_graph.GetNodeCount() > 0);
 
+    EmitExecutionMessage("generating DPDA codespec symbols");
+    
     // _dpda_lalr_lookahead_count -- the number of lookaheads required for this LALR grammar
     {
 //         Preprocessor::ScalarSymbol *dpda_lalr_lookahead_count =
@@ -652,6 +658,8 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
 
 void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string const &target_id, Preprocessor::SymbolTable &symbol_table)
 {
+    EmitExecutionMessage("generating codespec symbols for target \"" + target_id + "\"");
+    
     // _rule_code[_rule_count] -- specifies code for each rule.
     {
         Preprocessor::ArraySymbol *rule_code =

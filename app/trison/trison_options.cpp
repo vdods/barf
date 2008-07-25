@@ -174,14 +174,14 @@ CommandLineOption const Options::ms_option[] =
         "enable-verbosity",
         &OptionsBase::EnableVerbosity,
         "    Enables the specified verbosity option.  Valid parameters are\n"
-        "        \"execution\" - Print general application activity to stderr. (not currently implemented)\n" // TODO: implement
+        "        \"execution\" - Print general application activity to stderr.\n"
         "        \"scanner\" - Print primary source (*.trison) scanner activity to stderr.\n"
         "        \"parser\" - Print primary source (*.trison) parser activity to stderr.\n"
         "        \"ast\" - Print the parsed primary source abstract syntax tree to stderr.\n"
         "        \"targetspec-scanner\" - Print targetspec scanner activity to stderr.\n"
         "        \"targetspec-parser\" - Print targetspec parser activity to stderr.\n"
         "        \"targetspec-ast\" - Print the parsed targetspec abstract syntax tree(s) to stderr.\n"
-        "        \"codespec-scanner\" - Print codespec scanner activity to stderr. (not currently implemented)\n"
+        "        \"codespec-scanner\" - Print codespec scanner activity to stderr.\n"
         "        \"codespec-parser\" - Print codespec parser activity to stderr.\n"
         "        \"codespec-ast\" - Print the parsed codespec abstract syntax tree(s) to stderr.\n"
         "        \"codespec-symbols\" - Print the preprocessor symbols available to the codespec to stderr.\n"
@@ -207,6 +207,7 @@ Uint32 const Options::ms_option_count = sizeof(Options::ms_option) / sizeof(Comm
 Options::Options (string const &executable_filename)
     :
     OptionsBase(
+        "trison",
         &Options::SetInputFilename,
         ms_option,
         ms_option_count,

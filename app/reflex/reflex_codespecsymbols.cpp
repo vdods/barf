@@ -57,6 +57,8 @@ void PopulateAcceptHandlerScannerModeAndRegexSymbols (
 
 void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Preprocessor::SymbolTable &symbol_table)
 {
+    EmitExecutionMessage("generating general automaton codespec symbols");
+
     // _accept_handler_count -- gives the number of accept handlers.
     {
         Preprocessor::ScalarSymbol *accept_handler_count =
@@ -98,6 +100,8 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
 {
     assert(nfa_graph.GetNodeCount() > 0);
 
+    EmitExecutionMessage("generating NFA codespec symbols");
+    
     // _nfa_initial_node_index[scanner mode name] -- maps scanner mode name => node index
     {
         Preprocessor::MapSymbol *nfa_initial_node_index =
@@ -219,6 +223,8 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
 {
     assert(dfa_graph.GetNodeCount() > 0);
 
+    EmitExecutionMessage("generating DFA codespec symbols");
+    
     // _dfa_initial_node_index[scanner mode name] -- maps scanner mode name => node index
     {
         Preprocessor::MapSymbol *dfa_initial_node_index =
@@ -385,6 +391,8 @@ void PopulateAcceptHandlerCodeArraySymbol (ScannerMode const &scanner_mode, stri
 
 void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string const &target_id, Preprocessor::SymbolTable &symbol_table)
 {
+    EmitExecutionMessage("generating codespec symbols for target \"" + target_id + "\"");
+    
     // _accept_handler_code[_accept_handler_count] -- specifies code
     // for all accept handlers.
     {

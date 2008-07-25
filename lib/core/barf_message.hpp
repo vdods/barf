@@ -20,6 +20,7 @@ extern bool g_errors_encountered;
 
 namespace Barf {
 
+void EmitExecutionMessage (string const &message);
 void EmitWarning (string const &message, FiLoc const &filoc = FiLoc::ms_invalid);
 void EmitError (string const &message, FiLoc const &filoc = FiLoc::ms_invalid);
 void EmitFatalError (string const &message, FiLoc const &filoc = FiLoc::ms_invalid);

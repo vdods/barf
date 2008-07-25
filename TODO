@@ -38,8 +38,7 @@ $ move all AST usage to smart pointers to ease-ify stuff and to escape the
 - use Ast::Directive::GetDirectiveString in error messages instead of
   creating the error messages by hand -- make all directives derive from
   Ast::Directive
-* add "execution debug spew" mode for each program, which says what it's doing,
-  e.g. opening files, doing type checking, env vars it's using, etc
+- make wrapper for opening files so that execution debug spew is automatic.
 - file locations should be "2d range" -- a starting line/column and an ending
   line/column (or starting line/column and a number of bytes following).
   nonterminal expressions can then be the union of the file locations of their
@@ -231,6 +230,7 @@ $ also add post-undefine option
   doesn't affect performance unacceptably.
 - break dot-graphing up into graphs of separate scanner modes, so the images
   it produces aren't gigantic
+- rename start/end_of_scan_method_actions into top/bottom
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -297,6 +297,7 @@ $ also add post-undefine option
   instead of a linear search (in the dpda target)
 - break dot-graphing up into graphs of separated graph portions, so the
   images it produces aren't gigantic (this won't work so well for trison)
+- rename start/end_of_parse_method_actions into top/bottom
 
 template <Sint32 low, Sint32 high> struct SmallestSint {
     typedef

@@ -90,10 +90,11 @@ void Target::Add (TargetDirective *target_directive)
         EmitWarning("undeclared target \"" + target_directive->m_target_id->GetText() + "\"", target_directive->GetFiLoc());
 }
 
-void Target::ParseTargetspec (string const &tool_prefix, Targetspec::Parser &parser) const
+void Target::ParseTargetspec (Targetspec::Parser &parser) const
 {
     try {
-        string filename(tool_prefix + '.' + m_target_id + ".targetspec");
+        string filename(GetOptions().GetProgramName() + '.' + m_target_id + ".targetspec");
+        EmitExecutionMessage("beginning parse procedure of targetspec file \"" + filename + "\"");
         m_targetspec.m_source_path = GetOptions().GetTargetsSearchPath().GetFilePath(filename);
         Ast::Base *parsed_tree_root = NULL;
         if (m_targetspec.m_source_path.empty())
@@ -109,14 +110,17 @@ void Target::ParseTargetspec (string const &tool_prefix, Targetspec::Parser &par
             if (GetOptions().GetIsVerbose(OptionsBase::V_TARGETSPEC_AST))
                 m_targetspec.m_specification->Print(cerr);
             if (!g_errors_encountered)
+            {
                 CheckAgainstTargetspec(*m_targetspec.m_specification);
+                EmitExecutionMessage("done with parse procedure of targetspec file \"" + filename + "\"");
+            }
         }
     } catch (string const &exception) {
         cerr << exception << endl;
     }
 }
 
-void Target::ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &parser) const
+void Target::ParseCodespecs (Preprocessor::Parser &parser) const
 {
     assert(!m_targetspec.m_source_path.empty());
     assert(m_targetspec.m_specification != NULL);
@@ -131,7 +135,8 @@ void Target::ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &pa
         assert(add_codespec != NULL);
 
         try {
-            string filename(tool_prefix + '.' + m_target_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
+            string filename(GetOptions().GetProgramName()  + '.' + m_target_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
+            EmitExecutionMessage("beginning parse procedure of codespec file \"" + filename + "\"");
             string codespec_filename(GetOptions().GetTargetsSearchPath().GetFilePath(filename));
             Ast::Base *parsed_tree_root = NULL;
             if (codespec_filename.empty())
@@ -147,6 +152,7 @@ void Target::ParseCodespecs (string const &tool_prefix, Preprocessor::Parser &pa
                 m_codespec_list.push_back(ParsedCodespec(add_codespec, codespec_body, codespec_filename));
                 if (GetOptions().GetIsVerbose(OptionsBase::V_CODESPEC_AST))
                     codespec_body->Print(cerr);
+                EmitExecutionMessage("done with parse procedure of codespec file \"" + filename + "\"");
             }
         } catch (string const &exception) {
             cerr << exception << endl;
@@ -170,6 +176,8 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
         FiLoc::ms_invalid,
         GetCurrentDateAndTimeString());
 
+    EmitExecutionMessage("generating code");
+
     for (ParsedCodespecList::const_iterator it = m_codespec_list.begin(),
                                             it_end = m_codespec_list.end();
          it != it_end;
@@ -180,11 +188,13 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
         string filename_directive_id(codespec.m_add_codespec->m_filename_directive_id->GetText());
         string filename(GetOptions().GetOutputDirectory() + GetElement(filename_directive_id)->m_directive_value->GetText());
         ofstream stream;
+        EmitExecutionMessage("opening file \"" + filename + "\" for output");
         stream.open(filename.c_str());
         if (!stream.is_open())
             EmitError("could not open file \"" + filename + "\" for writing", FiLoc(GetOptions().GetInputFilename()));
         else
         {
+            EmitExecutionMessage("opened file \"" + filename + "\" successfully");
             Preprocessor::SymbolTable codespec_symbol_table(target_symbol_table);
 
             codespec_symbol_table.DefineScalarSymbolAsText(
@@ -199,7 +209,9 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
             try {
                 Preprocessor::Textifier textifier(stream, GetFilenamePortion(filename));
                 // TODO: here's where you indicate line directives shouldn't be used
+                EmitExecutionMessage("generating code for file \"" + filename + "\"");
                 codespec.m_codespec_body->Execute(textifier, codespec_symbol_table);
+                EmitExecutionMessage("done generating code for file \"" + filename + "\"");
             } catch (string const &exception) {
                 cerr << exception << endl;
             }
@@ -210,6 +222,7 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
 
 void Target::CheckAgainstTargetspec (Targetspec::Specification const &specification) const
 {
+    EmitExecutionMessage("checking target directives");
     // if checks are enabled, check that all the required directives are present
     if (m_is_enabled_for_code_generation)
     {
@@ -226,6 +239,7 @@ void Target::CheckAgainstTargetspec (Targetspec::Specification const &specificat
         }
     }
 
+    EmitExecutionMessage("checking validity of specified directives");
     // check that all the target directives are validly specified in the targetspec
     for (const_iterator it = begin(),
                         it_end = end();

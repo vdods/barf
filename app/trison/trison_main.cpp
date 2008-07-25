@@ -49,6 +49,7 @@ enum ReturnStatus
 {
     RS_SUCCESS = 0,
     RS_COMMANDLINE_ABORT,
+    RS_INPUT_FILE_ERROR,
     RS_PRIMARY_SOURCE_ERROR,
     RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR,
     RS_TARGETSPEC_ERROR,
@@ -102,7 +103,11 @@ Trison::PrimarySource const *ParsePrimarySource ()
 
     if (!parser.OpenFile(GetTrisonOptions().GetInputFilename()))
         EmitError("file not found: \"" + GetTrisonOptions().GetInputFilename() + "\"");
-    else if (parser.Parse(&parsed_tree_root) != Trison::Parser::PRC_SUCCESS)
+
+    if (g_errors_encountered)
+        exit(RS_INPUT_FILE_ERROR);
+        
+    if (parser.Parse(&parsed_tree_root) != Trison::Parser::PRC_SUCCESS)
         EmitError("general trison parse error -- " + GetTrisonOptions().HowtoReportError(), FiLoc(GetTrisonOptions().GetInputFilename()));
     else
     {
@@ -124,14 +129,21 @@ void PrintDotGraph (Graph const &graph, string const &filename, string const &gr
         return;
 
     if (filename == "-")
+    {
+        EmitExecutionMessage("printing " + graph_name + " graph to <stdout>");
         graph.PrintDotGraph(cout, graph_name);
+    }
     else
     {
+        EmitExecutionMessage("opening file \"" + filename + "\" for output of " + graph_name + " graph");
         ofstream file(filename.c_str());
-        if (!file.is_open())
-            EmitWarning("could not open file \"" + filename + "\" for writing");
-        else
+        if (file.is_open())
+        {
+            EmitExecutionMessage("opened file \"" + filename + "\" successfully");
             graph.PrintDotGraph(file, graph_name);
+        }
+        else
+            EmitError("could not open file \"" + filename + "\" for writing");
     }
 }
 
@@ -140,7 +152,9 @@ void GenerateNpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
     // generate the NPDA and print it (if the filename is even specified).
     // no error is possible in this section.
 
+    EmitExecutionMessage("generating NPDA graph");
     Trison::GenerateNpda(primary_source, npda_graph);
+    EmitExecutionMessage("done generating NPDA graph");
     PrintDotGraph(npda_graph, GetTrisonOptions().GetNaDotGraphPath(), "NPDA");
 }
 
@@ -152,7 +166,9 @@ void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
     // section, abort with an error code.
 
     try {
+        EmitExecutionMessage("attempting to generate DPDA graph");
         Trison::GenerateDpda(primary_source, npda_graph, dpda_graph);
+        EmitExecutionMessage("generated DPDA graph successfully");
         PrintDotGraph(dpda_graph, GetTrisonOptions().GetDaDotGraphPath(), "DPDA");
     } catch (string const &exception) {
         EmitError(exception);
@@ -174,14 +190,21 @@ void GenerateDpdaStatesFile (Trison::PrimarySource const &primary_source, Graph 
         return;
 
     if (filename == "-")
+    {
+        EmitExecutionMessage("printing DPDA states file to <stdout>");
         Trison::PrintDpdaStatesFile(primary_source, npda_graph, dpda_graph, cout);
+    }
     else
     {
+        EmitExecutionMessage("opening file \"" + filename + "\" for output of DPDA states file");
         ofstream file(filename.c_str());
-        if (!file.is_open())
-            EmitWarning("could not open file \"" + filename + "\" for writing");
-        else
+        if (file.is_open())
+        {
+            EmitExecutionMessage("opened file \"" + filename + "\" successfully");
             Trison::PrintDpdaStatesFile(primary_source, npda_graph, dpda_graph, file);
+        }
+        else
+            EmitError("could not open file \"" + filename + "\" for writing");
     }
 }
 
@@ -204,7 +227,7 @@ void ParseTargetspecs (Trison::PrimarySource const &primary_source)
     {
         CommonLang::Target const *target = it->second;
         assert(target != NULL);
-        target->ParseTargetspec("trison", parser);
+        target->ParseTargetspec(parser);
     }
 
     if (g_errors_encountered)
@@ -228,7 +251,9 @@ void ParseCodespecs (Trison::PrimarySource const &primary_source)
     {
         CommonLang::Target const *target = it->second;
         assert(target != NULL);
-        target->ParseCodespecs("trison", parser);
+        EmitExecutionMessage("parsing codespecs for target \"" + target->m_target_id + "\"");
+        target->ParseCodespecs(parser);
+        EmitExecutionMessage("done parsing codespecs for target \"" + target->m_target_id + "\"");
     }
 
     if (g_errors_encountered)
@@ -286,6 +311,7 @@ int main (int argc, char **argv)
         WriteTargets(*primary_source, npda_graph, dpda_graph);
 
         delete primary_source;
+        EmitExecutionMessage("ending execution successfully");
         return RS_SUCCESS;
     } catch (string const &exception) {
         // this is the catch block for fatal errors

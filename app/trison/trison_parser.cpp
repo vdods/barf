@@ -52,10 +52,21 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, ParseNontermi
     m_precedence_map = NULL;
     m_nonterminal_list = NULL;
     m_rule_count = 0;
+    EmitExecutionMessage("starting trison parser");
 
-#line 57 "trison_parser.cpp"
+#line 58 "trison_parser.cpp"
 
-    return Parse_(return_token, nonterminal_to_parse);
+    ParserReturnCode const parse_return_code = Parse_(return_token, nonterminal_to_parse);
+
+
+#line 97 "trison_parser.trison"
+
+    if (parse_return_code == PRC_SUCCESS)
+        EmitExecutionMessage("trison parse was successful");
+
+#line 68 "trison_parser.cpp"
+
+    return parse_return_code;
 }
 
 // ///////////////////////////////////////////////////////////////////////
@@ -67,9 +78,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 73 "trison_parser.cpp"
+#line 84 "trison_parser.cpp"
  << " starting parse" << std::endl)
 
     ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
@@ -121,18 +132,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
         if (m_is_in_error_panic_)
         {
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 127 "trison_parser.cpp"
+#line 138 "trison_parser.cpp"
  << " begin error panic" << std::endl)
 
             // the special Terminal::END_ can not be eaten by error panic.
             if (Lookahead_(0).m_id == Terminal::END_)
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 136 "trison_parser.cpp"
+#line 147 "trison_parser.cpp"
  << " end error panic; abort (error panic can't eat Terminal::END_)" << std::endl)
                 // parser_return_code_ and return_token are already appropriately
                 // set, so just break out of the main loop.
@@ -166,9 +177,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 if (accepts_error)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 172 "trison_parser.cpp"
+#line 183 "trison_parser.cpp"
  << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
                     // if the current state accepts error, throw away the first lookahead data
                     // (but don't pop the front of the lookahead queue).  then clear the thrown-
@@ -185,17 +196,17 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     if (m_stack_.size() > 1)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 191 "trison_parser.cpp"
+#line 202 "trison_parser.cpp"
  << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
                     }
                     else
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 199 "trison_parser.cpp"
+#line 210 "trison_parser.cpp"
  << " end error panic; abort (stack is empty)" << std::endl)
                     }
                     // otherwise throw away the data at the top of the stack, and pop the stack.
@@ -260,9 +271,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 if (lookahead_sequence_matched)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 266 "trison_parser.cpp"
+#line 277 "trison_parser.cpp"
  << " current (relevant) lookahead(s):")
                     for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
@@ -280,9 +291,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             if (!transition_exercised)
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 286 "trison_parser.cpp"
+#line 297 "trison_parser.cpp"
  << " current (relevant) lookahead(s):")
                 for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
@@ -291,9 +302,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
 
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 297 "trison_parser.cpp"
+#line 308 "trison_parser.cpp"
  << " exercising default transition" << std::endl)
                 // exercise the default transition.  a return value of true indicates
                 // that the parser should return.
@@ -322,14 +333,14 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
     ClearStack_();
 
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 328 "trison_parser.cpp"
+#line 339 "trison_parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 333 "trison_parser.cpp"
+#line 344 "trison_parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
     return parser_return_code_;
@@ -338,23 +349,23 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 void Parser::ThrowAwayToken_ (Token::Data &token_data) throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 344 "trison_parser.cpp"
+#line 355 "trison_parser.cpp"
  << " executing throw-away-token actions" << std::endl)
 
 
-#line 109 "trison_parser.trison"
+#line 119 "trison_parser.trison"
 
     delete token_data;
 
-#line 352 "trison_parser.cpp"
+#line 363 "trison_parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
 {
 
-#line 112 "trison_parser.trison"
+#line 122 "trison_parser.trison"
 
     Ast::Base *lookahead_token_data = NULL;
     CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&lookahead_token_data);
@@ -405,7 +416,7 @@ Parser::Token Parser::Scan_ () throw()
             return Token(Terminal::BAD_TOKEN);
     }
 
-#line 409 "trison_parser.cpp"
+#line 420 "trison_parser.cpp"
 }
 
 void Parser::ClearStack_ () throw()
@@ -414,9 +425,9 @@ void Parser::ClearStack_ () throw()
         return; // nothing to do
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 420 "trison_parser.cpp"
+#line 431 "trison_parser.cpp"
  << " clearing the stack" << std::endl)
 
     Stack_::iterator it = m_stack_.begin();
@@ -432,9 +443,9 @@ void Parser::ClearStack_ () throw()
 void Parser::ClearLookaheadQueue_ () throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 438 "trison_parser.cpp"
+#line 449 "trison_parser.cpp"
  << " clearing the lookahead queue" << std::endl)
 
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
@@ -449,9 +460,9 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
         m_lookahead_queue_.push_back(Scan_());
 
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 455 "trison_parser.cpp"
+#line 466 "trison_parser.cpp"
  << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl)
     }
     return m_lookahead_queue_[index];
@@ -469,9 +480,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             assert(transition.m_data < ms_rule_count_);
             Rule_ const &rule = ms_rule_table_[transition.m_data];
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 475 "trison_parser.cpp"
+#line 486 "trison_parser.cpp"
  << " REDUCE " << rule.m_description << std::endl)
             assert(m_stack_.size() > rule.m_token_count);
             m_lookahead_queue_.push_front(
@@ -481,18 +492,18 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             m_stack_.resize(m_stack_.size() - rule.m_token_count);
             assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 487 "trison_parser.cpp"
+#line 498 "trison_parser.cpp"
  << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
             return false; // indicating the parser isn't returning
         }
 
         case Transition_::RETURN:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 496 "trison_parser.cpp"
+#line 507 "trison_parser.cpp"
  << " RETURN" << std::endl)
             return true; // indicating the parser is returning
 
@@ -503,9 +514,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
                                                                // client error, so asserting here is ok.
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 509 "trison_parser.cpp"
+#line 520 "trison_parser.cpp"
  << " SHIFT " << Lookahead_(0) << std::endl)
             m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0).m_data));
             m_lookahead_queue_.pop_front();
@@ -513,9 +524,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
 
         case Transition_::ERROR_PANIC:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 519 "trison_parser.cpp"
+#line 530 "trison_parser.cpp"
  << " ERROR_PANIC" << std::endl)
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
@@ -530,9 +541,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 {
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 536 "trison_parser.cpp"
+#line 547 "trison_parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
@@ -550,7 +561,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
             NonterminalMap * nonterminal_map(Dsc<NonterminalMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 205 "trison_parser.trison"
+#line 215 "trison_parser.trison"
 
         assert(m_target_map != NULL);
         assert(target_map == m_target_map);
@@ -588,7 +599,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete default_parse_nonterminal_id;
         return primary_source;
     
-#line 592 "trison_parser.cpp"
+#line 603 "trison_parser.cpp"
             break;
         }
 
@@ -598,14 +609,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             CommonLang::TargetMap * target_map(Dsc<CommonLang::TargetMap *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 251 "trison_parser.trison"
+#line 261 "trison_parser.trison"
 
         assert(m_target_map == NULL);
         m_target_map = target_map;
         delete throwaway;
         return target_map;
     
-#line 609 "trison_parser.cpp"
+#line 620 "trison_parser.cpp"
             break;
         }
 
@@ -613,13 +624,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 259 "trison_parser.trison"
+#line 269 "trison_parser.trison"
 
         assert(m_target_map == NULL);
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     
-#line 623 "trison_parser.cpp"
+#line 634 "trison_parser.cpp"
             break;
         }
 
@@ -628,14 +639,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 266 "trison_parser.trison"
+#line 276 "trison_parser.trison"
 
         assert(m_target_map == NULL);
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         m_target_map = new CommonLang::TargetMap();
         return m_target_map;
     
-#line 639 "trison_parser.cpp"
+#line 650 "trison_parser.cpp"
             break;
         }
 
@@ -645,14 +656,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             CommonLang::TargetMap * target_map(Dsc<CommonLang::TargetMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 277 "trison_parser.trison"
+#line 287 "trison_parser.trison"
 
         CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
         target->EnableCodeGeneration();
         target_map->Add(target_id->GetText(), target);
         return target_map;
     
-#line 656 "trison_parser.cpp"
+#line 667 "trison_parser.cpp"
             break;
         }
 
@@ -660,12 +671,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 285 "trison_parser.trison"
+#line 295 "trison_parser.trison"
 
         assert(m_target_map == NULL);
         return new CommonLang::TargetMap();
     
-#line 669 "trison_parser.cpp"
+#line 680 "trison_parser.cpp"
             break;
         }
 
@@ -674,14 +685,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             CommonLang::TargetDirective * target_directive(Dsc<CommonLang::TargetDirective *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 298 "trison_parser.trison"
+#line 308 "trison_parser.trison"
 
         assert(m_target_map != NULL);
         if (target_directive != NULL)
             m_target_map->AddTargetDirective(target_directive);
         return NULL;
     
-#line 685 "trison_parser.cpp"
+#line 696 "trison_parser.cpp"
             break;
         }
 
@@ -689,13 +700,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 306 "trison_parser.trison"
+#line 316 "trison_parser.trison"
 
         if (m_target_map == NULL)
             m_target_map = new CommonLang::TargetMap();
         return NULL;
     
-#line 699 "trison_parser.cpp"
+#line 710 "trison_parser.cpp"
             break;
         }
 
@@ -707,12 +718,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::TextBase * param(Dsc<Ast::TextBase *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 316 "trison_parser.trison"
+#line 326 "trison_parser.trison"
 
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     
-#line 716 "trison_parser.cpp"
+#line 727 "trison_parser.cpp"
             break;
         }
 
@@ -723,7 +734,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
             Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 322 "trison_parser.trison"
+#line 332 "trison_parser.trison"
 
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -731,7 +742,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete target_directive;
         return NULL;
     
-#line 735 "trison_parser.cpp"
+#line 746 "trison_parser.cpp"
             break;
         }
 
@@ -741,14 +752,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 331 "trison_parser.trison"
+#line 341 "trison_parser.trison"
 
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
     
-#line 752 "trison_parser.cpp"
+#line 763 "trison_parser.cpp"
             break;
         }
 
@@ -757,13 +768,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 339 "trison_parser.trison"
+#line 349 "trison_parser.trison"
 
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 767 "trison_parser.cpp"
+#line 778 "trison_parser.cpp"
             break;
         }
 
@@ -772,9 +783,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Id * value(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 348 "trison_parser.trison"
+#line 358 "trison_parser.trison"
  return value; 
-#line 778 "trison_parser.cpp"
+#line 789 "trison_parser.cpp"
             break;
         }
 
@@ -783,9 +794,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::String * value(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 349 "trison_parser.trison"
+#line 359 "trison_parser.trison"
  return value; 
-#line 789 "trison_parser.cpp"
+#line 800 "trison_parser.cpp"
             break;
         }
 
@@ -794,9 +805,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 350 "trison_parser.trison"
+#line 360 "trison_parser.trison"
  return value; 
-#line 800 "trison_parser.cpp"
+#line 811 "trison_parser.cpp"
             break;
         }
 
@@ -805,9 +816,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 351 "trison_parser.trison"
+#line 361 "trison_parser.trison"
  return value; 
-#line 811 "trison_parser.cpp"
+#line 822 "trison_parser.cpp"
             break;
         }
 
@@ -815,9 +826,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 352 "trison_parser.trison"
+#line 362 "trison_parser.trison"
  return NULL; 
-#line 821 "trison_parser.cpp"
+#line 832 "trison_parser.cpp"
             break;
         }
 
@@ -826,12 +837,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             TerminalMap * terminal_map(Dsc<TerminalMap *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 362 "trison_parser.trison"
+#line 372 "trison_parser.trison"
 
         assert(terminal_map == m_terminal_map);
         return terminal_map;
     
-#line 835 "trison_parser.cpp"
+#line 846 "trison_parser.cpp"
             break;
         }
 
@@ -839,7 +850,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 368 "trison_parser.trison"
+#line 378 "trison_parser.trison"
 
         m_terminal_list = new TerminalList();
         m_terminal_map = new TerminalMap();
@@ -866,7 +877,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         return m_terminal_map;
     
-#line 870 "trison_parser.cpp"
+#line 881 "trison_parser.cpp"
             break;
         }
 
@@ -877,7 +888,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             TerminalList * terminal_list(Dsc<TerminalList *>(m_stack_[m_stack_.size()-3].m_token_data));
             TypeMap * assigned_type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 399 "trison_parser.trison"
+#line 409 "trison_parser.trison"
 
         assert(m_terminal_map != NULL);
         assert(terminal_list != NULL);
@@ -898,7 +909,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete terminal_list;
         return NULL;
     
-#line 902 "trison_parser.cpp"
+#line 913 "trison_parser.cpp"
             break;
         }
 
@@ -908,13 +919,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             TerminalList * terminal_list(Dsc<TerminalList *>(m_stack_[m_stack_.size()-2].m_token_data));
             Trison::Terminal * terminal(Dsc<Trison::Terminal *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 424 "trison_parser.trison"
+#line 434 "trison_parser.trison"
 
         if (terminal != NULL)
             terminal_list->Append(terminal);
         return terminal_list;
     
-#line 918 "trison_parser.cpp"
+#line 929 "trison_parser.cpp"
             break;
         }
 
@@ -923,14 +934,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Trison::Terminal * terminal(Dsc<Trison::Terminal *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 431 "trison_parser.trison"
+#line 441 "trison_parser.trison"
 
         TerminalList *terminal_list = new TerminalList();
         if (terminal != NULL)
             terminal_list->Append(terminal);
         return terminal_list;
     
-#line 934 "trison_parser.cpp"
+#line 945 "trison_parser.cpp"
             break;
         }
 
@@ -939,14 +950,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             PrecedenceMap * precedence_map(Dsc<PrecedenceMap *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 446 "trison_parser.trison"
+#line 456 "trison_parser.trison"
 
         assert(precedence_map != NULL);
         assert(m_precedence_map == precedence_map);
         assert(m_precedence_list != NULL);
         return precedence_map;
     
-#line 950 "trison_parser.cpp"
+#line 961 "trison_parser.cpp"
             break;
         }
 
@@ -954,7 +965,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 454 "trison_parser.trison"
+#line 464 "trison_parser.trison"
 
         assert(m_precedence_list == NULL);
         assert(m_precedence_map == NULL);
@@ -965,7 +976,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         m_precedence_map->Add("DEFAULT_", precedence);
         return m_precedence_map;
     
-#line 969 "trison_parser.cpp"
+#line 980 "trison_parser.cpp"
             break;
         }
 
@@ -975,7 +986,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 469 "trison_parser.trison"
+#line 479 "trison_parser.trison"
 
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
@@ -991,7 +1002,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete id;
         return m_precedence_map;
     
-#line 995 "trison_parser.cpp"
+#line 1006 "trison_parser.cpp"
             break;
         }
 
@@ -1002,7 +1013,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * associativity_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 486 "trison_parser.trison"
+#line 496 "trison_parser.trison"
 
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
@@ -1030,7 +1041,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete id;
         return m_precedence_map;
     
-#line 1034 "trison_parser.cpp"
+#line 1045 "trison_parser.cpp"
             break;
         }
 
@@ -1040,12 +1051,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 522 "trison_parser.trison"
+#line 532 "trison_parser.trison"
 
         delete throwaway;
         return id;
     
-#line 1049 "trison_parser.cpp"
+#line 1060 "trison_parser.cpp"
             break;
         }
 
@@ -1055,7 +1066,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             NonterminalMap * nonterminal_map(Dsc<NonterminalMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             Nonterminal * nonterminal(Dsc<Nonterminal *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 535 "trison_parser.trison"
+#line 545 "trison_parser.trison"
 
         assert(m_terminal_map != NULL);
         assert(m_nonterminal_list != NULL);
@@ -1066,7 +1077,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         }
         return nonterminal_map;
     
-#line 1070 "trison_parser.cpp"
+#line 1081 "trison_parser.cpp"
             break;
         }
 
@@ -1074,7 +1085,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 547 "trison_parser.trison"
+#line 557 "trison_parser.trison"
 
         assert(m_nonterminal_list == NULL);
         m_nonterminal_list = new NonterminalList();
@@ -1088,7 +1099,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         return nonterminal_map;
     
-#line 1092 "trison_parser.cpp"
+#line 1103 "trison_parser.cpp"
             break;
         }
 
@@ -1098,7 +1109,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Nonterminal * nonterminal(Dsc<Nonterminal *>(m_stack_[m_stack_.size()-4].m_token_data));
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 565 "trison_parser.trison"
+#line 575 "trison_parser.trison"
 
         if (nonterminal != NULL)
             nonterminal->SetRuleList(rule_list);
@@ -1106,7 +1117,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             delete rule_list;
         return nonterminal;
     
-#line 1110 "trison_parser.cpp"
+#line 1121 "trison_parser.cpp"
             break;
         }
 
@@ -1114,12 +1125,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 574 "trison_parser.trison"
+#line 584 "trison_parser.trison"
 
         EmitError("syntax error in nonterminal definition", GetFiLoc());
         return NULL;
     
-#line 1123 "trison_parser.cpp"
+#line 1134 "trison_parser.cpp"
             break;
         }
 
@@ -1130,7 +1141,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
             TypeMap * assigned_type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 583 "trison_parser.trison"
+#line 593 "trison_parser.trison"
 
         assert(m_terminal_map != NULL);
         assert(m_token_index >= 0x100);
@@ -1148,7 +1159,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete id;
         return nonterminal;
     
-#line 1152 "trison_parser.cpp"
+#line 1163 "trison_parser.cpp"
             break;
         }
 
@@ -1157,14 +1168,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 602 "trison_parser.trison"
+#line 612 "trison_parser.trison"
 
         assert(throwaway != NULL);
         EmitError("syntax error while parsing nonterminal specification", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 1168 "trison_parser.cpp"
+#line 1179 "trison_parser.cpp"
             break;
         }
 
@@ -1174,7 +1185,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 610 "trison_parser.trison"
+#line 620 "trison_parser.trison"
 
         assert(id != NULL);
         EmitError("syntax error in %nonterminal directive", id->GetFiLoc());
@@ -1182,7 +1193,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete id;
         return NULL;
     
-#line 1186 "trison_parser.cpp"
+#line 1197 "trison_parser.cpp"
             break;
         }
 
@@ -1192,12 +1203,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-3].m_token_data));
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 626 "trison_parser.trison"
+#line 636 "trison_parser.trison"
 
         rule_list->Append(rule);
         return rule_list;
     
-#line 1201 "trison_parser.cpp"
+#line 1212 "trison_parser.cpp"
             break;
         }
 
@@ -1206,13 +1217,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 632 "trison_parser.trison"
+#line 642 "trison_parser.trison"
 
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
     
-#line 1216 "trison_parser.cpp"
+#line 1227 "trison_parser.cpp"
             break;
         }
 
@@ -1222,12 +1233,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-2].m_token_data));
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 642 "trison_parser.trison"
+#line 652 "trison_parser.trison"
 
         rule->m_rule_handler_map = rule_handler_map;
         return rule;
     
-#line 1231 "trison_parser.cpp"
+#line 1242 "trison_parser.cpp"
             break;
         }
 
@@ -1237,7 +1248,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             RuleTokenList * rule_token_list(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::Id * rule_precedence_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 651 "trison_parser.trison"
+#line 661 "trison_parser.trison"
 
         Precedence *rule_precedence;
         if (rule_precedence_directive == NULL)
@@ -1252,7 +1263,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete rule_precedence_directive;
         return rule;
     
-#line 1256 "trison_parser.cpp"
+#line 1267 "trison_parser.cpp"
             break;
         }
 
@@ -1262,13 +1273,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             CommonLang::RuleHandler * rule_handler(Dsc<CommonLang::RuleHandler *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 670 "trison_parser.trison"
+#line 680 "trison_parser.trison"
 
         if (rule_handler != NULL)
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
     
-#line 1272 "trison_parser.cpp"
+#line 1283 "trison_parser.cpp"
             break;
         }
 
@@ -1276,11 +1287,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 677 "trison_parser.trison"
+#line 687 "trison_parser.trison"
 
         return new CommonLang::RuleHandlerMap();
     
-#line 1284 "trison_parser.cpp"
+#line 1295 "trison_parser.cpp"
             break;
         }
 
@@ -1291,7 +1302,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 685 "trison_parser.trison"
+#line 695 "trison_parser.trison"
 
         delete throwaway;
         assert(m_target_map != NULL);
@@ -1301,7 +1312,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
                 target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     
-#line 1305 "trison_parser.cpp"
+#line 1316 "trison_parser.cpp"
             break;
         }
 
@@ -1311,7 +1322,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 696 "trison_parser.trison"
+#line 706 "trison_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -1319,7 +1330,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete code_block;
         return NULL;
     
-#line 1323 "trison_parser.cpp"
+#line 1334 "trison_parser.cpp"
             break;
         }
 
@@ -1328,14 +1339,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 705 "trison_parser.trison"
+#line 715 "trison_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 1339 "trison_parser.cpp"
+#line 1350 "trison_parser.cpp"
             break;
         }
 
@@ -1344,14 +1355,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 713 "trison_parser.trison"
+#line 723 "trison_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     
-#line 1355 "trison_parser.cpp"
+#line 1366 "trison_parser.cpp"
             break;
         }
 
@@ -1361,12 +1372,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             RuleTokenList * rule_token_list(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-2].m_token_data));
             RuleToken * rule_token(Dsc<RuleToken *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 724 "trison_parser.trison"
+#line 734 "trison_parser.trison"
 
         rule_token_list->Append(rule_token);
         return rule_token_list;
     
-#line 1370 "trison_parser.cpp"
+#line 1381 "trison_parser.cpp"
             break;
         }
 
@@ -1374,11 +1385,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 730 "trison_parser.trison"
+#line 740 "trison_parser.trison"
 
         return new RuleTokenList();
     
-#line 1382 "trison_parser.cpp"
+#line 1393 "trison_parser.cpp"
             break;
         }
 
@@ -1388,7 +1399,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             TokenId * token_id(Dsc<TokenId *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 738 "trison_parser.trison"
+#line 748 "trison_parser.trison"
 
         RuleToken *rule_token =
             token_id != NULL ?
@@ -1398,7 +1409,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete assigned_id;
         return rule_token;
     
-#line 1402 "trison_parser.cpp"
+#line 1413 "trison_parser.cpp"
             break;
         }
 
@@ -1407,7 +1418,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             TokenId * token_id(Dsc<TokenId *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 749 "trison_parser.trison"
+#line 759 "trison_parser.trison"
 
         RuleToken *rule_token =
             token_id != NULL ?
@@ -1416,7 +1427,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete token_id;
         return rule_token;
     
-#line 1420 "trison_parser.cpp"
+#line 1431 "trison_parser.cpp"
             break;
         }
 
@@ -1425,13 +1436,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 759 "trison_parser.trison"
+#line 769 "trison_parser.trison"
 
         RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
         delete throwaway;
         return rule_token;
     
-#line 1435 "trison_parser.cpp"
+#line 1446 "trison_parser.cpp"
             break;
         }
 
@@ -1441,12 +1452,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 769 "trison_parser.trison"
+#line 779 "trison_parser.trison"
 
         delete throwaway;
         return id;
     
-#line 1450 "trison_parser.cpp"
+#line 1461 "trison_parser.cpp"
             break;
         }
 
@@ -1454,11 +1465,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 775 "trison_parser.trison"
+#line 785 "trison_parser.trison"
 
         return NULL;
     
-#line 1462 "trison_parser.cpp"
+#line 1473 "trison_parser.cpp"
             break;
         }
 
@@ -1466,9 +1477,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 786 "trison_parser.trison"
+#line 796 "trison_parser.trison"
  return NULL; 
-#line 1472 "trison_parser.cpp"
+#line 1483 "trison_parser.cpp"
             break;
         }
 
@@ -1476,9 +1487,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 788 "trison_parser.trison"
+#line 798 "trison_parser.trison"
  return NULL; 
-#line 1482 "trison_parser.cpp"
+#line 1493 "trison_parser.cpp"
             break;
         }
 
@@ -1486,9 +1497,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 793 "trison_parser.trison"
+#line 803 "trison_parser.trison"
  return NULL; 
-#line 1492 "trison_parser.cpp"
+#line 1503 "trison_parser.cpp"
             break;
         }
 
@@ -1496,9 +1507,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 795 "trison_parser.trison"
+#line 805 "trison_parser.trison"
  return NULL; 
-#line 1502 "trison_parser.cpp"
+#line 1513 "trison_parser.cpp"
             break;
         }
 
@@ -1507,7 +1518,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 801 "trison_parser.trison"
+#line 811 "trison_parser.trison"
 
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
@@ -1515,7 +1526,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete id;
         return token_id;
     
-#line 1519 "trison_parser.cpp"
+#line 1530 "trison_parser.cpp"
             break;
         }
 
@@ -1524,7 +1535,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 810 "trison_parser.trison"
+#line 820 "trison_parser.trison"
 
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
@@ -1532,7 +1543,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete ch;
         return token_id;
     
-#line 1536 "trison_parser.cpp"
+#line 1547 "trison_parser.cpp"
             break;
         }
 
@@ -1541,9 +1552,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 821 "trison_parser.trison"
+#line 831 "trison_parser.trison"
  return new Trison::Terminal(id, m_token_index++); 
-#line 1547 "trison_parser.cpp"
+#line 1558 "trison_parser.cpp"
             break;
         }
 
@@ -1552,9 +1563,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 823 "trison_parser.trison"
+#line 833 "trison_parser.trison"
  return new Trison::Terminal(ch); 
-#line 1558 "trison_parser.cpp"
+#line 1569 "trison_parser.cpp"
             break;
         }
 
@@ -1563,9 +1574,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 828 "trison_parser.trison"
+#line 838 "trison_parser.trison"
  return dumb_code_block; 
-#line 1569 "trison_parser.cpp"
+#line 1580 "trison_parser.cpp"
             break;
         }
 
@@ -1574,9 +1585,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 830 "trison_parser.trison"
+#line 840 "trison_parser.trison"
  return strict_code_block; 
-#line 1580 "trison_parser.cpp"
+#line 1591 "trison_parser.cpp"
             break;
         }
 
@@ -1588,7 +1599,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::String * assigned_type(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 836 "trison_parser.trison"
+#line 846 "trison_parser.trison"
 
         assert(type_map != NULL);
         assert(target_id != NULL);
@@ -1598,7 +1609,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete target_id;
         return type_map;
     
-#line 1602 "trison_parser.cpp"
+#line 1613 "trison_parser.cpp"
             break;
         }
 
@@ -1606,11 +1617,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 847 "trison_parser.trison"
+#line 857 "trison_parser.trison"
 
         return new TypeMap();
     
-#line 1614 "trison_parser.cpp"
+#line 1625 "trison_parser.cpp"
             break;
         }
 
@@ -1625,9 +1636,9 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     assert(!m_stack_.empty());
 
     stream << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 1631 "trison_parser.cpp"
+#line 1642 "trison_parser.cpp"
  << " parser stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -1646,17 +1657,17 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
 {
     assert(string != NULL);
     stream << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 1652 "trison_parser.cpp"
+#line 1663 "trison_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
         if (*string == '\n')
             stream << '\n' << 
-#line 165 "trison_parser.trison"
+#line 175 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 1660 "trison_parser.cpp"
+#line 1671 "trison_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -2813,13 +2824,18 @@ BarfCpp_::Size const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 96 "trison_parser.trison"
+#line 101 "trison_parser.trison"
 
 bool Parser::OpenFile (string const &input_filename)
 {
-    return m_scanner.OpenFile(input_filename);
+    ResetForNewInput();
+    EmitExecutionMessage("opening file \"" + input_filename + "\" for input");
+    bool scanner_open_file_succeeded = m_scanner.OpenFile(input_filename);
+    if (scanner_open_file_succeeded)
+        EmitExecutionMessage("opened file \"" + input_filename + "\" successfully");
+    return scanner_open_file_succeeded;
 }
 
 } // end of namespace Trison
 
-#line 2826 "trison_parser.cpp"
+#line 2842 "trison_parser.cpp"

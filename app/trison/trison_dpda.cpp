@@ -2169,7 +2169,7 @@ void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph,
         nonterminal->SetDpdaGraphStates(graph_context.DpdaStateIndex(nonterminal_start_npda.CurrentDpdaState()));
     }
 
-    cerr << "LALR(" << graph_context.LalrLookaheadCount() << ')' << endl;
+    EmitExecutionMessage(FORMAT("grammar is LALR(" << graph_context.LalrLookaheadCount() << ')'));
 }
 
 void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_graph, ostream &stream)

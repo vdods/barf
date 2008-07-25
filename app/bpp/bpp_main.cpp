@@ -47,33 +47,48 @@ int main (int argc, char **argv)
             return 0;
         }
 
+        EmitExecutionMessage("beginning execution");
         Preprocessor::Parser parser;
         parser.ScannerDebugSpew(GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER));
         parser.DebugSpew(GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
 
         if (GetBppOptions().GetInputFilename() == "-" || GetBppOptions().GetInputFilename().empty())
         {
+            EmitExecutionMessage("using <stdin> for input");
             g_options->SetInputFilename("<stdin>");
             parser.OpenUsingStream(&cin, GetBppOptions().GetInputFilename(), true);
         }
-
-        else if (!parser.OpenFile(GetBppOptions().GetInputFilename()))
+        else
         {
-            EmitError("file not found: \"" + GetBppOptions().GetInputFilename() + "\"");
-            return 2;
+            EmitExecutionMessage("opening file \"" + GetBppOptions().GetInputFilename() + "\" for input");
+            if (parser.OpenFile(GetBppOptions().GetInputFilename()))
+            {
+                EmitExecutionMessage("opened file \"" + GetBppOptions().GetInputFilename() + "\" successfully");
+            }
+            else
+            {
+                EmitError("file not found: \"" + GetBppOptions().GetInputFilename() + "\"");
+                return 2;
+            }
         }
 
         ostream *out = NULL;
         ofstream out_fstream;
         if (GetBppOptions().GetOutputFilename() == "-" || GetBppOptions().GetOutputFilename().empty())
         {
+            EmitExecutionMessage("using <stdout> for output");
             g_options->SetOutputFilename("<stdout>");
             out = &cout;
         }
         else
         {
+            EmitExecutionMessage("opening file \"" + GetBppOptions().GetOutputFilename() + "\" for output");
             out_fstream.open(GetBppOptions().GetOutputFilename().c_str(), ofstream::out|ofstream::trunc);
-            if (!out_fstream.is_open())
+            if (out_fstream.is_open())
+            {
+                EmitExecutionMessage("opened file \"" + GetBppOptions().GetOutputFilename() + "\" successfully");
+            }
+            else
             {
                 EmitError("unable to open file \"" + GetBppOptions().GetOutputFilename() + "\" for writing");
                 return 3;
@@ -98,6 +113,7 @@ int main (int argc, char **argv)
         if (GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_AST))
             body->Print(cerr);
 
+        EmitExecutionMessage("preprocessing input and generating output");
         Preprocessor::Textifier textifier(*out, GetBppOptions().GetOutputFilename());
         textifier.SetGeneratesLineDirectives(false);
         Preprocessor::SymbolTable symbol_table;
@@ -106,6 +122,7 @@ int main (int argc, char **argv)
             return 6;
 
         delete body;
+        EmitExecutionMessage("ending execution successfully");
     }
     catch (string const &exception)
     {

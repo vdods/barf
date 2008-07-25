@@ -92,11 +92,21 @@ namespace Trison {
     m_precedence_map = NULL;
     m_nonterminal_list = NULL;
     m_rule_count = 0;
+    EmitExecutionMessage("starting trison parser");
+%}
+%target.cpp.end_of_parse_method_actions %{
+    if (parse_return_code == PRC_SUCCESS)
+        EmitExecutionMessage("trison parse was successful");
 %}
 %target.cpp.bottom_of_implementation_file %{
 bool Parser::OpenFile (string const &input_filename)
 {
-    return m_scanner.OpenFile(input_filename);
+    ResetForNewInput();
+    EmitExecutionMessage("opening file \"" + input_filename + "\" for input");
+    bool scanner_open_file_succeeded = m_scanner.OpenFile(input_filename);
+    if (scanner_open_file_succeeded)
+        EmitExecutionMessage("opened file \"" + input_filename + "\" successfully");
+    return scanner_open_file_succeeded;
 }
 
 } // end of namespace Trison

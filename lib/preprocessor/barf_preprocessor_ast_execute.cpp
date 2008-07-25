@@ -219,11 +219,13 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
     if (m_include_body_root == NULL)
     {
+        string filename_expression(m_include_filename_expression->GetTextValue(symbol_table));
+        EmitExecutionMessage("preprocessor encountered include(\"" + filename_expression + "\") directive");
         Parser parser;
         // figure out the pathname from the targets search path
         string filename(
             GetOptions().GetTargetsSearchPath().GetFilePath(
-                m_include_filename_expression->GetTextValue(symbol_table)));
+                filename_expression));
         if (!parser.OpenFile(filename))
         {
             EmitError("file \"" + filename + "\" not found", GetFiLoc());

@@ -17,14 +17,20 @@
 
 namespace Barf {
 
+void EmitExecutionMessage (string const &message)
+{
+    if (GetOptions().GetIsVerbose(OptionsBase::V_EXECUTION))
+        cerr << GetOptions().GetProgramName() << ": " << message << endl;
+}
+
 void EmitWarning (string const &message, FiLoc const &filoc)
 {
     if (OptionsAreInitialized() && GetOptions().GetTreatWarningsAsErrors())
         EmitError(message, filoc);
     else if (filoc.GetIsValid())
-        cerr << filoc << ": warning: " << message << endl;
+        cerr << GetOptions().GetProgramName() << ": " << filoc << ": warning: " << message << endl;
     else
-        cerr << "warning: " << message << endl;
+        cerr << GetOptions().GetProgramName() << ": " << "warning: " << message << endl;
 }
 
 void EmitError (string const &message, FiLoc const &filoc)
@@ -39,9 +45,9 @@ void EmitError (string const &message, FiLoc const &filoc)
             assert(false && "you have requested to assert on error, human, and here it is");
 #endif
         if (filoc.GetIsValid())
-            cerr << filoc << ": error: " << message << endl;
+            cerr << GetOptions().GetProgramName() << ": " << filoc << ": error: " << message << endl;
         else
-            cerr << "error: " << message << endl;
+            cerr << GetOptions().GetProgramName() << ": " << "error: " << message << endl;
     }
 }
 
@@ -53,9 +59,9 @@ void EmitFatalError (string const &message, FiLoc const &filoc)
         assert(false && "you have requested to assert on error, human, and here it is");
 #endif
     if (filoc.GetIsValid())
-        THROW_STRING(filoc << ": fatal error: " << message);
+        THROW_STRING(GetOptions().GetProgramName() << ": " << filoc << ": fatal error: " << message);
     else
-        THROW_STRING("fatal error: " << message);
+        THROW_STRING(GetOptions().GetProgramName() << ": " << "fatal error: " << message);
 }
 
 } // end of namespace Barf
