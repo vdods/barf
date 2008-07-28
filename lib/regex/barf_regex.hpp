@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_REGEX_HPP_)
-#define _BARF_REGEX_HPP_
+#if !defined(BARF_REGEX_HPP_)
+#define BARF_REGEX_HPP_
 
 // EVERY HPP AND CPP FILE IN REGEX SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN REGEX SHOULD INCLUDE THIS FILE
@@ -64,4 +64,4 @@ ConditionalType GetConditionalTypeFromConditional (Conditional &conditional);
 } // end of namespace Regex
 } // end of namespace Barf
 
-#endif // !defined(_BARF_REGEX_HPP_)
+#endif // !defined(BARF_REGEX_HPP_)

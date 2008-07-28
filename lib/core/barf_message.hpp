@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_MESSAGE_HPP_)
-#define _BARF_MESSAGE_HPP_
+#if !defined(BARF_MESSAGE_HPP_)
+#define BARF_MESSAGE_HPP_
 
 #include "barf.hpp"
 
@@ -27,4 +27,4 @@ void EmitFatalError (string const &message, FiLoc const &filoc = FiLoc::ms_inval
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_MESSAGE_HPP_)
+#endif // !defined(BARF_MESSAGE_HPP_)

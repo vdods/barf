@@ -16,8 +16,8 @@
 
 
 %target.cpp.top_of_header_file %{
-#if !defined(_CALCULATOR_PARSER_HPP_)
-#define _CALCULATOR_PARSER_HPP_
+#if !defined(CALCULATOR_PARSER_HPP_)
+#define CALCULATOR_PARSER_HPP_
 
 #include "calculator.hpp"
 
@@ -42,7 +42,7 @@ private:
 %target.cpp.bottom_of_header_file %{
 } // end of namespace Calculator
 
-#endif // !defined(_CALCULATOR_PARSER_HPP_)
+#endif // !defined(CALCULATOR_PARSER_HPP_)
 %}
 
 

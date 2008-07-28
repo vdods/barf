@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_REFLEX_CODESPECSYMBOLS_HPP_)
-#define _REFLEX_CODESPECSYMBOLS_HPP_
+#if !defined(REFLEX_CODESPECSYMBOLS_HPP_)
+#define REFLEX_CODESPECSYMBOLS_HPP_
 
 #include "reflex.hpp"
 
@@ -37,4 +37,4 @@ void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string
 
 } // end of namespace Reflex
 
-#endif // !defined(_REFLEX_CODESPECSYMBOLS_HPP_)
+#endif // !defined(REFLEX_CODESPECSYMBOLS_HPP_)

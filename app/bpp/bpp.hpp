@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BPP_HPP_)
-#define _BPP_HPP_
+#if !defined(BPP_HPP_)
+#define BPP_HPP_
 
 // EVERY HPP AND CPP FILE IN BPP SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN BPP SHOULD INCLUDE THIS FILE
@@ -23,4 +23,4 @@ namespace Bpp {
 
 } // end of namespace Bpp
 
-#endif // !defined(_BPP_HPP_)
+#endif // !defined(BPP_HPP_)

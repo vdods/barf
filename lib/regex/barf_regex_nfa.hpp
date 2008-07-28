@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_REGEX_NFA_HPP_)
-#define _BARF_REGEX_NFA_HPP_
+#if !defined(BARF_REGEX_NFA_HPP_)
+#define BARF_REGEX_NFA_HPP_
 
 #include "barf_regex.hpp"
 
@@ -86,4 +86,4 @@ void GenerateNfa (RegularExpression const &regular_expression, Graph &nfa_graph,
 } // end of namespace Regex
 } // end of namespace Barf
 
-#endif // !defined(_BARF_REGEX_NFA_HPP_)
+#endif // !defined(BARF_REGEX_NFA_HPP_)

@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_COMPILETIMEASSERTS_HPP_)
-#define _BARF_COMPILETIMEASSERTS_HPP_
+#if !defined(BARF_COMPILETIMEASSERTS_HPP_)
+#define BARF_COMPILETIMEASSERTS_HPP_
 
 #include "barf.hpp"
 
@@ -40,4 +40,4 @@ ThisCompileErrorIsActuallyAFailedCompileTimeAssert<bool(x)>::BLAH
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_COMPILETIMEASSERTS_HPP_)
+#endif // !defined(BARF_COMPILETIMEASSERTS_HPP_)

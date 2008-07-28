@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_PREPROCESSOR_HPP_)
-#define _BARF_PREPROCESSOR_HPP_
+#if !defined(BARF_PREPROCESSOR_HPP_)
+#define BARF_PREPROCESSOR_HPP_
 
 // EVERY HPP AND CPP FILE IN PREPROCESSOR SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN PREPROCESSOR SHOULD INCLUDE THIS FILE
@@ -23,4 +23,4 @@ namespace Preprocessor {
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#endif // !defined(_BARF_PREPROCESSOR_HPP_)
+#endif // !defined(BARF_PREPROCESSOR_HPP_)

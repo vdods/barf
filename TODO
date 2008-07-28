@@ -9,7 +9,6 @@
   will be installed.
 - guarantee that errors will be reported such that the line numbers never
   decrease.
-- improve the parser/scanner/ast verbosity (i.e. prefix each line with a label)
 - bug: getting "file not found" error when a file exists but the permissions
   are such that the user can't read it.
 * add lots of error rules to all parser grammars
@@ -22,8 +21,8 @@
 - add recursive block comments into barf_commonlang_scanner.reflex (think
   about how this will interact with other-languaged code blocks)
 - add _barf_version to preprocessor shit?
-- add targetspec versions -- so you can have multiple coexisting versions of
-  the same target but at different versions.
+- add targetspec versions -- so you can compile/link multiple coexisting
+  versions of the same target but at different versions.
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
@@ -38,7 +37,6 @@ $ move all AST usage to smart pointers to ease-ify stuff and to escape the
 - use Ast::Directive::GetDirectiveString in error messages instead of
   creating the error messages by hand -- make all directives derive from
   Ast::Directive
-- make wrapper for opening files so that execution debug spew is automatic.
 - file locations should be "2d range" -- a starting line/column and an ending
   line/column (or starting line/column and a number of bytes following).
   nonterminal expressions can then be the union of the file locations of their
@@ -49,10 +47,7 @@ $ move all AST usage to smart pointers to ease-ify stuff and to escape the
   functions which operate on them (unless it's more practical to use member
   functions in a particular case).  this will make the separation of systems
   clearer.
-- add some path-checking function -- i.e. to check for newlines and other stuff
-- change _TRISON_SCANNER_HPP_ to TRISON_SCANNER_HPP_ (in the ifndef include
-  thingies), since underscore-affixed identifiers are technically reserved
-  by the compiler.
+- add filename-sanitizing function -- i.e. to check for newlines and other stuff
 - the help display for trison and reflex is getting pretty long, consider
   making a help system more like svn
 - get rid of Get/Set prefixes on accessors/modifiers, using method overloading

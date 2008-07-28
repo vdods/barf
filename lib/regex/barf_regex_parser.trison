@@ -16,8 +16,8 @@
 
 
 %target.cpp.top_of_header_file %{
-#if !defined(_BARF_REGEX_PARSER_HPP_)
-#define _BARF_REGEX_PARSER_HPP_
+#if !defined(BARF_REGEX_PARSER_HPP_)
+#define BARF_REGEX_PARSER_HPP_
 
 #include "barf_regex.hpp"
 
@@ -60,7 +60,7 @@ private:
 } // end of namespace Regex
 } // end of namespace Barf
 
-#endif // !defined(_BARF_REGEX_PARSER_HPP_)
+#endif // !defined(BARF_REGEX_PARSER_HPP_)
 %}
 
 

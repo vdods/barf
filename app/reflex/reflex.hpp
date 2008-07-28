@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_REFLEX_HPP_)
-#define _REFLEX_HPP_
+#if !defined(REFLEX_HPP_)
+#define REFLEX_HPP_
 
 // EVERY HPP AND CPP FILE IN REFLEX SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN REFLEX SHOULD INCLUDE THIS FILE
@@ -23,4 +23,4 @@ namespace Reflex {
 
 } // end of namespace Reflex
 
-#endif // !defined(_REFLEX_HPP_)
+#endif // !defined(REFLEX_HPP_)

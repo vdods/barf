@@ -505,8 +505,8 @@ private:
 
 #line 19 "barf_commonlang_scanner.reflex"
 
-#if !defined(_BARF_COMMONLANG_SCANNER_HPP_)
-#define _BARF_COMMONLANG_SCANNER_HPP_
+#if !defined(BARF_COMMONLANG_SCANNER_HPP_)
+#define BARF_COMMONLANG_SCANNER_HPP_
 
 #include "barf_commonlang.hpp"
 
@@ -682,6 +682,6 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 } // end of namespace CommonLang
 } // end of namespace Barf
 
-#endif // !defined(_BARF_COMMONLANG_SCANNER_HPP_)
+#endif // !defined(BARF_COMMONLANG_SCANNER_HPP_)
 
 #line 688 "barf_commonlang_scanner.hpp"

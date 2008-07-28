@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_CODESPECSYMBOLS_HPP_)
-#define _TRISON_CODESPECSYMBOLS_HPP_
+#if !defined(TRISON_CODESPECSYMBOLS_HPP_)
+#define TRISON_CODESPECSYMBOLS_HPP_
 
 #include "trison.hpp"
 
@@ -35,4 +35,4 @@ void GenerateTargetDependentSymbols(PrimarySource const &primary_source, string 
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_CODESPECSYMBOLS_HPP_)
+#endif // !defined(TRISON_CODESPECSYMBOLS_HPP_)

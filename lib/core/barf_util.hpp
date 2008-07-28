@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_UTIL_HPP_)
-#define _BARF_UTIL_HPP_
+#if !defined(BARF_UTIL_HPP_)
+#define BARF_UTIL_HPP_
 
 #include "barf.hpp"
 
@@ -81,4 +81,4 @@ string GetCurrentDateAndTimeString ();
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_UTIL_HPP_)
+#endif // !defined(BARF_UTIL_HPP_)

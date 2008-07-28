@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_DPDA_HPP_)
-#define _TRISON_DPDA_HPP_
+#if !defined(TRISON_DPDA_HPP_)
+#define TRISON_DPDA_HPP_
 
 #include "trison.hpp"
 
@@ -47,4 +47,4 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_DPDA_HPP_)
+#endif // !defined(TRISON_DPDA_HPP_)

@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_OPTIONS_HPP_)
-#define _TRISON_OPTIONS_HPP_
+#if !defined(TRISON_OPTIONS_HPP_)
+#define TRISON_OPTIONS_HPP_
 
 #include "trison.hpp"
 
@@ -45,4 +45,4 @@ private:
 
 inline Trison::Options const &GetTrisonOptions () { return *Dsc<Trison::Options const *>(&GetOptions()); }
 
-#endif // !defined(_TRISON_OPTIONS_HPP_)
+#endif // !defined(TRISON_OPTIONS_HPP_)

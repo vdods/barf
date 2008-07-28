@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_ENUMS_HPP_)
-#define _BARF_ENUMS_HPP_
+#if !defined(BARF_ENUMS_HPP_)
+#define BARF_ENUMS_HPP_
 
 #include "barf.hpp"
 
@@ -19,4 +19,4 @@ namespace Barf {
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_ENUMS_HPP_)
+#endif // !defined(BARF_ENUMS_HPP_)

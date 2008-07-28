@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_TYPES_HPP_)
-#define _BARF_TYPES_HPP_
+#if !defined(BARF_TYPES_HPP_)
+#define BARF_TYPES_HPP_
 
 // this file is included in barf.h, so it doesn't need to include barf.h
 
@@ -51,4 +51,4 @@ typedef string const &(*StringifyAstType)(AstType);
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_TYPES_HPP_)
+#endif // !defined(BARF_TYPES_HPP_)

@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_COMMONLANG_HPP_)
-#define _BARF_COMMONLANG_HPP_
+#if !defined(BARF_COMMONLANG_HPP_)
+#define BARF_COMMONLANG_HPP_
 
 // EVERY HPP AND CPP FILE IN COMMONLANG SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN COMMONLANG SHOULD INCLUDE THIS FILE
@@ -23,4 +23,4 @@ namespace CommonLang {
 } // end of namespace CommonLang
 } // end of namespace Barf
 
-#endif // !defined(_BARF_COMMONLANG_HPP_)
+#endif // !defined(BARF_COMMONLANG_HPP_)

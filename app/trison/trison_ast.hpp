@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_AST_HPP_)
-#define _TRISON_AST_HPP_
+#if !defined(TRISON_AST_HPP_)
+#define TRISON_AST_HPP_
 
 #include "trison.hpp"
 
@@ -345,4 +345,4 @@ private:
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_AST_HPP_)
+#endif // !defined(TRISON_AST_HPP_)

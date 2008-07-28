@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_GRAPH_HPP_)
-#define _TRISON_GRAPH_HPP_
+#if !defined(TRISON_GRAPH_HPP_)
+#define TRISON_GRAPH_HPP_
 
 #include "trison.hpp"
 
@@ -62,4 +62,4 @@ Graph::Transition DpdaErrorPanicTransition ();
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_GRAPH_HPP_)
+#endif // !defined(TRISON_GRAPH_HPP_)

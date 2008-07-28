@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_REFLEX_AST_HPP_)
-#define _REFLEX_AST_HPP_
+#if !defined(REFLEX_AST_HPP_)
+#define REFLEX_AST_HPP_
 
 #include "reflex.hpp"
 
@@ -177,4 +177,4 @@ public:
 
 } // end of namespace Reflex
 
-#endif // !defined(_REFLEX_AST_HPP_)
+#endif // !defined(REFLEX_AST_HPP_)

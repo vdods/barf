@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_REFLEX_AUTOMATON_HPP_)
-#define _REFLEX_AUTOMATON_HPP_
+#if !defined(REFLEX_AUTOMATON_HPP_)
+#define REFLEX_AUTOMATON_HPP_
 
 #include "reflex.hpp"
 
@@ -31,4 +31,4 @@ void GenerateDfa (PrimarySource const &primary_source, Automaton const &nfa, Uin
 
 } // end of namespace Reflex
 
-#endif // !defined(_REFLEX_AUTOMATON_HPP_)
+#endif // !defined(REFLEX_AUTOMATON_HPP_)

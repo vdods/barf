@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_TARGETSPEC_HPP_)
-#define _BARF_TARGETSPEC_HPP_
+#if !defined(BARF_TARGETSPEC_HPP_)
+#define BARF_TARGETSPEC_HPP_
 
 // EVERY HPP AND CPP FILE IN TARGETSPEC SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN TARGETSPEC SHOULD INCLUDE THIS FILE
@@ -23,4 +23,4 @@ namespace Targetspec {
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_TARGETSPEC_HPP_)
+#endif // !defined(BARF_TARGETSPEC_HPP_)

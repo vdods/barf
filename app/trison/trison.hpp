@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_HPP_)
-#define _TRISON_HPP_
+#if !defined(TRISON_HPP_)
+#define TRISON_HPP_
 
 // EVERY HPP AND CPP FILE IN TRISON SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN TRISON SHOULD INCLUDE THIS FILE
@@ -25,4 +25,4 @@ namespace Trison {
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_HPP_)
+#endif // !defined(TRISON_HPP_)

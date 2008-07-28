@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_HPP_)
-#define _BARF_HPP_
+#if !defined(BARF_HPP_)
+#define BARF_HPP_
 
 // EVERY HPP AND CPP FILE IN BARF SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN BARF SHOULD INCLUDE THIS FILE
@@ -96,4 +96,4 @@ bool Contains (ContainerType &container, KeyType const &key, IteratorType &it)
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_HPP_)
+#endif // !defined(BARF_HPP_)

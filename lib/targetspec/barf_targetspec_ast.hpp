@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_TARGETSPEC_AST_HPP_)
-#define _BARF_TARGETSPEC_AST_HPP_
+#if !defined(BARF_TARGETSPEC_AST_HPP_)
+#define BARF_TARGETSPEC_AST_HPP_
 
 #include "barf_targetspec.hpp"
 
@@ -207,4 +207,4 @@ struct SpecificationMap : public Ast::AstMap<Specification>
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_TARGETSPEC_AST_HPP_)
+#endif // !defined(BARF_TARGETSPEC_AST_HPP_)

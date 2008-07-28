@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_NPDA_HPP_)
-#define _TRISON_NPDA_HPP_
+#if !defined(TRISON_NPDA_HPP_)
+#define TRISON_NPDA_HPP_
 
 #include "trison.hpp"
 
@@ -44,4 +44,4 @@ void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph);
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_NPDA_HPP_)
+#endif // !defined(TRISON_NPDA_HPP_)

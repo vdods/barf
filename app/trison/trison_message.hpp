@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_MESSAGE_HPP_)
-#define _TRISON_MESSAGE_HPP_
+#if !defined(TRISON_MESSAGE_HPP_)
+#define TRISON_MESSAGE_HPP_
 
 #include "trison.hpp"
 
@@ -21,4 +21,4 @@ void EmitConflictWarning (string const &message);
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_MESSAGE_HPP_)
+#endif // !defined(TRISON_MESSAGE_HPP_)

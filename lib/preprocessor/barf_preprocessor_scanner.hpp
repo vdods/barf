@@ -505,8 +505,8 @@ private:
 
 #line 19 "barf_preprocessor_scanner.reflex"
 
-#if !defined(_BARF_PREPROCESSOR_SCANNER_NEW_HPP_)
-#define _BARF_PREPROCESSOR_SCANNER_NEW_HPP_
+#if !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
+#define BARF_PREPROCESSOR_SCANNER_HPP_
 
 #include "barf_preprocessor.hpp"
 
@@ -626,6 +626,6 @@ private:
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#endif // !defined(_BARF_PREPROCESSOR_SCANNER_NEW_HPP_)
+#endif // !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 
 #line 632 "barf_preprocessor_scanner.hpp"

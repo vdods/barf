@@ -16,8 +16,8 @@
 
 
 %target.cpp.top_of_header_file %{
-#if !defined(_TRISON_PARSER_HPP_)
-#define _TRISON_PARSER_HPP_
+#if !defined(TRISON_PARSER_HPP_)
+#define TRISON_PARSER_HPP_
 
 #include "trison.hpp"
 
@@ -72,7 +72,7 @@ private:
 %target.cpp.bottom_of_header_file %{
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_PARSER_HPP_)
+#endif // !defined(TRISON_PARSER_HPP_)
 %}
 
 

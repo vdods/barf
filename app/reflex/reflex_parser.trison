@@ -16,8 +16,8 @@
 
 
 %target.cpp.top_of_header_file %{
-#if !defined(_REFLEX_PARSER_HPP_)
-#define _REFLEX_PARSER_HPP_
+#if !defined(REFLEX_PARSER_HPP_)
+#define REFLEX_PARSER_HPP_
 
 #include "reflex.hpp"
 
@@ -65,7 +65,7 @@ private:
 %target.cpp.bottom_of_header_file%{
 } // end of namespace Reflex
 
-#endif // !defined(_REFLEX_PARSER_HPP_)
+#endif // !defined(REFLEX_PARSER_HPP_)
 %}
 
 

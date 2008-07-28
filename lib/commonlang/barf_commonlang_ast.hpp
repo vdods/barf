@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_COMMONLANG_AST_HPP_)
-#define _BARF_COMMONLANG_AST_HPP_
+#if !defined(BARF_COMMONLANG_AST_HPP_)
+#define BARF_COMMONLANG_AST_HPP_
 
 #include "barf_commonlang.hpp"
 
@@ -196,4 +196,4 @@ struct RuleHandlerMap : public Ast::AstMap<RuleHandler>
 } // end of namespace CommonLang
 } // end of namespace Barf
 
-#endif // !defined(_BARF_COMMONLANG_AST_HPP_)
+#endif // !defined(BARF_COMMONLANG_AST_HPP_)

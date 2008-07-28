@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_CALCULATOR_HPP_)
-#define _CALCULATOR_HPP_
+#if !defined(CALCULATOR_HPP_)
+#define CALCULATOR_HPP_
 
 // EVERY HPP AND CPP FILE IN CALCULATOR SHOULD INCLUDE THIS FILE
 // EVERY HPP AND CPP FILE IN CALCULATOR SHOULD INCLUDE THIS FILE
@@ -59,4 +59,4 @@ inline CastToType Dsc (CastFromType cast_from)
 
 } // end of namespace Calculator
 
-#endif // !defined(_CALCULATOR_HPP_)
+#endif // !defined(CALCULATOR_HPP_)

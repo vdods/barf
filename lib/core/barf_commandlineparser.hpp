@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_COMMANDLINEPARSER_HPP_)
-#define _BARF_COMMANDLINEPARSER_HPP_
+#if !defined(BARF_COMMANDLINEPARSER_HPP_)
+#define BARF_COMMANDLINEPARSER_HPP_
 
 #include "barf.hpp"
 
@@ -194,4 +194,4 @@ private:
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_COMMANDLINEPARSER_HPP_)
+#endif // !defined(BARF_COMMANDLINEPARSER_HPP_)

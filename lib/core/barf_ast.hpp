@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_AST_HPP_)
-#define _BARF_AST_HPP_
+#if !defined(BARF_AST_HPP_)
+#define BARF_AST_HPP_
 
 #include "barf.hpp"
 
@@ -455,4 +455,4 @@ struct DirectiveList : public AstList<Directive>
 } // end of namespace Ast
 } // end of namespace Barf
 
-#endif // !defined(_BARF_AST_HPP_)
+#endif // !defined(BARF_AST_HPP_)

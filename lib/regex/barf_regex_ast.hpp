@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_REGEX_AST_HPP_)
-#define _BARF_REGEX_AST_HPP_
+#if !defined(BARF_REGEX_AST_HPP_)
+#define BARF_REGEX_AST_HPP_
 
 #include "barf_regex.hpp"
 
@@ -228,4 +228,4 @@ struct RegularExpressionMap : public Ast::AstMap<RegularExpression>
 } // end of namespace Regex
 } // end of namespace Barf
 
-#endif // !defined(_BARF_REGEX_AST_HPP_)
+#endif // !defined(BARF_REGEX_AST_HPP_)

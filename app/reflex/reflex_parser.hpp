@@ -87,8 +87,8 @@ enum
 
 #line 18 "reflex_parser.trison"
 
-#if !defined(_REFLEX_PARSER_HPP_)
-#define _REFLEX_PARSER_HPP_
+#if !defined(REFLEX_PARSER_HPP_)
+#define REFLEX_PARSER_HPP_
 
 #include "reflex.hpp"
 
@@ -457,6 +457,6 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 } // end of namespace Reflex
 
-#endif // !defined(_REFLEX_PARSER_HPP_)
+#endif // !defined(REFLEX_PARSER_HPP_)
 
 #line 463 "reflex_parser.hpp"

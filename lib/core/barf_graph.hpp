@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_GRAPH_HPP_)
-#define _BARF_GRAPH_HPP_
+#if !defined(BARF_GRAPH_HPP_)
+#define BARF_GRAPH_HPP_
 
 #include "barf.hpp"
 
@@ -201,4 +201,4 @@ struct Automaton
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_GRAPH_HPP_)
+#endif // !defined(BARF_GRAPH_HPP_)

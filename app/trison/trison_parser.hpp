@@ -87,8 +87,8 @@ enum
 
 #line 18 "trison_parser.trison"
 
-#if !defined(_TRISON_PARSER_HPP_)
-#define _TRISON_PARSER_HPP_
+#if !defined(TRISON_PARSER_HPP_)
+#define TRISON_PARSER_HPP_
 
 #include "trison.hpp"
 
@@ -489,6 +489,6 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_PARSER_HPP_)
+#endif // !defined(TRISON_PARSER_HPP_)
 
 #line 495 "trison_parser.hpp"

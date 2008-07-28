@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_SEARCHPATH_HPP_)
-#define _BARF_SEARCHPATH_HPP_
+#if !defined(BARF_SEARCHPATH_HPP_)
+#define BARF_SEARCHPATH_HPP_
 
 #include "barf.hpp"
 
@@ -72,4 +72,4 @@ private:
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_SEARCHPATH_HPP_)
+#endif // !defined(BARF_SEARCHPATH_HPP_)

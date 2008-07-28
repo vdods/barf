@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_TRISON_ENUMS_HPP_)
-#define _TRISON_ENUMS_HPP_
+#if !defined(TRISON_ENUMS_HPP_)
+#define TRISON_ENUMS_HPP_
 
 #include "trison.hpp"
 
@@ -32,4 +32,4 @@ ostream &operator << (ostream &stream, Associativity associativity);
 
 } // end of namespace Trison
 
-#endif // !defined(_TRISON_ENUMS_HPP_)
+#endif // !defined(TRISON_ENUMS_HPP_)

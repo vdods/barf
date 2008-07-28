@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_FILOC_HPP_)
-#define _BARF_FILOC_HPP_
+#if !defined(BARF_FILOC_HPP_)
+#define BARF_FILOC_HPP_
 
 #include "barf.hpp"
 
@@ -84,4 +84,4 @@ ostream &operator << (ostream &stream, FiLoc const &filoc);
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_FILOC_HPP_)
+#endif // !defined(BARF_FILOC_HPP_)

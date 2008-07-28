@@ -17,8 +17,8 @@
 %target.cpp.header_filename "calculator_scanner.hpp"
 %target.cpp.implementation_filename "calculator_scanner.cpp"
 %target.cpp.top_of_header_file %{
-#if !defined(_CALCULATOR_SCANNER_HPP_)
-#define _CALCULATOR_SCANNER_HPP_
+#if !defined(CALCULATOR_SCANNER_HPP_)
+#define CALCULATOR_SCANNER_HPP_
 
 #include "calculator.hpp"
 
@@ -36,7 +36,7 @@ namespace Calculator {
 %target.cpp.bottom_of_header_file %{
 } // end of namespace Calculator
 
-#endif // !defined(_CALCULATOR_SCANNER_HPP_)
+#endif // !defined(CALCULATOR_SCANNER_HPP_)
 %}
 
 // ///////////////////////////////////////////////////////////////////////////

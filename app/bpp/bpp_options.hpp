@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BPP_OPTIONS_HPP_)
-#define _BPP_OPTIONS_HPP_
+#if !defined(BPP_OPTIONS_HPP_)
+#define BPP_OPTIONS_HPP_
 
 #include "bpp.hpp"
 
@@ -43,4 +43,4 @@ private:
 
 inline Bpp::Options const &GetBppOptions () { return *Dsc<Bpp::Options const *>(&GetOptions()); }
 
-#endif // !defined(_BPP_OPTIONS_HPP_)
+#endif // !defined(BPP_OPTIONS_HPP_)

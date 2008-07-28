@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_PREPROCESSOR_AST_HPP_)
-#define _BARF_PREPROCESSOR_AST_HPP_
+#if !defined(BARF_PREPROCESSOR_AST_HPP_)
+#define BARF_PREPROCESSOR_AST_HPP_
 
 #include "barf_preprocessor.hpp"
 
@@ -728,4 +728,4 @@ ostream &operator << (ostream &stream, Operation::Operator op);
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#endif // !defined(_BARF_PREPROCESSOR_AST_HPP_)
+#endif // !defined(BARF_PREPROCESSOR_AST_HPP_)

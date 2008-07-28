@@ -16,8 +16,8 @@
 
 
 %target.cpp.top_of_header_file %{
-#if !defined(_BARF_TARGETSPEC_PARSER_HPP_)
-#define _BARF_TARGETSPEC_PARSER_HPP_
+#if !defined(BARF_TARGETSPEC_PARSER_HPP_)
+#define BARF_TARGETSPEC_PARSER_HPP_
 
 #include "barf.hpp"
 
@@ -55,7 +55,7 @@ private:
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
+#endif // !defined(BARF_TARGETSPEC_PARSER_HPP_)
 %}
 
 

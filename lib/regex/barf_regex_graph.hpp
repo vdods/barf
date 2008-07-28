@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_REGEX_GRAPH_HPP_)
-#define _BARF_REGEX_GRAPH_HPP_
+#if !defined(BARF_REGEX_GRAPH_HPP_)
+#define BARF_REGEX_GRAPH_HPP_
 
 #include "barf_regex.hpp"
 
@@ -44,4 +44,4 @@ Graph::Transition NfaConditionalTransition (ConditionalType type, Uint32 target_
 } // end of namespace Regex
 } // end of namespace Barf
 
-#endif // !defined(_BARF_REGEX_GRAPH_HPP_)
+#endif // !defined(BARF_REGEX_GRAPH_HPP_)

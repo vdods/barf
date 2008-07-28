@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_REFLEX_OPTIONS_HPP_)
-#define _REFLEX_OPTIONS_HPP_
+#if !defined(REFLEX_OPTIONS_HPP_)
+#define REFLEX_OPTIONS_HPP_
 
 #include "reflex.hpp"
 
@@ -35,4 +35,4 @@ private:
 
 inline Reflex::Options const &GetReflexOptions () { return *Dsc<Reflex::Options const *>(&GetOptions()); }
 
-#endif // !defined(_REFLEX_OPTIONS_HPP_)
+#endif // !defined(REFLEX_OPTIONS_HPP_)

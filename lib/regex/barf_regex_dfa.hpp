@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_REGEX_DFA_HPP_)
-#define _BARF_REGEX_DFA_HPP_
+#if !defined(BARF_REGEX_DFA_HPP_)
+#define BARF_REGEX_DFA_HPP_
 
 #include "barf_regex.hpp"
 
@@ -26,4 +26,4 @@ void GenerateDfa (Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton
 } // end of namespace Regex
 } // end of namespace Barf
 
-#endif // !defined(_BARF_REGEX_DFA_HPP_)
+#endif // !defined(BARF_REGEX_DFA_HPP_)

@@ -87,8 +87,8 @@ enum
 
 #line 18 "barf_preprocessor_parser.trison"
 
-#if !defined(_BARF_PREPROCESSOR_PARSER_HPP_)
-#define _BARF_PREPROCESSOR_PARSER_HPP_
+#if !defined(BARF_PREPROCESSOR_PARSER_HPP_)
+#define BARF_PREPROCESSOR_PARSER_HPP_
 
 #include "barf_preprocessor.hpp"
 
@@ -471,6 +471,6 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#endif // !defined(_BARF_PREPROCESSOR_PARSER_HPP_)
+#endif // !defined(BARF_PREPROCESSOR_PARSER_HPP_)
 
 #line 477 "barf_preprocessor_parser.hpp"

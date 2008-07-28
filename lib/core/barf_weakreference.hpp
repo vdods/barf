@@ -8,8 +8,8 @@
 // file LICENSE for details.
 // ///////////////////////////////////////////////////////////////////////////
 
-#if !defined(_BARF_WEAKREFERENCE_HPP_)
-#define _BARF_WEAKREFERENCE_HPP_
+#if !defined(BARF_WEAKREFERENCE_HPP_)
+#define BARF_WEAKREFERENCE_HPP_
 
 #include "barf.hpp"
 
@@ -84,4 +84,4 @@ private:
 
 } // end of namespace Barf
 
-#endif // !defined(_BARF_WEAKREFERENCE_HPP_)
+#endif // !defined(BARF_WEAKREFERENCE_HPP_)

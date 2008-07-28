@@ -87,8 +87,8 @@ enum
 
 #line 18 "barf_targetspec_parser.trison"
 
-#if !defined(_BARF_TARGETSPEC_PARSER_HPP_)
-#define _BARF_TARGETSPEC_PARSER_HPP_
+#if !defined(BARF_TARGETSPEC_PARSER_HPP_)
+#define BARF_TARGETSPEC_PARSER_HPP_
 
 #include "barf.hpp"
 
@@ -429,6 +429,6 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#endif // !defined(_BARF_TARGETSPEC_PARSER_HPP_)
+#endif // !defined(BARF_TARGETSPEC_PARSER_HPP_)
 
 #line 435 "barf_targetspec_parser.hpp"
