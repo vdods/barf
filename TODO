@@ -259,10 +259,6 @@ $ add option for line directives referencing codespecs (the default should be
   path and which directory each resides in.
 * add %end keyword which matches the builtin terminal END_ (?)
 - check for reduction rule variable name collisions
-$ add --predefine (-D) and --postdefine (-d) options for defining crap in the
-  preprocessor stage -- before and after the .trison source is read (e.g. to
-  override the output filenames).  this could even be used to be able to
-  omit the output filenames in the primary source itself (probably preferable)
 $ also add post-undefine option
 - make directives parseable in any order?
 * add a directive for what to do with unnamed tokens (because they might need

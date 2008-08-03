@@ -344,19 +344,6 @@ void TargetMap::SetSourcePath (string const &source_path)
     }
 }
 
-void TargetMap::AddTargetDirective (TargetDirective *target_directive)
-{
-    assert(target_directive != NULL);
-    Target *target = GetElement(target_directive->m_target_id->GetText());
-    if (target == NULL)
-    {
-        target = new Target(target_directive->m_target_id->GetText());
-        Add(target_directive->m_target_id->GetText(), target);
-    }
-    assert(target != NULL);
-    target->Add(target_directive);
-}
-
 void TargetMap::SetTargetDirective (TargetDirective *target_directive)
 {
     assert(target_directive != NULL);

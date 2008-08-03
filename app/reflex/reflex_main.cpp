@@ -45,8 +45,8 @@ enum ReturnStatus
     RS_COMMANDLINE_ABORT,
     RS_PREDEFINE_ERROR,
     RS_INPUT_FILE_ERROR,
-    RS_POSTDEFINE_ERROR,
     RS_PRIMARY_SOURCE_ERROR,
+    RS_POSTDEFINE_ERROR,
     RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR,
     RS_TARGETSPEC_ERROR,
     RS_CODESPEC_ERROR,
@@ -146,13 +146,13 @@ Reflex::PrimarySource const *ParsePrimarySource ()
         parsed_tree_root = NULL;
     }
 
+    if (g_errors_encountered)
+        exit(RS_POSTDEFINE_ERROR);
+
     primary_source->SetTargetMap(parser.StealTargetMap());
     if (GetReflexOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
         primary_source->Print(cerr);
         
-    if (g_errors_encountered)
-        exit(RS_POSTDEFINE_ERROR);
-
     return primary_source;
 }
 

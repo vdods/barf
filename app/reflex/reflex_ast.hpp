@@ -166,13 +166,13 @@ public:
     Rule const *GetRule (Uint32 rule_index) const;
     CommonLang::TargetMap const &GetTargetMap () const
     {
-        assert(m_target_map != NULL);
+        assert(m_target_map != NULL && "no target map set");
         return *m_target_map;
     }
 
     void SetTargetMap (CommonLang::TargetMap const *target_map)
     {
-        assert(m_target_map == NULL);
+        assert(m_target_map == NULL && "target map already set");
         assert(target_map != NULL);
         m_target_map = target_map;
     }

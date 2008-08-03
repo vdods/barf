@@ -158,12 +158,6 @@ struct TargetMap : public Ast::AstMap<Target>
 
     // sets the path of the primary source file on each Target
     void SetSourcePath (string const &source_path);
-    // adds the given TargetDirective to the corresponding Target if
-    // the Target exists, otherwise it creates the Target before
-    // adding the TargetDirective.
-    // TODO -- i think this can be deprecated once trison also
-    // uses SetTargetDirective.
-    void AddTargetDirective (TargetDirective *target_directive);
     // adds the target directive (as AddTargetDirective) if it doesn't
     // exist, otherwise overrides the existing one.
     void SetTargetDirective (TargetDirective *target_directive);

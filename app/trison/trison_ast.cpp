@@ -248,6 +248,8 @@ void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
 
 void PrimarySource::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
+    assert(m_target_map != NULL && "no target map set");
+
     Ast::Base::Print(stream, Stringify, indent_level);
     m_target_map->Print(stream, Stringify, indent_level+1);
     m_terminal_map->Print(stream, Stringify, indent_level+1);

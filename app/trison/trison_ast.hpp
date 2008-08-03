@@ -269,7 +269,6 @@ struct PrecedenceList : public Ast::AstList<Precedence>
 
 struct PrimarySource : public Ast::Base
 {
-    CommonLang::TargetMap const *const m_target_map;
     TerminalList const *const m_terminal_list;
     TerminalMap const *const m_terminal_map;
     PrecedenceMap const *const m_precedence_map;
@@ -279,7 +278,6 @@ struct PrimarySource : public Ast::Base
     NonterminalMap const *const m_nonterminal_map;
 
     PrimarySource (
-        CommonLang::TargetMap const *target_map,
         TerminalList const *terminal_list,
         TerminalMap const *terminal_map,
         PrecedenceMap const *precedence_map,
@@ -290,16 +288,15 @@ struct PrimarySource : public Ast::Base
         NonterminalMap const *nonterminal_map)
         :
         Ast::Base(filoc, AST_PRIMARY_SOURCE),
-        m_target_map(target_map),
         m_terminal_list(terminal_list),
         m_terminal_map(terminal_map),
         m_precedence_map(precedence_map),
         m_precedence_list(precedence_list),
         m_default_parse_nonterminal_id(default_parse_nonterminal_id),
         m_nonterminal_list(nonterminal_list),
-        m_nonterminal_map(nonterminal_map)
+        m_nonterminal_map(nonterminal_map),
+        m_target_map(NULL)
     {
-        assert(m_target_map != NULL);
         assert(m_terminal_list != NULL);
         assert(m_terminal_map != NULL);
         assert(m_precedence_map != NULL);
@@ -330,6 +327,18 @@ struct PrimarySource : public Ast::Base
     RuleToken const *GetRuleToken (Uint32 rule_token_index) const;
     string const &GetAssignedType (string const &token_id, string const &target_id) const;
     string GetTokenId (Uint32 token_index) const;
+    CommonLang::TargetMap const &GetTargetMap () const
+    {
+        assert(m_target_map != NULL && "no target map set");
+        return *m_target_map;
+    }
+
+    void SetTargetMap (CommonLang::TargetMap const *target_map)
+    {
+        assert(m_target_map == NULL && "target map already set");
+        assert(target_map != NULL);
+        m_target_map = target_map;
+    }
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
@@ -341,6 +350,7 @@ private:
 
     typedef map<Uint32, string> TokenIdMap;
     TokenIdMap m_token_id_map;
+    CommonLang::TargetMap const *m_target_map;
 }; // end of struct PrimarySource
 
 } // end of namespace Trison

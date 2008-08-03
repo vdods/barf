@@ -202,35 +202,35 @@ public:
           */
         enum Name
         {
-            any_type_of_code_block = 152,
-            at_least_one_newline = 146,
-            at_least_zero_newlines = 144,
-            nonterminal = 124,
-            nonterminal_specification = 126,
-            nonterminals = 122,
-            precedence_directive = 118,
-            precedence_directives = 116,
+            any_type_of_code_block = 149,
+            at_least_one_newline = 143,
+            at_least_zero_newlines = 141,
+            nonterminal = 121,
+            nonterminal_specification = 123,
+            nonterminals = 119,
+            precedence_directive = 115,
+            precedence_directives = 113,
             root = 0,
-            rule = 130,
-            rule_handler = 136,
-            rule_handlers = 134,
-            rule_precedence_directive = 142,
-            rule_specification = 132,
-            rule_token = 140,
-            rule_token_list = 138,
-            rules = 128,
-            start_directive = 120,
-            target_directive = 106,
-            target_directive_param = 108,
-            target_directives = 104,
-            target_ids = 102,
-            targets_directive = 100,
-            terminal = 150,
-            terminal_directive = 112,
-            terminal_directives = 110,
-            terminals = 114,
-            token_id = 148,
-            type_spec = 154,
+            rule = 127,
+            rule_handler = 133,
+            rule_handlers = 131,
+            rule_precedence_directive = 139,
+            rule_specification = 129,
+            rule_token = 137,
+            rule_token_list = 135,
+            rules = 125,
+            start_directive = 117,
+            target_directive = 103,
+            target_directive_param = 105,
+            target_directives = 101,
+            target_ids = 99,
+            targets_directive = 97,
+            terminal = 147,
+            terminal_directive = 109,
+            terminal_directives = 107,
+            terminals = 111,
+            token_id = 145,
+            type_spec = 151,
             /// Nonterminal which will be attempted to be parsed by the Parse()
             /// method by default (specified by the %default_parse_nonterminal
             /// directive).
@@ -338,11 +338,15 @@ public:
 #line 52 "trison_parser.trison"
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
+    CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
+    CommonLang::TargetMap *StealTargetMap ();
 
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
     void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
 
     bool OpenFile (string const &input_filename);
+    void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
+    void OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers);
 
 private:
 
@@ -356,7 +360,7 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 360 "trison_parser.hpp"
+#line 364 "trison_parser.hpp"
 
 
 private:
@@ -485,10 +489,10 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 
-#line 72 "trison_parser.trison"
+#line 76 "trison_parser.trison"
 
 } // end of namespace Trison
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 495 "trison_parser.hpp"
+#line 499 "trison_parser.hpp"
