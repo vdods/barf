@@ -9,7 +9,7 @@
 #define TRISON_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
 
 
-#line 72 "reflex_parser.trison"
+#line 76 "reflex_parser.trison"
 
 #include <sstream>
 
@@ -26,9 +26,9 @@ Parser::Parser ()
     DebugSpew(false);
 
 
-#line 81 "reflex_parser.trison"
+#line 85 "reflex_parser.trison"
 
-    m_target_map = NULL;
+    m_target_map = new CommonLang::TargetMap();
     m_regex_macro_map = NULL;
 
 #line 35 "reflex_parser.cpp"
@@ -42,37 +42,54 @@ Parser::~Parser ()
 
 
 
-#line 85 "reflex_parser.trison"
+#line 89 "reflex_parser.trison"
 
+    // if the target map wasn't stolen by the user of this parser,
+    // then make sure to delete it.
+    delete m_target_map;
+    m_target_map = NULL;
 
-#line 49 "reflex_parser.cpp"
+#line 53 "reflex_parser.cpp"
 }
 
 void Parser::ResetForNewInput ()
 {
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 202 "reflex_parser.trison"
+"Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+#line 61 "reflex_parser.cpp"
+ << " executing reset-for-new-input actions" << std::endl)
+    
     // clean up stuff that might be hanging around from the last parse's input.
     ClearStack_();
     ClearLookaheadQueue_();
+
+
+#line 196 "reflex_parser.trison"
+
+    m_scanner.ResetForNewInput();
+
+#line 73 "reflex_parser.cpp"
 }
 
 Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
 {
 
-#line 87 "reflex_parser.trison"
+#line 95 "reflex_parser.trison"
 
     EmitExecutionMessage("starting reflex parser");
 
-#line 66 "reflex_parser.cpp"
+#line 83 "reflex_parser.cpp"
 
     ParserReturnCode const parse_return_code = Parse_(return_token, nonterminal_to_parse);
 
 
-#line 90 "reflex_parser.trison"
+#line 98 "reflex_parser.trison"
 
     if (parse_return_code == PRC_SUCCESS)
         EmitExecutionMessage("reflex parse was successful");
 
-#line 76 "reflex_parser.cpp"
+#line 93 "reflex_parser.cpp"
 
     return parse_return_code;
 }
@@ -86,9 +103,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 92 "reflex_parser.cpp"
+#line 109 "reflex_parser.cpp"
  << " starting parse" << std::endl)
 
     ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
@@ -129,18 +146,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
         if (m_is_in_error_panic_)
         {
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 135 "reflex_parser.cpp"
+#line 152 "reflex_parser.cpp"
  << " begin error panic" << std::endl)
 
             // the special Terminal::END_ can not be eaten by error panic.
             if (Lookahead_(0).m_id == Terminal::END_)
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 144 "reflex_parser.cpp"
+#line 161 "reflex_parser.cpp"
  << " end error panic; abort (error panic can't eat Terminal::END_)" << std::endl)
                 // parser_return_code_ and return_token are already appropriately
                 // set, so just break out of the main loop.
@@ -174,9 +191,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 if (accepts_error)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 180 "reflex_parser.cpp"
+#line 197 "reflex_parser.cpp"
  << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
                     // if the current state accepts error, throw away the first lookahead data
                     // (but don't pop the front of the lookahead queue).  then clear the thrown-
@@ -193,17 +210,17 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     if (m_stack_.size() > 1)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 199 "reflex_parser.cpp"
+#line 216 "reflex_parser.cpp"
  << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
                     }
                     else
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 207 "reflex_parser.cpp"
+#line 224 "reflex_parser.cpp"
  << " end error panic; abort (stack is empty)" << std::endl)
                     }
                     // otherwise throw away the data at the top of the stack, and pop the stack.
@@ -268,9 +285,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 if (lookahead_sequence_matched)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 274 "reflex_parser.cpp"
+#line 291 "reflex_parser.cpp"
  << " current (relevant) lookahead(s):")
                     for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
@@ -288,9 +305,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             if (!transition_exercised)
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 294 "reflex_parser.cpp"
+#line 311 "reflex_parser.cpp"
  << " current (relevant) lookahead(s):")
                 for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
@@ -299,9 +316,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
 
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 305 "reflex_parser.cpp"
+#line 322 "reflex_parser.cpp"
  << " exercising default transition" << std::endl)
                 // exercise the default transition.  a return value of true indicates
                 // that the parser should return.
@@ -330,14 +347,14 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
     ClearStack_();
 
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 336 "reflex_parser.cpp"
+#line 353 "reflex_parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 341 "reflex_parser.cpp"
+#line 358 "reflex_parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
     return parser_return_code_;
@@ -346,23 +363,23 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 void Parser::ThrowAwayToken_ (Token::Data &token_data) throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 352 "reflex_parser.cpp"
+#line 369 "reflex_parser.cpp"
  << " executing throw-away-token actions" << std::endl)
 
 
-#line 112 "reflex_parser.trison"
+#line 142 "reflex_parser.trison"
 
     delete token_data;
 
-#line 360 "reflex_parser.cpp"
+#line 377 "reflex_parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
 {
 
-#line 115 "reflex_parser.trison"
+#line 145 "reflex_parser.trison"
 
     Ast::Base *lookahead_token_data = NULL;
     CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&lookahead_token_data);
@@ -414,7 +431,7 @@ Parser::Token Parser::Scan_ () throw()
             return Token(Terminal::BAD_TOKEN);
     }
 
-#line 418 "reflex_parser.cpp"
+#line 435 "reflex_parser.cpp"
 }
 
 void Parser::ClearStack_ () throw()
@@ -423,9 +440,9 @@ void Parser::ClearStack_ () throw()
         return; // nothing to do
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 429 "reflex_parser.cpp"
+#line 446 "reflex_parser.cpp"
  << " clearing the stack" << std::endl)
 
     Stack_::iterator it = m_stack_.begin();
@@ -441,9 +458,9 @@ void Parser::ClearStack_ () throw()
 void Parser::ClearLookaheadQueue_ () throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 447 "reflex_parser.cpp"
+#line 464 "reflex_parser.cpp"
  << " clearing the lookahead queue" << std::endl)
 
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
@@ -458,9 +475,9 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
         m_lookahead_queue_.push_back(Scan_());
 
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 464 "reflex_parser.cpp"
+#line 481 "reflex_parser.cpp"
  << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl)
     }
     return m_lookahead_queue_[index];
@@ -478,9 +495,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             assert(transition.m_data < ms_rule_count_);
             Rule_ const &rule = ms_rule_table_[transition.m_data];
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 484 "reflex_parser.cpp"
+#line 501 "reflex_parser.cpp"
  << " REDUCE " << rule.m_description << std::endl)
             assert(m_stack_.size() > rule.m_token_count);
             m_lookahead_queue_.push_front(
@@ -490,18 +507,18 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             m_stack_.resize(m_stack_.size() - rule.m_token_count);
             assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 496 "reflex_parser.cpp"
+#line 513 "reflex_parser.cpp"
  << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
             return false; // indicating the parser isn't returning
         }
 
         case Transition_::RETURN:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 505 "reflex_parser.cpp"
+#line 522 "reflex_parser.cpp"
  << " RETURN" << std::endl)
             return true; // indicating the parser is returning
 
@@ -512,9 +529,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
                                                                // client error, so asserting here is ok.
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 518 "reflex_parser.cpp"
+#line 535 "reflex_parser.cpp"
  << " SHIFT " << Lookahead_(0) << std::endl)
             m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0).m_data));
             m_lookahead_queue_.pop_front();
@@ -522,9 +539,9 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
 
         case Transition_::ERROR_PANIC:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 528 "reflex_parser.cpp"
+#line 545 "reflex_parser.cpp"
  << " ERROR_PANIC" << std::endl)
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
@@ -539,9 +556,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 {
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 545 "reflex_parser.cpp"
+#line 562 "reflex_parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
@@ -552,19 +569,17 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         case 0:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            CommonLang::TargetMap * target_map(Dsc<CommonLang::TargetMap *>(m_stack_[m_stack_.size()-6].m_token_data));
             Regex::RegularExpressionMap * regular_expression_map(Dsc<Regex::RegularExpressionMap *>(m_stack_[m_stack_.size()-4].m_token_data));
             StartInScannerModeDirective * start_in_scanner_mode_directive(Dsc<StartInScannerModeDirective *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
             ScannerModeMap * scanner_mode_map(Dsc<ScannerModeMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 206 "reflex_parser.trison"
+#line 239 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
-        assert(target_map == m_target_map);
 
         // set the TargetMap's primary source path
-        target_map->SetSourcePath(m_scanner.GetInputName());
+        m_target_map->SetSourcePath(m_scanner.GetInputName());
         // make sure the %start_in_scanner_mode directive value specifies a real scanner mode
         if (start_in_scanner_mode_directive != NULL &&
             scanner_mode_map->GetElement(start_in_scanner_mode_directive->m_scanner_mode_id->GetText()) == NULL)
@@ -576,7 +591,6 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         PrimarySource *primary_source =
             new PrimarySource(
-                target_map,
                 regular_expression_map,
                 start_in_scanner_mode_directive,
                 throwaway->GetFiLoc(),
@@ -584,7 +598,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete throwaway;
         return primary_source;
     
-#line 588 "reflex_parser.cpp"
+#line 602 "reflex_parser.cpp"
             break;
         }
 
@@ -592,16 +606,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
-            CommonLang::TargetMap * target_map(Dsc<CommonLang::TargetMap *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 240 "reflex_parser.trison"
+#line 271 "reflex_parser.trison"
 
-        assert(m_target_map == NULL);
-        m_target_map = target_map;
         delete throwaway;
-        return target_map;
+        return NULL;
     
-#line 605 "reflex_parser.cpp"
+#line 616 "reflex_parser.cpp"
             break;
         }
 
@@ -609,13 +620,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 248 "reflex_parser.trison"
+#line 277 "reflex_parser.trison"
 
-        assert(m_target_map == NULL);
-        m_target_map = new CommonLang::TargetMap();
-        return m_target_map;
+        return NULL;
     
-#line 619 "reflex_parser.cpp"
+#line 628 "reflex_parser.cpp"
             break;
         }
 
@@ -624,31 +633,37 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 255 "reflex_parser.trison"
+#line 282 "reflex_parser.trison"
 
-        assert(m_target_map == NULL);
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
-        m_target_map = new CommonLang::TargetMap();
-        return m_target_map;
+        return NULL;
     
-#line 635 "reflex_parser.cpp"
+#line 642 "reflex_parser.cpp"
             break;
         }
 
         case 4:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            CommonLang::TargetMap * target_map(Dsc<CommonLang::TargetMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 266 "reflex_parser.trison"
+#line 291 "reflex_parser.trison"
 
-        CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
-        target->EnableCodeGeneration();
-        target_map->Add(target_id->GetText(), target);
-        return target_map;
+        assert(m_target_map != NULL);
+        // if the given target doesn't exist in the target map, add it.
+        if (m_target_map->GetElement(target_id->GetText()) == NULL)
+        {
+            CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
+            m_target_map->Add(target_id->GetText(), target);
+        }
+        // otherwise delete the target_id since we don't need it
+        else
+        {
+            delete target_id;
+        }
+        return NULL;
     
-#line 652 "reflex_parser.cpp"
+#line 667 "reflex_parser.cpp"
             break;
         }
 
@@ -656,28 +671,27 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 274 "reflex_parser.trison"
+#line 308 "reflex_parser.trison"
 
-        assert(m_target_map == NULL);
-        return new CommonLang::TargetMap();
+        assert(m_target_map != NULL);
+        return NULL;
     
-#line 665 "reflex_parser.cpp"
+#line 680 "reflex_parser.cpp"
             break;
         }
 
         case 6:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            CommonLang::TargetDirective * target_directive(Dsc<CommonLang::TargetDirective *>(m_stack_[m_stack_.size()-1].m_token_data));
+            CommonLang::TargetDirective * target_directive(Dsc<CommonLang::TargetDirective *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 287 "reflex_parser.trison"
+#line 321 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
-        if (target_directive != NULL)
-            m_target_map->AddTargetDirective(target_directive);
+        m_target_map->SetTargetDirective(target_directive);
         return NULL;
     
-#line 681 "reflex_parser.cpp"
+#line 695 "reflex_parser.cpp"
             break;
         }
 
@@ -685,41 +699,40 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 295 "reflex_parser.trison"
+#line 328 "reflex_parser.trison"
 
-        if (m_target_map == NULL)
-            m_target_map = new CommonLang::TargetMap();
+        assert(m_target_map != NULL);
         return NULL;
     
-#line 695 "reflex_parser.cpp"
+#line 708 "reflex_parser.cpp"
             break;
         }
 
         case 8:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-7].m_token_data));
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Ast::TextBase * param(Dsc<Ast::TextBase *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-6].m_token_data));
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
+            Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::TextBase * param(Dsc<Ast::TextBase *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 305 "reflex_parser.trison"
+#line 337 "reflex_parser.trison"
 
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     
-#line 712 "reflex_parser.cpp"
+#line 725 "reflex_parser.cpp"
             break;
         }
 
         case 9:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-7].m_token_data));
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-6].m_token_data));
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
+            Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 311 "reflex_parser.trison"
+#line 343 "reflex_parser.trison"
 
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -727,39 +740,39 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete target_directive;
         return NULL;
     
-#line 731 "reflex_parser.cpp"
+#line 744 "reflex_parser.cpp"
             break;
         }
 
         case 10:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token_data));
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 320 "reflex_parser.trison"
+#line 352 "reflex_parser.trison"
 
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
     
-#line 748 "reflex_parser.cpp"
+#line 761 "reflex_parser.cpp"
             break;
         }
 
         case 11:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 328 "reflex_parser.trison"
+#line 360 "reflex_parser.trison"
 
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 763 "reflex_parser.cpp"
+#line 776 "reflex_parser.cpp"
             break;
         }
 
@@ -768,9 +781,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Id * value(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 337 "reflex_parser.trison"
+#line 369 "reflex_parser.trison"
  return value; 
-#line 774 "reflex_parser.cpp"
+#line 787 "reflex_parser.cpp"
             break;
         }
 
@@ -779,9 +792,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::String * value(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 338 "reflex_parser.trison"
+#line 370 "reflex_parser.trison"
  return value; 
-#line 785 "reflex_parser.cpp"
+#line 798 "reflex_parser.cpp"
             break;
         }
 
@@ -790,9 +803,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 339 "reflex_parser.trison"
+#line 371 "reflex_parser.trison"
  return value; 
-#line 796 "reflex_parser.cpp"
+#line 809 "reflex_parser.cpp"
             break;
         }
 
@@ -801,9 +814,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 340 "reflex_parser.trison"
+#line 372 "reflex_parser.trison"
  return value; 
-#line 807 "reflex_parser.cpp"
+#line 820 "reflex_parser.cpp"
             break;
         }
 
@@ -811,9 +824,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 341 "reflex_parser.trison"
+#line 373 "reflex_parser.trison"
  return NULL; 
-#line 817 "reflex_parser.cpp"
+#line 830 "reflex_parser.cpp"
             break;
         }
 
@@ -825,7 +838,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * macro_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::String * macro_regex_string(Dsc<Ast::String *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 351 "reflex_parser.trison"
+#line 383 "reflex_parser.trison"
 
         Regex::Parser parser;
         parser.ScannerDebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
@@ -850,7 +863,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete macro_regex_string;
         return regular_expression_map;
     
-#line 854 "reflex_parser.cpp"
+#line 867 "reflex_parser.cpp"
             break;
         }
 
@@ -858,14 +871,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 377 "reflex_parser.trison"
+#line 409 "reflex_parser.trison"
 
         // we save the regex macro map in a member var, so that the reduction
         // rule handler for the scanner mode rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
         return m_regex_macro_map;
     
-#line 869 "reflex_parser.cpp"
+#line 882 "reflex_parser.cpp"
             break;
         }
 
@@ -876,14 +889,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token_data));
             Ast::Id * macro_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 385 "reflex_parser.trison"
+#line 417 "reflex_parser.trison"
 
         EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete macro_id;
         return regular_expression_map;
     
-#line 887 "reflex_parser.cpp"
+#line 900 "reflex_parser.cpp"
             break;
         }
 
@@ -893,13 +906,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Regex::RegularExpressionMap * regular_expression_map(Dsc<Regex::RegularExpressionMap *>(m_stack_[m_stack_.size()-4].m_token_data));
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 393 "reflex_parser.trison"
+#line 425 "reflex_parser.trison"
 
         EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
         return regular_expression_map;
     
-#line 903 "reflex_parser.cpp"
+#line 916 "reflex_parser.cpp"
             break;
         }
 
@@ -909,12 +922,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 407 "reflex_parser.trison"
+#line 439 "reflex_parser.trison"
 
         delete throwaway;
         return new StartInScannerModeDirective(scanner_mode_id);
     
-#line 918 "reflex_parser.cpp"
+#line 931 "reflex_parser.cpp"
             break;
         }
 
@@ -923,13 +936,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
 
-#line 413 "reflex_parser.trison"
+#line 445 "reflex_parser.trison"
 
         EmitError("parse error in directive %start_in_scanner_mode", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 933 "reflex_parser.cpp"
+#line 946 "reflex_parser.cpp"
             break;
         }
 
@@ -939,13 +952,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             ScannerModeMap * scanner_mode_map(Dsc<ScannerModeMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             ScannerMode * scanner_mode(Dsc<ScannerMode *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 427 "reflex_parser.trison"
+#line 459 "reflex_parser.trison"
 
         if (scanner_mode != NULL)
             scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
         return scanner_mode_map;
     
-#line 949 "reflex_parser.cpp"
+#line 962 "reflex_parser.cpp"
             break;
         }
 
@@ -953,11 +966,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 434 "reflex_parser.trison"
+#line 466 "reflex_parser.trison"
 
         return new ScannerModeMap();
     
-#line 961 "reflex_parser.cpp"
+#line 974 "reflex_parser.cpp"
             break;
         }
 
@@ -968,12 +981,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 442 "reflex_parser.trison"
+#line 474 "reflex_parser.trison"
 
         delete throwaway;
         return new ScannerMode(scanner_mode_id, rule_list);
     
-#line 977 "reflex_parser.cpp"
+#line 990 "reflex_parser.cpp"
             break;
         }
 
@@ -983,13 +996,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
             Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
 
-#line 448 "reflex_parser.trison"
+#line 480 "reflex_parser.trison"
 
         EmitError("parse error in scanner mode rule list", throwaway->GetFiLoc());
         delete throwaway;
         return new ScannerMode(scanner_mode_id, new RuleList());
     
-#line 993 "reflex_parser.cpp"
+#line 1006 "reflex_parser.cpp"
             break;
         }
 
@@ -999,14 +1012,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 455 "reflex_parser.trison"
+#line 487 "reflex_parser.trison"
 
         EmitError("parse error in scanner mode id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
     
-#line 1010 "reflex_parser.cpp"
+#line 1023 "reflex_parser.cpp"
             break;
         }
 
@@ -1015,11 +1028,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 466 "reflex_parser.trison"
+#line 498 "reflex_parser.trison"
 
         return rule_list;
     
-#line 1023 "reflex_parser.cpp"
+#line 1036 "reflex_parser.cpp"
             break;
         }
 
@@ -1027,11 +1040,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 471 "reflex_parser.trison"
+#line 503 "reflex_parser.trison"
 
         return new RuleList();
     
-#line 1035 "reflex_parser.cpp"
+#line 1048 "reflex_parser.cpp"
             break;
         }
 
@@ -1041,12 +1054,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-3].m_token_data));
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 479 "reflex_parser.trison"
+#line 511 "reflex_parser.trison"
 
         rule_list->Append(rule);
         return rule_list;
     
-#line 1050 "reflex_parser.cpp"
+#line 1063 "reflex_parser.cpp"
             break;
         }
 
@@ -1055,13 +1068,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 485 "reflex_parser.trison"
+#line 517 "reflex_parser.trison"
 
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
     
-#line 1065 "reflex_parser.cpp"
+#line 1078 "reflex_parser.cpp"
             break;
         }
 
@@ -1071,7 +1084,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::String * regex_string(Dsc<Ast::String *>(m_stack_[m_stack_.size()-2].m_token_data));
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 495 "reflex_parser.trison"
+#line 527 "reflex_parser.trison"
 
         assert(m_regex_macro_map != NULL);
 
@@ -1132,7 +1145,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete regex_string;
         return rule;
     
-#line 1136 "reflex_parser.cpp"
+#line 1149 "reflex_parser.cpp"
             break;
         }
 
@@ -1142,13 +1155,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-2].m_token_data));
             CommonLang::RuleHandler * rule_handler(Dsc<CommonLang::RuleHandler *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 560 "reflex_parser.trison"
+#line 592 "reflex_parser.trison"
 
         if (rule_handler != NULL)
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
     
-#line 1152 "reflex_parser.cpp"
+#line 1165 "reflex_parser.cpp"
             break;
         }
 
@@ -1156,11 +1169,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 567 "reflex_parser.trison"
+#line 599 "reflex_parser.trison"
 
         return new CommonLang::RuleHandlerMap();
     
-#line 1164 "reflex_parser.cpp"
+#line 1177 "reflex_parser.cpp"
             break;
         }
 
@@ -1171,7 +1184,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 575 "reflex_parser.trison"
+#line 607 "reflex_parser.trison"
 
         delete throwaway;
         assert(m_target_map != NULL);
@@ -1181,7 +1194,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
                 target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     
-#line 1185 "reflex_parser.cpp"
+#line 1198 "reflex_parser.cpp"
             break;
         }
 
@@ -1191,7 +1204,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 586 "reflex_parser.trison"
+#line 618 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -1199,7 +1212,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete code_block;
         return NULL;
     
-#line 1203 "reflex_parser.cpp"
+#line 1216 "reflex_parser.cpp"
             break;
         }
 
@@ -1208,14 +1221,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
 
-#line 595 "reflex_parser.trison"
+#line 627 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
-#line 1219 "reflex_parser.cpp"
+#line 1232 "reflex_parser.cpp"
             break;
         }
 
@@ -1224,14 +1237,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 603 "reflex_parser.trison"
+#line 635 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     
-#line 1235 "reflex_parser.cpp"
+#line 1248 "reflex_parser.cpp"
             break;
         }
 
@@ -1240,9 +1253,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 617 "reflex_parser.trison"
+#line 649 "reflex_parser.trison"
  return dumb_code_block; 
-#line 1246 "reflex_parser.cpp"
+#line 1259 "reflex_parser.cpp"
             break;
         }
 
@@ -1251,9 +1264,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token_data));
 
-#line 619 "reflex_parser.trison"
+#line 651 "reflex_parser.trison"
  return strict_code_block; 
-#line 1257 "reflex_parser.cpp"
+#line 1270 "reflex_parser.cpp"
             break;
         }
 
@@ -1261,9 +1274,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 624 "reflex_parser.trison"
+#line 656 "reflex_parser.trison"
  return NULL; 
-#line 1267 "reflex_parser.cpp"
+#line 1280 "reflex_parser.cpp"
             break;
         }
 
@@ -1271,9 +1284,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 626 "reflex_parser.trison"
+#line 658 "reflex_parser.trison"
  return NULL; 
-#line 1277 "reflex_parser.cpp"
+#line 1290 "reflex_parser.cpp"
             break;
         }
 
@@ -1281,9 +1294,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 631 "reflex_parser.trison"
+#line 663 "reflex_parser.trison"
  return NULL; 
-#line 1287 "reflex_parser.cpp"
+#line 1300 "reflex_parser.cpp"
             break;
         }
 
@@ -1291,9 +1304,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 633 "reflex_parser.trison"
+#line 665 "reflex_parser.trison"
  return NULL; 
-#line 1297 "reflex_parser.cpp"
+#line 1310 "reflex_parser.cpp"
             break;
         }
 
@@ -1308,9 +1321,9 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     assert(!m_stack_.empty());
 
     stream << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 1314 "reflex_parser.cpp"
+#line 1327 "reflex_parser.cpp"
  << " parser stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -1329,17 +1342,17 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
 {
     assert(string != NULL);
     stream << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 1335 "reflex_parser.cpp"
+#line 1348 "reflex_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
         if (*string == '\n')
             stream << '\n' << 
-#line 169 "reflex_parser.trison"
+#line 202 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
-#line 1343 "reflex_parser.cpp"
+#line 1356 "reflex_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -1364,12 +1377,12 @@ Parser::Rule_ const Parser::ms_rule_table_[] =
     { Parser::Nonterminal_::targets_directive, 3, "targets_directive <- DIRECTIVE_TARGETS ERROR_ at_least_one_newline" },
     { Parser::Nonterminal_::target_ids, 2, "target_ids <- target_ids ID" },
     { Parser::Nonterminal_::target_ids, 0, "target_ids <-" },
-    { Parser::Nonterminal_::target_directives, 2, "target_directives <- target_directives target_directive" },
+    { Parser::Nonterminal_::target_directives, 3, "target_directives <- target_directives target_directive at_least_one_newline" },
     { Parser::Nonterminal_::target_directives, 0, "target_directives <-" },
-    { Parser::Nonterminal_::target_directive, 7, "target_directive <- DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline" },
-    { Parser::Nonterminal_::target_directive, 7, "target_directive <- DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline" },
-    { Parser::Nonterminal_::target_directive, 5, "target_directive <- DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline" },
-    { Parser::Nonterminal_::target_directive, 3, "target_directive <- DIRECTIVE_TARGET ERROR_ at_least_one_newline" },
+    { Parser::Nonterminal_::target_directive, 6, "target_directive <- DIRECTIVE_TARGET '.' ID '.' ID target_directive_param" },
+    { Parser::Nonterminal_::target_directive, 6, "target_directive <- DIRECTIVE_TARGET '.' ID '.' ID ERROR_" },
+    { Parser::Nonterminal_::target_directive, 4, "target_directive <- DIRECTIVE_TARGET '.' ID ERROR_" },
+    { Parser::Nonterminal_::target_directive, 2, "target_directive <- DIRECTIVE_TARGET ERROR_" },
     { Parser::Nonterminal_::target_directive_param, 1, "target_directive_param <- ID" },
     { Parser::Nonterminal_::target_directive_param, 1, "target_directive_param <- STRING_LITERAL" },
     { Parser::Nonterminal_::target_directive_param, 1, "target_directive_param <- STRICT_CODE_BLOCK" },
@@ -1420,106 +1433,103 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 1, ms_transition_table_+22, "rule 4: target_ids <- target_ids ID ." },
     { 2, ms_transition_table_+23, "rule 1: targets_directive <- DIRECTIVE_TARGETS target_ids at_least_one_newline .\nrule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                 " },
     { 1, ms_transition_table_+25, "rule 41: at_least_zero_newlines <- at_least_zero_newlines NEWLINE ." },
-    { 2, ms_transition_table_+26, "rule 0: root <- at_least_zero_newlines targets_directive . target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 6: target_directives <- . target_directives target_directive                                                                                       \nrule 7: target_directives <- .                                                                                                                          " },
-    { 4, ms_transition_table_+28, "rule 0: root <- at_least_zero_newlines targets_directive target_directives . macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 6: target_directives <- target_directives . target_directive                                                                                       \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline                                                \nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline                                                                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline                                                                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_ at_least_one_newline                                                                             \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline                                                           \nrule 18: macro_directives <- .                                                                                                                          \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline                                                          \nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline                                                             " },
-    { 3, ms_transition_table_+32, "rule 8: target_directive <- DIRECTIVE_TARGET . '.' ID '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- DIRECTIVE_TARGET . '.' ID '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- DIRECTIVE_TARGET . '.' ID ERROR_ at_least_one_newline                      \nrule 11: target_directive <- DIRECTIVE_TARGET . ERROR_ at_least_one_newline                             " },
-    { 2, ms_transition_table_+35, "rule 8: target_directive <- DIRECTIVE_TARGET '.' . ID '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- DIRECTIVE_TARGET '.' . ID '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- DIRECTIVE_TARGET '.' . ID ERROR_ at_least_one_newline                      " },
-    { 3, ms_transition_table_+37, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID . '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID . '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- DIRECTIVE_TARGET '.' ID . ERROR_ at_least_one_newline                      " },
-    { 2, ms_transition_table_+40, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID '.' . ID target_directive_param at_least_one_newline\nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID '.' . ID ERROR_ at_least_one_newline                " },
-    { 7, ms_transition_table_+42, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID . target_directive_param at_least_one_newline\nrule 12: target_directive_param <- . ID                                                                 \nrule 13: target_directive_param <- . STRING_LITERAL                                                     \nrule 14: target_directive_param <- . STRICT_CODE_BLOCK                                                  \nrule 15: target_directive_param <- . DUMB_CODE_BLOCK                                                    \nrule 16: target_directive_param <- .                                                                    \nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID . ERROR_ at_least_one_newline                " },
-    { 3, ms_transition_table_+49, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                         \nrule 44: at_least_one_newline <- . NEWLINE                                              \nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID ERROR_ . at_least_one_newline" },
-    { 2, ms_transition_table_+52, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                         \nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline ." },
-    { 1, ms_transition_table_+54, "rule 15: target_directive_param <- DUMB_CODE_BLOCK ." },
-    { 1, ms_transition_table_+55, "rule 12: target_directive_param <- ID ." },
-    { 1, ms_transition_table_+56, "rule 14: target_directive_param <- STRICT_CODE_BLOCK ." },
-    { 1, ms_transition_table_+57, "rule 13: target_directive_param <- STRING_LITERAL ." },
-    { 3, ms_transition_table_+58, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                         \nrule 44: at_least_one_newline <- . NEWLINE                                                              \nrule 8: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID target_directive_param . at_least_one_newline" },
-    { 2, ms_transition_table_+61, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                         \nrule 8: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline ." },
-    { 3, ms_transition_table_+63, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                   \nrule 44: at_least_one_newline <- . NEWLINE                                        \nrule 10: target_directive <- DIRECTIVE_TARGET '.' ID ERROR_ . at_least_one_newline" },
-    { 2, ms_transition_table_+66, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                   \nrule 10: target_directive <- DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline ." },
-    { 3, ms_transition_table_+68, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE            \nrule 44: at_least_one_newline <- . NEWLINE                                 \nrule 11: target_directive <- DIRECTIVE_TARGET ERROR_ . at_least_one_newline" },
-    { 2, ms_transition_table_+71, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE            \nrule 11: target_directive <- DIRECTIVE_TARGET ERROR_ at_least_one_newline ." },
-    { 1, ms_transition_table_+73, "rule 6: target_directives <- target_directives target_directive ." },
-    { 4, ms_transition_table_+74, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives . start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline                                                           \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline                                                          \nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline                                                             \nrule 21: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline                                                   \nrule 22: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline                                               " },
-    { 3, ms_transition_table_+78, "rule 17: macro_directives <- macro_directives DIRECTIVE_MACRO . ID REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO . ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO . ERROR_ at_least_one_newline   " },
-    { 3, ms_transition_table_+81, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                            \nrule 44: at_least_one_newline <- . NEWLINE                                                 \nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO ERROR_ . at_least_one_newline" },
-    { 2, ms_transition_table_+84, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                            \nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline ." },
-    { 3, ms_transition_table_+86, "rule 17: macro_directives <- macro_directives DIRECTIVE_MACRO ID . REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO ID . ERROR_ at_least_one_newline" },
-    { 3, ms_transition_table_+89, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                               \nrule 44: at_least_one_newline <- . NEWLINE                                                    \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO ID ERROR_ . at_least_one_newline" },
-    { 2, ms_transition_table_+92, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                               \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline ." },
-    { 3, ms_transition_table_+94, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                              \nrule 44: at_least_one_newline <- . NEWLINE                                                   \nrule 17: macro_directives <- macro_directives DIRECTIVE_MACRO ID REGEX . at_least_one_newline" },
-    { 2, ms_transition_table_+97, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                              \nrule 17: macro_directives <- macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline ." },
-    { 3, ms_transition_table_+99, "rule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE . ID at_least_one_newline    \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE . ERROR_ at_least_one_newline" },
-    { 3, ms_transition_table_+102, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                          \nrule 44: at_least_one_newline <- . NEWLINE                                                               \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ERROR_ . at_least_one_newline" },
-    { 2, ms_transition_table_+105, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                          \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline ." },
-    { 3, ms_transition_table_+107, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                      \nrule 44: at_least_one_newline <- . NEWLINE                                                           \nrule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ID . at_least_one_newline" },
-    { 2, ms_transition_table_+110, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                      \nrule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline ." },
-    { 2, ms_transition_table_+112, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive . END_PREAMBLE scanner_modes" },
-    { 2, ms_transition_table_+114, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE . scanner_modes\nrule 23: scanner_modes <- . scanner_modes scanner_mode                                                                                                  \nrule 24: scanner_modes <- .                                                                                                                             " },
-    { 3, ms_transition_table_+116, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes .\nrule 23: scanner_modes <- scanner_modes . scanner_mode                                                                                                  \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'                                                                                \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                                                                                            \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'                                                                            " },
-    { 3, ms_transition_table_+119, "rule 25: scanner_mode <- DIRECTIVE_STATE . ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- DIRECTIVE_STATE . ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- DIRECTIVE_STATE . ERROR_ ':' scanner_mode_rules ';'" },
-    { 2, ms_transition_table_+122, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ . ':' scanner_mode_rules ';'" },
-    { 5, ms_transition_table_+124, "rule 28: scanner_mode_rules <- . rule_list                                  \nrule 30: rule_list <- . rule_list '|' rule                                  \nrule 32: rule <- . REGEX rule_handlers                                      \nrule 31: rule_list <- . rule                                                \nrule 29: scanner_mode_rules <- .                                            \nrule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' . scanner_mode_rules ';'" },
-    { 2, ms_transition_table_+129, "rule 32: rule <- REGEX . rule_handlers                \nrule 33: rule_handlers <- . rule_handlers rule_handler\nrule 34: rule_handlers <- .                           " },
-    { 4, ms_transition_table_+131, "rule 32: rule <- REGEX rule_handlers .                                   \nrule 33: rule_handlers <- rule_handlers . rule_handler                   \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
-    { 4, ms_transition_table_+135, "rule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK    \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK  \nrule 38: rule_handler <- ERROR_ . any_type_of_code_block" },
-    { 1, ms_transition_table_+139, "rule 39: any_type_of_code_block <- DUMB_CODE_BLOCK ." },
-    { 1, ms_transition_table_+140, "rule 40: any_type_of_code_block <- STRICT_CODE_BLOCK ." },
-    { 1, ms_transition_table_+141, "rule 38: rule_handler <- ERROR_ any_type_of_code_block ." },
-    { 3, ms_transition_table_+142, "rule 35: rule_handler <- DIRECTIVE_TARGET . '.' ID any_type_of_code_block\nrule 36: rule_handler <- DIRECTIVE_TARGET . ERROR_ any_type_of_code_block\nrule 37: rule_handler <- DIRECTIVE_TARGET . ERROR_                       " },
-    { 2, ms_transition_table_+145, "rule 35: rule_handler <- DIRECTIVE_TARGET '.' . ID any_type_of_code_block" },
-    { 4, ms_transition_table_+147, "rule 35: rule_handler <- DIRECTIVE_TARGET '.' ID . any_type_of_code_block\nrule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK                   " },
-    { 1, ms_transition_table_+151, "rule 35: rule_handler <- DIRECTIVE_TARGET '.' ID any_type_of_code_block ." },
-    { 4, ms_transition_table_+152, "rule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK                   \nrule 36: rule_handler <- DIRECTIVE_TARGET ERROR_ . any_type_of_code_block\nrule 37: rule_handler <- DIRECTIVE_TARGET ERROR_ .                       " },
-    { 1, ms_transition_table_+156, "rule 36: rule_handler <- DIRECTIVE_TARGET ERROR_ any_type_of_code_block ." },
-    { 1, ms_transition_table_+157, "rule 33: rule_handlers <- rule_handlers rule_handler ." },
-    { 2, ms_transition_table_+158, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules . ';'" },
-    { 1, ms_transition_table_+160, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';' ." },
-    { 2, ms_transition_table_+161, "rule 28: scanner_mode_rules <- rule_list .\nrule 30: rule_list <- rule_list . '|' rule" },
-    { 3, ms_transition_table_+163, "rule 30: rule_list <- rule_list '|' . rule\nrule 32: rule <- . REGEX rule_handlers    " },
-    { 1, ms_transition_table_+166, "rule 30: rule_list <- rule_list '|' rule ." },
-    { 1, ms_transition_table_+167, "rule 31: rule_list <- rule ." },
-    { 2, ms_transition_table_+168, "rule 25: scanner_mode <- DIRECTIVE_STATE ID . ':' scanner_mode_rules ';'\nrule 26: scanner_mode <- DIRECTIVE_STATE ID . ':' ERROR_ ';'            " },
-    { 6, ms_transition_table_+170, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' . scanner_mode_rules ';'\nrule 28: scanner_mode_rules <- . rule_list                              \nrule 30: rule_list <- . rule_list '|' rule                              \nrule 32: rule <- . REGEX rule_handlers                                  \nrule 31: rule_list <- . rule                                            \nrule 29: scanner_mode_rules <- .                                        \nrule 26: scanner_mode <- DIRECTIVE_STATE ID ':' . ERROR_ ';'            " },
-    { 2, ms_transition_table_+176, "rule 26: scanner_mode <- DIRECTIVE_STATE ID ':' ERROR_ . ';'" },
-    { 1, ms_transition_table_+178, "rule 26: scanner_mode <- DIRECTIVE_STATE ID ':' ERROR_ ';' ." },
-    { 2, ms_transition_table_+179, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules . ';'" },
-    { 1, ms_transition_table_+181, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules ';' ." },
-    { 1, ms_transition_table_+182, "rule 23: scanner_modes <- scanner_modes scanner_mode ." },
-    { 3, ms_transition_table_+183, "START targets_directive                                                         \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline\nrule 2: targets_directive <- .                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline    " },
-    { 1, ms_transition_table_+186, "RETURN targets_directive" },
-    { 2, ms_transition_table_+187, "START target_ids                     \nrule 4: target_ids <- . target_ids ID\nrule 5: target_ids <- .              " },
-    { 2, ms_transition_table_+189, "RETURN target_ids                    \nrule 4: target_ids <- target_ids . ID" },
-    { 2, ms_transition_table_+191, "START target_directives                                          \nrule 6: target_directives <- . target_directives target_directive\nrule 7: target_directives <- .                                   " },
-    { 3, ms_transition_table_+193, "RETURN target_directives                                                                                \nrule 6: target_directives <- target_directives . target_directive                                       \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_ at_least_one_newline                             " },
-    { 3, ms_transition_table_+196, "START target_directive                                                                                  \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param at_least_one_newline\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_ at_least_one_newline                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_ at_least_one_newline                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_ at_least_one_newline                             " },
-    { 1, ms_transition_table_+199, "RETURN target_directive" },
-    { 6, ms_transition_table_+200, "START target_directive_param                          \nrule 12: target_directive_param <- . ID               \nrule 13: target_directive_param <- . STRING_LITERAL   \nrule 14: target_directive_param <- . STRICT_CODE_BLOCK\nrule 15: target_directive_param <- . DUMB_CODE_BLOCK  \nrule 16: target_directive_param <- .                  " },
-    { 1, ms_transition_table_+206, "RETURN target_directive_param" },
-    { 2, ms_transition_table_+207, "START macro_directives                                                                        \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 18: macro_directives <- .                                                                \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
-    { 2, ms_transition_table_+209, "RETURN macro_directives                                                                       \nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
-    { 3, ms_transition_table_+211, "START start_in_scanner_mode_directive                                                                    \nrule 21: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline    \nrule 22: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline" },
-    { 1, ms_transition_table_+214, "RETURN start_in_scanner_mode_directive" },
-    { 2, ms_transition_table_+215, "START scanner_modes                                   \nrule 23: scanner_modes <- . scanner_modes scanner_mode\nrule 24: scanner_modes <- .                           " },
-    { 3, ms_transition_table_+217, "RETURN scanner_modes                                                        \nrule 23: scanner_modes <- scanner_modes . scanner_mode                      \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
-    { 3, ms_transition_table_+220, "START scanner_mode                                                          \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
-    { 1, ms_transition_table_+223, "RETURN scanner_mode" },
-    { 5, ms_transition_table_+224, "START scanner_mode_rules                  \nrule 28: scanner_mode_rules <- . rule_list\nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              \nrule 29: scanner_mode_rules <- .          " },
-    { 1, ms_transition_table_+229, "RETURN scanner_mode_rules" },
-    { 4, ms_transition_table_+230, "START rule_list                           \nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              " },
-    { 2, ms_transition_table_+234, "RETURN rule_list                          \nrule 30: rule_list <- rule_list . '|' rule" },
-    { 3, ms_transition_table_+236, "START rule                            \nrule 32: rule <- . REGEX rule_handlers" },
-    { 1, ms_transition_table_+239, "RETURN rule" },
-    { 2, ms_transition_table_+240, "START rule_handlers                                   \nrule 33: rule_handlers <- . rule_handlers rule_handler\nrule 34: rule_handlers <- .                           " },
-    { 4, ms_transition_table_+242, "RETURN rule_handlers                                                     \nrule 33: rule_handlers <- rule_handlers . rule_handler                   \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
-    { 4, ms_transition_table_+246, "START rule_handler                                                       \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
-    { 1, ms_transition_table_+250, "RETURN rule_handler" },
-    { 4, ms_transition_table_+251, "START any_type_of_code_block                          \nrule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK  \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK" },
-    { 1, ms_transition_table_+255, "RETURN any_type_of_code_block" },
-    { 2, ms_transition_table_+256, "START at_least_zero_newlines                                       \nrule 41: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 42: at_least_zero_newlines <- .                               " },
-    { 2, ms_transition_table_+258, "RETURN at_least_zero_newlines                                      \nrule 41: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE" },
-    { 3, ms_transition_table_+260, "START at_least_one_newline                                     \nrule 43: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 44: at_least_one_newline <- . NEWLINE                     " },
-    { 2, ms_transition_table_+263, "RETURN at_least_one_newline                                    \nrule 43: at_least_one_newline <- at_least_one_newline . NEWLINE" }
+    { 2, ms_transition_table_+26, "rule 0: root <- at_least_zero_newlines targets_directive . target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 6: target_directives <- . target_directives target_directive at_least_one_newline                                                                  \nrule 7: target_directives <- .                                                                                                                          " },
+    { 4, ms_transition_table_+28, "rule 0: root <- at_least_zero_newlines targets_directive target_directives . macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 6: target_directives <- target_directives . target_directive at_least_one_newline                                                                  \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param                                                                     \nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                                                                                     \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                                                                                           \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                                                                                                  \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline                                                           \nrule 18: macro_directives <- .                                                                                                                          \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline                                                          \nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline                                                             " },
+    { 3, ms_transition_table_+32, "rule 8: target_directive <- DIRECTIVE_TARGET . '.' ID '.' ID target_directive_param\nrule 9: target_directive <- DIRECTIVE_TARGET . '.' ID '.' ID ERROR_                \nrule 10: target_directive <- DIRECTIVE_TARGET . '.' ID ERROR_                      \nrule 11: target_directive <- DIRECTIVE_TARGET . ERROR_                             " },
+    { 2, ms_transition_table_+35, "rule 8: target_directive <- DIRECTIVE_TARGET '.' . ID '.' ID target_directive_param\nrule 9: target_directive <- DIRECTIVE_TARGET '.' . ID '.' ID ERROR_                \nrule 10: target_directive <- DIRECTIVE_TARGET '.' . ID ERROR_                      " },
+    { 3, ms_transition_table_+37, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID . '.' ID target_directive_param\nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID . '.' ID ERROR_                \nrule 10: target_directive <- DIRECTIVE_TARGET '.' ID . ERROR_                      " },
+    { 2, ms_transition_table_+40, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID '.' . ID target_directive_param\nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID '.' . ID ERROR_                " },
+    { 7, ms_transition_table_+42, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID . target_directive_param\nrule 12: target_directive_param <- . ID                                            \nrule 13: target_directive_param <- . STRING_LITERAL                                \nrule 14: target_directive_param <- . STRICT_CODE_BLOCK                             \nrule 15: target_directive_param <- . DUMB_CODE_BLOCK                               \nrule 16: target_directive_param <- .                                               \nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID . ERROR_                " },
+    { 1, ms_transition_table_+49, "rule 9: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID ERROR_ ." },
+    { 1, ms_transition_table_+50, "rule 15: target_directive_param <- DUMB_CODE_BLOCK ." },
+    { 1, ms_transition_table_+51, "rule 12: target_directive_param <- ID ." },
+    { 1, ms_transition_table_+52, "rule 14: target_directive_param <- STRICT_CODE_BLOCK ." },
+    { 1, ms_transition_table_+53, "rule 13: target_directive_param <- STRING_LITERAL ." },
+    { 1, ms_transition_table_+54, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID target_directive_param ." },
+    { 1, ms_transition_table_+55, "rule 10: target_directive <- DIRECTIVE_TARGET '.' ID ERROR_ ." },
+    { 1, ms_transition_table_+56, "rule 11: target_directive <- DIRECTIVE_TARGET ERROR_ ." },
+    { 3, ms_transition_table_+57, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                       \nrule 44: at_least_one_newline <- . NEWLINE                                            \nrule 6: target_directives <- target_directives target_directive . at_least_one_newline" },
+    { 2, ms_transition_table_+60, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                       \nrule 6: target_directives <- target_directives target_directive at_least_one_newline ." },
+    { 4, ms_transition_table_+62, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives . start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline                                                           \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline                                                          \nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline                                                             \nrule 21: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline                                                   \nrule 22: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline                                               " },
+    { 3, ms_transition_table_+66, "rule 17: macro_directives <- macro_directives DIRECTIVE_MACRO . ID REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO . ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO . ERROR_ at_least_one_newline   " },
+    { 3, ms_transition_table_+69, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                            \nrule 44: at_least_one_newline <- . NEWLINE                                                 \nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO ERROR_ . at_least_one_newline" },
+    { 2, ms_transition_table_+72, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                            \nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline ." },
+    { 3, ms_transition_table_+74, "rule 17: macro_directives <- macro_directives DIRECTIVE_MACRO ID . REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO ID . ERROR_ at_least_one_newline" },
+    { 3, ms_transition_table_+77, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                               \nrule 44: at_least_one_newline <- . NEWLINE                                                    \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO ID ERROR_ . at_least_one_newline" },
+    { 2, ms_transition_table_+80, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                               \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline ." },
+    { 3, ms_transition_table_+82, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                              \nrule 44: at_least_one_newline <- . NEWLINE                                                   \nrule 17: macro_directives <- macro_directives DIRECTIVE_MACRO ID REGEX . at_least_one_newline" },
+    { 2, ms_transition_table_+85, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                              \nrule 17: macro_directives <- macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline ." },
+    { 3, ms_transition_table_+87, "rule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE . ID at_least_one_newline    \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE . ERROR_ at_least_one_newline" },
+    { 3, ms_transition_table_+90, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                          \nrule 44: at_least_one_newline <- . NEWLINE                                                               \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ERROR_ . at_least_one_newline" },
+    { 2, ms_transition_table_+93, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                          \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline ." },
+    { 3, ms_transition_table_+95, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                      \nrule 44: at_least_one_newline <- . NEWLINE                                                           \nrule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ID . at_least_one_newline" },
+    { 2, ms_transition_table_+98, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                      \nrule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline ." },
+    { 2, ms_transition_table_+100, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive . END_PREAMBLE scanner_modes" },
+    { 2, ms_transition_table_+102, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE . scanner_modes\nrule 23: scanner_modes <- . scanner_modes scanner_mode                                                                                                  \nrule 24: scanner_modes <- .                                                                                                                             " },
+    { 3, ms_transition_table_+104, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes .\nrule 23: scanner_modes <- scanner_modes . scanner_mode                                                                                                  \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'                                                                                \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                                                                                            \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'                                                                            " },
+    { 3, ms_transition_table_+107, "rule 25: scanner_mode <- DIRECTIVE_STATE . ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- DIRECTIVE_STATE . ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- DIRECTIVE_STATE . ERROR_ ':' scanner_mode_rules ';'" },
+    { 2, ms_transition_table_+110, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ . ':' scanner_mode_rules ';'" },
+    { 5, ms_transition_table_+112, "rule 28: scanner_mode_rules <- . rule_list                                  \nrule 30: rule_list <- . rule_list '|' rule                                  \nrule 32: rule <- . REGEX rule_handlers                                      \nrule 31: rule_list <- . rule                                                \nrule 29: scanner_mode_rules <- .                                            \nrule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' . scanner_mode_rules ';'" },
+    { 2, ms_transition_table_+117, "rule 32: rule <- REGEX . rule_handlers                \nrule 33: rule_handlers <- . rule_handlers rule_handler\nrule 34: rule_handlers <- .                           " },
+    { 4, ms_transition_table_+119, "rule 32: rule <- REGEX rule_handlers .                                   \nrule 33: rule_handlers <- rule_handlers . rule_handler                   \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
+    { 4, ms_transition_table_+123, "rule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK    \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK  \nrule 38: rule_handler <- ERROR_ . any_type_of_code_block" },
+    { 1, ms_transition_table_+127, "rule 39: any_type_of_code_block <- DUMB_CODE_BLOCK ." },
+    { 1, ms_transition_table_+128, "rule 40: any_type_of_code_block <- STRICT_CODE_BLOCK ." },
+    { 1, ms_transition_table_+129, "rule 38: rule_handler <- ERROR_ any_type_of_code_block ." },
+    { 3, ms_transition_table_+130, "rule 35: rule_handler <- DIRECTIVE_TARGET . '.' ID any_type_of_code_block\nrule 36: rule_handler <- DIRECTIVE_TARGET . ERROR_ any_type_of_code_block\nrule 37: rule_handler <- DIRECTIVE_TARGET . ERROR_                       " },
+    { 2, ms_transition_table_+133, "rule 35: rule_handler <- DIRECTIVE_TARGET '.' . ID any_type_of_code_block" },
+    { 4, ms_transition_table_+135, "rule 35: rule_handler <- DIRECTIVE_TARGET '.' ID . any_type_of_code_block\nrule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK                   " },
+    { 1, ms_transition_table_+139, "rule 35: rule_handler <- DIRECTIVE_TARGET '.' ID any_type_of_code_block ." },
+    { 4, ms_transition_table_+140, "rule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK                   \nrule 36: rule_handler <- DIRECTIVE_TARGET ERROR_ . any_type_of_code_block\nrule 37: rule_handler <- DIRECTIVE_TARGET ERROR_ .                       " },
+    { 1, ms_transition_table_+144, "rule 36: rule_handler <- DIRECTIVE_TARGET ERROR_ any_type_of_code_block ." },
+    { 1, ms_transition_table_+145, "rule 33: rule_handlers <- rule_handlers rule_handler ." },
+    { 2, ms_transition_table_+146, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules . ';'" },
+    { 1, ms_transition_table_+148, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';' ." },
+    { 2, ms_transition_table_+149, "rule 28: scanner_mode_rules <- rule_list .\nrule 30: rule_list <- rule_list . '|' rule" },
+    { 3, ms_transition_table_+151, "rule 30: rule_list <- rule_list '|' . rule\nrule 32: rule <- . REGEX rule_handlers    " },
+    { 1, ms_transition_table_+154, "rule 30: rule_list <- rule_list '|' rule ." },
+    { 1, ms_transition_table_+155, "rule 31: rule_list <- rule ." },
+    { 2, ms_transition_table_+156, "rule 25: scanner_mode <- DIRECTIVE_STATE ID . ':' scanner_mode_rules ';'\nrule 26: scanner_mode <- DIRECTIVE_STATE ID . ':' ERROR_ ';'            " },
+    { 6, ms_transition_table_+158, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' . scanner_mode_rules ';'\nrule 28: scanner_mode_rules <- . rule_list                              \nrule 30: rule_list <- . rule_list '|' rule                              \nrule 32: rule <- . REGEX rule_handlers                                  \nrule 31: rule_list <- . rule                                            \nrule 29: scanner_mode_rules <- .                                        \nrule 26: scanner_mode <- DIRECTIVE_STATE ID ':' . ERROR_ ';'            " },
+    { 2, ms_transition_table_+164, "rule 26: scanner_mode <- DIRECTIVE_STATE ID ':' ERROR_ . ';'" },
+    { 1, ms_transition_table_+166, "rule 26: scanner_mode <- DIRECTIVE_STATE ID ':' ERROR_ ';' ." },
+    { 2, ms_transition_table_+167, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules . ';'" },
+    { 1, ms_transition_table_+169, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules ';' ." },
+    { 1, ms_transition_table_+170, "rule 23: scanner_modes <- scanner_modes scanner_mode ." },
+    { 3, ms_transition_table_+171, "START targets_directive                                                         \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline\nrule 2: targets_directive <- .                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline    " },
+    { 1, ms_transition_table_+174, "RETURN targets_directive" },
+    { 2, ms_transition_table_+175, "START target_ids                     \nrule 4: target_ids <- . target_ids ID\nrule 5: target_ids <- .              " },
+    { 2, ms_transition_table_+177, "RETURN target_ids                    \nrule 4: target_ids <- target_ids . ID" },
+    { 2, ms_transition_table_+179, "START target_directives                                                               \nrule 6: target_directives <- . target_directives target_directive at_least_one_newline\nrule 7: target_directives <- .                                                        " },
+    { 3, ms_transition_table_+181, "RETURN target_directives                                                              \nrule 6: target_directives <- target_directives . target_directive at_least_one_newline\nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param   \nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                   \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                         \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                                " },
+    { 3, ms_transition_table_+184, "START target_directive                                                             \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                             " },
+    { 1, ms_transition_table_+187, "RETURN target_directive" },
+    { 6, ms_transition_table_+188, "START target_directive_param                          \nrule 12: target_directive_param <- . ID               \nrule 13: target_directive_param <- . STRING_LITERAL   \nrule 14: target_directive_param <- . STRICT_CODE_BLOCK\nrule 15: target_directive_param <- . DUMB_CODE_BLOCK  \nrule 16: target_directive_param <- .                  " },
+    { 1, ms_transition_table_+194, "RETURN target_directive_param" },
+    { 2, ms_transition_table_+195, "START macro_directives                                                                        \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 18: macro_directives <- .                                                                \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
+    { 2, ms_transition_table_+197, "RETURN macro_directives                                                                       \nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
+    { 3, ms_transition_table_+199, "START start_in_scanner_mode_directive                                                                    \nrule 21: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline    \nrule 22: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline" },
+    { 1, ms_transition_table_+202, "RETURN start_in_scanner_mode_directive" },
+    { 2, ms_transition_table_+203, "START scanner_modes                                   \nrule 23: scanner_modes <- . scanner_modes scanner_mode\nrule 24: scanner_modes <- .                           " },
+    { 3, ms_transition_table_+205, "RETURN scanner_modes                                                        \nrule 23: scanner_modes <- scanner_modes . scanner_mode                      \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
+    { 3, ms_transition_table_+208, "START scanner_mode                                                          \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
+    { 1, ms_transition_table_+211, "RETURN scanner_mode" },
+    { 5, ms_transition_table_+212, "START scanner_mode_rules                  \nrule 28: scanner_mode_rules <- . rule_list\nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              \nrule 29: scanner_mode_rules <- .          " },
+    { 1, ms_transition_table_+217, "RETURN scanner_mode_rules" },
+    { 4, ms_transition_table_+218, "START rule_list                           \nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              " },
+    { 2, ms_transition_table_+222, "RETURN rule_list                          \nrule 30: rule_list <- rule_list . '|' rule" },
+    { 3, ms_transition_table_+224, "START rule                            \nrule 32: rule <- . REGEX rule_handlers" },
+    { 1, ms_transition_table_+227, "RETURN rule" },
+    { 2, ms_transition_table_+228, "START rule_handlers                                   \nrule 33: rule_handlers <- . rule_handlers rule_handler\nrule 34: rule_handlers <- .                           " },
+    { 4, ms_transition_table_+230, "RETURN rule_handlers                                                     \nrule 33: rule_handlers <- rule_handlers . rule_handler                   \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
+    { 4, ms_transition_table_+234, "START rule_handler                                                       \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
+    { 1, ms_transition_table_+238, "RETURN rule_handler" },
+    { 4, ms_transition_table_+239, "START any_type_of_code_block                          \nrule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK  \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK" },
+    { 1, ms_transition_table_+243, "RETURN any_type_of_code_block" },
+    { 2, ms_transition_table_+244, "START at_least_zero_newlines                                       \nrule 41: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 42: at_least_zero_newlines <- .                               " },
+    { 2, ms_transition_table_+246, "RETURN at_least_zero_newlines                                      \nrule 41: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE" },
+    { 3, ms_transition_table_+248, "START at_least_one_newline                                     \nrule 43: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 44: at_least_one_newline <- . NEWLINE                     " },
+    { 2, ms_transition_table_+251, "RETURN at_least_one_newline                                    \nrule 43: at_least_one_newline <- at_least_one_newline . NEWLINE" }
 };
 BarfCpp_::Size const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
 
@@ -1555,241 +1565,229 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+14 },
     { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+15 },
     { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+15 },
-    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+16 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+17 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+16 },
+    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+17 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+18 },
     { Parser::Transition_::SHIFT, 15, 1, ms_lookahead_table_+18 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+19 },
+    { Parser::Transition_::SHIFT, 26, 1, ms_lookahead_table_+19 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+20 },
     { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+20 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+21 },
     { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+21 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+22 },
+    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+22 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+23 },
     { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+23 },
     { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+24 },
     { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+24 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+25 },
-    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+26 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+27 },
-    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+28 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+29 },
+    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+25 },
+    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+26 },
+    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+27 },
+    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+28 },
+    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+29 },
+    { Parser::Transition_::REDUCE, 9, 0, ms_lookahead_table_+30 },
+    { Parser::Transition_::REDUCE, 15, 0, ms_lookahead_table_+30 },
+    { Parser::Transition_::REDUCE, 12, 0, ms_lookahead_table_+30 },
+    { Parser::Transition_::REDUCE, 14, 0, ms_lookahead_table_+30 },
+    { Parser::Transition_::REDUCE, 13, 0, ms_lookahead_table_+30 },
+    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+30 },
+    { Parser::Transition_::REDUCE, 10, 0, ms_lookahead_table_+30 },
+    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+30 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+30 },
     { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+30 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+31 },
-    { Parser::Transition_::REDUCE, 9, 0, ms_lookahead_table_+32 },
+    { Parser::Transition_::SHIFT, 28, 1, ms_lookahead_table_+31 },
+    { Parser::Transition_::REDUCE, 6, 0, ms_lookahead_table_+32 },
     { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+32 },
-    { Parser::Transition_::REDUCE, 15, 0, ms_lookahead_table_+33 },
-    { Parser::Transition_::REDUCE, 12, 0, ms_lookahead_table_+33 },
-    { Parser::Transition_::REDUCE, 14, 0, ms_lookahead_table_+33 },
-    { Parser::Transition_::REDUCE, 13, 0, ms_lookahead_table_+33 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+33 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+33 },
-    { Parser::Transition_::SHIFT, 26, 1, ms_lookahead_table_+34 },
-    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+35 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+35 },
+    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+33 },
+    { Parser::Transition_::SHIFT, 38, 1, ms_lookahead_table_+34 },
+    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+35 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+36 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+36 },
-    { Parser::Transition_::SHIFT, 28, 1, ms_lookahead_table_+37 },
-    { Parser::Transition_::REDUCE, 10, 0, ms_lookahead_table_+38 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+38 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+39 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+39 },
-    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+40 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+41 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+41 },
-    { Parser::Transition_::REDUCE, 6, 0, ms_lookahead_table_+42 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+42 },
-    { Parser::Transition_::SHIFT, 33, 1, ms_lookahead_table_+42 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+43 },
-    { Parser::Transition_::SHIFT, 46, 1, ms_lookahead_table_+44 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+45 },
-    { Parser::Transition_::SHIFT, 34, 1, ms_lookahead_table_+45 },
-    { Parser::Transition_::SHIFT, 36, 1, ms_lookahead_table_+46 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+47 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+47 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+48 },
-    { Parser::Transition_::REDUCE, 20, 0, ms_lookahead_table_+49 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+49 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+50 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+50 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+51 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+52 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+52 },
-    { Parser::Transition_::SHIFT, 38, 1, ms_lookahead_table_+53 },
-    { Parser::Transition_::REDUCE, 19, 0, ms_lookahead_table_+54 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+54 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+55 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+55 },
-    { Parser::Transition_::SHIFT, 40, 1, ms_lookahead_table_+56 },
-    { Parser::Transition_::REDUCE, 17, 0, ms_lookahead_table_+57 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+57 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+58 },
-    { Parser::Transition_::SHIFT, 42, 1, ms_lookahead_table_+58 },
-    { Parser::Transition_::SHIFT, 44, 1, ms_lookahead_table_+59 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+60 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+60 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+61 },
-    { Parser::Transition_::REDUCE, 22, 0, ms_lookahead_table_+62 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+62 },
+    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+36 },
+    { Parser::Transition_::SHIFT, 33, 1, ms_lookahead_table_+37 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+38 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+38 },
+    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+39 },
+    { Parser::Transition_::REDUCE, 20, 0, ms_lookahead_table_+40 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+40 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+41 },
+    { Parser::Transition_::SHIFT, 34, 1, ms_lookahead_table_+41 },
+    { Parser::Transition_::SHIFT, 36, 1, ms_lookahead_table_+42 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+43 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+43 },
+    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+44 },
+    { Parser::Transition_::REDUCE, 19, 0, ms_lookahead_table_+45 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+45 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+46 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+46 },
+    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+47 },
+    { Parser::Transition_::REDUCE, 17, 0, ms_lookahead_table_+48 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+48 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+49 },
+    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+49 },
+    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+50 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+51 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+51 },
+    { Parser::Transition_::SHIFT, 40, 1, ms_lookahead_table_+52 },
+    { Parser::Transition_::REDUCE, 22, 0, ms_lookahead_table_+53 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+53 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+54 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+54 },
+    { Parser::Transition_::SHIFT, 42, 1, ms_lookahead_table_+55 },
+    { Parser::Transition_::REDUCE, 21, 0, ms_lookahead_table_+56 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+56 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+57 },
+    { Parser::Transition_::SHIFT, 44, 1, ms_lookahead_table_+57 },
+    { Parser::Transition_::REDUCE, 24, 0, ms_lookahead_table_+58 },
+    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+58 },
+    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+59 },
+    { Parser::Transition_::SHIFT, 46, 1, ms_lookahead_table_+59 },
+    { Parser::Transition_::SHIFT, 74, 1, ms_lookahead_table_+60 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+61 },
+    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+61 },
+    { Parser::Transition_::SHIFT, 68, 1, ms_lookahead_table_+62 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+63 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+63 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+64 },
-    { Parser::Transition_::REDUCE, 21, 0, ms_lookahead_table_+65 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+65 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+66 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+66 },
-    { Parser::Transition_::REDUCE, 24, 0, ms_lookahead_table_+67 },
-    { Parser::Transition_::SHIFT, 48, 1, ms_lookahead_table_+67 },
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+68 },
-    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+68 },
-    { Parser::Transition_::SHIFT, 77, 1, ms_lookahead_table_+69 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+70 },
-    { Parser::Transition_::SHIFT, 50, 1, ms_lookahead_table_+70 },
-    { Parser::Transition_::SHIFT, 71, 1, ms_lookahead_table_+71 },
+    { Parser::Transition_::SHIFT, 48, 1, ms_lookahead_table_+63 },
+    { Parser::Transition_::REDUCE, 29, 0, ms_lookahead_table_+64 },
+    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+64 },
+    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+65 },
+    { Parser::Transition_::SHIFT, 64, 1, ms_lookahead_table_+66 },
+    { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+67 },
+    { Parser::Transition_::REDUCE, 34, 0, ms_lookahead_table_+68 },
+    { Parser::Transition_::SHIFT, 50, 1, ms_lookahead_table_+68 },
+    { Parser::Transition_::REDUCE, 32, 0, ms_lookahead_table_+69 },
+    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+69 },
+    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+70 },
+    { Parser::Transition_::SHIFT, 61, 1, ms_lookahead_table_+71 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+72 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+72 },
-    { Parser::Transition_::REDUCE, 29, 0, ms_lookahead_table_+73 },
-    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+73 },
-    { Parser::Transition_::SHIFT, 65, 1, ms_lookahead_table_+74 },
-    { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+75 },
-    { Parser::Transition_::SHIFT, 70, 1, ms_lookahead_table_+76 },
-    { Parser::Transition_::REDUCE, 34, 0, ms_lookahead_table_+77 },
-    { Parser::Transition_::SHIFT, 53, 1, ms_lookahead_table_+77 },
-    { Parser::Transition_::REDUCE, 32, 0, ms_lookahead_table_+78 },
-    { Parser::Transition_::SHIFT, 54, 1, ms_lookahead_table_+78 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+79 },
-    { Parser::Transition_::SHIFT, 64, 1, ms_lookahead_table_+80 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+81 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+81 },
-    { Parser::Transition_::SHIFT, 56, 1, ms_lookahead_table_+82 },
-    { Parser::Transition_::SHIFT, 57, 1, ms_lookahead_table_+83 },
-    { Parser::Transition_::REDUCE, 39, 0, ms_lookahead_table_+84 },
-    { Parser::Transition_::REDUCE, 40, 0, ms_lookahead_table_+84 },
-    { Parser::Transition_::REDUCE, 38, 0, ms_lookahead_table_+84 },
+    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+72 },
+    { Parser::Transition_::SHIFT, 53, 1, ms_lookahead_table_+73 },
+    { Parser::Transition_::SHIFT, 54, 1, ms_lookahead_table_+74 },
+    { Parser::Transition_::REDUCE, 39, 0, ms_lookahead_table_+75 },
+    { Parser::Transition_::REDUCE, 40, 0, ms_lookahead_table_+75 },
+    { Parser::Transition_::REDUCE, 38, 0, ms_lookahead_table_+75 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+75 },
+    { Parser::Transition_::SHIFT, 56, 1, ms_lookahead_table_+75 },
+    { Parser::Transition_::SHIFT, 59, 1, ms_lookahead_table_+76 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+77 },
+    { Parser::Transition_::SHIFT, 57, 1, ms_lookahead_table_+77 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+78 },
+    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+78 },
+    { Parser::Transition_::SHIFT, 53, 1, ms_lookahead_table_+79 },
+    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+80 },
+    { Parser::Transition_::REDUCE, 35, 0, ms_lookahead_table_+81 },
+    { Parser::Transition_::REDUCE, 37, 0, ms_lookahead_table_+81 },
+    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+81 },
+    { Parser::Transition_::SHIFT, 53, 1, ms_lookahead_table_+82 },
+    { Parser::Transition_::SHIFT, 60, 1, ms_lookahead_table_+83 },
+    { Parser::Transition_::REDUCE, 36, 0, ms_lookahead_table_+84 },
+    { Parser::Transition_::REDUCE, 33, 0, ms_lookahead_table_+84 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+84 },
-    { Parser::Transition_::SHIFT, 59, 1, ms_lookahead_table_+84 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+85 },
+    { Parser::Transition_::SHIFT, 63, 1, ms_lookahead_table_+84 },
+    { Parser::Transition_::REDUCE, 27, 0, ms_lookahead_table_+85 },
+    { Parser::Transition_::REDUCE, 28, 0, ms_lookahead_table_+85 },
+    { Parser::Transition_::SHIFT, 65, 1, ms_lookahead_table_+85 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+86 },
-    { Parser::Transition_::SHIFT, 60, 1, ms_lookahead_table_+86 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+87 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+87 },
-    { Parser::Transition_::SHIFT, 56, 1, ms_lookahead_table_+88 },
-    { Parser::Transition_::SHIFT, 61, 1, ms_lookahead_table_+89 },
-    { Parser::Transition_::REDUCE, 35, 0, ms_lookahead_table_+90 },
-    { Parser::Transition_::REDUCE, 37, 0, ms_lookahead_table_+90 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+90 },
-    { Parser::Transition_::SHIFT, 56, 1, ms_lookahead_table_+91 },
-    { Parser::Transition_::SHIFT, 63, 1, ms_lookahead_table_+92 },
-    { Parser::Transition_::REDUCE, 36, 0, ms_lookahead_table_+93 },
-    { Parser::Transition_::REDUCE, 33, 0, ms_lookahead_table_+93 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+93 },
-    { Parser::Transition_::SHIFT, 66, 1, ms_lookahead_table_+93 },
-    { Parser::Transition_::REDUCE, 27, 0, ms_lookahead_table_+94 },
-    { Parser::Transition_::REDUCE, 28, 0, ms_lookahead_table_+94 },
-    { Parser::Transition_::SHIFT, 68, 1, ms_lookahead_table_+94 },
+    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+86 },
+    { Parser::Transition_::SHIFT, 66, 1, ms_lookahead_table_+87 },
+    { Parser::Transition_::REDUCE, 30, 0, ms_lookahead_table_+88 },
+    { Parser::Transition_::REDUCE, 31, 0, ms_lookahead_table_+88 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+88 },
+    { Parser::Transition_::SHIFT, 69, 1, ms_lookahead_table_+88 },
+    { Parser::Transition_::REDUCE, 29, 0, ms_lookahead_table_+89 },
+    { Parser::Transition_::SHIFT, 70, 1, ms_lookahead_table_+89 },
+    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+90 },
+    { Parser::Transition_::SHIFT, 72, 1, ms_lookahead_table_+91 },
+    { Parser::Transition_::SHIFT, 64, 1, ms_lookahead_table_+92 },
+    { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+93 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+94 },
+    { Parser::Transition_::SHIFT, 71, 1, ms_lookahead_table_+94 },
+    { Parser::Transition_::REDUCE, 26, 0, ms_lookahead_table_+95 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+95 },
-    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+95 },
-    { Parser::Transition_::SHIFT, 69, 1, ms_lookahead_table_+96 },
-    { Parser::Transition_::REDUCE, 30, 0, ms_lookahead_table_+97 },
-    { Parser::Transition_::REDUCE, 31, 0, ms_lookahead_table_+97 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+97 },
-    { Parser::Transition_::SHIFT, 72, 1, ms_lookahead_table_+97 },
-    { Parser::Transition_::REDUCE, 29, 0, ms_lookahead_table_+98 },
-    { Parser::Transition_::SHIFT, 73, 1, ms_lookahead_table_+98 },
-    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+99 },
-    { Parser::Transition_::SHIFT, 75, 1, ms_lookahead_table_+100 },
-    { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+101 },
-    { Parser::Transition_::SHIFT, 70, 1, ms_lookahead_table_+102 },
+    { Parser::Transition_::SHIFT, 73, 1, ms_lookahead_table_+95 },
+    { Parser::Transition_::REDUCE, 25, 0, ms_lookahead_table_+96 },
+    { Parser::Transition_::REDUCE, 23, 0, ms_lookahead_table_+96 },
+    { Parser::Transition_::REDUCE, 2, 0, ms_lookahead_table_+96 },
+    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+96 },
+    { Parser::Transition_::SHIFT, 76, 1, ms_lookahead_table_+97 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+98 },
+    { Parser::Transition_::REDUCE, 5, 0, ms_lookahead_table_+98 },
+    { Parser::Transition_::SHIFT, 78, 1, ms_lookahead_table_+98 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+99 },
+    { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+99 },
+    { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+100 },
+    { Parser::Transition_::SHIFT, 80, 1, ms_lookahead_table_+100 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+101 },
+    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+101 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+102 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+103 },
-    { Parser::Transition_::SHIFT, 74, 1, ms_lookahead_table_+103 },
-    { Parser::Transition_::REDUCE, 26, 0, ms_lookahead_table_+104 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+104 },
-    { Parser::Transition_::SHIFT, 76, 1, ms_lookahead_table_+104 },
-    { Parser::Transition_::REDUCE, 25, 0, ms_lookahead_table_+105 },
-    { Parser::Transition_::REDUCE, 23, 0, ms_lookahead_table_+105 },
-    { Parser::Transition_::REDUCE, 2, 0, ms_lookahead_table_+105 },
-    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+105 },
-    { Parser::Transition_::SHIFT, 79, 1, ms_lookahead_table_+106 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+107 },
-    { Parser::Transition_::REDUCE, 5, 0, ms_lookahead_table_+107 },
-    { Parser::Transition_::SHIFT, 81, 1, ms_lookahead_table_+107 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+108 },
-    { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+108 },
-    { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+109 },
-    { Parser::Transition_::SHIFT, 83, 1, ms_lookahead_table_+109 },
+    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+103 },
+    { Parser::Transition_::SHIFT, 82, 1, ms_lookahead_table_+104 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+105 },
+    { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+105 },
+    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+105 },
+    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+106 },
+    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+107 },
+    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+108 },
+    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+109 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+110 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+110 },
-    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+111 },
+    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+110 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+110 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+111 },
+    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+111 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+112 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+112 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+113 },
+    { Parser::Transition_::SHIFT, 38, 1, ms_lookahead_table_+112 },
+    { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+113 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+114 },
-    { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+114 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+114 },
-    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+115 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+116 },
-    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+117 },
-    { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+118 },
+    { Parser::Transition_::REDUCE, 24, 0, ms_lookahead_table_+114 },
+    { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+114 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+115 },
+    { Parser::Transition_::SHIFT, 46, 1, ms_lookahead_table_+115 },
+    { Parser::Transition_::SHIFT, 74, 1, ms_lookahead_table_+116 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+117 },
+    { Parser::Transition_::SHIFT, 46, 1, ms_lookahead_table_+117 },
+    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+118 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+119 },
-    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+119 },
-    { Parser::Transition_::SHIFT, 89, 1, ms_lookahead_table_+119 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+120 },
-    { Parser::Transition_::SHIFT, 33, 1, ms_lookahead_table_+120 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+121 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+121 },
-    { Parser::Transition_::SHIFT, 91, 1, ms_lookahead_table_+122 },
+    { Parser::Transition_::REDUCE, 29, 0, ms_lookahead_table_+119 },
+    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+119 },
+    { Parser::Transition_::SHIFT, 94, 1, ms_lookahead_table_+120 },
+    { Parser::Transition_::SHIFT, 64, 1, ms_lookahead_table_+121 },
+    { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+122 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+123 },
-    { Parser::Transition_::REDUCE, 24, 0, ms_lookahead_table_+123 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+123 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+124 },
-    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+124 },
-    { Parser::Transition_::SHIFT, 77, 1, ms_lookahead_table_+125 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+126 },
-    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+126 },
-    { Parser::Transition_::SHIFT, 95, 1, ms_lookahead_table_+127 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+128 },
-    { Parser::Transition_::REDUCE, 29, 0, ms_lookahead_table_+128 },
-    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+128 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+129 },
-    { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+130 },
-    { Parser::Transition_::SHIFT, 70, 1, ms_lookahead_table_+131 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+132 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+132 },
-    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+132 },
-    { Parser::Transition_::SHIFT, 99, 1, ms_lookahead_table_+133 },
-    { Parser::Transition_::SHIFT, 70, 1, ms_lookahead_table_+134 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+135 },
-    { Parser::Transition_::SHIFT, 68, 1, ms_lookahead_table_+135 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+123 },
+    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+123 },
+    { Parser::Transition_::SHIFT, 96, 1, ms_lookahead_table_+124 },
+    { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+125 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+126 },
+    { Parser::Transition_::SHIFT, 65, 1, ms_lookahead_table_+126 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+127 },
+    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+127 },
+    { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+128 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+129 },
+    { Parser::Transition_::REDUCE, 34, 0, ms_lookahead_table_+129 },
+    { Parser::Transition_::SHIFT, 100, 1, ms_lookahead_table_+129 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+130 },
+    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+130 },
+    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+131 },
+    { Parser::Transition_::SHIFT, 61, 1, ms_lookahead_table_+132 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+133 },
+    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+133 },
+    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+134 },
+    { Parser::Transition_::SHIFT, 102, 1, ms_lookahead_table_+135 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+136 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+136 },
     { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+136 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+137 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+138 },
-    { Parser::Transition_::REDUCE, 34, 0, ms_lookahead_table_+138 },
-    { Parser::Transition_::SHIFT, 103, 1, ms_lookahead_table_+138 },
+    { Parser::Transition_::SHIFT, 53, 1, ms_lookahead_table_+137 },
+    { Parser::Transition_::SHIFT, 104, 1, ms_lookahead_table_+138 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+139 },
-    { Parser::Transition_::SHIFT, 54, 1, ms_lookahead_table_+139 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+140 },
-    { Parser::Transition_::SHIFT, 64, 1, ms_lookahead_table_+141 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+142 },
-    { Parser::Transition_::SHIFT, 54, 1, ms_lookahead_table_+142 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+143 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+144 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+145 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+145 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+145 },
-    { Parser::Transition_::SHIFT, 56, 1, ms_lookahead_table_+146 },
-    { Parser::Transition_::SHIFT, 107, 1, ms_lookahead_table_+147 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+148 },
-    { Parser::Transition_::REDUCE, 42, 0, ms_lookahead_table_+148 },
-    { Parser::Transition_::SHIFT, 109, 1, ms_lookahead_table_+148 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+149 },
-    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+149 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+150 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+150 },
-    { Parser::Transition_::SHIFT, 111, 1, ms_lookahead_table_+151 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+152 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+152 }
+    { Parser::Transition_::REDUCE, 42, 0, ms_lookahead_table_+139 },
+    { Parser::Transition_::SHIFT, 106, 1, ms_lookahead_table_+139 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+140 },
+    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+140 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+141 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+141 },
+    { Parser::Transition_::SHIFT, 108, 1, ms_lookahead_table_+142 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+143 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+143 }
 };
 BarfCpp_::Size const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
 
@@ -1825,15 +1823,6 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRICT_CODE_BLOCK,
     Parser::Terminal::STRING_LITERAL,
     Parser::Nonterminal_::target_directive_param,
-    Parser::Terminal::NEWLINE,
-    Parser::Nonterminal_::at_least_one_newline,
-    Parser::Terminal::NEWLINE,
-    Parser::Terminal::NEWLINE,
-    Parser::Nonterminal_::at_least_one_newline,
-    Parser::Terminal::NEWLINE,
-    Parser::Terminal::NEWLINE,
-    Parser::Nonterminal_::at_least_one_newline,
-    Parser::Terminal::NEWLINE,
     Parser::Terminal::NEWLINE,
     Parser::Nonterminal_::at_least_one_newline,
     Parser::Terminal::NEWLINE,
@@ -2250,7 +2239,15 @@ BarfCpp_::Size const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 94 "reflex_parser.trison"
+#line 102 "reflex_parser.trison"
+
+CommonLang::TargetMap *Parser::StealTargetMap ()
+{
+    assert(m_target_map != NULL);
+    CommonLang::TargetMap *retval = m_target_map;
+    m_target_map = NULL;
+    return retval;
+}
 
 bool Parser::OpenFile (string const &input_filename)
 {
@@ -2262,6 +2259,20 @@ bool Parser::OpenFile (string const &input_filename)
     return scanner_open_file_succeeded;
 }
 
+void Parser::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
+{
+    ResetForNewInput();
+    EmitExecutionMessage("using string " + input_name + " (" + GetStringLiteral(input_string) + ") for input");
+    m_scanner.OpenString(input_string, input_name, use_line_numbers);
+}
+
+void Parser::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
+{
+    ResetForNewInput();
+    EmitExecutionMessage("using stream " + input_name + " for input");
+    m_scanner.OpenUsingStream(input_stream, input_name, use_line_numbers);
+}
+
 } // end of namespace Reflex
 
-#line 2268 "reflex_parser.cpp"
+#line 2279 "reflex_parser.cpp"

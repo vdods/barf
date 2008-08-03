@@ -141,25 +141,22 @@ struct PrimarySource : public Ast::Base
 {
 public:
 
-    CommonLang::TargetMap const *const m_target_map;
     Regex::RegularExpressionMap *const m_regex_macro_map; // this could technically go away
     StartInScannerModeDirective const *const m_start_in_scanner_mode_directive;
     ScannerModeMap const *const m_scanner_mode_map;
 
     PrimarySource (
-        CommonLang::TargetMap const *target_map,
         Regex::RegularExpressionMap *regex_macro_map,
         StartInScannerModeDirective const *start_in_scanner_mode_directive,
         FiLoc const &end_preamble_filoc,
         ScannerModeMap const *scanner_mode_map)
         :
-        Ast::Base(target_map->GetFiLoc(), AST_PRIMARY_SOURCE),
-        m_target_map(target_map),
+        Ast::Base(FiLoc::ms_invalid, AST_PRIMARY_SOURCE),
         m_regex_macro_map(regex_macro_map),
         m_start_in_scanner_mode_directive(start_in_scanner_mode_directive),
-        m_scanner_mode_map(scanner_mode_map)
+        m_scanner_mode_map(scanner_mode_map),
+        m_target_map(NULL)
     {
-        assert(m_target_map != NULL);
         assert(m_regex_macro_map != NULL);
         // m_start_in_scanner_mode_directive can be NULL if an error happened
         assert(m_scanner_mode_map != NULL);
@@ -167,12 +164,28 @@ public:
 
     Uint32 GetRuleCount () const;
     Rule const *GetRule (Uint32 rule_index) const;
+    CommonLang::TargetMap const &GetTargetMap () const
+    {
+        assert(m_target_map != NULL);
+        return *m_target_map;
+    }
+
+    void SetTargetMap (CommonLang::TargetMap const *target_map)
+    {
+        assert(m_target_map == NULL);
+        assert(target_map != NULL);
+        m_target_map = target_map;
+    }
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+
+private:
+
+    CommonLang::TargetMap const *m_target_map;
 }; // end of struct PrimarySource
 
 } // end of namespace Reflex

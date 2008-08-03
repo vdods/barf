@@ -74,6 +74,10 @@ public:
         // m_directive_value can be NULL
     }
 
+    // this is the non-virtual, top-level Print method, not
+    // to be confused with Ast::Base::Print.
+    void Print (ostream &stream, Uint32 indent_level = 0) const;
+
     virtual string GetDirectiveString () const;
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class TargetDirective
@@ -86,14 +90,12 @@ public:
 
     Target (string const &target_id);
 
-    // this is called on a Target which appears in %targets
-    // and will enable specific error checking required for later code generation
-    void EnableCodeGeneration () { m_is_enabled_for_code_generation = true; }
     // sets the primary source path which was used to generate this target
     void SetSourcePath (string const &source_path);
-    // attempts to add a target directive, but will warn and not add if this
-    // target is not enabled for code generation.
+    // adds the given target directive
     void Add (TargetDirective *target_directive);
+    // sets the given target directive
+    void Set (TargetDirective *target_directive);
     // parses the targetspec file corresponding to this target.
     void ParseTargetspec (Targetspec::Parser &parser) const;
     // parses all the codespecs specified in m_targetspec and adds the
@@ -142,12 +144,12 @@ private:
 
     typedef vector<ParsedCodespec> ParsedCodespecList;
 
-    bool m_is_enabled_for_code_generation;
     string m_source_path;
     mutable ParsedTargetspec m_targetspec;
     mutable ParsedCodespecList m_codespec_list;
 
     using Ast::AstMap<TargetDirective>::Add;
+    using Ast::AstMap<TargetDirective>::Set;
 }; // end of class Target
 
 struct TargetMap : public Ast::AstMap<Target>
@@ -159,7 +161,12 @@ struct TargetMap : public Ast::AstMap<Target>
     // adds the given TargetDirective to the corresponding Target if
     // the Target exists, otherwise it creates the Target before
     // adding the TargetDirective.
+    // TODO -- i think this can be deprecated once trison also
+    // uses SetTargetDirective.
     void AddTargetDirective (TargetDirective *target_directive);
+    // adds the target directive (as AddTargetDirective) if it doesn't
+    // exist, otherwise overrides the existing one.
+    void SetTargetDirective (TargetDirective *target_directive);
 
     using Ast::AstMap<Target>::Add;
 }; // end of struct TargetMap

@@ -100,7 +100,8 @@ void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
 void PrimarySource::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << endl;
-    m_target_map->Print(stream, Stringify, indent_level+1);
+    if (m_target_map != NULL)
+        m_target_map->Print(stream, Stringify, indent_level+1);
     m_regex_macro_map->Print(stream, indent_level+1);
     if (m_start_in_scanner_mode_directive != NULL)
         m_start_in_scanner_mode_directive->Print(stream, Stringify, indent_level+1);

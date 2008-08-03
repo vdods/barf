@@ -130,29 +130,27 @@ CommandLineOption const Options::ms_option[] =
         "    Do not create a `dot` graph file for the DFA.  This is the default\n"
         "    behavior.  See also option --generate-dfa-dot-graph."),
 
-/* TODO: implement
     CommandLineOption("Target-related options"),
     CommandLineOption(
-        'd',
+        'D',
         "predefine",
         &OptionsBase::Predefine,
         "    Defines a targetspec directive value for a given target before parsing\n"
         "    the primary source.  Directive values specified in the primary source will\n"
         "    override values defined via this commandline option.  The argument is of\n"
         "    the form:\n"
-        "        target.<target_id>.<directive_id>=<value>\n"
+        "        %target.<target_id>.<directive_id>=<value>\n"
         "    The <value> portion of the argument must include the delimiters appropriate\n"
         "    to the targetspec directive (e.g. %string directives require a double-quote-\n"
-        "    delimited <value>, etc).  See also option -D."),
+        "    delimited <value>, etc).  See also option -d."),
     CommandLineOption(
-        'D',
+        'd',
         "postdefine",
         &OptionsBase::Postdefine,
         "    Defines a targetspec directive value for a given target after parsing\n"
         "    the primary source.  Directive values specified in the primary source will\n"
         "    be overridden by values defined via this commandline option.  See option\n"
-        "    -d for details on the form of the argument."),
-*/
+        "    -D for details on the form of the argument."),
 
     CommandLineOption("Verbosity options"),
     CommandLineOption(

@@ -43,7 +43,9 @@ enum ReturnStatus
 {
     RS_SUCCESS = 0,
     RS_COMMANDLINE_ABORT,
+    RS_PREDEFINE_ERROR,
     RS_INPUT_FILE_ERROR,
+    RS_POSTDEFINE_ERROR,
     RS_PRIMARY_SOURCE_ERROR,
     RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR,
     RS_TARGETSPEC_ERROR,
@@ -89,11 +91,29 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     // accumulated during this section, abort with an error code.
 
     Reflex::PrimarySource *primary_source = NULL;
-
     Ast::Base *parsed_tree_root = NULL;
+    
     Reflex::Parser parser;
     parser.ScannerDebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
     parser.DebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER));
+
+    // go through the predefine commandline directives and parse them.
+    for (vector<string>::size_type i = 0; i < GetReflexOptions().GetPredefineCount(); ++i)
+    {
+        parser.OpenString(GetReflexOptions().GetPredefine(i), "<predefine>");
+
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+            EmitError("general reflex parse error (in predefine) -- " + GetReflexOptions().HowtoReportError());
+        else if (!g_errors_encountered)
+        {
+            CommonLang::TargetDirective *target_directive = Dsc<CommonLang::TargetDirective *>(parsed_tree_root);
+            parser.GetTargetMap().SetTargetDirective(target_directive);
+        }
+        parsed_tree_root = NULL;
+    }
+
+    if (g_errors_encountered)
+        exit(RS_PREDEFINE_ERROR);
 
     if (!parser.OpenFile(GetReflexOptions().GetInputFilename()))
         EmitError("file not found: \"" + GetReflexOptions().GetInputFilename() + "\"");
@@ -103,16 +123,35 @@ Reflex::PrimarySource const *ParsePrimarySource ()
         
     if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
         EmitError("general reflex parse error -- " + GetReflexOptions().HowtoReportError(), FiLoc(GetReflexOptions().GetInputFilename()));
+    else if (g_errors_encountered)
+        exit(RS_PRIMARY_SOURCE_ERROR);
     else
     {
         primary_source = Dsc<Reflex::PrimarySource *>(parsed_tree_root);
         assert(primary_source != NULL);
-        if (GetReflexOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
-            primary_source->Print(cerr);
     }
 
+    // go through the postdefine commandline directives and parse them.
+    for (vector<string>::size_type i = 0; i < GetReflexOptions().GetPostdefineCount(); ++i)
+    {
+        parser.OpenString(GetReflexOptions().GetPostdefine(i), "<postdefine>");
+
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+            EmitError("general reflex parse error (in postdefine) -- " + GetReflexOptions().HowtoReportError());
+        else if (!g_errors_encountered)
+        {
+            CommonLang::TargetDirective *target_directive = Dsc<CommonLang::TargetDirective *>(parsed_tree_root);
+            parser.GetTargetMap().SetTargetDirective(target_directive);
+        }
+        parsed_tree_root = NULL;
+    }
+
+    primary_source->SetTargetMap(parser.StealTargetMap());
+    if (GetReflexOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
+        primary_source->Print(cerr);
+        
     if (g_errors_encountered)
-        exit(RS_PRIMARY_SOURCE_ERROR);
+        exit(RS_POSTDEFINE_ERROR);
 
     return primary_source;
 }
@@ -184,8 +223,8 @@ void ParseTargetspecs (Reflex::PrimarySource const &primary_source)
     parser.ScannerDebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER));
     parser.DebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_PARSER));
 
-    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
-                                               it_end = primary_source.m_target_map->end();
+    for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
+                                               it_end = primary_source.GetTargetMap().end();
          it != it_end;
          ++it)
     {
@@ -208,8 +247,8 @@ void ParseCodespecs (Reflex::PrimarySource const &primary_source)
     parser.ScannerDebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_SCANNER));
     parser.DebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_PARSER));
 
-    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
-                                               it_end = primary_source.m_target_map->end();
+    for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
+                                               it_end = primary_source.GetTargetMap().end();
          it != it_end;
          ++it)
     {
@@ -237,8 +276,8 @@ void WriteTargets (Reflex::PrimarySource const &primary_source, Automaton const 
     Reflex::GenerateNfaSymbols(primary_source, nfa.m_graph, nfa.m_start_state_index, global_symbol_table);
     Reflex::GenerateDfaSymbols(primary_source, dfa.m_graph, dfa.m_start_state_index, global_symbol_table);
 
-    for (CommonLang::TargetMap::const_iterator it = primary_source.m_target_map->begin(),
-                                               it_end = primary_source.m_target_map->end();
+    for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
+                                               it_end = primary_source.GetTargetMap().end();
          it != it_end;
          ++it)
     {

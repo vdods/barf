@@ -169,7 +169,7 @@ $ move all AST usage to smart pointers to ease-ify stuff and to escape the
 // bpp
 // ///////////////////////////////////////////////////////////////////////////
 
-- add pre (-d) and post (-D) define options
+- add predefine (-D) option
 
 // ///////////////////////////////////////////////////////////////////////////
 // grope
@@ -182,7 +182,6 @@ $ move all AST usage to smart pointers to ease-ify stuff and to escape the
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
-* make ResetForNewInput() protected
 * get rid of STL usage in C++ target (and do Continue() and Unaccept())
 $ add interactive/noninteractive option to target -- interactive will do
   char-by-char input, while noninteractive will do the faster chunk reading
@@ -209,29 +208,24 @@ $ add option which prints the (reflex) targets available in the current search
   (in C++, this can be done easily with templates)
 - add _reflex_version to the code generator (_barf_version?)
 * the rule handler code block type should be specifiable by the targetspec
-$ add --predefine (-D) and --postdefine (-d) options for defining crap in the
-  preprocessor stage -- before and after the .reflex source is read (e.g. to
-  override the output filenames).  this could even be used to be able to
-  omit the output filenames in the primary source itself (probably preferable)
 $ also add post-undefine option
 * warn about targetspec directive values that weren't referenced in the
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
 * in the codespecsymbols, add some sort of "description" property so that
-  when you dump the symbols, it's self documenting.
+  when you dump the symbols, it's self documenting.  then verify the commandline
+  option for dumping symbols works correctly
 - once existing C++ target is optimized, make a version of it where the
   subclasses are virtual and there are interface methods, and see if it
   doesn't affect performance unacceptably.
-- break dot-graphing up into graphs of separate scanner modes, so the images
-  it produces aren't gigantic
 - rename start/end_of_scan_method_actions into top/bottom
+* allow "%targets xxxx" in pre/postdefine
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
-* make ResetForNewInput() protected
 ! refactor the DPDA generation to be simpler and faster (difficult)
 - make NPDA states file (?)
 - correctly determine LALR(0) (which is when all shift transitions have
@@ -284,15 +278,16 @@ $ also add post-undefine option
   in the parser.
 - decouple npda states from trison ASTs -- they should only exist in the
   graph itself.
-- add an unbounded grammar app/dev test case
+- add an unbounded grammar app/dev test case, and deal with unbounded grammars
+  (since DPDAs can't be generated for them)
 * in the codespecsymbols, add some sort of "description" property so that
-  when you dump the symbols, it's self documenting.
+  when you dump the symbols, it's self documenting.  then verify the commandline
+  option for dumping symbols works correctly
 - compactify lookaheads in dpda
 - make sure lookahead sequences are alphabetized, allowing for a binary search
   instead of a linear search (in the dpda target)
-- break dot-graphing up into graphs of separated graph portions, so the
-  images it produces aren't gigantic (this won't work so well for trison)
 - rename start/end_of_parse_method_actions into top/bottom
+* allow "%targets xxxx" in pre/postdefine
 
 template <Sint32 low, Sint32 high> struct SmallestSint {
     typedef

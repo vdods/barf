@@ -82,6 +82,10 @@ void <{class_name}::ScannerMode (Mode::Name mode)
 
 void <{class_name}::ResetForNewInput ()
 {
+<|if(is_defined(generate_debug_spew_code))
+    REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions" << std::endl)
+                
+<|end_if
     ReflexCpp_::AutomatonApparatus::ResetForNewInput_(ms_state_table_ + Mode::START_);
 
 <|reset_for_new_input_actions?

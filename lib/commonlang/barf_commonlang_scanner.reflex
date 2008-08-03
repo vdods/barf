@@ -174,22 +174,20 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
 
 bool Scanner::OpenFile (string const &input_filename)
 {
-    bool open_succeeded = InputBase::OpenFile(input_filename);
-    if (open_succeeded)
-        ResetForNewInput();
-    return open_succeeded;
+    ResetForNewInput();
+    return InputBase::OpenFile(input_filename);
 }
 
 void Scanner::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
 {
-    InputBase::OpenString(input_string, input_name, use_line_numbers);
     ResetForNewInput();
+    InputBase::OpenString(input_string, input_name, use_line_numbers);
 }
 
 void Scanner::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
 {
-    InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
     ResetForNewInput();
+    InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
 }
 
 Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast::Base **token)

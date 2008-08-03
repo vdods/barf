@@ -47,6 +47,11 @@ string const &GetAstTypeString (AstType ast_type)
 //
 // ///////////////////////////////////////////////////////////////////////////
 
+void TargetDirective::Print (ostream &stream, Uint32 indent_level) const
+{
+    Print(stream, GetAstTypeString, indent_level);
+}
+
 string TargetDirective::GetDirectiveString () const
 {
     assert(m_target_id != NULL);
@@ -70,8 +75,7 @@ void TargetDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32
 Target::Target (string const &target_id)
     :
     Ast::AstMap<TargetDirective>(AST_TARGET),
-    m_target_id(target_id),
-    m_is_enabled_for_code_generation(false)
+    m_target_id(target_id)
 {
     assert(!m_target_id.empty());
 }
@@ -84,10 +88,12 @@ void Target::SetSourcePath (string const &source_path)
 
 void Target::Add (TargetDirective *target_directive)
 {
-    if (m_is_enabled_for_code_generation)
-        Add(target_directive->m_directive_id->GetText(), target_directive);
-    else
-        EmitWarning("undeclared target \"" + target_directive->m_target_id->GetText() + "\"", target_directive->GetFiLoc());
+    Add(target_directive->m_directive_id->GetText(), target_directive);
+}
+
+void Target::Set (TargetDirective *target_directive)
+{
+    Set(target_directive->m_directive_id->GetText(), target_directive);
 }
 
 void Target::ParseTargetspec (Targetspec::Parser &parser) const
@@ -162,12 +168,6 @@ void Target::ParseCodespecs (Preprocessor::Parser &parser) const
 
 void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
 {
-    if (!m_is_enabled_for_code_generation)
-    {
-        EmitWarning("skipping code generation for target " + m_target_id);
-        return;
-    }
-
     Preprocessor::SymbolTable target_symbol_table(symbol_table);
     GenerateTargetSymbols(target_symbol_table);
 
@@ -223,20 +223,17 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
 void Target::CheckAgainstTargetspec (Targetspec::Specification const &specification) const
 {
     EmitExecutionMessage("checking target directives");
-    // if checks are enabled, check that all the required directives are present
-    if (m_is_enabled_for_code_generation)
+    // check that all the required directives are present
+    for (Targetspec::AddDirectiveMap::const_iterator it = specification.m_add_directive_map->begin(),
+                                                     it_end = specification.m_add_directive_map->end();
+         it != it_end;
+         ++it)
     {
-        for (Targetspec::AddDirectiveMap::const_iterator it = specification.m_add_directive_map->begin(),
-                                                         it_end = specification.m_add_directive_map->end();
-            it != it_end;
-            ++it)
-        {
-            Targetspec::AddDirective const *add_directive = it->second;
-            assert(add_directive != NULL);
-            TargetDirective const *target_directive =
-                GetElement(add_directive->m_directive_to_add_id->GetText());
-            CheckAgainstAddDirective(*add_directive, target_directive);
-        }
+        Targetspec::AddDirective const *add_directive = it->second;
+        assert(add_directive != NULL);
+        TargetDirective const *target_directive =
+            GetElement(add_directive->m_directive_to_add_id->GetText());
+        CheckAgainstAddDirective(*add_directive, target_directive);
     }
 
     EmitExecutionMessage("checking validity of specified directives");
@@ -358,6 +355,31 @@ void TargetMap::AddTargetDirective (TargetDirective *target_directive)
     }
     assert(target != NULL);
     target->Add(target_directive);
+}
+
+void TargetMap::SetTargetDirective (TargetDirective *target_directive)
+{
+    assert(target_directive != NULL);
+    Target *target = GetElement(target_directive->m_target_id->GetText());
+    if (target == NULL)
+    {
+        target = new Target(target_directive->m_target_id->GetText());
+        Add(target_directive->m_target_id->GetText(), target);
+    }
+    assert(target != NULL);
+
+    // if there's a collision between directives, then we need to check
+    // if the previously defined directive was defined in the primary
+    // source or not.  collisions where one of the directives is a pre
+    // or post define are allowed.
+    TargetDirective *old_target_directive = target->GetElement(target_directive->m_directive_id->GetText());
+    if (old_target_directive != NULL &&
+        old_target_directive->GetFiLoc().GetHasLineNumber() &&
+        target_directive->GetFiLoc().GetHasLineNumber())
+    {
+        EmitError(FORMAT(target_directive->GetDirectiveString() << " previously specified at " << old_target_directive->GetFiLoc()), target_directive->GetFiLoc());
+    }
+    target->Set(target_directive);
 }
 
 // ///////////////////////////////////////////////////////////////////////////

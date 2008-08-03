@@ -60,6 +60,7 @@ void InputBase::OpenString (string const &input_string, string const &input_name
 
     assert(m_istringstream.str().empty());
     m_istringstream.str(input_string);
+    m_istringstream.clear(); // clear the eof and other flags
 
     m_input_stream = &m_istringstream;
     m_input_stream->unsetf(ios_base::skipws);

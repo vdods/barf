@@ -196,6 +196,14 @@ struct Map : private map<string, ElementType *>
         else
             map<string, ElementType *>::operator[](key) = element;
     }
+    virtual void Set (string const &key, ElementType *element)
+    {
+        assert(element != NULL);
+        iterator it = find(key);
+        if (it != end())
+            delete it->second;
+        map<string, ElementType *>::operator[](key) = element;
+    }
 }; // end of class Map<ElementType>
 
 template <typename ElementType>
@@ -228,6 +236,15 @@ struct AstMap : public Base, public Map<ElementType>
     {
         assert(element != NULL);
         Map<ElementType>::Add(key, element);
+        // if this map doesn't yet have a valid file location, and
+        // the appending element does, use it as the map's file location
+        if (!GetFiLoc().GetHasLineNumber() && element->GetFiLoc().GetHasLineNumber())
+            SetFiLoc(element->GetFiLoc());
+    }
+    virtual void Set (string const &key, ElementType *element)
+    {
+        assert(element != NULL);
+        Map<ElementType>::Set(key, element);
         // if this map doesn't yet have a valid file location, and
         // the appending element does, use it as the map's file location
         if (!GetFiLoc().GetHasLineNumber() && element->GetFiLoc().GetHasLineNumber())

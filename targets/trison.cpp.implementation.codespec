@@ -57,9 +57,17 @@
 
 void <{class_name}::ResetForNewInput ()
 {
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions" << std::endl)
+    
+<|end_if
     // clean up stuff that might be hanging around from the last parse's input.
     ClearStack_();
     ClearLookaheadQueue_();
+<|if(is_defined(reset_for_new_input_actions))
+
+<|reset_for_new_input_actions
+<|end_if
 }
 
 <{class_name}::ParserReturnCode <{class_name}::Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse)

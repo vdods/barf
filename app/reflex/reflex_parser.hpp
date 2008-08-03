@@ -198,24 +198,24 @@ public:
           */
         enum Name
         {
-            any_type_of_code_block = 106,
-            at_least_one_newline = 110,
-            at_least_zero_newlines = 108,
-            macro_directives = 88,
+            any_type_of_code_block = 103,
+            at_least_one_newline = 107,
+            at_least_zero_newlines = 105,
+            macro_directives = 85,
             root = 0,
-            rule = 100,
-            rule_handler = 104,
-            rule_handlers = 102,
-            rule_list = 98,
-            scanner_mode = 94,
-            scanner_mode_rules = 96,
-            scanner_modes = 92,
-            start_in_scanner_mode_directive = 90,
-            target_directive = 84,
-            target_directive_param = 86,
-            target_directives = 82,
-            target_ids = 80,
-            targets_directive = 78,
+            rule = 97,
+            rule_handler = 101,
+            rule_handlers = 99,
+            rule_list = 95,
+            scanner_mode = 91,
+            scanner_mode_rules = 93,
+            scanner_modes = 89,
+            start_in_scanner_mode_directive = 87,
+            target_directive = 81,
+            target_directive_param = 83,
+            target_directives = 79,
+            target_ids = 77,
+            targets_directive = 75,
             /// Nonterminal which will be attempted to be parsed by the Parse()
             /// method by default (specified by the %default_parse_nonterminal
             /// directive).
@@ -323,11 +323,15 @@ public:
 #line 51 "reflex_parser.trison"
 
     FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
+    CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
+    CommonLang::TargetMap *StealTargetMap ();
 
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
     void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
 
     bool OpenFile (string const &input_filename);
+    void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
+    void OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers);
 
 private:
 
@@ -335,7 +339,7 @@ private:
     CommonLang::TargetMap *m_target_map;
     Regex::RegularExpressionMap *m_regex_macro_map;
 
-#line 339 "reflex_parser.hpp"
+#line 343 "reflex_parser.hpp"
 
 
 private:
@@ -453,10 +457,10 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 
-#line 65 "reflex_parser.trison"
+#line 69 "reflex_parser.trison"
 
 } // end of namespace Reflex
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 463 "reflex_parser.hpp"
+#line 467 "reflex_parser.hpp"

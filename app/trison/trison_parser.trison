@@ -286,7 +286,6 @@ bool Parser::OpenFile (string const &input_filename)
     target_ids:target_map ID:target_id
     %target.cpp {
         CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
-        target->EnableCodeGeneration();
         target_map->Add(target_id->GetText(), target);
         return target_map;
     }
