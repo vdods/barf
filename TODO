@@ -219,7 +219,6 @@ $ also add post-undefine option
 - once existing C++ target is optimized, make a version of it where the
   subclasses are virtual and there are interface methods, and see if it
   doesn't affect performance unacceptably.
-- rename start/end_of_scan_method_actions into top/bottom
 * allow "%targets xxxx" in pre/postdefine
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -281,7 +280,6 @@ $ also add post-undefine option
 - compactify lookaheads in dpda
 - make sure lookahead sequences are alphabetized, allowing for a binary search
   instead of a linear search (in the dpda target)
-- rename start/end_of_parse_method_actions into top/bottom
 * allow "%targets xxxx" in pre/postdefine
 
 template <Sint32 low, Sint32 high> struct SmallestSint {

@@ -96,7 +96,7 @@ namespace Trison {
     delete m_target_map;
     m_target_map = NULL;
 }
-%target.cpp.start_of_parse_method_actions %{
+%target.cpp.top_of_parse_method_actions %{
     m_terminal_list = NULL;
     m_terminal_map = NULL;
     m_token_index = 0;
@@ -106,7 +106,7 @@ namespace Trison {
     m_rule_count = 0;
     EmitExecutionMessage("starting trison parser");
 %}
-%target.cpp.end_of_parse_method_actions %{
+%target.cpp.bottom_of_parse_method_actions %{
     if (parse_return_code == PRC_SUCCESS)
         EmitExecutionMessage("trison parse was successful");
 %}

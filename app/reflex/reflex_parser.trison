@@ -92,10 +92,10 @@ namespace Reflex {
     delete m_target_map;
     m_target_map = NULL;
 }
-%target.cpp.start_of_parse_method_actions %{
+%target.cpp.top_of_parse_method_actions %{
     EmitExecutionMessage("starting reflex parser");
 %}
-%target.cpp.end_of_parse_method_actions %{
+%target.cpp.bottom_of_parse_method_actions %{
     if (parse_return_code == PRC_SUCCESS)
         EmitExecutionMessage("reflex parse was successful");
 %}

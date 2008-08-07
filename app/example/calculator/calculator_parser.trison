@@ -63,7 +63,7 @@ namespace Calculator {
     delete m_scanner;
     m_scanner = NULL;
 }
-%target.cpp.start_of_parse_method_actions %{
+%target.cpp.top_of_parse_method_actions %{
     m_should_print_result = true;
 %}
 %target.cpp.bottom_of_implementation_file %{

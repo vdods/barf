@@ -102,15 +102,15 @@
 // contents of the Parse method within a "try" block, you would use this to
 // open the "try" block (see enable_parse_method_exception_handling).
 // e.g. %{ try { %}
-%add_optional_directive start_of_parse_method_actions       %dumb_code_block
-// This is the analog to start_of_parse_method_actions -- its contents go
+%add_optional_directive top_of_parse_method_actions         %dumb_code_block
+// This is the analog to top_of_parse_method_actions -- its contents go
 // directly at the end of the generated Parse method.  If you opened a "try"
-// block within start_of_parse_method_actions, remember to finish it with one
+// block within top_of_parse_method_actions, remember to finish it with one
 // or more "catch" blocks (see enable_parse_method_exception_handling).
 // e.g. %{ } catch (...) { std::cout << "caught exception" << std::endl } %}
 // The result of the parse will be stored in a const variable called
 // parse_return_code, which you can check here.
-%add_optional_directive end_of_parse_method_actions         %dumb_code_block
+%add_optional_directive bottom_of_parse_method_actions      %dumb_code_block
 // If any of the reduction rule code blocks throw an exception, this directive
 // must be specified; this will cause the parser to catch and rethrow any
 // exceptions thrown in reduction rule code, allowing it to clean up

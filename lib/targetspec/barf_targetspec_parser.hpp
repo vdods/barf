@@ -271,8 +271,8 @@ public:
     /** The %target.cpp.parse_method_access directive can be used to specify the
       * access level of this method.
       *
-      * The %target.cpp.start_of_parse_method_actions and
-      * %target.cpp.end_of_parse_method_actions directives can be used to specify
+      * The %target.cpp.top_of_parse_method_actions and
+      * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
       * code to execute at the beginning and end, respectively, of the Parse() method.
       * This includes the ability to enclose the body of the Parse() method within a
       * try {} block, for exception handling (if exceptions are thrown in reduction

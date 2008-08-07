@@ -66,12 +66,12 @@ private:
 namespace Barf {
 namespace Targetspec {
 %}
-%target.cpp.start_of_parse_method_actions %{
+%target.cpp.top_of_parse_method_actions %{
     m_add_codespec_list = new AddCodespecList();
     m_add_directive_map = new AddDirectiveMap();
     EmitExecutionMessage("starting targetspec parser");
 %}
-%target.cpp.end_of_parse_method_actions %{
+%target.cpp.bottom_of_parse_method_actions %{
     if (parse_return_code == PRC_SUCCESS)
         EmitExecutionMessage("targetspec parse was successful");
 %}

@@ -72,14 +72,14 @@ void <{class_name}::ResetForNewInput ()
 
 <{class_name}::ParserReturnCode <{class_name}::Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse)
 {
-<|if(is_defined(start_of_parse_method_actions))
-<|start_of_parse_method_actions
+<|if(is_defined(top_of_parse_method_actions))
+<|top_of_parse_method_actions
 
 <|end_if
-<|if(is_defined(end_of_parse_method_actions))
+<|if(is_defined(bottom_of_parse_method_actions))
     ParserReturnCode const parse_return_code = Parse_(return_token, nonterminal_to_parse);
 
-<|end_of_parse_method_actions
+<|bottom_of_parse_method_actions
 
     return parse_return_code;
 <|else
