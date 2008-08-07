@@ -211,7 +211,9 @@ EXTRA_DIST = \
     doc/doxygen_pages/reflex_guts.dox \
     doc/doxygen_pages/regexes_in_barf.dox \
     doc/doxygen_pages/targetspec_and_codespec.dox \
+    doc/doxygen_pages/trison_guts.dox \
     extra/barf.xml \
+    targets/barf.cpp.include.codespec \
     targets/reflex.cpp.header.codespec \
     targets/reflex.cpp.implementation.codespec \
     targets/reflex.cpp.targetspec \
@@ -285,6 +287,7 @@ lib_libbarf_preprocessor_la_SOURCES = \
     lib/preprocessor/barf_preprocessor_parser.cpp \
     lib/preprocessor/barf_preprocessor_parser.trison \
     lib/preprocessor/barf_preprocessor_scanner.cpp \
+    lib/preprocessor/barf_preprocessor_scanner.reflex \
     lib/preprocessor/barf_preprocessor_symboltable.cpp \
     lib/preprocessor/barf_preprocessor_textifier.cpp
 
