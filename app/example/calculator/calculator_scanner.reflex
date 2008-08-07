@@ -44,9 +44,6 @@ namespace Calculator {
 // ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.top_of_implementation_file %{
-// #define SPEW(x) cerr << x << endl
-#define SPEW(x)
-
 namespace Calculator {
 %}
 %target.cpp.constructor_actions {
@@ -112,28 +109,22 @@ namespace Calculator {
 :
     ({INTEGER})
     %target.cpp {
-        return Parser::Token(Parser::Terminal::NUMBER, cl_I(accepted_string.c_str()));
+        return Parser::Token(Parser::Terminal::NUMBER, strtod(accepted_string.c_str(), NULL));
     }
 |
     ({FLOAT})
     %target.cpp {
-        return Parser::Token(Parser::Terminal::NUMBER, cl_F(accepted_string.c_str()));
+        return Parser::Token(Parser::Terminal::NUMBER, strtod(accepted_string.c_str(), NULL));
     }
 |
     (pi)
     %target.cpp {
-        return Parser::Token(Parser::Terminal::NUMBER, pi(float_format(FLOAT_DIGITS)));
+        return Parser::Token(Parser::Terminal::NUMBER, M_PI);
     }
 |
     (e)
     %target.cpp {
-        return Parser::Token(Parser::Terminal::NUMBER, exp1(float_format(FLOAT_DIGITS)));
-    }
-|
-    (i)
-    %target.cpp {
-        // TODO -- find better way of returning I.
-        return Parser::Token(Parser::Terminal::NUMBER, sqrt(cl_N(-1)));
+        return Parser::Token(Parser::Terminal::NUMBER, M_E);
     }
 |
     (r)
@@ -141,9 +132,9 @@ namespace Calculator {
         return Parser::Token(Parser::Terminal::RESULT);
     }
 |
-    (float)
+    (log)
     %target.cpp {
-        return Parser::Token(Parser::Terminal::FLOAT);
+        return Parser::Token(Parser::Terminal::LOG);
     }
 |
     (help)

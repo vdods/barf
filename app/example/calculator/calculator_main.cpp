@@ -19,10 +19,11 @@ using namespace Calculator;
 int main (int argc, char **argv)
 {
     char buffer[BUFFER_SIZE];
-    cl_N accepted_token;
+    double accepted_token;
     Parser parser;
 
     cout << "BARF calculator by Victor Dods - type \\help for help." << endl;
+    cout.precision(15); // about the number of digits a double is good for.
 
     while (!cin.eof())
     {
@@ -33,7 +34,9 @@ int main (int argc, char **argv)
         {
             case Parser::PRC_SUCCESS:
                 if (parser.ShouldPrintResult())
+                {
                     cout << " = " << accepted_token << endl;
+                }
                 break;
 
             case Parser::PRC_UNHANDLED_PARSE_ERROR:

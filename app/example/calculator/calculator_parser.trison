@@ -34,8 +34,8 @@ class Scanner;
 private:
 
     Scanner *m_scanner;
-    cl_N m_last_result;
-    cl_R m_modulus;
+    double m_last_result;
+    double m_modulus;
     bool m_should_print_result;
 }
 
@@ -49,14 +49,14 @@ private:
 %target.cpp.top_of_implementation_file %{
 #include "calculator_scanner.hpp"
 
-#define MODULO(x) (zerop(m_modulus) ? x : cl_N(mod(realpart(x), m_modulus)))
+#define MODULO(x) (m_modulus == 0 ? x : fmod(x, m_modulus))
 
 namespace Calculator {
 %}
 %target.cpp.constructor_actions {
     m_scanner = NULL;
-    m_last_result = cl_I(0);
-    m_modulus = cl_I(0);
+    m_last_result = 0.0;
+    m_modulus = 0.0;
     m_should_print_result = true;
 }
 %target.cpp.destructor_actions {
@@ -79,8 +79,8 @@ void Parser::SetInputString (string const &input_string)
 %}
 
 
-%target.cpp.token_data_type "cl_N"
-%target.cpp.token_data_default "0"
+%target.cpp.token_data_type "double"
+%target.cpp.token_data_default "0.0"
 %target.cpp.scan_actions {
     assert(m_scanner != NULL);
     return m_scanner->Scan();
@@ -95,7 +95,8 @@ void Parser::SetInputString (string const &input_string)
 %terminal NEWLINE
 %terminal NUMBER
 %terminal RESULT
-%terminal FLOAT HELP MOD
+%terminal HELP MOD
+%terminal LOG
 %terminal '+' '-' '*' '/' '^' '(' ')' '\\'
 
 %prec.left ADDITION
@@ -112,7 +113,7 @@ void Parser::SetInputString (string const &input_string)
     // empty reduction rule
     %target.cpp {
         m_should_print_result = false;
-        return 0;
+        return 0.0;
     }
 |
     expression:result
@@ -126,7 +127,7 @@ void Parser::SetInputString (string const &input_string)
     command
     %target.cpp {
         m_should_print_result = false;
-        return 0;
+        return 0.0;
     }
 ;
 
@@ -140,33 +141,35 @@ void Parser::SetInputString (string const &input_string)
 |
     expression:lhs '/' expression:rhs %prec MULTIPLICATION
     %target.cpp {
-        if (zerop(rhs))
+        if (rhs == 0.0)
         {
             cerr << "error: divide by zero" << endl;
             m_should_print_result = false;
-            return rhs; // arbitrary return value
+            return 1.0; // arbitrary non-zero return value
         }
         else
             return lhs / rhs;
     }
 |
-    '+' expression:exp %prec UNARY %target.cpp { return MODULO(exp); }
+    '+' expression:ex %prec UNARY %target.cpp { return MODULO(ex); }
 |
-    '-' expression:exp %prec UNARY %target.cpp { return MODULO(-exp); }
+    '-' expression:ex %prec UNARY %target.cpp { return MODULO(-ex); }
+|
+    LOG '(' expression:ex ')' %prec UNARY %target.cpp { return log(ex); }
 |
     expression:base '^' expression:power %prec EXPONENTIATION
     %target.cpp {
-        if (zerop(base) && zerop(power))
+        if (base == 0.0 && power == 0.0)
         {
             cerr << "error: taking 0 to the 0 power" << endl;
             m_should_print_result = false;
-            return base; // arbitrary return value
+            return 1.0; // arbitrary non-zero return value
         }
         else
-            return MODULO(expt(base, power));
+            return MODULO(pow(base, power));
     }
 |
-    '(' expression:exp ')' %target.cpp { return exp; }
+    '(' expression:ex ')' %target.cpp { return ex; }
 |
     NUMBER:number %target.cpp { return MODULO(number); }
 |
@@ -175,15 +178,6 @@ void Parser::SetInputString (string const &input_string)
 
 %nonterminal command
 :
-    '\\' FLOAT
-    %target.cpp {
-        cout << "last result in floating-point: " << cl_float(realpart(m_last_result), float_format(FLOAT_DIGITS));
-        if (!zerop(imagpart(m_last_result)))
-            cout << " + " << cl_float(imagpart(m_last_result)) << "i";
-        cout << endl;
-        return 0;
-    }
-|
     '\\' HELP
     %target.cpp {
         cout << "Operators\n"
@@ -192,38 +186,38 @@ void Parser::SetInputString (string const &input_string)
                 "  r          - The value of the previous result.\n"
                 "  pi         - The ratio of a circle's circumference to its diameter.\n"
                 "  e          - The base of the natural logarithm.\n"
-                "  i          - The square root of -1.\n"
+                "Functions\n"
+                "  log        - The natural logarithm (base e).\n"
                 "Commands\n"
-                "  \\float     - Print last result in floating point format.\n"
                 "  \\help      - This help screen.\n"
                 "  \\mod [arg] - Sets the modulus (i.e. modulo arithmetic).  Giving no\n"
                 "               argument will print the current modulus.  A modulus\n"
                 "               of 0 indicates no result truncation." << endl;
-        return 0;
+        return 0.0;
     }
 |
     '\\' MOD NUMBER:number
     %target.cpp {
-        if (realpart(number) >= 0 && zerop(imagpart(number)))
+        if (number >= 0.0)
         {
-            m_modulus = realpart(number);
+            m_modulus = number;
             cout << "current modulus set to: " << m_modulus << endl;
         }
         else
-            cerr << "error: invalid modulus (must be non-negative, real)" << endl;
-        return 0;
+            cerr << "error: invalid modulus (must be non-negative)" << endl;
+        return 0.0;
     }
 |
     '\\' MOD
     %target.cpp {
         cout << "current modulus: " << m_modulus << endl;
-        return 0;
+        return 0.0;
     }
 ;
 
 %nonterminal at_least_zero_newlines
 :
-    at_least_zero_newlines NEWLINE %target.cpp { return 0; }
+    at_least_zero_newlines NEWLINE %target.cpp { return 0.0; }
 |
-    /* empty reduction rule */ %target.cpp { return 0; }
+    /* empty reduction rule */ %target.cpp { return 0.0; }
 ;

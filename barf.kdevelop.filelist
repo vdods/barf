@@ -18,7 +18,11 @@ app/example/calculator/Makefile.am
 app/example/calculator/bootstrap.sh
 app/example/calculator/calculator.hpp
 app/example/calculator/calculator_main.cpp
+app/example/calculator/calculator_parser.cpp
+app/example/calculator/calculator_parser.hpp
 app/example/calculator/calculator_parser.trison
+app/example/calculator/calculator_scanner.cpp
+app/example/calculator/calculator_scanner.hpp
 app/example/calculator/calculator_scanner.reflex
 app/example/calculator/configure.ac
 app/reflex/reflex.hpp
