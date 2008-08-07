@@ -172,19 +172,20 @@ public:
             BAD_TOKEN = 258,
             CHAR_LITERAL = 259,
             DIRECTIVE_DEFAULT_PARSE_NONTERMINAL = 260,
-            DIRECTIVE_ERROR = 261,
-            DIRECTIVE_NONTERMINAL = 262,
-            DIRECTIVE_PREC = 263,
-            DIRECTIVE_TARGET = 264,
-            DIRECTIVE_TARGETS = 265,
-            DIRECTIVE_TERMINAL = 266,
-            DIRECTIVE_TYPE = 267,
-            DUMB_CODE_BLOCK = 268,
-            END_PREAMBLE = 269,
-            ID = 270,
-            NEWLINE = 271,
-            STRICT_CODE_BLOCK = 272,
-            STRING_LITERAL = 273
+            DIRECTIVE_END = 261,
+            DIRECTIVE_ERROR = 262,
+            DIRECTIVE_NONTERMINAL = 263,
+            DIRECTIVE_PREC = 264,
+            DIRECTIVE_TARGET = 265,
+            DIRECTIVE_TARGETS = 266,
+            DIRECTIVE_TERMINAL = 267,
+            DIRECTIVE_TYPE = 268,
+            DUMB_CODE_BLOCK = 269,
+            END_PREAMBLE = 270,
+            ID = 271,
+            NEWLINE = 272,
+            STRICT_CODE_BLOCK = 273,
+            STRING_LITERAL = 274
         }; // end of enum Parser::Terminal::Name
     }; // end of struct Parser::Terminal
 
@@ -202,35 +203,35 @@ public:
           */
         enum Name
         {
-            any_type_of_code_block = 149,
-            at_least_one_newline = 143,
-            at_least_zero_newlines = 141,
-            nonterminal = 121,
-            nonterminal_specification = 123,
-            nonterminals = 119,
-            precedence_directive = 115,
-            precedence_directives = 113,
+            any_type_of_code_block = 154,
+            at_least_one_newline = 148,
+            at_least_zero_newlines = 146,
+            nonterminal = 126,
+            nonterminal_specification = 128,
+            nonterminals = 124,
+            precedence_directive = 120,
+            precedence_directives = 118,
             root = 0,
-            rule = 127,
-            rule_handler = 133,
-            rule_handlers = 131,
-            rule_precedence_directive = 139,
-            rule_specification = 129,
-            rule_token = 137,
-            rule_token_list = 135,
-            rules = 125,
-            start_directive = 117,
-            target_directive = 103,
-            target_directive_param = 105,
-            target_directives = 101,
-            target_ids = 99,
-            targets_directive = 97,
-            terminal = 147,
-            terminal_directive = 109,
-            terminal_directives = 107,
-            terminals = 111,
-            token_id = 145,
-            type_spec = 151,
+            rule = 132,
+            rule_handler = 138,
+            rule_handlers = 136,
+            rule_precedence_directive = 144,
+            rule_specification = 134,
+            rule_token = 142,
+            rule_token_list = 140,
+            rules = 130,
+            start_directive = 122,
+            target_directive = 108,
+            target_directive_param = 110,
+            target_directives = 106,
+            target_ids = 104,
+            targets_directive = 102,
+            terminal = 152,
+            terminal_directive = 114,
+            terminal_directives = 112,
+            terminals = 116,
+            token_id = 150,
+            type_spec = 156,
             /// Nonterminal which will be attempted to be parsed by the Parse()
             /// method by default (specified by the %default_parse_nonterminal
             /// directive).
@@ -360,7 +361,7 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 364 "trison_parser.hpp"
+#line 365 "trison_parser.hpp"
 
 
 private:
@@ -374,35 +375,35 @@ private:
         enum Name
         {
             none_ = 0,
-            root = 274,
-            targets_directive = 275,
-            target_ids = 276,
-            target_directives = 277,
-            target_directive = 278,
-            target_directive_param = 279,
-            terminal_directives = 280,
-            terminal_directive = 281,
-            terminals = 282,
-            precedence_directives = 283,
-            precedence_directive = 284,
-            start_directive = 285,
-            nonterminals = 286,
-            nonterminal = 287,
-            nonterminal_specification = 288,
-            rules = 289,
-            rule = 290,
-            rule_specification = 291,
-            rule_handlers = 292,
-            rule_handler = 293,
-            rule_token_list = 294,
-            rule_token = 295,
-            rule_precedence_directive = 296,
-            at_least_zero_newlines = 297,
-            at_least_one_newline = 298,
-            token_id = 299,
-            terminal = 300,
-            any_type_of_code_block = 301,
-            type_spec = 302
+            root = 275,
+            targets_directive = 276,
+            target_ids = 277,
+            target_directives = 278,
+            target_directive = 279,
+            target_directive_param = 280,
+            terminal_directives = 281,
+            terminal_directive = 282,
+            terminals = 283,
+            precedence_directives = 284,
+            precedence_directive = 285,
+            start_directive = 286,
+            nonterminals = 287,
+            nonterminal = 288,
+            nonterminal_specification = 289,
+            rules = 290,
+            rule = 291,
+            rule_specification = 292,
+            rule_handlers = 293,
+            rule_handler = 294,
+            rule_token_list = 295,
+            rule_token = 296,
+            rule_precedence_directive = 297,
+            at_least_zero_newlines = 298,
+            at_least_one_newline = 299,
+            token_id = 300,
+            terminal = 301,
+            any_type_of_code_block = 302,
+            type_spec = 303
         }; // end of enum Parser::Nonterminal_::Name
     }; // end of struct Parser::Nonterminal_
     struct Transition_;
@@ -495,4 +496,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 499 "trison_parser.hpp"
+#line 500 "trison_parser.hpp"

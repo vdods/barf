@@ -221,9 +221,11 @@ int main (int argc, char **argv)
 
 %nonterminal st
 :
-    exp ';' %target.cpp { cerr << "HIPPO: st <- exp ';'" << endl; return NULL; }
+    exp ';' %end %target.cpp { cerr << "HIPPO: st <- exp ';' %end" << endl; return NULL; }
 |
-    %error ';' %target.cpp { cerr << "HIPPO: st <- %error ';'" << endl; return NULL; }
+    %error ';' %end %target.cpp { cerr << "HIPPO: st <- %error ';' %end" << endl; return NULL; }
+|
+    %error %end %target.cpp { cerr << "HIPPO: st <- %error %end" << endl; return NULL; }
 ;
 /*
 // arithmetic

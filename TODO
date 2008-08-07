@@ -257,7 +257,6 @@ $ add option for line directives referencing codespecs (the default should be
 * the rule handler code block type should be specifiable by the targetspec
 * add option which prints the (trison) targets available in the current search
   path and which directory each resides in.
-* add %end keyword which matches the builtin terminal END_ (?)
 - check for reduction rule variable name collisions
 $ also add post-undefine option
 - make directives parseable in any order?

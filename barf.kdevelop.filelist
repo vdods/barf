@@ -136,6 +136,7 @@ lib/targetspec/barf_targetspec_ast.hpp
 lib/targetspec/barf_targetspec_parser.cpp
 lib/targetspec/barf_targetspec_parser.hpp
 lib/targetspec/barf_targetspec_parser.trison
+targets/barf.cpp.include.codespec
 targets/reflex.cpp.header.codespec
 targets/reflex.cpp.implementation.codespec
 targets/reflex.cpp.targetspec

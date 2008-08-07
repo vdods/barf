@@ -165,6 +165,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         case CommonLang::Scanner::Token::BAD_TOKEN:                           return Token(Terminal::BAD_TOKEN, lookahead_token_data);
         case CommonLang::Scanner::Token::CHAR_LITERAL:                        return Token(Terminal::CHAR_LITERAL, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Token(Terminal::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_END:                       return Token(Terminal::DIRECTIVE_END, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:                     return Token(Terminal::DIRECTIVE_ERROR, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:               return Token(Terminal::DIRECTIVE_NONTERMINAL, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:                      return Token(Terminal::DIRECTIVE_PREC, lookahead_token_data);
@@ -216,6 +217,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 %terminal BAD_TOKEN
 %terminal CHAR_LITERAL %type.cpp "Ast::Char *"
 %terminal DIRECTIVE_DEFAULT_PARSE_NONTERMINAL %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_END %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_ERROR %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_NONTERMINAL %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_PREC %type.cpp "Ast::ThrowAway *"
@@ -799,6 +801,29 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
             NULL;
         delete token_id;
         return rule_token;
+    }
+|
+    DIRECTIVE_END:throwaway ':' ID:assigned_id
+    %target.cpp {
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc(), assigned_id->GetText());
+        delete throwaway;
+        delete assigned_id;
+        return rule_token;
+    }
+|
+    DIRECTIVE_END:throwaway
+    %target.cpp {
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
+        delete throwaway;
+        return rule_token;
+    }
+|
+    DIRECTIVE_ERROR:throwaway ':' ID:assigned_id
+    %target.cpp {
+        EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
+        delete throwaway;
+        delete assigned_id;
+        return NULL;
     }
 |
     DIRECTIVE_ERROR:throwaway

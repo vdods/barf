@@ -135,17 +135,6 @@ void <{class_name}::ResetForNewInput ()
             TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " begin error panic" << std::endl)
 
 <|end_if
-            // the special Terminal::END_ can not be eaten by error panic.
-            if (Lookahead_(0).m_id == Terminal::END_)
-            {
-<|if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " end error panic; abort (error panic can't eat Terminal::END_)" << std::endl)
-<|end_if
-                // parser_return_code_ and return_token are already appropriately
-                // set, so just break out of the main loop.
-                break;
-            }
-
             while (true)
             {
                 // get the current state (top of the stack)
@@ -177,11 +166,21 @@ void <{class_name}::ResetForNewInput ()
 <|if(is_defined(generate_debug_spew_code))
                     TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
 <|end_if
-                    // if the current state accepts error, throw away the first lookahead data
-                    // (but don't pop the front of the lookahead queue).  then clear the thrown-
-                    // away token data, and set the token id to ERROR_.
+                    // if the current state accepts error, then we check if the lookahead token
+                    // is Terminal::END_.  if it is, then we add a dummy Terminal::ERROR_ token
+                    // in before it (since %error can't accept END_).  otherwise, we throw away
+                    // the lookahead token, then clear the thrown-away token data, and set the
+                    // token id to ERROR_.
                     assert(!m_lookahead_queue_.empty());
-                    ThrowAwayToken_(m_lookahead_queue_[0].m_data);
+                    if (m_lookahead_queue_[0].m_id == Terminal::END_)
+                    {
+<|if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
+<|end_if
+                        m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
+                    }
+                    else
+                        ThrowAwayToken_(m_lookahead_queue_[0].m_data);
                     m_lookahead_queue_[0].m_id = Terminal::ERROR_;
                     m_lookahead_queue_[0].m_data = <{token_data_default};
                     m_is_in_error_panic_ = false;

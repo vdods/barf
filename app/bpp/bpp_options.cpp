@@ -64,17 +64,17 @@ CommandLineOption const Options::ms_option[] =
         "    is to write to stdout.  Specifying \"-\" will also send output to stdout\n"
         "    Warning and error messages are always to stderr."),
 
-
+/* TODO implement
     CommandLineOption("Macro-related options"),
     CommandLineOption(
         'D',
-        "predefine",
+        "define",
         &OptionsBase::Predefine,
         "    Defines a macro value before parsing the input file.  Macro values\n"
         "    specified in the input file will override values defined via this\n"
         "    commandline option.  The argument is of the form:\n"
         "        <macro_id>=<value>"),
-
+*/
 
     CommandLineOption("Verbosity options"),
     CommandLineOption(
