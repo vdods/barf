@@ -226,6 +226,21 @@ public:
     /// primary source.
     ~Parser ();
 
+    /** It is not sufficient to just check the EOF condition on the input
+      * source (e.g. the scanner, cin, etc), because the parser may have read,
+      * but not consumed, additional lookaheads up to EOF.  Thus checking
+      * the input source for EOF condition may give false positives.  This
+      * method should be the preferred means to check EOF condition.
+      *
+      * It should be noted that this may cause the parser to read (but never
+      * consume) up to one additional lookahead token, owing to the necessity
+      * of checking what the next lookahead token is.
+      *
+      * @brief Returns true if and only if the next unshifted lookahead
+      *        token is Terminal::END_.
+      */
+    bool IsAtEndOfInput ();
+
     /// Returns true if and only if "debug spew" is enabled (which prints, to
     /// std::cerr, exactly what the parser is doing at each step).  This method,
     /// along with all other debug spew code can be removed by removing the
@@ -291,7 +306,7 @@ private:
     double m_modulus;
     bool m_should_print_result;
 
-#line 295 "calculator_parser.hpp"
+#line 310 "calculator_parser.hpp"
 
 
 private:
@@ -401,4 +416,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(CALCULATOR_PARSER_HPP_)
 
-#line 405 "calculator_parser.hpp"
+#line 420 "calculator_parser.hpp"

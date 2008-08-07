@@ -95,6 +95,12 @@
       <path>app/dev/dumblang_parser.hpp</path>
       <path>app/dev/dumblang_scanner.cpp</path>
       <path>app/dev/dumblang_scanner.hpp</path>
+      <path>app/example/calculator/debug</path>
+      <path>app/example/calculator/debug/config.h</path>
+      <path>app/example/calculator/debug/Makefile</path>
+      <path>dist</path>
+      <path>dist/config.h</path>
+      <path>dist/Makefile</path>
     </blacklist>
     <other>
       <prio>0</prio>

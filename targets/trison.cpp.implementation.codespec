@@ -55,6 +55,11 @@
 <|end_if
 }
 
+bool <{class_name}::IsAtEndOfInput ()
+{
+    return Lookahead_(0).m_id == Terminal::END_;
+}
+
 void <{class_name}::ResetForNewInput ()
 {
 <|if(is_defined(generate_debug_spew_code))

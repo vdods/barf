@@ -163,6 +163,21 @@ public:
 <|end_if
     <{if(is_defined(force_virtual_destructor))}virtual <{end_if}~<{class_name} ();
 
+    /** It is not sufficient to just check the EOF condition on the input
+      * source (e.g. the scanner, cin, etc), because the parser may have read,
+      * but not consumed, additional lookaheads up to EOF.  Thus checking
+      * the input source for EOF condition may give false positives.  This
+      * method should be the preferred means to check EOF condition.
+      *
+      * It should be noted that this may cause the parser to read (but never
+      * consume) up to one additional lookahead token, owing to the necessity
+      * of checking what the next lookahead token is.
+      *
+      * @brief Returns true if and only if the next unshifted lookahead
+      *        token is Terminal::END_.
+      */
+    bool IsAtEndOfInput ();
+
 <|if(is_defined(generate_debug_spew_code))
     /// Returns true if and only if "debug spew" is enabled (which prints, to
     /// std::cerr, exactly what the parser is doing at each step).  This method,

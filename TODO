@@ -26,11 +26,7 @@
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
-$ move all AST usage to smart pointers to ease-ify stuff and to escape the
-  woes of memory leaks (not like it matters that much in this context) --
-  OR
-  do comprehensive deleting of stuff (which would probably set a better
-  example for people who read the source code of the parsers/scanners).
+$ do comprehensive deleting of stuff
   THEN
   do memory leak checking (valgrind)
 - get rid of AST hierarchy overviews once doxygen docs are to some decent state
@@ -235,12 +231,10 @@ $ also add post-undefine option
 - figure out why minimal graphing isn't working (the right lookaheads
   aren't being generated).
 - if possible, make the dpda.states file put the states' rules in order.
-$ issue warnings for unused nonterminals (and make this warning an option)
 $ add a max token stack depth in each parser implementation
 - move the --with-line-directives option to be specified by the target, and
   overridable by the primary source
 - add commandline option to describe the return codes (?)
-* c++ target -- ability to set the debug spew ostream
 - clean up the parsing so that it's less about passing crap around and more
   about using member variables of the parser (assign rule indices on the fly,
   etc)
@@ -258,18 +252,10 @@ $ add option for line directives referencing codespecs (the default should be
   path and which directory each resides in.
 - check for reduction rule variable name collisions
 $ also add post-undefine option
-- make directives parseable in any order?
-* add a directive for what to do with unnamed tokens (because they might need
-  to be thrown away) or just call throw-away-token-actions on them (probably
-  just call throw-away-token-actions)
 * warn about targetspec directive values that weren't referenced in the
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
-* on generated parser, add "IsAtEndOfInput()" accessor -- you can't use
-  the scanner to check this, because the parser might have read in extra
-  lookaheads that put it at EOF.  you'll have to go by the lookahead queue
-  in the parser.
 - decouple npda states from trison ASTs -- they should only exist in the
   graph itself.
 - add an unbounded grammar app/dev test case, and deal with unbounded grammars
