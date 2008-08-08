@@ -47,6 +47,7 @@ clean-calculator-scanner-extras:
 	rm -f $(top_srcdir)/calculator_scanner.nfa.dot
 	rm -f $(top_srcdir)/calculator_scanner.nfa.png
 
+# installed into $(bindir)
 bin_PROGRAMS = calculator
 
 EXTRA_DIST = \
@@ -82,7 +83,7 @@ calculator_SOURCES = \
 if REFLEX_EXISTS
 calculator-scanner: $(top_srcdir)/calculator_scanner.hpp
 $(top_srcdir)/calculator_scanner.hpp: $(top_srcdir)/calculator_scanner.cpp
-$(top_srcdir)/calculator_scanner.cpp: $(top_srcdir)/calculator_scanner.reflex $(REFLEX) $(TARGETS_PATH)/reflex.cpp.targetspec $(TARGETS_PATH)/reflex.cpp.header.codespec $(TARGETS_PATH)/reflex.cpp.implementation.codespec
+$(top_srcdir)/calculator_scanner.cpp: $(top_srcdir)/calculator_scanner.reflex
 	$(REFLEX) $(top_srcdir)/calculator_scanner.reflex --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-nfa-dot-graph calculator_scanner.nfa.dot --generate-dfa-dot-graph calculator_scanner.dfa.dot
 
 force-calculator-scanner:
@@ -106,7 +107,7 @@ endif
 if TRISON_EXISTS
 calculator-parser: $(top_srcdir)/calculator_parser.hpp
 $(top_srcdir)/calculator_parser.hpp: $(top_srcdir)/calculator_parser.cpp
-$(top_srcdir)/calculator_parser.cpp: $(top_srcdir)/calculator_parser.trison $(TRISON) $(TARGETS_PATH)/trison.cpp.targetspec $(TARGETS_PATH)/trison.cpp.header.codespec $(TARGETS_PATH)/trison.cpp.implementation.codespec
+$(top_srcdir)/calculator_parser.cpp: $(top_srcdir)/calculator_parser.trison
 	$(TRISON) $(top_srcdir)/calculator_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/ --generate-npda-dot-graph calculator_parser.npda.dot --generate-dpda-dot-graph calculator_parser.dpda.dot --generate-dpda-states-file calculator_parser.dpda.states
 
 force-calculator-parser:

@@ -19,6 +19,14 @@ AC_CHECK_TOOL(PERL, perl)
 AC_CHECK_TOOL(DOT, dot)
 
 ##############################################################################
+# check for installed reflex and trison binaries (these are overridden by
+# the --with-reflex and --with-trison options)
+##############################################################################
+
+AC_CHECK_TOOL(REFLEX, reflex)
+AC_CHECK_TOOL(TRISON, trison)
+
+##############################################################################
 # configure script commandline options
 ##############################################################################
 
@@ -52,7 +60,7 @@ AC_ARG_WITH(
         [--with-reflex=full/path/to/reflex],
         [specify a stable, external reflex binary.]),
     [REFLEX=$withval],
-    [REFLEX=])
+    [])
 
 AC_ARG_WITH(
     [trison],
@@ -60,7 +68,7 @@ AC_ARG_WITH(
         [--with-trison=full/path/to/trison],
         [specify a stable, external trison binary.]),
     [TRISON=$withval],
-    [TRISON=])
+    [])
 
 AC_ARG_WITH(
     [targets-path],

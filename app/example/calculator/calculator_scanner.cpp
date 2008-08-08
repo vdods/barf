@@ -85,7 +85,7 @@ void Scanner::ResetForNewInput ()
 #line 86 "calculator_scanner.cpp"
 }
 
-Parser::Token::Token Scanner::Scan ()
+Parser::Token Scanner::Scan ()
 {
 
     std::string accepted_string;

@@ -181,11 +181,43 @@ noinst_LTLIBRARIES = \
 	lib/libbarf-preprocessor.la \
     lib/libbarf-regex.la
 
+# installed into $(bindir)
 bin_PROGRAMS = \
 	bpp \
 	reflex \
 	trison
 
+# installed into $(pkgdatadir) as executable
+nobase_pkgdata_SCRIPTS = \
+	app/example/calculator/bootstrap.sh
+
+# installed into $(pkgdatadir)
+nobase_pkgdata_DATA = \
+	app/example/calculator/calculator.hpp \
+	app/example/calculator/calculator_main.cpp \
+	app/example/calculator/calculator_parser.cpp \
+	app/example/calculator/calculator_parser.hpp \
+	app/example/calculator/calculator_parser.trison \
+	app/example/calculator/calculator_scanner.cpp \
+	app/example/calculator/calculator_scanner.hpp \
+	app/example/calculator/calculator_scanner.reflex \
+	app/example/calculator/configure.ac \
+	app/example/calculator/INSTALL \
+	app/example/calculator/LICENSE \
+	app/example/calculator/Makefile.am \
+	app/example/calculator/README \
+	LICENSE \
+	README \
+	targets/barf.cpp.include.codespec \
+	targets/reflex.cpp.header.codespec \
+	targets/reflex.cpp.implementation.codespec \
+	targets/reflex.cpp.targetspec \
+	targets/trison.cpp.header.codespec \
+	targets/trison.cpp.implementation.codespec \
+	targets/trison.cpp.targetspec \
+	TODO
+
+# non-source files which are added to the distribution
 EXTRA_DIST = \
     bootstrap.sh \
 	configure.ac \

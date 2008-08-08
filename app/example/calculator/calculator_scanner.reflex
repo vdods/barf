@@ -60,7 +60,7 @@ namespace Calculator {
 // cpp scanner I/O parameters
 // ///////////////////////////////////////////////////////////////////////////
 
-%target.cpp.return_type "Parser::Token::Token"
+%target.cpp.return_type "Parser::Token"
 %target.cpp.return_true_iff_input_is_at_end {
     return m_input.peek() == char_traits<char>::eof();
 }

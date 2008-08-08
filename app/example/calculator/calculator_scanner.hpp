@@ -549,7 +549,7 @@ public:
 
     void ResetForNewInput ();
 
-    Parser::Token::Token Scan ();
+    Parser::Token Scan ();
 
 public:
 
