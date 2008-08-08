@@ -44,14 +44,12 @@ void DumpSymbolTable::Execute (Textifier &textifier, SymbolTable &symbol_table) 
 
 void DeclareArray::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    ArraySymbol *symbol = symbol_table.DefineArraySymbol(m_id->GetText(), m_id->GetFiLoc());
-    assert(symbol->GetArrayElementCount() == 0);
+    symbol_table.DefineArraySymbol(m_id->GetText(), m_id->GetFiLoc());
 }
 
 void DeclareMap::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    MapSymbol *symbol = symbol_table.DefineMapSymbol(m_id->GetText(), m_id->GetFiLoc());
-    assert(symbol->GetMapElementCount() == 0);
+    symbol_table.DefineMapSymbol(m_id->GetText(), m_id->GetFiLoc());
 }
 
 void Define::Execute (Textifier &textifier, SymbolTable &symbol_table) const
