@@ -62,7 +62,11 @@ void ParseAndHandleOptions (int argc, char **argv)
     // options (printing the help message, etc) if present.
 
     g_options = new Reflex::Options(argv[0]);
+    g_options->AddDefaultTargetsSearchPathEntries();
     g_options->Parse(argc, argv);
+    EmitExecutionMessage("beginning execution");
+    g_options->ProcessTargetsSearchPath();
+    
     if (GetReflexOptions().GetAbort())
     {
         exit(RS_COMMANDLINE_ABORT);
@@ -305,7 +309,6 @@ int main (int argc, char **argv)
         Automaton nfa, dfa;
 
         ParseAndHandleOptions(argc, argv);
-        EmitExecutionMessage("beginning execution");
         primary_source = ParsePrimarySource();
         GenerateAndPrintNfaDotGraph(*primary_source, nfa);
         GenerateAndPrintDfaDotGraph(*primary_source, nfa, dfa);

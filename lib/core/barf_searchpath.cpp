@@ -62,7 +62,7 @@ string SearchPath::GetAsStringPrivate (string const &delimiter, SearchPath::Verb
         PathEntry const &path_entry = *it;
         path_string += GetStringLiteral(path_entry.GetPath());
         if (verbosity == VERBOSE)
-            path_string += ' ' + path_entry.GetSetBy();
+            path_string += " (" + path_entry.GetSetBy() + ')';
         // only add the delimiter if there's another path to iterate over.
         PathEntryStack::const_reverse_iterator next_it = it;
         ++next_it;

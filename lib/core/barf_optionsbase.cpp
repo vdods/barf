@@ -10,6 +10,7 @@
 
 #include "barf_optionsbase.hpp"
 
+#include "barf_message.hpp"
 #include "barf_util.hpp"
 
 namespace Barf {
@@ -62,7 +63,7 @@ void OptionsBase::DontAssertOnError ()
 
 void OptionsBase::IncludeTargetsSearchPath (string const &search_path)
 {
-    AddTargetsSearchPath(search_path, "set by commandline option");
+    m_targets_search_path_entry.push_back(TargetsSearchPathEntry(search_path, "set by commandline option", ABORT_ON_FAILURE));
 }
 
 void OptionsBase::RequestShortPrintTargetsSearchPath ()
@@ -149,6 +150,33 @@ void OptionsBase::RequestHelp ()
 void OptionsBase::Parse (int argc, char const *const *argv)
 {
     CommandLineParser::Parse(argc, argv);
+}
+
+void OptionsBase::AddDefaultTargetsSearchPathEntries ()
+{
+#if defined(BARFDATADIR)
+    // add "BARFDATADIR/targets" (i.e. the installed targets data)
+    // as the lowest-priority targets search path.
+    if (!string(BARFDATADIR).empty())
+        m_targets_search_path_entry.push_back(TargetsSearchPathEntry(BARFDATADIR DIRECTORY_SLASH_STRING "targets", "location of installed targets directory", IGNORE_FAILURE));
+#endif // defined(BARFDATADIR)
+
+    // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
+    // add it as the lowest-priority targets search path.
+    char const *search_path = getenv("BARF_TARGETS_SEARCH_PATH");
+    if (search_path != NULL)
+        m_targets_search_path_entry.push_back(TargetsSearchPathEntry(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable", ABORT_ON_FAILURE));
+}
+
+void OptionsBase::ProcessTargetsSearchPath ()
+{
+    for (vector<TargetsSearchPathEntry>::const_iterator it = m_targets_search_path_entry.begin(),
+                                                        it_end = m_targets_search_path_entry.end();
+         it != it_end;
+         ++it)
+    {
+        AddTargetsSearchPath(it->m_search_path, it->m_set_by, it->m_ignore_add_failure);
+    }
 
     if (m_targets_search_path.GetIsEmpty())
         m_targets_search_path.AddPath(string(".") + DIRECTORY_SLASH_CHAR, "set as default targets search path");
@@ -161,19 +189,32 @@ void OptionsBase::ReportErrorAndSetAbortFlag (string const &error_message)
     m_abort_flag = true;
 }
 
-void OptionsBase::AddTargetsSearchPath (string const &search_path, string const &set_by)
+void OptionsBase::AddTargetsSearchPath (string const &search_path, string const &set_by, bool ignore_add_failure)
 {
+    EmitExecutionMessage("attempting to add " + GetStringLiteral(search_path) + " (" + set_by + ") to targets search path");
+    
     switch (m_targets_search_path.AddPath(search_path, set_by))
     {
         case SearchPath::ADD_PATH_SUCCESS:
+            EmitExecutionMessage("successfully added " + GetStringLiteral(search_path) + " (" + set_by + ") to targets search path");
             break;
 
         case SearchPath::ADD_PATH_FAILURE_EMPTY:
-            ReportErrorAndSetAbortFlag("empty path (" + set_by + ") can't be added to the targets search path");
+            if (!ignore_add_failure)
+                ReportErrorAndSetAbortFlag("empty path (" + set_by + ") can't be added to the targets search path");
+            else
+                EmitExecutionMessage("empty path (" + set_by + ") can't be added to the targets search path");
+            break;
+            
+        case SearchPath::ADD_PATH_FAILURE_INVALID:
+            if (!ignore_add_failure)
+                ReportErrorAndSetAbortFlag("invalid targets search path " + GetStringLiteral(search_path) + " (" + set_by + ')');
+            else
+                EmitExecutionMessage("invalid targets search path " + GetStringLiteral(search_path) + " (" + set_by + ')');
             break;
 
-        case SearchPath::ADD_PATH_FAILURE_INVALID:
-            ReportErrorAndSetAbortFlag("invalid path " + GetStringLiteral(search_path) + ' ' + set_by);
+        default:
+            assert(false && "unhandled case");
             break;
     }
 }

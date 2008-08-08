@@ -2,6 +2,9 @@ AC_INIT(BARF, 0.9.20080806, victor.dods@gmail.com, barf)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE
 
+# hack to get $prefix to actually contain the real value
+test "$prefix" = "NONE" && prefix="$ac_default_prefix"
+
 # C++ stuff
 AC_LANG_CPLUSPLUS
 AC_PROG_CXX
@@ -69,11 +72,14 @@ AC_ARG_WITH(
 if test "${ENABLE_DEBUG}" = "yes"; then
     CXXFLAGS="${CXXFLAGS} -g3 -O0"
 else
-    AC_DEFINE([NDEBUG], [], [Define if compiling without debug code (asserts, etc), otherwise leave undefined])
+    AC_DEFINE(
+        [NDEBUG],
+        [],
+        [Define if compiling without debug code (asserts, etc), otherwise leave undefined])
     CXXFLAGS="${CXXFLAGS} -g0 -O3"
 fi
 
-# if warnings should be interpreted as errors, add -Wall to the compiler flags
+# if warnings should be interpreted as errors, add -Werror to the compiler flags
 if test "${WARNINGS_AS_ERRORS}" = "yes"; then
     CXXFLAGS="${CXXFLAGS} -Werror"
 fi
@@ -90,6 +96,16 @@ AC_SUBST(STABLE_REFLEX)
 
 AM_CONDITIONAL(STABLE_TRISON_EXISTS, [test "${STABLE_TRISON}" != ""])
 AC_SUBST(STABLE_TRISON)
+
+##############################################################################
+# add BARFDATADIR (the absolute path to where the targets/ dir and other stuff
+# is installed) to config.h
+##############################################################################
+  
+temp=${datadir}/barf
+eval temp="\"$temp\""
+eval temp="\"$temp\""
+AC_DEFINE_UNQUOTED([BARFDATADIR], "$temp", [Define as the absolute path of the place the data will be installed (e.g. "/usr/local/share/barf").  This value will be compiled into the reflex and trison binaries as containing the targets/ directory, which is the default targets search path.  Leave undefined if no default targets search path is desired.])
 
 ##############################################################################
 # add some good stuff to the compiler flags

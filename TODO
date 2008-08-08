@@ -2,6 +2,7 @@
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- figure out how to generate/install docs
 - make FirstContainsSecond(x,y) and FirstDoesntContainSecond(x,y) funcs
 * use BARF_TARGETS_SEARCH_PATH in example app configure.ac files
 * config.h-specified search path which is where the targetspecs/codespecs

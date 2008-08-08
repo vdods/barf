@@ -267,7 +267,7 @@
     <splitheadersource>
       <enabled>true</enabled>
       <synchronize>true</synchronize>
-      <orientation>Horizontal</orientation>
+      <orientation>Vertical</orientation>
     </splitheadersource>
   </kdevcppsupport>
   <cppsupportpart>

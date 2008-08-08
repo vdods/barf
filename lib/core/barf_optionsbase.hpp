@@ -97,13 +97,6 @@ public:
     {
         assert(!m_program_name.empty());
         assert((m_allowed_verbosity & ~V_ALL) == 0 && "allowed_verbosity contains invalid Verbosity flags");
-
-        // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
-        // add it as the lowest-priority targets search path.
-        // TODO: add config.h-specified path
-        char const *search_path = getenv("BARF_TARGETS_SEARCH_PATH");
-        if (search_path != NULL)
-            AddTargetsSearchPath(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable");
     }
 
     // returns the name of this program, e.g. "reflex", "trison", "bpp"
@@ -176,6 +169,9 @@ public:
 
     virtual void Parse (int argc, char const *const *argv);
 
+    void AddDefaultTargetsSearchPathEntries ();
+    void ProcessTargetsSearchPath ();
+
 protected:
 
     bool AbortFlag () const { return m_abort_flag; }
@@ -183,7 +179,22 @@ protected:
 
 private:
 
-    void AddTargetsSearchPath (string const &search_path, string const &set_by);
+    struct TargetsSearchPathEntry
+    {
+        string m_search_path;
+        string m_set_by;
+        bool m_ignore_add_failure;
+
+        TargetsSearchPathEntry (string const &search_path, string const &set_by, bool ignore_add_failure)
+            :
+            m_search_path(search_path),
+            m_set_by(set_by),
+            m_ignore_add_failure(ignore_add_failure)
+        { }
+    }; // end of struct OptionsBase::TargetsSearchPathEntry
+    
+    enum { IGNORE_FAILURE = true, ABORT_ON_FAILURE = false };
+    void AddTargetsSearchPath (string const &search_path, string const &set_by, bool ignore_add_failure);
     Verbosity ParseVerbosityString (string const &verbosity_string);
 
     // the name of this program, e.g. "reflex"
@@ -204,6 +215,8 @@ private:
     bool m_with_line_directives;
     string m_na_dot_graph_filename;
     string m_da_dot_graph_filename;
+    // targets search path options
+    vector<TargetsSearchPathEntry> m_targets_search_path_entry;
     // target-related options
     vector<string> m_predefine;
     vector<string> m_postdefine;

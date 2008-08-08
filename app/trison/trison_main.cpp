@@ -68,7 +68,11 @@ void ParseAndHandleOptions (int argc, char **argv)
     // options (printing the help message, etc) if present.
 
     g_options = new Trison::Options(argv[0]);
+    g_options->AddDefaultTargetsSearchPathEntries();
     g_options->Parse(argc, argv);
+    EmitExecutionMessage("beginning execution");
+    g_options->ProcessTargetsSearchPath();
+    
     if (GetTrisonOptions().GetAbort())
     {
         exit(RS_COMMANDLINE_ABORT);

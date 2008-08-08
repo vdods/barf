@@ -46,7 +46,7 @@ private:
     class PathEntry
     {
     public:
-    
+
         PathEntry (string const &path, string const &set_by)
             :
             m_path(path),
@@ -55,12 +55,12 @@ private:
             assert(!m_path.empty());
             assert(!m_set_by.empty());
         }
-    
-        inline string const &GetPath () const { return m_path; }
-        inline string const &GetSetBy () const { return m_set_by; }
-    
+
+        string const &GetPath () const { return m_path; }
+        string const &GetSetBy () const { return m_set_by; }
+
     private:
-    
+
         string m_path;
         string m_set_by;
     }; // end of class SearchPath::PathEntry
