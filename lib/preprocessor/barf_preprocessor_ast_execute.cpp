@@ -224,11 +224,11 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         Parser parser;
         // figure out the pathname from the targets search path
         string filename(
-            GetOptions().GetTargetsSearchPath().GetFilePath(
+            GetOptions().GetSearchPath().GetFilePath(
                 filename_expression));
-        if (!parser.OpenFile(filename))
+        if (filename.empty() || !parser.OpenFile(filename))
         {
-            EmitError("file \"" + filename + "\" not found", GetFiLoc());
+            EmitError("file \"" + filename_expression + "\" not found in search path", GetFiLoc());
             return;
         }
         Ast::Base *parsed_tree_root = NULL;

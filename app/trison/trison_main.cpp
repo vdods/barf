@@ -68,10 +68,10 @@ void ParseAndHandleOptions (int argc, char **argv)
     // options (printing the help message, etc) if present.
 
     g_options = new Trison::Options(argv[0]);
-    g_options->AddDefaultTargetsSearchPathEntries();
+    g_options->AddDefaultSearchPathEntries();
     g_options->Parse(argc, argv);
     EmitExecutionMessage("beginning execution");
-    g_options->ProcessTargetsSearchPath();
+    g_options->ProcessSearchPath();
     
     if (GetTrisonOptions().GetAbort())
     {
@@ -82,14 +82,14 @@ void ParseAndHandleOptions (int argc, char **argv)
         GetTrisonOptions().PrintHelpMessage(cerr);
         exit(RS_SUCCESS);
     }
-    else if (GetTrisonOptions().GetPrintTargetsSearchPathRequest() == Trison::Options::PTSPR_SHORT)
+    else if (GetTrisonOptions().GetPrintSearchPathRequest() == Trison::Options::PSPR_SHORT)
     {
-        cout << GetTrisonOptions().GetTargetsSearchPath().GetAsString("\n") << endl;
+        cout << GetTrisonOptions().GetSearchPath().GetAsString("\n") << endl;
         exit(RS_SUCCESS);
     }
-    else if (GetTrisonOptions().GetPrintTargetsSearchPathRequest() == Trison::Options::PTSPR_VERBOSE)
+    else if (GetTrisonOptions().GetPrintSearchPathRequest() == Trison::Options::PSPR_VERBOSE)
     {
-        cout << GetTrisonOptions().GetTargetsSearchPath().GetAsVerboseString("\n") << endl;
+        cout << GetTrisonOptions().GetSearchPath().GetAsVerboseString("\n") << endl;
         exit(RS_SUCCESS);
     }
 }

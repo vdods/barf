@@ -39,6 +39,8 @@ int main (int argc, char **argv)
     {
         g_options = new Bpp::Options(argv[0]);
         g_options->Parse(argc, argv);
+        g_options->ProcessSearchPath();
+        
         if (GetBppOptions().GetAbort())
             return 1;
         else if (GetBppOptions().GetIsHelpRequested())

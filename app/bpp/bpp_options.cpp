@@ -55,6 +55,31 @@ CommandLineOption const Options::ms_option[] =
 #endif
 
 
+    CommandLineOption("Input behavior options"),
+    CommandLineOption(
+        'I',
+        "include-search-path",
+        &OptionsBase::IncludeSearchPath,
+        "    Adds another entry to the include search path, with higher search priority\n"
+        "    than the existing entries.  If no valid directories are specified, the search\n"
+        "    path will default to the current working directory."),
+    CommandLineOption(
+        'p',
+        "print-search-path",
+        &OptionsBase::RequestShortPrintSearchPath,
+        "    Prints to stdout, from highest priority to lowest, the include search path\n"
+        "    once all -I options have been processed, then exits.  Each path entry is\n"
+        "    delimited by a newline."),
+    CommandLineOption(
+        'P',
+        "print-verbose-search-path",
+        &OptionsBase::RequestVerbosePrintSearchPath,
+        "    Prints to stdout, from highest priority to lowest, the include search path\n"
+        "    once all -I options have been processed, then exits.  Each path entry is\n"
+        "    followed by a description of how each was added.  Each entry is delimited\n"
+        "    by a newline.  This is identical to option -p except for the description."),
+
+
     CommandLineOption("Output behavior options"),
     CommandLineOption(
         'o',

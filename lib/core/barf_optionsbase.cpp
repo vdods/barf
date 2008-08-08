@@ -61,19 +61,19 @@ void OptionsBase::DontAssertOnError ()
 }
 #endif
 
-void OptionsBase::IncludeTargetsSearchPath (string const &search_path)
+void OptionsBase::IncludeSearchPath (string const &search_path)
 {
-    m_targets_search_path_entry.push_back(TargetsSearchPathEntry(search_path, "set by commandline option", ABORT_ON_FAILURE));
+    m_search_path_entry.push_back(SearchPathEntry(search_path, "set by commandline option", ABORT_ON_FAILURE));
 }
 
-void OptionsBase::RequestShortPrintTargetsSearchPath ()
+void OptionsBase::RequestShortPrintSearchPath ()
 {
-    m_print_targets_search_path_request = PTSPR_SHORT;
+    m_print_search_path_request = PSPR_SHORT;
 }
 
-void OptionsBase::RequestVerbosePrintTargetsSearchPath ()
+void OptionsBase::RequestVerbosePrintSearchPath ()
 {
-    m_print_targets_search_path_request = PTSPR_VERBOSE;
+    m_print_search_path_request = PSPR_VERBOSE;
 }
 
 void OptionsBase::SetOutputDirectory (string const &output_directory)
@@ -152,34 +152,34 @@ void OptionsBase::Parse (int argc, char const *const *argv)
     CommandLineParser::Parse(argc, argv);
 }
 
-void OptionsBase::AddDefaultTargetsSearchPathEntries ()
+void OptionsBase::AddDefaultSearchPathEntries ()
 {
 #if defined(BARFDATADIR)
     // add "BARFDATADIR/targets" (i.e. the installed targets data)
     // as the lowest-priority targets search path.
     if (!string(BARFDATADIR).empty())
-        m_targets_search_path_entry.push_back(TargetsSearchPathEntry(BARFDATADIR DIRECTORY_SLASH_STRING "targets", "location of installed targets directory", IGNORE_FAILURE));
+        m_search_path_entry.push_back(SearchPathEntry(BARFDATADIR DIRECTORY_SLASH_STRING "targets", "location of installed targets directory", IGNORE_FAILURE));
 #endif // defined(BARFDATADIR)
 
     // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
     // add it as the lowest-priority targets search path.
     char const *search_path = getenv("BARF_TARGETS_SEARCH_PATH");
     if (search_path != NULL)
-        m_targets_search_path_entry.push_back(TargetsSearchPathEntry(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable", ABORT_ON_FAILURE));
+        m_search_path_entry.push_back(SearchPathEntry(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable", ABORT_ON_FAILURE));
 }
 
-void OptionsBase::ProcessTargetsSearchPath ()
+void OptionsBase::ProcessSearchPath ()
 {
-    for (vector<TargetsSearchPathEntry>::const_iterator it = m_targets_search_path_entry.begin(),
-                                                        it_end = m_targets_search_path_entry.end();
+    for (vector<SearchPathEntry>::const_iterator it = m_search_path_entry.begin(),
+                                                        it_end = m_search_path_entry.end();
          it != it_end;
          ++it)
     {
-        AddTargetsSearchPath(it->m_search_path, it->m_set_by, it->m_ignore_add_failure);
+        AddSearchPath(it->m_search_path, it->m_set_by, it->m_ignore_add_failure);
     }
 
-    if (m_targets_search_path.GetIsEmpty())
-        m_targets_search_path.AddPath(string(".") + DIRECTORY_SLASH_CHAR, "set as default targets search path");
+    if (m_search_path.GetIsEmpty())
+        m_search_path.AddPath(string(".") + DIRECTORY_SLASH_CHAR, "set as default targets search path");
 }
 
 void OptionsBase::ReportErrorAndSetAbortFlag (string const &error_message)
@@ -189,11 +189,11 @@ void OptionsBase::ReportErrorAndSetAbortFlag (string const &error_message)
     m_abort_flag = true;
 }
 
-void OptionsBase::AddTargetsSearchPath (string const &search_path, string const &set_by, bool ignore_add_failure)
+void OptionsBase::AddSearchPath (string const &search_path, string const &set_by, bool ignore_add_failure)
 {
     EmitExecutionMessage("attempting to add " + GetStringLiteral(search_path) + " (" + set_by + ") to targets search path");
     
-    switch (m_targets_search_path.AddPath(search_path, set_by))
+    switch (m_search_path.AddPath(search_path, set_by))
     {
         case SearchPath::ADD_PATH_SUCCESS:
             EmitExecutionMessage("successfully added " + GetStringLiteral(search_path) + " (" + set_by + ") to targets search path");

@@ -52,7 +52,10 @@ bin_PROGRAMS = calculator
 
 EXTRA_DIST = \
     bootstrap.sh \
-	configure.ac
+	configure.ac \
+	INSTALL \
+	LICENSE \
+	README
 
 ##############################################################################
 # general flags

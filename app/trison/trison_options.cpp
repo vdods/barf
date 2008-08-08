@@ -59,23 +59,23 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'I',
         "include-targets-search-path",
-        &OptionsBase::IncludeTargetsSearchPath,
+        &OptionsBase::IncludeSearchPath,
         "    Adds another entry to the search path for data files (e.g. targetspec and\n"
-        "    codespec files) with higher search priority than the existing entries.\n"
+        "    codespec files), with higher search priority than the existing entries.\n"
         "    By default the search path is specified by the BARF_TARGETS_SEARCH_PATH\n"
         "    enviroment variable.  If no valid directories are specified, the search\n"
         "    path will default to the current working directory."),
     CommandLineOption(
         'p',
         "print-targets-search-path",
-        &OptionsBase::RequestShortPrintTargetsSearchPath,
+        &OptionsBase::RequestShortPrintSearchPath,
         "    Prints to stdout, from highest priority to lowest, the targets search path\n"
         "    once all -I options have been processed, then exits.  Each path entry is\n"
         "    delimited by a newline."),
     CommandLineOption(
         'P',
         "print-verbose-targets-search-path",
-        &OptionsBase::RequestVerbosePrintTargetsSearchPath,
+        &OptionsBase::RequestVerbosePrintSearchPath,
         "    Prints to stdout, from highest priority to lowest, the targets search path\n"
         "    once all -I options have been processed, then exits.  Each path entry is\n"
         "    followed by a description of how each was added.  Each entry is delimited\n"
@@ -235,7 +235,7 @@ void Options::Parse (int const argc, char const *const *const argv)
     // option was specified (e.g. help or print-targets-search-path)
     if (!AbortFlag() &&
         !GetIsHelpRequested() &&
-        GetPrintTargetsSearchPathRequest() == PTSPR_NONE)
+        GetPrintSearchPathRequest() == PSPR_NONE)
     {
         if (GetInputFilename().empty())
             ReportErrorAndSetAbortFlag("no input filename specified");

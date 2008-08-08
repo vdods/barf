@@ -12,6 +12,7 @@
 
 #include <iostream>
 
+#include "barf_message.hpp"
 #include "barf_util.hpp"
 
 namespace Barf {
@@ -19,6 +20,7 @@ namespace Barf {
 string SearchPath::GetFilePath (string const &filename) const
 {
     assert(!m_path_stack.empty() && "there must be at least one valid path");
+    EmitExecutionMessage("looking for file \"" + filename + "\" in search path");
     for (PathEntryStack::const_reverse_iterator it = m_path_stack.rbegin(),
                                                 it_end = m_path_stack.rend();
          it != it_end;
@@ -27,7 +29,14 @@ string SearchPath::GetFilePath (string const &filename) const
         PathEntry const &path_entry = *it;
         string file_path(path_entry.GetPath() + filename);
         if (GetIsValidFile(file_path))
+        {
+            EmitExecutionMessage("file \"" + filename + "\" was found in directory \"" + path_entry.GetPath() + "\"");
             return file_path;
+        }
+        else
+        {
+            EmitExecutionMessage("file \"" + filename + "\" was not found in directory \"" + path_entry.GetPath() + "\"");
+        }
     }
     return g_empty_string;
 }

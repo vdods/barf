@@ -4,9 +4,6 @@
 
 - figure out how to generate/install docs
 - make FirstContainsSecond(x,y) and FirstDoesntContainSecond(x,y) funcs
-* use BARF_TARGETS_SEARCH_PATH in example app configure.ac files
-* config.h-specified search path which is where the targetspecs/codespecs
-  will be installed.
 - guarantee that errors will be reported such that the line numbers never
   decrease.
 - bug: getting "file not found" error when a file exists but the permissions
@@ -196,8 +193,8 @@ $ add "push accepted string back into buffer" API (call it Unaccept) to the
 - add targetspec directives for disabling stuff besides debug_spew -- like
   disabling Unaccept and the accessor methods DebugSpew and ScannerMode
 * c++ target -- ability to set the debug spew ostream
-$ add option for line directives referencing codespecs (the default should be
-  to refer to codespecs, for easier development)
+$ add targetspec directive for line directives referencing codespecs (the
+  default should be to refer to codespecs, for easier development)
 $ add option which prints the (reflex) targets available in the current search
   path and which directory each resides in.
 - use smallest integer type to store state and transition indices, etc.

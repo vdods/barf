@@ -35,12 +35,12 @@ class OptionsBase : public CommandLineParser
 {
 public:
 
-    enum PrintTargetsSearchPathRequest
+    enum PrintSearchPathRequest
     {
-        PTSPR_NONE = 0,
-        PTSPR_SHORT,
-        PTSPR_VERBOSE
-    }; // end of enum OptionsBase::PrintTargetsSearchPathRequest
+        PSPR_NONE = 0,
+        PSPR_SHORT,
+        PSPR_VERBOSE
+    }; // end of enum OptionsBase::PrintSearchPathRequest
 
     enum Verbosity
     {
@@ -88,7 +88,7 @@ public:
     #if DEBUG
         m_assert_on_error(false),
     #endif
-        m_print_targets_search_path_request(PTSPR_NONE),
+        m_print_search_path_request(PSPR_NONE),
         m_with_line_directives(false),
         m_enabled_verbosity(V_NONE),
         m_is_help_requested(false),
@@ -118,8 +118,8 @@ public:
     bool GetAssertOnError () const { return m_assert_on_error; }
 #endif
     // input options
-    SearchPath const &GetTargetsSearchPath () const { return m_targets_search_path; }
-    PrintTargetsSearchPathRequest GetPrintTargetsSearchPathRequest () const { return m_print_targets_search_path_request; }
+    SearchPath const &GetSearchPath () const { return m_search_path; }
+    PrintSearchPathRequest GetPrintSearchPathRequest () const { return m_print_search_path_request; }
     // output options
     string GetOutputDirectory () const { return m_output_directory; }
     bool GetWithLineDirectives () const { return m_with_line_directives; }
@@ -147,9 +147,9 @@ public:
     void DontAssertOnError ();
 #endif
     // input options
-    void IncludeTargetsSearchPath (string const &search_path);
-    void RequestShortPrintTargetsSearchPath ();
-    void RequestVerbosePrintTargetsSearchPath ();
+    void IncludeSearchPath (string const &search_path);
+    void RequestShortPrintSearchPath ();
+    void RequestVerbosePrintSearchPath ();
     // output options
     void SetOutputDirectory (string const &output_directory);
     void WithLineDirectives ();
@@ -169,8 +169,8 @@ public:
 
     virtual void Parse (int argc, char const *const *argv);
 
-    void AddDefaultTargetsSearchPathEntries ();
-    void ProcessTargetsSearchPath ();
+    void AddDefaultSearchPathEntries ();
+    void ProcessSearchPath ();
 
 protected:
 
@@ -179,22 +179,22 @@ protected:
 
 private:
 
-    struct TargetsSearchPathEntry
+    struct SearchPathEntry
     {
         string m_search_path;
         string m_set_by;
         bool m_ignore_add_failure;
 
-        TargetsSearchPathEntry (string const &search_path, string const &set_by, bool ignore_add_failure)
+        SearchPathEntry (string const &search_path, string const &set_by, bool ignore_add_failure)
             :
             m_search_path(search_path),
             m_set_by(set_by),
             m_ignore_add_failure(ignore_add_failure)
         { }
-    }; // end of struct OptionsBase::TargetsSearchPathEntry
+    }; // end of struct OptionsBase::SearchPathEntry
     
     enum { IGNORE_FAILURE = true, ABORT_ON_FAILURE = false };
-    void AddTargetsSearchPath (string const &search_path, string const &set_by, bool ignore_add_failure);
+    void AddSearchPath (string const &search_path, string const &set_by, bool ignore_add_failure);
     Verbosity ParseVerbosityString (string const &verbosity_string);
 
     // the name of this program, e.g. "reflex"
@@ -208,15 +208,15 @@ private:
     bool m_assert_on_error;
 #endif
     // input option values
-    SearchPath m_targets_search_path;
-    PrintTargetsSearchPathRequest m_print_targets_search_path_request;
+    SearchPath m_search_path;
+    PrintSearchPathRequest m_print_search_path_request;
     // output option values
     string m_output_directory;
     bool m_with_line_directives;
     string m_na_dot_graph_filename;
     string m_da_dot_graph_filename;
     // targets search path options
-    vector<TargetsSearchPathEntry> m_targets_search_path_entry;
+    vector<SearchPathEntry> m_search_path_entry;
     // target-related options
     vector<string> m_predefine;
     vector<string> m_postdefine;

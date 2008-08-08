@@ -62,10 +62,10 @@ void ParseAndHandleOptions (int argc, char **argv)
     // options (printing the help message, etc) if present.
 
     g_options = new Reflex::Options(argv[0]);
-    g_options->AddDefaultTargetsSearchPathEntries();
+    g_options->AddDefaultSearchPathEntries();
     g_options->Parse(argc, argv);
     EmitExecutionMessage("beginning execution");
-    g_options->ProcessTargetsSearchPath();
+    g_options->ProcessSearchPath();
     
     if (GetReflexOptions().GetAbort())
     {
@@ -76,14 +76,14 @@ void ParseAndHandleOptions (int argc, char **argv)
         GetReflexOptions().PrintHelpMessage(cerr);
         exit(RS_SUCCESS);
     }
-    else if (GetReflexOptions().GetPrintTargetsSearchPathRequest() == Reflex::Options::PTSPR_SHORT)
+    else if (GetReflexOptions().GetPrintSearchPathRequest() == Reflex::Options::PSPR_SHORT)
     {
-        cout << GetReflexOptions().GetTargetsSearchPath().GetAsString("\n") << endl;
+        cout << GetReflexOptions().GetSearchPath().GetAsString("\n") << endl;
         exit(RS_SUCCESS);
     }
-    else if (GetReflexOptions().GetPrintTargetsSearchPathRequest() == Reflex::Options::PTSPR_VERBOSE)
+    else if (GetReflexOptions().GetPrintSearchPathRequest() == Reflex::Options::PSPR_VERBOSE)
     {
-        cout << GetReflexOptions().GetTargetsSearchPath().GetAsVerboseString("\n") << endl;
+        cout << GetReflexOptions().GetSearchPath().GetAsVerboseString("\n") << endl;
         exit(RS_SUCCESS);
     }
 }

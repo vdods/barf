@@ -101,10 +101,10 @@ void Target::ParseTargetspec (Targetspec::Parser &parser) const
     try {
         string filename(GetOptions().GetProgramName() + '.' + m_target_id + ".targetspec");
         EmitExecutionMessage("beginning parse procedure of targetspec file \"" + filename + "\"");
-        m_targetspec.m_source_path = GetOptions().GetTargetsSearchPath().GetFilePath(filename);
+        m_targetspec.m_source_path = GetOptions().GetSearchPath().GetFilePath(filename);
         Ast::Base *parsed_tree_root = NULL;
         if (m_targetspec.m_source_path.empty())
-            EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetTargetsSearchPath().GetAsString(), FiLoc(GetOptions().GetInputFilename()));
+            EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetSearchPath().GetAsString(), FiLoc(GetOptions().GetInputFilename()));
         else if (!parser.OpenTargetspec(m_targetspec.m_source_path, m_target_id))
             EmitError("unable to open file \"" + m_targetspec.m_source_path + "\" for reading", FiLoc(GetOptions().GetInputFilename()));
         else if (parser.Parse(&parsed_tree_root) != Targetspec::Parser::PRC_SUCCESS)
@@ -143,10 +143,10 @@ void Target::ParseCodespecs (Preprocessor::Parser &parser) const
         try {
             string filename(GetOptions().GetProgramName()  + '.' + m_target_id + '.' + add_codespec->m_filename->GetText() + ".codespec");
             EmitExecutionMessage("beginning parse procedure of codespec file \"" + filename + "\"");
-            string codespec_filename(GetOptions().GetTargetsSearchPath().GetFilePath(filename));
+            string codespec_filename(GetOptions().GetSearchPath().GetFilePath(filename));
             Ast::Base *parsed_tree_root = NULL;
             if (codespec_filename.empty())
-                EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetTargetsSearchPath().GetAsString(), FiLoc(m_targetspec.m_source_path));
+                EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetSearchPath().GetAsString(), FiLoc(m_targetspec.m_source_path));
             else if (!parser.OpenFile(codespec_filename))
                 EmitError("unable to open file \"" + codespec_filename + "\" for reading", FiLoc(m_targetspec.m_source_path));
             else if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
