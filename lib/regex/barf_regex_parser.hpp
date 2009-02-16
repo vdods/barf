@@ -243,6 +243,21 @@ public:
     /// primary source.
     ~Parser ();
 
+    /** It is not sufficient to just check the EOF condition on the input
+      * source (e.g. the scanner, cin, etc), because the parser may have read,
+      * but not consumed, additional lookaheads up to EOF.  Thus checking
+      * the input source for EOF condition may give false positives.  This
+      * method should be the preferred means to check EOF condition.
+      *
+      * It should be noted that this may cause the parser to read (but never
+      * consume) up to one additional lookahead token, owing to the necessity
+      * of checking what the next lookahead token is.
+      *
+      * @brief Returns true if and only if the next unshifted lookahead
+      *        token is Terminal::END_.
+      */
+    bool IsAtEndOfInput ();
+
     /// Returns true if and only if "debug spew" is enabled (which prints, to
     /// std::cerr, exactly what the parser is doing at each step).  This method,
     /// along with all other debug spew code can be removed by removing the
@@ -288,7 +303,7 @@ private:
 
     mutable RegularExpressionMap *m_macro_map;
 
-#line 292 "barf_regex_parser.hpp"
+#line 307 "barf_regex_parser.hpp"
 
 
 private:
@@ -441,4 +456,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 445 "barf_regex_parser.hpp"
+#line 460 "barf_regex_parser.hpp"

@@ -3,6 +3,7 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - figure out how to generate/install docs
+- rename "lib" directory to "barf" (?)
 - make FirstContainsSecond(x,y) and FirstDoesntContainSecond(x,y) funcs
 - guarantee that errors will be reported such that the line numbers never
   decrease.

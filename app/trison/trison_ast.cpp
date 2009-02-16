@@ -224,7 +224,7 @@ string const &PrimarySource::GetAssignedType (string const &token_id, string con
     assert(!target_id.empty());
     Terminal const *terminal = m_terminal_map->GetElement(token_id);
     Nonterminal const *nonterminal = m_nonterminal_map->GetElement(token_id);
-    assert(terminal != NULL && nonterminal == NULL || terminal == NULL && nonterminal != NULL);
+    assert((terminal != NULL && nonterminal == NULL) || (terminal == NULL && nonterminal != NULL));
     TypeMap const *assigned_type_map = terminal != NULL ? terminal->GetAssignedTypeMap() : nonterminal->m_assigned_type_map;
     assert(assigned_type_map != NULL);
     Ast::String const *assigned_type = assigned_type_map->GetElement(target_id);

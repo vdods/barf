@@ -85,7 +85,7 @@ if test "${WARNINGS_AS_ERRORS}" = "yes"; then
 fi
 
 if test "${ARCH_TYPE}" != ""; then
-    CXXFLAGS="${CXXFLAGS} -march=${ARCH_TYPE}"
+    CXXFLAGS="${CXXFLAGS} -mtune=${ARCH_TYPE}"
 fi
 
 AM_CONDITIONAL(DOT_EXISTS, [test "${DOT}" != ""])

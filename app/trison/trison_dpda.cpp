@@ -369,8 +369,8 @@ private:
             // order by higher precedence, and then lower rule index
             return left.m_rule_precedence->m_precedence_level > right.m_rule_precedence->m_precedence_level
                    ||
-                   left.m_rule_precedence->m_precedence_level == right.m_rule_precedence->m_precedence_level &&
-                   left.m_rule_index < right.m_rule_index;
+                   (left.m_rule_precedence->m_precedence_level == right.m_rule_precedence->m_precedence_level &&
+                    left.m_rule_index < right.m_rule_index);
         }
     }; // end of struct Npda::ReduceReduceConflict
     struct ShiftReduceConflict
@@ -1381,9 +1381,9 @@ public:
         if (!m_tree_root->m_action_branch_list.IsEmpty())
             return false;
         // there must either be only a reduce or only a shift child.
-        return m_tree_root->m_reduce_child != NULL && m_tree_root->m_shift_child == NULL
+        return (m_tree_root->m_reduce_child != NULL && m_tree_root->m_shift_child == NULL)
                ||
-               m_tree_root->m_reduce_child == NULL && m_tree_root->m_shift_child != NULL;
+               (m_tree_root->m_reduce_child == NULL && m_tree_root->m_shift_child != NULL);
     }
     ActionSpec FirstTrunkAction (Uint32 lookahead_token_index) const
     {
@@ -1888,12 +1888,12 @@ private:
                 Graph::Transition const &transition = *it;
                 // if we're shift-blocked, only schedule shift-transitions for branches with
                 // nonterminal lookaheads, otherwise schedule any valid shift-transition.
-                if (m_is_shift_blocked &&
-                    branch->m_lookahead_nonterminal_token_index != none__ &&
-                    TransitionAcceptsTokenId(transition, branch->m_lookahead_nonterminal_token_index)
+                if ((m_is_shift_blocked &&
+                     branch->m_lookahead_nonterminal_token_index != none__ &&
+                     TransitionAcceptsTokenId(transition, branch->m_lookahead_nonterminal_token_index))
                     ||
-                    !m_is_shift_blocked &&
-                    TransitionAcceptsTokenId(transition, lookahead_token))
+                    (!m_is_shift_blocked &&
+                     TransitionAcceptsTokenId(transition, lookahead_token)))
                 {
                     PerformShiftTransition(graph_context, *branch, transition.TargetIndex());
                 }

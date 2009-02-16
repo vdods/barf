@@ -254,7 +254,7 @@ private:
         if (m_buffer[m_read_cursor] == '\0' || m_buffer[m_read_cursor] == '\n')           m_current_conditional_flags |= CF_END_OF_LINE;
         if (IsWordChar(m_buffer[m_read_cursor-1]) != IsWordChar(m_buffer[m_read_cursor])) m_current_conditional_flags |= CF_WORD_BOUNDARY;
     }
-    static bool IsWordChar (BarfCpp_::Uint8 c) { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_'; }
+    static bool IsWordChar (BarfCpp_::Uint8 c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'; }
 
     typedef std::deque<BarfCpp_::Uint8> Buffer;
 
@@ -300,11 +300,11 @@ public:
             // returns true iff this transition is INPUT_ATOM and input_atom
             // matches m_data_0, or this transition is INPUT_ATOM_RANGE and
             // input_atom is within the range [m_data_0, m_data_1] inclusive.
-            return m_transition_type == INPUT_ATOM &&
-                   m_data_0 == input_atom
+            return (m_transition_type == INPUT_ATOM &&
+                    m_data_0 == input_atom)
                    ||
-                   m_transition_type == INPUT_ATOM_RANGE &&
-                   m_data_0 <= input_atom && input_atom <= m_data_1;
+                   (m_transition_type == INPUT_ATOM_RANGE &&
+                    m_data_0 <= input_atom && input_atom <= m_data_1);
         }
         bool AcceptsConditionalFlags (BarfCpp_::Uint8 conditional_flags) const
         {

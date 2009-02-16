@@ -23,7 +23,7 @@ namespace {
 bool GetCharNeedsHexEscaping (Uint8 const c)
 {
     // normal escaping will suffice for these (a b t n v f r are contiguous).
-    if (c == '\0' || c >= '\a' && c <= '\r')
+    if (c == '\0' || (c >= '\a' && c <= '\r'))
         return false;
     // otherwise, only use hex escaping for anything outside the printables
     else
@@ -33,13 +33,13 @@ bool GetCharNeedsHexEscaping (Uint8 const c)
 bool GetCharLiteralCharNeedsNormalEscaping (Uint8 const c)
 {
     // normal escaping will suffice for these (a b t n v f r are contiguous).
-    return c == '\0' || c >= '\a' && c <= '\r' || c == '\\' || c == '\'';
+    return c == '\0' || (c >= '\a' && c <= '\r') || c == '\\' || c == '\'';
 }
 
 bool GetStringLiteralCharNeedsNormalEscaping (Uint8 const c)
 {
     // normal escaping will suffice for these (a b t n v f r are contiguous).
-    return c == '\0' || c >= '\a' && c <= '\r' || c == '\\' || c == '\"';
+    return c == '\0' || (c >= '\a' && c <= '\r') || c == '\\' || c == '\"';
 }
 
 Uint8 GetEscapeCode (Uint8 const c)
@@ -60,7 +60,7 @@ Uint8 GetEscapeCode (Uint8 const c)
 
 bool GetIsHexDigitChar (Uint8 c)
 {
-    return c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f';
+    return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
 }
 
 Uint8 GetHexDigit (Uint8 c)

@@ -152,8 +152,8 @@ struct Char : public Atom
         m_conditional_type(conditional_type)
     {
         // only one of m_char or m_conditional_type may be specified
-        assert(m_char != '\0' && m_conditional_type == CT_COUNT ||
-               m_char == '\0' && m_conditional_type < CT_COUNT);
+        assert((m_char != '\0' && m_conditional_type == CT_COUNT) ||
+               (m_char == '\0' && m_conditional_type < CT_COUNT));
     }
 
     inline Uint8 GetChar () const { return m_char; }

@@ -31,8 +31,8 @@ public:
             Remove();
         // now ensure this node is a floaty or it is a head or tail of an empty list
         assert(NodeClass() == CT_FLOATY ||
-               NodeClass() == CT_HEAD && m_next->NodeClass() == CT_TAIL && m_next->m_prev == this ||
-               NodeClass() == CT_TAIL && m_prev->NodeClass() == CT_HEAD && m_prev->m_next == this);
+               (NodeClass() == CT_HEAD && m_next->NodeClass() == CT_TAIL && m_next->m_prev == this) ||
+               (NodeClass() == CT_TAIL && m_prev->NodeClass() == CT_HEAD && m_prev->m_next == this));
     }
 
     bool IsAnElement () const { return NodeClass() == CT_BODY; }
@@ -61,7 +61,7 @@ public:
     {
         assert(node != NULL);
         assert(node->NodeClass() == CT_FLOATY && "can't insert a node that is already in a list");
-        assert(NodeClass() == CT_BODY || NodeClass() == CT_TAIL && "can't insert a node before a head or a floaty");
+        assert(NodeClass() == CT_BODY || (NodeClass() == CT_TAIL && "can't insert a node before a head or a floaty"));
         assert(node != this && "can't insert a node before itself");
         m_prev->m_next = node;
         node->m_prev = m_prev;
@@ -72,7 +72,7 @@ public:
     {
         assert(node != NULL);
         assert(node->NodeClass() == CT_FLOATY && "can't insert a node that is already in a list");
-        assert(NodeClass() == CT_HEAD || NodeClass() == CT_BODY && "can't insert a node after a tail or a floaty");
+        assert(NodeClass() == CT_HEAD || (NodeClass() == CT_BODY && "can't insert a node after a tail or a floaty"));
         assert(node != this && "can't insert a node after itself");
         m_next->m_prev = node;
         node->m_next = m_next;

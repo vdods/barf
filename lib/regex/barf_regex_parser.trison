@@ -80,7 +80,7 @@ namespace Regex {
 %target.cpp.bottom_of_implementation_file %{
 inline bool IsHexDigit (Uint8 const c)
 {
-    return c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f';
+    return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
 }
 
 inline Uint8 GetHexDigitValue (Uint8 c)
@@ -138,9 +138,9 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 //             fprintf(stderr, "\n######## scanning DIGIT '%c'\n", static_cast<char>(c));
             return Token(Terminal::DIGIT, new Char(c));
         }
-        else if (c >= 'A' && c <= 'Z'
+        else if ((c >= 'A' && c <= 'Z')
                  ||
-                 c >= 'a' && c <= 'z')
+                 (c >= 'a' && c <= 'z'))
         {
 //             fprintf(stderr, "\n######## scanning CHAR '%c'\n", static_cast<char>(c));
             return Token(Terminal::ALPHA, new Char(c));
@@ -417,7 +417,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
         assert(lower_bound->GetValue() >= 0);
         assert(upper_bound->GetValue() >= 0);
         if (lower_bound->GetValue() > upper_bound->GetValue() ||
-            lower_bound->GetValue() == 0 && upper_bound->GetValue() == 0)
+            (lower_bound->GetValue() == 0 && upper_bound->GetValue() == 0))
         {
             ostringstream out;
             out << "invalid bound {" << lower_bound->GetValue() << ',' << upper_bound->GetValue() << '}';

@@ -30,7 +30,7 @@ struct ConditionalOrder
 {
     bool operator () (Conditional const &c0, Conditional const &c1)
     {
-        return c0.m_mask < c1.m_mask || c0.m_mask == c1.m_mask && c0.m_flags < c1.m_flags;
+        return c0.m_mask < c1.m_mask || (c0.m_mask == c1.m_mask && c0.m_flags < c1.m_flags);
     }
 };
 // for mapping sets of target states to a particular Conditional

@@ -220,7 +220,7 @@ void GenerateNpda (
         EmitError("undeclared token \"" + rule_token.m_token_id + "\"", rule_token.GetFiLoc());
         return;
     }
-    assert(terminal != NULL && nonterminal == NULL || terminal == NULL && nonterminal != NULL);
+    assert((terminal != NULL && nonterminal == NULL) || (terminal == NULL && nonterminal != NULL));
     if (terminal != NULL)
         GenerateNpda(*terminal, graph_context, start_index, end_index);
     else

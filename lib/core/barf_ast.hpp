@@ -13,6 +13,7 @@
 
 #include "barf.hpp"
 
+#include <algorithm>
 #include <ostream>
 #include <map>
 #include <sstream>

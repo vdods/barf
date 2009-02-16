@@ -10,6 +10,8 @@
 
 #include "barf_optionsbase.hpp"
 
+#include <stdlib.h>
+
 #include "barf_message.hpp"
 #include "barf_util.hpp"
 
