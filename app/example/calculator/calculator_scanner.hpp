@@ -254,7 +254,7 @@ private:
         if (m_buffer[m_read_cursor] == '\0' || m_buffer[m_read_cursor] == '\n')           m_current_conditional_flags |= CF_END_OF_LINE;
         if (IsWordChar(m_buffer[m_read_cursor-1]) != IsWordChar(m_buffer[m_read_cursor])) m_current_conditional_flags |= CF_WORD_BOUNDARY;
     }
-    static bool IsWordChar (BarfCpp_::Uint8 c) { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_'; }
+    static bool IsWordChar (BarfCpp_::Uint8 c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'; }
 
     typedef std::deque<BarfCpp_::Uint8> Buffer;
 
@@ -300,11 +300,11 @@ public:
             // returns true iff this transition is INPUT_ATOM and input_atom
             // matches m_data_0, or this transition is INPUT_ATOM_RANGE and
             // input_atom is within the range [m_data_0, m_data_1] inclusive.
-            return m_transition_type == INPUT_ATOM &&
-                   m_data_0 == input_atom
+            return (m_transition_type == INPUT_ATOM &&
+                    m_data_0 == input_atom)
                    ||
-                   m_transition_type == INPUT_ATOM_RANGE &&
-                   m_data_0 <= input_atom && input_atom <= m_data_1;
+                   (m_transition_type == INPUT_ATOM_RANGE &&
+                    m_data_0 <= input_atom && input_atom <= m_data_1);
         }
         bool AcceptsConditionalFlags (BarfCpp_::Uint8 conditional_flags) const
         {
@@ -511,12 +511,13 @@ private:
 #include "calculator.hpp"
 
 #include <sstream>
+#include <stdlib.h>
 
 #include "calculator_parser.hpp"
 
 namespace Calculator {
 
-#line 520 "calculator_scanner.hpp"
+#line 521 "calculator_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus
 {
@@ -535,9 +536,9 @@ public:
     }; // end of struct Scanner::Mode
 
     Scanner (
-#line 31 "calculator_scanner.reflex"
+#line 32 "calculator_scanner.reflex"
  string const &input_string 
-#line 541 "calculator_scanner.hpp"
+#line 542 "calculator_scanner.hpp"
 );
     ~Scanner ();
 
@@ -554,11 +555,11 @@ public:
 public:
 
 
-#line 33 "calculator_scanner.reflex"
+#line 34 "calculator_scanner.reflex"
 
     istringstream m_input;
 
-#line 562 "calculator_scanner.hpp"
+#line 563 "calculator_scanner.hpp"
 
 
 private:
@@ -590,10 +591,10 @@ private:
 }; // end of class Scanner
 
 
-#line 36 "calculator_scanner.reflex"
+#line 37 "calculator_scanner.reflex"
 
 } // end of namespace Calculator
 
 #endif // !defined(CALCULATOR_SCANNER_HPP_)
 
-#line 600 "calculator_scanner.hpp"
+#line 601 "calculator_scanner.hpp"

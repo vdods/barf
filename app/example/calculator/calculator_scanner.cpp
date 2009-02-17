@@ -10,14 +10,14 @@
 #define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
 
 
-#line 46 "calculator_scanner.reflex"
+#line 47 "calculator_scanner.reflex"
 
 namespace Calculator {
 
 #line 18 "calculator_scanner.cpp"
 
 Scanner::Scanner (
-#line 31 "calculator_scanner.reflex"
+#line 32 "calculator_scanner.reflex"
  string const &input_string 
 #line 23 "calculator_scanner.cpp"
 )
@@ -34,7 +34,7 @@ Scanner::Scanner (
     DebugSpew(false);
 
 
-#line 49 "calculator_scanner.reflex"
+#line 50 "calculator_scanner.reflex"
 
     m_input.str(input_string);
 
@@ -79,7 +79,7 @@ void Scanner::ResetForNewInput ()
     ReflexCpp_::AutomatonApparatus::ResetForNewInput_(ms_state_table_ + Mode::START_);
 
 
-#line 73 "calculator_scanner.reflex"
+#line 74 "calculator_scanner.reflex"
 
 
 #line 86 "calculator_scanner.cpp"
@@ -120,7 +120,7 @@ Parser::Token Scanner::Scan ()
             do
             {
 
-#line 70 "calculator_scanner.reflex"
+#line 71 "calculator_scanner.reflex"
 
     assert(false && "we should have handled this in the catch-all rule");
 
@@ -145,7 +145,7 @@ Parser::Token Scanner::Scan ()
                 case 0:
                 {
 
-#line 111 "calculator_scanner.reflex"
+#line 112 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, strtod(accepted_string.c_str(), NULL));
     
@@ -157,7 +157,7 @@ Parser::Token Scanner::Scan ()
                 case 1:
                 {
 
-#line 116 "calculator_scanner.reflex"
+#line 117 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, strtod(accepted_string.c_str(), NULL));
     
@@ -169,7 +169,7 @@ Parser::Token Scanner::Scan ()
                 case 2:
                 {
 
-#line 121 "calculator_scanner.reflex"
+#line 122 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, M_PI);
     
@@ -181,7 +181,7 @@ Parser::Token Scanner::Scan ()
                 case 3:
                 {
 
-#line 126 "calculator_scanner.reflex"
+#line 127 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, M_E);
     
@@ -193,7 +193,7 @@ Parser::Token Scanner::Scan ()
                 case 4:
                 {
 
-#line 131 "calculator_scanner.reflex"
+#line 132 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::RESULT);
     
@@ -205,7 +205,7 @@ Parser::Token Scanner::Scan ()
                 case 5:
                 {
 
-#line 136 "calculator_scanner.reflex"
+#line 137 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::LOG);
     
@@ -217,7 +217,7 @@ Parser::Token Scanner::Scan ()
                 case 6:
                 {
 
-#line 141 "calculator_scanner.reflex"
+#line 142 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::HELP);
     
@@ -229,7 +229,7 @@ Parser::Token Scanner::Scan ()
                 case 7:
                 {
 
-#line 146 "calculator_scanner.reflex"
+#line 147 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::MOD);
     
@@ -241,7 +241,7 @@ Parser::Token Scanner::Scan ()
                 case 8:
                 {
 
-#line 151 "calculator_scanner.reflex"
+#line 152 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Token::Id(accepted_string[0]));
     
@@ -253,7 +253,7 @@ Parser::Token Scanner::Scan ()
                 case 9:
                 {
 
-#line 156 "calculator_scanner.reflex"
+#line 157 "calculator_scanner.reflex"
 
         // ignore all non-newline whitespace
     
@@ -265,7 +265,7 @@ Parser::Token Scanner::Scan ()
                 case 10:
                 {
 
-#line 161 "calculator_scanner.reflex"
+#line 162 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NEWLINE);
     
@@ -277,7 +277,7 @@ Parser::Token Scanner::Scan ()
                 case 11:
                 {
 
-#line 166 "calculator_scanner.reflex"
+#line 167 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::END_);
     
@@ -289,7 +289,7 @@ Parser::Token Scanner::Scan ()
                 case 12:
                 {
 
-#line 171 "calculator_scanner.reflex"
+#line 172 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     
@@ -304,7 +304,7 @@ Parser::Token Scanner::Scan ()
     }
 
 
-#line 52 "calculator_scanner.reflex"
+#line 53 "calculator_scanner.reflex"
 
     return Parser::Token(Parser::Terminal::BAD_TOKEN);
 
@@ -318,7 +318,7 @@ Parser::Token Scanner::Scan ()
 bool Scanner::IsInputAtEnd_ ()
 {
 
-#line 64 "calculator_scanner.reflex"
+#line 65 "calculator_scanner.reflex"
 
     return m_input.peek() == char_traits<char>::eof();
 
@@ -328,7 +328,7 @@ bool Scanner::IsInputAtEnd_ ()
 BarfCpp_::Uint8 Scanner::ReadNextAtom_ ()
 {
 
-#line 67 "calculator_scanner.reflex"
+#line 68 "calculator_scanner.reflex"
 
     return m_input.get();
 
@@ -537,7 +537,7 @@ BarfCpp_::Uint32 const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_ac
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 55 "calculator_scanner.reflex"
+#line 56 "calculator_scanner.reflex"
 
 } // end of namespace Calculator
 
