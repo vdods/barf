@@ -69,7 +69,7 @@ string const &GetAstTypeString (AstType ast_type);
 struct Atom : public Ast::Base
 {
     Atom (AstType ast_type) : Ast::Base(FiLoc::ms_invalid, ast_type) { }
-}; // end of class Atom
+}; // end of struct Atom
 
 struct Bound : public Ast::Base
 {
@@ -100,7 +100,7 @@ struct Bound : public Ast::Base
     inline bool GetHasNoUpperBound () const { return m_upper_bound < 0; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class Bound
+}; // end of struct Bound
 
 struct Piece : public Ast::Base
 {
@@ -125,7 +125,9 @@ private:
 
     Atom *m_atom;
     Bound *m_bound;
-}; // end of class Piece
+
+    friend bool NodesAreEqual (Ast::Base const *, Ast::Base const *);
+}; // end of struct Piece
 
 struct Branch : public Ast::AstList<Piece>
 {
@@ -141,7 +143,9 @@ struct Branch : public Ast::AstList<Piece>
 private:
 
     bool m_last_modification_was_atom_addition;
-}; // end of class Branch
+
+    friend bool NodesAreEqual (Ast::Base const *, Ast::Base const *);
+}; // end of struct Branch
 
 struct Char : public Atom
 {
@@ -168,7 +172,9 @@ private:
 
     Uint8 m_char;
     ConditionalType m_conditional_type;
-}; // end of class Char
+
+    friend bool NodesAreEqual (Ast::Base const *, Ast::Base const *);
+}; // end of struct Char
 
 struct BracketCharSet : public Atom
 {
@@ -203,6 +209,8 @@ private:
     typedef bitset<256> CharSet;
 
     CharSet m_char_set;
+
+    friend bool NodesAreEqual (Ast::Base const *, Ast::Base const *);
 }; // end of BracketCharSet
 
 struct RegularExpression : public Atom, public Ast::List<Branch>
@@ -214,7 +222,7 @@ struct RegularExpression : public Atom, public Ast::List<Branch>
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class RegularExpression
+}; // end of struct RegularExpression
 
 struct RegularExpressionMap : public Ast::AstMap<RegularExpression>
 {
@@ -223,7 +231,9 @@ struct RegularExpressionMap : public Ast::AstMap<RegularExpression>
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
-}; // end of class RegularExpressionMap
+}; // end of struct RegularExpressionMap
+
+bool NodesAreEqual (Ast::Base const *left, Ast::Base const *right);
 
 } // end of namespace Regex
 } // end of namespace Barf

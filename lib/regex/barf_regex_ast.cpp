@@ -295,5 +295,85 @@ void RegularExpressionMap::Print (ostream &stream, Uint32 indent_level) const
     Ast::AstMap<RegularExpression>::Print(stream, GetAstTypeString, indent_level);
 }
 
+// ///////////////////////////////////////////////////////////////////////////
+//
+// ///////////////////////////////////////////////////////////////////////////
+
+bool NodesAreEqual (Ast::Base const *left, Ast::Base const *right)
+{
+    assert(left != NULL);
+    assert(right != NULL);
+    
+    if (left->GetAstType() != right->GetAstType())
+        return false;
+
+    switch (left->GetAstType())
+    {
+        case AST_BOUND:
+        {
+            Bound const *left_bound = Dsc<Bound const *>(left);
+            Bound const *right_bound = Dsc<Bound const *>(right);
+            return left_bound->m_lower_bound == right_bound->m_lower_bound &&
+                   left_bound->m_upper_bound == right_bound->m_upper_bound;
+        }
+            
+        case AST_BRACKET_CHAR_SET:
+        {
+            BracketCharSet const *left_set = Dsc<BracketCharSet const *>(left);
+            BracketCharSet const *right_set = Dsc<BracketCharSet const *>(right);
+            return left_set->m_char_set == right_set->m_char_set;
+        }
+            
+        case AST_BRANCH:
+        {
+            Branch const *left_branch = Dsc<Branch const *>(left);
+            Branch const *right_branch = Dsc<Branch const *>(right);
+            if (left_branch->m_last_modification_was_atom_addition != right_branch->m_last_modification_was_atom_addition ||
+                left_branch->size() != right_branch->size())
+            {
+                return false;
+            }
+            for (Branch::size_type i = 0; i < left_branch->size(); ++i)
+                if (!NodesAreEqual(left_branch->GetElement(i), right_branch->GetElement(i)))
+                    return false;
+            return true;
+        }
+            
+        case AST_CHAR:
+        {
+            Char const *left_ch = Dsc<Char const *>(left);
+            Char const *right_ch = Dsc<Char const *>(right);
+            return left_ch->m_char == right_ch->m_char && left_ch->m_conditional_type == right_ch->m_conditional_type;
+        }
+            
+        case AST_PIECE:
+        {
+            Piece const *left_piece = Dsc<Piece const *>(left);
+            Piece const *right_piece = Dsc<Piece const *>(right);
+            return NodesAreEqual(left_piece->m_atom, right_piece->m_atom) && NodesAreEqual(left_piece->m_bound, right_piece->m_bound);
+        }
+            
+        case AST_REGULAR_EXPRESSION:
+        {
+            RegularExpression const *left_regex = Dsc<RegularExpression const *>(left);
+            RegularExpression const *right_regex = Dsc<RegularExpression const *>(right);
+            if (left_regex->size() != right_regex->size())
+                return false;
+            for (Branch::size_type i = 0; i < left_regex->size(); ++i)
+                if (!NodesAreEqual(left_regex->GetElement(i), right_regex->GetElement(i)))
+                    return false;
+            return true;
+        }
+            
+        case AST_REGULAR_EXPRESSION_MAP:
+        default:
+            assert(false && "invalid type to compare");
+            return false;
+    }
+
+    assert(false && "forgot to return a value");
+    return false;
+}
+
 } // end of namespace Regex
 } // end of namespace Barf

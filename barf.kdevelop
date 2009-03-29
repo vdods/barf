@@ -34,14 +34,14 @@
   </general>
   <kdevcustomproject>
     <run>
-      <mainprogram></mainprogram>
+      <mainprogram>/home/vdods/files/sf/barf/trunk/debug/trison</mainprogram>
       <directoryradio>executable</directoryradio>
       <customdirectory>/</customdirectory>
       <programargs></programargs>
       <terminal>false</terminal>
       <autocompile>false</autocompile>
       <envvars/>
-      <globaldebugarguments></globaldebugarguments>
+      <globaldebugarguments>-I ../targets/ steel3.trison</globaldebugarguments>
       <globalcwd>/home/vdods/files/sf/barf/trunk/debug</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <autoinstall>false</autoinstall>
@@ -57,7 +57,7 @@
       <prio>0</prio>
       <dontact>false</dontact>
       <makebin></makebin>
-      <defaulttarget></defaulttarget>
+      <defaulttarget>trison</defaulttarget>
       <makeoptions></makeoptions>
       <selectedenvironment>default</selectedenvironment>
       <environments>
@@ -104,6 +104,9 @@
       <path>temp</path>
       <path>temp/config.h</path>
       <path>temp/Makefile</path>
+      <path>release</path>
+      <path>release/config.h</path>
+      <path>release/Makefile</path>
     </blacklist>
     <other>
       <prio>0</prio>

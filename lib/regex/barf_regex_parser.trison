@@ -312,6 +312,10 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 :
     regex:regex '|' branch:branch
     %target.cpp {
+        for (RegularExpression::size_type i = 0; i < regex->size(); ++i)
+            if (Regex::NodesAreEqual(branch, regex->GetElement(i)))
+                THROW_STRING("duplicated branch");
+                
         regex->Append(branch);
         return regex;
     }
