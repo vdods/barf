@@ -202,10 +202,7 @@ nobase_pkgdata_DATA = \
 	app/example/calculator/calculator_scanner.hpp \
 	app/example/calculator/calculator_scanner.reflex \
 	app/example/calculator/configure.ac \
-	app/example/calculator/INSTALL \
-	app/example/calculator/LICENSE \
 	app/example/calculator/Makefile.am \
-	app/example/calculator/README \
 	LICENSE \
 	README \
 	targets/barf.cpp.include.codespec \
@@ -236,10 +233,7 @@ EXTRA_DIST = \
     app/example/calculator/calculator_scanner.hpp \
     app/example/calculator/calculator_scanner.reflex \
     app/example/calculator/configure.ac \
-	app/example/calculator/INSTALL \
-	app/example/calculator/LICENSE \
     app/example/calculator/Makefile.am \
-	app/example/calculator/README \
     doc/doxygen_pages/acknowledgements.dox \
     doc/doxygen_pages/footer.html \
     doc/doxygen_pages/generic_regexes.dox \
