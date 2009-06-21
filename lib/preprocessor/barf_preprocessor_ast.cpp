@@ -249,7 +249,7 @@ Sint32 Sizeof::GetIntegerValue (SymbolTable &symbol_table) const
         return symbol->Sizeof();
     else
     {
-        EmitError("can not return sizeof undefined macro \"" + m_id->GetText() + "\"", GetFiLoc());
+        EmitError("can't return sizeof undefined macro \"" + m_id->GetText() + "\"", GetFiLoc());
         return 0;
     }
 }

@@ -208,11 +208,12 @@ public:
       * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
       * code to execute at the beginning and end, respectively, of the Parse() method.
       * This includes the ability to enclose the body of the Parse() method within a
-      * try {} block, for exception handling (if exceptions are thrown in reduction
-      * rule code, then the %target.cpp.enable_parse_method_exception_handling directive
-      * must be specified; this will cause the parser to catch and rethrow any exceptions
-      * thrown in reduction rule code, allowing it to clean up dynamically allocated
-      * memory, etc.
+      * try {} block, for exception handling (if exceptions are thrown in scan_actions
+      * or any reduction rule code, then the %target.cpp.enable_scan_actions_exceptions
+      * or %target.cpp.enable_reduction_rule_exceptions directives must be specified
+      * respectively; this will cause the parser to catch and rethrow any exceptions
+      * thrown by scan_actions or reduction rule code, allowing it to clean up
+      * dynamically allocated memory, etc.
       *
       * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
@@ -247,11 +248,12 @@ protected:
       * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
       * code to execute at the beginning and end, respectively, of the Parse() method.
       * This includes the ability to enclose the body of the Parse() method within a
-      * try {} block, for exception handling (if exceptions are thrown in reduction
-      * rule code, then the %target.cpp.enable_parse_method_exception_handling directive
-      * must be specified; this will cause the parser to catch and rethrow any exceptions
-      * thrown in reduction rule code, allowing it to clean up dynamically allocated
-      * memory, etc.
+      * try {} block, for exception handling (if exceptions are thrown in scan_actions
+      * or any reduction rule code, then the %target.cpp.enable_scan_actions_exceptions
+      * or %target.cpp.enable_reduction_rule_exceptions directives must be specified
+      * respectively; this will cause the parser to catch and rethrow any exceptions
+      * thrown by scan_actions or reduction rule code, allowing it to clean up
+      * dynamically allocated memory, etc.
       *
       * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
@@ -282,11 +284,12 @@ private:
       * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
       * code to execute at the beginning and end, respectively, of the Parse() method.
       * This includes the ability to enclose the body of the Parse() method within a
-      * try {} block, for exception handling (if exceptions are thrown in reduction
-      * rule code, then the %target.cpp.enable_parse_method_exception_handling directive
-      * must be specified; this will cause the parser to catch and rethrow any exceptions
-      * thrown in reduction rule code, allowing it to clean up dynamically allocated
-      * memory, etc.
+      * try {} block, for exception handling (if exceptions are thrown in scan_actions
+      * or any reduction rule code, then the %target.cpp.enable_scan_actions_exceptions
+      * or %target.cpp.enable_reduction_rule_exceptions directives must be specified
+      * respectively; this will cause the parser to catch and rethrow any exceptions
+      * thrown by scan_actions or reduction rule code, allowing it to clean up
+      * dynamically allocated memory, etc.
       *
       * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
@@ -351,12 +354,12 @@ private:
     ParserReturnCode Parse_ (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token::Data &token_data) throw();
     void ResetForNewInput_ () throw();
-    Token Scan_ () throw();
+    Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
     void ClearStack_ () throw();
     void ClearLookaheadQueue_ () throw();
-    Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
+    Token const &Lookahead_ (LookaheadQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
     bool ExerciseTransition_ (Transition_ const &transition);
-    Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_);
+    Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
 <|if(is_defined(generate_debug_spew_code))
     // debug spew methods
     void PrintParserStatus_ (std::ostream &stream) const;

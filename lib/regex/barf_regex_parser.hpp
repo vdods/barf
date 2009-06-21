@@ -158,7 +158,8 @@ public:
             BAD_TOKEN = 258,
             ALPHA = 259,
             CHAR = 260,
-            DIGIT = 261
+            DIGIT = 261,
+            HEX_CHAR = 262
         }; // end of enum Parser::Terminal::Name
     }; // end of struct Parser::Terminal
 
@@ -176,20 +177,20 @@ public:
           */
         enum Name
         {
-            atom = 109,
-            atom_control_char = 120,
-            atom_normal_char = 122,
-            bound = 111,
-            bracket_char_set = 116,
-            bracket_expression = 114,
-            bracket_expression_char = 118,
-            bracket_expression_control_char = 124,
-            bracket_expression_normal_char = 126,
-            branch = 101,
-            branch_which_didnt_just_accept_an_atom = 103,
-            branch_which_just_accepted_an_atom = 106,
-            id = 128,
-            integer = 130,
+            atom = 111,
+            atom_control_char = 122,
+            atom_normal_char = 124,
+            bound = 113,
+            bracket_char_set = 118,
+            bracket_expression = 116,
+            bracket_expression_char = 120,
+            bracket_expression_control_char = 126,
+            bracket_expression_normal_char = 128,
+            branch = 103,
+            branch_which_didnt_just_accept_an_atom = 105,
+            branch_which_just_accepted_an_atom = 108,
+            id = 130,
+            integer = 132,
             regex = 0,
             /// Nonterminal which will be attempted to be parsed by the Parse()
             /// method by default (specified by the %default_parse_nonterminal
@@ -285,9 +286,11 @@ public:
     using InputBase::GetFiLoc;
     using InputBase::GetInputName;
 
-    using InputBase::OpenFile;
-    using InputBase::OpenString;
-    using InputBase::OpenUsingStream;
+    // must override these (instead of just "using" them), so that
+    // ResetForNewInput can be called.
+    bool OpenFile (string const &input_filename);
+    void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
+    void OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers);
 
     using InputBase::Close;
 
@@ -295,15 +298,15 @@ public:
     void ScannerDebugSpew (bool debug_spew) { /* TODO: not implemented yet */ }
 
     // this method will throw a std::string if a macro is used without
-    // providing a macro map, or otherwise if an undefined macro is
-    // referenced.
-    ParserReturnCode Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map);
+    // providing a macro map, if an undefined macro is referenced, or
+    // if it encounters an error while parsing the regex.
+    ParserReturnCode Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map = NULL);
 
 private:
 
     mutable RegularExpressionMap *m_macro_map;
 
-#line 307 "barf_regex_parser.hpp"
+#line 310 "barf_regex_parser.hpp"
 
 
 private:
@@ -315,11 +318,12 @@ private:
       * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
       * code to execute at the beginning and end, respectively, of the Parse() method.
       * This includes the ability to enclose the body of the Parse() method within a
-      * try {} block, for exception handling (if exceptions are thrown in reduction
-      * rule code, then the %target.cpp.enable_parse_method_exception_handling directive
-      * must be specified; this will cause the parser to catch and rethrow any exceptions
-      * thrown in reduction rule code, allowing it to clean up dynamically allocated
-      * memory, etc.
+      * try {} block, for exception handling (if exceptions are thrown in scan_actions
+      * or any reduction rule code, then the %target.cpp.enable_scan_actions_exceptions
+      * or %target.cpp.enable_reduction_rule_exceptions directives must be specified
+      * respectively; this will cause the parser to catch and rethrow any exceptions
+      * thrown by scan_actions or reduction rule code, allowing it to clean up
+      * dynamically allocated memory, etc.
       *
       * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
@@ -348,21 +352,21 @@ private:
         enum Name
         {
             none_ = 0,
-            regex = 262,
-            branch = 263,
-            branch_which_didnt_just_accept_an_atom = 264,
-            branch_which_just_accepted_an_atom = 265,
-            atom = 266,
-            bound = 267,
-            bracket_expression = 268,
-            bracket_char_set = 269,
-            bracket_expression_char = 270,
-            atom_control_char = 271,
-            atom_normal_char = 272,
-            bracket_expression_control_char = 273,
-            bracket_expression_normal_char = 274,
-            id = 275,
-            integer = 276
+            regex = 263,
+            branch = 264,
+            branch_which_didnt_just_accept_an_atom = 265,
+            branch_which_just_accepted_an_atom = 266,
+            atom = 267,
+            bound = 268,
+            bracket_expression = 269,
+            bracket_char_set = 270,
+            bracket_expression_char = 271,
+            atom_control_char = 272,
+            atom_normal_char = 273,
+            bracket_expression_control_char = 274,
+            bracket_expression_normal_char = 275,
+            id = 276,
+            integer = 277
         }; // end of enum Parser::Nonterminal_::Name
     }; // end of struct Parser::Nonterminal_
     struct Transition_;
@@ -390,10 +394,10 @@ private:
     ParserReturnCode Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token::Data &token_data) throw();
     void ResetForNewInput_ () throw();
-    Token Scan_ () throw();
+    Token Scan_ ();
     void ClearStack_ () throw();
     void ClearLookaheadQueue_ () throw();
-    Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
+    Token const &Lookahead_ (LookaheadQueue_::size_type index);
     bool ExerciseTransition_ (Transition_ const &transition);
     Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_);
     // debug spew methods
@@ -449,11 +453,11 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 
-#line 59 "barf_regex_parser.trison"
+#line 61 "barf_regex_parser.trison"
 
 } // end of namespace Regex
 } // end of namespace Barf
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 460 "barf_regex_parser.hpp"
+#line 464 "barf_regex_parser.hpp"

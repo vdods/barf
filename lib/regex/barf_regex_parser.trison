@@ -38,9 +38,11 @@ namespace Regex {
     using InputBase::GetFiLoc;
     using InputBase::GetInputName;
 
-    using InputBase::OpenFile;
-    using InputBase::OpenString;
-    using InputBase::OpenUsingStream;
+    // must override these (instead of just "using" them), so that
+    // ResetForNewInput can be called.
+    bool OpenFile (string const &input_filename);
+    void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
+    void OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers);
 
     using InputBase::Close;
 
@@ -48,9 +50,9 @@ namespace Regex {
     void ScannerDebugSpew (bool debug_spew) { /* TODO: not implemented yet */ }
 
     // this method will throw a std::string if a macro is used without
-    // providing a macro map, or otherwise if an undefined macro is
-    // referenced.
-    ParserReturnCode Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map);
+    // providing a macro map, if an undefined macro is referenced, or
+    // if it encounters an error while parsing the regex.
+    ParserReturnCode Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map = NULL);
 
 private:
 
@@ -69,21 +71,13 @@ private:
 
 namespace Barf {
 namespace Regex {
-%}
-%target.cpp.superclass_and_member_constructors { InputBase() }
-%target.cpp.constructor_actions {
-    m_macro_map = NULL;
-}
-%target.cpp.destructor_actions {
-    assert(m_macro_map == NULL);
-}
-%target.cpp.bottom_of_implementation_file %{
-inline bool IsHexDigit (Uint8 const c)
+
+bool IsHexDigit (Uint8 const c)
 {
     return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
 }
 
-inline Uint8 GetHexDigitValue (Uint8 c)
+Uint8 HexDigitValue (Uint8 c)
 {
     assert(IsHexDigit(c));
     if (c >= '0' && c <= '9')
@@ -93,6 +87,34 @@ inline Uint8 GetHexDigitValue (Uint8 c)
     else if (c >= 'a' && c <= 'f')
         c += 0xA - 'a';
     return c;
+}
+%}
+%target.cpp.superclass_and_member_constructors { InputBase() }
+%target.cpp.constructor_actions {
+    m_macro_map = NULL;
+}
+%target.cpp.destructor_actions {
+    assert(m_macro_map == NULL);
+}
+%target.cpp.enable_scan_actions_exceptions
+%target.cpp.enable_reduction_rule_exceptions
+%target.cpp.bottom_of_implementation_file %{
+bool Parser::OpenFile (string const &input_filename)
+{
+    ResetForNewInput();
+    return InputBase::OpenFile(input_filename);
+}
+
+void Parser::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
+{
+    ResetForNewInput();
+    return InputBase::OpenString(input_string, input_name, use_line_numbers);
+}
+
+void Parser::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
+{
+    ResetForNewInput();
+    return InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
 }
 
 Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, RegularExpressionMap *macro_map)
@@ -135,79 +157,51 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 
         if (c >= '0' && c <= '9')
         {
-//             fprintf(stderr, "\n######## scanning DIGIT '%c'\n", static_cast<char>(c));
             return Token(Terminal::DIGIT, new Char(c));
         }
         else if ((c >= 'A' && c <= 'Z')
                  ||
                  (c >= 'a' && c <= 'z'))
         {
-//             fprintf(stderr, "\n######## scanning CHAR '%c'\n", static_cast<char>(c));
             return Token(Terminal::ALPHA, new Char(c));
         }
-        else if (c >= 128 && c < 256)
-        {
-//             fprintf(stderr, "\n######## scanning extended ascii CHAR \\0x%02X\n", c);
-            return Token(Terminal::ALPHA, new Char(c));
-        }
+
+        assert(c >= 0 && c < 256);
 
         switch (c)
         {
-            // special case for backslash, because it can be followed by a hex char
+            // backslash needs to be handled in a special way, since
+            // it can delimit a hex char (e.g. \xA7).
             case '\\':
-                // fuck it for now, just return the backslash
-                /*
-                if (In().peek() == EOF)
-                {
-                    In().get();
-                    assert(In().eof());
+            {
+                if (In().peek() != 'x')
                     return Token::Id('\\');
-                }
+                    
+                c = In().get();
+                assert(c == 'x');
 
-                c = In().peek();
-                if (c == 'x')
+                // we're expecting exactly two hex digits after the \x
+                Uint8 hex_value = 0;
+                for (Uint8 i = 0; i < 2; ++i)
                 {
-                    In().get();
-                    assert(!In().eof());
-
-                    c = In().peek();
+                    c = In().get();
                     if (c == EOF)
-                    {
-                        cerr << "\n\nBLAH BLAH\n\n" << endl;
-                        assert(In().eof());
-                    }
-                    if (c != EOF && IsHexDigit(c))
-                    {
-                        In().get();
-                        assert(!In().eof());
-                        Uint8 hex_value = GetHexDigitValue(c);
-
-                        c = In().peek();
-                        if (c != EOF && IsHexDigit(c))
-                        {
-                            In().get();
-                            assert(!In().eof());
-                            hex_value = (hex_value << 4) + GetHexDigitValue(c);
-                        }
-
-                        return Token(Terminal::ALPHA, new Char(hex_value, true));
-                    }
-                    else
-                    {
-                        // unget the 'x' char
-//                         In().putback('x');
-                        In().unget();
-//                         assert(!In().eof());
-//                         assert((c = In().peek()) == 'x');
-                        return Token::Id('\\');
-                    }
+                        THROW_STRING("encountered end of input while trying to scan hex char");
+                    if (!IsHexDigit(c))
+                        THROW_STRING("expected exactly two hex digits after \"\\x\"");
+                    hex_value <<= 4;
+                    hex_value |= HexDigitValue(c);
                 }
-                // if it didn't work, push the char back in the stream and return '\\'
-                else
-                {
-                    return Token::Id('\\');
-                }
-                */
+                
+                // (for now) prevent usage of the null char \x00, since
+                // the scanner implementation uses '\0' as a sentinel value.
+                if (hex_value == 0)
+                    THROW_STRING("can't use hex char \x00");
+
+                return Token(Terminal::HEX_CHAR, new Char(hex_value));
+            }
+
+            // other control chars
             case '^':
             case '$':
             case '*':
@@ -224,20 +218,9 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
             case '|':
             case '-':
             case ':':
-//                 fprintf(stderr, "\n######## scanning control char '%c'\n", static_cast<char>(c));
                 return Token::Id(c);
 
-            case '\0':
-            case '\a':
-            case '\b':
-            case '\t':
-            case '\n':
-            case '\v':
-            case '\f':
-            case '\r':
-//                 fprintf(stderr, "\n######## skipping escaped char\n");
-                break;
-
+            // non-alphanumeric normal chars
             case ' ':
             case '!':
             case '"':
@@ -254,11 +237,11 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
             case '_':
             case '`':
             case '~':
-//                 fprintf(stderr, "\n######## scanning CHAR '%c'\n", static_cast<char>(c));
                 return Token(Terminal::CHAR, new Char(c));
 
+            // anything else is an invalid char
             default:
-//                 fprintf(stderr, "\n######## skipping invalid char\n");
+                THROW_STRING("invalid char (use hex char " << GetCharLiteral(c, false) << " instead)");
                 break;
         }
     }
@@ -278,6 +261,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 %terminal ALPHA %type.cpp "Char *"
 %terminal CHAR %type.cpp "Char *"
 %terminal DIGIT %type.cpp "Char *"
+%terminal HEX_CHAR %type.cpp "Char *"
                        // NOTE: quotes around examples for clarity
 %terminal '|'          // branch operator; e.g. "re1|re2" matches "re1" or "re2"
 %terminal '(' ')'      // associative grouping delimiters
@@ -290,7 +274,8 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 %terminal '^'          // "^blah" matches "blah" only at the beginning of a line
 %terminal '$'          // "blah$" matches "blah" only at the end of a line
 %terminal '.'          // "." matches any non-newline char
-%terminal '\\'         // escape char
+%terminal '\\'         // escape char (but also delimits a hex char such as \xA7
+                       // which is handled entirely by the scanner)
 %terminal '[' ']'      // bracket expression delimiters
 %terminal '-'          // bracket range delimiter
 %terminal ':'          // char class delimiter
@@ -376,7 +361,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     %target.cpp {
         assert(macro_name != NULL);
         if (m_macro_map == NULL)
-            THROW_STRING("can not use regex macros if no macro map was provided");
+            THROW_STRING("undefined macro \"" + macro_name->GetText() + "\" (no macro map was provided)");
         RegularExpression *macro_regex = m_macro_map->GetElement(macro_name->GetText());
         if (macro_regex == NULL)
             THROW_STRING("undefined macro \"" + macro_name->GetText() + "\"");
@@ -391,6 +376,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 |   atom_normal_char:ch         %target.cpp { return ch; }
 |   '\\' atom_normal_char:ch    %target.cpp { ch->Escape(); return ch; }
 |   '\\' atom_control_char:ch   %target.cpp { return ch; }
+|   HEX_CHAR:ch                 %target.cpp { return ch; }
 |   bracket_expression:exp      %target.cpp { return exp; }
 ;
 
@@ -510,6 +496,8 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     '\\' bracket_expression_normal_char:normal_char   %target.cpp { normal_char->Escape(); return normal_char; }
 |   // control chars require escaping.
     '\\' bracket_expression_control_char:control_char %target.cpp { return control_char; }
+|   // hex chars can't be escaped
+    HEX_CHAR:hex_char                                 %target.cpp { return hex_char; }
 ;
 
 //////////////////////////////////////////////////////////////////////////////

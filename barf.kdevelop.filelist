@@ -5,6 +5,7 @@ LICENSE
 Makefile.am
 README
 TODO
+app
 app/bpp/bpp.hpp
 app/bpp/bpp_main.cpp
 app/bpp/bpp_options.cpp
@@ -25,6 +26,7 @@ app/example/calculator/calculator_scanner.cpp
 app/example/calculator/calculator_scanner.hpp
 app/example/calculator/calculator_scanner.reflex
 app/example/calculator/configure.ac
+app/playground.cpp
 app/reflex/reflex.hpp
 app/reflex/reflex_ast.cpp
 app/reflex/reflex_ast.hpp

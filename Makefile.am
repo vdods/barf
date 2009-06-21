@@ -184,6 +184,7 @@ noinst_LTLIBRARIES = \
 # installed into $(bindir)
 bin_PROGRAMS = \
 	bpp \
+	playground \
 	reflex \
 	trison
 
@@ -543,6 +544,29 @@ bpp_LDADD = \
 bpp_SOURCES = \
 	app/bpp/bpp_main.cpp \
 	app/bpp/bpp_options.cpp
+
+##############################################################################
+# playground (testing area)
+##############################################################################
+
+playground_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+    -I$(top_srcdir)/lib/commonlang \
+    -I$(top_srcdir)/lib/core \
+    -I$(top_srcdir)/lib/preprocessor \
+    -I$(top_srcdir)/lib/regex \
+    -I$(top_srcdir)/lib/targetspec
+
+playground_LDADD = \
+    $(LDADD) \
+    $(top_builddir)/lib/libbarf-regex.la \
+    $(top_builddir)/lib/libbarf-commonlang.la \
+    $(top_builddir)/lib/libbarf-core.la \
+    $(top_builddir)/lib/libbarf-preprocessor.la \
+    $(top_builddir)/lib/libbarf-targetspec.la
+
+playground_SOURCES = \
+	app/playground.cpp
 
 ##############################################################################
 # reflex
