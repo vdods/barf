@@ -115,19 +115,25 @@
 // If anything needs to be done at the very beginning of the generated Scan
 // method, it should be specified here.  If you wanted to enclose the entire
 // contents of the Scan method within a "try" block, you would use this to
-// open the "try" block.
+// open the "try" block.  See also bottom_of_scan_method_actions directive.
 // e.g. %{ try { %}
-%add_optional_directive start_of_scan_method_actions        %dumb_code_block
-// This is the analog to start_of_scan_method_actions -- its contents go
+%add_optional_directive top_of_scan_method_actions          %dumb_code_block
+// This is the analog to top_of_scan_method_actions -- its contents go
 // directly at the end of the generated Scan method.  If you opened a "try"
-// block within start_of_scan_method_actions, remember to finish it with one
+// block within top_of_scan_method_actions, remember to finish it with one
 // or more "catch" blocks.  This section of the Scan method will only be
 // reached if no scanner regex rules or rejection_actions (see below) return
 // upon end-of-file.  If you specify a non-void value for return_type, you
 // should remember to provide a return statement (your C++ compiler should
 // warn about this if left out).
 // e.g. %{ } catch (...) { std::cout << "caught exception" << std::endl } %}
-%add_optional_directive end_of_scan_method_actions          %dumb_code_block
+%add_optional_directive bottom_of_scan_method_actions       %dumb_code_block
+// If the code specified in any accept handler code throws an exception,
+// this directive must be specified; this will cause the scanner to catch
+// and rethrow and exceptions thrown in the accept handler code, allowing
+// it to clean up dynamically allocated memory, etc.  The default is that
+// no exception handling will be done.
+%add_optional_directive enable_accept_handler_exceptions
 // This is the analog to top_of_implementation_file -- its contents go
 // directly at the bottom of the generated implementation file.  If you opened
 // a namespace from within top_of_implementation_file, remember to close it
@@ -157,7 +163,7 @@
 // This value's code is executed when a character is not matched by any regex
 // rule in the scanner's current state.  The rejected character is in the
 // local variable rejected_atom.  This is never called at the end of input;
-// the main scanner loop is broken from and end_of_scan_method_actions is
+// the main scanner loop is broken from and bottom_of_scan_method_actions is
 // executed.  The default value simply prints the unmatched char to stdout.
 %add_optional_directive rejection_actions                   %strict_code_block  %default { std::cout << rejected_atom; }
 // This specifies code to be executed when the scanner object is being reset

@@ -346,7 +346,8 @@ protected:
     void ResetForNewInput_ (DfaState_ const *initial_state)
     {
         InputApparatus::ResetForNewInput_();
-        InitialState_(initial_state);
+        if (initial_state != NULL)
+            InitialState_(initial_state);
         m_current_state = NULL;
         m_accept_state = NULL;
     }
@@ -520,12 +521,12 @@ namespace Preprocessor {
 
 class Text;
 
-#line 524 "barf_preprocessor_scanner.hpp"
+#line 525 "barf_preprocessor_scanner.hpp"
 
 class ScannerNew : private ReflexCpp_::AutomatonApparatus, 
 #line 36 "barf_preprocessor_scanner.reflex"
  protected InputBase 
-#line 529 "barf_preprocessor_scanner.hpp"
+#line 530 "barf_preprocessor_scanner.hpp"
 
 {
 public:
@@ -550,7 +551,7 @@ public:
 #line 37 "barf_preprocessor_scanner.reflex"
 
 
-#line 554 "barf_preprocessor_scanner.hpp"
+#line 555 "barf_preprocessor_scanner.hpp"
 
 public:
 
@@ -565,7 +566,7 @@ public:
 
     void ResetForNewInput ();
 
-    Parser::Token Scan ();
+    Parser::Token Scan () throw();
 
 public:
 
@@ -589,7 +590,7 @@ private:
     bool m_is_reading_newline_sensitive_code;
     Text *m_text;
 
-#line 593 "barf_preprocessor_scanner.hpp"
+#line 594 "barf_preprocessor_scanner.hpp"
 
 
 private:
@@ -598,8 +599,8 @@ private:
     // begin internal reflex-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    bool IsInputAtEnd_ ();
-    BarfCpp_::Uint8 ReadNextAtom_ ();
+    bool IsInputAtEnd_ () throw();
+    BarfCpp_::Uint8 ReadNextAtom_ () throw();
 
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
@@ -628,4 +629,4 @@ private:
 
 #endif // !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 
-#line 632 "barf_preprocessor_scanner.hpp"
+#line 633 "barf_preprocessor_scanner.hpp"

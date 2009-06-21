@@ -50,7 +50,7 @@ namespace Calculator {
 %target.cpp.constructor_actions {
     m_input.str(input_string);
 }
-%target.cpp.end_of_scan_method_actions %{
+%target.cpp.bottom_of_scan_method_actions %{
     return Parser::Token(Parser::Terminal::BAD_TOKEN);
 %}
 %target.cpp.bottom_of_implementation_file %{

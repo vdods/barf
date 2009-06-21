@@ -277,7 +277,8 @@ protected:
     void ResetForNewInput_ (DfaState_ const *initial_state)
     {
         InputApparatus::ResetForNewInput_();
-        InitialState_(initial_state);
+        if (initial_state != NULL)
+            InitialState_(initial_state);
         m_current_state = NULL;
         m_accept_state = NULL;
     }
@@ -478,7 +479,7 @@ public:
 <{scan_method_access}
 
 <|end_if
-    <{return_type} Scan (<{scan_method_parameters?});
+    <{return_type} Scan (<{scan_method_parameters?})<{if(!is_defined(enable_accept_handler_exceptions))} throw()<{end_if};
 
 <|if(is_defined(bottom_of_class))
 public:
@@ -492,8 +493,8 @@ private:
     // begin internal reflex-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    bool IsInputAtEnd_ ();
-    BarfCpp_::Uint8 ReadNextAtom_ ();
+    bool IsInputAtEnd_ () throw();
+    BarfCpp_::Uint8 ReadNextAtom_ () throw();
 
 <|if(is_defined(generate_debug_spew_code))
     // debug spew methods

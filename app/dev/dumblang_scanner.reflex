@@ -20,7 +20,7 @@
 %target.cpp.top_of_implementation_file %{
 #define SPEW(x) cerr << x << endl
 %}
-%target.cpp.end_of_scan_method_actions %{
+%target.cpp.bottom_of_scan_method_actions %{
     assert(false && "you didn't handle EOF properly");
 %}
 

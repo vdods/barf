@@ -222,11 +222,11 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     return Token::BAD_TOKEN;
 }
 %}
-%target.cpp.start_of_scan_method_actions %{
+%target.cpp.top_of_scan_method_actions %{
     assert(token != NULL);
     assert(*token == NULL);
 %}
-%target.cpp.end_of_scan_method_actions %{
+%target.cpp.bottom_of_scan_method_actions %{
     assert(false && "you didn't handle EOF properly");
     return Token::BAD_END_OF_FILE;
 %}

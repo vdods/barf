@@ -346,7 +346,8 @@ protected:
     void ResetForNewInput_ (DfaState_ const *initial_state)
     {
         InputApparatus::ResetForNewInput_();
-        InitialState_(initial_state);
+        if (initial_state != NULL)
+            InitialState_(initial_state);
         m_current_state = NULL;
         m_accept_state = NULL;
     }
@@ -523,12 +524,12 @@ class Base;
 
 namespace CommonLang {
 
-#line 527 "barf_commonlang_scanner.hpp"
+#line 528 "barf_commonlang_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
-#line 532 "barf_commonlang_scanner.hpp"
+#line 533 "barf_commonlang_scanner.hpp"
 
 {
 public:
@@ -598,7 +599,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 602 "barf_commonlang_scanner.hpp"
+#line 603 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -616,8 +617,8 @@ public:
     Scanner::Token::Type Scan (
 #line 81 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
-#line 620 "barf_commonlang_scanner.hpp"
-);
+#line 621 "barf_commonlang_scanner.hpp"
+) throw();
 
 public:
 
@@ -644,7 +645,7 @@ private:
     Uint32 m_code_block_bracket_level;
     Mode::Name m_return_state;
 
-#line 648 "barf_commonlang_scanner.hpp"
+#line 649 "barf_commonlang_scanner.hpp"
 
 
 private:
@@ -653,8 +654,8 @@ private:
     // begin internal reflex-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    bool IsInputAtEnd_ ();
-    BarfCpp_::Uint8 ReadNextAtom_ ();
+    bool IsInputAtEnd_ () throw();
+    BarfCpp_::Uint8 ReadNextAtom_ () throw();
 
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
@@ -685,4 +686,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 689 "barf_commonlang_scanner.hpp"
+#line 690 "barf_commonlang_scanner.hpp"

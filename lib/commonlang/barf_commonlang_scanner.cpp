@@ -216,7 +216,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 81 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
 #line 219 "barf_commonlang_scanner.cpp"
-)
+) throw()
 {
 
 #line 225 "barf_commonlang_scanner.reflex"
@@ -1235,7 +1235,7 @@ Scanner::Token::Type Scanner::Scan (
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-bool Scanner::IsInputAtEnd_ ()
+bool Scanner::IsInputAtEnd_ () throw()
 {
 
 #line 243 "barf_commonlang_scanner.reflex"
@@ -1245,7 +1245,7 @@ bool Scanner::IsInputAtEnd_ ()
 #line 1246 "barf_commonlang_scanner.cpp"
 }
 
-BarfCpp_::Uint8 Scanner::ReadNextAtom_ ()
+BarfCpp_::Uint8 Scanner::ReadNextAtom_ () throw()
 {
 
 #line 246 "barf_commonlang_scanner.reflex"

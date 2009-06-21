@@ -161,7 +161,7 @@ void ScannerNew::ResetForNewInput ()
 #line 162 "barf_preprocessor_scanner.cpp"
 }
 
-Parser::Token ScannerNew::Scan ()
+Parser::Token ScannerNew::Scan () throw()
 {
 
     std::string accepted_string;
@@ -648,7 +648,7 @@ Parser::Token ScannerNew::Scan ()
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-bool ScannerNew::IsInputAtEnd_ ()
+bool ScannerNew::IsInputAtEnd_ () throw()
 {
 
 #line 147 "barf_preprocessor_scanner.reflex"
@@ -658,7 +658,7 @@ bool ScannerNew::IsInputAtEnd_ ()
 #line 659 "barf_preprocessor_scanner.cpp"
 }
 
-BarfCpp_::Uint8 ScannerNew::ReadNextAtom_ ()
+BarfCpp_::Uint8 ScannerNew::ReadNextAtom_ () throw()
 {
 
 #line 150 "barf_preprocessor_scanner.reflex"

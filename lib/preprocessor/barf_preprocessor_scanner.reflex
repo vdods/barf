@@ -130,7 +130,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
     delete m_text;
     m_text = NULL;
 }
-%target.cpp.end_of_scan_method_actions %{
+%target.cpp.bottom_of_scan_method_actions %{
     assert(false && "you didn't handle EOF properly");
     return Parser::Token(Parser::Terminal::END_);
 %}
