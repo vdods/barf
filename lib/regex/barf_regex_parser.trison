@@ -57,6 +57,11 @@ namespace Regex {
 private:
 
     mutable RegularExpressionMap *m_macro_map;
+    // little kludgey thing to keep track of if the last char
+    // was a backslash which is going to escape something (this
+    // is needed because the scanner is doing part of the parser's
+    // job; parsing of hex chars, e.g. \xA7)
+    bool m_active_backslash;
 }
 %target.cpp.bottom_of_header_file %{
 } // end of namespace Regex
@@ -92,6 +97,7 @@ Uint8 HexDigitValue (Uint8 c)
 %target.cpp.superclass_and_member_constructors { InputBase() }
 %target.cpp.constructor_actions {
     m_macro_map = NULL;
+    m_active_backslash = false;
 }
 %target.cpp.destructor_actions {
     assert(m_macro_map == NULL);
@@ -153,16 +159,21 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 
         c = In().get();
         if (c == EOF)
+        {
+            m_active_backslash = false;
             return Token(Terminal::END_);
+        }
 
         if (c >= '0' && c <= '9')
         {
+            m_active_backslash = false;
             return Token(Terminal::DIGIT, new Char(c));
         }
         else if ((c >= 'A' && c <= 'Z')
                  ||
                  (c >= 'a' && c <= 'z'))
         {
+            m_active_backslash = false;
             return Token(Terminal::ALPHA, new Char(c));
         }
 
@@ -172,11 +183,31 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
         {
             // backslash needs to be handled in a special way, since
             // it can delimit a hex char (e.g. \xA7).
+            //
+            // the desired behavior is that in the string "\\xA7" the
+            // sequence of returned chars is '\' '\' 'x' 'A' '7' (i.e.
+            // "\\" takes precedence over "\xA7") whereas in the string
+            // "\xA7" the sequence a single character having hex value A7.
             case '\\':
             {
-                if (In().peek() != 'x')
+                // if there's an active backslash, we'll want to just
+                // return the backslash, because the active backslash
+                // (the previous character) will escape it.
+                if (m_active_backslash)
+                {
+                    m_active_backslash = false;
                     return Token::Id('\\');
-                    
+                }                
+                // if the next char isn't 'x' (i.e. we will not be
+                // parsing a hex char), then this backslash is active.
+                if (In().peek() != 'x')
+                {
+                    m_active_backslash = true;
+                    return Token::Id('\\');
+                }
+                assert(!m_active_backslash);
+
+                // eat the 'x'
                 c = In().get();
                 assert(c == 'x');
 
@@ -218,6 +249,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
             case '|':
             case '-':
             case ':':
+                m_active_backslash = false;
                 return Token::Id(c);
 
             // non-alphanumeric normal chars
@@ -237,14 +269,20 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
             case '_':
             case '`':
             case '~':
+                m_active_backslash = false;
                 return Token(Terminal::CHAR, new Char(c));
 
             // anything else is an invalid char
             default:
+                m_active_backslash = false;
                 THROW_STRING("invalid char (use hex char " << GetCharLiteral(c, false) << " instead)");
                 break;
         }
     }
+}
+%target.cpp.reset_for_new_input_actions {
+    m_macro_map = NULL;
+    m_active_backslash = false;
 }
 
 

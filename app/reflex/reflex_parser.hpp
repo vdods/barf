@@ -268,6 +268,21 @@ public:
     /// primary source.
     ~Parser ();
 
+    /** It is not sufficient to just check the EOF condition on the input
+      * source (e.g. the scanner, cin, etc), because the parser may have read,
+      * but not consumed, additional lookaheads up to EOF.  Thus checking
+      * the input source for EOF condition may give false positives.  This
+      * method should be the preferred means to check EOF condition.
+      *
+      * It should be noted that this may cause the parser to read (but never
+      * consume) up to one additional lookahead token, owing to the necessity
+      * of checking what the next lookahead token is.
+      *
+      * @brief Returns true if and only if the next unshifted lookahead
+      *        token is Terminal::END_.
+      */
+    bool IsAtEndOfInput ();
+
     /// Returns true if and only if "debug spew" is enabled (which prints, to
     /// std::cerr, exactly what the parser is doing at each step).  This method,
     /// along with all other debug spew code can be removed by removing the
@@ -295,11 +310,12 @@ public:
       * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
       * code to execute at the beginning and end, respectively, of the Parse() method.
       * This includes the ability to enclose the body of the Parse() method within a
-      * try {} block, for exception handling (if exceptions are thrown in reduction
-      * rule code, then the %target.cpp.enable_parse_method_exception_handling directive
-      * must be specified; this will cause the parser to catch and rethrow any exceptions
-      * thrown in reduction rule code, allowing it to clean up dynamically allocated
-      * memory, etc.
+      * try {} block, for exception handling (if exceptions are thrown in scan_actions
+      * or any reduction rule code, then the %target.cpp.enable_scan_actions_exceptions
+      * or %target.cpp.enable_reduction_rule_exceptions directives must be specified
+      * respectively; this will cause the parser to catch and rethrow any exceptions
+      * thrown by scan_actions or reduction rule code, allowing it to clean up
+      * dynamically allocated memory, etc.
       *
       * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
@@ -339,7 +355,7 @@ private:
     CommonLang::TargetMap *m_target_map;
     Regex::RegularExpressionMap *m_regex_macro_map;
 
-#line 343 "reflex_parser.hpp"
+#line 359 "reflex_parser.hpp"
 
 
 private:
@@ -403,7 +419,7 @@ private:
     void ClearLookaheadQueue_ () throw();
     Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
     bool ExerciseTransition_ (Transition_ const &transition);
-    Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_);
+    Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_) throw();
     // debug spew methods
     void PrintParserStatus_ (std::ostream &stream) const;
     void PrintIndented_ (std::ostream &stream, char const *string) const;
@@ -463,4 +479,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 467 "reflex_parser.hpp"
+#line 483 "reflex_parser.hpp"

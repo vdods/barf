@@ -305,8 +305,13 @@ public:
 private:
 
     mutable RegularExpressionMap *m_macro_map;
+    // little kludgey thing to keep track of if the last char
+    // was a backslash which is going to escape something (this
+    // is needed because the scanner is doing part of the parser's
+    // job; parsing of hex chars, e.g. \xA7)
+    bool m_active_backslash;
 
-#line 310 "barf_regex_parser.hpp"
+#line 315 "barf_regex_parser.hpp"
 
 
 private:
@@ -453,11 +458,11 @@ private:
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 
-#line 61 "barf_regex_parser.trison"
+#line 66 "barf_regex_parser.trison"
 
 } // end of namespace Regex
 } // end of namespace Barf
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 464 "barf_regex_parser.hpp"
+#line 469 "barf_regex_parser.hpp"
