@@ -11,6 +11,7 @@
             <item>default</item>
             <item>default_parse_nonterminal</item>
             <item>dumb_code_block</item>
+            <item>end</item>
             <item>error</item>
             <item>identifier</item>
             <item>left</item>
@@ -26,17 +27,17 @@
             <item>target</item>
             <item>targets</item>
             <item>terminal</item>
+            <item>type</item>
         </list>
 
         <contexts>
             <context name="preamble" attribute="Normal Text" lineEndContext="#stay">
                 <DetectSpaces />
-                <DetectChar char="&quot;" attribute="Symbol" context="string" />
+                <DetectChar char="&quot;" attribute="String" context="string" />
                 <DetectChar char="%" attribute="Symbol" context="directive" />
                 <DetectChar char="{" attribute="Symbol" context="strict_code_block" beginRegion="Strict Code Block" />
                 <Detect2Chars char="/" char1="/" attribute="Comment" context="line_comment" />
                 <Detect2Chars char="/" char1="*" attribute="Comment" context="block_comment" beginRegion="Comment"/>
-                <DetectIdentifier attribute="Identifier" context="#stay" />
                 <AnyChar String="." attribute="Symbol" context="#stay" />
                 <DetectChar char="(" attribute="Symbol" context="regex" />
                 <DetectChar char="'" attribute="Char" context="char" />
@@ -44,25 +45,32 @@
 
             <context name="body" attribute="Normal Text" lineEndContext="#stay">
                 <DetectSpaces />
+                <DetectChar char="&quot;" attribute="String" context="string" />
+                <DetectChar char="%" attribute="Symbol" context="directive_in_body" />
+                <DetectChar char="{" attribute="Symbol" context="strict_code_block" beginRegion="Strict Code Block" />
                 <Detect2Chars char="/" char1="/" attribute="Comment" context="line_comment" />
                 <Detect2Chars char="/" char1="*" attribute="Comment" context="block_comment" beginRegion="Comment"/>
                 <AnyChar String=":;|.," attribute="Symbol" context="#stay" />
                 <DetectChar char="(" attribute="Symbol" context="regex" />
-                <DetectChar char="&quot;" attribute="Symbol" context="string" />
-                <DetectChar char="%" attribute="Symbol" context="directive" />
-                <DetectChar char="{" attribute="Symbol" context="strict_code_block" beginRegion="Strict Code Block" />
                 <DetectChar char="'" attribute="Char" context="char" />
             </context>
 
-            <context name="directive" attribute="Keyword" lineEndContext="#pop">
+            <context name="directive" attribute="Keyword" lineEndContext="#pop" fallthrough="true" fallthroughContext="#pop">
+                <DetectSpaces />
                 <keyword String="keywords" attribute="Keyword" context="#pop" />
                 <DetectChar char="%" attribute="Symbol" context="body" />
                 <DetectChar char="{" attribute="Symbol" context="dumb_code_block" beginRegion="Dumb Code Block" />
             </context>
 
+            <context name="directive_in_body" attribute="Keyword" lineEndContext="#pop" fallthrough="true" fallthroughContext="#pop">
+                <DetectSpaces />
+                <keyword String="keywords" attribute="Keyword" context="#pop" />
+                <DetectChar char="{" attribute="Symbol" context="dumb_code_block" beginRegion="Dumb Code Block" />
+            </context>
+            
             <context name="string" attribute="String" lineEndContext="#pop">
                 <DetectSpaces />
-                <DetectChar char="&quot;" attribute="Symbol" context="#pop" />
+                <DetectChar char="&quot;" attribute="String" context="#pop" />
                 <DetectChar char="\" attribute="String" context="escaped_char_in_string" />
             </context>
 
@@ -174,12 +182,10 @@
 
         <itemDatas>
             <itemData name="Normal Text"                        defStyleNum="dsNormal"/>
-            <itemData name="Identifier"                         defStyleNum="dsFunction"/>
             <itemData name="Keyword"                            defStyleNum="dsKeyword"/>
             <itemData name="Char"                               defStyleNum="dsChar"/>
             <itemData name="String"                             defStyleNum="dsString"/>
             <itemData name="String Char"                        defStyleNum="dsChar"/>
-            <itemData name="Identifier As Parameter"            defStyleNum="dsString"/>
             <itemData name="Dumb Code Block"                    defStyleNum="dsString"/>
             <itemData name="Strict Code Block"                  defStyleNum="dsString"/>
             <itemData name="String Inside Strict Code Block"    defStyleNum="dsString"/>

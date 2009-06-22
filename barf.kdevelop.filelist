@@ -74,6 +74,7 @@ doc/doxygen_pages/reflex_guts.dox
 doc/doxygen_pages/regexes_in_barf.dox
 doc/doxygen_pages/targetspec_and_codespec.dox
 extra/barf.xml
+extra/barf_preprocessor.xml
 lib/commonlang/barf_commonlang.hpp
 lib/commonlang/barf_commonlang_ast.cpp
 lib/commonlang/barf_commonlang_ast.hpp
