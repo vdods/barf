@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<!-- This is a syntax highlighting file for the katepart component of KDE; the editor widget used by kwrite, kate, and kdevelop. -->
+<language name="BARF (codespec, bpp)" version="1.0" section="Sources" extensions="*.codespec;*.bpp" author="Victor Dods" license="GPL">
+
+    <highlighting>
+        <list name="keywords">
+            <item>declare_array</item>
+            <item>declare_map</item>
+            <item>define</item>
+            <item>dump_symbol_table</item>
+            <item>else</item>
+            <item>else_if</item>
+            <item>end_define</item>
+            <item>end_for_each</item>
+            <item>end_if</item>
+            <item>end_loop</item>
+            <item>error</item>
+            <item>fatal_error</item>
+            <item>for_each</item>
+            <item>if</item>
+            <item>include</item>
+            <item>int</item>
+            <item>is_defined</item>
+            <item>loop</item>
+            <item>sandbox_include</item>
+            <item>sizeof</item>
+            <item>string</item>
+            <item>string_length</item>
+            <item>to_character_literal</item>
+            <item>to_string_literal</item>
+            <item>undefine</item>
+            <item>warning</item>
+        </list>
+
+        <contexts>
+            <context name="body" attribute="Body" lineEndContext="#stay">
+                <DetectSpaces />
+                <Detect2Chars char="&lt;" char1="|" attribute="Symbol" context="line_code" />
+                <Detect2Chars char="&lt;" char1="{" attribute="Symbol" context="code" />
+            </context>
+
+            <context name="line_code" attribute="Normal Text" lineEndContext="#pop">
+                <DetectSpaces />
+                <keyword String="keywords" attribute="Keyword" context="#stay" />
+                <AnyChar String="()[],?.+-*/%!&amp;|=&lt;&gt;" attribute="Symbol" context="#stay" />
+                <DetectChar char="&quot;" attribute="String" context="string" />
+                <Int attribute="Integer" context="#stay" />
+            </context>
+
+            <context name="code" attribute="Normal Text" lineEndContext="#stay">
+                <DetectSpaces />
+                <keyword String="keywords" attribute="Keyword" context="#stay" />
+                <AnyChar String="()[],?.+-*/%!&amp;|=&lt;&gt;" attribute="Symbol" context="#stay" />
+                <DetectChar char="&quot;" attribute="String" context="string" />
+                <Int attribute="Integer" context="#stay" />
+                <DetectChar char="}" attribute="Symbol" context="#pop" />
+            </context>
+
+            <context name="string" attribute="String" lineEndContext="#stay">
+                <DetectSpaces />
+                <DetectChar char="&quot;" attribute="String" context="#pop" />
+                <DetectChar char="\" attribute="String Char" context="escaped_char_in_string" />
+            </context>
+
+            <context name="escaped_char_in_string" attribute="String Char" lineEndContext="#stay">
+                <RegExpr String=".|\n" attribute="String Char" context="#pop" />
+            </context>
+        </contexts>
+
+        <itemDatas>
+            <itemData name="Body"                               defStyleNum="dsComment"/>
+            <itemData name="Normal Text"                        defStyleNum="dsNormal"/>
+            <itemData name="Keyword"                            defStyleNum="dsKeyword"/>
+            <itemData name="String"                             defStyleNum="dsString"/>
+            <itemData name="String Char"                        defStyleNum="dsChar"/>
+            <itemData name="Symbol"                             defStyleNum="dsSymbol"/>
+            <itemData name="Integer"                            defStyleNum="dsDecVal"/>
+        </itemDatas>
+    </highlighting>
+
+    <general>
+        <keywords casesensitive="1" />
+    </general>
+
+</language>
+
