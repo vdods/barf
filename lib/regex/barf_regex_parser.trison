@@ -405,14 +405,19 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
             THROW_STRING("undefined macro \"" + macro_name->GetText() + "\"");
         return macro_regex;
     }
-|
-    '(' regex:regex ')'         %target.cpp { return regex; }
+|   '(' regex:regex ')'         %target.cpp { return regex; }
 |   '(' ')'                     %target.cpp { return new RegularExpression(); }
 |   '^'                         %target.cpp { return new Char('\0', CT_BEGINNING_OF_LINE); }
 |   '$'                         %target.cpp { return new Char('\0', CT_END_OF_LINE); }
 |   '.'                         %target.cpp { return new BracketCharSet('\n', true); }
 |   atom_normal_char:ch         %target.cpp { return ch; }
-|   '\\' atom_normal_char:ch    %target.cpp { ch->Escape(); return ch; }
+|   '\\' atom_normal_char:ch
+    %target.cpp {
+        if (ch->GetChar() == '0')
+            THROW_STRING("can't use \\0");
+        ch->Escape();
+        return ch;
+    }
 |   '\\' atom_control_char:ch   %target.cpp { return ch; }
 |   HEX_CHAR:ch                 %target.cpp { return ch; }
 |   bracket_expression:exp      %target.cpp { return exp; }
