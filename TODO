@@ -22,8 +22,7 @@
   "pushdown-automaton-based parsers"
 - error when any output file is the same as an input file, or when any two
   output files are the same.
-- add recursive block comments into barf_commonlang_scanner.reflex (think
-  about how this will interact with other-languaged code blocks)
+- change comments to %/ and %* *% in primary sources?
 - add _barf_version to preprocessor shit?
 - add targetspec versions -- so you can compile/link multiple coexisting
   versions of the same target but at different versions.  do this by sticking
@@ -44,13 +43,8 @@ $ do comprehensive deleting of stuff
   component parts.  this technique will be useful later in compiler design for
   debugging info.
 - add metaprogramming stuff for integer types and compile time asserts
-- make all AST classes dumb storage containers with external, non-member
-  functions which operate on them (unless it's more practical to use member
-  functions in a particular case).  this will make the separation of systems
-  clearer.
+  (and smallest int stuff in targets)
 - add filename-sanitizing function -- i.e. to check for newlines and other stuff
-- the help display for trison and reflex is getting pretty long, consider
-  making a help system more like svn
 - get rid of Get/Set prefixes on accessors/modifiers, using method overloading
   using simpler names instead.
 
@@ -65,8 +59,6 @@ $ do comprehensive deleting of stuff
 // commonlang
 // ///////////////////////////////////////////////////////////////////////////
 
-- rename to something better (AppCommon, ToolCommon?) and put the common
-  stuff from trison_main.cpp and reflex_main.cpp in there (maybe)
 - target directives (including rule handlers) should accept multiple targets ?
   like
   %target.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
@@ -75,13 +67,10 @@ $ do comprehensive deleting of stuff
 // core
 // ///////////////////////////////////////////////////////////////////////////
 
-- do not read overflowed hex chars -- e.g. "\x1E8BA" should be "\x1E" "8BA"
-- typedef Graph::Node::Index as a struct or an enum with a value
-  UINT32_UPPER_BOUND (to force it to be unsigned) and use that everywhere for
-  node index values.
-- move trison's conflict messages into barf_message.h/cpp
-- make a Graph::Node::Index type and Graph::Node::IndexArray vector type in
-  barf_graph.h (replacing the ad-hoc vector<Uint32> used all over the place)
+- make a Graph::Node::Index type (a struct or an enum with a value
+  UINT32_UPPER_BOUND (to force it to be unsigned)) and Graph::Node::IndexArray
+  vector type in barf_graph.h (replacing the ad-hoc vector<Uint32> used all
+  over the place)
 
 // ///////////////////////////////////////////////////////////////////////////
 // targetspec
@@ -90,7 +79,6 @@ $ do comprehensive deleting of stuff
 - allow using the value of previously declared directives as default values
   (this would be had for free if targetspec-declared, primary-source-defined
   codespec symbols are allowed to use codespec symbols -- see codespec section)
-* add error handling to the parser grammar (after new trison is done)
 
 // ///////////////////////////////////////////////////////////////////////////
 // codespec
@@ -98,7 +86,8 @@ $ do comprehensive deleting of stuff
 
 - add comment/description element to each codespec symbol, so that you can
   print out a list of all available codespec symbols and their descriptions
-  from the commandline for easier development
+  from the commandline for easier development (i.e. to the state machine ones
+  so that you don't have to look through xxx_codespecsymbols.cpp for these)
 - allow targetspec-declared, primary-source-defined codespec symbols to use
   codespec symbols? (i.e. { printf(<{_rule_regex}); } ) ?
 
@@ -113,14 +102,15 @@ $ do comprehensive deleting of stuff
 - add comments (C++ and C style)
 - make _blah ids not be able to be defined in-file, they're reserved
 - add assignment operator; e.g. <{x=x+3}
-- add eval directive so you can parse and execute a block of text as a preprocessor body.
+- add eval directive so you can parse and execute a block of text as a
+  preprocessor body.
 - add 64 bit ints (better) and add whatever the negative-most 64-bit int is
   to the scanner (because the way negative ints are constructed in the parser
   screws this up)
 - maybe make the Textifier detect if a newline was just printed, so that
   it doesn't print unnecessary newlines when generating line directives
 - add boolean property for wether or not a particular symbol was referenced
-  during preprocessing.
+  during preprocessing, so that warnings can be emitted if a symbol isn't used
 
 // ///////////////////////////////////////////////////////////////////////////
 // regex
@@ -135,7 +125,12 @@ $ do comprehensive deleting of stuff
 - make a parse-string method which returns a Regex::RegularExpression and
   possibly throws to indicate errors.
 - implement ungreedy pattern matching (e.g. ".*?b" when given "aaabab" will
-  match "aaab" instead of the greedy match of "aaabab").
+  match "aaab" instead of the greedy match of "aaabab").  this is complicated;
+  it's unclear (and possibly undefined) what to do when greedy and ungreedy
+  matching is done in the same regex.  maybe solve this problem by adding
+  a SetGreedyFlag() method to the scanner class, or by specifying %greedy
+  or %ungreedy on the scanner mode itself, so that the DFA can either accept
+  the longest (greedy) or shortest (ungreedy) string that matches.
 - positive/negative lookahead matching
   "dumbfaces" -> "dumb(?=face)" matches "dumb"
   "dumbfaces" -> "dumb(?=erface)" doesn't match
@@ -165,32 +160,42 @@ $ do comprehensive deleting of stuff
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
-* get rid of STL usage in C++ target (and do Continue() and Unaccept())
 $ add interactive/noninteractive option to target -- interactive will do
   char-by-char input, while noninteractive will do the faster chunk reading
   and buffering.  flex-like interactive scanner option -- if it's enabled,
   you must specify the "get next char" directive, otherwise you must specify
   the "read chars" directive (which reads a big chunk of input for faster reads)
-- move the --with-line-directives option to be specified by the target, and
-  overridable by the primary source
 $ add API similar to yymore() for continuing the accepted string -- call it
   Continue() or something.
-- add commandline option to describe the return codes (?)
 $ add "push accepted string back into buffer" API (call it Unaccept) to the
   generated scanner -- it should not be able to push any string, because the
   previous character is required.  this task would be easier implemented
   once the STL classes have been replaced.
 - add targetspec directives for disabling stuff besides debug_spew -- like
   disabling Unaccept and the accessor methods DebugSpew and ScannerMode
-* c++ target -- ability to set the debug spew ostream
-$ add targetspec directive for line directives referencing codespecs (the
-  default should be to refer to codespecs, for easier development)
-$ add option which prints the (reflex) targets available in the current search
-  path and which directory each resides in.
 - use smallest integer type to store state and transition indices, etc.
   (in C++, this can be done easily with templates)
 - add _reflex_version to the code generator (_barf_version?)
+- once existing C++ target is optimized, make a version of it where the
+  subclasses are virtual and there are interface methods, and see if it
+  doesn't affect performance unacceptably.
+
+// ///////////////////////////////////////////////////////////////////////////
+// reflex/trison common
+// ///////////////////////////////////////////////////////////////////////////
+
+* c++ target -- ability to set the debug spew ostream
+- move the --with-line-directives option to be specified by the target,
+  overridable by the primary source
+- add commandline option to describe the return codes (?)
+$ add targetspec directive for line directives referencing codespecs (the
+  default should be to not refer to codespecs), making development easier
+$ add option which prints the reflex/trison targets available in the current
+  search path and which directory each resides in.
+* get rid of STL usage in C++ codespecs (make a separate target)
 * the rule handler code block type should be specifiable by the targetspec
+* specifying any %target.xxx directive seems to add the target; stop this
+* allow "%targets xxxx" in pre/postdefine
 $ also add post-undefine option
 * warn about targetspec directive values that weren't referenced in the
   code generation (preprocessor) stage -- ones that don't appear at all in
@@ -199,10 +204,6 @@ $ also add post-undefine option
 * in the codespecsymbols, add some sort of "description" property so that
   when you dump the symbols, it's self documenting.  then verify the commandline
   option for dumping symbols works correctly
-- once existing C++ target is optimized, make a version of it where the
-  subclasses are virtual and there are interface methods, and see if it
-  doesn't affect performance unacceptably.
-* allow "%targets xxxx" in pre/postdefine
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -214,46 +215,26 @@ $ also add post-undefine option
   exactly one lookahead, and no lookahead is ever required for a reduce
   transition.
 * put some cap on the lookahead count while generating the DPDA, and emit
-  errors when it exceeds this.
+  errors when it exceeds this, and allow this cap to be specified by targetspec
+  directive (and maybe also commandline param)
 - figure out why minimal graphing isn't working (the right lookaheads
   aren't being generated).
 - if possible, make the dpda.states file put the states' rules in order.
 $ add a max token stack depth in each parser implementation
-- move the --with-line-directives option to be specified by the target, and
-  overridable by the primary source
-- add commandline option to describe the return codes (?)
 - clean up the parsing so that it's less about passing crap around and more
   about using member variables of the parser (assign rule indices on the fly,
   etc)
 - figure out how to guarantee branch uniqueness per Action_ branch list in npda.
-- add default values in trison cpp targetspec for Scan implementation (i.e.
-  just returning the ascii char values from stdin)
 - you shouldn't have to specify %terminal 'X' for ascii chars.  you should
   just be able to use them (or maybe add as option)
-* specifying any %target.xxx directive seems to add the target; stop this
-$ add option for line directives referencing codespecs (the default should be
-  to refer to codespecs, for easier development)
-* get rid of STL usage in C++ codespecs (separate target?)
-* the rule handler code block type should be specifiable by the targetspec
-* add option which prints the (trison) targets available in the current search
-  path and which directory each resides in.
 - check for reduction rule variable name collisions
-$ also add post-undefine option
-* warn about targetspec directive values that weren't referenced in the
-  code generation (preprocessor) stage -- ones that don't appear at all in
-  any codespec, not necessarily to indicate they weren't used in one particular
-  case.
 - decouple npda states from trison ASTs -- they should only exist in the
   graph itself.
 - add an unbounded grammar app/dev test case, and deal with unbounded grammars
   (since DPDAs can't be generated for them)
-* in the codespecsymbols, add some sort of "description" property so that
-  when you dump the symbols, it's self documenting.  then verify the commandline
-  option for dumping symbols works correctly
 - compactify lookaheads in dpda
 - make sure lookahead sequences are alphabetized, allowing for a binary search
   instead of a linear search (in the dpda target)
-* allow "%targets xxxx" in pre/postdefine
 
 template <Sint32 low, Sint32 high> struct SmallestSint {
     typedef

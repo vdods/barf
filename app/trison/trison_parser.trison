@@ -22,7 +22,6 @@
 #include "trison.hpp"
 
 #include "barf_commonlang_scanner.hpp"
-#include "trison_message.hpp"
 
 namespace Barf {
 namespace Ast {

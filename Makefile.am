@@ -663,7 +663,6 @@ trison_SOURCES = \
 	app/trison/trison_enums.cpp \
 	app/trison/trison_graph.cpp \
 	app/trison/trison_main.cpp \
-	app/trison/trison_message.cpp \
 	app/trison/trison_npda.cpp \
 	app/trison/trison_options.cpp \
 	app/trison/trison_parser.cpp \
@@ -728,7 +727,6 @@ noinst_HEADERS = \
 	app/trison/trison_dpda.hpp \
 	app/trison/trison_enums.hpp \
 	app/trison/trison_graph.hpp \
-	app/trison/trison_message.hpp \
 	app/trison/trison_npda.hpp \
 	app/trison/trison_options.hpp \
 	app/trison/trison_parser.hpp \
