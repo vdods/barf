@@ -117,7 +117,7 @@ struct Piece : public Ast::Base
     inline Atom const *GetAtom () const { return m_atom; }
     inline Bound const *GetBound () const { return m_bound; }
 
-    void SetBound (Bound *bound);
+    void ReplaceBound (Bound *bound);
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 

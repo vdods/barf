@@ -53,7 +53,7 @@ void Bound::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_le
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-void Piece::SetBound (Bound *bound)
+void Piece::ReplaceBound (Bound *bound)
 {
     assert(bound != NULL);
     delete m_bound;
@@ -85,7 +85,7 @@ void Branch::AddBound (Bound *bound)
     assert(size() > 0);
     assert(bound != NULL);
     Piece *last_piece = GetElement(size()-1);
-    last_piece->SetBound(bound);
+    last_piece->ReplaceBound(bound);
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -94,8 +94,6 @@ void Branch::AddBound (Bound *bound)
 
 void Char::Escape ()
 {
-    // TODO: emit warning if trying to escape a hex char?
-
     if (GetIsControlChar())
         return;
 
@@ -122,7 +120,7 @@ void Char::Escape ()
 void Char::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     if (GetIsControlChar())
-        stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_conditional_type << ' ' << endl;
+        stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetConditionalTypeString(m_conditional_type) << endl;
     else
         stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharLiteral(m_char) << endl;
 }

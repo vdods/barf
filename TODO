@@ -26,7 +26,8 @@
   about how this will interact with other-languaged code blocks)
 - add _barf_version to preprocessor shit?
 - add targetspec versions -- so you can compile/link multiple coexisting
-  versions of the same target but at different versions.
+  versions of the same target but at different versions.  do this by sticking
+  a version number in the namespace of the generated baseclasses
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
@@ -86,14 +87,9 @@ $ do comprehensive deleting of stuff
 // targetspec
 // ///////////////////////////////////////////////////////////////////////////
 
-- allow using the value of previously declared directive ids as default values
-- add new "add_optional_codespec" directive which requires the directive
-  id of an add_optional_directive, for optional output files (like
-  baseclasses which could be common to multiple parsers/scanners), then change
-  add_codespec into add_required_codespec
-  OR
-  think of a good way to specify not-very-often-changing baseclass-like
-  files which may be common to many parsers/scanners
+- allow using the value of previously declared directives as default values
+  (this would be had for free if targetspec-declared, primary-source-defined
+  codespec symbols are allowed to use codespec symbols -- see codespec section)
 * add error handling to the parser grammar (after new trison is done)
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -110,6 +106,7 @@ $ do comprehensive deleting of stuff
 // preprocessor
 // ///////////////////////////////////////////////////////////////////////////
 
+- add parser error handler for when argument to is_defined is not an identifier
 - just make the preprocessor language better in general -- it's sort of crappy
 - add a printf function
 - add some way to use a different file location for errors/warnings
@@ -131,25 +128,12 @@ $ do comprehensive deleting of stuff
 
 * document all of this regex stuff in detail, since it's pretty complicated,
   and not completely standard
-- do not read overflowed hex chars -- e.g. "\x1E8BA" should be "\x1E" "8BA"
-- consider getting rid of \a \b \f \r \v and only having \t and \n, so that
-  conditionals can use \a \b etc (because just who the hell uses vertical
-  tab anyway?  they can use hex codes instead)
-  OR
-  use \A and \B, etc as conditionals
-- emit error when a non-printable char is encountered in a regex
-  (must use a hex code instead)
 * in graph printing, TT_INPUT_ATOM_RANGEs which include [ or ] as the ending
   char need to escape them
 * generally fix up the escaping of characters in display strings and graphs
   to escape in the context of the regex.
-- attempt to get rid of the initial epsilon transitions currently required
-  in each regex
 - make a parse-string method which returns a Regex::RegularExpression and
   possibly throws to indicate errors.
-* use \c and \C to turn case sensitivity off/on -- this would not be a
-  state-machine-determined thing, but it would influence character classes
-  and such.
 - implement ungreedy pattern matching (e.g. ".*?b" when given "aaabab" will
   match "aaab" instead of the greedy match of "aaabab").
 - positive/negative lookahead matching
@@ -157,13 +141,11 @@ $ do comprehensive deleting of stuff
   "dumbfaces" -> "dumb(?=erface)" doesn't match
   "dumbfaces" -> "dumb(?!face)" doesn't match
   "dumbfaces" -> "dumb(?!erface)" matches "dumb"
-- fix up the \x stuff in the scanner (disallow \x alone, require a hex char)
-* allow '\0' as a transition atom -- this will allow usage of regexes for
-  binary data.  this will also require some thought, since the current
-  implementation uses '\0' as a sentinel value.
 - move NodeData into separate file
-- improve the DFA generation so that throwing an exception when there is
+- improve the DFA generation so that when throwing an exception when there is
   a conditional conflict, it includes the file location that caused it.
+- add a pass to NFA generation where it optimizes unnecessary epsilon
+  transitions out.
 
 // ///////////////////////////////////////////////////////////////////////////
 // bpp
@@ -176,7 +158,8 @@ $ do comprehensive deleting of stuff
 // ///////////////////////////////////////////////////////////////////////////
 
 - write it (or not. probably not.  but it might be nice to have a
-  grep-like tool which can match across newlines)
+  grep-like tool which can match across newlines, and also to directly
+  test the regex system)
 
 // ///////////////////////////////////////////////////////////////////////////
 // reflex
