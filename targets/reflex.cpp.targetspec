@@ -147,9 +147,8 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 // This specifies the return type of the generated Scan method.  The default
-// value is void so as to not require a return statement in the Scan method.
-// e.g. use "TrisonParserClass::Token::Type" -- when reflex is used with
-// trison.
+// value is void so as to not require a return value in the Scan method.
+// e.g. use "TrisonParserClass::Token" -- when reflex is used with trison.
 %add_optional_directive return_type                         %string             %default "void"
 // This value's code should return true only when the next read operation will
 // produce the end-of-file condition.  The default value is an example for

@@ -167,10 +167,7 @@ $ add interactive/noninteractive option to target -- interactive will do
   the "read chars" directive (which reads a big chunk of input for faster reads)
 $ add API similar to yymore() for continuing the accepted string -- call it
   Continue() or something.
-$ add "push accepted string back into buffer" API (call it Unaccept) to the
-  generated scanner -- it should not be able to push any string, because the
-  previous character is required.  this task would be easier implemented
-  once the STL classes have been replaced.
+- add Unreject method (to put the rejected atom back in the buffer and reread)
 - add targetspec directives for disabling stuff besides debug_spew -- like
   disabling Unaccept and the accessor methods DebugSpew and ScannerMode
 - use smallest integer type to store state and transition indices, etc.

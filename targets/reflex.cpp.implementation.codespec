@@ -24,14 +24,14 @@
 
 <{class_name}::<{class_name} (<{if(is_defined(constructor_definition_parameters))}<{constructor_definition_parameters}<{else}<{constructor_parameters?}<{end_if})
     :
-    ReflexCpp_::AutomatonApparatus(
+    ReflexCpp_::AutomatonApparatus_(
         ms_state_table_,
         ms_state_count_,
         ms_transition_table_,
         ms_transition_count_,
         ms_accept_handler_count_,
-        static_cast<ReflexCpp_::InputApparatus::IsInputAtEndMethod>(&<{class_name}::IsInputAtEnd_),
-        static_cast<ReflexCpp_::InputApparatus::ReadNextAtomMethod>(&<{class_name}::ReadNextAtom_))<{if(is_defined(superclass_and_member_constructors))},
+        static_cast<ReflexCpp_::InputApparatus_::IsInputAtEndMethod_>(&<{class_name}::IsInputAtEnd_),
+        static_cast<ReflexCpp_::InputApparatus_::ReadNextAtomMethod_>(&<{class_name}::ReadNextAtom_))<{if(is_defined(superclass_and_member_constructors))},
 <|superclass_and_member_constructors
 <{end_if}
 {
@@ -86,7 +86,7 @@ void <{class_name}::ResetForNewInput ()
     REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions" << std::endl)
                 
 <|end_if
-    ReflexCpp_::AutomatonApparatus::ResetForNewInput_(ms_state_table_ + Mode::START_);
+    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + Mode::START_);
 
 <|reset_for_new_input_actions?
 }
@@ -109,6 +109,12 @@ void <{class_name}::ResetForNewInput ()
     // exist (see comments below).
     while (true)
     {
+        // clear the previous accepted string.
+        accepted_string.clear();
+        // dump the chars that weren't Unaccept'ed in the previous loop,
+        // otherwise all the used chars will keep piling up.
+        DumpPreviouslyAcceptedChars_();
+    
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
         BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(accepted_string);
@@ -147,9 +153,9 @@ void <{class_name}::ResetForNewInput ()
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << <{debug_spew_prefix} << " accepting string ";
                 PrintString_(accepted_string);
-                std::cerr << ", corresponding to mode ";
+                std::cerr << " in mode ";
                 PrintScannerMode_(ScannerMode());
-                std::cerr << ", regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")." << std::endl)
+                std::cerr << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
 <|end_if
             // execute the appropriate accept handler.
             // the accepted string is in accepted_string.
@@ -174,12 +180,12 @@ void <{class_name}::ResetForNewInput ()
     // primary source, to allow necessary cleanup if any of the accept
     // handler code throws an exception.
     } catch (...) {
-        // reset for new input (on InputApparatus and AutomatonApparatus
+        // reset for new input (on InputApparatus_ and AutomatonApparatus_
         // only) because the state machine is in a bad state and the
         // behavior of scanning again from that point would be undefined.
         // pass NULL for initial_state so that the current scanner mode
         // is preserved.
-        ReflexCpp_::AutomatonApparatus::ResetForNewInput_(NULL);
+        ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(NULL);
         // rethrow the (unknown) exception.
         throw;
     }
@@ -188,6 +194,14 @@ void <{class_name}::ResetForNewInput ()
 <|bottom_of_scan_method_actions?
 }
 
+<|if(is_defined(generate_debug_spew_code))
+void <{class_name}::Unaccept (BarfCpp_::Uint32 unaccept_char_count)
+{
+    REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)
+    AutomatonApparatus_::Unaccept(unaccept_char_count);
+}
+
+<|end_if
 // ///////////////////////////////////////////////////////////////////////
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
@@ -261,7 +275,7 @@ void <{class_name}::PrintScannerMode_ (Mode::Name mode)
 <|end_if
 // the order of the states indicates priority (only for accept states).
 // the lower the state's index in this array, the higher its priority.
-ReflexCpp_::AutomatonApparatus::DfaState_ const <{class_name}::ms_state_table_[] =
+ReflexCpp_::AutomatonApparatus_::DfaState_ const <{class_name}::ms_state_table_[] =
 {
 <|loop(i, _dfa_state_count)
     { <{_dfa_state_accept_handler_index[i]}, <{_dfa_state_transition_count[i]}, ms_transition_table_+<{_dfa_state_transition_offset[i]} }<{if(i < _dfa_state_count-1)},<{end_if}
@@ -269,10 +283,10 @@ ReflexCpp_::AutomatonApparatus::DfaState_ const <{class_name}::ms_state_table_[]
 };
 BarfCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
 
-ReflexCpp_::AutomatonApparatus::DfaTransition_ const <{class_name}::ms_transition_table_[] =
+ReflexCpp_::AutomatonApparatus_::DfaTransition_ const <{class_name}::ms_transition_table_[] =
 {
 <|loop(i, _dfa_transition_count)
-    { ReflexCpp_::AutomatonApparatus::DfaTransition_::<{_dfa_transition_type_name[i]}, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
+    { ReflexCpp_::AutomatonApparatus_::DfaTransition_::<{_dfa_transition_type_name[i]}, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]}, ms_state_table_+<{_dfa_transition_target_node_index[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
 <|end_loop
 };
 BarfCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
