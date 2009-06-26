@@ -125,23 +125,12 @@ $ do comprehensive deleting of stuff
   to escape in the context of the regex.
 - make a parse-string method which returns a Regex::RegularExpression and
   possibly throws to indicate errors.
-- implement ungreedy pattern matching (e.g. ".*?b" when given "aaabab" will
-  match "aaab" instead of the greedy match of "aaabab").  this is complicated;
-  it's unclear (and possibly undefined) what to do when greedy and ungreedy
-  matching is done in the same regex.  likely this will only be possible by
-  having the greedy/ungreedy behavior fixed per regex state machine run;
-  in greedy mode, the longest string possible is matched, in ungreedy mode,
-  the shortest string possible is matched.
-- positive/negative lookahead matching (this is probably too much trouble)
-  "dumbfaces" -> "dumb(?=face)" matches "dumb"
-  "dumbfaces" -> "dumb(?=erface)" doesn't match
-  "dumbfaces" -> "dumb(?!face)" doesn't match
-  "dumbfaces" -> "dumb(?!erface)" matches "dumb"
 - move NodeData into separate file
 - improve the DFA generation so that when throwing an exception when there is
   a conditional conflict, it includes the file location that caused it.
 - add a pass to NFA generation where it optimizes unnecessary epsilon
   transitions out.
+- bracket expression transitions should use single-atom transitions when possible
 
 // ///////////////////////////////////////////////////////////////////////////
 // bpp
@@ -169,6 +158,8 @@ $ add interactive/noninteractive option to target -- interactive will do
 - once existing C++ target is optimized, make a version of it where the
   subclasses are virtual and there are interface methods, and see if it
   doesn't affect performance unacceptably.
+- case in/sensitivity (this will be done in the scanner itself using control
+  codes)
 - greedy/ungreedy behavior (per scanner mode, most likely)
 - forgetful mode (when you don't care about the accept string, you can just
   drop all the input on the floor and not bother to buffer it) also per-

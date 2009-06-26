@@ -23,40 +23,13 @@
 namespace Barf {
 namespace Regex {
 
-/*
-
-// ///////////////////////////////////////////////////////////////////////////
-// class hierarchy
-// ///////////////////////////////////////////////////////////////////////////
-
-Ast::Base (abstract)
-    Branch
-    Piece
-    Atom (abstract)
-        RegularExpression
-        ControlChar
-        NormalChar
-        BracketCharSet
-    Bound
-
-// ///////////////////////////////////////////////////////////////////////////
-// class composition
-// ///////////////////////////////////////////////////////////////////////////
-
-RegularExpression
-    Branch
-        Piece[]
-            Atom
-            Bound
-
-*/
-
 enum
 {
     AST_BOUND = Ast::AST_START_CUSTOM_TYPES_HERE_,
     AST_BRACKET_CHAR_SET,
     AST_BRANCH,
     AST_CHAR,
+    AST_CONDITIONAL_CHAR,
     AST_PIECE,
     AST_REGULAR_EXPRESSION,
     AST_REGULAR_EXPRESSION_MAP,
@@ -69,6 +42,10 @@ string const &GetAstTypeString (AstType ast_type);
 struct Atom : public Ast::Base
 {
     Atom (AstType ast_type) : Ast::Base(FiLoc::ms_invalid, ast_type) { }
+
+    // subclasses should return true iff the nfa transitions they generate
+    // would not all be epsilon transitions (e.g. normal characters or conditionals)
+    virtual bool RequiresNontrivialTransition () const = 0;
 }; // end of struct Atom
 
 struct Bound : public Ast::Base
@@ -149,32 +126,52 @@ private:
 
 struct Char : public Atom
 {
-    Char (Uint8 ch, ConditionalType conditional_type = CT_COUNT)
+    Char (Uint8 ch)
         :
         Atom(AST_CHAR),
-        m_char(ch),
-        m_conditional_type(conditional_type)
+        m_char(ch)
     {
-        // only one of m_char or m_conditional_type may be specified
-        assert((m_char != '\0' && m_conditional_type == CT_COUNT) ||
-               (m_char == '\0' && m_conditional_type < CT_COUNT));
+        assert(m_char != '\0' && "null char is not allowed");
     }
 
     inline Uint8 GetChar () const { return m_char; }
-    inline bool GetIsControlChar () const { return m_conditional_type != CT_COUNT; }
-    inline ConditionalType GetConditionalType () const { return m_conditional_type; }
 
-    void Escape ();
+    Atom *Escaped ();
+    void EscapeInsideBracketExpression ();
+
+    virtual bool RequiresNontrivialTransition () const { return true; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
     Uint8 m_char;
-    ConditionalType m_conditional_type;
 
     friend bool NodesAreEqual (Ast::Base const *, Ast::Base const *);
 }; // end of struct Char
+
+struct ConditionalChar : public Atom
+{
+    ConditionalChar (ConditionalType conditional_type)
+        :
+        Atom(AST_CONDITIONAL_CHAR),
+        m_conditional_type(conditional_type)
+    {
+        assert(m_conditional_type < CT_COUNT);
+    }
+
+    inline ConditionalType GetConditionalType () const { return m_conditional_type; }
+
+    virtual bool RequiresNontrivialTransition () const { return true; }
+
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+
+private:
+
+    ConditionalType m_conditional_type;
+
+    friend bool NodesAreEqual (Ast::Base const *, Ast::Base const *);
+}; // end of struct ConditionalChar
 
 struct BracketCharSet : public Atom
 {
@@ -202,6 +199,8 @@ struct BracketCharSet : public Atom
     void AddCharClass (string const &char_class);
     void Negate ();
 
+    virtual bool RequiresNontrivialTransition () const { return true; }
+    
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
@@ -221,6 +220,8 @@ struct RegularExpression : public Atom, public Ast::List<Branch>
     // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
+    virtual bool RequiresNontrivialTransition () const { return true; }
+    
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct RegularExpression
 

@@ -144,10 +144,12 @@ void GenerateNfa (RegularExpression const &regular_expression, Graph &graph, Uin
 
 void GenerateNfa (Char const &ch, Graph &graph, Uint32 start_index, Uint32 end_index)
 {
-    if (ch.GetIsControlChar())
-        graph.AddTransition(start_index, NfaConditionalTransition(ch.GetConditionalType(), end_index));
-    else
-        graph.AddTransition(start_index, InputAtomTransition(ch.GetChar(), end_index));
+    graph.AddTransition(start_index, InputAtomTransition(ch.GetChar(), end_index));
+}
+
+void GenerateNfa (ConditionalChar const &ch, Graph &graph, Uint32 start_index, Uint32 end_index)
+{
+    graph.AddTransition(start_index, NfaConditionalTransition(ch.GetConditionalType(), end_index));
 }
 
 void GenerateNfa (BracketCharSet const &bracket_char_set, Graph &graph, Uint32 start_index, Uint32 end_index)
@@ -177,6 +179,7 @@ void GenerateNfa (Atom const &atom, Graph &graph, Uint32 start_index, Uint32 end
     {
         case AST_REGULAR_EXPRESSION: return GenerateNfa(static_cast<RegularExpression const &>(atom), graph, start_index, end_index);
         case AST_CHAR:               return GenerateNfa(static_cast<Char const &>(atom),              graph, start_index, end_index);
+        case AST_CONDITIONAL_CHAR:   return GenerateNfa(static_cast<ConditionalChar const &>(atom),   graph, start_index, end_index);
         case AST_BRACKET_CHAR_SET:   return GenerateNfa(static_cast<BracketCharSet const &>(atom),    graph, start_index, end_index);
         default: assert(false && "invalid atom type");
     }

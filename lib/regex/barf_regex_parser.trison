@@ -407,16 +407,19 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     }
 |   '(' regex:regex ')'         %target.cpp { return regex; }
 |   '(' ')'                     %target.cpp { return new RegularExpression(); }
-|   '^'                         %target.cpp { return new Char('\0', CT_BEGINNING_OF_LINE); }
-|   '$'                         %target.cpp { return new Char('\0', CT_END_OF_LINE); }
+|   '^'                         %target.cpp { return new ConditionalChar(CT_BEGINNING_OF_LINE); }
+|   '$'                         %target.cpp { return new ConditionalChar(CT_END_OF_LINE); }
 |   '.'                         %target.cpp { return new BracketCharSet('\n', true); }
 |   atom_normal_char:ch         %target.cpp { return ch; }
 |   '\\' atom_normal_char:ch
     %target.cpp {
         if (ch->GetChar() == '0')
             THROW_STRING("can't use \\0");
-        ch->Escape();
-        return ch;
+        Atom *escaped = ch->Escaped();
+        // if escaping changed the char (i.e. it new'ed something), delete the old
+        if (ch != escaped)
+            delete ch;
+        return escaped;
     }
 |   '\\' atom_control_char:ch   %target.cpp { return ch; }
 |   HEX_CHAR:ch                 %target.cpp { return ch; }
@@ -536,7 +539,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 :   // normal chars don't require any escaping.
     bracket_expression_normal_char:normal_char        %target.cpp { return normal_char; }
 |   // some normal chars can be escaped (like '\n')
-    '\\' bracket_expression_normal_char:normal_char   %target.cpp { normal_char->Escape(); return normal_char; }
+    '\\' bracket_expression_normal_char:normal_char   %target.cpp { normal_char->EscapeInsideBracketExpression(); return normal_char; }
 |   // control chars require escaping.
     '\\' bracket_expression_control_char:control_char %target.cpp { return control_char; }
 |   // hex chars can't be escaped

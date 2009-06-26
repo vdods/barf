@@ -23,6 +23,7 @@ string const &GetAstTypeString (AstType ast_type)
         "AST_BRACKET_CHAR_SET",
         "AST_BRANCH",
         "AST_CHAR",
+        "AST_CONDITIONAL_CHAR",
         "AST_PIECE",
         "AST_REGULAR_EXPRESSION",
         "AST_REGULAR_EXPRESSION_MAP"
@@ -92,37 +93,55 @@ void Branch::AddBound (Bound *bound)
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-void Char::Escape ()
+Atom *Char::Escaped ()
 {
-    if (GetIsControlChar())
-        return;
+    Atom *escaped = this;
 
     switch (m_char)
     {
         // conditional escape chars
-        case 'y': m_conditional_type = CT_BEGINNING_OF_INPUT;     break;
-        case 'Y': m_conditional_type = CT_NOT_BEGINNING_OF_INPUT; break;
-        case 'z': m_conditional_type = CT_END_OF_INPUT;           break;
-        case 'Z': m_conditional_type = CT_NOT_END_OF_INPUT;       break;
-        case 'l': m_conditional_type = CT_BEGINNING_OF_LINE;      break;
-        case 'L': m_conditional_type = CT_NOT_BEGINNING_OF_LINE;  break;
-        case 'e': m_conditional_type = CT_END_OF_LINE;            break;
-        case 'E': m_conditional_type = CT_NOT_END_OF_LINE;        break;
-        case 'b': m_conditional_type = CT_WORD_BOUNDARY;          break;
-        case 'B': m_conditional_type = CT_NOT_WORD_BOUNDARY;      break;
+        case 'y': escaped = new ConditionalChar(CT_BEGINNING_OF_INPUT);     break;
+        case 'Y': escaped = new ConditionalChar(CT_NOT_BEGINNING_OF_INPUT); break;
+        case 'z': escaped = new ConditionalChar(CT_END_OF_INPUT);           break;
+        case 'Z': escaped = new ConditionalChar(CT_NOT_END_OF_INPUT);       break;
+        case 'l': escaped = new ConditionalChar(CT_BEGINNING_OF_LINE);      break;
+        case 'L': escaped = new ConditionalChar(CT_NOT_BEGINNING_OF_LINE);  break;
+        case 'e': escaped = new ConditionalChar(CT_END_OF_LINE);            break;
+        case 'E': escaped = new ConditionalChar(CT_NOT_END_OF_LINE);        break;
+        case 'b': escaped = new ConditionalChar(CT_WORD_BOUNDARY);          break;
+        case 'B': escaped = new ConditionalChar(CT_NOT_WORD_BOUNDARY);      break;
         // escaping '0' should not provide a literal '\0'.
         case '0': break;
-        // otherwise, do normal char escaping (e.g. '\a', '\n', etc).
-        default : m_char = GetEscapedChar(m_char);             break;
+        // otherwise, do normal char escaping (e.g. '\t', '\n', etc).
+        default : m_char = GetEscapedChar(m_char); break;
+    }
+
+    return escaped;
+}
+
+void Char::EscapeInsideBracketExpression ()
+{
+    switch (m_char)
+    {
+        // escaping '0' should not provide a literal '\0'.
+        case '0': break;
+        // otherwise, do normal char escaping (e.g. '\t', '\n', etc).
+        default : m_char = GetEscapedChar(m_char); break;
     }
 }
 
 void Char::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    if (GetIsControlChar())
-        stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetConditionalTypeString(m_conditional_type) << endl;
-    else
-        stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharLiteral(m_char) << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharLiteral(m_char) << endl;
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+//
+// ///////////////////////////////////////////////////////////////////////////
+
+void ConditionalChar::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetConditionalTypeString(m_conditional_type) << endl;
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -341,7 +360,14 @@ bool NodesAreEqual (Ast::Base const *left, Ast::Base const *right)
         {
             Char const *left_ch = Dsc<Char const *>(left);
             Char const *right_ch = Dsc<Char const *>(right);
-            return left_ch->m_char == right_ch->m_char && left_ch->m_conditional_type == right_ch->m_conditional_type;
+            return left_ch->m_char == right_ch->m_char;
+        }
+
+        case AST_CONDITIONAL_CHAR:
+        {
+            ConditionalChar const *left_ch = Dsc<ConditionalChar const *>(left);
+            ConditionalChar const *right_ch = Dsc<ConditionalChar const *>(right);
+            return left_ch->m_conditional_type == right_ch->m_conditional_type;
         }
             
         case AST_PIECE:
