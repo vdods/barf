@@ -103,24 +103,23 @@ void <{class_name}::ResetForNewInput ()
     try {
 
 <|end_if
-    std::string accepted_string;
+    std::string work_string;
     // this is the main scanner loop.  it only breaks when an accept handler
     // returns or after the unmatched character handler, if certain conditions
     // exist (see comments below).
     while (true)
     {
-        // clear the previous accepted string.
-        accepted_string.clear();
-        // dump the chars that weren't Unaccept'ed in the previous loop,
-        // otherwise all the used chars will keep piling up.
-        DumpPreviouslyAcceptedChars_();
+        // clear the previous accepted/rejected string.
+        work_string.clear();
+        // reset the char buffer and other stuff
+        PrepareToScan_();
     
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
-        BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(accepted_string);
-        // if no valid accept_handler_index_ was returned, then accepted_string
-        // was filled with the first unaccepted input atom (i.e. the rejected
-        // atom).  we'll call the HandleUnmatchedCharacter_ method on it.
+        BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(work_string);
+        // if no valid accept_handler_index_ was returned, then work_string
+        // was filled with everything up to the char after the keep_string
+        // cursor (i.e. the rejected atom).
         if (accept_handler_index_ >= ms_accept_handler_count_)
         {
             // if we were already at the end of input and no
@@ -128,18 +127,21 @@ void <{class_name}::ResetForNewInput ()
             if (was_at_end_of_input_)
                 break;
 
-            assert(accepted_string.length() == 1);
-            BarfCpp_::Uint8 rejected_atom = accepted_string[0];
+            std::string &rejected_string = work_string;
+            BarfCpp_::Uint8 rejected_atom = rejected_string.empty() ? '\0' : *rejected_string.rbegin();
+            
 <|if(is_defined(generate_debug_spew_code))
             REFLEX_CPP_DEBUG_CODE_(
-                std::cerr << <{debug_spew_prefix} << " rejecting atom '";
+                std::cerr << <{debug_spew_prefix} << " rejecting string ";
+                PrintString_(rejected_string);
+                std::cerr << " (rejected_atom is \'";
                 PrintAtom_(rejected_atom);
-                std::cerr << '\'' << std::endl)
+                std::cerr << "\')" << std::endl)
 <|end_if
 
-            // execute the rejected-atom-handling actions.  the rejected atom
-            // is in rejected_atom.  the loop is so a break statement inside
-            // rejection_actions doesn't break out of the main scanner loop.
+            // execute the rejection actions.  the do/while loop is so that a
+            // break statement inside the rejection actions doesn't break out
+            // of the main scanner loop.
             do
             {
 <{rejection_actions}
@@ -149,6 +151,8 @@ void <{class_name}::ResetForNewInput ()
         // otherwise, call the appropriate accept handler code.
         else
         {
+            std::string &accepted_string = work_string;
+        
 <|if(is_defined(generate_debug_spew_code))
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << <{debug_spew_prefix} << " accepting string ";
@@ -195,6 +199,12 @@ void <{class_name}::ResetForNewInput ()
 }
 
 <|if(is_defined(generate_debug_spew_code))
+void <{class_name}::KeepString ()
+{
+    REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " keeping string" << std::endl)
+    AutomatonApparatus_::KeepString();
+}
+
 void <{class_name}::Unaccept (BarfCpp_::Uint32 unaccept_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)

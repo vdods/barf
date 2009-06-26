@@ -24,9 +24,6 @@
   output files are the same.
 - change comments to %/ and %* *% in primary sources?
 - add _barf_version to preprocessor shit?
-- add targetspec versions -- so you can compile/link multiple coexisting
-  versions of the same target but at different versions.  do this by sticking
-  a version number in the namespace of the generated baseclasses
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
@@ -79,6 +76,10 @@ $ do comprehensive deleting of stuff
 - allow using the value of previously declared directives as default values
   (this would be had for free if targetspec-declared, primary-source-defined
   codespec symbols are allowed to use codespec symbols -- see codespec section)
+- add targetspec versions (target-specific) -- so you can compile/link
+  multiple coexisting versions of the same target but at different versions.
+  do this by sticking a version number in the namespace of the generated
+  baseclasses
 
 // ///////////////////////////////////////////////////////////////////////////
 // codespec
@@ -127,11 +128,11 @@ $ do comprehensive deleting of stuff
 - implement ungreedy pattern matching (e.g. ".*?b" when given "aaabab" will
   match "aaab" instead of the greedy match of "aaabab").  this is complicated;
   it's unclear (and possibly undefined) what to do when greedy and ungreedy
-  matching is done in the same regex.  maybe solve this problem by adding
-  a SetGreedyFlag() method to the scanner class, or by specifying %greedy
-  or %ungreedy on the scanner mode itself, so that the DFA can either accept
-  the longest (greedy) or shortest (ungreedy) string that matches.
-- positive/negative lookahead matching
+  matching is done in the same regex.  likely this will only be possible by
+  having the greedy/ungreedy behavior fixed per regex state machine run;
+  in greedy mode, the longest string possible is matched, in ungreedy mode,
+  the shortest string possible is matched.
+- positive/negative lookahead matching (this is probably too much trouble)
   "dumbfaces" -> "dumb(?=face)" matches "dumb"
   "dumbfaces" -> "dumb(?=erface)" doesn't match
   "dumbfaces" -> "dumb(?!face)" doesn't match
@@ -165,17 +166,23 @@ $ add interactive/noninteractive option to target -- interactive will do
   and buffering.  flex-like interactive scanner option -- if it's enabled,
   you must specify the "get next char" directive, otherwise you must specify
   the "read chars" directive (which reads a big chunk of input for faster reads)
-$ add API similar to yymore() for continuing the accepted string -- call it
-  Continue() or something.
 - add Unreject method (to put the rejected atom back in the buffer and reread)
 - add targetspec directives for disabling stuff besides debug_spew -- like
-  disabling Unaccept and the accessor methods DebugSpew and ScannerMode
+  disabling Unaccept/KeepString/Unreject (since the code for this stuff is
+  complicated)
 - use smallest integer type to store state and transition indices, etc.
   (in C++, this can be done easily with templates)
-- add _reflex_version to the code generator (_barf_version?)
 - once existing C++ target is optimized, make a version of it where the
   subclasses are virtual and there are interface methods, and see if it
   doesn't affect performance unacceptably.
+- greedy/ungreedy behavior (per scanner mode, most likely)
+- forgetful mode (when you don't care about the accept string, you can just
+  drop all the input on the floor and not bother to buffer it)
+- BUG: an unterminated regex causes a hang;
+  %scanner_mode BLAH
+  :
+    (
+  ;
 
 // ///////////////////////////////////////////////////////////////////////////
 // reflex/trison common
@@ -189,7 +196,7 @@ $ add targetspec directive for line directives referencing codespecs (the
   default should be to not refer to codespecs), making development easier
 $ add option which prints the reflex/trison targets available in the current
   search path and which directory each resides in.
-* get rid of STL usage in C++ codespecs (make a separate target)
+* non-stl cpp targets
 * the rule handler code block type should be specifiable by the targetspec
 * specifying any %target.xxx directive seems to add the target; stop this
 * allow "%targets xxxx" in pre/postdefine
