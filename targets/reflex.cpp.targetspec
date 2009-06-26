@@ -159,12 +159,12 @@
 // never be called once the end-of-file condition has been reached.  The
 // default value is an example for returning the next character from stdin.
 %add_optional_directive return_next_input_char              %strict_code_block  %default { return std::cin.get(); }
-// This value's code is executed when a character is not matched by any regex
-// rule in the scanner's current state.  The rejected character is in the
-// local variable rejected_atom.  This is never called at the end of input;
+// This value's code is executed when the input is not matched by any regex
+// rule in the scanner's current state.  The rejected string is in the
+// local variable rejected_string.  This is never called at the end of input;
 // the main scanner loop is broken from and bottom_of_scan_method_actions is
-// executed.  The default value simply prints the unmatched char to stdout.
-%add_optional_directive rejection_actions                   %strict_code_block  %default { std::cout << rejected_atom; }
+// executed.  The default value simply prints the rejected string to stdout.
+%add_optional_directive rejection_actions                   %strict_code_block  %default { std::cout << rejected_string; }
 // This specifies code to be executed when the scanner object is being reset
 // to start scanning from a new source.  This code is executed in addition to
 // various internal state-machine-related initialization that is required.

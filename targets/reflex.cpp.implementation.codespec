@@ -211,6 +211,12 @@ void <{class_name}::Unaccept (BarfCpp_::Uint32 unaccept_char_count)
     AutomatonApparatus_::Unaccept(unaccept_char_count);
 }
 
+void <{class_name}::Unreject (BarfCpp_::Uint32 unreject_char_count)
+{
+    REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
+    AutomatonApparatus_::Unreject(unreject_char_count);
+}
+
 <|end_if
 // ///////////////////////////////////////////////////////////////////////
 // begin internal reflex-generated parser guts -- don't use

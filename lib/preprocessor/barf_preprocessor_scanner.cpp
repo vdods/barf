@@ -674,6 +674,16 @@ void ScannerNew::Unaccept (BarfCpp_::Uint32 unaccept_char_count)
     AutomatonApparatus_::Unaccept(unaccept_char_count);
 }
 
+void ScannerNew::Unreject (BarfCpp_::Uint32 unreject_char_count)
+{
+    REFLEX_CPP_DEBUG_CODE_(std::cerr << 
+#line 166 "barf_preprocessor_scanner.reflex"
+"Preprocessor::ScannerNew" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+#line 683 "barf_preprocessor_scanner.cpp"
+ << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
+    AutomatonApparatus_::Unreject(unreject_char_count);
+}
+
 // ///////////////////////////////////////////////////////////////////////
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
@@ -685,7 +695,7 @@ bool ScannerNew::IsInputAtEnd_ () throw()
 
     return In().peek() == char_traits<char>::eof();
 
-#line 689 "barf_preprocessor_scanner.cpp"
+#line 699 "barf_preprocessor_scanner.cpp"
 }
 
 BarfCpp_::Uint8 ScannerNew::ReadNextAtom_ () throw()
@@ -695,7 +705,7 @@ BarfCpp_::Uint8 ScannerNew::ReadNextAtom_ () throw()
 
     return In().get();
 
-#line 699 "barf_preprocessor_scanner.cpp"
+#line 709 "barf_preprocessor_scanner.cpp"
 }
 
 void ScannerNew::PrintAtom_ (BarfCpp_::Uint8 atom)
@@ -1006,4 +1016,4 @@ BarfCpp_::Uint32 const ScannerNew::ms_accept_handler_count_ = sizeof(ScannerNew:
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 1010 "barf_preprocessor_scanner.cpp"
+#line 1020 "barf_preprocessor_scanner.cpp"

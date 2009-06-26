@@ -166,12 +166,8 @@ $ add interactive/noninteractive option to target -- interactive will do
   and buffering.  flex-like interactive scanner option -- if it's enabled,
   you must specify the "get next char" directive, otherwise you must specify
   the "read chars" directive (which reads a big chunk of input for faster reads)
-- add Unreject method (to put the rejected atom back in the buffer and reread)
 - add targetspec directives for disabling stuff besides debug_spew -- like
-  disabling Unaccept/KeepString/Unreject (since the code for this stuff is
-  complicated)
-- use smallest integer type to store state and transition indices, etc.
-  (in C++, this can be done easily with templates)
+  disabling Unaccept/KeepString/Unreject
 - once existing C++ target is optimized, make a version of it where the
   subclasses are virtual and there are interface methods, and see if it
   doesn't affect performance unacceptably.
@@ -188,6 +184,8 @@ $ add interactive/noninteractive option to target -- interactive will do
 // reflex/trison common
 // ///////////////////////////////////////////////////////////////////////////
 
+- use smallest integer type to store state and transition indices, etc.
+  (in C++, this can be done easily with templates)
 * c++ target -- ability to set the debug spew ostream
 - move the --with-line-directives option to be specified by the target,
   overridable by the primary source
@@ -230,7 +228,7 @@ $ add a max token stack depth in each parser implementation
   etc)
 - figure out how to guarantee branch uniqueness per Action_ branch list in npda.
 - you shouldn't have to specify %terminal 'X' for ascii chars.  you should
-  just be able to use them (or maybe add as option)
+  just be able to use them (or maybe add as a directive)
 - check for reduction rule variable name collisions
 - decouple npda states from trison ASTs -- they should only exist in the
   graph itself.

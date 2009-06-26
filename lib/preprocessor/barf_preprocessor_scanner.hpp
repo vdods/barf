@@ -109,7 +109,6 @@ protected:
 
     bool IsAtEndOfInput () { return IsConditionalMet(CF_END_OF_INPUT, CF_END_OF_INPUT); }
 
-    // after calling KeepString, Unaccept can't be called on more than 0 chars
     void KeepString ()
     {
         assert(m_accept_cursor > m_start_cursor && "may only KeepString within accept or reject handler code");
@@ -124,15 +123,12 @@ protected:
     void Unaccept (BarfCpp_::Uint32 unaccept_char_count)
     {
         assert(m_accept_cursor > m_start_cursor && "may only Unaccept within accept handler code");
-        assert(!m_keep_string_has_been_called && "may only Unaccept before KeepString");
-        assert(unaccept_char_count <= m_start_cursor && "can't Unaccept more characters than were accepted");
-        if (unaccept_char_count == 0)
-            return; // nothing to do
-        // update the cursors
-        m_start_cursor -= unaccept_char_count;
-        m_read_cursor = m_start_cursor + 1;
-        m_keep_string_cursor = m_start_cursor + 1;
-        m_accept_cursor -= unaccept_char_count;
+        UnacceptUnrejectCommon(unaccept_char_count);
+    }
+    void Unreject (BarfCpp_::Uint32 unreject_char_count)
+    {
+        assert(m_accept_cursor == m_start_cursor+1 && "may only Unreject within accept handler code");
+        UnacceptUnrejectCommon(unreject_char_count);
     }
     
     void PrepareToScan_ ()
@@ -198,75 +194,64 @@ protected:
     }
     void Accept_ (std::string &s)
     {
-        assert(s.empty());
         assert(m_accept_cursor > 0 && "can't Accept_ if the accept cursor is not set");
-        assert(m_accept_cursor <= m_buffer.size());
-        assert(m_start_cursor == 0);
-        assert(m_read_cursor > 0);
-        assert(m_read_cursor <= m_buffer.size());
         assert(m_accept_cursor <= m_read_cursor);
-        // come up with iterators which specify the range of accepted chars
-        Buffer::iterator accept_it = m_buffer.begin();
-        ++accept_it; // don't accept the previous atom
-        Buffer::iterator accept_it_end = accept_it;
-        for (Buffer::size_type i = 1; i < m_accept_cursor; ++i)
-        {
-            assert(accept_it_end != m_buffer.end());
-            ++accept_it_end;
-        }
-        // extract the accepted string
-        s.insert(s.begin(), accept_it, accept_it_end);
-        assert(s.size() == m_accept_cursor - 1);
-        // advance the start cursor by the number of accepted chars
-        m_start_cursor += m_accept_cursor - 1;
-        // reset the other cursors
-        m_read_cursor = m_start_cursor + 1;
-        m_keep_string_cursor = m_start_cursor + 1;
-        // leave the accept cursor (its value is needed in KeepString), to be
-        // reset in PrepareToScan_
+        AcceptRejectCommon(s);
     }
     void Reject_ (std::string &s)
     {
-        assert(s.empty());
         assert(m_accept_cursor == 0 && "can't Reject_ if the accept cursor was set");
-        assert(m_start_cursor == 0);
-        assert(m_read_cursor > 0);
-        assert(m_read_cursor < m_buffer.size());
-        assert(m_buffer.size() >= 2);
-        // the rejected string consists of the kept string (if any)
-        // and the next character in the buffer, assuming said char isn't '\0'.
-        assert(m_keep_string_cursor >= m_start_cursor+1);
-        // now come up with iterators which specify the range of accepted chars.
-        Buffer::iterator reject_it = m_buffer.begin();
-        ++reject_it; // start after the previous atom
-        Buffer::iterator reject_it_end = reject_it;
-        for (Buffer::size_type i = 1; i < m_keep_string_cursor+1; ++i)
-        {
-            assert(reject_it_end != m_buffer.end());
-            
-            // we don't want the EOF-indicating null char
-            if (*reject_it_end == '\0')
-                break;
-                
-            ++reject_it_end;
-        }
-        // extract the rejected string
-        s.insert(s.begin(), reject_it, reject_it_end);
-        // the kept string has length m_keep_string_cursor-1, and the
-        // rejected string has at most one character more (the rejected atom).
-        assert(s.size() == m_keep_string_cursor || s.size() == m_keep_string_cursor-1);
-        // set the start cursor to one before the end of the rejected string
-        // (the last char in the rejected string becomes the previous atom)
-        m_start_cursor = m_keep_string_cursor;
-        // reset the other cursors (here, the accept cursor is set to one past
-        // the start cursor, so that the rejected string is considered "accepted")
-        m_read_cursor = m_start_cursor + 1;
-        m_keep_string_cursor = m_start_cursor + 1;
-        m_accept_cursor = m_start_cursor + 1;
+        // must set the accept cursor to indicate the rejected string
+        // (the kept string plus the rejected atom)
+        m_accept_cursor = m_keep_string_cursor + 1;
+        AcceptRejectCommon(s);
     }
     
 private:
 
+    void UnacceptUnrejectCommon (BarfCpp_::Uint32 char_count)
+    {
+        assert(!m_keep_string_has_been_called && "may only Unaccept/Unreject before KeepString");
+        assert(char_count <= m_start_cursor && "can't Unaccept/Unreject more characters than were rejected");
+        if (char_count == 0)
+            return; // nothing to do
+        // update the cursors
+        m_start_cursor -= char_count;
+        m_read_cursor = m_start_cursor + 1;
+        m_keep_string_cursor = m_start_cursor + 1;
+        m_accept_cursor -= char_count;
+    }
+    void AcceptRejectCommon (std::string &s)
+    {
+        assert(s.empty());
+        assert(m_buffer.size() >= 2);
+        assert(m_start_cursor == 0);
+        // the accept cursor indicates the end of the string to accept/reject
+        assert(m_accept_cursor > 0 && m_accept_cursor <= m_buffer.size());
+        // there should not be an EOF-indicating '\0' at the end of the string
+        assert(m_accept_cursor == 1 || m_buffer[m_accept_cursor-1] != '\0');
+        // the accepted/rejected string is the range [1,m_accept_cursor).
+        // come up with iterators which specify the string's range.
+        Buffer::iterator it = m_buffer.begin();
+        ++it; // start after the previous atom (the first char in the buffer)
+        Buffer::iterator it_end = it;
+        for (Buffer::size_type i = 1; i < m_accept_cursor; ++i)
+        {
+            assert(it_end != m_buffer.end());
+            assert(*it_end != '\0');
+            ++it_end;
+        }
+        // extract the string
+        s.insert(s.begin(), it, it_end);
+        assert(s.size() == m_accept_cursor-1);
+        // set the start cursor to one before the end of the string
+        // (the last char in the string becomes the previous atom)
+        m_start_cursor = m_accept_cursor - 1;
+        // reset the other cursors
+        m_read_cursor = m_accept_cursor;
+        m_keep_string_cursor = m_accept_cursor;
+    }
+    
     enum ConditionalFlag
     {
         CF_BEGINNING_OF_INPUT = (1 << 0),
@@ -608,12 +593,12 @@ namespace Preprocessor {
 
 class Text;
 
-#line 612 "barf_preprocessor_scanner.hpp"
+#line 597 "barf_preprocessor_scanner.hpp"
 
 class ScannerNew : private ReflexCpp_::AutomatonApparatus_, 
 #line 36 "barf_preprocessor_scanner.reflex"
  protected InputBase 
-#line 617 "barf_preprocessor_scanner.hpp"
+#line 602 "barf_preprocessor_scanner.hpp"
 
 {
 public:
@@ -636,7 +621,7 @@ public:
 #line 37 "barf_preprocessor_scanner.reflex"
 
 
-#line 640 "barf_preprocessor_scanner.hpp"
+#line 625 "barf_preprocessor_scanner.hpp"
 
 public:
 
@@ -676,7 +661,7 @@ private:
     bool m_is_reading_newline_sensitive_code;
     Text *m_text;
 
-#line 680 "barf_preprocessor_scanner.hpp"
+#line 665 "barf_preprocessor_scanner.hpp"
 
 
 private:
@@ -684,6 +669,7 @@ private:
     // this method is for use in accept handler code only
     void KeepString ();
     void Unaccept (BarfCpp_::Uint32 unaccept_char_count);
+    void Unreject (BarfCpp_::Uint32 unreject_char_count);
 
     // ///////////////////////////////////////////////////////////////////////
     // begin internal reflex-generated parser guts -- don't use
@@ -727,4 +713,4 @@ private:
 
 #endif // !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 
-#line 731 "barf_preprocessor_scanner.hpp"
+#line 717 "barf_preprocessor_scanner.hpp"

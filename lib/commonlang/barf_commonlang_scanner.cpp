@@ -1261,6 +1261,16 @@ void Scanner::Unaccept (BarfCpp_::Uint32 unaccept_char_count)
     AutomatonApparatus_::Unaccept(unaccept_char_count);
 }
 
+void Scanner::Unreject (BarfCpp_::Uint32 unreject_char_count)
+{
+    REFLEX_CPP_DEBUG_CODE_(std::cerr << 
+#line 263 "barf_commonlang_scanner.reflex"
+"CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+#line 1270 "barf_commonlang_scanner.cpp"
+ << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
+    AutomatonApparatus_::Unreject(unreject_char_count);
+}
+
 // ///////////////////////////////////////////////////////////////////////
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
@@ -1272,7 +1282,7 @@ bool Scanner::IsInputAtEnd_ () throw()
 
     return In().peek() == char_traits<char>::eof();
 
-#line 1276 "barf_commonlang_scanner.cpp"
+#line 1286 "barf_commonlang_scanner.cpp"
 }
 
 BarfCpp_::Uint8 Scanner::ReadNextAtom_ () throw()
@@ -1282,7 +1292,7 @@ BarfCpp_::Uint8 Scanner::ReadNextAtom_ () throw()
 
     return In().get();
 
-#line 1286 "barf_commonlang_scanner.cpp"
+#line 1296 "barf_commonlang_scanner.cpp"
 }
 
 void Scanner::PrintAtom_ (BarfCpp_::Uint8 atom)
@@ -1877,4 +1887,4 @@ BarfCpp_::Uint32 const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_ac
 } // end of namespace CommonLang
 } // end of namespace Barf
 
-#line 1881 "barf_commonlang_scanner.cpp"
+#line 1891 "barf_commonlang_scanner.cpp"
