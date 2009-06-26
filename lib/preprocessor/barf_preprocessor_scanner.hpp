@@ -109,28 +109,6 @@ protected:
 
     bool IsAtEndOfInput () { return IsConditionalMet(CF_END_OF_INPUT, CF_END_OF_INPUT); }
 
-    void KeepString ()
-    {
-        assert(m_accept_cursor > m_start_cursor && "may only KeepString within accept or reject handler code");
-        // reset the start cursor, so that the entire accepted string is
-        // "put back in the already-read buffer", but we'll keep reading
-        // from the same read cursor.
-        m_start_cursor = 0;
-        // save the accepted string's end position at the time of KeepString
-        m_keep_string_cursor = m_accept_cursor;
-        // leave the accept cursor to be reset in the next loop
-    }
-    void Unaccept (BarfCpp_::Uint32 unaccept_char_count)
-    {
-        assert(m_accept_cursor > m_start_cursor && "may only Unaccept within accept handler code");
-        UnacceptUnrejectCommon(unaccept_char_count);
-    }
-    void Unreject (BarfCpp_::Uint32 unreject_char_count)
-    {
-        assert(m_accept_cursor == m_start_cursor+1 && "may only Unreject within accept handler code");
-        UnacceptUnrejectCommon(unreject_char_count);
-    }
-    
     void PrepareToScan_ ()
     {
         assert(m_start_cursor < m_read_cursor);
@@ -139,7 +117,7 @@ protected:
         // zero;  if Unaccept was called, it should have postcondition
         // m_read_cursor == m_start_cursor + 1
         m_read_cursor -= m_start_cursor;
-        m_keep_string_cursor -= m_start_cursor;
+        m_kept_string_cursor -= m_start_cursor;
         // dump the first m_start_cursor chars from the buffer
         while (m_start_cursor > 0)
         {
@@ -148,8 +126,9 @@ protected:
         }
         // reset the accept cursor
         m_accept_cursor = m_start_cursor;
-        assert(m_accept_cursor == 0);
         m_keep_string_has_been_called = false;
+        assert(m_kept_string_cursor > m_start_cursor);
+        assert(m_accept_cursor == 0);
     }
     void ResetForNewInput_ ()
     {
@@ -159,7 +138,7 @@ protected:
         assert(m_buffer.size() == 1);
         m_start_cursor = 0;
         m_read_cursor = 1;
-        m_keep_string_cursor = 1;
+        m_kept_string_cursor = 1;
         m_accept_cursor = 0;
         m_keep_string_has_been_called = false;
     }
@@ -202,25 +181,16 @@ protected:
     {
         assert(m_accept_cursor == 0 && "can't Reject_ if the accept cursor was set");
         // must set the accept cursor to indicate the rejected string
-        // (the kept string plus the rejected atom)
-        m_accept_cursor = m_keep_string_cursor + 1;
+        // (which is the kept string plus the rejected atom)
+        m_accept_cursor = m_kept_string_cursor;
+        assert(m_accept_cursor < m_buffer.size());
+        if (m_buffer[m_accept_cursor] != '\0')
+            ++m_accept_cursor;
         AcceptRejectCommon(s);
     }
     
 private:
 
-    void UnacceptUnrejectCommon (BarfCpp_::Uint32 char_count)
-    {
-        assert(!m_keep_string_has_been_called && "may only Unaccept/Unreject before KeepString");
-        assert(char_count <= m_start_cursor && "can't Unaccept/Unreject more characters than were rejected");
-        if (char_count == 0)
-            return; // nothing to do
-        // update the cursors
-        m_start_cursor -= char_count;
-        m_read_cursor = m_start_cursor + 1;
-        m_keep_string_cursor = m_start_cursor + 1;
-        m_accept_cursor -= char_count;
-    }
     void AcceptRejectCommon (std::string &s)
     {
         assert(s.empty());
@@ -249,7 +219,7 @@ private:
         m_start_cursor = m_accept_cursor - 1;
         // reset the other cursors
         m_read_cursor = m_accept_cursor;
-        m_keep_string_cursor = m_accept_cursor;
+        m_kept_string_cursor = m_accept_cursor;
     }
     
     enum ConditionalFlag
@@ -263,7 +233,6 @@ private:
 
     bool IsConditionalMet (BarfCpp_::Uint8 conditional_mask, BarfCpp_::Uint8 conditional_flags)
     {
-        assert(m_start_cursor == 0);
         UpdateConditionalFlags();
         // return true iff no bits indicated by conditional_mask differ between
         // conditional_flags and m_current_conditional_flags.
@@ -271,7 +240,6 @@ private:
     }
     void FillBuffer ()
     {
-        assert(m_start_cursor == 0);
         assert(m_read_cursor > 0);
         assert(m_read_cursor <= m_buffer.size());
         // if we already have at least one atom ahead of the read cursor in
@@ -320,12 +288,12 @@ private:
 
     BarfCpp_::Uint8 m_current_conditional_flags;
     Buffer m_buffer;
-    // indicates the "previous" atom (used mainly in Accept/Unaccept)
+    // indicates the "previous" atom
     Buffer::size_type m_start_cursor;
     // indicates how far the scanner has read
     Buffer::size_type m_read_cursor;
     // indicates the end of the kept string
-    Buffer::size_type m_keep_string_cursor;
+    Buffer::size_type m_kept_string_cursor;
     // if != m_start_cursor, indicates the most recent, longest accepted string
     Buffer::size_type m_accept_cursor;
     // indicates if KeepString has been called during the accept/reject handler
@@ -593,12 +561,12 @@ namespace Preprocessor {
 
 class Text;
 
-#line 597 "barf_preprocessor_scanner.hpp"
+#line 565 "barf_preprocessor_scanner.hpp"
 
 class ScannerNew : private ReflexCpp_::AutomatonApparatus_, 
 #line 36 "barf_preprocessor_scanner.reflex"
  protected InputBase 
-#line 602 "barf_preprocessor_scanner.hpp"
+#line 570 "barf_preprocessor_scanner.hpp"
 
 {
 public:
@@ -621,7 +589,7 @@ public:
 #line 37 "barf_preprocessor_scanner.reflex"
 
 
-#line 625 "barf_preprocessor_scanner.hpp"
+#line 593 "barf_preprocessor_scanner.hpp"
 
 public:
 
@@ -661,15 +629,10 @@ private:
     bool m_is_reading_newline_sensitive_code;
     Text *m_text;
 
-#line 665 "barf_preprocessor_scanner.hpp"
+#line 633 "barf_preprocessor_scanner.hpp"
 
 
 private:
-
-    // this method is for use in accept handler code only
-    void KeepString ();
-    void Unaccept (BarfCpp_::Uint32 unaccept_char_count);
-    void Unreject (BarfCpp_::Uint32 unreject_char_count);
 
     // ///////////////////////////////////////////////////////////////////////
     // begin internal reflex-generated parser guts -- don't use
@@ -713,4 +676,4 @@ private:
 
 #endif // !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 
-#line 717 "barf_preprocessor_scanner.hpp"
+#line 680 "barf_preprocessor_scanner.hpp"

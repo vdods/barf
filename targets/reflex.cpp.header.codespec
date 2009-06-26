@@ -40,6 +40,7 @@ protected:
 
     bool IsAtEndOfInput () { return IsConditionalMet(CF_END_OF_INPUT, CF_END_OF_INPUT); }
 
+<|if(is_defined(generate_scanner_augmentation_methods))
     void KeepString ()
     {
         assert(m_accept_cursor > m_start_cursor && "may only KeepString within accept or reject handler code");
@@ -48,7 +49,7 @@ protected:
         // from the same read cursor.
         m_start_cursor = 0;
         // save the accepted string's end position at the time of KeepString
-        m_keep_string_cursor = m_accept_cursor;
+        m_kept_string_cursor = m_accept_cursor;
         // leave the accept cursor to be reset in the next loop
     }
     void Unaccept (BarfCpp_::Uint32 unaccept_char_count)
@@ -61,7 +62,8 @@ protected:
         assert(m_accept_cursor == m_start_cursor+1 && "may only Unreject within accept handler code");
         UnacceptUnrejectCommon(unreject_char_count);
     }
-    
+
+<|end_if
     void PrepareToScan_ ()
     {
         assert(m_start_cursor < m_read_cursor);
@@ -70,7 +72,7 @@ protected:
         // zero;  if Unaccept was called, it should have postcondition
         // m_read_cursor == m_start_cursor + 1
         m_read_cursor -= m_start_cursor;
-        m_keep_string_cursor -= m_start_cursor;
+        m_kept_string_cursor -= m_start_cursor;
         // dump the first m_start_cursor chars from the buffer
         while (m_start_cursor > 0)
         {
@@ -79,8 +81,9 @@ protected:
         }
         // reset the accept cursor
         m_accept_cursor = m_start_cursor;
-        assert(m_accept_cursor == 0);
         m_keep_string_has_been_called = false;
+        assert(m_kept_string_cursor > m_start_cursor);
+        assert(m_accept_cursor == 0);
     }
     void ResetForNewInput_ ()
     {
@@ -90,7 +93,7 @@ protected:
         assert(m_buffer.size() == 1);
         m_start_cursor = 0;
         m_read_cursor = 1;
-        m_keep_string_cursor = 1;
+        m_kept_string_cursor = 1;
         m_accept_cursor = 0;
         m_keep_string_has_been_called = false;
     }
@@ -133,13 +136,17 @@ protected:
     {
         assert(m_accept_cursor == 0 && "can't Reject_ if the accept cursor was set");
         // must set the accept cursor to indicate the rejected string
-        // (the kept string plus the rejected atom)
-        m_accept_cursor = m_keep_string_cursor + 1;
+        // (which is the kept string plus the rejected atom)
+        m_accept_cursor = m_kept_string_cursor;
+        assert(m_accept_cursor < m_buffer.size());
+        if (m_buffer[m_accept_cursor] != '\0')
+            ++m_accept_cursor;
         AcceptRejectCommon(s);
     }
     
 private:
 
+<|if(is_defined(generate_scanner_augmentation_methods))
     void UnacceptUnrejectCommon (BarfCpp_::Uint32 char_count)
     {
         assert(!m_keep_string_has_been_called && "may only Unaccept/Unreject before KeepString");
@@ -149,9 +156,10 @@ private:
         // update the cursors
         m_start_cursor -= char_count;
         m_read_cursor = m_start_cursor + 1;
-        m_keep_string_cursor = m_start_cursor + 1;
+        m_kept_string_cursor = m_start_cursor + 1;
         m_accept_cursor -= char_count;
     }
+<|end_if
     void AcceptRejectCommon (std::string &s)
     {
         assert(s.empty());
@@ -180,7 +188,7 @@ private:
         m_start_cursor = m_accept_cursor - 1;
         // reset the other cursors
         m_read_cursor = m_accept_cursor;
-        m_keep_string_cursor = m_accept_cursor;
+        m_kept_string_cursor = m_accept_cursor;
     }
     
     enum ConditionalFlag
@@ -194,7 +202,6 @@ private:
 
     bool IsConditionalMet (BarfCpp_::Uint8 conditional_mask, BarfCpp_::Uint8 conditional_flags)
     {
-        assert(m_start_cursor == 0);
         UpdateConditionalFlags();
         // return true iff no bits indicated by conditional_mask differ between
         // conditional_flags and m_current_conditional_flags.
@@ -202,7 +209,6 @@ private:
     }
     void FillBuffer ()
     {
-        assert(m_start_cursor == 0);
         assert(m_read_cursor > 0);
         assert(m_read_cursor <= m_buffer.size());
         // if we already have at least one atom ahead of the read cursor in
@@ -251,12 +257,12 @@ private:
 
     BarfCpp_::Uint8 m_current_conditional_flags;
     Buffer m_buffer;
-    // indicates the "previous" atom (used mainly in Accept/Unaccept)
+    // indicates the "previous" atom
     Buffer::size_type m_start_cursor;
     // indicates how far the scanner has read
     Buffer::size_type m_read_cursor;
     // indicates the end of the kept string
-    Buffer::size_type m_keep_string_cursor;
+    Buffer::size_type m_kept_string_cursor;
     // if != m_start_cursor, indicates the most recent, longest accepted string
     Buffer::size_type m_accept_cursor;
     // indicates if KeepString has been called during the accept/reject handler
@@ -560,7 +566,7 @@ public:
 <|end_if
 private:
 
-    // this method is for use in accept handler code only
+<|if(is_defined(generate_scanner_augmentation_methods))
 <|if(is_defined(generate_debug_spew_code))
     void KeepString ();
     void Unaccept (BarfCpp_::Uint32 unaccept_char_count);
@@ -569,8 +575,9 @@ private:
     using InputApparatus_::KeepString;
     using InputApparatus_::Unaccept;
     using InputApparatus_::Unreject;
-<|end_if
 
+<|end_if
+<|end_if
     // ///////////////////////////////////////////////////////////////////////
     // begin internal reflex-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////

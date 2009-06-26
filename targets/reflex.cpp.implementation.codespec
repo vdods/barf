@@ -37,8 +37,8 @@
 {
 <|if(is_defined(generate_debug_spew_code))
     DebugSpew(false);
-<|end_if
 
+<|end_if
 <|constructor_actions?
 
     ResetForNewInput();
@@ -137,8 +137,8 @@ void <{class_name}::ResetForNewInput ()
                 std::cerr << " (rejected_atom is \'";
                 PrintAtom_(rejected_atom);
                 std::cerr << "\')" << std::endl)
-<|end_if
 
+<|end_if
             // execute the rejection actions.  the do/while loop is so that a
             // break statement inside the rejection actions doesn't break out
             // of the main scanner loop.
@@ -160,6 +160,7 @@ void <{class_name}::ResetForNewInput ()
                 std::cerr << " in mode ";
                 PrintScannerMode_(ScannerMode());
                 std::cerr << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
+                
 <|end_if
             // execute the appropriate accept handler.
             // the accepted string is in accepted_string.
@@ -198,6 +199,7 @@ void <{class_name}::ResetForNewInput ()
 <|bottom_of_scan_method_actions?
 }
 
+<|if(is_defined(generate_scanner_augmentation_methods))
 <|if(is_defined(generate_debug_spew_code))
 void <{class_name}::KeepString ()
 {
@@ -217,6 +219,7 @@ void <{class_name}::Unreject (BarfCpp_::Uint32 unreject_char_count)
     AutomatonApparatus_::Unreject(unreject_char_count);
 }
 
+<|end_if
 <|end_if
 // ///////////////////////////////////////////////////////////////////////
 // begin internal reflex-generated parser guts -- don't use

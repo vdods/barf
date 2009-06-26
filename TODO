@@ -166,14 +166,16 @@ $ add interactive/noninteractive option to target -- interactive will do
   and buffering.  flex-like interactive scanner option -- if it's enabled,
   you must specify the "get next char" directive, otherwise you must specify
   the "read chars" directive (which reads a big chunk of input for faster reads)
-- add targetspec directives for disabling stuff besides debug_spew -- like
-  disabling Unaccept/KeepString/Unreject
 - once existing C++ target is optimized, make a version of it where the
   subclasses are virtual and there are interface methods, and see if it
   doesn't affect performance unacceptably.
 - greedy/ungreedy behavior (per scanner mode, most likely)
 - forgetful mode (when you don't care about the accept string, you can just
-  drop all the input on the floor and not bother to buffer it)
+  drop all the input on the floor and not bother to buffer it) also per-
+  scanner mode
+- add codespec symbol for what scanner mode each accept_handler is in,
+  and then add comments to each case statement indicating what scanner mode
+  and regex it's for
 - BUG: an unterminated regex causes a hang;
   %scanner_mode BLAH
   :
