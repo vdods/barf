@@ -107,19 +107,35 @@ struct RuleList : public Ast::AstList<Rule>
 
 struct StateMachine : public Ast::Base
 {
+    typedef Uint8 ModeFlags;
+
+    enum
+    {
+        MF_CASE_INSENSITIVE = 0x01,
+        MF_UNGREEDY         = 0x02,
+        MF_FORGETFUL        = 0x04,
+
+        MF_NONE             = 0x00,
+        MF_ALL              = 0x07
+    };
+
     Ast::Id const *const m_state_machine_id;
     RuleList const *const m_rule_list;
+    ModeFlags const m_mode_flags;
 
     StateMachine (
         Ast::Id const *state_machine_id,
-        RuleList *rule_list)
+        RuleList *rule_list,
+        ModeFlags mode_flags)
         :
         Ast::Base(state_machine_id->GetFiLoc(), AST_STATE_MACHINE),
         m_state_machine_id(state_machine_id),
-        m_rule_list(rule_list)
+        m_rule_list(rule_list),
+        m_mode_flags(mode_flags)
     {
         assert(m_state_machine_id != NULL);
         assert(m_rule_list != NULL);
+        assert((m_mode_flags & ~MF_ALL) == 0);
     }
     virtual ~StateMachine ()
     {

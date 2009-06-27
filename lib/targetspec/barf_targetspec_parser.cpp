@@ -382,7 +382,7 @@ Parser::Token Parser::Scan_ () throw()
         case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:
         case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE:
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE:
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE_MACHINE:
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:
         case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:

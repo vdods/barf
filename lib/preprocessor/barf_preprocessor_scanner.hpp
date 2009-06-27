@@ -433,7 +433,7 @@ protected:
 
 private:
 
-    // these InputApparatus_ methods should not be accessable to ScannerNew
+    // these InputApparatus_ methods should not be accessable to Scanner
     using InputApparatus_::GetCurrentConditionalFlags_;
     using InputApparatus_::GetInputAtom_;
     using InputApparatus_::AdvanceReadCursor_;
@@ -563,7 +563,7 @@ class Text;
 
 #line 565 "barf_preprocessor_scanner.hpp"
 
-class ScannerNew : private ReflexCpp_::AutomatonApparatus_, 
+class Scanner : private ReflexCpp_::AutomatonApparatus_, 
 #line 36 "barf_preprocessor_scanner.reflex"
  protected InputBase 
 #line 570 "barf_preprocessor_scanner.hpp"
@@ -582,8 +582,8 @@ public:
             TRANSITION_TO_CODE = 46,
             // default starting state machine
             START_ = READING_BODY
-        }; // end of enum ScannerNew::StateMachine::Name
-    }; // end of struct ScannerNew::StateMachine
+        }; // end of enum Scanner::StateMachine::Name
+    }; // end of struct Scanner::StateMachine
 
 
 #line 37 "barf_preprocessor_scanner.reflex"
@@ -593,8 +593,8 @@ public:
 
 public:
 
-    ScannerNew ();
-    ~ScannerNew ();
+    Scanner ();
+    ~Scanner ();
 
     bool DebugSpew () const { return m_debug_spew_; }
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
@@ -666,7 +666,7 @@ private:
     // ///////////////////////////////////////////////////////////////////////
     // end of internal reflex-generated parser guts
     // ///////////////////////////////////////////////////////////////////////
-}; // end of class ScannerNew
+}; // end of class Scanner
 
 
 #line 57 "barf_preprocessor_scanner.reflex"

@@ -154,11 +154,9 @@ $ add interactive/noninteractive option to target -- interactive will do
   char-by-char input, while noninteractive will do the faster chunk reading
   and buffering.  flex-like interactive scanner option -- if it's enabled,
   you must specify the "get next char" directive, otherwise you must specify
-  the "read chars" directive (which reads a big chunk of input for faster reads)
-- once existing C++ target is optimized, make a version of it where the
-  subclasses are virtual and there are interface methods, and see if it
-  doesn't affect performance unacceptably.
-- scanner control states: case in/sensitivity, un/greedy un/forgetful.
+  the "read chars" directive (which reads a big chunk of input for faster
+  reads).  the default should be non-interactive, so the default is fast
+- scanner control states: case in/sensitivity, un/greedy, un/forgetful.
   these will work per-state machine (or be a "global state/commandline option"
   when running a general regex in a grep-like situation)
 - add codespec symbol for what state machine each accept_handler is in,

@@ -94,6 +94,30 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
         symbol->SetScalarBody(
             new Preprocessor::Body(primary_source.m_start_with_state_machine_directive->m_state_machine_id->GetText()));
     }
+
+    // _state_machine_mode_flags[state machine name] -- maps state machine name => state machine mode flags
+    // where the flags are:
+    //      0x01 - case insensitive
+    //      0x02 - ungreedy
+    //      0x04 - forgetful
+    // the default behavior of the scanner is case sensitive, greedy, and not forgetful.
+    // see StateMachine::ModeFlags.
+    {
+        Preprocessor::MapSymbol *state_machine_mode_flags =
+            symbol_table.DefineMapSymbol("_state_machine_mode_flags", FiLoc::ms_invalid);
+        for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
+                                             it_end = primary_source.m_state_machine_map->end();
+            it != it_end;
+            ++it)
+        {
+            string const &state_machine_name = it->first;
+            StateMachine const *state_machine = it->second;
+            assert(state_machine != NULL);
+            state_machine_mode_flags->SetMapElement(
+                state_machine_name,
+                new Preprocessor::Body(Sint32(state_machine->m_mode_flags)));
+        }
+    }
 }
 
 void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_graph, vector<Uint32> const &nfa_start_state_index, Preprocessor::SymbolTable &symbol_table)

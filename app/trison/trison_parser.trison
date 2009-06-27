@@ -183,13 +183,16 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:
+        case CommonLang::Scanner::Token::DIRECTIVE_CASE_INSENSITIVE:
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:
         case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:
+        case CommonLang::Scanner::Token::DIRECTIVE_FORGETFUL:
         case CommonLang::Scanner::Token::DIRECTIVE_ID:
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
         case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE:
         case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
         case CommonLang::Scanner::Token::DIRECTIVE_STRING:
+        case CommonLang::Scanner::Token::DIRECTIVE_UNGREEDY:
         case CommonLang::Scanner::Token::REGEX:
             assert(lookahead_token_data != NULL);
             EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());

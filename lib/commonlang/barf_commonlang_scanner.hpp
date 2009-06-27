@@ -607,23 +607,26 @@ public:
             DIRECTIVE_ADD_CODESPEC,
             DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
             DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
+            DIRECTIVE_CASE_INSENSITIVE,
             DIRECTIVE_DEFAULT,
             DIRECTIVE_DEFAULT_PARSE_NONTERMINAL,
             DIRECTIVE_DUMB_CODE_BLOCK,
             DIRECTIVE_END,
             DIRECTIVE_ERROR,
+            DIRECTIVE_FORGETFUL,
             DIRECTIVE_ID,
             DIRECTIVE_MACRO,
             DIRECTIVE_NONTERMINAL,
             DIRECTIVE_PREC,
             DIRECTIVE_START_IN_STATE_MACHINE,
-            DIRECTIVE_STATE,
+            DIRECTIVE_STATE_MACHINE,
             DIRECTIVE_STRICT_CODE_BLOCK,
             DIRECTIVE_STRING,
             DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
             DIRECTIVE_TERMINAL,
             DIRECTIVE_TYPE,
+            DIRECTIVE_UNGREEDY,
             DUMB_CODE_BLOCK,
             END_OF_FILE,
             END_PREAMBLE,
@@ -637,7 +640,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 641 "barf_commonlang_scanner.hpp"
+#line 644 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -654,15 +657,15 @@ public:
     void ResetForNewInput ();
 
     Scanner::Token::Type Scan (
-#line 81 "barf_commonlang_scanner.reflex"
+#line 84 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
-#line 660 "barf_commonlang_scanner.hpp"
+#line 663 "barf_commonlang_scanner.hpp"
 ) throw();
 
 public:
 
 
-#line 82 "barf_commonlang_scanner.reflex"
+#line 85 "barf_commonlang_scanner.reflex"
 
     using InputBase::GetIsOpen;
     using InputBase::GetFiLoc;
@@ -684,7 +687,7 @@ private:
     Uint32 m_code_block_bracket_level;
     StateMachine::Name m_return_state;
 
-#line 688 "barf_commonlang_scanner.hpp"
+#line 691 "barf_commonlang_scanner.hpp"
 
 
 private:
@@ -724,7 +727,7 @@ private:
 }; // end of class Scanner
 
 
-#line 103 "barf_commonlang_scanner.reflex"
+#line 106 "barf_commonlang_scanner.reflex"
 
 ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
@@ -733,4 +736,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 737 "barf_commonlang_scanner.hpp"
+#line 740 "barf_commonlang_scanner.hpp"

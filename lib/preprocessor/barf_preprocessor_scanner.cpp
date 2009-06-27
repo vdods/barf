@@ -17,7 +17,7 @@
 namespace Barf {
 namespace Preprocessor {
 
-bool ScannerNew::OpenFile (string const &input_filename)
+bool Scanner::OpenFile (string const &input_filename)
 {
     bool open_succeeded = InputBase::OpenFile(input_filename);
     if (open_succeeded)
@@ -25,19 +25,19 @@ bool ScannerNew::OpenFile (string const &input_filename)
     return open_succeeded;
 }
 
-void ScannerNew::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
+void Scanner::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenString(input_string, input_name, use_line_numbers);
     ResetForNewInput();
 }
 
-void ScannerNew::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
+void Scanner::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
     ResetForNewInput();
 }
 
-Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
+Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 {
     if (accepted_string == "declare_array")         return Parser::Token(Parser::Terminal::DECLARE_ARRAY);
     if (accepted_string == "declare_map")           return Parser::Token(Parser::Terminal::DECLARE_MAP);
@@ -71,7 +71,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
 
 #line 73 "barf_preprocessor_scanner.cpp"
 
-ScannerNew::ScannerNew ()
+Scanner::Scanner ()
     :
     ReflexCpp_::AutomatonApparatus_(
         ms_state_table_,
@@ -79,8 +79,8 @@ ScannerNew::ScannerNew ()
         ms_transition_table_,
         ms_transition_count_,
         ms_accept_handler_count_,
-        static_cast<ReflexCpp_::InputApparatus_::IsInputAtEndMethod_>(&ScannerNew::IsInputAtEnd_),
-        static_cast<ReflexCpp_::InputApparatus_::ReadNextAtomMethod_>(&ScannerNew::ReadNextAtom_))
+        static_cast<ReflexCpp_::InputApparatus_::IsInputAtEndMethod_>(&Scanner::IsInputAtEnd_),
+        static_cast<ReflexCpp_::InputApparatus_::ReadNextAtomMethod_>(&Scanner::ReadNextAtom_))
 {
     DebugSpew(false);
 
@@ -94,7 +94,7 @@ ScannerNew::ScannerNew ()
     ResetForNewInput();
 }
 
-ScannerNew::~ScannerNew ()
+Scanner::~Scanner ()
 {
 
 #line 129 "barf_preprocessor_scanner.reflex"
@@ -105,7 +105,7 @@ ScannerNew::~ScannerNew ()
 #line 106 "barf_preprocessor_scanner.cpp"
 }
 
-ScannerNew::StateMachine::Name ScannerNew::CurrentStateMachine () const
+Scanner::StateMachine::Name Scanner::CurrentStateMachine () const
 {
     assert(InitialState_() != NULL);
     BarfCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
@@ -121,7 +121,7 @@ ScannerNew::StateMachine::Name ScannerNew::CurrentStateMachine () const
     }
 }
 
-void ScannerNew::SwitchToStateMachine (StateMachine::Name state_machine)
+void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
 {
     assert(
         state_machine == StateMachine::EXPECTING_END_OF_FILE ||
@@ -134,7 +134,7 @@ void ScannerNew::SwitchToStateMachine (StateMachine::Name state_machine)
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
-"Preprocessor::ScannerNew" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Preprocessor::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 139 "barf_preprocessor_scanner.cpp"
  << " transitioning to state machine ";
         PrintStateMachineName_(state_machine);
@@ -142,11 +142,11 @@ void ScannerNew::SwitchToStateMachine (StateMachine::Name state_machine)
     assert(CurrentStateMachine() == state_machine);
 }
 
-void ScannerNew::ResetForNewInput ()
+void Scanner::ResetForNewInput ()
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
-"Preprocessor::ScannerNew" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Preprocessor::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 151 "barf_preprocessor_scanner.cpp"
  << " executing reset-for-new-input actions" << std::endl)
                 
@@ -161,7 +161,7 @@ void ScannerNew::ResetForNewInput ()
 #line 162 "barf_preprocessor_scanner.cpp"
 }
 
-Parser::Token ScannerNew::Scan () throw()
+Parser::Token Scanner::Scan () throw()
 {
 
     std::string work_string;
@@ -194,7 +194,7 @@ Parser::Token ScannerNew::Scan () throw()
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
-"Preprocessor::ScannerNew" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Preprocessor::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 199 "barf_preprocessor_scanner.cpp"
  << " rejecting string ";
                 PrintString_(rejected_string);
@@ -225,7 +225,7 @@ Parser::Token ScannerNew::Scan () throw()
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
-"Preprocessor::ScannerNew" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Preprocessor::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 230 "barf_preprocessor_scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
@@ -659,7 +659,7 @@ Parser::Token ScannerNew::Scan () throw()
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-bool ScannerNew::IsInputAtEnd_ () throw()
+bool Scanner::IsInputAtEnd_ () throw()
 {
 
 #line 147 "barf_preprocessor_scanner.reflex"
@@ -669,7 +669,7 @@ bool ScannerNew::IsInputAtEnd_ () throw()
 #line 670 "barf_preprocessor_scanner.cpp"
 }
 
-BarfCpp_::Uint8 ScannerNew::ReadNextAtom_ () throw()
+BarfCpp_::Uint8 Scanner::ReadNextAtom_ () throw()
 {
 
 #line 150 "barf_preprocessor_scanner.reflex"
@@ -679,7 +679,7 @@ BarfCpp_::Uint8 ScannerNew::ReadNextAtom_ () throw()
 #line 680 "barf_preprocessor_scanner.cpp"
 }
 
-void ScannerNew::PrintAtom_ (BarfCpp_::Uint8 atom)
+void Scanner::PrintAtom_ (BarfCpp_::Uint8 atom)
 {
     if (atom == '\\')                    std::cerr << "\\\\";
     else if (atom == '"')                std::cerr << "\\\"";
@@ -695,7 +695,7 @@ void ScannerNew::PrintAtom_ (BarfCpp_::Uint8 atom)
     }
 }
 
-void ScannerNew::PrintString_ (std::string const &s)
+void Scanner::PrintString_ (std::string const &s)
 {
     // save the existing std::cerr properties for later restoration
     std::ios_base::fmtflags saved_stream_flags = std::cerr.flags();
@@ -726,7 +726,7 @@ void ScannerNew::PrintString_ (std::string const &s)
     std::cerr.precision(saved_stream_precision);
 }
 
-void ScannerNew::PrintStateMachineName_ (StateMachine::Name state_machine)
+void Scanner::PrintStateMachineName_ (StateMachine::Name state_machine)
 {
     if (false) { }
     else if (state_machine == StateMachine::EXPECTING_END_OF_FILE) { std::cerr << "EXPECTING_END_OF_FILE"; }
@@ -738,7 +738,7 @@ void ScannerNew::PrintStateMachineName_ (StateMachine::Name state_machine)
 
 // the order of the states indicates priority (only for accept states).
 // the lower the state's index in this array, the higher its priority.
-ReflexCpp_::AutomatonApparatus_::DfaState_ const ScannerNew::ms_state_table_[] =
+ReflexCpp_::AutomatonApparatus_::DfaState_ const Scanner::ms_state_table_[] =
 {
     { 24, 2, ms_transition_table_+0 },
     { 24, 1, ms_transition_table_+2 },
@@ -788,9 +788,9 @@ ReflexCpp_::AutomatonApparatus_::DfaState_ const ScannerNew::ms_state_table_[] =
     { 21, 9, ms_transition_table_+144 },
     { 23, 0, ms_transition_table_+153 }
 };
-BarfCpp_::Size const ScannerNew::ms_state_count_ = sizeof(ScannerNew::ms_state_table_) / sizeof(*ScannerNew::ms_state_table_);
+BarfCpp_::Size const Scanner::ms_state_count_ = sizeof(Scanner::ms_state_table_) / sizeof(*Scanner::ms_state_table_);
 
-ReflexCpp_::AutomatonApparatus_::DfaTransition_ const ScannerNew::ms_transition_table_[] =
+ReflexCpp_::AutomatonApparatus_::DfaTransition_ const Scanner::ms_transition_table_[] =
 {
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::CONDITIONAL, 2, 0, ms_state_table_+1 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::CONDITIONAL, 2, 2, ms_state_table_+3 },
@@ -946,9 +946,9 @@ ReflexCpp_::AutomatonApparatus_::DfaTransition_ const ScannerNew::ms_transition_
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::INPUT_ATOM_RANGE, 93, 126, ms_state_table_+33 },
     { ReflexCpp_::AutomatonApparatus_::DfaTransition_::INPUT_ATOM_RANGE, 127, 255, ms_state_table_+32 }
 };
-BarfCpp_::Size const ScannerNew::ms_transition_count_ = sizeof(ScannerNew::ms_transition_table_) / sizeof(*ScannerNew::ms_transition_table_);
+BarfCpp_::Size const Scanner::ms_transition_count_ = sizeof(Scanner::ms_transition_table_) / sizeof(*Scanner::ms_transition_table_);
 
-char const *const ScannerNew::ms_accept_handler_regex_[] =
+char const *const Scanner::ms_accept_handler_regex_[] =
 {
     "{ANYTHING}+",
     "{END_OF_FILE}",
@@ -975,7 +975,7 @@ char const *const ScannerNew::ms_accept_handler_regex_[] =
     "{ANYTHING}",
     ""
 };
-BarfCpp_::Uint32 const ScannerNew::ms_accept_handler_count_ = sizeof(ScannerNew::ms_accept_handler_regex_) / sizeof(*ScannerNew::ms_accept_handler_regex_);
+BarfCpp_::Uint32 const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_accept_handler_regex_) / sizeof(*Scanner::ms_accept_handler_regex_);
 
 // ///////////////////////////////////////////////////////////////////////
 // end of internal reflex-generated parser guts

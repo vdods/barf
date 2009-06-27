@@ -32,7 +32,7 @@ class Base;
 
 namespace Preprocessor {
 
-class ScannerNew;
+class Scanner;
 %}
 %target.cpp.class_name Parser
 %target.cpp.bottom_of_class {
@@ -47,7 +47,7 @@ class ScannerNew;
 
 private:
 
-    ScannerNew *m_scanner;
+    Scanner *m_scanner;
 }
 %target.cpp.bottom_of_header_file %{
 } // end of namespace Preprocessor
@@ -65,7 +65,7 @@ namespace Barf {
 namespace Preprocessor {
 %}
 %target.cpp.constructor_actions {
-    m_scanner = new ScannerNew();
+    m_scanner = new Scanner();
 }
 %target.cpp.destructor_actions {
     delete m_scanner;

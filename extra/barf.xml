@@ -8,11 +8,13 @@
             <item>add_codespec</item>
             <item>add_optional_directive</item>
             <item>add_required_directive</item>
+            <item>case_insensitive</item>
             <item>default</item>
             <item>default_parse_nonterminal</item>
             <item>dumb_code_block</item>
             <item>end</item>
             <item>error</item>
+            <item>forgetful</item>
             <item>identifier</item>
             <item>left</item>
             <item>macro</item>
@@ -28,6 +30,7 @@
             <item>targets</item>
             <item>terminal</item>
             <item>type</item>
+            <item>ungreedy</item>
         </list>
 
         <contexts>

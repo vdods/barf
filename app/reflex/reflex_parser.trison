@@ -152,11 +152,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     {
         case CommonLang::Scanner::Token::BAD_END_OF_FILE:                  return Token(Terminal::END_, lookahead_token_data);
         case CommonLang::Scanner::Token::BAD_TOKEN:                        return Token(Terminal::BAD_TOKEN, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_CASE_INSENSITIVE:       return Token(Terminal::DIRECTIVE_CASE_INSENSITIVE, lookahead_token_data); 
+        case CommonLang::Scanner::Token::DIRECTIVE_FORGETFUL:              return Token(Terminal::DIRECTIVE_FORGETFUL, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                  return Token(Terminal::DIRECTIVE_MACRO, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE: return Token(Terminal::DIRECTIVE_START_IN_STATE_MACHINE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE:                  return Token(Terminal::DIRECTIVE_STATE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE_MACHINE:          return Token(Terminal::DIRECTIVE_STATE_MACHINE, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                 return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_UNGREEDY:               return Token(Terminal::DIRECTIVE_UNGREEDY, lookahead_token_data);
         case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                  return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
         case CommonLang::Scanner::Token::END_OF_FILE:                      return Token(Terminal::END_, lookahead_token_data);
         case CommonLang::Scanner::Token::END_PREAMBLE:                     return Token(Terminal::END_PREAMBLE, lookahead_token_data);
@@ -204,11 +207,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 
 %terminal BAD_TOKEN
+%terminal DIRECTIVE_CASE_INSENSITIVE %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_FORGETFUL %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_MACRO %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_START_IN_STATE_MACHINE %type.cpp "Ast::ThrowAway *"
-%terminal DIRECTIVE_STATE %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_STATE_MACHINE %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_TARGET %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_TARGETS %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_UNGREEDY %type.cpp "Ast::ThrowAway *"
 %terminal DUMB_CODE_BLOCK %type.cpp "Ast::DumbCodeBlock *"
 %terminal END_PREAMBLE %type.cpp "Ast::ThrowAway *"
 %terminal ID %type.cpp "Ast::Id *"
@@ -470,25 +476,64 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal state_machine %type.cpp "StateMachine *"
 :
-    DIRECTIVE_STATE:throwaway ID:state_machine_id ':' state_machine_rules:rule_list ';'
+    DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' state_machine_rules:rule_list ';'
     %target.cpp {
+        StateMachine *state_machine = new StateMachine(state_machine_id, rule_list, mode_flags->GetValue());
         delete throwaway;
-        return new StateMachine(state_machine_id, rule_list);
+        delete mode_flags;
+        return state_machine;
     }
 |
-    DIRECTIVE_STATE:throwaway ID:state_machine_id ':' %error ';'
+    DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' %error ';'
     %target.cpp {
         EmitError("parse error in state machine rule list", throwaway->GetFiLoc());
+        StateMachine *state_machine = new StateMachine(state_machine_id, new RuleList(), mode_flags->GetValue());
         delete throwaway;
-        return new StateMachine(state_machine_id, new RuleList());
+        delete mode_flags;
+        return state_machine;
     }
 |
-    DIRECTIVE_STATE:throwaway %error ':' state_machine_rules:rule_list ';'
+    DIRECTIVE_STATE_MACHINE:throwaway %error ':' state_machine_rules:rule_list ';'
     %target.cpp {
         EmitError("parse error in state machine id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
+    }
+;
+
+%nonterminal state_machine_mode_flags %type.cpp "Ast::UnsignedInteger *"
+:
+    state_machine_mode_flags:mode_flags DIRECTIVE_CASE_INSENSITIVE:throwaway
+    %target.cpp {
+        if (mode_flags->GetValue() & StateMachine::MF_CASE_INSENSITIVE)
+            EmitWarning("duplicate %case_insensitive", throwaway->GetFiLoc());
+        mode_flags->SetValue(mode_flags->GetValue() | StateMachine::MF_CASE_INSENSITIVE);
+        delete throwaway;
+        return mode_flags;
+    }
+|
+    state_machine_mode_flags:mode_flags DIRECTIVE_FORGETFUL:throwaway
+    %target.cpp {
+        if (mode_flags->GetValue() & StateMachine::MF_FORGETFUL)
+            EmitWarning("duplicate %forgetful", throwaway->GetFiLoc());
+        mode_flags->SetValue(mode_flags->GetValue() | StateMachine::MF_FORGETFUL);
+        delete throwaway;
+        return mode_flags;
+    }
+|
+    state_machine_mode_flags:mode_flags DIRECTIVE_UNGREEDY:throwaway
+    %target.cpp {
+        if (mode_flags->GetValue() & StateMachine::MF_UNGREEDY)
+            EmitWarning("duplicate %ungreedy", throwaway->GetFiLoc());
+        mode_flags->SetValue(mode_flags->GetValue() | StateMachine::MF_UNGREEDY);
+        delete throwaway;
+        return mode_flags;
+    }
+|
+    // empty reduction rule
+    %target.cpp {
+        return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
     }
 ;
 

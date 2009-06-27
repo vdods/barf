@@ -169,18 +169,21 @@ public:
             END_ = 256,
             ERROR_ = 257,
             BAD_TOKEN = 258,
-            DIRECTIVE_MACRO = 259,
-            DIRECTIVE_START_IN_STATE_MACHINE = 260,
-            DIRECTIVE_STATE = 261,
-            DIRECTIVE_TARGET = 262,
-            DIRECTIVE_TARGETS = 263,
-            DUMB_CODE_BLOCK = 264,
-            END_PREAMBLE = 265,
-            ID = 266,
-            NEWLINE = 267,
-            REGEX = 268,
-            STRICT_CODE_BLOCK = 269,
-            STRING_LITERAL = 270
+            DIRECTIVE_CASE_INSENSITIVE = 259,
+            DIRECTIVE_FORGETFUL = 260,
+            DIRECTIVE_MACRO = 261,
+            DIRECTIVE_START_IN_STATE_MACHINE = 262,
+            DIRECTIVE_STATE_MACHINE = 263,
+            DIRECTIVE_TARGET = 264,
+            DIRECTIVE_TARGETS = 265,
+            DIRECTIVE_UNGREEDY = 266,
+            DUMB_CODE_BLOCK = 267,
+            END_PREAMBLE = 268,
+            ID = 269,
+            NEWLINE = 270,
+            REGEX = 271,
+            STRICT_CODE_BLOCK = 272,
+            STRING_LITERAL = 273
         }; // end of enum Parser::Terminal::Name
     }; // end of struct Parser::Terminal
 
@@ -198,24 +201,25 @@ public:
           */
         enum Name
         {
-            any_type_of_code_block = 103,
-            at_least_one_newline = 107,
-            at_least_zero_newlines = 105,
-            macro_directives = 85,
+            any_type_of_code_block = 109,
+            at_least_one_newline = 113,
+            at_least_zero_newlines = 111,
+            macro_directives = 89,
             root = 0,
-            rule = 97,
-            rule_handler = 101,
-            rule_handlers = 99,
-            rule_list = 95,
-            start_with_state_machine_directive = 87,
-            state_machine = 91,
-            state_machine_rules = 93,
-            state_machines = 89,
-            target_directive = 81,
-            target_directive_param = 83,
-            target_directives = 79,
-            target_ids = 77,
-            targets_directive = 75,
+            rule = 103,
+            rule_handler = 107,
+            rule_handlers = 105,
+            rule_list = 101,
+            start_with_state_machine_directive = 91,
+            state_machine = 95,
+            state_machine_mode_flags = 97,
+            state_machine_rules = 99,
+            state_machines = 93,
+            target_directive = 85,
+            target_directive_param = 87,
+            target_directives = 83,
+            target_ids = 81,
+            targets_directive = 79,
             /// Nonterminal which will be attempted to be parsed by the Parse()
             /// method by default (specified by the %default_parse_nonterminal
             /// directive).
@@ -355,7 +359,7 @@ private:
     CommonLang::TargetMap *m_target_map;
     Regex::RegularExpressionMap *m_regex_macro_map;
 
-#line 359 "reflex_parser.hpp"
+#line 363 "reflex_parser.hpp"
 
 
 private:
@@ -369,24 +373,25 @@ private:
         enum Name
         {
             none_ = 0,
-            root = 271,
-            targets_directive = 272,
-            target_ids = 273,
-            target_directives = 274,
-            target_directive = 275,
-            target_directive_param = 276,
-            macro_directives = 277,
-            start_with_state_machine_directive = 278,
-            state_machines = 279,
-            state_machine = 280,
-            state_machine_rules = 281,
-            rule_list = 282,
-            rule = 283,
-            rule_handlers = 284,
-            rule_handler = 285,
-            any_type_of_code_block = 286,
-            at_least_zero_newlines = 287,
-            at_least_one_newline = 288
+            root = 274,
+            targets_directive = 275,
+            target_ids = 276,
+            target_directives = 277,
+            target_directive = 278,
+            target_directive_param = 279,
+            macro_directives = 280,
+            start_with_state_machine_directive = 281,
+            state_machines = 282,
+            state_machine = 283,
+            state_machine_mode_flags = 284,
+            state_machine_rules = 285,
+            rule_list = 286,
+            rule = 287,
+            rule_handlers = 288,
+            rule_handler = 289,
+            any_type_of_code_block = 290,
+            at_least_zero_newlines = 291,
+            at_least_one_newline = 292
         }; // end of enum Parser::Nonterminal_::Name
     }; // end of struct Parser::Nonterminal_
     struct Transition_;
@@ -479,4 +484,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 483 "reflex_parser.hpp"
+#line 488 "reflex_parser.hpp"

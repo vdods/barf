@@ -32,7 +32,7 @@ namespace Preprocessor {
 
 class Text;
 %}
-%target.cpp.class_name ScannerNew
+%target.cpp.class_name Scanner
 %target.cpp.class_inheritance { protected InputBase }
 %target.cpp.top_of_class {
 }
@@ -71,7 +71,7 @@ private:
 namespace Barf {
 namespace Preprocessor {
 
-bool ScannerNew::OpenFile (string const &input_filename)
+bool Scanner::OpenFile (string const &input_filename)
 {
     bool open_succeeded = InputBase::OpenFile(input_filename);
     if (open_succeeded)
@@ -79,19 +79,19 @@ bool ScannerNew::OpenFile (string const &input_filename)
     return open_succeeded;
 }
 
-void ScannerNew::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
+void Scanner::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenString(input_string, input_name, use_line_numbers);
     ResetForNewInput();
 }
 
-void ScannerNew::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
+void Scanner::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
     ResetForNewInput();
 }
 
-Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
+Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 {
     if (accepted_string == "declare_array")         return Parser::Token(Parser::Terminal::DECLARE_ARRAY);
     if (accepted_string == "declare_map")           return Parser::Token(Parser::Terminal::DECLARE_MAP);
@@ -163,7 +163,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
 // ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Preprocessor::ScannerNew" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Preprocessor::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 // ///////////////////////////////////////////////////////////////////////////

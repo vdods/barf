@@ -26,7 +26,7 @@ Parser::Parser ()
 
 #line 67 "barf_preprocessor_parser.trison"
 
-    m_scanner = new ScannerNew();
+    m_scanner = new Scanner();
 
 #line 32 "barf_preprocessor_parser.cpp"
 }

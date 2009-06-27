@@ -103,7 +103,7 @@ class Base;
 
 namespace Preprocessor {
 
-class ScannerNew;
+class Scanner;
 
 #line 109 "barf_preprocessor_parser.hpp"
 
@@ -360,7 +360,7 @@ public:
 
 private:
 
-    ScannerNew *m_scanner;
+    Scanner *m_scanner;
 
 #line 366 "barf_preprocessor_parser.hpp"
 

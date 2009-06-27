@@ -48,23 +48,26 @@ namespace CommonLang {
             DIRECTIVE_ADD_CODESPEC,
             DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
             DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
+            DIRECTIVE_CASE_INSENSITIVE,
             DIRECTIVE_DEFAULT,
             DIRECTIVE_DEFAULT_PARSE_NONTERMINAL,
             DIRECTIVE_DUMB_CODE_BLOCK,
             DIRECTIVE_END,
             DIRECTIVE_ERROR,
+            DIRECTIVE_FORGETFUL,
             DIRECTIVE_ID,
             DIRECTIVE_MACRO,
             DIRECTIVE_NONTERMINAL,
             DIRECTIVE_PREC,
             DIRECTIVE_START_IN_STATE_MACHINE,
-            DIRECTIVE_STATE,
+            DIRECTIVE_STATE_MACHINE,
             DIRECTIVE_STRICT_CODE_BLOCK,
             DIRECTIVE_STRING,
             DIRECTIVE_TARGET,
             DIRECTIVE_TARGETS,
             DIRECTIVE_TERMINAL,
             DIRECTIVE_TYPE,
+            DIRECTIVE_UNGREEDY,
             DUMB_CODE_BLOCK,
             END_OF_FILE,
             END_PREAMBLE,
@@ -136,23 +139,26 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DIRECTIVE_ADD_CODESPEC",
         "DIRECTIVE_ADD_OPTIONAL_DIRECTIVE",
         "DIRECTIVE_ADD_REQUIRED_DIRECTIVE",
+        "DIRECTIVE_CASE_INSENSITIVE",
         "DIRECTIVE_DEFAULT",
         "DIRECTIVE_DEFAULT_PARSE_NONTERMINAL",
         "DIRECTIVE_DUMB_CODE_BLOCK",
         "DIRECTIVE_END",
         "DIRECTIVE_ERROR",
+        "DIRECTIVE_FORGETFUL",
         "DIRECTIVE_ID",
         "DIRECTIVE_MACRO",
         "DIRECTIVE_NONTERMINAL",
         "DIRECTIVE_PREC",
         "DIRECTIVE_START_IN_STATE_MACHINE",
-        "DIRECTIVE_STATE",
+        "DIRECTIVE_STATE_MACHINE",
         "DIRECTIVE_STRICT_CODE_BLOCK",
         "DIRECTIVE_STRING",
         "DIRECTIVE_TARGET",
         "DIRECTIVE_TARGETS",
         "DIRECTIVE_TERMINAL",
         "DIRECTIVE_TYPE",
+        "DIRECTIVE_UNGREEDY",
         "DUMB_CODE_BLOCK",
         "END_OF_FILE",
         "END_PREAMBLE",
@@ -200,23 +206,26 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%add_codespec") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_CODESPEC; }
     if (accepted_string == "%add_optional_directive") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE; }
     if (accepted_string == "%add_required_directive") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE; }
+    if (accepted_string == "%case_insensitive") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_CASE_INSENSITIVE; }
     if (accepted_string == "%default") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DEFAULT; }
     if (accepted_string == "%default_parse_nonterminal") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL; }
     if (accepted_string == "%dumb_code_block") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DUMB_CODE_BLOCK; }
     if (accepted_string == "%end") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_END; }
     if (accepted_string == "%error") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ERROR; }
+    if (accepted_string == "%forgetful") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_FORGETFUL; }
     if (accepted_string == "%identifier") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ID; }
     if (accepted_string == "%macro") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_MACRO; }
     if (accepted_string == "%nonterminal") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_NONTERMINAL; }
     if (accepted_string == "%prec") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_PREC; }
     if (accepted_string == "%start_with_state_machine") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_START_IN_STATE_MACHINE; }
-    if (accepted_string == "%state_machine") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE; }
+    if (accepted_string == "%state_machine") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE_MACHINE; }
     if (accepted_string == "%strict_code_block") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
     if (accepted_string == "%string") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRING; }
     if (accepted_string == "%target") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET; }
     if (accepted_string == "%targets") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGETS; }
     if (accepted_string == "%terminal") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TERMINAL; }
     if (accepted_string == "%type") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TYPE; }
+    if (accepted_string == "%ungreedy") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_UNGREEDY; }
 
     EmitError("invalid directive \"" + accepted_string + "\"", GetFiLoc());
     return Token::BAD_TOKEN;

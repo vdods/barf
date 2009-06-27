@@ -39,7 +39,14 @@ void StartWithStateMachineDirective::Print (ostream &stream, StringifyAstType St
 
 void StateMachine::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_state_machine_id->GetText() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_state_machine_id->GetText();
+    if (m_mode_flags&MF_CASE_INSENSITIVE)
+        stream << " %case_insensitive";
+    if (m_mode_flags&MF_UNGREEDY)
+        stream << " %ungreedy";
+    if (m_mode_flags&MF_FORGETFUL)
+        stream << " %forgetful";
+    stream << endl;
     for (RuleList::const_iterator it = m_rule_list->begin(),
                                  it_end = m_rule_list->end();
          it != it_end;
