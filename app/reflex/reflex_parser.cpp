@@ -399,7 +399,7 @@ Parser::Token Parser::Scan_ () throw()
         case CommonLang::Scanner::Token::DIRECTIVE_FORGETFUL:              return Token(Terminal::DIRECTIVE_FORGETFUL, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                  return Token(Terminal::DIRECTIVE_MACRO, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE: return Token(Terminal::DIRECTIVE_START_IN_STATE_MACHINE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE_MACHINE:                  return Token(Terminal::DIRECTIVE_STATE_MACHINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE_MACHINE:          return Token(Terminal::DIRECTIVE_STATE_MACHINE, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                 return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_UNGREEDY:               return Token(Terminal::DIRECTIVE_UNGREEDY, lookahead_token_data);

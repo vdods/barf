@@ -70,12 +70,12 @@ void <{class_name}::SwitchToStateMachine (StateMachine::Name state_machine)
         state_machine == StateMachine::<{key} ||
 <|end_for_each
         (false && "invalid StateMachine::Name"));
-    InitialState_(ms_state_table_ + state_machine);
+    InitialState_(ms_state_table_ + ms_state_machine_start_state_index_[state_machine]);
+    ModeFlags_(ms_state_machine_mode_flags_[state_machine]);
 <|if(is_defined(generate_debug_spew_code))
     REFLEX_CPP_DEBUG_CODE_(
-        std::cerr << <{debug_spew_prefix} << " transitioning to state machine ";
-        PrintStateMachineName_(state_machine);
-        std::cerr << std::endl)
+        std::cerr << <{debug_spew_prefix} << " transitioning to state machine "
+                  << ms_state_machine_name_[state_machine] << std::endl)
 <|end_if
     assert(CurrentStateMachine() == state_machine);
 }
@@ -86,7 +86,7 @@ void <{class_name}::ResetForNewInput ()
     REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions" << std::endl)
                 
 <|end_if
-    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + StateMachine::START_);
+    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + StateMachine::START_, ms_state_machine_mode_flags_[StateMachine::START_]);
 
 <|reset_for_new_input_actions?
 }
@@ -157,9 +157,8 @@ void <{class_name}::ResetForNewInput ()
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << <{debug_spew_prefix} << " accepting string ";
                 PrintString_(accepted_string);
-                std::cerr << " in state machine ";
-                PrintStateMachineName_(CurrentStateMachine());
-                std::cerr << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
+                std::cerr << " in state machine " << ms_state_machine_name_[CurrentStateMachine()] 
+                          << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
                 
 <|end_if
             // execute the appropriate accept handler.
@@ -283,15 +282,31 @@ void <{class_name}::PrintString_ (std::string const &s)
     std::cerr.precision(saved_stream_precision);
 }
 
-void <{class_name}::PrintStateMachineName_ (StateMachine::Name state_machine)
-{
-    if (false) { }
-<|for_each(key, _dfa_initial_node_index)
-    else if (state_machine == StateMachine::<{key}) { std::cerr << "<{key}"; }
-<|end_for_each
-}
-
 <|end_if
+BarfCpp_::Uint32 const <{class_name}::ms_state_machine_start_state_index_[] =
+{
+<|for_each(key, _dfa_initial_node_index)
+    <{_dfa_initial_node_index[key]},
+<|end_for_each
+};
+BarfCpp_::Uint8 const <{class_name}::ms_state_machine_mode_flags_[] =
+{
+<|for_each(key, _state_machine_mode_flags)
+    <{_state_machine_mode_flags[key]},
+<|end_for_each
+};
+<|if(is_defined(generate_debug_spew_code))
+char const *const <{class_name}::ms_state_machine_name_[] =
+{
+<|for_each(key, _dfa_initial_node_index)
+    <{to_string_literal(key)},
+<|end_for_each
+};
+BarfCpp_::Uint32 const <{class_name}::ms_state_machine_count_ = sizeof(<{class_name}::ms_state_machine_name_) / sizeof(*<{class_name}::ms_state_machine_name_);
+<|else
+BarfCpp_::Uint32 const <{class_name}::ms_state_machine_count_ = <{sizeof(_dfa_initial_node_index)};
+<|end_if
+
 // the order of the states indicates priority (only for accept states).
 // the lower the state's index in this array, the higher its priority.
 ReflexCpp_::AutomatonApparatus_::DfaState_ const <{class_name}::ms_state_table_[] =

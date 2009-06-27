@@ -98,8 +98,8 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     // _state_machine_mode_flags[state machine name] -- maps state machine name => state machine mode flags
     // where the flags are:
     //      0x01 - case insensitive
-    //      0x02 - ungreedy
-    //      0x04 - forgetful
+    //      0x02 - forgetful
+    //      0x04 - ungreedy
     // the default behavior of the scanner is case sensitive, greedy, and not forgetful.
     // see StateMachine::ModeFlags.
     {

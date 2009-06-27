@@ -112,8 +112,8 @@ struct StateMachine : public Ast::Base
     enum
     {
         MF_CASE_INSENSITIVE = 0x01,
-        MF_UNGREEDY         = 0x02,
-        MF_FORGETFUL        = 0x04,
+        MF_FORGETFUL        = 0x02,
+        MF_UNGREEDY         = 0x04,
 
         MF_NONE             = 0x00,
         MF_ALL              = 0x07
