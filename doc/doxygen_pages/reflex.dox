@@ -23,17 +23,17 @@ Everything at the top of the file, above the %% delimiter, is the preamble.  The
     <li>Target(s) -- indicates that scanners will be generated for each of the given targets, with each language corresponding to a "targetspec" file in the data directory.  This directive is optional; if omitted, <tt>reflex</tt> will process the specified scanner and internally generate the corresponding state machine, emitting warnings and errors if necessary, but will not generate any source code.  For example, @verbatim %targets cpp @endverbatim
     <li>Target-specific directives -- as mentioned earlier, each target an associated <tt>reflex.*.targetspec</tt> (e.g. <tt>reflex.cpp.targetspec</tt> for the <tt>cpp</tt> target) which defines what language-specific directives are available, which ones are required to be supplied in the <tt>.reflex</tt> source, as well as the parameter type for each.  For example, the <tt>ccp</tt> target only requires the <tt>class_name</tt> directive be specified; this would be done as @verbatim %target.cpp.class_name AwesomeScanner @endverbatim
     <li>Regular expression macros -- are simple macro definitions for convenient in later <tt>\%macro</tt> directives or in scanner regexes.  For example, @verbatim %macro DIGIT ([0-9]) @endverbatim
-    <li>Starting scanner mode -- is the single required preamble directive.  It specifies the name of the scanner mode the generated scanner will start in by default -- though the scanner mode can be changed at runtime via target-specific calls), choosing from those defined after the preamble.  For example, @verbatim %start_in_scanner_mode MAIN @endverbatim
+    <li>Starting state machine -- is the single required preamble directive.  It specifies the name of the state machine the generated scanner will start in by default -- though the state machine can be changed at runtime via target-specific calls), choosing from those defined after the preamble.  For example, @verbatim %start_with_state_machine MAIN @endverbatim
     </ul>
 The preamble is newline-sensitive, so each directive must be on its own line (though there can be an arbitrary number of newlines between directive lines).
 
 It should be noted that the preamble for both <tt>reflex</tt> and <tt>trison</tt> are nearly identical in format -- the exception being the tool-specific directives such as <tt>\%macro</tt> on the <tt>reflex</tt> side, and XXX (TODO: fill in later) on the <tt>trison</tt> side.
 
-Below the %% delimiter is the scanner mode specification.  The format is comprised of one or more scanner modes, each containing zero or more regex rules.  Each scanner mode is essentially a unique mode of operation which dictates what regex rules can be accepted at any given time.  When the scanner is in a particular scanner mode, only the regex rules specified within can be accepted.  The generated scanner code will provide facilities for switching the current scanner mode at runtime.
+Below the %% delimiter is the state machine specification.  The format is comprised of one or more state machines, each containing zero or more regex rules.  Each state machine is essentially a unique mode of operation which dictates what regex rules can be accepted at any given time.  When the scanner is in a particular state machine, only the regex rules specified within can be accepted.  The generated scanner code will provide facilities for switching the current state machine at runtime.
 
-Scanner modes are useful in separating modes of operation, such as scanning the body of a string literal, or ignoring everything except the closing delimiter of a block-style comment.
+Scanner state machines are useful in separating modes of operation, such as scanning the body of a string literal, or ignoring everything except the closing delimiter of a block-style comment.
 
-Each regex rule in each scanner mode must specify, for each target declared in the preamble, a segment of code known as a rule handler.  This code will be executed when the corresponding regex has been successfully matched by the generated scanner.
+Each regex rule in each state machine must specify, for each target declared in the preamble, a segment of code known as a rule handler.  This code will be executed when the corresponding regex has been successfully matched by the generated scanner.
 
 The following is an example primary source file which uses the <tt>cpp</tt> target.
 @verbatim
@@ -41,9 +41,9 @@ The following is an example primary source file which uses the <tt>cpp</tt> targ
 // This particular example will recognize tokens from the regular language
 // consisting of integers (sequences of decimal digits), whitespace (tabs, 
 // newlines and spaces), operators (plusses and asterisks), and C-style block
-// comments.  There are two scanner modes, one (%scanner_mode MAIN) for 
+// comments.  There are two state machines, one (%state_machine MAIN) for 
 // recognizing the first three language elements mentioned, and the second
-// (%scanner_mode BLOCK_COMMENT) for recognizing the last.
+// (%state_machine BLOCK_COMMENT) for recognizing the last.
 // ///////////////////////////////////////////////////////////////////////////
 
 %targets cpp
@@ -64,11 +64,11 @@ int main (int argc, char **argv)
 %macro DIGIT ([0-9])
 %macro INTEGER ({DIGIT}+)
 
-%start_in_scanner_mode MAIN
+%start_with_state_machine MAIN
 
 %%
 
-%scanner_mode MAIN
+%state_machine MAIN
 :
     ({INTEGER}) %target.cpp { std::cout << "integer" << std::endl; }
 |
@@ -78,16 +78,16 @@ int main (int argc, char **argv)
 |
     (\z) %target.cpp { std::cout << "EOF" << std::endl; return; }
 |
-    (/[*]) %target.cpp { ScannerMode(Mode::BLOCK_COMMENT); }
+    (/[*]) %target.cpp { SwitchToStateMachine(StateMachine::BLOCK_COMMENT); }
 ;
 
-%scanner_mode BLOCK_COMMENT
+%state_machine BLOCK_COMMENT
 :
-    ([*]/) %target.cpp { std::cout << "block comment" << std::endl; ScannerMode(Mode::MAIN); }
+    ([*]/) %target.cpp { std::cout << "block comment" << std::endl; SwitchToStateMachine(StateMachine::MAIN); }
 |
     ([^*]+|[*]) %target.cpp { }
 |
-    (\z) %target.cpp { std::cout << "unterminated block comment" << std::endl; ScannerMode(Mode::MAIN); }
+    (\z) %target.cpp { std::cout << "unterminated block comment" << std::endl; SwitchToStateMachine(StateMachine::MAIN); }
 ;
 @endverbatim
 

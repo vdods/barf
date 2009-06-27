@@ -19,9 +19,9 @@ string const &GetAstTypeString (AstType ast_type)
         "AST_PRIMARY_SOURCE",
         "AST_RULE",
         "AST_RULE_LIST",
-        "AST_SCANNER_MODE",
-        "AST_SCANNER_MODE_MAP",
-        "AST_START_DIRECTIVE"
+        "AST_START_DIRECTIVE",
+        "AST_STATE_MACHINE",
+        "AST_STATE_MACHINE_MAP"
     };
 
     assert(ast_type < AST_COUNT);
@@ -31,15 +31,15 @@ string const &GetAstTypeString (AstType ast_type)
         return s_ast_type_string[ast_type-CommonLang::AST_START_CUSTOM_TYPES_HERE_];
 }
 
-void StartInScannerModeDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void StartWithStateMachineDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Directive::Print(stream, Stringify, indent_level);
-    m_scanner_mode_id->Print(stream, Stringify, indent_level+1);
+    m_state_machine_id->Print(stream, Stringify, indent_level+1);
 }
 
-void ScannerMode::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void StateMachine::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_scanner_mode_id->GetText() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_state_machine_id->GetText() << endl;
     for (RuleList::const_iterator it = m_rule_list->begin(),
                                  it_end = m_rule_list->end();
          it != it_end;
@@ -61,14 +61,14 @@ void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
 Uint32 PrimarySource::GetRuleCount () const
 {
     Uint32 accept_handler_count = 0;
-    for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
-                                         it_end = m_scanner_mode_map->end();
+    for (StateMachineMap::const_iterator it = m_state_machine_map->begin(),
+                                         it_end = m_state_machine_map->end();
          it != it_end;
          ++it)
     {
-        ScannerMode const *scanner_mode = it->second;
-        assert(scanner_mode != NULL);
-        accept_handler_count += scanner_mode->GetRuleCount();
+        StateMachine const *state_machine = it->second;
+        assert(state_machine != NULL);
+        accept_handler_count += state_machine->GetRuleCount();
     }
     return accept_handler_count;
 }
@@ -76,17 +76,17 @@ Uint32 PrimarySource::GetRuleCount () const
 Rule const *PrimarySource::GetRule (Uint32 rule_index) const
 {
     assert(rule_index < GetRuleCount());
-    for (ScannerModeMap::const_iterator it = m_scanner_mode_map->begin(),
-                                         it_end = m_scanner_mode_map->end();
+    for (StateMachineMap::const_iterator it = m_state_machine_map->begin(),
+                                         it_end = m_state_machine_map->end();
          it != it_end;
          ++it)
     {
-        ScannerMode const *scanner_mode = it->second;
-        assert(scanner_mode != NULL);
-        if (rule_index < scanner_mode->GetRuleCount())
-            return scanner_mode->m_rule_list->GetElement(rule_index);
+        StateMachine const *state_machine = it->second;
+        assert(state_machine != NULL);
+        if (rule_index < state_machine->GetRuleCount())
+            return state_machine->m_rule_list->GetElement(rule_index);
         else
-            rule_index -= scanner_mode->GetRuleCount();
+            rule_index -= state_machine->GetRuleCount();
     }
     assert(false && "GetRuleCount() doesn't match reality");
     return NULL;
@@ -104,9 +104,9 @@ void PrimarySource::Print (ostream &stream, StringifyAstType Stringify, Uint32 i
     Ast::Base::Print(stream, Stringify, indent_level);
     m_target_map->Print(stream, Stringify, indent_level+1);
     m_regex_macro_map->Print(stream, indent_level+1);
-    if (m_start_in_scanner_mode_directive != NULL)
-        m_start_in_scanner_mode_directive->Print(stream, Stringify, indent_level+1);
-    m_scanner_mode_map->Print(stream, Stringify, indent_level+1);
+    if (m_start_with_state_machine_directive != NULL)
+        m_start_with_state_machine_directive->Print(stream, Stringify, indent_level+1);
+    m_state_machine_map->Print(stream, Stringify, indent_level+1);
 }
 
 } // end of namespace Reflex

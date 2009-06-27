@@ -44,33 +44,33 @@ enum
     AST_PRIMARY_SOURCE = CommonLang::AST_START_CUSTOM_TYPES_HERE_,
     AST_RULE,
     AST_RULE_LIST,
-    AST_SCANNER_MODE,
-    AST_SCANNER_MODE_MAP,
     AST_START_DIRECTIVE,
+    AST_STATE_MACHINE,
+    AST_STATE_MACHINE_MAP,
 
     AST_COUNT
 };
 
 string const &GetAstTypeString (AstType ast_type);
 
-struct StartInScannerModeDirective : public Ast::Directive
+struct StartWithStateMachineDirective : public Ast::Directive
 {
-    Ast::Id const *const m_scanner_mode_id;
+    Ast::Id const *const m_state_machine_id;
 
-    StartInScannerModeDirective (Ast::Id const *scanner_mode_id)
+    StartWithStateMachineDirective (Ast::Id const *state_machine_id)
         :
-        Ast::Directive("%start_in_scanner_mode", scanner_mode_id->GetFiLoc(), AST_START_DIRECTIVE),
-        m_scanner_mode_id(scanner_mode_id)
+        Ast::Directive("%start_with_state_machine", state_machine_id->GetFiLoc(), AST_START_DIRECTIVE),
+        m_state_machine_id(state_machine_id)
     {
-        assert(m_scanner_mode_id != NULL);
+        assert(m_state_machine_id != NULL);
     }
-    virtual ~StartInScannerModeDirective ()
+    virtual ~StartWithStateMachineDirective ()
     {
-        delete m_scanner_mode_id;
+        delete m_state_machine_id;
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class StartInScannerModeDirective
+}; // end of class StartWithStateMachineDirective
 
 struct Rule : public Ast::Base
 {
@@ -105,36 +105,36 @@ struct RuleList : public Ast::AstList<Rule>
     RuleList () : Ast::AstList<Rule>(AST_RULE_LIST) { }
 };
 
-struct ScannerMode : public Ast::Base
+struct StateMachine : public Ast::Base
 {
-    Ast::Id const *const m_scanner_mode_id;
+    Ast::Id const *const m_state_machine_id;
     RuleList const *const m_rule_list;
 
-    ScannerMode (
-        Ast::Id const *scanner_mode_id,
+    StateMachine (
+        Ast::Id const *state_machine_id,
         RuleList *rule_list)
         :
-        Ast::Base(scanner_mode_id->GetFiLoc(), AST_SCANNER_MODE),
-        m_scanner_mode_id(scanner_mode_id),
+        Ast::Base(state_machine_id->GetFiLoc(), AST_STATE_MACHINE),
+        m_state_machine_id(state_machine_id),
         m_rule_list(rule_list)
     {
-        assert(m_scanner_mode_id != NULL);
+        assert(m_state_machine_id != NULL);
         assert(m_rule_list != NULL);
     }
-    virtual ~ScannerMode ()
+    virtual ~StateMachine ()
     {
-        delete m_scanner_mode_id;
+        delete m_state_machine_id;
         delete m_rule_list;
     }
 
     Uint32 GetRuleCount () const { return m_rule_list->size(); }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
-}; // end of class ScannerMode
+}; // end of class StateMachine
 
-struct ScannerModeMap : public Ast::AstMap<ScannerMode>
+struct StateMachineMap : public Ast::AstMap<StateMachine>
 {
-    ScannerModeMap () : Ast::AstMap<ScannerMode>(AST_SCANNER_MODE_MAP) { }
+    StateMachineMap () : Ast::AstMap<StateMachine>(AST_STATE_MACHINE_MAP) { }
 };
 
 struct PrimarySource : public Ast::Base
@@ -142,24 +142,24 @@ struct PrimarySource : public Ast::Base
 public:
 
     Regex::RegularExpressionMap *const m_regex_macro_map; // this could technically go away
-    StartInScannerModeDirective const *const m_start_in_scanner_mode_directive;
-    ScannerModeMap const *const m_scanner_mode_map;
+    StartWithStateMachineDirective const *const m_start_with_state_machine_directive;
+    StateMachineMap const *const m_state_machine_map;
 
     PrimarySource (
         Regex::RegularExpressionMap *regex_macro_map,
-        StartInScannerModeDirective const *start_in_scanner_mode_directive,
+        StartWithStateMachineDirective const *start_with_state_machine_directive,
         FiLoc const &end_preamble_filoc,
-        ScannerModeMap const *scanner_mode_map)
+        StateMachineMap const *state_machine_map)
         :
         Ast::Base(FiLoc::ms_invalid, AST_PRIMARY_SOURCE),
         m_regex_macro_map(regex_macro_map),
-        m_start_in_scanner_mode_directive(start_in_scanner_mode_directive),
-        m_scanner_mode_map(scanner_mode_map),
+        m_start_with_state_machine_directive(start_with_state_machine_directive),
+        m_state_machine_map(state_machine_map),
         m_target_map(NULL)
     {
         assert(m_regex_macro_map != NULL);
-        // m_start_in_scanner_mode_directive can be NULL if an error happened
-        assert(m_scanner_mode_map != NULL);
+        // m_start_with_state_machine_directive can be NULL if an error happened
+        assert(m_state_machine_map != NULL);
     }
 
     Uint32 GetRuleCount () const;

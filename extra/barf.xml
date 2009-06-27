@@ -20,8 +20,8 @@
             <item>nonterminal</item>
             <item>prec</item>
             <item>right</item>
-            <item>start_in_scanner_mode</item>
-            <item>scanner_mode</item>
+            <item>start_with_state_machine</item>
+            <item>state_machine</item>
             <item>strict_code_block</item>
             <item>string</item>
             <item>target</item>

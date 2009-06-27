@@ -386,7 +386,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
     }
 }
 
-Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_)
+Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_) throw()
 {
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << "Parser:" << " executing reduction rule " << rule_index_ << std::endl)

@@ -3,7 +3,7 @@
 @section reflex_guts_regex_usage Regular Expressions As Used By Reflex
 I would recommend reading the pages on @ref language_theory, @ref generic_regexes and @ref regexes_in_barf before proceeding.  The latter is essential for understanding this section and the next.
 
-The body of a <tt>reflex</tt> scanner source file consists of one or more named scanner modes.  A scanner mode is composed of one or more rules.  A rule is a regular expression with associated handler code.  Essentially each scanner mode is a separate state machine, as it is impossible to transition from anywhere in one scanner mode to a different scanner mode without an explicit transition in the rule handler code.  Each rule regex in a given scanner mode is essentially a separate branch in a massively alternated regex.
+The body of a <tt>reflex</tt> scanner source file consists of one or more named state machines.  A state machine is composed of one or more rules.  A rule is a regular expression with associated handler code.  Essentially each state machine is a separate state machine, as it is impossible to transition from anywhere in one state machine to a different state machine without an explicit transition in the rule handler code.  Each rule regex in a given state machine is essentially a separate branch in a massively alternated regex.
 
 TODO: graph of AST produced by the example
 
@@ -13,7 +13,7 @@ Here is the NFA produced from the example <tt>reflex</tt> source given in @ref r
 digraph "NFA" {
     fontname=courier;
     subgraph cluster_0 {
-        label="%scanner_mode MAIN";
+        label="%state_machine MAIN";
         node [label="3:({INTEGER})", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
         3
         node [label="4:([\\t\\n ])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
@@ -87,7 +87,7 @@ digraph "NFA" {
 digraph "NFA" {
     fontname=courier;
     subgraph cluster_0 {
-        label="%scanner_mode BLOCK_COMMENT";
+        label="%state_machine BLOCK_COMMENT";
         node [label="0:([*]/)", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
         0
         node [label="1:([^*]+|[*])", style=filled, fillcolor="#B6FFAE", shape=box, fontname=courier, peripheries=1];
@@ -131,15 +131,15 @@ digraph "NFA" {
 }
 @enddot
 
-Notice that the two scanner modes are entirely separate NFAs.  Also notice that though there is only one start state (the double-lined graph nodes) for each scanner mode, there are multiple accept states (the green graph nodes).  This is because not only does the scanner need to decide wether or not the input is accepted by any of the regexes in the scanner mode, but it has to determine which one(s) accept the input.  However, notice that there is only one accept state for each regex.  This fact will be contrasted after DFA generation.
+Notice that the two state machines are entirely separate NFAs.  Also notice that though there is only one start state (the double-lined graph nodes) for each state machine, there are multiple accept states (the green graph nodes).  This is because not only does the scanner need to decide wether or not the input is accepted by any of the regexes in the state machine, but it has to determine which one(s) accept the input.  However, notice that there is only one accept state for each regex.  This fact will be contrasted after DFA generation.
 
-In order to construct the DFA from which to generate the scanner targets, we will use the modified subset construction algorithm on each separate scanner mode's NFA.  The result is an equal number of DFAs, each corresponding to the NFA it was generated from.  Here are the DFAs corresponding to the above NFAs.
+In order to construct the DFA from which to generate the scanner targets, we will use the modified subset construction algorithm on each separate state machine's NFA.  The result is an equal number of DFAs, each corresponding to the NFA it was generated from.  Here are the DFAs corresponding to the above NFAs.
 
 @dot
 digraph "DFA" {
     fontname=courier;
     subgraph cluster {
-        label="%scanner_mode MAIN";
+        label="%state_machine MAIN";
         node [label="6 : DFA\n14:MAIN, 18, 20, 21, 22, 23", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=2];
         6
         node [label="7 : DFA\n18, 20, 21, 23", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
@@ -189,7 +189,7 @@ digraph "DFA" {
 digraph "DFA" {
     fontname=courier;
     subgraph cluster {
-        label="%scanner_mode BLOCK_COMMENT";
+        label="%state_machine BLOCK_COMMENT";
         node [label="0 : DFA\n8:BLOCK_COMMENT, 9, 11, 13", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=2];
         0
         node [label="1 : DFA\n9, 11", style=filled, fillcolor="#FCFFAE", shape=box, fontname=courier, peripheries=1];
@@ -223,7 +223,7 @@ digraph "DFA" {
 }
 @enddot
 
-Because each DFA state is a set of NFA states, each node is labeled first with the DFA state index, then the list of NFA states it corresponds to.  Again, start states are indicated by double-lined graph nodes and accept states are indicated by green graph nodes.  For the DFA states which contain accept states from the NFA, the accepting regex is indicated after the state index, separated by a colon (just like in the NFA graph).  If a DFA state contains an accept state from the NFA, it is also an accept state.  Notice that in the DFA graph for <tt>\%scanner_mode BLOCK_COMMENT</tt> there are two DFA states which contain the NFA state <tt>1:([^*]+|[*])</tt>.  This is a result of the subset construction algorithm.  Another result is that over all states in a DFA, the corresponding NFA state set is unique.
+Because each DFA state is a set of NFA states, each node is labeled first with the DFA state index, then the list of NFA states it corresponds to.  Again, start states are indicated by double-lined graph nodes and accept states are indicated by green graph nodes.  For the DFA states which contain accept states from the NFA, the accepting regex is indicated after the state index, separated by a colon (just like in the NFA graph).  If a DFA state contains an accept state from the NFA, it is also an accept state.  Notice that in the DFA graph for <tt>\%state_machine BLOCK_COMMENT</tt> there are two DFA states which contain the NFA state <tt>1:([^*]+|[*])</tt>.  This is a result of the subset construction algorithm.  Another result is that over all states in a DFA, the corresponding NFA state set is unique.
 
 If a DFA state contains more than one NFA accept state, the state with the lower index (i.e. declared first in the <tt>reflex</tt> source file) takes priority, as only one rule handler can be be executed for each string that is accepted.
 
@@ -232,7 +232,7 @@ Make sure to read the previous section and all referred pages before this one, b
 
 The goal of this section is to enumerate the concepts and algorithms necessary to implement a target using whatever crappy language your heart desires.  What will be implemented is a machine which runs the FA generated by <tt>reflex</tt> (both an NFA and equivalent DFA are generated), and it must conform to certain standards and obey certain rules to provide consistent behavior across all targets.
 
-First, you must gain an understanding of exactly what a scanner does.  The scanner simply analyzes input, one character at a time, attempting to accept the longest string which satisfies its FA.  Once the scanner can make no valid transitions based on the next input atom, it executes the code associated with the most recently encountered accept state(s).  Assuming the executed code didn't cause the scanning to halt, the machine sets the current state to the starting state for the current scanner mode (e.g. for <tt>\%scanner_mode MAIN</tt> in the above example, DFA state 6) and continues processing.
+First, you must gain an understanding of exactly what a scanner does.  The scanner simply analyzes input, one character at a time, attempting to accept the longest string which satisfies its FA.  Once the scanner can make no valid transitions based on the next input atom, it executes the code associated with the most recently encountered accept state(s).  Assuming the executed code didn't cause the scanning to halt, the machine sets the current state to the starting state for the current state machine (e.g. for <tt>\%state_machine MAIN</tt> in the above example, DFA state 6) and continues processing.
 
 The main parts of a scanner, as defined in this document, are:
 
@@ -430,7 +430,7 @@ interface InputApparatus {
 
 All of the following two definitions are independent of the input apparatus -- they are definitions for the components required to run the FA generated by <tt>reflex</tt>.
 
-The <strong>current scanner mode</strong> (not to be confused with an FA state) is the currently active "mode" of the scanner -- the two scanner modes in the example from @ref reflex_format are <tt>MAIN</tt> and <tt>BLOCK_COMMENT</tt>.  Each has an associated FA -- a set of states, transitions, a starting state, and a set of accept states.
+The <strong>current state machine</strong> is the currently active "mode" of the scanner -- the two state machines in the example from @ref reflex_format are <tt>MAIN</tt> and <tt>BLOCK_COMMENT</tt>.  Each has an associated FA -- a set of states, transitions, a starting state, and a set of accept states.
 
 A <strong>state identifier</strong> is an abstract indicator for a single state in an FA.  It can be invalid (i.e. indicating no real FA state), and its validity must be detectable.  A state identifier could be implemented as a pointer to a memory address (in which case the invalid value would be NULL), the FA state index (the invalid value could be one higher than the highest valid FA state index), or whatever.
 
@@ -441,7 +441,7 @@ The above definitions have been made for use in the following definition.
 The <strong>automaton apparatus</strong> is an interface which provides certain well-defined operations on the above-defined entities.  Like the input apparatus, its encapsulation serves to simplify the interaction with the final generated scanner.  The given definition is that of a DFA (and not an NFA); because all NFAs have an equivalent DFA, we will choose to implement the easier/faster DFA.  The definition of the automaton apparatus for an NFA may be given at a later time.  The interface follows.
 
     <ul>
-    <li>type: <tt>accept_handler_index</tt> -- an index into the table of accept handlers which are provided by <tt>reflex</tt>.  If this value is greater or equal to the total number of accept handlers (from all scanner modes), then it is invalid.  This type must be large enough to hold the total number of accept handlers.
+    <li>type: <tt>accept_handler_index</tt> -- an index into the table of accept handlers which are provided by <tt>reflex</tt>.  If this value is greater or equal to the total number of accept handlers (from all state machines), then it is invalid.  This type must be large enough to hold the total number of accept handlers.
     <li>type: <tt>state_identifier</tt> -- a type satisfying the above definition of a state identifier.
     <li>type: <tt>dfa_state</tt> -- is a compound, implementing the concept of an FA state, containing:
         <ul>
@@ -467,7 +467,7 @@ The <strong>automaton apparatus</strong> is an interface which provides certain 
         </ul>
 
     <li>member: <tt>accept_handler_count</tt> -- of type accept_handler_index.  This stores the number of accept handlers, and indicates the least invalid value for members of type accept_handler_index.
-    <li>member: <tt>initial_state</tt> -- of type state identifier.  Stores the starting state for the current scanner mode.  Its value is used to initialize current_state (see below).  It must never be invalid.
+    <li>member: <tt>initial_state</tt> -- of type state identifier.  Stores the starting state for the current state machine.  Its value is used to initialize current_state (see below).  It must never be invalid.
     <li>member: <tt>current_state</tt> -- of type state identifier.  Indicates the current state (as described in @ref language_theory_definitions) in the running FA.
     <li>member: <tt>accept_state</tt> -- of type state identifier.  Indicates the FA accept state which was most recently encountered (i.e. the most recent value of the current state which was an FA accept state).  It is always initialized as invalid.
     <li>member: <tt>input_buffer</tt> -- of a type implementing the input apparatus interface.
@@ -556,7 +556,7 @@ Each apparatus, in hiding its subordinate, provides a much cleaner and simpler A
     <li>To separate the common code from user-customized code, so that code-reuse is possible (e.g. the input and FA apparati could be implemented as unchanging C++ baseclasses used by each instance of user-customized code).  The automaton apparatus is designed to hide the input apparatus.  Similarly, the scanner apparatus is designed to hide the automaton apparatus (from the user).
     </ul>
 
-TODO: describe the "debug spew" and "scanner mode" properties.
+TODO: describe the "debug spew" and "state machine" properties.
 There are two important properties of the scanner apparatus which will now be described.  Firstly, the "debug spew" property, a boolean value, indicates wether or not various "debug messages" will be printed during the execution of 
 
 The scanner apparatus API follows.
@@ -564,21 +564,21 @@ The scanner apparatus API follows.
     <ul>
     <li>type: <tt>dfa_state_set</tt> -- A set type whose elements are of type dfa_state (see @ref reflex_guts_implementing_a_target_definitions_automaton_apparatus).
     <li>type: <tt>dfa_transition_set</tt> -- A set type whose elements are of type dfa_transition (see @ref reflex_guts_implementing_a_target_definitions_automaton_apparatus).
-    <li>type: <tt>scanner_mode_name</tt> -- A type which can uniquely identify scanner modes by name.
-    <li>type: <tt>scanner_mode_map</tt> -- A type which maps scanner_mode_name onto dfa_state (see @ref reflex_guts_implementing_a_target_definitions_automaton_apparatus).
+    <li>type: <tt>state_machine_name</tt> -- A type which can uniquely identify state machines by name.
+    <li>type: <tt>state_machine_map</tt> -- A type which maps state_machine_name onto dfa_state (see @ref reflex_guts_implementing_a_target_definitions_automaton_apparatus).
     <li>type: <tt>return_type</tt> -- A user-specified type which defines the return type of the <tt>Scan</tt> method.
 
     <li>member: <tt>automaton</tt> -- of a type satisfying the automaton apparatus.
     <li>member: <tt>states</tt> -- of type dfa_state_set.
     <li>member: <tt>transitions</tt> -- of type dfa_transition_set.
 
-    <li>method: <tt>Construct (user-specified parameters)</tt> -- one-time and each-time initializations; calls automaton.Construct(...), sets the "debug spew" property to false, sets the "scanner mode" to the value specified by %start_in_scanner_mode, and calls automaton.ResetForNewInput().
+    <li>method: <tt>Construct (user-specified parameters)</tt> -- one-time and each-time initializations; calls automaton.Construct(...), sets the "debug spew" property to false, sets the "state machine" to the value specified by %start_with_state_machine, and calls automaton.ResetForNewInput().
     <li>method: <tt>Destruct ()</tt> -- one-time cleanup operations; user-customizable.
     <li>method: <tt>IsAtEndOfInput ()</tt> returns <tt>boolean</tt> -- simply returns the value of automaton.input_buffer.IsAtEndOfInput().
     <li>method: <tt>DebugSpew ()</tt> returns <tt>boolean</tt> -- accessor for the "debug spew" property.
     <li>method: <tt>DebugSpew (boolean debug_spew)</tt> -- modifier for the "debug spew" property.
-    <li>method: <tt>ScannerMode ()</tt> returns <tt>scanner_mode_name</tt> -- accessor for the "scanner mode" property.
-    <li>method: <tt>ScannerMode (scanner_mode_name)</tt> -- modifier for the "scanner mode" property.
+    <li>method: <tt>StateMachine ()</tt> returns <tt>state_machine_name</tt> -- accessor for the "state machine" property.
+    <li>method: <tt>StateMachine (state_machine_name)</tt> -- modifier for the "state machine" property.
     <li>method: <tt>Scan ()</tt> returns <tt>return_type</tt> -- the whole reason this fine mess exists in the first place; runs the automaton until the user-specified rule-handler code causes it to return a value.
     </ul>
 

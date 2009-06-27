@@ -134,10 +134,10 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
            || nonterminal_to_parse == ParseNonterminal::rule_handler
            || nonterminal_to_parse == ParseNonterminal::rule_handlers
            || nonterminal_to_parse == ParseNonterminal::rule_list
-           || nonterminal_to_parse == ParseNonterminal::scanner_mode
-           || nonterminal_to_parse == ParseNonterminal::scanner_mode_rules
-           || nonterminal_to_parse == ParseNonterminal::scanner_modes
-           || nonterminal_to_parse == ParseNonterminal::start_in_scanner_mode_directive
+           || nonterminal_to_parse == ParseNonterminal::start_with_state_machine_directive
+           || nonterminal_to_parse == ParseNonterminal::state_machine
+           || nonterminal_to_parse == ParseNonterminal::state_machine_rules
+           || nonterminal_to_parse == ParseNonterminal::state_machines
            || nonterminal_to_parse == ParseNonterminal::target_directive
            || nonterminal_to_parse == ParseNonterminal::target_directive_param
            || nonterminal_to_parse == ParseNonterminal::target_directives
@@ -392,21 +392,21 @@ Parser::Token Parser::Scan_ () throw()
         return Token(Parser::Token::Id(scanner_token_type), lookahead_token_data);
     switch (scanner_token_type)
     {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                 return Token(Terminal::END_, lookahead_token_data);
-        case CommonLang::Scanner::Token::BAD_TOKEN:                       return Token(Terminal::BAD_TOKEN, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                 return Token(Terminal::DIRECTIVE_MACRO, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_SCANNER_MODE: return Token(Terminal::DIRECTIVE_START_IN_SCANNER_MODE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE:                 return Token(Terminal::DIRECTIVE_STATE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:               return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                 return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::END_OF_FILE:                     return Token(Terminal::END_, lookahead_token_data);
-        case CommonLang::Scanner::Token::END_PREAMBLE:                    return Token(Terminal::END_PREAMBLE, lookahead_token_data);
-        case CommonLang::Scanner::Token::ID:                              return Token(Terminal::ID, lookahead_token_data);
-        case CommonLang::Scanner::Token::NEWLINE:                         return Token(Terminal::NEWLINE, lookahead_token_data);
-        case CommonLang::Scanner::Token::REGEX:                           return Token(Terminal::REGEX, lookahead_token_data);
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:               return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::STRING_LITERAL:                  return Token(Terminal::STRING_LITERAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                  return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::BAD_TOKEN:                        return Token(Terminal::BAD_TOKEN, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                  return Token(Terminal::DIRECTIVE_MACRO, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE: return Token(Terminal::DIRECTIVE_START_IN_STATE_MACHINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE:                  return Token(Terminal::DIRECTIVE_STATE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                 return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                  return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_OF_FILE:                      return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_PREAMBLE:                     return Token(Terminal::END_PREAMBLE, lookahead_token_data);
+        case CommonLang::Scanner::Token::ID:                               return Token(Terminal::ID, lookahead_token_data);
+        case CommonLang::Scanner::Token::NEWLINE:                          return Token(Terminal::NEWLINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::REGEX:                            return Token(Terminal::REGEX, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRING_LITERAL:                   return Token(Terminal::STRING_LITERAL, lookahead_token_data);
 
         case CommonLang::Scanner::Token::CHAR_LITERAL:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
@@ -574,9 +574,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Regex::RegularExpressionMap * regular_expression_map(Dsc<Regex::RegularExpressionMap *>(m_stack_[m_stack_.size()-4].m_token_data));
-            StartInScannerModeDirective * start_in_scanner_mode_directive(Dsc<StartInScannerModeDirective *>(m_stack_[m_stack_.size()-3].m_token_data));
+            StartWithStateMachineDirective * start_with_state_machine_directive(Dsc<StartWithStateMachineDirective *>(m_stack_[m_stack_.size()-3].m_token_data));
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token_data));
-            ScannerModeMap * scanner_mode_map(Dsc<ScannerModeMap *>(m_stack_[m_stack_.size()-1].m_token_data));
+            StateMachineMap * state_machine_map(Dsc<StateMachineMap *>(m_stack_[m_stack_.size()-1].m_token_data));
 
 #line 239 "reflex_parser.trison"
 
@@ -584,21 +584,21 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         // set the TargetMap's primary source path
         m_target_map->SetSourcePath(m_scanner.GetInputName());
-        // make sure the %start_in_scanner_mode directive value specifies a real scanner mode
-        if (start_in_scanner_mode_directive != NULL &&
-            scanner_mode_map->GetElement(start_in_scanner_mode_directive->m_scanner_mode_id->GetText()) == NULL)
+        // make sure the %start_with_state_machine directive value specifies a real state machine
+        if (start_with_state_machine_directive != NULL &&
+            state_machine_map->GetElement(start_with_state_machine_directive->m_state_machine_id->GetText()) == NULL)
         {
             EmitError(
-                "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"",
-                start_in_scanner_mode_directive->GetFiLoc());
+                "undeclared state \"" + start_with_state_machine_directive->m_state_machine_id->GetText() + "\"",
+                start_with_state_machine_directive->GetFiLoc());
         }
 
         PrimarySource *primary_source =
             new PrimarySource(
                 regular_expression_map,
-                start_in_scanner_mode_directive,
+                start_with_state_machine_directive,
                 throwaway->GetFiLoc(),
-                scanner_mode_map);
+                state_machine_map);
         delete throwaway;
         return primary_source;
     
@@ -878,7 +878,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 #line 409 "reflex_parser.trison"
 
         // we save the regex macro map in a member var, so that the reduction
-        // rule handler for the scanner mode rules can use it.
+        // rule handler for the state machine rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
         return m_regex_macro_map;
     
@@ -924,12 +924,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::Id * state_machine_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
 
 #line 439 "reflex_parser.trison"
 
         delete throwaway;
-        return new StartInScannerModeDirective(scanner_mode_id);
+        return new StartWithStateMachineDirective(state_machine_id);
     
 #line 935 "reflex_parser.cpp"
             break;
@@ -942,7 +942,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 445 "reflex_parser.trison"
 
-        EmitError("parse error in directive %start_in_scanner_mode", throwaway->GetFiLoc());
+        EmitError("parse error in directive %start_with_state_machine", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     
@@ -953,14 +953,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         case 23:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ScannerModeMap * scanner_mode_map(Dsc<ScannerModeMap *>(m_stack_[m_stack_.size()-2].m_token_data));
-            ScannerMode * scanner_mode(Dsc<ScannerMode *>(m_stack_[m_stack_.size()-1].m_token_data));
+            StateMachineMap * state_machine_map(Dsc<StateMachineMap *>(m_stack_[m_stack_.size()-2].m_token_data));
+            StateMachine * state_machine(Dsc<StateMachine *>(m_stack_[m_stack_.size()-1].m_token_data));
 
 #line 459 "reflex_parser.trison"
 
-        if (scanner_mode != NULL)
-            scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
-        return scanner_mode_map;
+        if (state_machine != NULL)
+            state_machine_map->Add(state_machine->m_state_machine_id->GetText(), state_machine);
+        return state_machine_map;
     
 #line 966 "reflex_parser.cpp"
             break;
@@ -972,7 +972,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 466 "reflex_parser.trison"
 
-        return new ScannerModeMap();
+        return new StateMachineMap();
     
 #line 978 "reflex_parser.cpp"
             break;
@@ -982,13 +982,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
+            Ast::Id * state_machine_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
             RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token_data));
 
 #line 474 "reflex_parser.trison"
 
         delete throwaway;
-        return new ScannerMode(scanner_mode_id, rule_list);
+        return new StateMachine(state_machine_id, rule_list);
     
 #line 994 "reflex_parser.cpp"
             break;
@@ -998,13 +998,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Ast::Id * scanner_mode_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
+            Ast::Id * state_machine_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
 
 #line 480 "reflex_parser.trison"
 
-        EmitError("parse error in scanner mode rule list", throwaway->GetFiLoc());
+        EmitError("parse error in state machine rule list", throwaway->GetFiLoc());
         delete throwaway;
-        return new ScannerMode(scanner_mode_id, new RuleList());
+        return new StateMachine(state_machine_id, new RuleList());
     
 #line 1010 "reflex_parser.cpp"
             break;
@@ -1018,7 +1018,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 487 "reflex_parser.trison"
 
-        EmitError("parse error in scanner mode id", throwaway->GetFiLoc());
+        EmitError("parse error in state machine id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
@@ -1375,7 +1375,7 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
 
 Parser::Rule_ const Parser::ms_rule_table_[] =
 {
-    { Parser::Nonterminal_::root, 7, "root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes" },
+    { Parser::Nonterminal_::root, 7, "root <- at_least_zero_newlines targets_directive target_directives macro_directives start_with_state_machine_directive END_PREAMBLE state_machines" },
     { Parser::Nonterminal_::targets_directive, 3, "targets_directive <- DIRECTIVE_TARGETS target_ids at_least_one_newline" },
     { Parser::Nonterminal_::targets_directive, 0, "targets_directive <-" },
     { Parser::Nonterminal_::targets_directive, 3, "targets_directive <- DIRECTIVE_TARGETS ERROR_ at_least_one_newline" },
@@ -1396,15 +1396,15 @@ Parser::Rule_ const Parser::ms_rule_table_[] =
     { Parser::Nonterminal_::macro_directives, 0, "macro_directives <-" },
     { Parser::Nonterminal_::macro_directives, 5, "macro_directives <- macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline" },
     { Parser::Nonterminal_::macro_directives, 4, "macro_directives <- macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline" },
-    { Parser::Nonterminal_::start_in_scanner_mode_directive, 3, "start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline" },
-    { Parser::Nonterminal_::start_in_scanner_mode_directive, 3, "start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline" },
-    { Parser::Nonterminal_::scanner_modes, 2, "scanner_modes <- scanner_modes scanner_mode" },
-    { Parser::Nonterminal_::scanner_modes, 0, "scanner_modes <-" },
-    { Parser::Nonterminal_::scanner_mode, 5, "scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules ';'" },
-    { Parser::Nonterminal_::scanner_mode, 5, "scanner_mode <- DIRECTIVE_STATE ID ':' ERROR_ ';'" },
-    { Parser::Nonterminal_::scanner_mode, 5, "scanner_mode <- DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
-    { Parser::Nonterminal_::scanner_mode_rules, 1, "scanner_mode_rules <- rule_list" },
-    { Parser::Nonterminal_::scanner_mode_rules, 0, "scanner_mode_rules <-" },
+    { Parser::Nonterminal_::start_with_state_machine_directive, 3, "start_with_state_machine_directive <- DIRECTIVE_START_IN_STATE_MACHINE ID at_least_one_newline" },
+    { Parser::Nonterminal_::start_with_state_machine_directive, 3, "start_with_state_machine_directive <- DIRECTIVE_START_IN_STATE_MACHINE ERROR_ at_least_one_newline" },
+    { Parser::Nonterminal_::state_machines, 2, "state_machines <- state_machines state_machine" },
+    { Parser::Nonterminal_::state_machines, 0, "state_machines <-" },
+    { Parser::Nonterminal_::state_machine, 5, "state_machine <- DIRECTIVE_STATE ID ':' state_machine_rules ';'" },
+    { Parser::Nonterminal_::state_machine, 5, "state_machine <- DIRECTIVE_STATE ID ':' ERROR_ ';'" },
+    { Parser::Nonterminal_::state_machine, 5, "state_machine <- DIRECTIVE_STATE ERROR_ ':' state_machine_rules ';'" },
+    { Parser::Nonterminal_::state_machine_rules, 1, "state_machine_rules <- rule_list" },
+    { Parser::Nonterminal_::state_machine_rules, 0, "state_machine_rules <-" },
     { Parser::Nonterminal_::rule_list, 3, "rule_list <- rule_list '|' rule" },
     { Parser::Nonterminal_::rule_list, 1, "rule_list <- rule" },
     { Parser::Nonterminal_::rule, 2, "rule <- REGEX rule_handlers" },
@@ -1425,9 +1425,9 @@ BarfCpp_::Size const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / s
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
-    { 3, ms_transition_table_+0, "START root                                                                                                                                              \nrule 0: root <- . at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 41: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE                                                                                     \nrule 42: at_least_zero_newlines <- .                                                                                                                    " },
+    { 3, ms_transition_table_+0, "START root                                                                                                                                                  \nrule 0: root <- . at_least_zero_newlines targets_directive target_directives macro_directives start_with_state_machine_directive END_PREAMBLE state_machines\nrule 41: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE                                                                                         \nrule 42: at_least_zero_newlines <- .                                                                                                                        " },
     { 1, ms_transition_table_+3, "RETURN root" },
-    { 4, ms_transition_table_+4, "rule 0: root <- at_least_zero_newlines . targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 41: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE                                                                                     \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline                                                                        \nrule 2: targets_directive <- .                                                                                                                          \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline                                                                            " },
+    { 4, ms_transition_table_+4, "rule 0: root <- at_least_zero_newlines . targets_directive target_directives macro_directives start_with_state_machine_directive END_PREAMBLE state_machines\nrule 41: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE                                                                                         \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline                                                                            \nrule 2: targets_directive <- .                                                                                                                              \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline                                                                                " },
     { 3, ms_transition_table_+8, "rule 1: targets_directive <- DIRECTIVE_TARGETS . target_ids at_least_one_newline\nrule 4: target_ids <- . target_ids ID                                           \nrule 5: target_ids <- .                                                         \nrule 3: targets_directive <- DIRECTIVE_TARGETS . ERROR_ at_least_one_newline    " },
     { 3, ms_transition_table_+11, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE             \nrule 44: at_least_one_newline <- . NEWLINE                                  \nrule 3: targets_directive <- DIRECTIVE_TARGETS ERROR_ . at_least_one_newline" },
     { 1, ms_transition_table_+14, "rule 44: at_least_one_newline <- NEWLINE ." },
@@ -1437,8 +1437,8 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 1, ms_transition_table_+22, "rule 4: target_ids <- target_ids ID ." },
     { 2, ms_transition_table_+23, "rule 1: targets_directive <- DIRECTIVE_TARGETS target_ids at_least_one_newline .\nrule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                 " },
     { 1, ms_transition_table_+25, "rule 41: at_least_zero_newlines <- at_least_zero_newlines NEWLINE ." },
-    { 2, ms_transition_table_+26, "rule 0: root <- at_least_zero_newlines targets_directive . target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 6: target_directives <- . target_directives target_directive at_least_one_newline                                                                  \nrule 7: target_directives <- .                                                                                                                          " },
-    { 4, ms_transition_table_+28, "rule 0: root <- at_least_zero_newlines targets_directive target_directives . macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 6: target_directives <- target_directives . target_directive at_least_one_newline                                                                  \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param                                                                     \nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                                                                                     \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                                                                                           \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                                                                                                  \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline                                                           \nrule 18: macro_directives <- .                                                                                                                          \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline                                                          \nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline                                                             " },
+    { 2, ms_transition_table_+26, "rule 0: root <- at_least_zero_newlines targets_directive . target_directives macro_directives start_with_state_machine_directive END_PREAMBLE state_machines\nrule 6: target_directives <- . target_directives target_directive at_least_one_newline                                                                      \nrule 7: target_directives <- .                                                                                                                              " },
+    { 4, ms_transition_table_+28, "rule 0: root <- at_least_zero_newlines targets_directive target_directives . macro_directives start_with_state_machine_directive END_PREAMBLE state_machines\nrule 6: target_directives <- target_directives . target_directive at_least_one_newline                                                                      \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param                                                                         \nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                                                                                         \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                                                                                               \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                                                                                                      \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline                                                               \nrule 18: macro_directives <- .                                                                                                                              \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline                                                              \nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline                                                                 " },
     { 3, ms_transition_table_+32, "rule 8: target_directive <- DIRECTIVE_TARGET . '.' ID '.' ID target_directive_param\nrule 9: target_directive <- DIRECTIVE_TARGET . '.' ID '.' ID ERROR_                \nrule 10: target_directive <- DIRECTIVE_TARGET . '.' ID ERROR_                      \nrule 11: target_directive <- DIRECTIVE_TARGET . ERROR_                             " },
     { 2, ms_transition_table_+35, "rule 8: target_directive <- DIRECTIVE_TARGET '.' . ID '.' ID target_directive_param\nrule 9: target_directive <- DIRECTIVE_TARGET '.' . ID '.' ID ERROR_                \nrule 10: target_directive <- DIRECTIVE_TARGET '.' . ID ERROR_                      " },
     { 3, ms_transition_table_+37, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID . '.' ID target_directive_param\nrule 9: target_directive <- DIRECTIVE_TARGET '.' ID . '.' ID ERROR_                \nrule 10: target_directive <- DIRECTIVE_TARGET '.' ID . ERROR_                      " },
@@ -1454,7 +1454,7 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 1, ms_transition_table_+56, "rule 11: target_directive <- DIRECTIVE_TARGET ERROR_ ." },
     { 3, ms_transition_table_+57, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                       \nrule 44: at_least_one_newline <- . NEWLINE                                            \nrule 6: target_directives <- target_directives target_directive . at_least_one_newline" },
     { 2, ms_transition_table_+60, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                       \nrule 6: target_directives <- target_directives target_directive at_least_one_newline ." },
-    { 4, ms_transition_table_+62, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives . start_in_scanner_mode_directive END_PREAMBLE scanner_modes\nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline                                                           \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline                                                          \nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline                                                             \nrule 21: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline                                                   \nrule 22: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline                                               " },
+    { 4, ms_transition_table_+62, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives . start_with_state_machine_directive END_PREAMBLE state_machines\nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline                                                               \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline                                                              \nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline                                                                 \nrule 21: start_with_state_machine_directive <- . DIRECTIVE_START_IN_STATE_MACHINE ID at_least_one_newline                                                   \nrule 22: start_with_state_machine_directive <- . DIRECTIVE_START_IN_STATE_MACHINE ERROR_ at_least_one_newline                                               " },
     { 3, ms_transition_table_+66, "rule 17: macro_directives <- macro_directives DIRECTIVE_MACRO . ID REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO . ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO . ERROR_ at_least_one_newline   " },
     { 3, ms_transition_table_+69, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                            \nrule 44: at_least_one_newline <- . NEWLINE                                                 \nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO ERROR_ . at_least_one_newline" },
     { 2, ms_transition_table_+72, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                            \nrule 20: macro_directives <- macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline ." },
@@ -1463,17 +1463,17 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 2, ms_transition_table_+80, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                               \nrule 19: macro_directives <- macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline ." },
     { 3, ms_transition_table_+82, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                              \nrule 44: at_least_one_newline <- . NEWLINE                                                   \nrule 17: macro_directives <- macro_directives DIRECTIVE_MACRO ID REGEX . at_least_one_newline" },
     { 2, ms_transition_table_+85, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                              \nrule 17: macro_directives <- macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline ." },
-    { 3, ms_transition_table_+87, "rule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE . ID at_least_one_newline    \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE . ERROR_ at_least_one_newline" },
-    { 3, ms_transition_table_+90, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                          \nrule 44: at_least_one_newline <- . NEWLINE                                                               \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ERROR_ . at_least_one_newline" },
-    { 2, ms_transition_table_+93, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                          \nrule 22: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline ." },
-    { 3, ms_transition_table_+95, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                      \nrule 44: at_least_one_newline <- . NEWLINE                                                           \nrule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ID . at_least_one_newline" },
-    { 2, ms_transition_table_+98, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                      \nrule 21: start_in_scanner_mode_directive <- DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline ." },
-    { 2, ms_transition_table_+100, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive . END_PREAMBLE scanner_modes" },
-    { 2, ms_transition_table_+102, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE . scanner_modes\nrule 23: scanner_modes <- . scanner_modes scanner_mode                                                                                                  \nrule 24: scanner_modes <- .                                                                                                                             " },
-    { 3, ms_transition_table_+104, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_in_scanner_mode_directive END_PREAMBLE scanner_modes .\nrule 23: scanner_modes <- scanner_modes . scanner_mode                                                                                                  \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'                                                                                \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                                                                                            \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'                                                                            " },
-    { 3, ms_transition_table_+107, "rule 25: scanner_mode <- DIRECTIVE_STATE . ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- DIRECTIVE_STATE . ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- DIRECTIVE_STATE . ERROR_ ':' scanner_mode_rules ';'" },
-    { 2, ms_transition_table_+110, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ . ':' scanner_mode_rules ';'" },
-    { 5, ms_transition_table_+112, "rule 28: scanner_mode_rules <- . rule_list                                  \nrule 30: rule_list <- . rule_list '|' rule                                  \nrule 32: rule <- . REGEX rule_handlers                                      \nrule 31: rule_list <- . rule                                                \nrule 29: scanner_mode_rules <- .                                            \nrule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' . scanner_mode_rules ';'" },
+    { 3, ms_transition_table_+87, "rule 21: start_with_state_machine_directive <- DIRECTIVE_START_IN_STATE_MACHINE . ID at_least_one_newline    \nrule 22: start_with_state_machine_directive <- DIRECTIVE_START_IN_STATE_MACHINE . ERROR_ at_least_one_newline" },
+    { 3, ms_transition_table_+90, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                              \nrule 44: at_least_one_newline <- . NEWLINE                                                                   \nrule 22: start_with_state_machine_directive <- DIRECTIVE_START_IN_STATE_MACHINE ERROR_ . at_least_one_newline" },
+    { 2, ms_transition_table_+93, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                              \nrule 22: start_with_state_machine_directive <- DIRECTIVE_START_IN_STATE_MACHINE ERROR_ at_least_one_newline ." },
+    { 3, ms_transition_table_+95, "rule 43: at_least_one_newline <- . at_least_one_newline NEWLINE                                          \nrule 44: at_least_one_newline <- . NEWLINE                                                               \nrule 21: start_with_state_machine_directive <- DIRECTIVE_START_IN_STATE_MACHINE ID . at_least_one_newline" },
+    { 2, ms_transition_table_+98, "rule 43: at_least_one_newline <- at_least_one_newline . NEWLINE                                          \nrule 21: start_with_state_machine_directive <- DIRECTIVE_START_IN_STATE_MACHINE ID at_least_one_newline ." },
+    { 2, ms_transition_table_+100, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_with_state_machine_directive . END_PREAMBLE state_machines" },
+    { 2, ms_transition_table_+102, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_with_state_machine_directive END_PREAMBLE . state_machines\nrule 23: state_machines <- . state_machines state_machine                                                                                                   \nrule 24: state_machines <- .                                                                                                                                " },
+    { 3, ms_transition_table_+104, "rule 0: root <- at_least_zero_newlines targets_directive target_directives macro_directives start_with_state_machine_directive END_PREAMBLE state_machines .\nrule 23: state_machines <- state_machines . state_machine                                                                                                   \nrule 25: state_machine <- . DIRECTIVE_STATE ID ':' state_machine_rules ';'                                                                                  \nrule 26: state_machine <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                                                                                               \nrule 27: state_machine <- . DIRECTIVE_STATE ERROR_ ':' state_machine_rules ';'                                                                              " },
+    { 3, ms_transition_table_+107, "rule 25: state_machine <- DIRECTIVE_STATE . ID ':' state_machine_rules ';'    \nrule 26: state_machine <- DIRECTIVE_STATE . ID ':' ERROR_ ';'                 \nrule 27: state_machine <- DIRECTIVE_STATE . ERROR_ ':' state_machine_rules ';'" },
+    { 2, ms_transition_table_+110, "rule 27: state_machine <- DIRECTIVE_STATE ERROR_ . ':' state_machine_rules ';'" },
+    { 5, ms_transition_table_+112, "rule 28: state_machine_rules <- . rule_list                                   \nrule 30: rule_list <- . rule_list '|' rule                                    \nrule 32: rule <- . REGEX rule_handlers                                        \nrule 31: rule_list <- . rule                                                  \nrule 29: state_machine_rules <- .                                             \nrule 27: state_machine <- DIRECTIVE_STATE ERROR_ ':' . state_machine_rules ';'" },
     { 2, ms_transition_table_+117, "rule 32: rule <- REGEX . rule_handlers                \nrule 33: rule_handlers <- . rule_handlers rule_handler\nrule 34: rule_handlers <- .                           " },
     { 4, ms_transition_table_+119, "rule 32: rule <- REGEX rule_handlers .                                   \nrule 33: rule_handlers <- rule_handlers . rule_handler                   \nrule 35: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 36: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 37: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 38: rule_handler <- . ERROR_ any_type_of_code_block                 " },
     { 4, ms_transition_table_+123, "rule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK    \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK  \nrule 38: rule_handler <- ERROR_ . any_type_of_code_block" },
@@ -1487,19 +1487,19 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 4, ms_transition_table_+140, "rule 39: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 40: any_type_of_code_block <- . STRICT_CODE_BLOCK                   \nrule 36: rule_handler <- DIRECTIVE_TARGET ERROR_ . any_type_of_code_block\nrule 37: rule_handler <- DIRECTIVE_TARGET ERROR_ .                       " },
     { 1, ms_transition_table_+144, "rule 36: rule_handler <- DIRECTIVE_TARGET ERROR_ any_type_of_code_block ." },
     { 1, ms_transition_table_+145, "rule 33: rule_handlers <- rule_handlers rule_handler ." },
-    { 2, ms_transition_table_+146, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules . ';'" },
-    { 1, ms_transition_table_+148, "rule 27: scanner_mode <- DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';' ." },
-    { 2, ms_transition_table_+149, "rule 28: scanner_mode_rules <- rule_list .\nrule 30: rule_list <- rule_list . '|' rule" },
+    { 2, ms_transition_table_+146, "rule 27: state_machine <- DIRECTIVE_STATE ERROR_ ':' state_machine_rules . ';'" },
+    { 1, ms_transition_table_+148, "rule 27: state_machine <- DIRECTIVE_STATE ERROR_ ':' state_machine_rules ';' ." },
+    { 2, ms_transition_table_+149, "rule 28: state_machine_rules <- rule_list .\nrule 30: rule_list <- rule_list . '|' rule " },
     { 3, ms_transition_table_+151, "rule 30: rule_list <- rule_list '|' . rule\nrule 32: rule <- . REGEX rule_handlers    " },
     { 1, ms_transition_table_+154, "rule 30: rule_list <- rule_list '|' rule ." },
     { 1, ms_transition_table_+155, "rule 31: rule_list <- rule ." },
-    { 2, ms_transition_table_+156, "rule 25: scanner_mode <- DIRECTIVE_STATE ID . ':' scanner_mode_rules ';'\nrule 26: scanner_mode <- DIRECTIVE_STATE ID . ':' ERROR_ ';'            " },
-    { 6, ms_transition_table_+158, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' . scanner_mode_rules ';'\nrule 28: scanner_mode_rules <- . rule_list                              \nrule 30: rule_list <- . rule_list '|' rule                              \nrule 32: rule <- . REGEX rule_handlers                                  \nrule 31: rule_list <- . rule                                            \nrule 29: scanner_mode_rules <- .                                        \nrule 26: scanner_mode <- DIRECTIVE_STATE ID ':' . ERROR_ ';'            " },
-    { 2, ms_transition_table_+164, "rule 26: scanner_mode <- DIRECTIVE_STATE ID ':' ERROR_ . ';'" },
-    { 1, ms_transition_table_+166, "rule 26: scanner_mode <- DIRECTIVE_STATE ID ':' ERROR_ ';' ." },
-    { 2, ms_transition_table_+167, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules . ';'" },
-    { 1, ms_transition_table_+169, "rule 25: scanner_mode <- DIRECTIVE_STATE ID ':' scanner_mode_rules ';' ." },
-    { 1, ms_transition_table_+170, "rule 23: scanner_modes <- scanner_modes scanner_mode ." },
+    { 2, ms_transition_table_+156, "rule 25: state_machine <- DIRECTIVE_STATE ID . ':' state_machine_rules ';'\nrule 26: state_machine <- DIRECTIVE_STATE ID . ':' ERROR_ ';'             " },
+    { 6, ms_transition_table_+158, "rule 25: state_machine <- DIRECTIVE_STATE ID ':' . state_machine_rules ';'\nrule 28: state_machine_rules <- . rule_list                               \nrule 30: rule_list <- . rule_list '|' rule                                \nrule 32: rule <- . REGEX rule_handlers                                    \nrule 31: rule_list <- . rule                                              \nrule 29: state_machine_rules <- .                                         \nrule 26: state_machine <- DIRECTIVE_STATE ID ':' . ERROR_ ';'             " },
+    { 2, ms_transition_table_+164, "rule 26: state_machine <- DIRECTIVE_STATE ID ':' ERROR_ . ';'" },
+    { 1, ms_transition_table_+166, "rule 26: state_machine <- DIRECTIVE_STATE ID ':' ERROR_ ';' ." },
+    { 2, ms_transition_table_+167, "rule 25: state_machine <- DIRECTIVE_STATE ID ':' state_machine_rules . ';'" },
+    { 1, ms_transition_table_+169, "rule 25: state_machine <- DIRECTIVE_STATE ID ':' state_machine_rules ';' ." },
+    { 1, ms_transition_table_+170, "rule 23: state_machines <- state_machines state_machine ." },
     { 3, ms_transition_table_+171, "START targets_directive                                                         \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline\nrule 2: targets_directive <- .                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline    " },
     { 1, ms_transition_table_+174, "RETURN targets_directive" },
     { 2, ms_transition_table_+175, "START target_ids                     \nrule 4: target_ids <- . target_ids ID\nrule 5: target_ids <- .              " },
@@ -1512,14 +1512,14 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 1, ms_transition_table_+194, "RETURN target_directive_param" },
     { 2, ms_transition_table_+195, "START macro_directives                                                                        \nrule 17: macro_directives <- . macro_directives DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 18: macro_directives <- .                                                                \nrule 19: macro_directives <- . macro_directives DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- . macro_directives DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
     { 2, ms_transition_table_+197, "RETURN macro_directives                                                                       \nrule 17: macro_directives <- macro_directives . DIRECTIVE_MACRO ID REGEX at_least_one_newline \nrule 19: macro_directives <- macro_directives . DIRECTIVE_MACRO ID ERROR_ at_least_one_newline\nrule 20: macro_directives <- macro_directives . DIRECTIVE_MACRO ERROR_ at_least_one_newline   " },
-    { 3, ms_transition_table_+199, "START start_in_scanner_mode_directive                                                                    \nrule 21: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ID at_least_one_newline    \nrule 22: start_in_scanner_mode_directive <- . DIRECTIVE_START_IN_SCANNER_MODE ERROR_ at_least_one_newline" },
-    { 1, ms_transition_table_+202, "RETURN start_in_scanner_mode_directive" },
-    { 2, ms_transition_table_+203, "START scanner_modes                                   \nrule 23: scanner_modes <- . scanner_modes scanner_mode\nrule 24: scanner_modes <- .                           " },
-    { 3, ms_transition_table_+205, "RETURN scanner_modes                                                        \nrule 23: scanner_modes <- scanner_modes . scanner_mode                      \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
-    { 3, ms_transition_table_+208, "START scanner_mode                                                          \nrule 25: scanner_mode <- . DIRECTIVE_STATE ID ':' scanner_mode_rules ';'    \nrule 26: scanner_mode <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                \nrule 27: scanner_mode <- . DIRECTIVE_STATE ERROR_ ':' scanner_mode_rules ';'" },
-    { 1, ms_transition_table_+211, "RETURN scanner_mode" },
-    { 5, ms_transition_table_+212, "START scanner_mode_rules                  \nrule 28: scanner_mode_rules <- . rule_list\nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              \nrule 29: scanner_mode_rules <- .          " },
-    { 1, ms_transition_table_+217, "RETURN scanner_mode_rules" },
+    { 3, ms_transition_table_+199, "START start_with_state_machine_directive                                                                     \nrule 21: start_with_state_machine_directive <- . DIRECTIVE_START_IN_STATE_MACHINE ID at_least_one_newline    \nrule 22: start_with_state_machine_directive <- . DIRECTIVE_START_IN_STATE_MACHINE ERROR_ at_least_one_newline" },
+    { 1, ms_transition_table_+202, "RETURN start_with_state_machine_directive" },
+    { 2, ms_transition_table_+203, "START state_machines                                     \nrule 23: state_machines <- . state_machines state_machine\nrule 24: state_machines <- .                             " },
+    { 3, ms_transition_table_+205, "RETURN state_machines                                                         \nrule 23: state_machines <- state_machines . state_machine                     \nrule 25: state_machine <- . DIRECTIVE_STATE ID ':' state_machine_rules ';'    \nrule 26: state_machine <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                 \nrule 27: state_machine <- . DIRECTIVE_STATE ERROR_ ':' state_machine_rules ';'" },
+    { 3, ms_transition_table_+208, "START state_machine                                                           \nrule 25: state_machine <- . DIRECTIVE_STATE ID ':' state_machine_rules ';'    \nrule 26: state_machine <- . DIRECTIVE_STATE ID ':' ERROR_ ';'                 \nrule 27: state_machine <- . DIRECTIVE_STATE ERROR_ ':' state_machine_rules ';'" },
+    { 1, ms_transition_table_+211, "RETURN state_machine" },
+    { 5, ms_transition_table_+212, "START state_machine_rules                  \nrule 28: state_machine_rules <- . rule_list\nrule 30: rule_list <- . rule_list '|' rule \nrule 32: rule <- . REGEX rule_handlers     \nrule 31: rule_list <- . rule               \nrule 29: state_machine_rules <- .          " },
+    { 1, ms_transition_table_+217, "RETURN state_machine_rules" },
     { 4, ms_transition_table_+218, "START rule_list                           \nrule 30: rule_list <- . rule_list '|' rule\nrule 32: rule <- . REGEX rule_handlers    \nrule 31: rule_list <- . rule              " },
     { 2, ms_transition_table_+222, "RETURN rule_list                          \nrule 30: rule_list <- rule_list . '|' rule" },
     { 3, ms_transition_table_+224, "START rule                            \nrule 32: rule <- . REGEX rule_handlers" },
@@ -1831,8 +1831,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Nonterminal_::at_least_one_newline,
     Parser::Terminal::NEWLINE,
     Parser::Terminal::DIRECTIVE_MACRO,
-    Parser::Terminal::DIRECTIVE_START_IN_SCANNER_MODE,
-    Parser::Nonterminal_::start_in_scanner_mode_directive,
+    Parser::Terminal::DIRECTIVE_START_IN_STATE_MACHINE,
+    Parser::Nonterminal_::start_with_state_machine_directive,
     Parser::Terminal::ERROR_,
     Parser::Terminal::ID,
     Parser::Terminal::NEWLINE,
@@ -1855,14 +1855,14 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Nonterminal_::at_least_one_newline,
     Parser::Terminal::NEWLINE,
     Parser::Terminal::END_PREAMBLE,
-    Parser::Nonterminal_::scanner_modes,
+    Parser::Nonterminal_::state_machines,
     Parser::Terminal::DIRECTIVE_STATE,
-    Parser::Nonterminal_::scanner_mode,
+    Parser::Nonterminal_::state_machine,
     Parser::Terminal::ERROR_,
     Parser::Terminal::ID,
     ':',
     Parser::Terminal::REGEX,
-    Parser::Nonterminal_::scanner_mode_rules,
+    Parser::Nonterminal_::state_machine_rules,
     Parser::Nonterminal_::rule_list,
     Parser::Nonterminal_::rule,
     Parser::Nonterminal_::rule_handlers,
@@ -1888,7 +1888,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     ':',
     Parser::Terminal::ERROR_,
     Parser::Terminal::REGEX,
-    Parser::Nonterminal_::scanner_mode_rules,
+    Parser::Nonterminal_::state_machine_rules,
     Parser::Nonterminal_::rule_list,
     Parser::Nonterminal_::rule,
     ';',
@@ -1909,15 +1909,15 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Nonterminal_::target_directive_param,
     Parser::Nonterminal_::macro_directives,
     Parser::Terminal::DIRECTIVE_MACRO,
-    Parser::Terminal::DIRECTIVE_START_IN_SCANNER_MODE,
-    Parser::Nonterminal_::start_in_scanner_mode_directive,
-    Parser::Nonterminal_::scanner_modes,
+    Parser::Terminal::DIRECTIVE_START_IN_STATE_MACHINE,
+    Parser::Nonterminal_::start_with_state_machine_directive,
+    Parser::Nonterminal_::state_machines,
     Parser::Terminal::DIRECTIVE_STATE,
-    Parser::Nonterminal_::scanner_mode,
+    Parser::Nonterminal_::state_machine,
     Parser::Terminal::DIRECTIVE_STATE,
-    Parser::Nonterminal_::scanner_mode,
+    Parser::Nonterminal_::state_machine,
     Parser::Terminal::REGEX,
-    Parser::Nonterminal_::scanner_mode_rules,
+    Parser::Nonterminal_::state_machine_rules,
     Parser::Nonterminal_::rule_list,
     Parser::Nonterminal_::rule,
     Parser::Terminal::REGEX,
@@ -2206,7 +2206,7 @@ char const *const Parser::ms_token_name_table_[] =
     "ERROR_",
     "BAD_TOKEN",
     "DIRECTIVE_MACRO",
-    "DIRECTIVE_START_IN_SCANNER_MODE",
+    "DIRECTIVE_START_IN_STATE_MACHINE",
     "DIRECTIVE_STATE",
     "DIRECTIVE_TARGET",
     "DIRECTIVE_TARGETS",
@@ -2224,10 +2224,10 @@ char const *const Parser::ms_token_name_table_[] =
     "target_directive",
     "target_directive_param",
     "macro_directives",
-    "start_in_scanner_mode_directive",
-    "scanner_modes",
-    "scanner_mode",
-    "scanner_mode_rules",
+    "start_with_state_machine_directive",
+    "state_machines",
+    "state_machine",
+    "state_machine_rules",
     "rule_list",
     "rule",
     "rule_handlers",

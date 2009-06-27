@@ -26,7 +26,7 @@ void GenerateNfa (Rule const &rule, Graph &graph, Uint32 start_index, Uint32 end
 }
 
 void GenerateNfa (
-    ScannerMode const &scanner_mode,
+    StateMachine const &state_machine,
     Automaton &nfa,
 //     Graph &nfa_graph,
 //     vector<Uint32> &nfa_start_state_index,
@@ -37,13 +37,13 @@ void GenerateNfa (
             new Regex::NodeData(
                 Regex::IS_START_NODE,
                 Regex::NOT_ACCEPT_NODE,
-                scanner_mode.m_scanner_mode_id->GetText()));
+                state_machine.m_state_machine_id->GetText()));
     nfa.m_start_state_index.push_back(master_start_state_index);
 
     // each rule is effectively or'ed together (i.e. using regex operator '|')
     // except that each rule ends alone at its own accept state.
-    for (RuleList::const_iterator it = scanner_mode.m_rule_list->begin(),
-                                  it_end = scanner_mode.m_rule_list->end();
+    for (RuleList::const_iterator it = state_machine.m_rule_list->begin(),
+                                  it_end = state_machine.m_rule_list->end();
          it != it_end;
          ++it)
     {
@@ -74,18 +74,18 @@ void GenerateNfa (PrimarySource const &primary_source, Automaton &nfa)
     }
 
     Uint32 next_accept_handler_index = 0;
-    for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
-                                        it_end = primary_source.m_scanner_mode_map->end();
+    for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
+                                        it_end = primary_source.m_state_machine_map->end();
          it != it_end;
          ++it)
     {
-        ScannerMode const *scanner_mode = it->second;
-        assert(scanner_mode != NULL);
-        GenerateNfa(*scanner_mode, nfa, next_accept_handler_index);
+        StateMachine const *state_machine = it->second;
+        assert(state_machine != NULL);
+        GenerateNfa(*state_machine, nfa, next_accept_handler_index);
     }
 
-    assert(nfa.m_graph.GetNodeCount() >= primary_source.m_scanner_mode_map->size());
-    assert(nfa.m_start_state_index.size() == primary_source.m_scanner_mode_map->size());
+    assert(nfa.m_graph.GetNodeCount() >= primary_source.m_state_machine_map->size());
+    assert(nfa.m_start_state_index.size() == primary_source.m_state_machine_map->size());
 }
 
 void GenerateDfa (PrimarySource const &primary_source, Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa)
@@ -93,8 +93,8 @@ void GenerateDfa (PrimarySource const &primary_source, Automaton const &nfa, Uin
     assert(dfa.m_graph.GetNodeCount() == 0);
     assert(dfa.m_start_state_index.empty());
     Regex::GenerateDfa(nfa, nfa_accept_state_count, dfa);
-    assert(dfa.m_graph.GetNodeCount() >= primary_source.m_scanner_mode_map->size());
-    assert(dfa.m_start_state_index.size() == primary_source.m_scanner_mode_map->size());
+    assert(dfa.m_graph.GetNodeCount() >= primary_source.m_state_machine_map->size());
+    assert(dfa.m_start_state_index.size() == primary_source.m_state_machine_map->size());
 }
 
 } // end of namespace Reflex

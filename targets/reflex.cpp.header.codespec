@@ -518,17 +518,17 @@ class <{class_name} : private ReflexCpp_::AutomatonApparatus_<{if(is_defined(cla
 {
 public:
 
-    struct Mode
+    struct StateMachine
     {
         enum Name
         {
 <|for_each(key, _dfa_initial_node_index)
             <{key} = <{_dfa_initial_node_index[key]},
 <|end_for_each
-            // default starting scanner mode
-            START_ = <{_start_in_scanner_mode}
-        }; // end of enum <{class_name}::Mode::Name
-    }; // end of struct <{class_name}::Mode
+            // default starting state machine
+            START_ = <{_start_with_state_machine}
+        }; // end of enum <{class_name}::StateMachine::Name
+    }; // end of struct <{class_name}::StateMachine
 
 <|if(is_defined(top_of_class))
 <{top_of_class}
@@ -543,8 +543,8 @@ public:
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
 <|end_if
-    Mode::Name ScannerMode () const;
-    void ScannerMode (Mode::Name mode);
+    StateMachine::Name CurrentStateMachine () const;
+    void SwitchToStateMachine (StateMachine::Name state_machine);
 
     using AutomatonApparatus_::IsAtEndOfInput;
     void ResetForNewInput ();
@@ -596,7 +596,7 @@ private:
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
     static void PrintString_ (std::string const &s);
-    static void PrintScannerMode_ (Mode::Name mode);
+    static void PrintStateMachineName_ (StateMachine::Name state_machine);
 
     bool m_debug_spew_;
 

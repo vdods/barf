@@ -105,41 +105,41 @@ ScannerNew::~ScannerNew ()
 #line 106 "barf_preprocessor_scanner.cpp"
 }
 
-ScannerNew::Mode::Name ScannerNew::ScannerMode () const
+ScannerNew::StateMachine::Name ScannerNew::CurrentStateMachine () const
 {
     assert(InitialState_() != NULL);
     BarfCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
     assert(initial_node_index < ms_state_count_);
     switch (initial_node_index)
     {
-        default: assert(false && "invalid initial node index -- this should never happen"); return Mode::START_;
-        case 0: return Mode::EXPECTING_END_OF_FILE;
-        case 4: return Mode::READING_BODY;
-        case 16: return Mode::READING_CODE;
-        case 30: return Mode::READING_CODE_STRING_LITERAL_GUTS;
-        case 46: return Mode::TRANSITION_TO_CODE;
+        default: assert(false && "invalid initial node index -- this should never happen"); return StateMachine::START_;
+        case 0: return StateMachine::EXPECTING_END_OF_FILE;
+        case 4: return StateMachine::READING_BODY;
+        case 16: return StateMachine::READING_CODE;
+        case 30: return StateMachine::READING_CODE_STRING_LITERAL_GUTS;
+        case 46: return StateMachine::TRANSITION_TO_CODE;
     }
 }
 
-void ScannerNew::ScannerMode (Mode::Name mode)
+void ScannerNew::SwitchToStateMachine (StateMachine::Name state_machine)
 {
     assert(
-        mode == Mode::EXPECTING_END_OF_FILE ||
-        mode == Mode::READING_BODY ||
-        mode == Mode::READING_CODE ||
-        mode == Mode::READING_CODE_STRING_LITERAL_GUTS ||
-        mode == Mode::TRANSITION_TO_CODE ||
-        (false && "invalid Mode::Name"));
-    InitialState_(ms_state_table_ + mode);
+        state_machine == StateMachine::EXPECTING_END_OF_FILE ||
+        state_machine == StateMachine::READING_BODY ||
+        state_machine == StateMachine::READING_CODE ||
+        state_machine == StateMachine::READING_CODE_STRING_LITERAL_GUTS ||
+        state_machine == StateMachine::TRANSITION_TO_CODE ||
+        (false && "invalid StateMachine::Name"));
+    InitialState_(ms_state_table_ + state_machine);
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
 "Preprocessor::ScannerNew" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 139 "barf_preprocessor_scanner.cpp"
- << " transitioning to mode ";
-        PrintScannerMode_(mode);
+ << " transitioning to state machine ";
+        PrintStateMachineName_(state_machine);
         std::cerr << std::endl)
-    assert(ScannerMode() == mode);
+    assert(CurrentStateMachine() == state_machine);
 }
 
 void ScannerNew::ResetForNewInput ()
@@ -150,7 +150,7 @@ void ScannerNew::ResetForNewInput ()
 #line 151 "barf_preprocessor_scanner.cpp"
  << " executing reset-for-new-input actions" << std::endl)
                 
-    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + Mode::START_);
+    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + StateMachine::START_);
 
 
 #line 156 "barf_preprocessor_scanner.reflex"
@@ -229,8 +229,8 @@ Parser::Token ScannerNew::Scan () throw()
 #line 230 "barf_preprocessor_scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
-                std::cerr << " in mode ";
-                PrintScannerMode_(ScannerMode());
+                std::cerr << " in state machine ";
+                PrintStateMachineName_(CurrentStateMachine());
                 std::cerr << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
                 
             // execute the appropriate accept handler.
@@ -293,7 +293,7 @@ Parser::Token ScannerNew::Scan () throw()
         // and return the Text token.
         if (code_delimiter_encountered)
         {
-            ScannerMode(Mode::TRANSITION_TO_CODE);
+            SwitchToStateMachine(StateMachine::TRANSITION_TO_CODE);
             Ast::Base *token = m_text;
             m_text = NULL;
             return Parser::Token(Parser::Terminal::TEXT, token);
@@ -323,7 +323,7 @@ Parser::Token ScannerNew::Scan () throw()
         else
             m_text = new Text(accepted_string, GetFiLoc());
 
-        ScannerMode(Mode::EXPECTING_END_OF_FILE);
+        SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         Ast::Base *token = m_text;
         m_text = NULL;
         return Parser::Token(Parser::Terminal::TEXT, token);
@@ -338,7 +338,7 @@ Parser::Token ScannerNew::Scan () throw()
 
 #line 275 "barf_preprocessor_scanner.reflex"
 
-        ScannerMode(Mode::EXPECTING_END_OF_FILE);
+        SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         if (m_text != NULL)
         {
             Ast::Base *token = m_text;
@@ -385,7 +385,7 @@ Parser::Token ScannerNew::Scan () throw()
         // a newline-sensitive code line (i.e. one that starts with "<|").
         if (m_is_reading_newline_sensitive_code)
         {
-            ScannerMode(Mode::READING_BODY);
+            SwitchToStateMachine(StateMachine::READING_BODY);
             return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         }
     
@@ -399,7 +399,7 @@ Parser::Token ScannerNew::Scan () throw()
 
 #line 326 "barf_preprocessor_scanner.reflex"
 
-        ScannerMode(Mode::EXPECTING_END_OF_FILE);
+        SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         if (m_is_reading_newline_sensitive_code)
             return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         else
@@ -417,7 +417,7 @@ Parser::Token ScannerNew::Scan () throw()
 
         if (!m_is_reading_newline_sensitive_code)
         {
-            ScannerMode(Mode::READING_BODY);
+            SwitchToStateMachine(StateMachine::READING_BODY);
             return Parser::Token(Parser::Terminal::END_CODE);
         }
         else
@@ -477,7 +477,7 @@ Parser::Token ScannerNew::Scan () throw()
 
         assert(m_text == NULL);
         m_text = new Text("", GetFiLoc());
-        ScannerMode(Mode::READING_CODE_STRING_LITERAL_GUTS);
+        SwitchToStateMachine(StateMachine::READING_CODE_STRING_LITERAL_GUTS);
     
 #line 483 "barf_preprocessor_scanner.cpp"
 
@@ -585,7 +585,7 @@ Parser::Token ScannerNew::Scan () throw()
 #line 430 "barf_preprocessor_scanner.reflex"
 
         assert(m_text != NULL);
-        ScannerMode(Mode::READING_CODE);
+        SwitchToStateMachine(StateMachine::READING_CODE);
         Ast::Base *token = m_text;
         m_text = NULL;
         return Parser::Token(Parser::Terminal::STRING_LITERAL, token);
@@ -630,7 +630,7 @@ Parser::Token ScannerNew::Scan () throw()
 #line 296 "barf_preprocessor_scanner.reflex"
 
         assert(m_text == NULL);
-        ScannerMode(Mode::READING_CODE);
+        SwitchToStateMachine(StateMachine::READING_CODE);
         if (m_is_reading_newline_sensitive_code)
             return Parser::Token(Parser::Terminal::CODE_LINE);
         else
@@ -726,14 +726,14 @@ void ScannerNew::PrintString_ (std::string const &s)
     std::cerr.precision(saved_stream_precision);
 }
 
-void ScannerNew::PrintScannerMode_ (Mode::Name mode)
+void ScannerNew::PrintStateMachineName_ (StateMachine::Name state_machine)
 {
     if (false) { }
-    else if (mode == Mode::EXPECTING_END_OF_FILE) { std::cerr << "EXPECTING_END_OF_FILE"; }
-    else if (mode == Mode::READING_BODY) { std::cerr << "READING_BODY"; }
-    else if (mode == Mode::READING_CODE) { std::cerr << "READING_CODE"; }
-    else if (mode == Mode::READING_CODE_STRING_LITERAL_GUTS) { std::cerr << "READING_CODE_STRING_LITERAL_GUTS"; }
-    else if (mode == Mode::TRANSITION_TO_CODE) { std::cerr << "TRANSITION_TO_CODE"; }
+    else if (state_machine == StateMachine::EXPECTING_END_OF_FILE) { std::cerr << "EXPECTING_END_OF_FILE"; }
+    else if (state_machine == StateMachine::READING_BODY) { std::cerr << "READING_BODY"; }
+    else if (state_machine == StateMachine::READING_CODE) { std::cerr << "READING_CODE"; }
+    else if (state_machine == StateMachine::READING_CODE_STRING_LITERAL_GUTS) { std::cerr << "READING_CODE_STRING_LITERAL_GUTS"; }
+    else if (state_machine == StateMachine::TRANSITION_TO_CODE) { std::cerr << "TRANSITION_TO_CODE"; }
 }
 
 // the order of the states indicates priority (only for accept states).

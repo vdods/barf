@@ -19,38 +19,38 @@
 
 namespace Reflex {
 
-void PopulateAcceptHandlerScannerModeAndRegexSymbols (
+void PopulateAcceptHandlerStateMachineAndRegexSymbols (
     Rule const &rule,
-    string const &scanner_mode_id,
-    Preprocessor::ArraySymbol *accept_handler_scanner_mode,
+    string const &state_machine_id,
+    Preprocessor::ArraySymbol *accept_handler_state_machine,
     Preprocessor::ArraySymbol *accept_handler_regex)
 {
-    assert(accept_handler_scanner_mode != NULL);
+    assert(accept_handler_state_machine != NULL);
     assert(accept_handler_regex != NULL);
 
-    accept_handler_scanner_mode->AppendArrayElement(new Preprocessor::Body(scanner_mode_id));
+    accept_handler_state_machine->AppendArrayElement(new Preprocessor::Body(state_machine_id));
     accept_handler_regex->AppendArrayElement(new Preprocessor::Body(rule.m_rule_regex_string));
 }
 
-void PopulateAcceptHandlerScannerModeAndRegexSymbols (
-    ScannerMode const &scanner_mode,
-    Preprocessor::ArraySymbol *accept_handler_scanner_mode,
+void PopulateAcceptHandlerStateMachineAndRegexSymbols (
+    StateMachine const &state_machine,
+    Preprocessor::ArraySymbol *accept_handler_state_machine,
     Preprocessor::ArraySymbol *accept_handler_regex)
 {
-    assert(accept_handler_scanner_mode != NULL);
+    assert(accept_handler_state_machine != NULL);
     assert(accept_handler_regex != NULL);
 
-    for (RuleList::const_iterator it = scanner_mode.m_rule_list->begin(),
-                                  it_end = scanner_mode.m_rule_list->end();
+    for (RuleList::const_iterator it = state_machine.m_rule_list->begin(),
+                                  it_end = state_machine.m_rule_list->end();
          it != it_end;
          ++it)
     {
         Rule const *rule = *it;
         assert(rule != NULL);
-        PopulateAcceptHandlerScannerModeAndRegexSymbols(
+        PopulateAcceptHandlerStateMachineAndRegexSymbols(
             *rule,
-            scanner_mode.m_scanner_mode_id->GetText(),
-            accept_handler_scanner_mode,
+            state_machine.m_state_machine_id->GetText(),
+            accept_handler_state_machine,
             accept_handler_regex);
     }
 }
@@ -67,32 +67,32 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
     }
 
-    // _accept_handler_scanner_mode -- the name of the scanner mode this accept handler belongs to
+    // _accept_handler_state_machine -- the name of the state machine this accept handler belongs to
     //
     // _accept_handler_regex -- a string literal of the regex associated with each accept handler
     {
-        Preprocessor::ArraySymbol *accept_handler_scanner_mode =
-            symbol_table.DefineArraySymbol("_accept_handler_scanner_mode", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *accept_handler_state_machine =
+            symbol_table.DefineArraySymbol("_accept_handler_state_machine", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *accept_handler_regex =
             symbol_table.DefineArraySymbol("_accept_handler_regex", FiLoc::ms_invalid);
-        for (ScannerModeMap::const_iterator scanner_mode_it = primary_source.m_scanner_mode_map->begin(),
-                                            scanner_mode_it_end = primary_source.m_scanner_mode_map->end();
-            scanner_mode_it != scanner_mode_it_end;
-            ++scanner_mode_it)
+        for (StateMachineMap::const_iterator state_machine_it = primary_source.m_state_machine_map->begin(),
+                                            state_machine_it_end = primary_source.m_state_machine_map->end();
+            state_machine_it != state_machine_it_end;
+            ++state_machine_it)
         {
-            ScannerMode const *scanner_mode = scanner_mode_it->second;
-            assert(scanner_mode != NULL);
-            PopulateAcceptHandlerScannerModeAndRegexSymbols(*scanner_mode, accept_handler_scanner_mode, accept_handler_regex);
+            StateMachine const *state_machine = state_machine_it->second;
+            assert(state_machine != NULL);
+            PopulateAcceptHandlerStateMachineAndRegexSymbols(*state_machine, accept_handler_state_machine, accept_handler_regex);
         }
     }
 
-    // _start_in_scanner_mode -- value of %start_in_scanner_mode -- the name of the initial scanner mode
+    // _start_with_state_machine -- value of %start_with_state_machine -- the name of the initial state machine
     {
-        assert(primary_source.m_start_in_scanner_mode_directive != NULL);
+        assert(primary_source.m_start_with_state_machine_directive != NULL);
         Preprocessor::ScalarSymbol *symbol =
-            symbol_table.DefineScalarSymbol("_start_in_scanner_mode", FiLoc::ms_invalid);
+            symbol_table.DefineScalarSymbol("_start_with_state_machine", FiLoc::ms_invalid);
         symbol->SetScalarBody(
-            new Preprocessor::Body(primary_source.m_start_in_scanner_mode_directive->m_scanner_mode_id->GetText()));
+            new Preprocessor::Body(primary_source.m_start_with_state_machine_directive->m_state_machine_id->GetText()));
     }
 }
 
@@ -102,22 +102,22 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
 
     EmitExecutionMessage("generating NFA codespec symbols");
     
-    // _nfa_initial_node_index[scanner mode name] -- maps scanner mode name => node index
+    // _nfa_initial_node_index[state machine name] -- maps state machine name => node index
     {
         Preprocessor::MapSymbol *nfa_initial_node_index =
             symbol_table.DefineMapSymbol("_nfa_initial_node_index", FiLoc::ms_invalid);
         Uint32 state_index = 0;
-        for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
-                                            it_end = primary_source.m_scanner_mode_map->end();
+        for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
+                                            it_end = primary_source.m_state_machine_map->end();
             it != it_end;
             ++it)
         {
-            string const &scanner_mode_name = it->first;
-            ScannerMode const *scanner_mode = it->second;
-            assert(scanner_mode != NULL);
+            string const &state_machine_name = it->first;
+            StateMachine const *state_machine = it->second;
+            assert(state_machine != NULL);
             assert(state_index < nfa_start_state_index.size());
             nfa_initial_node_index->SetMapElement(
-                scanner_mode_name,
+                state_machine_name,
                 new Preprocessor::Body(Sint32(nfa_start_state_index[state_index])));
             ++state_index;
         }
@@ -225,22 +225,22 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
 
     EmitExecutionMessage("generating DFA codespec symbols");
     
-    // _dfa_initial_node_index[scanner mode name] -- maps scanner mode name => node index
+    // _dfa_initial_node_index[state machine name] -- maps state machine name => node index
     {
         Preprocessor::MapSymbol *dfa_initial_node_index =
             symbol_table.DefineMapSymbol("_dfa_initial_node_index", FiLoc::ms_invalid);
         Uint32 state_index = 0;
-        for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
-                                            it_end = primary_source.m_scanner_mode_map->end();
+        for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
+                                            it_end = primary_source.m_state_machine_map->end();
             it != it_end;
             ++it)
         {
-            string const &scanner_mode_name = it->first;
-            ScannerMode const *scanner_mode = it->second;
-            assert(scanner_mode != NULL);
+            string const &state_machine_name = it->first;
+            StateMachine const *state_machine = it->second;
+            assert(state_machine != NULL);
             assert(state_index < dfa_start_state_index.size());
             dfa_initial_node_index->SetMapElement(
-                scanner_mode_name,
+                state_machine_name,
                 new Preprocessor::Body(Sint32(dfa_start_state_index[state_index])));
             ++state_index;
         }
@@ -374,12 +374,12 @@ void PopulateAcceptHandlerCodeArraySymbol (Rule const &rule, string const &targe
             rule_handler_code_block->GetFiLoc()));
 }
 
-void PopulateAcceptHandlerCodeArraySymbol (ScannerMode const &scanner_mode, string const &target_id, Preprocessor::ArraySymbol *accept_handler_code)
+void PopulateAcceptHandlerCodeArraySymbol (StateMachine const &state_machine, string const &target_id, Preprocessor::ArraySymbol *accept_handler_code)
 {
     assert(accept_handler_code != NULL);
 
-    for (RuleList::const_iterator it = scanner_mode.m_rule_list->begin(),
-                                  it_end = scanner_mode.m_rule_list->end();
+    for (RuleList::const_iterator it = state_machine.m_rule_list->begin(),
+                                  it_end = state_machine.m_rule_list->end();
          it != it_end;
          ++it)
     {
@@ -399,14 +399,14 @@ void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string
         Preprocessor::ArraySymbol *accept_handler_code =
             symbol_table.DefineArraySymbol("_accept_handler_code", FiLoc::ms_invalid);
 
-        for (ScannerModeMap::const_iterator it = primary_source.m_scanner_mode_map->begin(),
-                                            it_end = primary_source.m_scanner_mode_map->end();
+        for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
+                                            it_end = primary_source.m_state_machine_map->end();
             it != it_end;
             ++it)
         {
-            ScannerMode const *scanner_mode = it->second;
-            assert(scanner_mode != NULL);
-            PopulateAcceptHandlerCodeArraySymbol(*scanner_mode, target_id, accept_handler_code);
+            StateMachine const *state_machine = it->second;
+            assert(state_machine != NULL);
+            PopulateAcceptHandlerCodeArraySymbol(*state_machine, target_id, accept_handler_code);
         }
     }
 }

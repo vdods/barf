@@ -45,11 +45,11 @@
 %macro ANYCHAR              (.|\n)
 %macro END_OF_FILE          (\z)
 
-%start_in_scanner_mode MAIN
+%start_with_state_machine MAIN
 
 %%
 
-%scanner_mode MAIN
+%state_machine MAIN
 :
     (//.*) // line comment (not including the newline)
     %target.cpp {

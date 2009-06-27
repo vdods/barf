@@ -150,21 +150,21 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return Token(Parser::Token::Id(scanner_token_type), lookahead_token_data);
     switch (scanner_token_type)
     {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                 return Token(Terminal::END_, lookahead_token_data);
-        case CommonLang::Scanner::Token::BAD_TOKEN:                       return Token(Terminal::BAD_TOKEN, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                 return Token(Terminal::DIRECTIVE_MACRO, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_SCANNER_MODE: return Token(Terminal::DIRECTIVE_START_IN_SCANNER_MODE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE:                 return Token(Terminal::DIRECTIVE_STATE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:               return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                 return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::END_OF_FILE:                     return Token(Terminal::END_, lookahead_token_data);
-        case CommonLang::Scanner::Token::END_PREAMBLE:                    return Token(Terminal::END_PREAMBLE, lookahead_token_data);
-        case CommonLang::Scanner::Token::ID:                              return Token(Terminal::ID, lookahead_token_data);
-        case CommonLang::Scanner::Token::NEWLINE:                         return Token(Terminal::NEWLINE, lookahead_token_data);
-        case CommonLang::Scanner::Token::REGEX:                           return Token(Terminal::REGEX, lookahead_token_data);
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:               return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::STRING_LITERAL:                  return Token(Terminal::STRING_LITERAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                  return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::BAD_TOKEN:                        return Token(Terminal::BAD_TOKEN, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                  return Token(Terminal::DIRECTIVE_MACRO, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE: return Token(Terminal::DIRECTIVE_START_IN_STATE_MACHINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE:                  return Token(Terminal::DIRECTIVE_STATE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                 return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                  return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_OF_FILE:                      return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_PREAMBLE:                     return Token(Terminal::END_PREAMBLE, lookahead_token_data);
+        case CommonLang::Scanner::Token::ID:                               return Token(Terminal::ID, lookahead_token_data);
+        case CommonLang::Scanner::Token::NEWLINE:                          return Token(Terminal::NEWLINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::REGEX:                            return Token(Terminal::REGEX, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRING_LITERAL:                   return Token(Terminal::STRING_LITERAL, lookahead_token_data);
 
         case CommonLang::Scanner::Token::CHAR_LITERAL:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
@@ -205,7 +205,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %terminal BAD_TOKEN
 %terminal DIRECTIVE_MACRO %type.cpp "Ast::ThrowAway *"
-%terminal DIRECTIVE_START_IN_SCANNER_MODE %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_START_IN_STATE_MACHINE %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_STATE %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_TARGET %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_TARGETS %type.cpp "Ast::ThrowAway *"
@@ -233,29 +233,29 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     targets_directive
     target_directives
     macro_directives:regular_expression_map
-    start_in_scanner_mode_directive:start_in_scanner_mode_directive
+    start_with_state_machine_directive:start_with_state_machine_directive
     END_PREAMBLE:throwaway
-    scanner_modes:scanner_mode_map
+    state_machines:state_machine_map
     %target.cpp {
         assert(m_target_map != NULL);
 
         // set the TargetMap's primary source path
         m_target_map->SetSourcePath(m_scanner.GetInputName());
-        // make sure the %start_in_scanner_mode directive value specifies a real scanner mode
-        if (start_in_scanner_mode_directive != NULL &&
-            scanner_mode_map->GetElement(start_in_scanner_mode_directive->m_scanner_mode_id->GetText()) == NULL)
+        // make sure the %start_with_state_machine directive value specifies a real state machine
+        if (start_with_state_machine_directive != NULL &&
+            state_machine_map->GetElement(start_with_state_machine_directive->m_state_machine_id->GetText()) == NULL)
         {
             EmitError(
-                "undeclared state \"" + start_in_scanner_mode_directive->m_scanner_mode_id->GetText() + "\"",
-                start_in_scanner_mode_directive->GetFiLoc());
+                "undeclared state \"" + start_with_state_machine_directive->m_state_machine_id->GetText() + "\"",
+                start_with_state_machine_directive->GetFiLoc());
         }
 
         PrimarySource *primary_source =
             new PrimarySource(
                 regular_expression_map,
-                start_in_scanner_mode_directive,
+                start_with_state_machine_directive,
                 throwaway->GetFiLoc(),
-                scanner_mode_map);
+                state_machine_map);
         delete throwaway;
         return primary_source;
     }
@@ -408,7 +408,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     // empty reduction rule
     %target.cpp {
         // we save the regex macro map in a member var, so that the reduction
-        // rule handler for the scanner mode rules can use it.
+        // rule handler for the state machine rules can use it.
         m_regex_macro_map = new Regex::RegularExpressionMap();
         return m_regex_macro_map;
     }
@@ -433,66 +433,66 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 // start directive rule
 // ///////////////////////////////////////////////////////////////////////////
 
-%nonterminal start_in_scanner_mode_directive %type.cpp "StartInScannerModeDirective *"
+%nonterminal start_with_state_machine_directive %type.cpp "StartWithStateMachineDirective *"
 :
-    DIRECTIVE_START_IN_SCANNER_MODE:throwaway ID:scanner_mode_id at_least_one_newline
+    DIRECTIVE_START_IN_STATE_MACHINE:throwaway ID:state_machine_id at_least_one_newline
     %target.cpp {
         delete throwaway;
-        return new StartInScannerModeDirective(scanner_mode_id);
+        return new StartWithStateMachineDirective(state_machine_id);
     }
 |
-    DIRECTIVE_START_IN_SCANNER_MODE:throwaway %error at_least_one_newline
+    DIRECTIVE_START_IN_STATE_MACHINE:throwaway %error at_least_one_newline
     %target.cpp {
-        EmitError("parse error in directive %start_in_scanner_mode", throwaway->GetFiLoc());
+        EmitError("parse error in directive %start_with_state_machine", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
 ;
 
 // ///////////////////////////////////////////////////////////////////////////
-// scanner mode rules
+// state machine rules
 // ///////////////////////////////////////////////////////////////////////////
 
-%nonterminal scanner_modes %type.cpp "ScannerModeMap *"
+%nonterminal state_machines %type.cpp "StateMachineMap *"
 :
-    scanner_modes:scanner_mode_map scanner_mode:scanner_mode
+    state_machines:state_machine_map state_machine:state_machine
     %target.cpp {
-        if (scanner_mode != NULL)
-            scanner_mode_map->Add(scanner_mode->m_scanner_mode_id->GetText(), scanner_mode);
-        return scanner_mode_map;
+        if (state_machine != NULL)
+            state_machine_map->Add(state_machine->m_state_machine_id->GetText(), state_machine);
+        return state_machine_map;
     }
 |
     // empty reduction rule
     %target.cpp {
-        return new ScannerModeMap();
+        return new StateMachineMap();
     }
 ;
 
-%nonterminal scanner_mode %type.cpp "ScannerMode *"
+%nonterminal state_machine %type.cpp "StateMachine *"
 :
-    DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' scanner_mode_rules:rule_list ';'
+    DIRECTIVE_STATE:throwaway ID:state_machine_id ':' state_machine_rules:rule_list ';'
     %target.cpp {
         delete throwaway;
-        return new ScannerMode(scanner_mode_id, rule_list);
+        return new StateMachine(state_machine_id, rule_list);
     }
 |
-    DIRECTIVE_STATE:throwaway ID:scanner_mode_id ':' %error ';'
+    DIRECTIVE_STATE:throwaway ID:state_machine_id ':' %error ';'
     %target.cpp {
-        EmitError("parse error in scanner mode rule list", throwaway->GetFiLoc());
+        EmitError("parse error in state machine rule list", throwaway->GetFiLoc());
         delete throwaway;
-        return new ScannerMode(scanner_mode_id, new RuleList());
+        return new StateMachine(state_machine_id, new RuleList());
     }
 |
-    DIRECTIVE_STATE:throwaway %error ':' scanner_mode_rules:rule_list ';'
+    DIRECTIVE_STATE:throwaway %error ':' state_machine_rules:rule_list ';'
     %target.cpp {
-        EmitError("parse error in scanner mode id", throwaway->GetFiLoc());
+        EmitError("parse error in state machine id", throwaway->GetFiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
     }
 ;
 
-%nonterminal scanner_mode_rules %type.cpp "RuleList *"
+%nonterminal state_machine_rules %type.cpp "RuleList *"
 :
     rule_list:rule_list
     %target.cpp {

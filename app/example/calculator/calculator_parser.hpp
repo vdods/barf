@@ -268,11 +268,12 @@ public:
       * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
       * code to execute at the beginning and end, respectively, of the Parse() method.
       * This includes the ability to enclose the body of the Parse() method within a
-      * try {} block, for exception handling (if exceptions are thrown in reduction
-      * rule code, then the %target.cpp.enable_parse_method_exception_handling directive
-      * must be specified; this will cause the parser to catch and rethrow any exceptions
-      * thrown in reduction rule code, allowing it to clean up dynamically allocated
-      * memory, etc.
+      * try {} block, for exception handling (if exceptions are thrown in scan_actions
+      * or any reduction rule code, then the %target.cpp.enable_scan_actions_exceptions
+      * or %target.cpp.enable_reduction_rule_exceptions directives must be specified
+      * respectively; this will cause the parser to catch and rethrow any exceptions
+      * thrown by scan_actions or reduction rule code, allowing it to clean up
+      * dynamically allocated memory, etc.
       *
       * @param return_token A pointer to the value which will be assigned to upon
       *        successfully parsing the requested nonterminal. If the parse fails,
@@ -306,7 +307,7 @@ private:
     double m_modulus;
     bool m_should_print_result;
 
-#line 310 "calculator_parser.hpp"
+#line 311 "calculator_parser.hpp"
 
 
 private:
@@ -356,7 +357,7 @@ private:
     void ClearLookaheadQueue_ () throw();
     Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
     bool ExerciseTransition_ (Transition_ const &transition);
-    Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_);
+    Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_) throw();
     // debug spew methods
     void PrintParserStatus_ (std::ostream &stream) const;
     void PrintIndented_ (std::ostream &stream, char const *string) const;
@@ -416,4 +417,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(CALCULATOR_PARSER_HPP_)
 
-#line 420 "calculator_parser.hpp"
+#line 421 "calculator_parser.hpp"

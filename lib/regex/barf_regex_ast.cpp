@@ -27,7 +27,6 @@ string const &GetAstTypeString (AstType ast_type)
         "AST_BRANCH",
         "AST_CHAR",
         "AST_CONDITIONAL_CHAR",
-        "AST_MODE_CONTROL_CHAR",
         "AST_PIECE",
         "AST_REGULAR_EXPRESSION",
         "AST_REGULAR_EXPRESSION_MAP"

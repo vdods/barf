@@ -49,35 +49,35 @@
 <|destructor_actions?
 }
 
-<{class_name}::Mode::Name <{class_name}::ScannerMode () const
+<{class_name}::StateMachine::Name <{class_name}::CurrentStateMachine () const
 {
     assert(InitialState_() != NULL);
     BarfCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
     assert(initial_node_index < ms_state_count_);
     switch (initial_node_index)
     {
-        default: assert(false && "invalid initial node index -- this should never happen"); return Mode::START_;
+        default: assert(false && "invalid initial node index -- this should never happen"); return StateMachine::START_;
 <|for_each(key, _dfa_initial_node_index)
-        case <{_dfa_initial_node_index[key]}: return Mode::<{key};
+        case <{_dfa_initial_node_index[key]}: return StateMachine::<{key};
 <|end_for_each
     }
 }
 
-void <{class_name}::ScannerMode (Mode::Name mode)
+void <{class_name}::SwitchToStateMachine (StateMachine::Name state_machine)
 {
     assert(
 <|for_each(key, _dfa_initial_node_index)
-        mode == Mode::<{key} ||
+        state_machine == StateMachine::<{key} ||
 <|end_for_each
-        (false && "invalid Mode::Name"));
-    InitialState_(ms_state_table_ + mode);
+        (false && "invalid StateMachine::Name"));
+    InitialState_(ms_state_table_ + state_machine);
 <|if(is_defined(generate_debug_spew_code))
     REFLEX_CPP_DEBUG_CODE_(
-        std::cerr << <{debug_spew_prefix} << " transitioning to mode ";
-        PrintScannerMode_(mode);
+        std::cerr << <{debug_spew_prefix} << " transitioning to state machine ";
+        PrintStateMachineName_(state_machine);
         std::cerr << std::endl)
 <|end_if
-    assert(ScannerMode() == mode);
+    assert(CurrentStateMachine() == state_machine);
 }
 
 void <{class_name}::ResetForNewInput ()
@@ -86,7 +86,7 @@ void <{class_name}::ResetForNewInput ()
     REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions" << std::endl)
                 
 <|end_if
-    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + Mode::START_);
+    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + StateMachine::START_);
 
 <|reset_for_new_input_actions?
 }
@@ -157,8 +157,8 @@ void <{class_name}::ResetForNewInput ()
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << <{debug_spew_prefix} << " accepting string ";
                 PrintString_(accepted_string);
-                std::cerr << " in mode ";
-                PrintScannerMode_(ScannerMode());
+                std::cerr << " in state machine ";
+                PrintStateMachineName_(CurrentStateMachine());
                 std::cerr << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
                 
 <|end_if
@@ -188,7 +188,7 @@ void <{class_name}::ResetForNewInput ()
         // reset for new input (on InputApparatus_ and AutomatonApparatus_
         // only) because the state machine is in a bad state and the
         // behavior of scanning again from that point would be undefined.
-        // pass NULL for initial_state so that the current scanner mode
+        // pass NULL for initial_state so that the current state machine
         // is preserved.
         ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(NULL);
         // rethrow the (unknown) exception.
@@ -283,11 +283,11 @@ void <{class_name}::PrintString_ (std::string const &s)
     std::cerr.precision(saved_stream_precision);
 }
 
-void <{class_name}::PrintScannerMode_ (Mode::Name mode)
+void <{class_name}::PrintStateMachineName_ (StateMachine::Name state_machine)
 {
     if (false) { }
 <|for_each(key, _dfa_initial_node_index)
-    else if (mode == Mode::<{key}) { std::cerr << "<{key}"; }
+    else if (state_machine == StateMachine::<{key}) { std::cerr << "<{key}"; }
 <|end_for_each
 }
 

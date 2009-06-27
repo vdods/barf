@@ -43,7 +43,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DIRECTIVE_MACRO",
         "DIRECTIVE_NONTERMINAL",
         "DIRECTIVE_PREC",
-        "DIRECTIVE_START_IN_SCANNER_MODE",
+        "DIRECTIVE_START_IN_STATE_MACHINE",
         "DIRECTIVE_STATE",
         "DIRECTIVE_STRICT_CODE_BLOCK",
         "DIRECTIVE_STRING",
@@ -107,8 +107,8 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%macro") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_MACRO; }
     if (accepted_string == "%nonterminal") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_NONTERMINAL; }
     if (accepted_string == "%prec") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_PREC; }
-    if (accepted_string == "%start_in_scanner_mode") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_START_IN_SCANNER_MODE; }
-    if (accepted_string == "%scanner_mode") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE; }
+    if (accepted_string == "%start_with_state_machine") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_START_IN_STATE_MACHINE; }
+    if (accepted_string == "%state_machine") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE; }
     if (accepted_string == "%strict_code_block") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
     if (accepted_string == "%string") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRING; }
     if (accepted_string == "%target") { *token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET; }
@@ -143,53 +143,53 @@ Scanner::~Scanner ()
 {
 }
 
-Scanner::Mode::Name Scanner::ScannerMode () const
+Scanner::StateMachine::Name Scanner::CurrentStateMachine () const
 {
     assert(InitialState_() != NULL);
     BarfCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
     assert(initial_node_index < ms_state_count_);
     switch (initial_node_index)
     {
-        default: assert(false && "invalid initial node index -- this should never happen"); return Mode::START_;
-        case 0: return Mode::BLOCK_COMMENT;
-        case 6: return Mode::CHAR_LITERAL_END;
-        case 13: return Mode::CHAR_LITERAL_GUTS;
-        case 26: return Mode::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK;
-        case 34: return Mode::DUMB_CODE_BLOCK;
-        case 40: return Mode::MAIN;
-        case 62: return Mode::REGULAR_EXPRESSION;
-        case 73: return Mode::REGULAR_EXPRESSION_BRACKET_EXPRESSION;
-        case 83: return Mode::STRICT_CODE_BLOCK;
-        case 94: return Mode::STRING_LITERAL_GUTS;
-        case 110: return Mode::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK;
+        default: assert(false && "invalid initial node index -- this should never happen"); return StateMachine::START_;
+        case 0: return StateMachine::BLOCK_COMMENT;
+        case 6: return StateMachine::CHAR_LITERAL_END;
+        case 13: return StateMachine::CHAR_LITERAL_GUTS;
+        case 26: return StateMachine::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK;
+        case 34: return StateMachine::DUMB_CODE_BLOCK;
+        case 40: return StateMachine::MAIN;
+        case 62: return StateMachine::REGULAR_EXPRESSION;
+        case 73: return StateMachine::REGULAR_EXPRESSION_BRACKET_EXPRESSION;
+        case 83: return StateMachine::STRICT_CODE_BLOCK;
+        case 94: return StateMachine::STRING_LITERAL_GUTS;
+        case 110: return StateMachine::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK;
     }
 }
 
-void Scanner::ScannerMode (Mode::Name mode)
+void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
 {
     assert(
-        mode == Mode::BLOCK_COMMENT ||
-        mode == Mode::CHAR_LITERAL_END ||
-        mode == Mode::CHAR_LITERAL_GUTS ||
-        mode == Mode::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK ||
-        mode == Mode::DUMB_CODE_BLOCK ||
-        mode == Mode::MAIN ||
-        mode == Mode::REGULAR_EXPRESSION ||
-        mode == Mode::REGULAR_EXPRESSION_BRACKET_EXPRESSION ||
-        mode == Mode::STRICT_CODE_BLOCK ||
-        mode == Mode::STRING_LITERAL_GUTS ||
-        mode == Mode::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK ||
-        (false && "invalid Mode::Name"));
-    InitialState_(ms_state_table_ + mode);
+        state_machine == StateMachine::BLOCK_COMMENT ||
+        state_machine == StateMachine::CHAR_LITERAL_END ||
+        state_machine == StateMachine::CHAR_LITERAL_GUTS ||
+        state_machine == StateMachine::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK ||
+        state_machine == StateMachine::DUMB_CODE_BLOCK ||
+        state_machine == StateMachine::MAIN ||
+        state_machine == StateMachine::REGULAR_EXPRESSION ||
+        state_machine == StateMachine::REGULAR_EXPRESSION_BRACKET_EXPRESSION ||
+        state_machine == StateMachine::STRICT_CODE_BLOCK ||
+        state_machine == StateMachine::STRING_LITERAL_GUTS ||
+        state_machine == StateMachine::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK ||
+        (false && "invalid StateMachine::Name"));
+    InitialState_(ms_state_table_ + state_machine);
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
 #line 263 "barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
 #line 189 "barf_commonlang_scanner.cpp"
- << " transitioning to mode ";
-        PrintScannerMode_(mode);
+ << " transitioning to state machine ";
+        PrintStateMachineName_(state_machine);
         std::cerr << std::endl)
-    assert(ScannerMode() == mode);
+    assert(CurrentStateMachine() == state_machine);
 }
 
 void Scanner::ResetForNewInput ()
@@ -200,7 +200,7 @@ void Scanner::ResetForNewInput ()
 #line 201 "barf_commonlang_scanner.cpp"
  << " executing reset-for-new-input actions" << std::endl)
                 
-    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + Mode::START_);
+    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + StateMachine::START_);
 
 
 #line 252 "barf_commonlang_scanner.reflex"
@@ -291,8 +291,8 @@ Scanner::Token::Type Scanner::Scan (
 #line 292 "barf_commonlang_scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
-                std::cerr << " in mode ";
-                PrintScannerMode_(ScannerMode());
+                std::cerr << " in state machine ";
+                PrintStateMachineName_(CurrentStateMachine());
                 std::cerr << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
                 
             // execute the appropriate accept handler.
@@ -307,7 +307,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("BLOCK_COMMENT - (\\*/) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         if (*token != NULL)
             Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
-        ScannerMode(m_return_state);
+        SwitchToStateMachine(m_return_state);
     
 #line 313 "barf_commonlang_scanner.cpp"
 
@@ -350,7 +350,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("CHAR_LITERAL_END - (') - accepted_string = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
-        ScannerMode(Mode::MAIN);
+        SwitchToStateMachine(StateMachine::MAIN);
         return Token::CHAR_LITERAL;
     
 #line 357 "barf_commonlang_scanner.cpp"
@@ -368,7 +368,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        ScannerMode(Mode::MAIN);
+        SwitchToStateMachine(StateMachine::MAIN);
         return Token::END_OF_FILE;
     
 #line 375 "barf_commonlang_scanner.cpp"
@@ -388,7 +388,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         delete *token;
         *token = NULL;
-        ScannerMode(Mode::MAIN);
+        SwitchToStateMachine(StateMachine::MAIN);
         return Token::BAD_TOKEN;
     
 #line 395 "barf_commonlang_scanner.cpp"
@@ -409,7 +409,7 @@ Scanner::Token::Type Scanner::Scan (
         if (value >= 0x100)
             EmitError("octal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         *token = new Ast::Char(Uint8(value), GetFiLoc());
-        ScannerMode(Mode::CHAR_LITERAL_END);
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 415 "barf_commonlang_scanner.cpp"
 
@@ -429,7 +429,7 @@ Scanner::Token::Type Scanner::Scan (
         if (value >= 0x100)
             EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", GetFiLoc());
         *token = new Ast::Char(Uint8(value), GetFiLoc());
-        ScannerMode(Mode::CHAR_LITERAL_END);
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 435 "barf_commonlang_scanner.cpp"
 
@@ -447,7 +447,7 @@ Scanner::Token::Type Scanner::Scan (
         Ast::Char *ch = new Ast::Char(Uint8(accepted_string[1]), GetFiLoc());
         ch->Escape();
         *token = ch;
-        ScannerMode(Mode::CHAR_LITERAL_END);
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 453 "barf_commonlang_scanner.cpp"
 
@@ -462,7 +462,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("CHAR_LITERAL_GUTS - ({CHAR_NORMAL_CHAR}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(accepted_string.length() == 1);
         *token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
-        ScannerMode(Mode::CHAR_LITERAL_END);
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 468 "barf_commonlang_scanner.cpp"
 
@@ -493,7 +493,7 @@ Scanner::Token::Type Scanner::Scan (
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
         *token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
-        ScannerMode(Mode::CHAR_LITERAL_END);
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 499 "barf_commonlang_scanner.cpp"
 
@@ -509,7 +509,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
         Dsc<Ast::StrictCodeBlock *>(*token)->AppendText(accepted_string);
-        ScannerMode(Mode::STRICT_CODE_BLOCK);
+        SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
     
 #line 515 "barf_commonlang_scanner.cpp"
 
@@ -541,7 +541,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("DUMB_CODE_BLOCK - (%\\}) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
-        ScannerMode(Mode::MAIN);
+        SwitchToStateMachine(StateMachine::MAIN);
         return Token::DUMB_CODE_BLOCK;
     
 #line 548 "barf_commonlang_scanner.cpp"
@@ -587,8 +587,8 @@ Scanner::Token::Type Scanner::Scan (
 #line 317 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (/\\*) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        m_return_state = Mode::MAIN;
-        ScannerMode(Mode::BLOCK_COMMENT);
+        m_return_state = StateMachine::MAIN;
+        SwitchToStateMachine(StateMachine::BLOCK_COMMENT);
     
 #line 594 "barf_commonlang_scanner.cpp"
 
@@ -613,7 +613,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 329 "barf_commonlang_scanner.reflex"
 
         SPEW("MAIN - (') = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
-        ScannerMode(Mode::CHAR_LITERAL_GUTS);
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_GUTS);
     
 #line 619 "barf_commonlang_scanner.cpp"
 
@@ -627,7 +627,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("MAIN - (\") = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         *token = new Ast::String(GetFiLoc());
-        ScannerMode(Mode::STRING_LITERAL_GUTS);
+        SwitchToStateMachine(StateMachine::STRING_LITERAL_GUTS);
     
 #line 633 "barf_commonlang_scanner.cpp"
 
@@ -641,7 +641,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("MAIN - (\\() = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         *token = new Ast::String(GetFiLoc());
-        ScannerMode(Mode::REGULAR_EXPRESSION);
+        SwitchToStateMachine(StateMachine::REGULAR_EXPRESSION);
     
 #line 647 "barf_commonlang_scanner.cpp"
 
@@ -655,7 +655,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("MAIN - (%\\{) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         *token = new Ast::DumbCodeBlock(GetFiLoc());
-        ScannerMode(Mode::DUMB_CODE_BLOCK);
+        SwitchToStateMachine(StateMachine::DUMB_CODE_BLOCK);
     
 #line 661 "barf_commonlang_scanner.cpp"
 
@@ -669,7 +669,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("MAIN - (\\{) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         *token = new Ast::StrictCodeBlock(GetFiLoc());
-        ScannerMode(Mode::STRICT_CODE_BLOCK);
+        SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
     
 #line 675 "barf_commonlang_scanner.cpp"
 
@@ -795,7 +795,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         if (m_regex_paren_level == 0)
         {
-            ScannerMode(Mode::MAIN);
+            SwitchToStateMachine(StateMachine::MAIN);
             return Token::REGEX;
         }
         --m_regex_paren_level;
@@ -830,7 +830,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
         m_regex_bracket_level = 0;
-        ScannerMode(Mode::REGULAR_EXPRESSION_BRACKET_EXPRESSION);
+        SwitchToStateMachine(StateMachine::REGULAR_EXPRESSION_BRACKET_EXPRESSION);
     
 #line 836 "barf_commonlang_scanner.cpp"
 
@@ -878,7 +878,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         Dsc<Ast::String *>(*token)->AppendText(accepted_string);
         if (m_regex_bracket_level == 0)
-            ScannerMode(Mode::REGULAR_EXPRESSION);
+            SwitchToStateMachine(StateMachine::REGULAR_EXPRESSION);
         else
             --m_regex_bracket_level;
     
@@ -943,7 +943,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         if (m_code_block_bracket_level == 0)
         {
-            ScannerMode(Mode::MAIN);
+            SwitchToStateMachine(StateMachine::MAIN);
             return Token::STRICT_CODE_BLOCK;
         }
         --m_code_block_bracket_level;
@@ -977,7 +977,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("STRICT_CODE_BLOCK - (') = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
-        ScannerMode(Mode::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK);
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     
 #line 983 "barf_commonlang_scanner.cpp"
 
@@ -992,7 +992,7 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("STRICT_CODE_BLOCK - (\") = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
-        ScannerMode(Mode::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK);
+        SwitchToStateMachine(StateMachine::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK);
     
 #line 998 "barf_commonlang_scanner.cpp"
 
@@ -1007,8 +1007,8 @@ Scanner::Token::Type Scanner::Scan (
         SPEW("STRICT_CODE_BLOCK - (/[*]) = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
         Dsc<Ast::CodeBlock *>(*token)->AppendText(accepted_string);
-        m_return_state = Mode::STRICT_CODE_BLOCK;
-        ScannerMode(Mode::BLOCK_COMMENT);
+        m_return_state = StateMachine::STRICT_CODE_BLOCK;
+        SwitchToStateMachine(StateMachine::BLOCK_COMMENT);
     
 #line 1014 "barf_commonlang_scanner.cpp"
 
@@ -1155,7 +1155,7 @@ Scanner::Token::Type Scanner::Scan (
 
         SPEW("STRING_LITERAL_GUTS - (\") = " << GetStringLiteral(accepted_string) << " @ " << GetFiLoc());
         assert(*token != NULL);
-        ScannerMode(Mode::MAIN);
+        SwitchToStateMachine(StateMachine::MAIN);
         return Token::STRING_LITERAL;
     
 #line 1162 "barf_commonlang_scanner.cpp"
@@ -1203,7 +1203,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(*token != NULL);
         Dsc<Ast::StrictCodeBlock *>(*token)->AppendText(accepted_string);
         IncrementLineNumber(GetNewlineCount(accepted_string));
-        ScannerMode(Mode::STRICT_CODE_BLOCK);
+        SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
     
 #line 1209 "barf_commonlang_scanner.cpp"
 
@@ -1313,20 +1313,20 @@ void Scanner::PrintString_ (std::string const &s)
     std::cerr.precision(saved_stream_precision);
 }
 
-void Scanner::PrintScannerMode_ (Mode::Name mode)
+void Scanner::PrintStateMachineName_ (StateMachine::Name state_machine)
 {
     if (false) { }
-    else if (mode == Mode::BLOCK_COMMENT) { std::cerr << "BLOCK_COMMENT"; }
-    else if (mode == Mode::CHAR_LITERAL_END) { std::cerr << "CHAR_LITERAL_END"; }
-    else if (mode == Mode::CHAR_LITERAL_GUTS) { std::cerr << "CHAR_LITERAL_GUTS"; }
-    else if (mode == Mode::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK) { std::cerr << "CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK"; }
-    else if (mode == Mode::DUMB_CODE_BLOCK) { std::cerr << "DUMB_CODE_BLOCK"; }
-    else if (mode == Mode::MAIN) { std::cerr << "MAIN"; }
-    else if (mode == Mode::REGULAR_EXPRESSION) { std::cerr << "REGULAR_EXPRESSION"; }
-    else if (mode == Mode::REGULAR_EXPRESSION_BRACKET_EXPRESSION) { std::cerr << "REGULAR_EXPRESSION_BRACKET_EXPRESSION"; }
-    else if (mode == Mode::STRICT_CODE_BLOCK) { std::cerr << "STRICT_CODE_BLOCK"; }
-    else if (mode == Mode::STRING_LITERAL_GUTS) { std::cerr << "STRING_LITERAL_GUTS"; }
-    else if (mode == Mode::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK) { std::cerr << "STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK"; }
+    else if (state_machine == StateMachine::BLOCK_COMMENT) { std::cerr << "BLOCK_COMMENT"; }
+    else if (state_machine == StateMachine::CHAR_LITERAL_END) { std::cerr << "CHAR_LITERAL_END"; }
+    else if (state_machine == StateMachine::CHAR_LITERAL_GUTS) { std::cerr << "CHAR_LITERAL_GUTS"; }
+    else if (state_machine == StateMachine::CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK) { std::cerr << "CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK"; }
+    else if (state_machine == StateMachine::DUMB_CODE_BLOCK) { std::cerr << "DUMB_CODE_BLOCK"; }
+    else if (state_machine == StateMachine::MAIN) { std::cerr << "MAIN"; }
+    else if (state_machine == StateMachine::REGULAR_EXPRESSION) { std::cerr << "REGULAR_EXPRESSION"; }
+    else if (state_machine == StateMachine::REGULAR_EXPRESSION_BRACKET_EXPRESSION) { std::cerr << "REGULAR_EXPRESSION_BRACKET_EXPRESSION"; }
+    else if (state_machine == StateMachine::STRICT_CODE_BLOCK) { std::cerr << "STRICT_CODE_BLOCK"; }
+    else if (state_machine == StateMachine::STRING_LITERAL_GUTS) { std::cerr << "STRING_LITERAL_GUTS"; }
+    else if (state_machine == StateMachine::STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK) { std::cerr << "STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK"; }
 }
 
 // the order of the states indicates priority (only for accept states).

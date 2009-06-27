@@ -571,7 +571,7 @@ class ScannerNew : private ReflexCpp_::AutomatonApparatus_,
 {
 public:
 
-    struct Mode
+    struct StateMachine
     {
         enum Name
         {
@@ -580,10 +580,10 @@ public:
             READING_CODE = 16,
             READING_CODE_STRING_LITERAL_GUTS = 30,
             TRANSITION_TO_CODE = 46,
-            // default starting scanner mode
+            // default starting state machine
             START_ = READING_BODY
-        }; // end of enum ScannerNew::Mode::Name
-    }; // end of struct ScannerNew::Mode
+        }; // end of enum ScannerNew::StateMachine::Name
+    }; // end of struct ScannerNew::StateMachine
 
 
 #line 37 "barf_preprocessor_scanner.reflex"
@@ -599,8 +599,8 @@ public:
     bool DebugSpew () const { return m_debug_spew_; }
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
-    Mode::Name ScannerMode () const;
-    void ScannerMode (Mode::Name mode);
+    StateMachine::Name CurrentStateMachine () const;
+    void SwitchToStateMachine (StateMachine::Name state_machine);
 
     using AutomatonApparatus_::IsAtEndOfInput;
     void ResetForNewInput ();
@@ -651,7 +651,7 @@ private:
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
     static void PrintString_ (std::string const &s);
-    static void PrintScannerMode_ (Mode::Name mode);
+    static void PrintStateMachineName_ (StateMachine::Name state_machine);
 
     bool m_debug_spew_;
 

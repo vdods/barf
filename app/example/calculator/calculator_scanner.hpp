@@ -92,108 +92,136 @@ namespace ReflexCpp_ {
 // implements the InputApparatus interface as described in the documentation
 // /////////////////////////////////////////////////////////////////////////////
 
-class InputApparatus
+class InputApparatus_
 {
-public:
+protected:
 
-    typedef bool (InputApparatus::*IsInputAtEndMethod)();
-    typedef BarfCpp_::Uint8 (InputApparatus::*ReadNextAtomMethod)();
+    typedef bool (InputApparatus_::*IsInputAtEndMethod_)();
+    typedef BarfCpp_::Uint8 (InputApparatus_::*ReadNextAtomMethod_)();
 
-    InputApparatus (IsInputAtEndMethod IsInputAtEnd, ReadNextAtomMethod ReadNextAtom)
+    InputApparatus_ (IsInputAtEndMethod_ IsInputAtEnd, ReadNextAtomMethod_ ReadNextAtom)
         :
         m_IsInputAtEnd(IsInputAtEnd),
         m_ReadNextAtom(ReadNextAtom)
     {
-        // subclasses must call InputApparatus::ResetForNewInput_ in their constructors.
+        // subclasses must call InputApparatus_::ResetForNewInput_ in their constructors.
     }
 
     bool IsAtEndOfInput () { return IsConditionalMet(CF_END_OF_INPUT, CF_END_OF_INPUT); }
 
-protected:
+    void PrepareToScan_ ()
+    {
+        assert(m_start_cursor < m_read_cursor);
+        // update the read and keep_string cursors.  if KeepString was called,
+        // this should do nothing, since in that case, m_start_cursor will be
+        // zero;  if Unaccept was called, it should have postcondition
+        // m_read_cursor == m_start_cursor + 1
+        m_read_cursor -= m_start_cursor;
+        m_kept_string_cursor -= m_start_cursor;
+        // dump the first m_start_cursor chars from the buffer
+        while (m_start_cursor > 0)
+        {
+            --m_start_cursor;
+            m_buffer.pop_front();
+        }
+        // reset the accept cursor
+        m_accept_cursor = m_start_cursor;
+        m_keep_string_has_been_called = false;
+        assert(m_kept_string_cursor > m_start_cursor);
+        assert(m_accept_cursor == 0);
+    }
+    void ResetForNewInput_ ()
+    {
+        m_current_conditional_flags = 0;
+        m_buffer.clear();
+        m_buffer.push_front('\0'); // special "previous" atom for beginning of input
+        assert(m_buffer.size() == 1);
+        m_start_cursor = 0;
+        m_read_cursor = 1;
+        m_kept_string_cursor = 1;
+        m_accept_cursor = 0;
+        m_keep_string_has_been_called = false;
+    }
 
-    BarfCpp_::Uint8 GetCurrentConditionalFlags ()
+    // for use in AutomatonApparatus_ only
+    BarfCpp_::Uint8 GetCurrentConditionalFlags_ ()
     {
         UpdateConditionalFlags();
         return m_current_conditional_flags;
     }
-    BarfCpp_::Uint8 GetInputAtom ()
+    BarfCpp_::Uint8 GetInputAtom_ ()
     {
         FillBuffer();
         assert(m_read_cursor > 0);
         assert(m_read_cursor < m_buffer.size());
         return m_buffer[m_read_cursor];
     }
-    void AdvanceReadCursor ()
+    void AdvanceReadCursor_ ()
     {
+        assert(m_start_cursor == 0);
         assert(m_read_cursor > 0);
         assert(m_read_cursor < m_buffer.size());
         if (m_buffer[m_read_cursor] != '\0')
             ++m_read_cursor;
     }
-    void SetAcceptCursor ()
+    void SetAcceptCursor_ ()
     {
+        assert(m_start_cursor == 0);
         assert(m_read_cursor > 0);
         assert(m_read_cursor <= m_buffer.size());
         m_accept_cursor = m_read_cursor;
     }
-    void Accept (std::string &s)
+    void Accept_ (std::string &s)
     {
-        assert(s.empty());
-        assert(m_accept_cursor > 0 && "can't Accept if the accept cursor was not set");
-        assert(m_accept_cursor <= m_buffer.size());
-        assert(m_read_cursor > 0);
-        assert(m_read_cursor <= m_buffer.size());
+        assert(m_accept_cursor > 0 && "can't Accept_ if the accept cursor is not set");
         assert(m_accept_cursor <= m_read_cursor);
-        // calculate the iterators for the buffer string to erase.
-        Buffer::iterator delete_it = m_buffer.begin();
-        Buffer::iterator delete_it_end = delete_it;
-        for (Buffer::size_type i = 0; i < m_accept_cursor-1; ++i)
-        {
-            assert(delete_it_end != m_buffer.end());
-            ++delete_it_end;
-        }
-        // the accepted string iterators are one atom right from the
-        // buffer's to-be-erased string.
-        Buffer::iterator accept_it = delete_it;
-        ++accept_it;
-        Buffer::iterator accept_it_end = delete_it_end;
-        assert(accept_it_end != m_buffer.end());
-        ++accept_it_end;
-        // extract the accepted string and erase all but the new previous atom
-        s.insert(s.begin(), accept_it, accept_it_end);
-        m_buffer.erase(delete_it, delete_it_end);
-        assert(m_buffer.size() >= 1);
-        // reset the cursors
-        m_read_cursor = 1;
-        m_accept_cursor = 0;
+        AcceptRejectCommon(s);
     }
-    void Reject (std::string &s)
+    void Reject_ (std::string &s)
     {
-        assert(s.empty());
-        assert(m_accept_cursor == 0 && "can't Reject if the accept cursor was set");
-        assert(m_read_cursor > 0);
-        assert(m_read_cursor < m_buffer.size());
-        assert(m_buffer.size() >= 2);
-        // only pop the front of the buffer if we're not at EOF.
-        BarfCpp_::Uint8 rejected_atom = m_buffer[1];
-        if (m_buffer[1] != '\0')
-            m_buffer.pop_front();
-        // reset the read cursor and return the rejected atom
-        m_read_cursor = 1;
-        s += rejected_atom;
+        assert(m_accept_cursor == 0 && "can't Reject_ if the accept cursor was set");
+        // must set the accept cursor to indicate the rejected string
+        // (which is the kept string plus the rejected atom)
+        m_accept_cursor = m_kept_string_cursor;
+        assert(m_accept_cursor < m_buffer.size());
+        if (m_buffer[m_accept_cursor] != '\0')
+            ++m_accept_cursor;
+        AcceptRejectCommon(s);
     }
-    void ResetForNewInput_ ()
-    {
-        m_buffer.clear();
-        m_buffer.push_front('\0'); // special "previous" atom for beginning of input
-        assert(m_buffer.size() == 1);
-        m_read_cursor = 1;
-        m_accept_cursor = 0;
-        m_current_conditional_flags = 0;
-    }
-
+    
 private:
 
+    void AcceptRejectCommon (std::string &s)
+    {
+        assert(s.empty());
+        assert(m_buffer.size() >= 2);
+        assert(m_start_cursor == 0);
+        // the accept cursor indicates the end of the string to accept/reject
+        assert(m_accept_cursor > 0 && m_accept_cursor <= m_buffer.size());
+        // there should not be an EOF-indicating '\0' at the end of the string
+        assert(m_accept_cursor == 1 || m_buffer[m_accept_cursor-1] != '\0');
+        // the accepted/rejected string is the range [1,m_accept_cursor).
+        // come up with iterators which specify the string's range.
+        Buffer::iterator it = m_buffer.begin();
+        ++it; // start after the previous atom (the first char in the buffer)
+        Buffer::iterator it_end = it;
+        for (Buffer::size_type i = 1; i < m_accept_cursor; ++i)
+        {
+            assert(it_end != m_buffer.end());
+            assert(*it_end != '\0');
+            ++it_end;
+        }
+        // extract the string
+        s.insert(s.begin(), it, it_end);
+        assert(s.size() == m_accept_cursor-1);
+        // set the start cursor to one before the end of the string
+        // (the last char in the string becomes the previous atom)
+        m_start_cursor = m_accept_cursor - 1;
+        // reset the other cursors
+        m_read_cursor = m_accept_cursor;
+        m_kept_string_cursor = m_accept_cursor;
+    }
+    
     enum ConditionalFlag
     {
         CF_BEGINNING_OF_INPUT = (1 << 0),
@@ -201,7 +229,7 @@ private:
         CF_BEGINNING_OF_LINE  = (1 << 2),
         CF_END_OF_LINE        = (1 << 3),
         CF_WORD_BOUNDARY      = (1 << 4)
-    }; // end of enum ReflexCpp_::InputApparatus::ConditionalFlag
+    }; // end of enum ReflexCpp_::InputApparatus_::ConditionalFlag
 
     bool IsConditionalMet (BarfCpp_::Uint8 conditional_mask, BarfCpp_::Uint8 conditional_flags)
     {
@@ -260,20 +288,28 @@ private:
 
     BarfCpp_::Uint8 m_current_conditional_flags;
     Buffer m_buffer;
+    // indicates the "previous" atom
+    Buffer::size_type m_start_cursor;
+    // indicates how far the scanner has read
     Buffer::size_type m_read_cursor;
+    // indicates the end of the kept string
+    Buffer::size_type m_kept_string_cursor;
+    // if != m_start_cursor, indicates the most recent, longest accepted string
     Buffer::size_type m_accept_cursor;
-    IsInputAtEndMethod m_IsInputAtEnd;
-    ReadNextAtomMethod m_ReadNextAtom;
-}; // end of class ReflexCpp_::InputApparatus
+    // indicates if KeepString has been called during the accept/reject handler
+    bool m_keep_string_has_been_called;
+    IsInputAtEndMethod_ m_IsInputAtEnd;
+    ReadNextAtomMethod_ m_ReadNextAtom;
+}; // end of class ReflexCpp_::InputApparatus_
 
 // /////////////////////////////////////////////////////////////////////////////
 // implements the AutomatonApparatus interface as described in the documentation
 // -- it contains all the generalized state machinery for running a reflex DFA.
 // /////////////////////////////////////////////////////////////////////////////
 
-class AutomatonApparatus : protected InputApparatus
+class AutomatonApparatus_ : protected InputApparatus_
 {
-public:
+protected:
 
     struct DfaTransition_;
     struct DfaState_
@@ -281,13 +317,13 @@ public:
         BarfCpp_::Uint32 m_accept_handler_index;
         BarfCpp_::Size m_transition_count;
         DfaTransition_ const *m_transition;
-    }; // end of struct ReflexCpp_::AutomatonApparatus::DfaState_
+    }; // end of struct ReflexCpp_::AutomatonApparatus_::DfaState_
     struct DfaTransition_
     {
         enum Type
         {
             INPUT_ATOM = 0, INPUT_ATOM_RANGE, CONDITIONAL
-        }; // end of enum ReflexCpp_::AutomatonApparatus::DfaTransition_::Type
+        }; // end of enum ReflexCpp_::AutomatonApparatus_::DfaTransition_::Type
 
         BarfCpp_::Uint8 m_transition_type;
         BarfCpp_::Uint8 m_data_0;
@@ -314,25 +350,23 @@ public:
             // (m_data_0) and flags (m_data_1).
             return ((conditional_flags ^ m_data_1) & m_data_0) == 0;
         }
-    }; // end of struct ReflexCpp_::AutomatonApparatus::DfaTransition_
+    }; // end of struct ReflexCpp_::AutomatonApparatus_::DfaTransition_
 
-    AutomatonApparatus (
+    AutomatonApparatus_ (
         DfaState_ const *state_table,
         BarfCpp_::Size state_count,
         DfaTransition_ const *transition_table,
         BarfCpp_::Size transition_count,
         BarfCpp_::Uint32 accept_handler_count,
-        IsInputAtEndMethod IsInputAtEnd,
-        ReadNextAtomMethod ReadNextAtom)
+        IsInputAtEndMethod_ IsInputAtEnd,
+        ReadNextAtomMethod_ ReadNextAtom)
         :
-        InputApparatus(IsInputAtEnd, ReadNextAtom),
+        InputApparatus_(IsInputAtEnd, ReadNextAtom),
         m_accept_handler_count(accept_handler_count)
     {
         CheckDfa(state_table, state_count, transition_table, transition_count);
-        // subclasses must call ReflexCpp_::InputApparatus::ResetForNewInput_ in their constructors.
+        // subclasses must call ReflexCpp_::InputApparatus_::ResetForNewInput_ in their constructors.
     }
-
-protected:
 
     DfaState_ const *InitialState_ () const
     {
@@ -345,15 +379,15 @@ protected:
     }
     void ResetForNewInput_ (DfaState_ const *initial_state)
     {
-        InputApparatus::ResetForNewInput_();
-        InitialState_(initial_state);
+        InputApparatus_::ResetForNewInput_();
+        if (initial_state != NULL)
+            InitialState_(initial_state);
         m_current_state = NULL;
         m_accept_state = NULL;
     }
     BarfCpp_::Uint32 RunDfa_ (std::string &s)
     {
-        // clear the destination string
-        s.clear();
+        assert(s.empty());
         // reset the current state to the initial state.
         assert(m_initial_state != NULL);
         m_current_state = m_initial_state;
@@ -365,7 +399,7 @@ protected:
             if (IsAcceptState(m_current_state))
             {
                 m_accept_state = m_current_state;
-                SetAcceptCursor();
+                SetAcceptCursor_();
             }
             // turn the crank on the state machine, exercising the appropriate
             // conditional (using m_current_conditional_flags) or atomic
@@ -379,7 +413,7 @@ protected:
         if (m_accept_state != NULL)
         {
             // extract the accepted string from the buffer
-            Accept(s);
+            Accept_(s);
             // save off the accept handler index
             BarfCpp_::Uint32 accept_handler_index = m_accept_state->m_accept_handler_index;
             // clear the accept state for next time
@@ -387,25 +421,32 @@ protected:
             // return accept_handler_index to indicate which handler to call
             return accept_handler_index;
         }
-        // otherwise the input atom went unhandled, so call the special
-        // unmatched character handler on the rejected atom.
+        // otherwise the input atom went unhandled; extract the rejected string.
         else
         {
-            // put the rejected atom in the return string and indicate
+            // put the rejected string in the return string and indicate
             // that no accept handler should be called.
-            Reject(s);
+            Reject_(s);
             return m_accept_handler_count;
         }
     }
 
 private:
 
+    // these InputApparatus_ methods should not be accessable to Scanner
+    using InputApparatus_::GetCurrentConditionalFlags_;
+    using InputApparatus_::GetInputAtom_;
+    using InputApparatus_::AdvanceReadCursor_;
+    using InputApparatus_::SetAcceptCursor_;
+    using InputApparatus_::Accept_;
+    using InputApparatus_::Reject_;
+
     DfaState_ const *ProcessInputAtom ()
     {
         assert(m_current_state != NULL);
         // get the current conditional flags and input atom once before looping
-        BarfCpp_::Uint8 current_conditional_flags = GetCurrentConditionalFlags();
-        BarfCpp_::Uint8 input_atom = GetInputAtom();
+        BarfCpp_::Uint8 current_conditional_flags = GetCurrentConditionalFlags_();
+        BarfCpp_::Uint8 input_atom = GetInputAtom_();
         // iterate through the current state's transitions, exercising the first
         // acceptable one and returning the target state
         for (DfaTransition_ const *transition = m_current_state->m_transition,
@@ -422,7 +463,7 @@ private:
             {
                 if (transition->AcceptsInputAtom(input_atom))
                 {
-                    AdvanceReadCursor();
+                    AdvanceReadCursor_();
                     return transition->m_target_dfa_state;
                 }
             }
@@ -497,7 +538,7 @@ private:
     DfaState_ const *m_initial_state;
     DfaState_ const *m_current_state;
     DfaState_ const *m_accept_state;
-}; // end of class ReflexCpp_::AutomatonApparatus
+}; // end of class ReflexCpp_::AutomatonApparatus_
 
 } // end of namespace ReflexCpp_
 #endif // !defined(ReflexCpp_namespace_)
@@ -517,40 +558,39 @@ private:
 
 namespace Calculator {
 
-#line 521 "calculator_scanner.hpp"
+#line 562 "calculator_scanner.hpp"
 
-class Scanner : private ReflexCpp_::AutomatonApparatus
+class Scanner : private ReflexCpp_::AutomatonApparatus_
 {
 public:
 
-    using AutomatonApparatus::IsAtEndOfInput;
-
-    struct Mode
+    struct StateMachine
     {
         enum Name
         {
             MAIN = 0,
-            // default starting scanner mode
+            // default starting state machine
             START_ = MAIN
-        }; // end of enum Scanner::Mode::Name
-    }; // end of struct Scanner::Mode
+        }; // end of enum Scanner::StateMachine::Name
+    }; // end of struct Scanner::StateMachine
 
     Scanner (
 #line 32 "calculator_scanner.reflex"
  string const &input_string 
-#line 542 "calculator_scanner.hpp"
+#line 581 "calculator_scanner.hpp"
 );
     ~Scanner ();
 
     bool DebugSpew () const { return m_debug_spew_; }
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
-    Mode::Name ScannerMode () const;
-    void ScannerMode (Mode::Name mode);
+    StateMachine::Name CurrentStateMachine () const;
+    void SwitchToStateMachine (StateMachine::Name state_machine);
 
+    using AutomatonApparatus_::IsAtEndOfInput;
     void ResetForNewInput ();
 
-    Parser::Token Scan ();
+    Parser::Token Scan () throw();
 
 public:
 
@@ -559,7 +599,7 @@ public:
 
     istringstream m_input;
 
-#line 563 "calculator_scanner.hpp"
+#line 603 "calculator_scanner.hpp"
 
 
 private:
@@ -568,19 +608,27 @@ private:
     // begin internal reflex-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    bool IsInputAtEnd_ ();
-    BarfCpp_::Uint8 ReadNextAtom_ ();
+    using InputApparatus_::PrepareToScan_;
+    using InputApparatus_::ResetForNewInput_;
+
+    using AutomatonApparatus_::InitialState_;
+    using AutomatonApparatus_::ResetForNewInput_;
+    using AutomatonApparatus_::RunDfa_;
+
+    bool IsInputAtEnd_ () throw();
+    BarfCpp_::Uint8 ReadNextAtom_ () throw();
 
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
     static void PrintString_ (std::string const &s);
-    static void PrintScannerMode_ (Mode::Name mode);
+    static void PrintStateMachineName_ (StateMachine::Name state_machine);
 
     bool m_debug_spew_;
 
-    static AutomatonApparatus::DfaState_ const ms_state_table_[];
+    // state machine data
+    static AutomatonApparatus_::DfaState_ const ms_state_table_[];
     static BarfCpp_::Size const ms_state_count_;
-    static AutomatonApparatus::DfaTransition_ const ms_transition_table_[];
+    static AutomatonApparatus_::DfaTransition_ const ms_transition_table_[];
     static BarfCpp_::Size const ms_transition_count_;
     static char const *const ms_accept_handler_regex_[];
     static BarfCpp_::Uint32 const ms_accept_handler_count_;
@@ -597,4 +645,4 @@ private:
 
 #endif // !defined(CALCULATOR_SCANNER_HPP_)
 
-#line 601 "calculator_scanner.hpp"
+#line 649 "calculator_scanner.hpp"

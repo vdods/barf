@@ -204,15 +204,15 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
 // end-of-file condition
 %macro END_OF_FILE          (\z)
 
-%start_in_scanner_mode READING_BODY
+%start_with_state_machine READING_BODY
 
 %%
 
 // ///////////////////////////////////////////////////////////////////////////
-// scanner modes and constituent regex rules
+// state machines and constituent regex rules
 // ///////////////////////////////////////////////////////////////////////////
 
-%scanner_mode READING_BODY
+%state_machine READING_BODY
 :
     ([^<]*(<[^<]|<))
     %target.cpp {
@@ -242,7 +242,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
         // and return the Text token.
         if (code_delimiter_encountered)
         {
-            ScannerMode(Mode::TRANSITION_TO_CODE);
+            SwitchToStateMachine(StateMachine::TRANSITION_TO_CODE);
             Ast::Base *token = m_text;
             m_text = NULL;
             return Parser::Token(Parser::Terminal::TEXT, token);
@@ -265,7 +265,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
         else
             m_text = new Text(accepted_string, GetFiLoc());
 
-        ScannerMode(Mode::EXPECTING_END_OF_FILE);
+        SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         Ast::Base *token = m_text;
         m_text = NULL;
         return Parser::Token(Parser::Terminal::TEXT, token);
@@ -273,7 +273,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
 |
     ({END_OF_FILE})
     %target.cpp {
-        ScannerMode(Mode::EXPECTING_END_OF_FILE);
+        SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         if (m_text != NULL)
         {
             Ast::Base *token = m_text;
@@ -288,14 +288,14 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
     }
 ;
 
-// this is a transitional scanner mode which immediately matches
-// the empty string and then transitions to Mode::READING_CODE
-%scanner_mode TRANSITION_TO_CODE
+// this is a transitional state machine which immediately matches
+// the empty string and then transitions to StateMachine::READING_CODE
+%state_machine TRANSITION_TO_CODE
 :
     () // always matches immediately
     %target.cpp {
         assert(m_text == NULL);
-        ScannerMode(Mode::READING_CODE);
+        SwitchToStateMachine(StateMachine::READING_CODE);
         if (m_is_reading_newline_sensitive_code)
             return Parser::Token(Parser::Terminal::CODE_LINE);
         else
@@ -303,7 +303,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
     }
 ;
 
-%scanner_mode READING_CODE
+%state_machine READING_CODE
 :
     ({WHITESPACE})
     %target.cpp {
@@ -317,14 +317,14 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
         // a newline-sensitive code line (i.e. one that starts with "<|").
         if (m_is_reading_newline_sensitive_code)
         {
-            ScannerMode(Mode::READING_BODY);
+            SwitchToStateMachine(StateMachine::READING_BODY);
             return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         }
     }
 |
     ({END_OF_FILE})
     %target.cpp {
-        ScannerMode(Mode::EXPECTING_END_OF_FILE);
+        SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         if (m_is_reading_newline_sensitive_code)
             return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         else
@@ -335,7 +335,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
     %target.cpp {
         if (!m_is_reading_newline_sensitive_code)
         {
-            ScannerMode(Mode::READING_BODY);
+            SwitchToStateMachine(StateMachine::READING_BODY);
             return Parser::Token(Parser::Terminal::END_CODE);
         }
         else
@@ -367,7 +367,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
     %target.cpp {
         assert(m_text == NULL);
         m_text = new Text("", GetFiLoc());
-        ScannerMode(Mode::READING_CODE_STRING_LITERAL_GUTS);
+        SwitchToStateMachine(StateMachine::READING_CODE_STRING_LITERAL_GUTS);
     }
 |
     ({ANYTHING}) // catch-all
@@ -377,7 +377,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
     }
 ;
 
-%scanner_mode READING_CODE_STRING_LITERAL_GUTS
+%state_machine READING_CODE_STRING_LITERAL_GUTS
 :
     ({OCT_CHAR})
     %target.cpp {
@@ -429,7 +429,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
     (") // the closing quote for the string literal
     %target.cpp {
         assert(m_text != NULL);
-        ScannerMode(Mode::READING_CODE);
+        SwitchToStateMachine(StateMachine::READING_CODE);
         Ast::Base *token = m_text;
         m_text = NULL;
         return Parser::Token(Parser::Terminal::STRING_LITERAL, token);
@@ -451,7 +451,7 @@ Parser::Token ScannerNew::ParseKeyword (string const &accepted_string)
     }
 ;
 
-%scanner_mode EXPECTING_END_OF_FILE
+%state_machine EXPECTING_END_OF_FILE
 :
     ({ANYTHING}+)
     %target.cpp {

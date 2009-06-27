@@ -159,13 +159,13 @@ $ add interactive/noninteractive option to target -- interactive will do
   subclasses are virtual and there are interface methods, and see if it
   doesn't affect performance unacceptably.
 - scanner control states: case in/sensitivity, un/greedy un/forgetful.
-  these will work per-scanner mode (or be a "global state/commandline option"
+  these will work per-state machine (or be a "global state/commandline option"
   when running a general regex in a grep-like situation)
-- add codespec symbol for what scanner mode each accept_handler is in,
+- add codespec symbol for what state machine each accept_handler is in,
   and then add comments to each case statement (in the target) indicating
-  what scanner mode and regex it's for
+  what state machine and regex it's for
 - BUG: an unterminated regex causes a hang;
-  %scanner_mode BLAH
+  %state_machine BLAH
   :
     (
   ;

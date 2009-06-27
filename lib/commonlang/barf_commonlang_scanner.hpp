@@ -574,7 +574,7 @@ class Scanner : private ReflexCpp_::AutomatonApparatus_,
 {
 public:
 
-    struct Mode
+    struct StateMachine
     {
         enum Name
         {
@@ -589,10 +589,10 @@ public:
             STRICT_CODE_BLOCK = 83,
             STRING_LITERAL_GUTS = 94,
             STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK = 110,
-            // default starting scanner mode
+            // default starting state machine
             START_ = MAIN
-        }; // end of enum Scanner::Mode::Name
-    }; // end of struct Scanner::Mode
+        }; // end of enum Scanner::StateMachine::Name
+    }; // end of struct Scanner::StateMachine
 
 
 #line 40 "barf_commonlang_scanner.reflex"
@@ -616,7 +616,7 @@ public:
             DIRECTIVE_MACRO,
             DIRECTIVE_NONTERMINAL,
             DIRECTIVE_PREC,
-            DIRECTIVE_START_IN_SCANNER_MODE,
+            DIRECTIVE_START_IN_STATE_MACHINE,
             DIRECTIVE_STATE,
             DIRECTIVE_STRICT_CODE_BLOCK,
             DIRECTIVE_STRING,
@@ -647,8 +647,8 @@ public:
     bool DebugSpew () const { return m_debug_spew_; }
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
-    Mode::Name ScannerMode () const;
-    void ScannerMode (Mode::Name mode);
+    StateMachine::Name CurrentStateMachine () const;
+    void SwitchToStateMachine (StateMachine::Name state_machine);
 
     using AutomatonApparatus_::IsAtEndOfInput;
     void ResetForNewInput ();
@@ -682,7 +682,7 @@ private:
     Uint32 m_regex_paren_level;
     Uint32 m_regex_bracket_level;
     Uint32 m_code_block_bracket_level;
-    Mode::Name m_return_state;
+    StateMachine::Name m_return_state;
 
 #line 688 "barf_commonlang_scanner.hpp"
 
@@ -706,7 +706,7 @@ private:
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
     static void PrintString_ (std::string const &s);
-    static void PrintScannerMode_ (Mode::Name mode);
+    static void PrintStateMachineName_ (StateMachine::Name state_machine);
 
     bool m_debug_spew_;
 

@@ -98,15 +98,15 @@ namespace Calculator {
 // end-of-file condition
 %macro END_OF_FILE          (\z)
 
-%start_in_scanner_mode MAIN
+%start_with_state_machine MAIN
 
 %%
 
 // ///////////////////////////////////////////////////////////////////////////
-// scanner modes and constituent regex rules
+// state machines and constituent regex rules
 // ///////////////////////////////////////////////////////////////////////////
 
-%scanner_mode MAIN
+%state_machine MAIN
 :
     ({INTEGER})
     %target.cpp {
