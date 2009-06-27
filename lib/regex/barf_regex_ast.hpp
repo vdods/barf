@@ -25,11 +25,13 @@ namespace Regex {
 
 enum
 {
-    AST_BOUND = Ast::AST_START_CUSTOM_TYPES_HERE_,
+    AST_BAKED_CONTROL_CHAR = Ast::AST_START_CUSTOM_TYPES_HERE_,
+    AST_BOUND,
     AST_BRACKET_CHAR_SET,
     AST_BRANCH,
     AST_CHAR,
     AST_CONDITIONAL_CHAR,
+    AST_MODE_CONTROL_CHAR,
     AST_PIECE,
     AST_REGULAR_EXPRESSION,
     AST_REGULAR_EXPRESSION_MAP,
@@ -42,10 +44,6 @@ string const &GetAstTypeString (AstType ast_type);
 struct Atom : public Ast::Base
 {
     Atom (AstType ast_type) : Ast::Base(FiLoc::ms_invalid, ast_type) { }
-
-    // subclasses should return true iff the nfa transitions they generate
-    // would not all be epsilon transitions (e.g. normal characters or conditionals)
-    virtual bool RequiresNontrivialTransition () const = 0;
 }; // end of struct Atom
 
 struct Bound : public Ast::Base
@@ -139,8 +137,6 @@ struct Char : public Atom
     Atom *Escaped ();
     void EscapeInsideBracketExpression ();
 
-    virtual bool RequiresNontrivialTransition () const { return true; }
-
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
@@ -162,16 +158,37 @@ struct ConditionalChar : public Atom
 
     inline ConditionalType GetConditionalType () const { return m_conditional_type; }
 
-    virtual bool RequiresNontrivialTransition () const { return true; }
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+
+private:
+
+    ConditionalType const m_conditional_type;
+
+    friend bool NodesAreEqual (Ast::Base const *, Ast::Base const *);
+}; // end of struct ConditionalChar
+
+// used for "compile time" control characters (i.e. control chars that affect
+// the generated NFA) (e.g. for case in/sensitivity, etc).
+struct BakedControlChar : public Atom
+{
+    BakedControlChar (BakedControlCharType baked_control_char_type)
+        :
+        Atom(AST_BAKED_CONTROL_CHAR),
+        m_baked_control_char_type(baked_control_char_type)
+    {
+        assert(m_baked_control_char_type < BCCT_COUNT);
+    }
+
+    inline BakedControlCharType GetBakedControlCharType () const { return m_baked_control_char_type; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    ConditionalType m_conditional_type;
+    BakedControlCharType const m_baked_control_char_type;
 
     friend bool NodesAreEqual (Ast::Base const *, Ast::Base const *);
-}; // end of struct ConditionalChar
+}; // end of struct BakedControlChar
 
 struct BracketCharSet : public Atom
 {
@@ -192,15 +209,13 @@ struct BracketCharSet : public Atom
     }
 
     inline bool GetIsEmpty () const { return m_char_set.none(); }
-    inline bool GetIsCharInSet (Uint8 ch) const { return m_char_set.test(ch); }
+    bool GetIsCharInSet (Uint8 ch, bool is_case_sensitive) const;
 
     void AddChar (Uint8 ch);
     void AddCharRange (Uint8 low_char, Uint8 high_char);
     void AddCharClass (string const &char_class);
     void Negate ();
 
-    virtual bool RequiresNontrivialTransition () const { return true; }
-    
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
@@ -220,8 +235,6 @@ struct RegularExpression : public Atom, public Ast::List<Branch>
     // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
-    virtual bool RequiresNontrivialTransition () const { return true; }
-    
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct RegularExpression
 

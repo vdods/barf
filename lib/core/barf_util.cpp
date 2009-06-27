@@ -106,6 +106,15 @@ ostream &operator << (ostream &stream, Tabs const &tabs)
     return stream;
 }
 
+Uint8 SwitchCase (Uint8 c)
+{
+    if (c >= 'a' && c <= 'z')
+        return c - 'a' + 'A';
+    if (c >= 'A' && c <= 'Z')
+        return c - 'A' + 'a';
+    return c;
+}
+
 Uint8 GetEscapedChar (Uint8 const c)
 {
     switch (c)

@@ -59,6 +59,7 @@ private:
     Uint32 const m_indent_level;
 };
 
+Uint8 SwitchCase (Uint8 c);
 Uint8 GetEscapedChar (Uint8 c);
 string GetEscapedString (string const &text);
 string GetCharLiteral (Uint8 c, bool with_quotes = true);

@@ -12,6 +12,8 @@
 
 #include <sstream>
 
+#include "barf_util.hpp"
+
 namespace Barf {
 namespace Regex {
 
@@ -19,11 +21,13 @@ string const &GetAstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_COUNT-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
+        "AST_BAKED_CONTROL_CHAR",
         "AST_BOUND",
         "AST_BRACKET_CHAR_SET",
         "AST_BRANCH",
         "AST_CHAR",
         "AST_CONDITIONAL_CHAR",
+        "AST_MODE_CONTROL_CHAR",
         "AST_PIECE",
         "AST_REGULAR_EXPRESSION",
         "AST_REGULAR_EXPRESSION_MAP"
@@ -110,6 +114,9 @@ Atom *Char::Escaped ()
         case 'E': escaped = new ConditionalChar(CT_NOT_END_OF_LINE);        break;
         case 'b': escaped = new ConditionalChar(CT_WORD_BOUNDARY);          break;
         case 'B': escaped = new ConditionalChar(CT_NOT_WORD_BOUNDARY);      break;
+        // baked control escape chars
+        case 'c': escaped = new BakedControlChar(BCCT_CASE_SENSITIVITY_DISABLE); break;
+        case 'C': escaped = new BakedControlChar(BCCT_CASE_SENSITIVITY_ENABLE);  break;
         // escaping '0' should not provide a literal '\0'.
         case '0': break;
         // otherwise, do normal char escaping (e.g. '\t', '\n', etc).
@@ -147,6 +154,22 @@ void ConditionalChar::Print (ostream &stream, StringifyAstType Stringify, Uint32
 // ///////////////////////////////////////////////////////////////////////////
 //
 // ///////////////////////////////////////////////////////////////////////////
+
+void BakedControlChar::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetBakedControlCharTypeString(m_baked_control_char_type) << endl;
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+//
+// ///////////////////////////////////////////////////////////////////////////
+
+bool BracketCharSet::GetIsCharInSet (Uint8 ch, bool is_case_sensitive) const
+{
+    return m_char_set.test(ch)
+           ||
+           (!is_case_sensitive && m_char_set.test(SwitchCase(ch)));
+}
 
 void BracketCharSet::AddChar (Uint8 ch)
 {
@@ -326,6 +349,13 @@ bool NodesAreEqual (Ast::Base const *left, Ast::Base const *right)
 
     switch (left->GetAstType())
     {
+        case AST_BAKED_CONTROL_CHAR:
+        {
+            BakedControlChar const *left_ch = Dsc<BakedControlChar const *>(left);
+            BakedControlChar const *right_ch = Dsc<BakedControlChar const *>(right);
+            return left_ch->m_baked_control_char_type == right_ch->m_baked_control_char_type;
+        }
+    
         case AST_BOUND:
         {
             Bound const *left_bound = Dsc<Bound const *>(left);
@@ -369,7 +399,7 @@ bool NodesAreEqual (Ast::Base const *left, Ast::Base const *right)
             ConditionalChar const *right_ch = Dsc<ConditionalChar const *>(right);
             return left_ch->m_conditional_type == right_ch->m_conditional_type;
         }
-            
+
         case AST_PIECE:
         {
             Piece const *left_piece = Dsc<Piece const *>(left);

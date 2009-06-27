@@ -73,5 +73,16 @@ ConditionalType GetConditionalTypeFromConditional (Conditional &conditional)
     }
 }
 
+string const &GetBakedControlCharTypeString (BakedControlCharType baked_control_char_type)
+{
+    static string const s_baked_control_char_type_string[BCCT_COUNT] =
+    {
+        "BCCT_CASE_SENSITIVITY_DISABLE",
+        "BCCT_CASE_SENSITIVITY_ENABLE"
+    };
+    assert(baked_control_char_type < BCCT_COUNT);
+    return s_baked_control_char_type_string[baked_control_char_type];
+}
+
 } // end of namespace Regex
 } // end of namespace Barf

@@ -61,6 +61,16 @@ struct Conditional
 Conditional GetConditionalFromConditionalType (ConditionalType conditional_type);
 ConditionalType GetConditionalTypeFromConditional (Conditional &conditional);
 
+enum BakedControlCharType
+{
+    BCCT_CASE_SENSITIVITY_DISABLE = 0,
+    BCCT_CASE_SENSITIVITY_ENABLE,
+
+    BCCT_COUNT
+}; // end of enum BakedControlCharType
+
+string const &GetBakedControlCharTypeString (BakedControlCharType baked_control_char_type);
+
 } // end of namespace Regex
 } // end of namespace Barf
 

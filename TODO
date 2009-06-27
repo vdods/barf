@@ -158,15 +158,12 @@ $ add interactive/noninteractive option to target -- interactive will do
 - once existing C++ target is optimized, make a version of it where the
   subclasses are virtual and there are interface methods, and see if it
   doesn't affect performance unacceptably.
-- case in/sensitivity (this will be done in the scanner itself using control
-  codes)
-- greedy/ungreedy behavior (per scanner mode, most likely)
-- forgetful mode (when you don't care about the accept string, you can just
-  drop all the input on the floor and not bother to buffer it) also per-
-  scanner mode
+- scanner control states: case in/sensitivity, un/greedy un/forgetful.
+  these will work per-scanner mode (or be a "global state/commandline option"
+  when running a general regex in a grep-like situation)
 - add codespec symbol for what scanner mode each accept_handler is in,
-  and then add comments to each case statement indicating what scanner mode
-  and regex it's for
+  and then add comments to each case statement (in the target) indicating
+  what scanner mode and regex it's for
 - BUG: an unterminated regex causes a hang;
   %scanner_mode BLAH
   :
