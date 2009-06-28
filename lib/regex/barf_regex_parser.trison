@@ -290,10 +290,9 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 %target.cpp.debug_spew_prefix {"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
-
-//////////////////////////////////////////////////////////////////////////////
-// grammar metadata
-//////////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* grammar metadata
+/* **************************************************************************/
 
 %terminal BAD_TOKEN
 %terminal ALPHA %type.cpp "Char *"
@@ -327,9 +326,9 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 
 %%
 
-//////////////////////////////////////////////////////////////////////////////
-// grammar specification
-//////////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* grammar specification
+/* **************************************************************************/
 
 %nonterminal regex %type.cpp "RegularExpression *"
 :
@@ -389,9 +388,9 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     }
 ;
 
-//////////////////////////////////////////////////////////////////////////////
-// atom and bound rules (which together make a piece)
-//////////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* atom and bound rules (which together make a piece)
+/* **************************************************************************/
 
 %nonterminal atom %type.cpp "Atom *"
 :
@@ -478,9 +477,9 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     }
 ;
 
-//////////////////////////////////////////////////////////////////////////////
-// bracket expression rules
-//////////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* bracket expression rules
+/* **************************************************************************/
 
 %nonterminal bracket_expression %type.cpp "Atom *"
 :
@@ -546,16 +545,17 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     HEX_CHAR:hex_char                                 %target.cpp { return hex_char; }
 ;
 
-//////////////////////////////////////////////////////////////////////////////
-// grammar primitive rules
-//////////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* grammar primitive rules
+/* **************************************************************************/
 
-// these chars are special only in atom parsing (not inside
-// a bound or a bracket expression).  all others (with the exception
-// of backslash, the escape char) are treated as normal chars.
-// no char here should be present in atom_normal_char,
-// and the union of atom_normal_char, atom_control_char
-// and backslash should constitute all valid chars.
+/* these chars are special only in atom parsing (not inside
+ * a bound or a bracket expression).  all others (with the exception
+ * of backslash, the escape char) are treated as normal chars.
+ * no char here should be present in atom_normal_char,
+ * and the union of atom_normal_char, atom_control_char
+ * and backslash should constitute all valid chars.
+ */
 %nonterminal atom_control_char %type.cpp "Char *"
 :
     // branch operator
@@ -588,12 +588,13 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     '\\' %target.cpp { return new Char('\\'); }
 ;
 
-// these chars have no special meaning in atom parsing (not
-// inside a bound or a bracket expression).  all others (with the exception
-// of backslash, the escape char) are treated as control chars.
-// no char here should be present in atom_control_char,
-// and the union of atom_normal_char, atom_control_char
-// and backslash should constitute all valid chars.
+/* these chars have no special meaning in atom parsing (not
+ * inside a bound or a bracket expression).  all others (with the exception
+ * of backslash, the escape char) are treated as control chars.
+ * no char here should be present in atom_control_char,
+ * and the union of atom_normal_char, atom_control_char
+ * and backslash should constitute all valid chars.
+ */
 %nonterminal atom_normal_char %type.cpp "Char *"
 :
     ALPHA:alpha %target.cpp { return alpha; }
@@ -604,12 +605,13 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 |   ':'         %target.cpp { return new Char(':'); }
 ;
 
-// these chars are special only inside bracket expressions.  all others
-// (with the exception of backslash, the escape char) are treated as
-// normal chars.  no char here should be present in
-// bracket_expression_normal_char, and the union of
-// bracket_expression_normal_char, bracket_expression_control_char
-// and backslash should constitute all valid chars.
+/* these chars are special only inside bracket expressions.  all others
+ * (with the exception of backslash, the escape char) are treated as
+ * normal chars.  no char here should be present in
+ * bracket_expression_normal_char, and the union of
+ * bracket_expression_normal_char, bracket_expression_control_char
+ * and backslash should constitute all valid chars.
+ */
 %nonterminal bracket_expression_control_char %type.cpp "Char *"
 :
     // delimits a bracket atom range
@@ -624,12 +626,13 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     '\\' %target.cpp { return new Char('\\'); }
 ;
 
-// these chars have no special meaning inside bracket expressions.  all
-// others (with the exception of backslash, the escape char) are treated
-// as normal chars.  no char here should be present in
-// bracket_expression_normal_char, and the union of
-// bracket_expression_normal_char, bracket_expression_control_char
-// and backslash should constitute all valid chars.
+/* these chars have no special meaning inside bracket expressions.  all
+ * others (with the exception of backslash, the escape char) are treated
+ * as normal chars.  no char here should be present in
+ * bracket_expression_normal_char, and the union of
+ * bracket_expression_normal_char, bracket_expression_control_char
+ * and backslash should constitute all valid chars.
+ */
 %nonterminal bracket_expression_normal_char %type.cpp "Char *"
 :
     ALPHA:alpha %target.cpp { return alpha; }

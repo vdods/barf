@@ -154,7 +154,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 }
 %target.cpp.scan_actions {
     Ast::Base *lookahead_token_data = NULL;
-    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&lookahead_token_data);
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(lookahead_token_data);
     assert(scanner_token_type >= 0);
     if (scanner_token_type < 0x100)
         return Token(Parser::Token::Id(scanner_token_type), lookahead_token_data);
@@ -238,9 +238,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %%
 
-// ///////////////////////////////////////////////////////////////////////////
-// root rule
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* root rule
+/* **************************************************************************/
 
 %nonterminal root %type.cpp "PrimarySource *"
 :
@@ -289,9 +289,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// targets directive rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* targets directive rules
+/* **************************************************************************/
 
 %nonterminal targets_directive
 :
@@ -339,9 +339,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// target directive rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* target directive rules
+/* **************************************************************************/
 
 %nonterminal target_directives
 :
@@ -401,9 +401,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |   /* empty reduction rule */  %target.cpp { return NULL; }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// terminal directive rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* terminal directive rules
+/* **************************************************************************/
 
 %nonterminal terminal_directives %type.cpp "TerminalMap *"
 :
@@ -485,9 +485,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// precedence directive rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* precedence directive rules
+/* **************************************************************************/
 
 %nonterminal precedence_directives %type.cpp "PrecedenceMap *"
 :
@@ -561,9 +561,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// start directive rule
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* start directive rule
+/* **************************************************************************/
 
 %nonterminal start_directive %type.cpp "Ast::Id *"
 :
@@ -574,9 +574,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// nonterminal rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* nonterminal rules
+/* **************************************************************************/
 
 %nonterminal nonterminals %type.cpp "NonterminalMap *"
 :
@@ -665,9 +665,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// rule rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* rule rules
+/* **************************************************************************/
 
 %nonterminal rules %type.cpp "RuleList *"
 :
@@ -849,9 +849,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// misc rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* misc rules
+/* **************************************************************************/
 
 %nonterminal at_least_zero_newlines
 :

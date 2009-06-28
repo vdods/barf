@@ -10,9 +10,9 @@
 
 %targets cpp
 
-// ///////////////////////////////////////////////////////////////////////////
-// cpp scanner header-file-related directives
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* cpp scanner header-file-related directives
+/* **************************************************************************/
 
 %target.cpp.header_filename "barf_preprocessor_scanner.hpp"
 %target.cpp.implementation_filename "barf_preprocessor_scanner.cpp"
@@ -61,9 +61,9 @@ private:
 #endif // !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 %}
 
-// ///////////////////////////////////////////////////////////////////////////
-// cpp scanner implementation-file-related directives
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* cpp scanner implementation-file-related directives
+/* **************************************************************************/
 
 %target.cpp.top_of_implementation_file %{
 #include "barf_preprocessor_ast.hpp"
@@ -139,9 +139,9 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 } // end of namespace Barf
 %}
 
-// ///////////////////////////////////////////////////////////////////////////
-// cpp scanner I/O parameters
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* cpp scanner I/O parameters
+/* **************************************************************************/
 
 %target.cpp.return_type "Parser::Token"
 %target.cpp.return_true_iff_input_is_at_end {
@@ -158,17 +158,17 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     m_text = NULL;
 }
 
-// ///////////////////////////////////////////////////////////////////////////
-// cpp scanner misc directives
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* cpp scanner misc directives
+/* **************************************************************************/
 
 %target.cpp.generate_debug_spew_code
 %target.cpp.debug_spew_prefix {"Preprocessor::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
-// ///////////////////////////////////////////////////////////////////////////
-// target-independent scanner directives
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* target-independent scanner directives
+/* **************************************************************************/
 
 // a single octal (base 8) digit
 %macro OCT_DIGIT            ([0-7])
@@ -208,9 +208,9 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 
 %%
 
-// ///////////////////////////////////////////////////////////////////////////
-// state machines and constituent regex rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* state machines and constituent regex rules
+/* **************************************************************************/
 
 %state_machine READING_BODY
 :
@@ -257,7 +257,6 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 |
     ([^<]+{END_OF_FILE})
     %target.cpp {
-
         // if there's already a body text in progress, continue it.
         if (m_text != NULL)
             m_text->AppendText(accepted_string);

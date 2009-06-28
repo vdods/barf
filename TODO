@@ -157,9 +157,6 @@ $ add interactive/noninteractive option to target -- interactive will do
   you must specify the "get next char" directive, otherwise you must specify
   the "read chars" directive (which reads a big chunk of input for faster
   reads).  the default should be non-interactive, so the default is fast
-- add codespec symbol for what state machine each accept_handler is in,
-  and then add comments to each case statement (in the target) indicating
-  what state machine and regex it's for
 - BUG: an unterminated regex causes a hang;
   %state_machine BLAH
   :
@@ -173,8 +170,7 @@ $ add interactive/noninteractive option to target -- interactive will do
 - use smallest integer type to store state and transition indices, etc.
   (in C++, this can be done easily with templates)
 * c++ target -- ability to set the debug spew ostream
-- move the --with-line-directives option to be specified by the target,
-  overridable by the primary source
+- move the --with-line-directives option to be an optional directive
 - add commandline option to describe the return codes (?)
 $ add targetspec directive for line directives referencing codespecs (the
   default should be to not refer to codespecs), making development easier

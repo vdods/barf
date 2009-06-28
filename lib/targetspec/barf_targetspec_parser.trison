@@ -105,7 +105,7 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 }
 %target.cpp.scan_actions {
     Ast::Base *lookahead_token_data = NULL;
-    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&lookahead_token_data);
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(lookahead_token_data);
     assert(scanner_token_type >= 0);
     if (scanner_token_type < 0x100)
         return Token(scanner_token_type);
@@ -180,9 +180,9 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 
 %%
 
-// ///////////////////////////////////////////////////////////////////////////
-// root rule
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* root rule
+/* **************************************************************************/
 
 %nonterminal root %type.cpp "Specification *"
 :
@@ -197,9 +197,9 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
     }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// directives (add_codespec and add_*_directive)
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* directives (add_codespec and add_*_directive)
+/* **************************************************************************/
 
 %nonterminal directives
 :
@@ -316,9 +316,9 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 |   STRICT_CODE_BLOCK:value %target.cpp { return value; }
 ;
 
-// ///////////////////////////////////////////////////////////////////////////
-// misc rules
-// ///////////////////////////////////////////////////////////////////////////
+/* ***************************************************************************
+/* misc rules
+/* **************************************************************************/
 
 %nonterminal at_least_zero_newlines
 :

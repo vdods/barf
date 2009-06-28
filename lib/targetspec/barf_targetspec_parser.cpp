@@ -351,7 +351,7 @@ Parser::Token Parser::Scan_ () throw()
 #line 106 "barf_targetspec_parser.trison"
 
     Ast::Base *lookahead_token_data = NULL;
-    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(&lookahead_token_data);
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(lookahead_token_data);
     assert(scanner_token_type >= 0);
     if (scanner_token_type < 0x100)
         return Token(scanner_token_type);

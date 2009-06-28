@@ -702,7 +702,7 @@ public:
 
     Scanner::Token::Type Scan (
 #line 83 "barf_commonlang_scanner.reflex"
- Ast::Base **token 
+ Ast::Base *&token 
 #line 707 "barf_commonlang_scanner.hpp"
 ) throw();
 
@@ -723,7 +723,7 @@ public:
 
 private:
 
-    Token::Type ParseDirective (string const &accepted_string, Ast::Base **token);
+    Token::Type ParseDirective (string const &accepted_string, Ast::Base *&token);
 
     bool m_is_in_preamble;
     Uint32 m_regex_paren_level;
