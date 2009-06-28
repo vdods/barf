@@ -34,22 +34,22 @@
   </general>
   <kdevcustomproject>
     <run>
-      <mainprogram>/home/vdods/files/sf/barf2/trunk/debug/playground</mainprogram>
+      <mainprogram>/home/vdods/files/sf/barf/trunk/debug/playground</mainprogram>
       <directoryradio>executable</directoryradio>
       <customdirectory>/</customdirectory>
-      <programargs>&lt; in2</programargs>
+      <programargs/>
       <terminal>false</terminal>
       <autocompile>false</autocompile>
       <envvars/>
-      <globaldebugarguments>&lt; in2</globaldebugarguments>
-      <globalcwd>/home/vdods/files/sf/barf2/trunk/debug</globalcwd>
+      <globaldebugarguments/>
+      <globalcwd>/home/vdods/files/sf/barf/trunk/debug</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
     </run>
     <build>
       <buildtool>make</buildtool>
-      <builddir>/home/vdods/files/sf/barf2/trunk/debug</builddir>
+      <builddir>/home/vdods/files/sf/barf/trunk/debug</builddir>
     </build>
     <make>
       <abortonerror>false</abortonerror>

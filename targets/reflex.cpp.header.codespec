@@ -257,7 +257,7 @@ private:
 
     BarfCpp_::Uint8 m_current_conditional_flags;
     Buffer m_buffer;
-    // indicates the "previous" atom
+    // indicates the "previous" atom (of the kept string)
     Buffer::size_type m_start_cursor;
     // indicates how far the scanner has read
     Buffer::size_type m_read_cursor;
@@ -280,14 +280,11 @@ class AutomatonApparatus_ : protected InputApparatus_
 {
 protected:
 
+    // state machine mode flags
     enum
     {
-        MF_CASE_INSENSITIVE = 0x01,
-        MF_FORGETFUL        = 0x02,
-        MF_UNGREEDY         = 0x04,
-
-        MF_NONE             = 0x00,
-        MF_ALL              = 0x07
+        MF_CASE_INSENSITIVE_ = 0x01,
+        MF_UNGREEDY_         = 0x02
     };
 
     struct DfaTransition_;
@@ -408,7 +405,7 @@ protected:
                 SetAcceptCursor_();
                 // if we're in ungreedy mode, accept the shortest string
                 // possible; don't process any more input.
-                if ((m_mode_flags & MF_UNGREEDY) != 0)
+                if ((m_mode_flags & MF_UNGREEDY_) != 0)
                 {
                     assert(m_accept_state != NULL);
                     m_current_state = NULL;
@@ -462,7 +459,7 @@ private:
         BarfCpp_::Uint8 current_conditional_flags = GetCurrentConditionalFlags_();
         BarfCpp_::Uint8 input_atom = GetInputAtom_();
         // calculate the case sensitivity
-        bool is_case_insensitive = (m_mode_flags & MF_CASE_INSENSITIVE) != 0;
+        bool is_case_insensitive = (m_mode_flags & MF_CASE_INSENSITIVE_) != 0;
         // iterate through the current state's transitions, exercising the first
         // acceptable one and returning the target state
         for (DfaTransition_ const *transition = m_current_state->m_transition,

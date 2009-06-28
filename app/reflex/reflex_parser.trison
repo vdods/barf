@@ -153,7 +153,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         case CommonLang::Scanner::Token::BAD_END_OF_FILE:                  return Token(Terminal::END_, lookahead_token_data);
         case CommonLang::Scanner::Token::BAD_TOKEN:                        return Token(Terminal::BAD_TOKEN, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_CASE_INSENSITIVE:       return Token(Terminal::DIRECTIVE_CASE_INSENSITIVE, lookahead_token_data); 
-        case CommonLang::Scanner::Token::DIRECTIVE_FORGETFUL:              return Token(Terminal::DIRECTIVE_FORGETFUL, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:                  return Token(Terminal::DIRECTIVE_MACRO, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE: return Token(Terminal::DIRECTIVE_START_IN_STATE_MACHINE, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_STATE_MACHINE:          return Token(Terminal::DIRECTIVE_STATE_MACHINE, lookahead_token_data);
@@ -208,7 +207,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %terminal BAD_TOKEN
 %terminal DIRECTIVE_CASE_INSENSITIVE %type.cpp "Ast::ThrowAway *"
-%terminal DIRECTIVE_FORGETFUL %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_MACRO %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_START_IN_STATE_MACHINE %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_STATE_MACHINE %type.cpp "Ast::ThrowAway *"
@@ -509,15 +507,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         if (mode_flags->GetValue() & StateMachine::MF_CASE_INSENSITIVE)
             EmitWarning("duplicate %case_insensitive", throwaway->GetFiLoc());
         mode_flags->SetValue(mode_flags->GetValue() | StateMachine::MF_CASE_INSENSITIVE);
-        delete throwaway;
-        return mode_flags;
-    }
-|
-    state_machine_mode_flags:mode_flags DIRECTIVE_FORGETFUL:throwaway
-    %target.cpp {
-        if (mode_flags->GetValue() & StateMachine::MF_FORGETFUL)
-            EmitWarning("duplicate %forgetful", throwaway->GetFiLoc());
-        mode_flags->SetValue(mode_flags->GetValue() | StateMachine::MF_FORGETFUL);
         delete throwaway;
         return mode_flags;
     }

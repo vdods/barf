@@ -288,7 +288,7 @@ private:
 
     BarfCpp_::Uint8 m_current_conditional_flags;
     Buffer m_buffer;
-    // indicates the "previous" atom
+    // indicates the "previous" atom (of the kept string)
     Buffer::size_type m_start_cursor;
     // indicates how far the scanner has read
     Buffer::size_type m_read_cursor;
@@ -311,6 +311,13 @@ class AutomatonApparatus_ : protected InputApparatus_
 {
 protected:
 
+    // state machine mode flags
+    enum
+    {
+        MF_CASE_INSENSITIVE_ = 0x01,
+        MF_UNGREEDY_         = 0x02
+    };
+
     struct DfaTransition_;
     struct DfaState_
     {
@@ -330,17 +337,31 @@ protected:
         BarfCpp_::Uint8 m_data_1;
         DfaState_ const *m_target_dfa_state;
 
-        bool AcceptsInputAtom (BarfCpp_::Uint8 input_atom) const
+        bool AcceptsInputAtom (BarfCpp_::Uint8 input_atom, bool is_case_insensitive) const
         {
             assert(m_transition_type == INPUT_ATOM || m_transition_type == INPUT_ATOM_RANGE);
             // returns true iff this transition is INPUT_ATOM and input_atom
             // matches m_data_0, or this transition is INPUT_ATOM_RANGE and
             // input_atom is within the range [m_data_0, m_data_1] inclusive.
-            return (m_transition_type == INPUT_ATOM &&
-                    m_data_0 == input_atom)
-                   ||
-                   (m_transition_type == INPUT_ATOM_RANGE &&
-                    m_data_0 <= input_atom && input_atom <= m_data_1);
+            if (is_case_insensitive)
+            {
+                BarfCpp_::Uint8 switched_case_input_atom = SwitchCase(input_atom);
+                return (m_transition_type == INPUT_ATOM
+                        &&
+                        (m_data_0 == input_atom || m_data_0 == switched_case_input_atom))
+                       ||
+                       (m_transition_type == INPUT_ATOM_RANGE
+                        &&
+                        ((m_data_0 <= input_atom && input_atom <= m_data_1)
+                         ||
+                         (m_data_0 <= switched_case_input_atom && switched_case_input_atom <= m_data_1)));
+            }
+            else // case sensitive
+                return (m_transition_type == INPUT_ATOM &&
+                        m_data_0 == input_atom)
+                       ||
+                       (m_transition_type == INPUT_ATOM_RANGE &&
+                        m_data_0 <= input_atom && input_atom <= m_data_1);
         }
         bool AcceptsConditionalFlags (BarfCpp_::Uint8 conditional_flags) const
         {
@@ -349,6 +370,14 @@ protected:
             // in conditional_flags conflict with this transition's conditional mask
             // (m_data_0) and flags (m_data_1).
             return ((conditional_flags ^ m_data_1) & m_data_0) == 0;
+        }
+        static BarfCpp_::Uint8 SwitchCase (BarfCpp_::Uint8 c)
+        {
+            if (c >= 'a' && c <= 'z')
+                return c - 'a' + 'A';
+            if (c >= 'A' && c <= 'Z')
+                return c - 'A' + 'a';
+            return c;
         }
     }; // end of struct ReflexCpp_::AutomatonApparatus_::DfaTransition_
 
@@ -377,13 +406,18 @@ protected:
         assert(initial_state != NULL);
         m_initial_state = initial_state;
     }
-    void ResetForNewInput_ (DfaState_ const *initial_state)
+    void ModeFlags_ (BarfCpp_::Uint8 mode_flags)
+    {
+        m_mode_flags = mode_flags;
+    }
+    void ResetForNewInput_ (DfaState_ const *initial_state, BarfCpp_::Uint8 mode_flags)
     {
         InputApparatus_::ResetForNewInput_();
         if (initial_state != NULL)
             InitialState_(initial_state);
         m_current_state = NULL;
         m_accept_state = NULL;
+        m_mode_flags = mode_flags;
     }
     BarfCpp_::Uint32 RunDfa_ (std::string &s)
     {
@@ -400,6 +434,14 @@ protected:
             {
                 m_accept_state = m_current_state;
                 SetAcceptCursor_();
+                // if we're in ungreedy mode, accept the shortest string
+                // possible; don't process any more input.
+                if ((m_mode_flags & MF_UNGREEDY_) != 0)
+                {
+                    assert(m_accept_state != NULL);
+                    m_current_state = NULL;
+                    break;
+                }
             }
             // turn the crank on the state machine, exercising the appropriate
             // conditional (using m_current_conditional_flags) or atomic
@@ -447,6 +489,8 @@ private:
         // get the current conditional flags and input atom once before looping
         BarfCpp_::Uint8 current_conditional_flags = GetCurrentConditionalFlags_();
         BarfCpp_::Uint8 input_atom = GetInputAtom_();
+        // calculate the case sensitivity
+        bool is_case_insensitive = (m_mode_flags & MF_CASE_INSENSITIVE_) != 0;
         // iterate through the current state's transitions, exercising the first
         // acceptable one and returning the target state
         for (DfaTransition_ const *transition = m_current_state->m_transition,
@@ -461,7 +505,7 @@ private:
             if (transition->m_transition_type == DfaTransition_::INPUT_ATOM ||
                 transition->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE)
             {
-                if (transition->AcceptsInputAtom(input_atom))
+                if (transition->AcceptsInputAtom(input_atom, is_case_insensitive))
                 {
                     AdvanceReadCursor_();
                     return transition->m_target_dfa_state;
@@ -479,7 +523,7 @@ private:
         assert(state != NULL);
         return state->m_accept_handler_index < m_accept_handler_count;
     }
-    void CheckDfa (
+    static void CheckDfa (
         DfaState_ const *state_table,
         BarfCpp_::Size state_count,
         DfaTransition_ const *transition_table,
@@ -538,6 +582,7 @@ private:
     DfaState_ const *m_initial_state;
     DfaState_ const *m_current_state;
     DfaState_ const *m_accept_state;
+    BarfCpp_::Uint8 m_mode_flags;
 }; // end of class ReflexCpp_::AutomatonApparatus_
 
 } // end of namespace ReflexCpp_
@@ -564,12 +609,12 @@ class Base;
 
 namespace CommonLang {
 
-#line 568 "barf_commonlang_scanner.hpp"
+#line 613 "barf_commonlang_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
-#line 573 "barf_commonlang_scanner.hpp"
+#line 618 "barf_commonlang_scanner.hpp"
 
 {
 public:
@@ -578,17 +623,17 @@ public:
     {
         enum Name
         {
-            BLOCK_COMMENT = 0,
-            CHAR_LITERAL_END = 6,
-            CHAR_LITERAL_GUTS = 13,
-            CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK = 26,
-            DUMB_CODE_BLOCK = 34,
-            MAIN = 40,
-            REGULAR_EXPRESSION = 62,
-            REGULAR_EXPRESSION_BRACKET_EXPRESSION = 73,
-            STRICT_CODE_BLOCK = 83,
-            STRING_LITERAL_GUTS = 94,
-            STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK = 110,
+            BLOCK_COMMENT,
+            CHAR_LITERAL_END,
+            CHAR_LITERAL_GUTS,
+            CHAR_LITERAL_INSIDE_STRICT_CODE_BLOCK,
+            DUMB_CODE_BLOCK,
+            MAIN,
+            REGULAR_EXPRESSION,
+            REGULAR_EXPRESSION_BRACKET_EXPRESSION,
+            STRICT_CODE_BLOCK,
+            STRING_LITERAL_GUTS,
+            STRING_LITERAL_INSIDE_STRICT_CODE_BLOCK,
             // default starting state machine
             START_ = MAIN
         }; // end of enum Scanner::StateMachine::Name
@@ -613,7 +658,6 @@ public:
             DIRECTIVE_DUMB_CODE_BLOCK,
             DIRECTIVE_END,
             DIRECTIVE_ERROR,
-            DIRECTIVE_FORGETFUL,
             DIRECTIVE_ID,
             DIRECTIVE_MACRO,
             DIRECTIVE_NONTERMINAL,
@@ -640,7 +684,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 644 "barf_commonlang_scanner.hpp"
+#line 688 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -657,15 +701,15 @@ public:
     void ResetForNewInput ();
 
     Scanner::Token::Type Scan (
-#line 84 "barf_commonlang_scanner.reflex"
+#line 83 "barf_commonlang_scanner.reflex"
  Ast::Base **token 
-#line 663 "barf_commonlang_scanner.hpp"
+#line 707 "barf_commonlang_scanner.hpp"
 ) throw();
 
 public:
 
 
-#line 85 "barf_commonlang_scanner.reflex"
+#line 84 "barf_commonlang_scanner.reflex"
 
     using InputBase::GetIsOpen;
     using InputBase::GetFiLoc;
@@ -687,7 +731,7 @@ private:
     Uint32 m_code_block_bracket_level;
     StateMachine::Name m_return_state;
 
-#line 691 "barf_commonlang_scanner.hpp"
+#line 735 "barf_commonlang_scanner.hpp"
 
 
 private:
@@ -709,11 +753,14 @@ private:
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
     static void PrintString_ (std::string const &s);
-    static void PrintStateMachineName_ (StateMachine::Name state_machine);
 
     bool m_debug_spew_;
 
-    // state machine data
+    // state machine and automaton data
+    static BarfCpp_::Uint32 const ms_state_machine_start_state_index_[];
+    static BarfCpp_::Uint8 const ms_state_machine_mode_flags_[];
+    static char const *const ms_state_machine_name_[];
+    static BarfCpp_::Uint32 const ms_state_machine_count_;
     static AutomatonApparatus_::DfaState_ const ms_state_table_[];
     static BarfCpp_::Size const ms_state_count_;
     static AutomatonApparatus_::DfaTransition_ const ms_transition_table_[];
@@ -727,7 +774,7 @@ private:
 }; // end of class Scanner
 
 
-#line 106 "barf_commonlang_scanner.reflex"
+#line 105 "barf_commonlang_scanner.reflex"
 
 ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
@@ -736,4 +783,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 740 "barf_commonlang_scanner.hpp"
+#line 787 "barf_commonlang_scanner.hpp"

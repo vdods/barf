@@ -70,23 +70,41 @@ void <{class_name}::SwitchToStateMachine (StateMachine::Name state_machine)
         state_machine == StateMachine::<{key} ||
 <|end_for_each
         (false && "invalid StateMachine::Name"));
-    InitialState_(ms_state_table_ + ms_state_machine_start_state_index_[state_machine]);
-    ModeFlags_(ms_state_machine_mode_flags_[state_machine]);
 <|if(is_defined(generate_debug_spew_code))
     REFLEX_CPP_DEBUG_CODE_(
-        std::cerr << <{debug_spew_prefix} << " transitioning to state machine "
-                  << ms_state_machine_name_[state_machine] << std::endl)
+        std::cerr << <{debug_spew_prefix} << " switching to state machine "
+                  << ms_state_machine_name_[state_machine];
+        if (ms_state_machine_mode_flags_[state_machine] != 0)
+        {
+            if ((ms_state_machine_mode_flags_[state_machine] & AutomatonApparatus_::MF_CASE_INSENSITIVE_) != 0)
+                std::cerr << " %case_insensitive";
+            if ((ms_state_machine_mode_flags_[state_machine] & AutomatonApparatus_::MF_UNGREEDY_) != 0)
+                std::cerr << " %ungreedy";
+        }
+        std::cerr << std::endl)
 <|end_if
+    InitialState_(ms_state_table_ + ms_state_machine_start_state_index_[state_machine]);
+    ModeFlags_(ms_state_machine_mode_flags_[state_machine]);
     assert(CurrentStateMachine() == state_machine);
 }
 
 void <{class_name}::ResetForNewInput ()
 {
 <|if(is_defined(generate_debug_spew_code))
-    REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions" << std::endl)
-                
+    REFLEX_CPP_DEBUG_CODE_(
+        std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions and switching to state machine "
+                  << ms_state_machine_name_[StateMachine::START_];
+        if (ms_state_machine_mode_flags_[StateMachine::START_] != 0)
+        {
+            if ((ms_state_machine_mode_flags_[StateMachine::START_] & AutomatonApparatus_::MF_CASE_INSENSITIVE_) != 0)
+                std::cerr << " %case_insensitive";
+            if ((ms_state_machine_mode_flags_[StateMachine::START_] & AutomatonApparatus_::MF_UNGREEDY_) != 0)
+                std::cerr << " %ungreedy";
+        }
+        std::cerr << std::endl)
 <|end_if
-    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + StateMachine::START_, ms_state_machine_mode_flags_[StateMachine::START_]);
+    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + ms_state_machine_start_state_index_[StateMachine::START_], ms_state_machine_mode_flags_[StateMachine::START_]);
+    assert(CurrentStateMachine() == StateMachine::START_);
 
 <|reset_for_new_input_actions?
 }
@@ -285,7 +303,7 @@ void <{class_name}::PrintString_ (std::string const &s)
 <|end_if
 BarfCpp_::Uint32 const <{class_name}::ms_state_machine_start_state_index_[] =
 {
-<|for_each(key, _dfa_initial_node_index)
+<|for_each(key, _state_machine_mode_flags)
     <{_dfa_initial_node_index[key]},
 <|end_for_each
 };
@@ -298,7 +316,7 @@ BarfCpp_::Uint8 const <{class_name}::ms_state_machine_mode_flags_[] =
 <|if(is_defined(generate_debug_spew_code))
 char const *const <{class_name}::ms_state_machine_name_[] =
 {
-<|for_each(key, _dfa_initial_node_index)
+<|for_each(key, _state_machine_mode_flags)
     <{to_string_literal(key)},
 <|end_for_each
 };
