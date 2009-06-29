@@ -68,6 +68,7 @@ $ do comprehensive deleting of stuff
   UINT32_UPPER_BOUND (to force it to be unsigned)) and Graph::Node::IndexArray
   vector type in barf_graph.h (replacing the ad-hoc vector<Uint32> used all
   over the place)
+- check standard on octal escape chars (up to 3 octal digits only?)
 
 // ///////////////////////////////////////////////////////////////////////////
 // targetspec
@@ -150,6 +151,11 @@ $ do comprehensive deleting of stuff
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
+- make EscapeChar (which does full char escaping) and use it in EscapeString?
+  this would make the char scanning much easier
+- built-in newline count in accepted string?  (it would have to neglect
+  the kept string, so the name couldn't just be "accepted string newline
+  count")
 - maybe consistencize the codespec symbol names
 $ add interactive/noninteractive option to target -- interactive will do
   char-by-char input, while noninteractive will do the faster chunk reading

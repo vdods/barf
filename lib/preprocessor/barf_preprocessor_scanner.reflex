@@ -172,8 +172,8 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 
 // a single octal (base 8) digit
 %macro OCT_DIGIT            ([0-7])
-// an octal escape char (e.g. \042)
-%macro OCT_CHAR             (\\0{OCT_DIGIT}+)
+// an octal escape char (e.g. \42)
+%macro OCT_CHAR             (\\{OCT_DIGIT}+)
 
 // a single hexadecimal (base 16) digit
 %macro HEX_DIGIT            ([0-9A-Fa-f])
@@ -200,7 +200,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 // newline
 %macro NEWLINE              (\n)
 // any char
-%macro ANYTHING             (\n|.)
+%macro ANY                  (\n|.)
 // end-of-file condition
 %macro END_OF_FILE          (\z)
 
@@ -212,50 +212,33 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 /* state machines and constituent regex rules
 /* **************************************************************************/
 
-%state_machine READING_BODY
+%state_machine READING_BODY %ungreedy
 :
-    ([^<]*(<[^<]|<))
+    ({ANY}*(<\||<\{))
     %target.cpp {
         IncrementLineNumber(GetNewlineCount(accepted_string));
 
-        bool code_delimiter_encountered = false;
-        string::size_type len = accepted_string.length();
-        // if the string ends in "<|" or "<{", then we chop that part off,
-        // and remember to switch to TRANSITION_TO_CODE.
-        if (len >= 2 &&
-            accepted_string[len-2] == '<' &&
-            (accepted_string[len-1] == '|' || accepted_string[len-1] == '{'))
-        {
-            code_delimiter_encountered = true;
-            m_is_reading_newline_sensitive_code = accepted_string[len-1] == '|';
-            len -= 2;
-        }
+        // save whether or not we got <|
+        m_is_reading_newline_sensitive_code = *accepted_string.rbegin() == '|';
+        
+        // take off the <| or <{ at the end
+        assert(accepted_string.length() >= 2);
+        accepted_string.resize(accepted_string.length()-2);
 
         // if there's already a body text in progress, continue it.
         if (m_text != NULL)
-            m_text->AppendText(accepted_string.c_str(), len);
+            m_text->AppendText(accepted_string);
         // otherwise start a new one.
         else
-            m_text = new Text(accepted_string.c_str(), len, GetFiLoc());
+            m_text = new Text(accepted_string, GetFiLoc());
 
-        // if we hit a code delimiter, then switch to TRANSITION_TO_CODE
-        // and return the Text token.
-        if (code_delimiter_encountered)
-        {
-            SwitchToStateMachine(StateMachine::TRANSITION_TO_CODE);
-            Ast::Base *token = m_text;
-            m_text = NULL;
-            return Parser::Token(Parser::Terminal::TEXT, token);
-        }
-        // otherwise the string didn't end with a code delimiter, so
-        // continue scanning.
-        else
-        {
-            // do nothing
-        }
+        SwitchToStateMachine(StateMachine::TRANSITION_TO_CODE);
+        Ast::Base *token = m_text;
+        m_text = NULL;
+        return Parser::Token(Parser::Terminal::TEXT, token);
     }
 |
-    ([^<]+{END_OF_FILE})
+    ({ANY}*{END_OF_FILE})
     %target.cpp {
         // if there's already a body text in progress, continue it.
         if (m_text != NULL)
@@ -268,22 +251,6 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
         Ast::Base *token = m_text;
         m_text = NULL;
         return Parser::Token(Parser::Terminal::TEXT, token);
-    }
-|
-    ({END_OF_FILE})
-    %target.cpp {
-        SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
-        if (m_text != NULL)
-        {
-            Ast::Base *token = m_text;
-            m_text = NULL;
-            return Parser::Token(Parser::Terminal::TEXT, token);
-        }
-    }
-|
-    ({ANYTHING}) // catch-all
-    %target.cpp {
-        assert(false && "this should never happen");
     }
 ;
 
@@ -369,90 +336,70 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
         SwitchToStateMachine(StateMachine::READING_CODE_STRING_LITERAL_GUTS);
     }
 |
-    ({ANYTHING}) // catch-all
+    ({ANY}) // catch-all
     %target.cpp {
         EmitError("unrecognized character encountered within preprocessor code section", GetFiLoc());
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     }
 ;
 
-%state_machine READING_CODE_STRING_LITERAL_GUTS
+%state_machine READING_CODE_STRING_LITERAL_GUTS %ungreedy
 :
-    ({OCT_CHAR})
-    %target.cpp {
-        assert(m_text != NULL);
-        assert(accepted_string.length() >= 3);
-        assert(accepted_string[0] == '\\');
-        assert(accepted_string[1] == '0');
-        Uint32 value = strtol(accepted_string.c_str()+2, NULL, 8);
-        if (value >= 0x100)
-            EmitError("octal character literal value out of range (" + accepted_string + ")", GetFiLoc());
-        m_text->AppendChar(Uint8(value));
-    }
-|
-    ({HEX_CHAR})
-    %target.cpp {
-        assert(m_text != NULL);
-        assert(accepted_string.length() >= 3);
-        assert(accepted_string[0] == '\\');
-        assert(accepted_string[1] == 'x');
-        Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
-        if (value >= 0x100)
-            EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", GetFiLoc());
-        m_text->AppendChar(Uint8(value));
-    }
-|
-    ({STRING_ESC_CHAR})
-    %target.cpp {
-        assert(m_text != NULL);
-        assert(accepted_string.length() == 2);
-        assert(accepted_string[0] == '\\');
-        m_text->AppendChar(GetEscapedChar(Uint8(accepted_string[1])));
-    }
-|
-    ({STRING_BAD_ESC_CHAR})
-    %target.cpp {
-        assert(m_text != NULL);
-        assert(accepted_string.length() == 2);
-        assert(accepted_string[0] == '\\');
-        EmitError("malformed string literal escape code -- backslash followed by " + GetCharLiteral(accepted_string[1]), GetFiLoc());
-    }
-|
-    ({STRING_NORMAL_CHAR}+)
+    (([^\\]|\\{ANY})*") // everything up through the first unescaped double quote
     %target.cpp {
         assert(m_text != NULL);
         IncrementLineNumber(GetNewlineCount(accepted_string));
+        // get rid of the trailing endquote
+        assert(accepted_string.length() >= 1);
+        accepted_string.resize(accepted_string.length()-1);
+        // escape the string in-place and handle the return code
+        EscapeStringStatus status = EscapeString(accepted_string);
+        switch (status.m_return_code)
+        {
+            case ESRC_SUCCESS:
+                // awesome
+                break;
+                
+            case ESRC_UNEXPECTED_EOI:
+                assert(false && "the formulation of the regex should prevent this");
+                break;
+                
+            case ESRC_MALFORMED_HEX_CHAR:
+                EmitError(
+                    "\\x with no trailing hex digits",
+                    FiLoc(m_text->GetFiLoc().GetFilename(),
+                          m_text->GetFiLoc().GetLineNumber() + status.m_line_number_offset));
+                break;
+                
+            case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
+            case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
+                EmitError(
+                    "hex/octal escape sequence out of range",
+                    FiLoc(m_text->GetFiLoc().GetFilename(),
+                          m_text->GetFiLoc().GetLineNumber() + status.m_line_number_offset));
+                break;
+        }
         m_text->AppendText(accepted_string);
-    }
-|
-    (") // the closing quote for the string literal
-    %target.cpp {
-        assert(m_text != NULL);
         SwitchToStateMachine(StateMachine::READING_CODE);
         Ast::Base *token = m_text;
         m_text = NULL;
         return Parser::Token(Parser::Terminal::STRING_LITERAL, token);
     }
 |
-    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
+    (([^\\]|\\{ANY})*\\?{END_OF_FILE}) // everything up through EOF (which may be preceded by a hanging backslash)
     %target.cpp {
         EmitError("unterminated string literal", GetFiLoc());
+        IncrementLineNumber(GetNewlineCount(accepted_string));
         assert(m_text != NULL);
         delete m_text;
         m_text = NULL;
         return Parser::Token(Parser::Terminal::END_);
     }
-|
-    ({ANYTHING}) // catch-all
-    %target.cpp {
-        assert(m_text != NULL);
-        EmitError("ignoring unexpected character " + GetCharLiteral(accepted_string[0]) + " in string literal", GetFiLoc());
-    }
 ;
 
 %state_machine EXPECTING_END_OF_FILE
 :
-    ({ANYTHING}+)
+    ({ANY}+)
     %target.cpp {
         assert(false && "this should never happen");
         return Parser::Token(Parser::Terminal::BAD_TOKEN);

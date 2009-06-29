@@ -59,9 +59,38 @@ private:
     Uint32 const m_indent_level;
 };
 
+enum EscapeStringReturnCode
+{
+    ESRC_SUCCESS = 0,
+    // if there's a backslash immediately before the end of the string
+    ESRC_UNEXPECTED_EOI,
+    // if there's \x without a hex digit after it
+    ESRC_MALFORMED_HEX_CHAR,
+    // if the hex code's value exceeded 255
+    ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE,
+    // if the octal code's value exceeded 255
+    ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE
+}; // end of enum EscapeStringReturnCode
+
+struct EscapeStringStatus
+{
+    EscapeStringReturnCode m_return_code;
+    Uint32 m_line_number_offset;
+
+    EscapeStringStatus (EscapeStringReturnCode return_code, Uint32 line_number_offset)
+        :
+        m_return_code(return_code),
+        m_line_number_offset(line_number_offset)
+    { }
+}; // end of struct EscapeStringStatus
+
 Uint8 SwitchCase (Uint8 c);
+// in-place char-escaping
+void EscapeChar (Uint8 &c);
 Uint8 GetEscapedChar (Uint8 c);
-string GetEscapedString (string const &text);
+// in-place string-escaping
+EscapeStringStatus EscapeString (string &text);
+string GetEscapedString (string const &text, EscapeStringReturnCode *escape_string_return_code = NULL);
 string GetCharLiteral (Uint8 c, bool with_quotes = true);
 string GetStringLiteral (string const &text, bool with_quotes = true);
 
