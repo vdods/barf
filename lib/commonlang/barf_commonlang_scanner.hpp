@@ -200,19 +200,8 @@ private:
         assert(m_accept_cursor > 0 && m_accept_cursor <= m_buffer.size());
         // there should not be an EOF-indicating '\0' at the end of the string
         assert(m_accept_cursor == 1 || m_buffer[m_accept_cursor-1] != '\0');
-        // the accepted/rejected string is the range [1,m_accept_cursor).
-        // come up with iterators which specify the string's range.
-        Buffer::iterator it = m_buffer.begin();
-        ++it; // start after the previous atom (the first char in the buffer)
-        Buffer::iterator it_end = it;
-        for (Buffer::size_type i = 1; i < m_accept_cursor; ++i)
-        {
-            assert(it_end != m_buffer.end());
-            assert(*it_end != '\0');
-            ++it_end;
-        }
-        // extract the string
-        s.insert(s.begin(), it, it_end);
+        // extract the accepted/rejected string: range [1,m_accept_cursor).
+        s.insert(s.begin(), m_buffer.begin()+1, m_buffer.begin()+m_accept_cursor);
         assert(s.size() == m_accept_cursor-1);
         // set the start cursor to one before the end of the string
         // (the last char in the string becomes the previous atom)
@@ -609,12 +598,12 @@ class Base;
 
 namespace CommonLang {
 
-#line 613 "barf_commonlang_scanner.hpp"
+#line 602 "barf_commonlang_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
-#line 618 "barf_commonlang_scanner.hpp"
+#line 607 "barf_commonlang_scanner.hpp"
 
 {
 public:
@@ -684,7 +673,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 688 "barf_commonlang_scanner.hpp"
+#line 677 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -703,7 +692,7 @@ public:
     Scanner::Token::Type Scan (
 #line 83 "barf_commonlang_scanner.reflex"
  Ast::Base *&token 
-#line 707 "barf_commonlang_scanner.hpp"
+#line 696 "barf_commonlang_scanner.hpp"
 ) throw();
 
 public:
@@ -731,7 +720,7 @@ private:
     Uint32 m_code_block_bracket_level;
     StateMachine::Name m_return_state;
 
-#line 735 "barf_commonlang_scanner.hpp"
+#line 724 "barf_commonlang_scanner.hpp"
 
 
 private:
@@ -783,4 +772,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 787 "barf_commonlang_scanner.hpp"
+#line 776 "barf_commonlang_scanner.hpp"

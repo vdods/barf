@@ -169,19 +169,8 @@ private:
         assert(m_accept_cursor > 0 && m_accept_cursor <= m_buffer.size());
         // there should not be an EOF-indicating '\0' at the end of the string
         assert(m_accept_cursor == 1 || m_buffer[m_accept_cursor-1] != '\0');
-        // the accepted/rejected string is the range [1,m_accept_cursor).
-        // come up with iterators which specify the string's range.
-        Buffer::iterator it = m_buffer.begin();
-        ++it; // start after the previous atom (the first char in the buffer)
-        Buffer::iterator it_end = it;
-        for (Buffer::size_type i = 1; i < m_accept_cursor; ++i)
-        {
-            assert(it_end != m_buffer.end());
-            assert(*it_end != '\0');
-            ++it_end;
-        }
-        // extract the string
-        s.insert(s.begin(), it, it_end);
+        // extract the accepted/rejected string: range [1,m_accept_cursor).
+        s.insert(s.begin(), m_buffer.begin()+1, m_buffer.begin()+m_accept_cursor);
         assert(s.size() == m_accept_cursor-1);
         // set the start cursor to one before the end of the string
         // (the last char in the string becomes the previous atom)

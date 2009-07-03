@@ -3,21 +3,25 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 - think about what to do when a reflex state is empty
+- reflex: an unterminated regex causes a hang;
+  %state_machine BLAH
+  :
+    (
+  ;
 
 // ///////////////////////////////////////////////////////////////////////////
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
+- write man pages for reflex, trison, bpp (hopefully somehow get doxygen to
+  do this)
 - figure out how to generate/install docs
 - rename "lib" directory to "barf" (?)
-- make FirstContainsSecond(x,y) and FirstDoesntContainSecond(x,y) funcs
 - guarantee that errors will be reported such that the line numbers never
   decrease.
 - bug: getting "file not found" error when a file exists but the permissions
   are such that the user can't read it.
 * add lots of error rules to all parser grammars
-- add optional-argument commandline options, and account for empty-argument
-  required-argument options (e.g. `./reflex -I ""` will assert)
 - descriptions should use terms "finite-automaton-based scanners" and
   "pushdown-automaton-based parsers"
 - error when any output file is the same as an input file, or when any two
@@ -27,7 +31,7 @@
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
-$ do comprehensive deleting of stuff
+$ do comprehensive deleting of stuff (this might be hard with all the throwing)
   THEN
   do memory leak checking (valgrind)
 - get rid of AST hierarchy overviews once doxygen docs are to some decent state
@@ -51,6 +55,7 @@ $ do comprehensive deleting of stuff
 
 - table of contents inside each doxygen_pages page
 - pyramidal documentation
+- simplify documentation (maybe leave out basic regex stuff, keep to essentials)
 
 // ///////////////////////////////////////////////////////////////////////////
 // commonlang
@@ -69,6 +74,8 @@ $ do comprehensive deleting of stuff
   vector type in barf_graph.h (replacing the ad-hoc vector<Uint32> used all
   over the place)
 - check standard on octal escape chars (up to 3 octal digits only?)
+- make EscapeChar (which does full char escaping) and use it in EscapeString?
+  this would make the char scanning much easier
 
 // ///////////////////////////////////////////////////////////////////////////
 // targetspec
@@ -151,11 +158,6 @@ $ do comprehensive deleting of stuff
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
-- make EscapeChar (which does full char escaping) and use it in EscapeString?
-  this would make the char scanning much easier
-- built-in newline count in accepted string?  (it would have to neglect
-  the kept string, so the name couldn't just be "accepted string newline
-  count")
 - maybe consistencize the codespec symbol names
 $ add interactive/noninteractive option to target -- interactive will do
   char-by-char input, while noninteractive will do the faster chunk reading
@@ -163,11 +165,6 @@ $ add interactive/noninteractive option to target -- interactive will do
   you must specify the "get next char" directive, otherwise you must specify
   the "read chars" directive (which reads a big chunk of input for faster
   reads).  the default should be non-interactive, so the default is fast
-- BUG: an unterminated regex causes a hang;
-  %state_machine BLAH
-  :
-    (
-  ;
 
 // ///////////////////////////////////////////////////////////////////////////
 // reflex/trison common
@@ -176,13 +173,12 @@ $ add interactive/noninteractive option to target -- interactive will do
 - use smallest integer type to store state and transition indices, etc.
   (in C++, this can be done easily with templates)
 * c++ target -- ability to set the debug spew ostream
-- move the --with-line-directives option to be an optional directive
+- move the --with-line-directives option to be an optional targetspec directive
 - add commandline option to describe the return codes (?)
 $ add targetspec directive for line directives referencing codespecs (the
   default should be to not refer to codespecs), making development easier
 $ add option which prints the reflex/trison targets available in the current
   search path and which directory each resides in.
-* non-stl cpp targets
 * the rule handler code block type should be specifiable by the targetspec
 * specifying any %target.xxx directive seems to add the target; stop this
 * allow "%targets xxxx" in pre/postdefine
