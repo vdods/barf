@@ -217,7 +217,7 @@ void GenerateNpda (
     Nonterminal const *nonterminal = graph_context.m_primary_source.m_nonterminal_map->Element(rule_token.m_token_id);
     if (terminal == NULL && nonterminal == NULL)
     {
-        EmitError("undeclared token \"" + rule_token.m_token_id + "\"", rule_token.GetFiLoc());
+        EmitError("undeclared token \"" + rule_token.m_token_id + "\"", rule_token.FiLoc());
         return;
     }
     assert((terminal != NULL && nonterminal == NULL) || (terminal == NULL && nonterminal != NULL));

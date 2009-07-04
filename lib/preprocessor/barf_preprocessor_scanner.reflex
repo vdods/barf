@@ -38,7 +38,7 @@ class Text;
 }
 %target.cpp.bottom_of_class {
     using InputBase::IsOpen;
-    using InputBase::GetFiLoc;
+    using InputBase::FiLoc;
     using InputBase::InputName;
 
     bool OpenFile (string const &input_filename);
@@ -120,7 +120,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     if (accepted_string == "undefine")              return Parser::Token(Parser::Terminal::UNDEFINE);
     if (accepted_string == "warning")               return Parser::Token(Parser::Terminal::WARNING);
 
-    return Parser::Token(Parser::Terminal::ID, new Ast::Id(accepted_string, GetFiLoc()));
+    return Parser::Token(Parser::Terminal::ID, new Ast::Id(accepted_string, FiLoc()));
 }
 %}
 %target.cpp.constructor_actions {
@@ -151,7 +151,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     return In().get();
 }
 %target.cpp.rejection_actions {
-    EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
+    EmitError("unrecognized character " + CharLiteral(rejected_atom), FiLoc());
 }
 %target.cpp.reset_for_new_input_actions {
     delete m_text;
@@ -163,7 +163,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 /* **************************************************************************/
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Preprocessor::Scanner" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
@@ -230,7 +230,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
             m_text->AppendText(accepted_string);
         // otherwise start a new one.
         else
-            m_text = new Text(accepted_string, GetFiLoc());
+            m_text = new Text(accepted_string, FiLoc());
 
         SwitchToStateMachine(StateMachine::TRANSITION_TO_CODE);
         Ast::Base *token = m_text;
@@ -245,7 +245,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
             m_text->AppendText(accepted_string);
         // otherwise start a new one.
         else
-            m_text = new Text(accepted_string, GetFiLoc());
+            m_text = new Text(accepted_string, FiLoc());
 
         SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         Ast::Base *token = m_text;
@@ -294,7 +294,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
         if (m_is_reading_newline_sensitive_code)
             return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         else
-            EmitError("unexpected end of file encountered within preprocessor code section", GetFiLoc());
+            EmitError("unexpected end of file encountered within preprocessor code section", FiLoc());
     }
 |
     (\})
@@ -306,7 +306,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
         }
         else
         {
-            EmitError("unexpected '}' encountered", GetFiLoc());
+            EmitError("unexpected '}' encountered", FiLoc());
             return Parser::Token(Parser::Terminal::BAD_TOKEN);
         }
     }
@@ -326,19 +326,19 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
         Sint32 value = 0;
         istringstream in(accepted_string);
         in >> value;
-        return Parser::Token(Parser::Terminal::INTEGER_LITERAL, new Integer(value, GetFiLoc()));
+        return Parser::Token(Parser::Terminal::INTEGER_LITERAL, new Integer(value, FiLoc()));
     }
 |
     (")
     %target.cpp {
         assert(m_text == NULL);
-        m_text = new Text("", GetFiLoc());
+        m_text = new Text("", FiLoc());
         SwitchToStateMachine(StateMachine::READING_CODE_STRING_LITERAL_GUTS);
     }
 |
     ({ANY}) // catch-all
     %target.cpp {
-        EmitError("unrecognized character encountered within preprocessor code section", GetFiLoc());
+        EmitError("unrecognized character encountered within preprocessor code section", FiLoc());
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     }
 ;
@@ -367,16 +367,16 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
             case ESRC_MALFORMED_HEX_CHAR:
                 EmitError(
                     "\\x with no trailing hex digits",
-                    FiLoc(m_text->GetFiLoc().Filename(),
-                          m_text->GetFiLoc().LineNumber() + status.m_line_number_offset));
+                    FileLocation(m_text->FiLoc().Filename(),
+                          m_text->FiLoc().LineNumber() + status.m_line_number_offset));
                 break;
                 
             case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 EmitError(
                     "hex/octal escape sequence out of range",
-                    FiLoc(m_text->GetFiLoc().Filename(),
-                          m_text->GetFiLoc().LineNumber() + status.m_line_number_offset));
+                    FileLocation(m_text->FiLoc().Filename(),
+                          m_text->FiLoc().LineNumber() + status.m_line_number_offset));
                 break;
         }
         m_text->AppendText(accepted_string);
@@ -388,7 +388,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 |
     (([^\\]|\\{ANY})*\\?{END_OF_FILE}) // everything up through EOF (which may be preceded by a hanging backslash)
     %target.cpp {
-        EmitError("unterminated string literal", GetFiLoc());
+        EmitError("unterminated string literal", FiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
         assert(m_text != NULL);
         delete m_text;

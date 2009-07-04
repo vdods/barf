@@ -132,7 +132,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
         exit(RS_INPUT_FILE_ERROR);
         
     if (parser.Parse(&parsed_tree_root) != Trison::Parser::PRC_SUCCESS)
-        EmitError("general trison parse error -- " + TrisonOptions().HowtoReportError(), FiLoc(TrisonOptions().InputFilename()));
+        EmitError("general trison parse error -- " + TrisonOptions().HowtoReportError(), FileLocation(TrisonOptions().InputFilename()));
     else if (g_errors_encountered)
         exit(RS_PRIMARY_SOURCE_ERROR);
     else

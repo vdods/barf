@@ -15,7 +15,7 @@ namespace Barf {
 InputBase::InputBase ()
     :
     m_input_stream(NULL),
-    m_filoc(FiLoc::ms_invalid)
+    m_filoc(FileLocation::ms_invalid)
 { }
 
 InputBase::~InputBase ()

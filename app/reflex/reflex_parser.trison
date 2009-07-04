@@ -49,7 +49,7 @@ namespace Reflex {
 %}
 %target.cpp.class_name Parser
 %target.cpp.bottom_of_class {
-    FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
+    FileLocation const &FiLoc () const { return m_scanner.FiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
     CommonLang::TargetMap *StealTargetMap ();
 
@@ -184,7 +184,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
             assert(lookahead_token_data != NULL);
-            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
+            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->FiLoc());
             delete lookahead_token_data;
             return Token(Terminal::BAD_TOKEN);
 
@@ -201,7 +201,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Reflex::Parser" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 
@@ -251,14 +251,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         {
             EmitError(
                 "undeclared state \"" + start_with_state_machine_directive->m_state_machine_id->GetText() + "\"",
-                start_with_state_machine_directive->GetFiLoc());
+                start_with_state_machine_directive->FiLoc());
         }
 
         PrimarySource *primary_source =
             new PrimarySource(
                 regular_expression_map,
                 start_with_state_machine_directive,
-                throwaway->GetFiLoc(),
+                throwaway->FiLoc(),
                 state_machine_map);
         delete throwaway;
         return primary_source;
@@ -284,7 +284,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
     %target.cpp {
-        EmitError("parse error in directive %targets", throwaway->GetFiLoc());
+        EmitError("parse error in directive %targets", throwaway->FiLoc());
         return NULL;
     }
 ;
@@ -345,7 +345,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error
     %target.cpp {
-        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
+        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->FiLoc());
         delete throwaway;
         delete target_id;
         delete target_directive;
@@ -354,7 +354,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id %error
     %target.cpp {
-        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
+        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->FiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
@@ -362,7 +362,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_TARGET:throwaway %error
     %target.cpp {
-        EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
+        EmitError("parse error in target name for directive %target", throwaway->FiLoc());
         delete throwaway;
         return NULL;
     }
@@ -399,9 +399,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 regular_expression_map->Add(macro_id->GetText(), regex);
             }
             else
-                EmitError("parse error in regular expression (" + macro_regex_string->GetText() + ")", throwaway->GetFiLoc());
+                EmitError("parse error in regular expression (" + macro_regex_string->GetText() + ")", throwaway->FiLoc());
         } catch (string const &exception) {
-            EmitError(exception + " in regular expression (" + macro_regex_string->GetText() + ")", throwaway->GetFiLoc());
+            EmitError(exception + " in regular expression (" + macro_regex_string->GetText() + ")", throwaway->FiLoc());
         }
         delete throwaway;
         delete macro_id;
@@ -419,7 +419,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error at_least_one_newline
     %target.cpp {
-        EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
+        EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->FiLoc());
         delete throwaway;
         delete macro_id;
         return regular_expression_map;
@@ -427,7 +427,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error at_least_one_newline
     %target.cpp {
-        EmitError("parse error in directive %macro", throwaway->GetFiLoc());
+        EmitError("parse error in directive %macro", throwaway->FiLoc());
         delete throwaway;
         return regular_expression_map;
     }
@@ -447,7 +447,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_START_IN_STATE_MACHINE:throwaway %error at_least_one_newline
     %target.cpp {
-        EmitError("parse error in directive %start_with_state_machine", throwaway->GetFiLoc());
+        EmitError("parse error in directive %start_with_state_machine", throwaway->FiLoc());
         delete throwaway;
         return NULL;
     }
@@ -484,7 +484,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' %error ';'
     %target.cpp {
-        EmitError("parse error in state machine rule list", throwaway->GetFiLoc());
+        EmitError("parse error in state machine rule list", throwaway->FiLoc());
         StateMachine *state_machine = new StateMachine(state_machine_id, new RuleList(), mode_flags->Value());
         delete throwaway;
         delete mode_flags;
@@ -493,7 +493,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_STATE_MACHINE:throwaway %error ':' state_machine_rules:rule_list ';'
     %target.cpp {
-        EmitError("parse error in state machine id", throwaway->GetFiLoc());
+        EmitError("parse error in state machine id", throwaway->FiLoc());
         delete throwaway;
         delete rule_list;
         return NULL;
@@ -505,7 +505,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     state_machine_mode_flags:mode_flags DIRECTIVE_CASE_INSENSITIVE:throwaway
     %target.cpp {
         if (mode_flags->Value() & StateMachine::MF_CASE_INSENSITIVE)
-            EmitWarning("duplicate %case_insensitive", throwaway->GetFiLoc());
+            EmitWarning("duplicate %case_insensitive", throwaway->FiLoc());
         mode_flags->SetValue(mode_flags->Value() | StateMachine::MF_CASE_INSENSITIVE);
         delete throwaway;
         return mode_flags;
@@ -514,7 +514,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     state_machine_mode_flags:mode_flags DIRECTIVE_UNGREEDY:throwaway
     %target.cpp {
         if (mode_flags->Value() & StateMachine::MF_UNGREEDY)
-            EmitWarning("duplicate %ungreedy", throwaway->GetFiLoc());
+            EmitWarning("duplicate %ungreedy", throwaway->FiLoc());
         mode_flags->SetValue(mode_flags->Value() | StateMachine::MF_UNGREEDY);
         delete throwaway;
         return mode_flags;
@@ -522,7 +522,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     // empty reduction rule
     %target.cpp {
-        return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
+        return new Ast::UnsignedInteger(StateMachine::MF_NONE, FileLocation::ms_invalid);
     }
 ;
 
@@ -579,13 +579,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 {
                     EmitError(
                         "parse error in regular expression (" + regex_string->GetText() + ")",
-                        regex_string->GetFiLoc());
+                        regex_string->FiLoc());
                     regex = new Regex::RegularExpression();
                 }
             } catch (string const &exception) {
                 EmitError(
                     exception + " in regular expression (" + regex_string->GetText() + ")",
-                    regex_string->GetFiLoc());
+                    regex_string->FiLoc());
                 regex = new Regex::RegularExpression();
             }
             assert(regex != NULL);
@@ -603,13 +603,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
             {
                 EmitWarning(
                     "missing rule handler for target \"" + target_id + "\"",
-                    regex_string->GetFiLoc());
+                    regex_string->FiLoc());
                 // add a blank code block for the rule handler's missing target
                 rule_handler_map->Add(
                     target_id,
                     new CommonLang::RuleHandler(
-                        new Ast::Id(target_id, FiLoc::ms_invalid),
-                        new Ast::StrictCodeBlock(FiLoc::ms_invalid)));
+                        new Ast::Id(target_id, FileLocation::ms_invalid),
+                        new Ast::StrictCodeBlock(FileLocation::ms_invalid)));
                 assert(rule_handler_map->Element(target_id) != NULL);
             }
         }
@@ -644,14 +644,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         if (m_target_map->Element(target_id->GetText()) == NULL)
             EmitWarning(
                 "undeclared target \"" + target_id->GetText() + "\"",
-                target_id->GetFiLoc());
+                target_id->FiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
     DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
-        EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
+        EmitError("parse error in target id after directive %target", throwaway->FiLoc());
         delete throwaway;
         delete code_block;
         return NULL;
@@ -660,7 +660,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     DIRECTIVE_TARGET:throwaway %error
     %target.cpp {
         assert(m_target_map != NULL);
-        EmitError("parse error in directive %target", throwaway->GetFiLoc());
+        EmitError("parse error in directive %target", throwaway->FiLoc());
         delete throwaway;
         return NULL;
     }
@@ -668,7 +668,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %error any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
-        EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
+        EmitError("missing directive %target before rule handler code block", code_block->FiLoc());
         delete code_block;
         return NULL;
     }

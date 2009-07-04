@@ -126,7 +126,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
         exit(RS_INPUT_FILE_ERROR);
         
     if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
-        EmitError("general reflex parse error -- " + ReflexOptions().HowtoReportError(), FiLoc(ReflexOptions().InputFilename()));
+        EmitError("general reflex parse error -- " + ReflexOptions().HowtoReportError(), FileLocation(ReflexOptions().InputFilename()));
     else if (g_errors_encountered)
         exit(RS_PRIMARY_SOURCE_ERROR);
     else

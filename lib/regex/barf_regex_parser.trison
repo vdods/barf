@@ -35,7 +35,7 @@ namespace Regex {
 %target.cpp.parse_method_access "private:"
 %target.cpp.bottom_of_class {
     using InputBase::IsOpen;
-    using InputBase::GetFiLoc;
+    using InputBase::FiLoc;
     using InputBase::InputName;
 
     // must override these (instead of just "using" them), so that
@@ -287,7 +287,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Regex::Parser" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
@@ -682,7 +682,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     %target.cpp {
         string temp;
         temp += alpha->GetChar();
-        Ast::Id *id = new Ast::Id(temp, FiLoc::ms_invalid);
+        Ast::Id *id = new Ast::Id(temp, FileLocation::ms_invalid);
         delete alpha;
         return id;
     }
@@ -691,7 +691,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     %target.cpp {
         string temp;
         temp += ch->GetChar();
-        Ast::Id *id = new Ast::Id(temp, FiLoc::ms_invalid);
+        Ast::Id *id = new Ast::Id(temp, FileLocation::ms_invalid);
         delete ch;
         return id;
     }
@@ -710,7 +710,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 |
     DIGIT:digit
     %target.cpp {
-        Ast::SignedInteger *integer = new Ast::SignedInteger(digit->GetChar() - '0', FiLoc::ms_invalid);
+        Ast::SignedInteger *integer = new Ast::SignedInteger(digit->GetChar() - '0', FileLocation::ms_invalid);
         delete digit;
         return integer;
     }

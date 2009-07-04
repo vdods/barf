@@ -104,11 +104,11 @@ void Target::ParseTargetspec (Targetspec::Parser &parser) const
         m_targetspec.m_source_path = GetOptions().GetSearchPath().FilePath(filename);
         Ast::Base *parsed_tree_root = NULL;
         if (m_targetspec.m_source_path.empty())
-            EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetSearchPath().AsString(), FiLoc(GetOptions().InputFilename()));
+            EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetSearchPath().AsString(), FileLocation(GetOptions().InputFilename()));
         else if (!parser.OpenTargetspec(m_targetspec.m_source_path, m_target_id))
-            EmitError("unable to open file \"" + m_targetspec.m_source_path + "\" for reading", FiLoc(GetOptions().InputFilename()));
+            EmitError("unable to open file \"" + m_targetspec.m_source_path + "\" for reading", FileLocation(GetOptions().InputFilename()));
         else if (parser.Parse(&parsed_tree_root) != Targetspec::Parser::PRC_SUCCESS)
-            EmitError("general targetspec parse error -- " + GetOptions().HowtoReportError(), FiLoc(m_targetspec.m_source_path));
+            EmitError("general targetspec parse error -- " + GetOptions().HowtoReportError(), FileLocation(m_targetspec.m_source_path));
         else
         {
             m_targetspec.m_specification = Dsc<Targetspec::Specification *>(parsed_tree_root);
@@ -146,11 +146,11 @@ void Target::ParseCodespecs (Preprocessor::Parser &parser) const
             string codespec_filename(GetOptions().GetSearchPath().FilePath(filename));
             Ast::Base *parsed_tree_root = NULL;
             if (codespec_filename.empty())
-                EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetSearchPath().AsString(), FiLoc(m_targetspec.m_source_path));
+                EmitError("file \"" + filename + "\" not found in search path " + GetOptions().GetSearchPath().AsString(), FileLocation(m_targetspec.m_source_path));
             else if (!parser.OpenFile(codespec_filename))
-                EmitError("unable to open file \"" + codespec_filename + "\" for reading", FiLoc(m_targetspec.m_source_path));
+                EmitError("unable to open file \"" + codespec_filename + "\" for reading", FileLocation(m_targetspec.m_source_path));
             else if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
-                EmitError("general preprocessor parse error -- " + GetOptions().HowtoReportError(), FiLoc(codespec_filename));
+                EmitError("general preprocessor parse error -- " + GetOptions().HowtoReportError(), FileLocation(codespec_filename));
             else
             {
                 Preprocessor::Body *codespec_body = Dsc<Preprocessor::Body *>(parsed_tree_root);
@@ -173,7 +173,7 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
 
     target_symbol_table.DefineScalarSymbolAsText(
         "_creation_timestamp",
-        FiLoc::ms_invalid,
+        FileLocation::ms_invalid,
         CurrentDateAndTimeString());
 
     EmitExecutionMessage("generating code");
@@ -191,7 +191,7 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
         EmitExecutionMessage("opening file \"" + filename + "\" for output");
         stream.open(filename.c_str());
         if (!stream.is_open())
-            EmitError("could not open file \"" + filename + "\" for writing", FiLoc(GetOptions().InputFilename()));
+            EmitError("could not open file \"" + filename + "\" for writing", FileLocation(GetOptions().InputFilename()));
         else
         {
             EmitExecutionMessage("opened file \"" + filename + "\" successfully");
@@ -199,11 +199,11 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
 
             codespec_symbol_table.DefineScalarSymbolAsText(
                 "_codespec_directory",
-                FiLoc::ms_invalid,
+                FileLocation::ms_invalid,
                 DirectoryPortion(codespec.m_source_path));
             codespec_symbol_table.DefineScalarSymbolAsText(
                 "_codespec_filename",
-                FiLoc::ms_invalid,
+                FileLocation::ms_invalid,
                 FilenamePortion(codespec.m_source_path));
 
             try {
@@ -249,7 +249,7 @@ void Target::CheckAgainstTargetspec (Targetspec::Specification const &specificat
             EmitError(
                 "directive " + target_directive->DirectiveString() +
                 " does not exist in targetspec for " + m_target_id,
-                target_directive->GetFiLoc());
+                target_directive->FiLoc());
     }
 }
 
@@ -260,28 +260,28 @@ void Target::CheckAgainstAddDirective (
     if (target_directive == NULL)
     {
         if (add_directive.IsRequired())
-            EmitError("missing required directive %target." + m_target_id + "." + add_directive.m_directive_to_add_id->GetText(), FiLoc(GetOptions().InputFilename()));
+            EmitError("missing required directive %target." + m_target_id + "." + add_directive.m_directive_to_add_id->GetText(), FileLocation(GetOptions().InputFilename()));
     }
     else if (add_directive.m_param_type == Ast::AST_NONE)
     {
         if (target_directive->m_directive_value != NULL)
-            EmitError("superfluous parameter given for directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " which does not accept a parameter", target_directive->GetFiLoc());
+            EmitError("superfluous parameter given for directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " which does not accept a parameter", target_directive->FiLoc());
     }
     else if (target_directive->m_directive_value->GetAstType() != add_directive.m_param_type)
     {
-        EmitError("directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " expects " + Targetspec::ParamType::ParamTypeString(add_directive.m_param_type) + ", got " + Targetspec::ParamType::ParamTypeString(target_directive->m_directive_value->GetAstType()), target_directive->GetFiLoc());
+        EmitError("directive %target." + target_directive->m_target_id->GetText() + "." + add_directive.m_directive_to_add_id->GetText() + " expects " + Targetspec::ParamType::ParamTypeString(add_directive.m_param_type) + ", got " + Targetspec::ParamType::ParamTypeString(target_directive->m_directive_value->GetAstType()), target_directive->FiLoc());
     }
 }
 
 void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) const
 {
-    symbol_table.DefineScalarSymbolAsText("_source_directory", FiLoc::ms_invalid, DirectoryPortion(m_source_path));
-    symbol_table.DefineScalarSymbolAsText("_source_filename", FiLoc::ms_invalid, FilenamePortion(m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_source_directory", FileLocation::ms_invalid, DirectoryPortion(m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_source_filename", FileLocation::ms_invalid, FilenamePortion(m_source_path));
 
-    symbol_table.DefineScalarSymbolAsText("_targetspec_directory", FiLoc::ms_invalid, DirectoryPortion(m_targetspec.m_source_path));
-    symbol_table.DefineScalarSymbolAsText("_targetspec_filename", FiLoc::ms_invalid, FilenamePortion(m_targetspec.m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_targetspec_directory", FileLocation::ms_invalid, DirectoryPortion(m_targetspec.m_source_path));
+    symbol_table.DefineScalarSymbolAsText("_targetspec_filename", FileLocation::ms_invalid, FilenamePortion(m_targetspec.m_source_path));
 
-    symbol_table.DefineScalarSymbolAsText("_output_directory", FiLoc::ms_invalid, GetOptions().OutputDirectory());
+    symbol_table.DefineScalarSymbolAsText("_output_directory", FileLocation::ms_invalid, GetOptions().OutputDirectory());
 
     // define symbols for each of the specified target directives
     for (const_iterator it = begin(),
@@ -294,14 +294,14 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
         Preprocessor::ScalarSymbol *symbol =
             symbol_table.DefineScalarSymbol(
                 target_directive->m_directive_id->GetText(),
-                target_directive->GetFiLoc());
+                target_directive->FiLoc());
 
         if (target_directive->m_directive_value != NULL)
         {
-            FiLoc const &source_filoc =
+            FileLocation const &source_filoc =
                 target_directive->m_directive_value->IsCodeBlock() ?
-                target_directive->m_directive_value->GetFiLoc() :
-                FiLoc::ms_invalid;
+                target_directive->m_directive_value->FiLoc() :
+                FileLocation::ms_invalid;
             symbol->SetScalarBody(new Preprocessor::Body(target_directive->m_directive_value->GetText(), source_filoc));
         }
         else
@@ -323,7 +323,7 @@ void Target::GenerateTargetSymbols (Preprocessor::SymbolTable &symbol_table) con
             Preprocessor::ScalarSymbol *symbol =
                 symbol_table.DefineScalarSymbol(
                     directive_id,
-                    FiLoc::ms_invalid);
+                    FileLocation::ms_invalid);
             symbol->SetScalarBody(new Preprocessor::Body(add_directive->DefaultValue()->GetText()));
         }
     }
@@ -361,10 +361,10 @@ void TargetMap::SetTargetDirective (TargetDirective *target_directive)
     // or post define are allowed.
     TargetDirective *old_target_directive = target->Element(target_directive->m_directive_id->GetText());
     if (old_target_directive != NULL &&
-        old_target_directive->GetFiLoc().HasLineNumber() &&
-        target_directive->GetFiLoc().HasLineNumber())
+        old_target_directive->FiLoc().HasLineNumber() &&
+        target_directive->FiLoc().HasLineNumber())
     {
-        EmitError(FORMAT(target_directive->DirectiveString() << " previously specified at " << old_target_directive->GetFiLoc()), target_directive->GetFiLoc());
+        EmitError(FORMAT(target_directive->DirectiveString() << " previously specified at " << old_target_directive->FiLoc()), target_directive->FiLoc());
     }
     target->Set(target_directive);
 }

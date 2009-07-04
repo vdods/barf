@@ -15,7 +15,7 @@
 
 #include <ostream>
 
-#include "barf_filoc.hpp"
+#include "barf_filelocation.hpp"
 
 namespace Barf {
 

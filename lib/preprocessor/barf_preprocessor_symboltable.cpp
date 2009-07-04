@@ -123,7 +123,7 @@ Symbol *SymbolTable::GetSymbol (string const &id)
     return Contains(m_symbol_map, id, it) ? it->second : NULL;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &id, FiLoc const &filoc)
+ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &id, FileLocation const &filoc)
 {
     assert(!id.empty());
 
@@ -138,7 +138,7 @@ ScalarSymbol *SymbolTable::DefineScalarSymbol (string const &id, FiLoc const &fi
     return symbol;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbolAsText (string const &id, FiLoc const &filoc, string const &text)
+ScalarSymbol *SymbolTable::DefineScalarSymbolAsText (string const &id, FileLocation const &filoc, string const &text)
 {
     assert(!id.empty());
 
@@ -150,11 +150,11 @@ ScalarSymbol *SymbolTable::DefineScalarSymbolAsText (string const &id, FiLoc con
 
     ScalarSymbol *symbol = new ScalarSymbol(id);
     m_symbol_map[id] = symbol;
-    symbol->SetScalarBody(new Body(text, FiLoc::ms_invalid));
+    symbol->SetScalarBody(new Body(text, FileLocation::ms_invalid));
     return symbol;
 }
 
-ScalarSymbol *SymbolTable::DefineScalarSymbolAsInteger (string const &id, FiLoc const &filoc, Sint32 integer)
+ScalarSymbol *SymbolTable::DefineScalarSymbolAsInteger (string const &id, FileLocation const &filoc, Sint32 integer)
 {
     assert(!id.empty());
 
@@ -166,11 +166,11 @@ ScalarSymbol *SymbolTable::DefineScalarSymbolAsInteger (string const &id, FiLoc 
 
     ScalarSymbol *symbol = new ScalarSymbol(id);
     m_symbol_map[id] = symbol;
-    symbol->SetScalarBody(new Body(integer, FiLoc::ms_invalid));
+    symbol->SetScalarBody(new Body(integer, FileLocation::ms_invalid));
     return symbol;
 }
 
-ArraySymbol *SymbolTable::DefineArraySymbol (string const &id, FiLoc const &filoc)
+ArraySymbol *SymbolTable::DefineArraySymbol (string const &id, FileLocation const &filoc)
 {
     assert(!id.empty());
 
@@ -185,7 +185,7 @@ ArraySymbol *SymbolTable::DefineArraySymbol (string const &id, FiLoc const &filo
     return symbol;
 }
 
-MapSymbol *SymbolTable::DefineMapSymbol (string const &id, FiLoc const &filoc)
+MapSymbol *SymbolTable::DefineMapSymbol (string const &id, FileLocation const &filoc)
 {
     assert(!id.empty());
 
@@ -200,7 +200,7 @@ MapSymbol *SymbolTable::DefineMapSymbol (string const &id, FiLoc const &filoc)
     return symbol;
 }
 
-void SymbolTable::UndefineSymbol (string const &id, FiLoc const &filoc)
+void SymbolTable::UndefineSymbol (string const &id, FileLocation const &filoc)
 {
     assert(!id.empty());
     SymbolMap::iterator it;

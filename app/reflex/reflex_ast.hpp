@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "barf_commonlang_ast.hpp"
-#include "barf_filoc.hpp"
+#include "barf_filelocation.hpp"
 #include "barf_graph.hpp"
 #include "barf_regex_ast.hpp"
 #include "barf_util.hpp"
@@ -59,7 +59,7 @@ struct StartWithStateMachineDirective : public Ast::Directive
 
     StartWithStateMachineDirective (Ast::Id const *state_machine_id)
         :
-        Ast::Directive("%start_with_state_machine", state_machine_id->GetFiLoc(), AST_START_DIRECTIVE),
+        Ast::Directive("%start_with_state_machine", state_machine_id->FiLoc(), AST_START_DIRECTIVE),
         m_state_machine_id(state_machine_id)
     {
         assert(m_state_machine_id != NULL);
@@ -83,7 +83,7 @@ struct Rule : public Ast::Base
         Regex::RegularExpression const *rule_regex,
         CommonLang::RuleHandlerMap const *rule_handler_map)
         :
-        Ast::Base(rule_regex->GetFiLoc(), AST_RULE),
+        Ast::Base(rule_regex->FiLoc(), AST_RULE),
         m_rule_regex_string(rule_regex_string),
         m_rule_regex(rule_regex),
         m_rule_handler_map(rule_handler_map)
@@ -127,7 +127,7 @@ struct StateMachine : public Ast::Base
         RuleList *rule_list,
         ModeFlags mode_flags)
         :
-        Ast::Base(state_machine_id->GetFiLoc(), AST_STATE_MACHINE),
+        Ast::Base(state_machine_id->FiLoc(), AST_STATE_MACHINE),
         m_state_machine_id(state_machine_id),
         m_rule_list(rule_list),
         m_mode_flags(mode_flags)
@@ -163,10 +163,10 @@ public:
     PrimarySource (
         Regex::RegularExpressionMap *regex_macro_map,
         StartWithStateMachineDirective const *start_with_state_machine_directive,
-        FiLoc const &end_preamble_filoc,
+        FileLocation const &end_preamble_filoc,
         StateMachineMap const *state_machine_map)
         :
-        Ast::Base(FiLoc::ms_invalid, AST_PRIMARY_SOURCE),
+        Ast::Base(FileLocation::ms_invalid, AST_PRIMARY_SOURCE),
         m_regex_macro_map(regex_macro_map),
         m_start_with_state_machine_directive(start_with_state_machine_directive),
         m_state_machine_map(state_machine_map),

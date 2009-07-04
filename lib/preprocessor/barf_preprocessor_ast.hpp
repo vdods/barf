@@ -94,7 +94,7 @@ class ExecutableAst : public Ast::Base, public Executable
 {
 public:
 
-    ExecutableAst (FiLoc const &filoc, AstType ast_type)
+    ExecutableAst (FileLocation const &filoc, AstType ast_type)
         :
         Ast::Base(filoc, ast_type),
         Executable()
@@ -113,8 +113,8 @@ class Body : public ExecutableAstList, public Executable
 public:
 
     Body () : ExecutableAstList(AST_BODY), Executable() { }
-    Body (string const &body_text, FiLoc const &source_filoc = FiLoc::ms_invalid);
-    Body (Sint32 body_integer, FiLoc const &source_filoc = FiLoc::ms_invalid);
+    Body (string const &body_text, FileLocation const &source_filoc = FileLocation::ms_invalid);
+    Body (Sint32 body_integer, FileLocation const &source_filoc = FileLocation::ms_invalid);
 
     bool IsNativeIntegerValue (SymbolTable &symbol_table) const;
 
@@ -138,7 +138,7 @@ class Directive : public ExecutableAst
 {
 public:
 
-    Directive (FiLoc const &filoc, AstType ast_type)
+    Directive (FileLocation const &filoc, AstType ast_type)
         :
         ExecutableAst(filoc, ast_type)
     { }
@@ -152,7 +152,7 @@ class Expression : public ExecutableAst
 {
 public:
 
-    Expression (FiLoc const &filoc, AstType ast_type)
+    Expression (FileLocation const &filoc, AstType ast_type)
         :
         ExecutableAst(filoc, ast_type)
     { }
@@ -169,7 +169,7 @@ public:
 
     Conditional (Expression const *if_expression)
         :
-        ExecutableAst(if_expression->GetFiLoc(), AST_CONDITIONAL),
+        ExecutableAst(if_expression->FiLoc(), AST_CONDITIONAL),
         m_if_expression(if_expression),
         m_if_body(NULL),
         m_else_body(NULL)
@@ -204,7 +204,7 @@ class DumpSymbolTable : public ExecutableAst
 {
 public:
 
-    DumpSymbolTable () : ExecutableAst(FiLoc::ms_invalid, AST_DUMP_SYMBOL_TABLE) { }
+    DumpSymbolTable () : ExecutableAst(FileLocation::ms_invalid, AST_DUMP_SYMBOL_TABLE) { }
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
 }; // end of class DumpSymbolTable
@@ -215,7 +215,7 @@ public:
 
     DeclareArray (Ast::Id const *id)
         :
-        Directive(id->GetFiLoc(), AST_DECLARE_ARRAY),
+        Directive(id->FiLoc(), AST_DECLARE_ARRAY),
         m_id(id)
     {
         assert(m_id != NULL);
@@ -236,7 +236,7 @@ public:
 
     DeclareMap (Ast::Id const *id)
         :
-        Directive(id->GetFiLoc(), AST_DECLARE_ARRAY),
+        Directive(id->FiLoc(), AST_DECLARE_ARRAY),
         m_id(id)
     {
         assert(m_id != NULL);
@@ -257,7 +257,7 @@ public:
 
     Define (Ast::Id *id)
         :
-        Directive(id->GetFiLoc(), AST_DEFINE),
+        Directive(id->FiLoc(), AST_DEFINE),
         m_id(id),
         m_body(NULL)
     {
@@ -279,7 +279,7 @@ protected:
 
     Define (Ast::Id *id, AstType ast_type)
         :
-        Directive(id->GetFiLoc(), ast_type),
+        Directive(id->FiLoc(), ast_type),
         m_id(id),
         m_body(NULL)
     {
@@ -329,7 +329,7 @@ public:
 
     Undefine (Ast::Id *id)
         :
-        Directive(id->GetFiLoc(), AST_UNDEFINE),
+        Directive(id->FiLoc(), AST_UNDEFINE),
         m_id(id)
     {
         assert(m_id != NULL);
@@ -352,7 +352,7 @@ public:
         Ast::Id *iterator_id,
         Expression *iteration_count_expression)
         :
-        Directive(iterator_id->GetFiLoc(), AST_LOOP),
+        Directive(iterator_id->FiLoc(), AST_LOOP),
         m_iterator_id(iterator_id),
         m_iteration_count_expression(iteration_count_expression),
         m_body(NULL),
@@ -394,7 +394,7 @@ public:
         Ast::Id *key_id,
         Ast::Id *map_id)
         :
-        Directive(key_id->GetFiLoc(), AST_FOR_EACH),
+        Directive(key_id->FiLoc(), AST_FOR_EACH),
         m_key_id(key_id),
         m_map_id(map_id),
         m_body(NULL),
@@ -434,7 +434,7 @@ public:
 
     Include (Expression *include_filename_expression, bool is_sandboxed)
         :
-        Directive(include_filename_expression->GetFiLoc(), AST_INCLUDE),
+        Directive(include_filename_expression->FiLoc(), AST_INCLUDE),
         m_is_sandboxed(is_sandboxed),
         m_include_filename_expression(include_filename_expression),
         m_include_body_root(NULL)
@@ -468,7 +468,7 @@ public:
 
     Message (Expression *message_expression, Criticality criticality)
         :
-        Directive(message_expression->GetFiLoc(), AST_MESSAGE),
+        Directive(message_expression->FiLoc(), AST_MESSAGE),
         m_message_expression(message_expression),
         m_criticality(criticality)
     {
@@ -492,12 +492,12 @@ class Text : public Expression
 public:
 
     // TODO: deprecate this once the reflex scanner is implemented
-    Text (string const &text, FiLoc const &filoc)
+    Text (string const &text, FileLocation const &filoc)
         :
         Expression(filoc, AST_TEXT),
         m_text(text)
     { }
-    Text (char const *s, Uint32 char_count, FiLoc const &filoc)
+    Text (char const *s, Uint32 char_count, FileLocation const &filoc)
         :
         Expression(filoc, AST_TEXT),
         m_text(s, char_count)
@@ -532,7 +532,7 @@ class Integer : public Expression
 {
 public:
 
-    Integer (Sint32 value, FiLoc const &filoc)
+    Integer (Sint32 value, FileLocation const &filoc)
         :
         Expression(filoc, AST_INTEGER),
         m_value(value)
@@ -560,7 +560,7 @@ public:
 
     Sizeof (Ast::Id *id)
         :
-        Expression(id->GetFiLoc(), AST_SIZEOF),
+        Expression(id->FiLoc(), AST_SIZEOF),
         m_id(id)
     {
         assert(m_id != NULL);
@@ -586,7 +586,7 @@ public:
 
     Dereference (Ast::Id *id, Expression *element_index_expression, DereferenceType dereference_type)
         :
-        Expression(id->GetFiLoc(), AST_DEREFERENCE),
+        Expression(id->FiLoc(), AST_DEREFERENCE),
         m_id(id),
         m_element_index_expression(element_index_expression),
         m_dereference_type(dereference_type)
@@ -609,7 +609,7 @@ protected:
 
     Dereference (Ast::Id *id, Expression *element_index_expression, DereferenceType dereference_type, AstType ast_type)
         :
-        Expression(id->GetFiLoc(), ast_type),
+        Expression(id->FiLoc(), ast_type),
         m_id(id),
         m_element_index_expression(element_index_expression),
         m_dereference_type(dereference_type)
@@ -678,7 +678,7 @@ public:
         Operator op,
         Expression const *right_expression)
         :
-        Expression(left_expression->GetFiLoc(), AST_OPERATION),
+        Expression(left_expression->FiLoc(), AST_OPERATION),
         m_op(op),
         m_left(left_expression),
         m_right(right_expression)
@@ -689,7 +689,7 @@ public:
         Operator op,
         Expression const *right_expression)
         :
-        Expression(right_expression->GetFiLoc(), AST_OPERATION),
+        Expression(right_expression->FiLoc(), AST_OPERATION),
         m_op(op),
         m_left(NULL),
         m_right(right_expression)

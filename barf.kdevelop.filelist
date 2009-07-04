@@ -89,8 +89,8 @@ lib/core/barf_compiletimeasserts.cpp
 lib/core/barf_compiletimeasserts.hpp
 lib/core/barf_enums.cpp
 lib/core/barf_enums.hpp
-lib/core/barf_filoc.cpp
-lib/core/barf_filoc.hpp
+lib/core/barf_filelocation.cpp
+lib/core/barf_filelocation.hpp
 lib/core/barf_graph.cpp
 lib/core/barf_graph.hpp
 lib/core/barf_inputbase.cpp

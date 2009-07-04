@@ -318,7 +318,7 @@ public:
 
 #line 39 "barf_targetspec_parser.trison"
 
-    inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
+    inline FileLocation const &FiLoc () const { return m_scanner.FiLoc(); }
 
     bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
     void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }

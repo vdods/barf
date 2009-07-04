@@ -102,7 +102,7 @@ int main (int argc, char **argv)
         Ast::Base *parsed_tree_root = NULL;
         if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
         {
-            EmitError("general preprocessor parse error -- " + BppOptions().HowtoReportError(), FiLoc(BppOptions().InputFilename()));
+            EmitError("general preprocessor parse error -- " + BppOptions().HowtoReportError(), FileLocation(BppOptions().InputFilename()));
             return 4;
         }
 
