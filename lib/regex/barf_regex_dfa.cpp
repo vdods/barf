@@ -97,7 +97,7 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
                 Conditional transition_conditional(GetConditionalFromConditionalType(transition.Data(0)));
                 // check if it conflicts with the passed-in conditional
                 if (conditional.ConflictsWith(transition_conditional))
-                    // TODO: improve this error to include a FileLocation
+                    // TODO: improve this error to include a FiLoc
                     throw string("conditional ") + ConditionalTypeString(transition.Data(0)) + " conflicts with previous adjacent conditionals";
                 // compose this transition's conditional with the one passed-in.
                 Conditional transitioned_conditional(

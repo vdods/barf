@@ -49,7 +49,7 @@ struct TerminalMap;
 %}
 %target.cpp.class_name Parser
 %target.cpp.bottom_of_class {
-    inline FileLocation const &FiLoc () const { return m_scanner.FiLoc(); }
+    inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
     CommonLang::TargetMap *StealTargetMap ();
 
@@ -194,7 +194,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         case CommonLang::Scanner::Token::DIRECTIVE_UNGREEDY:
         case CommonLang::Scanner::Token::REGEX:
             assert(lookahead_token_data != NULL);
-            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->FiLoc());
+            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
             delete lookahead_token_data;
             return Token(Terminal::BAD_TOKEN);
 
@@ -211,7 +211,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Trison::Parser" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 
@@ -270,7 +270,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         {
             EmitError(
                 "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"",
-                default_parse_nonterminal_id->FiLoc());
+                default_parse_nonterminal_id->GetFiLoc());
         }
 
         PrimarySource *primary_source =
@@ -280,7 +280,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 precedence_map,
                 m_precedence_list,
                 default_parse_nonterminal_id->GetText(),
-                throwaway->FiLoc(),
+                throwaway->GetFiLoc(),
                 m_nonterminal_list,
                 nonterminal_map);
         delete throwaway;
@@ -308,7 +308,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
     %target.cpp {
-        EmitError("parse error in directive %targets", throwaway->FiLoc());
+        EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         return NULL;
     }
 ;
@@ -369,7 +369,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error
     %target.cpp {
-        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->FiLoc());
+        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         delete target_directive;
@@ -378,7 +378,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_TARGET:throwaway '.' ID:target_id %error
     %target.cpp {
-        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->FiLoc());
+        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete target_id;
         return NULL;
@@ -386,7 +386,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_TARGET:throwaway %error
     %target.cpp {
-        EmitError("parse error in target name for directive %target", throwaway->FiLoc());
+        EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -426,13 +426,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(m_token_index == 0 && "must go from 0 to 0x100, all terminals, then all nonterminals");
         m_token_index = 0x100;
 
-        id = new Ast::Id("END_", FileLocation::ms_invalid);
+        id = new Ast::Id("END_", FiLoc::ms_invalid);
         terminal = new Trison::Terminal(id, m_token_index++);
         terminal->SetAssignedTypeMap(new TypeMap()); // default type
         m_terminal_list->Append(terminal);
         m_terminal_map->Add(terminal->GetText(), terminal);
 
-        id = new Ast::Id("ERROR_", FileLocation::ms_invalid);
+        id = new Ast::Id("ERROR_", FiLoc::ms_invalid);
         terminal = new Trison::Terminal(id, m_token_index++);
         terminal->SetAssignedTypeMap(new TypeMap()); // default type
         m_terminal_list->Append(terminal);
@@ -503,7 +503,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         assert(m_precedence_list == NULL);
         assert(m_precedence_map == NULL);
-        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FileLocation::ms_invalid, 0);
+        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FiLoc::ms_invalid, 0);
         m_precedence_list = new PrecedenceList();
         m_precedence_list->Append(precedence);
         m_precedence_map = new PrecedenceMap();
@@ -522,7 +522,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
             new Precedence(
                 id->GetText(),
                 A_NONASSOC,
-                id->FiLoc(),
+                id->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_id, precedence);
@@ -545,13 +545,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         else if (associativity_id->GetText() == "right")
             associativity = A_RIGHT;
         else
-            EmitError("invalid associativity specifier \"" + associativity_id->GetText() + "\"", throwaway->FiLoc());
+            EmitError("invalid associativity specifier \"" + associativity_id->GetText() + "\"", throwaway->GetFiLoc());
 
         Precedence *precedence =
             new Precedence(
                 id->GetText(),
                 associativity,
-                id->FiLoc(),
+                id->GetFiLoc(),
                 m_precedence_map->size());
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_id, precedence);
@@ -599,7 +599,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         NonterminalMap *nonterminal_map = new NonterminalMap();
 
         // add the special "none_" nonterminal with token_index 0 and empty rule list
-        Nonterminal *nonterminal = new Nonterminal("none_", 0, FileLocation::ms_invalid);
+        Nonterminal *nonterminal = new Nonterminal("none_", 0, FiLoc::ms_invalid);
         nonterminal->SetRuleList(new RuleList());
         nonterminal_map->Add(nonterminal->GetText(), nonterminal);
         m_nonterminal_list->Append(nonterminal);
@@ -621,7 +621,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     %error ';'
     %target.cpp {
-        EmitError("syntax error in nonterminal definition", FiLoc());
+        EmitError("syntax error in nonterminal definition", GetFiLoc());
         return NULL;
     }
 ;
@@ -635,12 +635,12 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(id != NULL);
         assert(assigned_type_map != NULL);
         if (m_terminal_map->Element(id->GetText()) != NULL)
-            EmitError("id collision with terminal " + id->GetText(), id->FiLoc());
+            EmitError("id collision with terminal " + id->GetText(), id->GetFiLoc());
         Nonterminal *nonterminal =
             new Nonterminal(
                 id->GetText(),
                 m_token_index++,
-                id->FiLoc(),
+                id->GetFiLoc(),
                 assigned_type_map);
         delete throwaway;
         delete id;
@@ -650,7 +650,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     DIRECTIVE_NONTERMINAL:throwaway %error
     %target.cpp {
         assert(throwaway != NULL);
-        EmitError("syntax error while parsing nonterminal specification", throwaway->FiLoc());
+        EmitError("syntax error while parsing nonterminal specification", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -658,7 +658,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     DIRECTIVE_NONTERMINAL:throwaway ID:id %error
     %target.cpp {
         assert(id != NULL);
-        EmitError("syntax error in %nonterminal directive", id->FiLoc());
+        EmitError("syntax error in %nonterminal directive", id->GetFiLoc());
         delete throwaway;
         delete id;
         return NULL;
@@ -737,14 +737,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         if (m_target_map->Element(target_id->GetText()) == NULL)
             EmitWarning(
                 "undeclared target \"" + target_id->GetText() + "\"",
-                target_id->FiLoc());
+                target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
     DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
-        EmitError("parse error in target id after directive %target", throwaway->FiLoc());
+        EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
         delete throwaway;
         delete code_block;
         return NULL;
@@ -753,7 +753,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     DIRECTIVE_TARGET:throwaway %error
     %target.cpp {
         assert(m_target_map != NULL);
-        EmitError("parse error in directive %target", throwaway->FiLoc());
+        EmitError("parse error in directive %target", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
@@ -761,7 +761,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %error any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
-        EmitError("missing directive %target before rule handler code block", code_block->FiLoc());
+        EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
         delete code_block;
         return NULL;
     }
@@ -787,7 +787,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         RuleToken *rule_token =
             token_id != NULL ?
-            new RuleToken(token_id->GetText(), token_id->FiLoc(), assigned_id->GetText()) :
+            new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id->GetText()) :
             NULL;
         delete token_id;
         delete assigned_id;
@@ -798,7 +798,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         RuleToken *rule_token =
             token_id != NULL ?
-            new RuleToken(token_id->GetText(), token_id->FiLoc()) :
+            new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
             NULL;
         delete token_id;
         return rule_token;
@@ -806,7 +806,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_END:throwaway ':' ID:assigned_id
     %target.cpp {
-        RuleToken *rule_token = new RuleToken("END_", throwaway->FiLoc(), assigned_id->GetText());
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc(), assigned_id->GetText());
         delete throwaway;
         delete assigned_id;
         return rule_token;
@@ -814,14 +814,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_END:throwaway
     %target.cpp {
-        RuleToken *rule_token = new RuleToken("END_", throwaway->FiLoc());
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
         delete throwaway;
         return rule_token;
     }
 |
     DIRECTIVE_ERROR:throwaway ':' ID:assigned_id
     %target.cpp {
-        EmitError("%error terminal can't have an assigned id", throwaway->FiLoc());
+        EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
         delete throwaway;
         delete assigned_id;
         return NULL;
@@ -829,7 +829,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_ERROR:throwaway
     %target.cpp {
-        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->FiLoc());
+        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
         delete throwaway;
         return rule_token;
     }
@@ -873,7 +873,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
-        TokenId *token_id = new TokenId(id->GetText(), 0, id->FiLoc());
+        TokenId *token_id = new TokenId(id->GetText(), 0, id->GetFiLoc());
         delete id;
         return token_id;
     }
@@ -882,7 +882,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
-        TokenId *token_id = new TokenId(CharLiteral(ch->GetChar()), 0, ch->FiLoc());
+        TokenId *token_id = new TokenId(CharLiteral(ch->GetChar()), 0, ch->GetFiLoc());
         delete ch;
         return token_id;
     }

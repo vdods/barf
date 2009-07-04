@@ -21,7 +21,7 @@
 
 #include "barf_preprocessor.hpp"
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 
 namespace Barf {
 namespace Ast {
@@ -36,7 +36,7 @@ class Scanner;
 %}
 %target.cpp.class_name Parser
 %target.cpp.bottom_of_class {
-    FileLocation const &FiLoc () const;
+    FiLoc const &GetFiLoc () const;
 
     bool ScannerDebugSpew () const;
     void ScannerDebugSpew (bool debug_spew);
@@ -79,10 +79,10 @@ namespace Preprocessor {
         EmitExecutionMessage("preprocessor parse was successful");
 %}
 %target.cpp.bottom_of_implementation_file %{
-FileLocation const &Parser::FiLoc () const
+FiLoc const &Parser::GetFiLoc () const
 {
     assert(m_scanner != NULL);
-    return m_scanner->FiLoc();
+    return m_scanner->GetFiLoc();
 }
 
 bool Parser::ScannerDebugSpew () const
@@ -138,7 +138,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Preprocessor::Parser" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 

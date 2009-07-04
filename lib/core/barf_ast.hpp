@@ -19,7 +19,7 @@
 #include <sstream>
 #include <vector>
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 #include "barf_message.hpp"
 #include "barf_util.hpp"
 
@@ -54,14 +54,14 @@ class Base
 {
 public:
 
-    Base (FileLocation const &filoc, AstType ast_type)
+    Base (FiLoc const &filoc, AstType ast_type)
         :
         m_filoc(filoc),
         m_ast_type(ast_type)
     { }
     virtual ~Base () { }
 
-    inline FileLocation const &FiLoc () const { return m_filoc; }
+    inline FiLoc const &GetFiLoc () const { return m_filoc; }
     inline AstType GetAstType () const { return m_ast_type; }
 
     virtual bool IsCodeBlock () const { return false; }
@@ -70,7 +70,7 @@ public:
 
 protected:
 
-    inline void SetFiLoc (FileLocation const &filoc)
+    inline void SetFiLoc (FiLoc const &filoc)
     {
         assert(filoc.HasLineNumber());
         m_filoc = filoc;
@@ -78,7 +78,7 @@ protected:
 
 private:
 
-    FileLocation m_filoc;
+    FiLoc m_filoc;
     AstType const m_ast_type;
 }; // end of class Base
 
@@ -132,10 +132,10 @@ struct AstList : public Base, public List<ElementType>
 
     AstList (AstType ast_type)
         :
-        Base(FileLocation::ms_invalid, ast_type),
+        Base(FiLoc::ms_invalid, ast_type),
         List<ElementType>()
     { }
-    AstList (FileLocation const &filoc, AstType ast_type)
+    AstList (FiLoc const &filoc, AstType ast_type)
         :
         Base(filoc, ast_type),
         List<ElementType>()
@@ -149,8 +149,8 @@ struct AstList : public Base, public List<ElementType>
         List<ElementType>::Append(element);
         // if this list doesn't yet have a valid file location, and
         // the appending element does, use it as the list's file location
-        if (!FiLoc().HasLineNumber() && element->FiLoc().HasLineNumber())
-            SetFiLoc(element->FiLoc());
+        if (!GetFiLoc().HasLineNumber() && element->GetFiLoc().HasLineNumber())
+            SetFiLoc(element->GetFiLoc());
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const
@@ -194,7 +194,7 @@ struct Map : private map<string, ElementType *>
         assert(element != NULL);
         iterator it = find(key);
         if (it != end())
-            EmitError(FORMAT("key \"" << key << "\" previously specified at " << it->second->FiLoc()), element->FiLoc());
+            EmitError(FORMAT("key \"" << key << "\" previously specified at " << it->second->GetFiLoc()), element->GetFiLoc());
         else
             map<string, ElementType *>::operator[](key) = element;
     }
@@ -223,10 +223,10 @@ struct AstMap : public Base, public Map<ElementType>
 
     AstMap (AstType ast_type)
         :
-        Base(FileLocation::ms_invalid, ast_type),
+        Base(FiLoc::ms_invalid, ast_type),
         Map<ElementType>()
     { }
-    AstMap (FileLocation const &filoc, AstType ast_type)
+    AstMap (FiLoc const &filoc, AstType ast_type)
         :
         Base(filoc, ast_type),
         Map<ElementType>()
@@ -240,8 +240,8 @@ struct AstMap : public Base, public Map<ElementType>
         Map<ElementType>::Add(key, element);
         // if this map doesn't yet have a valid file location, and
         // the appending element does, use it as the map's file location
-        if (!FiLoc().HasLineNumber() && element->FiLoc().HasLineNumber())
-            SetFiLoc(element->FiLoc());
+        if (!GetFiLoc().HasLineNumber() && element->GetFiLoc().HasLineNumber())
+            SetFiLoc(element->GetFiLoc());
     }
     virtual void Set (string const &key, ElementType *element)
     {
@@ -249,8 +249,8 @@ struct AstMap : public Base, public Map<ElementType>
         Map<ElementType>::Set(key, element);
         // if this map doesn't yet have a valid file location, and
         // the appending element does, use it as the map's file location
-        if (!FiLoc().HasLineNumber() && element->FiLoc().HasLineNumber())
-            SetFiLoc(element->FiLoc());
+        if (!GetFiLoc().HasLineNumber() && element->GetFiLoc().HasLineNumber())
+            SetFiLoc(element->GetFiLoc());
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const
@@ -269,7 +269,7 @@ struct AstMap : public Base, public Map<ElementType>
 
 struct ThrowAway : public Base
 {
-    ThrowAway (FileLocation const &filoc)
+    ThrowAway (FiLoc const &filoc)
         :
         Base(filoc, AST_THROW_AWAY)
     {
@@ -281,7 +281,7 @@ class Char : public Base
 {
 public:
 
-    Char (Uint8 ch, FileLocation const &filoc)
+    Char (Uint8 ch, FiLoc const &filoc)
         :
         Base(filoc, AST_CHAR),
         m_char(ch)
@@ -295,7 +295,7 @@ public:
 
 protected:
 
-    Char (Uint8 ch, FileLocation const &filoc, AstType ast_type)
+    Char (Uint8 ch, FiLoc const &filoc, AstType ast_type)
         :
         Base(filoc, ast_type),
         m_char(ch)
@@ -308,7 +308,7 @@ class SignedInteger : public Base
 {
 public:
 
-    SignedInteger (Sint32 value, FileLocation const &filoc)
+    SignedInteger (Sint32 value, FiLoc const &filoc)
         :
         Base(filoc, AST_SIGNED_INTEGER),
         m_value(value)
@@ -330,7 +330,7 @@ class UnsignedInteger : public Base
 {
 public:
 
-    UnsignedInteger (Uint32 value, FileLocation const &filoc)
+    UnsignedInteger (Uint32 value, FiLoc const &filoc)
         :
         Base(filoc, AST_UNSIGNED_INTEGER),
         m_value(value)
@@ -352,11 +352,11 @@ class TextBase : public Base
 {
 public:
 
-    TextBase (FileLocation const &filoc, AstType ast_type)
+    TextBase (FiLoc const &filoc, AstType ast_type)
         :
         Base(filoc, ast_type)
     { }
-    TextBase (string const &text, FileLocation const &filoc, AstType ast_type)
+    TextBase (string const &text, FiLoc const &filoc, AstType ast_type)
         :
         Base(filoc, ast_type),
         m_text(text)
@@ -379,11 +379,11 @@ protected:
 
 struct String : public TextBase
 {
-    String (FileLocation const &filoc)
+    String (FiLoc const &filoc)
         :
         TextBase(filoc, AST_STRING)
     { }
-    String (string const &str, FileLocation const &filoc)
+    String (string const &str, FiLoc const &filoc)
         :
         TextBase(str, filoc, AST_STRING)
     { }
@@ -393,7 +393,7 @@ struct String : public TextBase
 
 struct Id : public TextBase
 {
-    Id (string const &id_text, FileLocation const &filoc)
+    Id (string const &id_text, FiLoc const &filoc)
         :
         TextBase(id_text, filoc, AST_ID)
     {
@@ -405,7 +405,7 @@ struct Id : public TextBase
 
 struct CodeBlock : public TextBase
 {
-    CodeBlock (FileLocation const &filoc, AstType ast_type)
+    CodeBlock (FiLoc const &filoc, AstType ast_type)
         :
         TextBase(filoc, ast_type)
     { }
@@ -423,12 +423,12 @@ struct CodeBlock : public TextBase
 
 struct DumbCodeBlock : public CodeBlock
 {
-    DumbCodeBlock (FileLocation const &filoc) : CodeBlock(filoc, AST_DUMB_CODE_BLOCK) { }
+    DumbCodeBlock (FiLoc const &filoc) : CodeBlock(filoc, AST_DUMB_CODE_BLOCK) { }
 }; // end of struct DumbCodeBlock
 
 struct StrictCodeBlock : public CodeBlock
 {
-    StrictCodeBlock (FileLocation const &filoc) : CodeBlock(filoc, AST_STRICT_CODE_BLOCK) { }
+    StrictCodeBlock (FiLoc const &filoc) : CodeBlock(filoc, AST_STRICT_CODE_BLOCK) { }
 }; // end of struct StrictCodeBlock
 
 class Directive : public TextBase
@@ -437,7 +437,7 @@ public:
 
     Directive (
         string const &directive_id,
-        FileLocation const &filoc)
+        FiLoc const &filoc)
         :
         TextBase(directive_id, filoc, AST_DIRECTIVE)
     { }
@@ -449,7 +449,7 @@ protected:
 
     Directive (
         string const &directive_id,
-        FileLocation const &filoc,
+        FiLoc const &filoc,
         AstType ast_type)
         :
         TextBase(directive_id, filoc, ast_type)

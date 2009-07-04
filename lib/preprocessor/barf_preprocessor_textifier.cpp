@@ -19,10 +19,10 @@ namespace Preprocessor {
 
 void Textifier::TextifyBody (Body const &body, SymbolTable &symbol_table)
 {
-    if (m_generates_line_directives && body.FiLoc().IsValid())
+    if (m_generates_line_directives && body.GetFiLoc().IsValid())
     {
         m_output_filoc.IncrementLineNumber(2);
-        string line_directive(body.FiLoc().LineDirectiveString());
+        string line_directive(body.GetFiLoc().LineDirectiveString());
         m_output_stream << '\n' << line_directive << '\n';
     }
 
@@ -34,7 +34,7 @@ void Textifier::TextifyBody (Body const &body, SymbolTable &symbol_table)
         m_generates_line_directives = saved_generates_line_directives;
     }
 
-    if (m_generates_line_directives && body.FiLoc().IsValid())
+    if (m_generates_line_directives && body.GetFiLoc().IsValid())
     {
         m_output_filoc.IncrementLineNumber(2);
         string line_directive(m_output_filoc.LineDirectiveString());

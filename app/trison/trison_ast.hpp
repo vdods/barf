@@ -57,7 +57,7 @@ struct TokenId : public Ast::TextBase
 {
     Uint32 const m_token_index;
 
-    TokenId (string const &text, Uint32 token_index, FileLocation const &filoc, AstType ast_type = AST_TOKEN_ID)
+    TokenId (string const &text, Uint32 token_index, FiLoc const &filoc, AstType ast_type = AST_TOKEN_ID)
         :
         TextBase(text, filoc, ast_type),
         m_token_index(token_index)
@@ -73,7 +73,7 @@ struct Terminal : public TokenId
 
     Terminal (Ast::Id const *id, Uint32 token_index)
         :
-        TokenId(id->GetText(), token_index, id->FiLoc(), AST_TERMINAL),
+        TokenId(id->GetText(), token_index, id->GetFiLoc(), AST_TERMINAL),
         m_is_id(true),
         m_char('\0'),
         m_assigned_type_map(NULL)
@@ -82,7 +82,7 @@ struct Terminal : public TokenId
     }
     Terminal (Ast::Char const *ch)
         :
-        TokenId(CharLiteral(ch->GetChar()), (Uint32)ch->GetChar(), ch->FiLoc(), AST_TERMINAL),
+        TokenId(CharLiteral(ch->GetChar()), (Uint32)ch->GetChar(), ch->GetFiLoc(), AST_TERMINAL),
         m_is_id(false),
         m_char(ch->GetChar()),
         m_assigned_type_map(NULL)
@@ -116,7 +116,7 @@ struct RuleToken : public Ast::Base
     string const m_token_id;
     string const m_assigned_id;
 
-    RuleToken (string const &token_id, FileLocation const &filoc, string const &assigned_id = g_empty_string)
+    RuleToken (string const &token_id, FiLoc const &filoc, string const &assigned_id = g_empty_string)
         :
         Ast::Base(filoc, AST_RULE_TOKEN),
         m_token_id(token_id),
@@ -143,7 +143,7 @@ struct Rule : public Ast::Base
 
     Rule (RuleTokenList const *rule_token_list, Precedence const *rule_precedence, Uint32 rule_index)
         :
-        Ast::Base(rule_token_list->FiLoc(), AST_RULE),
+        Ast::Base(rule_token_list->GetFiLoc(), AST_RULE),
         m_owner_nonterminal(NULL),
         m_rule_token_list(rule_token_list),
         m_rule_precedence(rule_precedence),
@@ -172,7 +172,7 @@ struct Nonterminal : public TokenId
     Nonterminal (
         string const &id,
         Uint32 token_index,
-        FileLocation const &filoc,
+        FiLoc const &filoc,
         TypeMap const *assigned_type_map = NULL)
         :
         TokenId(id, token_index, filoc, AST_NONTERMINAL),
@@ -239,7 +239,7 @@ struct Precedence : public Ast::Base
     Precedence (
         string const &precedence_id,
         Associativity precedence_associativity,
-        FileLocation const &filoc,
+        FiLoc const &filoc,
         Sint32 precedence_level = DEFAULT_PRECEDENCE_LEVEL)
         :
         Ast::Base(filoc, AST_PRECEDENCE),
@@ -283,7 +283,7 @@ struct PrimarySource : public Ast::Base
         PrecedenceMap const *precedence_map,
         PrecedenceList const *precedence_list,
         string const &default_parse_nonterminal_id,
-        FileLocation const &filoc,
+        FiLoc const &filoc,
         NonterminalList const *nonterminal_list,
         NonterminalMap const *nonterminal_map)
         :

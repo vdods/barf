@@ -64,7 +64,7 @@ public:
         Ast::Id const *directive_id,
         Ast::TextBase const *directive_value)
         :
-        Directive("%target", target_id->FiLoc(), AST_TARGET_DIRECTIVE),
+        Directive("%target", target_id->GetFiLoc(), AST_TARGET_DIRECTIVE),
         m_target_id(target_id),
         m_directive_id(directive_id),
         m_directive_value(directive_value)
@@ -176,8 +176,8 @@ struct RuleHandler : public Ast::Base
         :
         Ast::Base(
             (target_id != NULL) ?
-            target_id->FiLoc() :
-            rule_handler_code_block->FiLoc(),
+            target_id->GetFiLoc() :
+            rule_handler_code_block->GetFiLoc(),
             AST_RULE_HANDLER),
         m_target_id(target_id),
         m_rule_handler_code_block(rule_handler_code_block)

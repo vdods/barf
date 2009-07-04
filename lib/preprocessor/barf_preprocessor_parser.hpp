@@ -92,7 +92,7 @@ enum
 
 #include "barf_preprocessor.hpp"
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 
 namespace Barf {
 namespace Ast {
@@ -349,7 +349,7 @@ public:
 
 #line 38 "barf_preprocessor_parser.trison"
 
-    FileLocation const &FiLoc () const;
+    FiLoc const &GetFiLoc () const;
 
     bool ScannerDebugSpew () const;
     void ScannerDebugSpew (bool debug_spew);

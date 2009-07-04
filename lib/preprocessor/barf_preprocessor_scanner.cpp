@@ -66,7 +66,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     if (accepted_string == "undefine")              return Parser::Token(Parser::Terminal::UNDEFINE);
     if (accepted_string == "warning")               return Parser::Token(Parser::Terminal::WARNING);
 
-    return Parser::Token(Parser::Terminal::ID, new Ast::Id(accepted_string, FiLoc()));
+    return Parser::Token(Parser::Terminal::ID, new Ast::Id(accepted_string, GetFiLoc()));
 }
 
 #line 73 "barf_preprocessor_scanner.cpp"
@@ -133,7 +133,7 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
-"Preprocessor::Scanner" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"
+"Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 138 "barf_preprocessor_scanner.cpp"
  << " switching to state machine "
                   << ms_state_machine_name_[state_machine];
@@ -155,7 +155,7 @@ void Scanner::ResetForNewInput ()
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
-"Preprocessor::Scanner" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"
+"Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 160 "barf_preprocessor_scanner.cpp"
  << " executing reset-for-new-input actions and switching to state machine "
                   << ms_state_machine_name_[StateMachine::START_];
@@ -212,7 +212,7 @@ Parser::Token Scanner::Scan () throw()
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
-"Preprocessor::Scanner" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"
+"Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 217 "barf_preprocessor_scanner.cpp"
  << " rejecting string ";
                 PrintString_(rejected_string);
@@ -228,7 +228,7 @@ Parser::Token Scanner::Scan () throw()
 
 #line 153 "barf_preprocessor_scanner.reflex"
 
-    EmitError("unrecognized character " + CharLiteral(rejected_atom), FiLoc());
+    EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 
 #line 234 "barf_preprocessor_scanner.cpp"
 
@@ -243,7 +243,7 @@ Parser::Token Scanner::Scan () throw()
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
 #line 166 "barf_preprocessor_scanner.reflex"
-"Preprocessor::Scanner" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"
+"Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 248 "barf_preprocessor_scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
@@ -298,7 +298,7 @@ Parser::Token Scanner::Scan () throw()
             m_text->AppendText(accepted_string);
         // otherwise start a new one.
         else
-            m_text = new Text(accepted_string, FiLoc());
+            m_text = new Text(accepted_string, GetFiLoc());
 
         SwitchToStateMachine(StateMachine::TRANSITION_TO_CODE);
         Ast::Base *token = m_text;
@@ -320,7 +320,7 @@ Parser::Token Scanner::Scan () throw()
             m_text->AppendText(accepted_string);
         // otherwise start a new one.
         else
-            m_text = new Text(accepted_string, FiLoc());
+            m_text = new Text(accepted_string, GetFiLoc());
 
         SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         Ast::Base *token = m_text;
@@ -372,7 +372,7 @@ Parser::Token Scanner::Scan () throw()
         if (m_is_reading_newline_sensitive_code)
             return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         else
-            EmitError("unexpected end of file encountered within preprocessor code section", FiLoc());
+            EmitError("unexpected end of file encountered within preprocessor code section", GetFiLoc());
     
 #line 378 "barf_preprocessor_scanner.cpp"
 
@@ -391,7 +391,7 @@ Parser::Token Scanner::Scan () throw()
         }
         else
         {
-            EmitError("unexpected '}' encountered", FiLoc());
+            EmitError("unexpected '}' encountered", GetFiLoc());
             return Parser::Token(Parser::Terminal::BAD_TOKEN);
         }
     
@@ -432,7 +432,7 @@ Parser::Token Scanner::Scan () throw()
         Sint32 value = 0;
         istringstream in(accepted_string);
         in >> value;
-        return Parser::Token(Parser::Terminal::INTEGER_LITERAL, new Integer(value, FiLoc()));
+        return Parser::Token(Parser::Terminal::INTEGER_LITERAL, new Integer(value, GetFiLoc()));
     
 #line 438 "barf_preprocessor_scanner.cpp"
 
@@ -445,7 +445,7 @@ Parser::Token Scanner::Scan () throw()
 #line 333 "barf_preprocessor_scanner.reflex"
 
         assert(m_text == NULL);
-        m_text = new Text("", FiLoc());
+        m_text = new Text("", GetFiLoc());
         SwitchToStateMachine(StateMachine::READING_CODE_STRING_LITERAL_GUTS);
     
 #line 452 "barf_preprocessor_scanner.cpp"
@@ -458,7 +458,7 @@ Parser::Token Scanner::Scan () throw()
 
 #line 340 "barf_preprocessor_scanner.reflex"
 
-        EmitError("unrecognized character encountered within preprocessor code section", FiLoc());
+        EmitError("unrecognized character encountered within preprocessor code section", GetFiLoc());
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     
 #line 465 "barf_preprocessor_scanner.cpp"
@@ -491,16 +491,16 @@ Parser::Token Scanner::Scan () throw()
             case ESRC_MALFORMED_HEX_CHAR:
                 EmitError(
                     "\\x with no trailing hex digits",
-                    FileLocation(m_text->FiLoc().Filename(),
-                          m_text->FiLoc().LineNumber() + status.m_line_number_offset));
+                    FiLoc(m_text->GetFiLoc().Filename(),
+                          m_text->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
                 
             case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 EmitError(
                     "hex/octal escape sequence out of range",
-                    FileLocation(m_text->FiLoc().Filename(),
-                          m_text->FiLoc().LineNumber() + status.m_line_number_offset));
+                    FiLoc(m_text->GetFiLoc().Filename(),
+                          m_text->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
         }
         m_text->AppendText(accepted_string);
@@ -519,7 +519,7 @@ Parser::Token Scanner::Scan () throw()
 
 #line 390 "barf_preprocessor_scanner.reflex"
 
-        EmitError("unterminated string literal", FiLoc());
+        EmitError("unterminated string literal", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
         assert(m_text != NULL);
         delete m_text;

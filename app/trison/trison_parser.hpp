@@ -353,7 +353,7 @@ public:
 
 #line 51 "trison_parser.trison"
 
-    inline FileLocation const &FiLoc () const { return m_scanner.FiLoc(); }
+    inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
     CommonLang::TargetMap *StealTargetMap ();
 

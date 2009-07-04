@@ -62,7 +62,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     // _accept_handler_count -- gives the number of accept handlers.
     {
         Preprocessor::ScalarSymbol *accept_handler_count =
-            symbol_table.DefineScalarSymbol("_accept_handler_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_accept_handler_count", FiLoc::ms_invalid);
         accept_handler_count->SetScalarBody(
             new Preprocessor::Body(Sint32(primary_source.RuleCount())));
     }
@@ -72,9 +72,9 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     // _accept_handler_regex -- a string literal of the regex associated with each accept handler
     {
         Preprocessor::ArraySymbol *accept_handler_state_machine =
-            symbol_table.DefineArraySymbol("_accept_handler_state_machine", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_accept_handler_state_machine", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *accept_handler_regex =
-            symbol_table.DefineArraySymbol("_accept_handler_regex", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_accept_handler_regex", FiLoc::ms_invalid);
         for (StateMachineMap::const_iterator state_machine_it = primary_source.m_state_machine_map->begin(),
                                             state_machine_it_end = primary_source.m_state_machine_map->end();
             state_machine_it != state_machine_it_end;
@@ -90,7 +90,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     {
         assert(primary_source.m_start_with_state_machine_directive != NULL);
         Preprocessor::ScalarSymbol *symbol =
-            symbol_table.DefineScalarSymbol("_start_with_state_machine", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_start_with_state_machine", FiLoc::ms_invalid);
         symbol->SetScalarBody(
             new Preprocessor::Body(primary_source.m_start_with_state_machine_directive->m_state_machine_id->GetText()));
     }
@@ -103,7 +103,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     // see StateMachine::ModeFlags.
     {
         Preprocessor::MapSymbol *state_machine_mode_flags =
-            symbol_table.DefineMapSymbol("_state_machine_mode_flags", FileLocation::ms_invalid);
+            symbol_table.DefineMapSymbol("_state_machine_mode_flags", FiLoc::ms_invalid);
         for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
                                              it_end = primary_source.m_state_machine_map->end();
             it != it_end;
@@ -128,7 +128,7 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
     // _nfa_initial_node_index[state machine name] -- maps state machine name => node index
     {
         Preprocessor::MapSymbol *nfa_initial_node_index =
-            symbol_table.DefineMapSymbol("_nfa_initial_node_index", FileLocation::ms_invalid);
+            symbol_table.DefineMapSymbol("_nfa_initial_node_index", FiLoc::ms_invalid);
         Uint32 state_index = 0;
         for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
                                             it_end = primary_source.m_state_machine_map->end();
@@ -149,7 +149,7 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
     // _nfa_state_count -- the number of nodes in the nondeterministic finite automaton (NFA)
     {
         Preprocessor::ScalarSymbol *nfa_state_count =
-            symbol_table.DefineScalarSymbol("_nfa_state_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_nfa_state_count", FiLoc::ms_invalid);
         nfa_state_count->SetScalarBody(
             new Preprocessor::Body(Sint32(nfa_graph.NodeCount())));
     }
@@ -183,21 +183,21 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
     // the node which to transition to if this transition is exercised.
     {
         Preprocessor::ArraySymbol *nfa_state_transition_offset =
-            symbol_table.DefineArraySymbol("_nfa_state_transition_offset", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nfa_state_transition_offset", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nfa_state_transition_count =
-            symbol_table.DefineArraySymbol("_nfa_state_transition_count", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nfa_state_transition_count", FiLoc::ms_invalid);
         Preprocessor::ScalarSymbol *nfa_transition_count =
-            symbol_table.DefineScalarSymbol("_nfa_transition_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_nfa_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nfa_transition_type_integer =
-            symbol_table.DefineArraySymbol("_nfa_transition_type_integer", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nfa_transition_type_integer", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nfa_transition_type_name =
-            symbol_table.DefineArraySymbol("_nfa_transition_type_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nfa_transition_type_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nfa_transition_data_0 =
-            symbol_table.DefineArraySymbol("_nfa_transition_data_0", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nfa_transition_data_0", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nfa_transition_data_1 =
-            symbol_table.DefineArraySymbol("_nfa_transition_data_1", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nfa_transition_data_1", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *nfa_transition_target_node_index =
-            symbol_table.DefineArraySymbol("_nfa_transition_target_node_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_nfa_transition_target_node_index", FiLoc::ms_invalid);
 
         Sint32 total_transition_count = 0;
 
@@ -251,7 +251,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
     // _dfa_initial_node_index[state machine name] -- maps state machine name => node index
     {
         Preprocessor::MapSymbol *dfa_initial_node_index =
-            symbol_table.DefineMapSymbol("_dfa_initial_node_index", FileLocation::ms_invalid);
+            symbol_table.DefineMapSymbol("_dfa_initial_node_index", FiLoc::ms_invalid);
         Uint32 state_index = 0;
         for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
                                             it_end = primary_source.m_state_machine_map->end();
@@ -272,7 +272,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
     // _dfa_state_count -- the number of nodes in the deterministic finite automaton (DFA)
     {
         Preprocessor::ScalarSymbol *dfa_state_count =
-            symbol_table.DefineScalarSymbol("_dfa_state_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_dfa_state_count", FiLoc::ms_invalid);
         dfa_state_count->SetScalarBody(
             new Preprocessor::Body(Sint32(dfa_graph.NodeCount())));
     }
@@ -313,25 +313,25 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
     // the node which to transition to if this transition is exercised.
     {
         Preprocessor::ArraySymbol *dfa_state_accept_handler_index =
-            symbol_table.DefineArraySymbol("_dfa_state_accept_handler_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_state_accept_handler_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_state_transition_offset =
-            symbol_table.DefineArraySymbol("_dfa_state_transition_offset", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_state_transition_offset", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_state_transition_count =
-            symbol_table.DefineArraySymbol("_dfa_state_transition_count", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_state_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_state_description =
-            symbol_table.DefineArraySymbol("_dfa_state_description", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_state_description", FiLoc::ms_invalid);
         Preprocessor::ScalarSymbol *dfa_transition_count =
-            symbol_table.DefineScalarSymbol("_dfa_transition_count", FileLocation::ms_invalid);
+            symbol_table.DefineScalarSymbol("_dfa_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_transition_type_integer =
-            symbol_table.DefineArraySymbol("_dfa_transition_type_integer", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_transition_type_integer", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_transition_type_name =
-            symbol_table.DefineArraySymbol("_dfa_transition_type_name", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_transition_type_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_transition_data_0 =
-            symbol_table.DefineArraySymbol("_dfa_transition_data_0", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_transition_data_0", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_transition_data_1 =
-            symbol_table.DefineArraySymbol("_dfa_transition_data_1", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_transition_data_1", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_transition_target_node_index =
-            symbol_table.DefineArraySymbol("_dfa_transition_target_node_index", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_dfa_transition_target_node_index", FiLoc::ms_invalid);
 
         Sint32 total_transition_count = 0;
 
@@ -394,7 +394,7 @@ void PopulateAcceptHandlerCodeArraySymbol (Rule const &rule, string const &targe
     accept_handler_code->AppendArrayElement(
         new Preprocessor::Body(
             rule_handler_code_block->GetText(),
-            rule_handler_code_block->FiLoc()));
+            rule_handler_code_block->GetFiLoc()));
 }
 
 void PopulateAcceptHandlerCodeArraySymbol (StateMachine const &state_machine, string const &target_id, Preprocessor::ArraySymbol *accept_handler_code)
@@ -420,7 +420,7 @@ void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string
     // for all accept handlers.
     {
         Preprocessor::ArraySymbol *accept_handler_code =
-            symbol_table.DefineArraySymbol("_accept_handler_code", FileLocation::ms_invalid);
+            symbol_table.DefineArraySymbol("_accept_handler_code", FiLoc::ms_invalid);
 
         for (StateMachineMap::const_iterator it = primary_source.m_state_machine_map->begin(),
                                             it_end = primary_source.m_state_machine_map->end();

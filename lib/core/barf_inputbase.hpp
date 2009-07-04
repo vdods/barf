@@ -16,7 +16,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "barf_filelocation.hpp"
+#include "barf_filoc.hpp"
 
 namespace Barf {
 
@@ -30,7 +30,7 @@ public:
     ~InputBase ();
 
     bool IsOpen () const;
-    FileLocation const &FiLoc () const { return m_filoc; }
+    FiLoc const &GetFiLoc () const { return m_filoc; }
     string const &InputName () const { return m_filoc.Filename(); }
 
     bool OpenFile (string const &input_filename);
@@ -57,7 +57,7 @@ private:
     istringstream m_istringstream;
     ifstream m_ifstream;
     istream *m_input_stream;
-    FileLocation m_filoc;
+    FiLoc m_filoc;
 }; // end of class InputBase
 
 } // end of namespace Barf

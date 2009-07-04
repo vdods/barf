@@ -69,7 +69,7 @@ string const &AstTypeString (AstType ast_type)
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-Body::Body (string const &body_text, FileLocation const &source_filoc)
+Body::Body (string const &body_text, FiLoc const &source_filoc)
     :
     ExecutableAstList(AST_BODY),
     Executable()
@@ -77,7 +77,7 @@ Body::Body (string const &body_text, FileLocation const &source_filoc)
     Append(new Text(body_text, source_filoc));
 }
 
-Body::Body (Sint32 body_integer, FileLocation const &source_filoc)
+Body::Body (Sint32 body_integer, FiLoc const &source_filoc)
     :
     ExecutableAstList(AST_BODY),
     Executable()
@@ -249,7 +249,7 @@ Sint32 Sizeof::IntegerValue (SymbolTable &symbol_table) const
         return symbol->Sizeof();
     else
     {
-        EmitError("can't return sizeof undefined macro \"" + m_id->GetText() + "\"", FiLoc());
+        EmitError("can't return sizeof undefined macro \"" + m_id->GetText() + "\"", GetFiLoc());
         return 0;
     }
 }
@@ -314,7 +314,7 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
     if (symbol == NULL)
     {
         if (m_dereference_type == DEREFERENCE_ALWAYS)
-            EmitError("undefined macro \"" + m_id->GetText() + "\"", m_id->FiLoc());
+            EmitError("undefined macro \"" + m_id->GetText() + "\"", m_id->GetFiLoc());
         return NULL;
     }
 
@@ -323,7 +323,7 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
     {
         if (m_element_index_expression != NULL)
         {
-            EmitError("trying to dereference a scalar macro as an array or map", FiLoc());
+            EmitError("trying to dereference a scalar macro as an array or map", GetFiLoc());
             return NULL;
         }
         dereferenced_body = Dsc<ScalarSymbol *>(symbol)->ScalarBody();
@@ -333,7 +333,7 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
     {
         if (m_element_index_expression == NULL)
         {
-            EmitError("trying to dereference an array macro without an array index", FiLoc());
+            EmitError("trying to dereference an array macro without an array index", GetFiLoc());
             return NULL;
         }
         Sint32 element_index = m_element_index_expression->IntegerValue(symbol_table);
@@ -341,7 +341,7 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
         {
             ostringstream out;
             out << "negative value (" << element_index << ") invalid for array index";
-            EmitError(out.str(), FiLoc());
+            EmitError(out.str(), GetFiLoc());
             return 0;
         }
         dereferenced_body = Dsc<ArraySymbol *>(symbol)->ArrayElement(Uint32(element_index));
@@ -349,7 +349,7 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
         {
             ostringstream out;
             out << "macro \"" << m_id->GetText() << "\" has no element " << element_index;
-            EmitError(out.str(), FiLoc());
+            EmitError(out.str(), GetFiLoc());
             return NULL;
         }
     }
@@ -358,7 +358,7 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
         assert(symbol->IsMapSymbol());
         if (m_element_index_expression == NULL)
         {
-            EmitError("trying to dereference a map macro without a map key", FiLoc());
+            EmitError("trying to dereference a map macro without a map key", GetFiLoc());
             return NULL;
         }
         string element_key = m_element_index_expression->TextValue(symbol_table);
@@ -367,7 +367,7 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
         {
             EmitError(
                 "macro \"" + m_id->GetText() + "\" has no such element " + StringLiteral(element_key),
-                FiLoc());
+                GetFiLoc());
             return NULL;
         }
     }
@@ -443,7 +443,7 @@ Sint32 Operation::IntegerValue (SymbolTable &symbol_table) const
 {
     if (IsTextOperation())
     {
-        EmitWarning("retrieving integer value from non-integer expression", FiLoc());
+        EmitWarning("retrieving integer value from non-integer expression", GetFiLoc());
         istringstream in(TextValue(symbol_table));
         Sint32 retval = 0;
         in >> retval;
@@ -469,7 +469,7 @@ Sint32 Operation::IntegerValue (SymbolTable &symbol_table) const
             Sint32 right_operand = m_right->IntegerValue(symbol_table);
             if (right_operand == 0)
             {
-                EmitWarning("divide by zero", FiLoc());
+                EmitWarning("divide by zero", GetFiLoc());
                 return 0;
             }
             else
@@ -481,7 +481,7 @@ Sint32 Operation::IntegerValue (SymbolTable &symbol_table) const
             Sint32 right_operand = m_right->IntegerValue(symbol_table);
             if (right_operand == 0)
             {
-                EmitWarning("divide by zero", FiLoc());
+                EmitWarning("divide by zero", GetFiLoc());
                 return 0;
             }
             else
@@ -500,7 +500,7 @@ Sint32 Operation::IntegerValue (SymbolTable &symbol_table) const
         case EQUAL:
             if (m_left->IsNativeIntegerValue(symbol_table) != m_right->IsNativeIntegerValue(symbol_table))
             {
-                EmitError("int/string type mismatch for == operator", m_left->FiLoc());
+                EmitError("int/string type mismatch for == operator", m_left->GetFiLoc());
                 return 0;
             }
             if (m_left->IsNativeIntegerValue(symbol_table))
@@ -511,7 +511,7 @@ Sint32 Operation::IntegerValue (SymbolTable &symbol_table) const
         case NOT_EQUAL:
             if (m_left->IsNativeIntegerValue(symbol_table) != m_right->IsNativeIntegerValue(symbol_table))
             {
-                EmitError("int/string type mismatch for != operator", m_left->FiLoc());
+                EmitError("int/string type mismatch for != operator", m_left->GetFiLoc());
                 return 0;
             }
             if (m_left->IsNativeIntegerValue(symbol_table))
@@ -537,7 +537,7 @@ Sint32 Operation::IntegerValue (SymbolTable &symbol_table) const
         case STRING_LENGTH:
             if (m_right->IsNativeIntegerValue(symbol_table))
             {
-                EmitError("type mismatch for string_length operator (expecting a string)", m_left->FiLoc());
+                EmitError("type mismatch for string_length operator (expecting a string)", m_left->GetFiLoc());
                 return 0;
             }
             else
@@ -553,7 +553,7 @@ string Operation::TextValue (SymbolTable &symbol_table) const
 {
     if (!IsTextOperation())
     {
-        EmitWarning("retrieving text value from non-text expression", FiLoc());
+        EmitWarning("retrieving text value from non-text expression", GetFiLoc());
         ostringstream out;
         out << IntegerValue(symbol_table);
         return out.str();
@@ -571,7 +571,7 @@ string Operation::TextValue (SymbolTable &symbol_table) const
         {
             Sint32 character_index = m_right->IntegerValue(symbol_table);
             if (character_index < 0 || character_index > 255)
-                EmitWarning(FORMAT("truncating character literal index (" << character_index << ") to within 0-255"), FiLoc());
+                EmitWarning(FORMAT("truncating character literal index (" << character_index << ") to within 0-255"), GetFiLoc());
             return CharLiteral(Uint8(character_index));
         }
 

@@ -83,7 +83,7 @@ struct AddCodespec : public Ast::Directive
 
     AddCodespec (Ast::String const *filename, Ast::Id const *filename_directive_id)
         :
-        Ast::Directive("%add_codespec", filename->FiLoc(), AST_ADD_CODESPEC),
+        Ast::Directive("%add_codespec", filename->GetFiLoc(), AST_ADD_CODESPEC),
         m_filename(filename),
         m_filename_directive_id(filename_directive_id)
     {
@@ -106,7 +106,7 @@ struct AddDirective : public Ast::Directive
 
     AddDirective (Ast::Id const *directive_to_add_id, AstType param_type, string const &directive_id)
         :
-        Ast::Directive(directive_id, directive_to_add_id->FiLoc(), AST_ADD_DIRECTIVE),
+        Ast::Directive(directive_id, directive_to_add_id->GetFiLoc(), AST_ADD_DIRECTIVE),
         m_directive_to_add_id(directive_to_add_id),
         m_param_type(param_type)
     {
@@ -158,7 +158,7 @@ struct ParamType : public Ast::Base
 
     ParamType (AstType param_type)
         :
-        Ast::Base(FileLocation::ms_invalid, AST_PARAM_TYPE),
+        Ast::Base(FiLoc::ms_invalid, AST_PARAM_TYPE),
         m_param_type(param_type)
     {
         assert(m_param_type == Ast::AST_ID ||
@@ -182,7 +182,7 @@ struct Specification : public Ast::Base
         AddCodespecList const *add_codespec_list,
         AddDirectiveMap const *add_directive_map)
         :
-        Ast::Base(target_id->FiLoc(), AST_SPECIFICATION),
+        Ast::Base(target_id->GetFiLoc(), AST_SPECIFICATION),
         m_target_id(target_id),
         m_add_codespec_list(add_codespec_list),
         m_add_directive_map(add_directive_map)

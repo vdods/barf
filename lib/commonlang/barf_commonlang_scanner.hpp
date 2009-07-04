@@ -701,7 +701,7 @@ public:
 #line 84 "barf_commonlang_scanner.reflex"
 
     using InputBase::IsOpen;
-    using InputBase::FiLoc;
+    using InputBase::GetFiLoc;
     using InputBase::InputName;
 
     bool OpenFile (string const &input_filename);

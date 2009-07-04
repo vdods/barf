@@ -23,7 +23,7 @@ void EmitExecutionMessage (string const &message)
         cerr << GetOptions().ProgramName() << ": " << message << endl;
 }
 
-void EmitWarning (string const &message, FileLocation const &filoc)
+void EmitWarning (string const &message, FiLoc const &filoc)
 {
     if (OptionsAreInitialized() && GetOptions().TreatWarningsAsErrors())
         EmitError(message, filoc);
@@ -33,7 +33,7 @@ void EmitWarning (string const &message, FileLocation const &filoc)
         cerr << GetOptions().ProgramName() << ": " << "warning: " << message << endl;
 }
 
-void EmitError (string const &message, FileLocation const &filoc)
+void EmitError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
     if (OptionsAreInitialized() && GetOptions().HaltOnFirstError())
@@ -51,7 +51,7 @@ void EmitError (string const &message, FileLocation const &filoc)
     }
 }
 
-void EmitFatalError (string const &message, FileLocation const &filoc)
+void EmitFatalError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
 #if DEBUG

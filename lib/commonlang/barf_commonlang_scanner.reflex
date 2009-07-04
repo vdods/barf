@@ -83,7 +83,7 @@ namespace CommonLang {
 %target.cpp.scan_method_parameters { Ast::Base *&token }
 %target.cpp.bottom_of_class {
     using InputBase::IsOpen;
-    using InputBase::FiLoc;
+    using InputBase::GetFiLoc;
     using InputBase::InputName;
 
     bool OpenFile (string const &input_filename);
@@ -197,30 +197,30 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 {
     assert(token == NULL);
 
-    if (accepted_string == "%add_codespec") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_ADD_CODESPEC; }
-    if (accepted_string == "%add_optional_directive") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE; }
-    if (accepted_string == "%add_required_directive") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE; }
-    if (accepted_string == "%case_insensitive") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_CASE_INSENSITIVE; }
-    if (accepted_string == "%default") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_DEFAULT; }
-    if (accepted_string == "%default_parse_nonterminal") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL; }
-    if (accepted_string == "%dumb_code_block") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_DUMB_CODE_BLOCK; }
-    if (accepted_string == "%end") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_END; }
-    if (accepted_string == "%error") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_ERROR; }
-    if (accepted_string == "%identifier") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_ID; }
-    if (accepted_string == "%macro") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_MACRO; }
-    if (accepted_string == "%nonterminal") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_NONTERMINAL; }
-    if (accepted_string == "%prec") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_PREC; }
-    if (accepted_string == "%start_with_state_machine") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_START_IN_STATE_MACHINE; }
-    if (accepted_string == "%state_machine") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_STATE_MACHINE; }
-    if (accepted_string == "%strict_code_block") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
-    if (accepted_string == "%string") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_STRING; }
-    if (accepted_string == "%target") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_TARGET; }
-    if (accepted_string == "%targets") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_TARGETS; }
-    if (accepted_string == "%terminal") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_TERMINAL; }
-    if (accepted_string == "%type") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_TYPE; }
-    if (accepted_string == "%ungreedy") { token = new Ast::ThrowAway(FiLoc()); return Token::DIRECTIVE_UNGREEDY; }
+    if (accepted_string == "%add_codespec") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_CODESPEC; }
+    if (accepted_string == "%add_optional_directive") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE; }
+    if (accepted_string == "%add_required_directive") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE; }
+    if (accepted_string == "%case_insensitive") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_CASE_INSENSITIVE; }
+    if (accepted_string == "%default") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DEFAULT; }
+    if (accepted_string == "%default_parse_nonterminal") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL; }
+    if (accepted_string == "%dumb_code_block") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_DUMB_CODE_BLOCK; }
+    if (accepted_string == "%end") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_END; }
+    if (accepted_string == "%error") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ERROR; }
+    if (accepted_string == "%identifier") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ID; }
+    if (accepted_string == "%macro") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_MACRO; }
+    if (accepted_string == "%nonterminal") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_NONTERMINAL; }
+    if (accepted_string == "%prec") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_PREC; }
+    if (accepted_string == "%start_with_state_machine") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_START_IN_STATE_MACHINE; }
+    if (accepted_string == "%state_machine") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STATE_MACHINE; }
+    if (accepted_string == "%strict_code_block") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRICT_CODE_BLOCK; }
+    if (accepted_string == "%string") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_STRING; }
+    if (accepted_string == "%target") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGET; }
+    if (accepted_string == "%targets") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TARGETS; }
+    if (accepted_string == "%terminal") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TERMINAL; }
+    if (accepted_string == "%type") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_TYPE; }
+    if (accepted_string == "%ungreedy") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_UNGREEDY; }
 
-    EmitError("invalid directive \"" + accepted_string + "\"", FiLoc());
+    EmitError("invalid directive \"" + accepted_string + "\"", GetFiLoc());
     return Token::BAD_TOKEN;
 }
 %}
@@ -248,7 +248,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     return In().get();
 }
 %target.cpp.rejection_actions {
-    EmitError("unrecognized character " + CharLiteral(rejected_atom), FiLoc());
+    EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 }
 %target.cpp.reset_for_new_input_actions {
     m_is_in_preamble = true;
@@ -261,7 +261,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 /* **************************************************************************/
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"CommonLang::Scanner" << (FiLoc().IsValid() ? " ("+FiLoc().AsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
@@ -330,25 +330,25 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     (") // opening quote for a string literal
     %target.cpp {
-        token = new Ast::String(FiLoc());
+        token = new Ast::String(GetFiLoc());
         SwitchToStateMachine(StateMachine::STRING_LITERAL_GUTS);
     }
 |
     (\() // opening delimiter for a regular expression
     %target.cpp {
-        token = new Ast::String(FiLoc());
+        token = new Ast::String(GetFiLoc());
         SwitchToStateMachine(StateMachine::REGULAR_EXPRESSION);
     }
 |
     (%\{) // opening delimiter for a dumb code block
     %target.cpp {
-        token = new Ast::DumbCodeBlock(FiLoc());
+        token = new Ast::DumbCodeBlock(GetFiLoc());
         SwitchToStateMachine(StateMachine::DUMB_CODE_BLOCK);
     }
 |
     (\{) // opening delimiter for a strict code block
     %target.cpp {
-        token = new Ast::StrictCodeBlock(FiLoc());
+        token = new Ast::StrictCodeBlock(GetFiLoc());
         SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
     }
 |
@@ -359,14 +359,14 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     (%%)
     %target.cpp {
-        token = new Ast::ThrowAway(FiLoc());
+        token = new Ast::ThrowAway(GetFiLoc());
         m_is_in_preamble = false;
         return Token::END_PREAMBLE;
     }
 |
     ({ID})
     %target.cpp {
-        token = new Ast::Id(accepted_string, FiLoc());
+        token = new Ast::Id(accepted_string, GetFiLoc());
         return Token::ID;
     }
 |
@@ -391,7 +391,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     (.)
     %target.cpp {
-        EmitError("unexpected character " + CharLiteral(accepted_string[0]), FiLoc());
+        EmitError("unexpected character " + CharLiteral(accepted_string[0]), GetFiLoc());
         return Token::BAD_TOKEN;
     }
 ;
@@ -409,7 +409,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     ({ANY}*{END_OF_FILE}) // everything up through EOF
     %target.cpp {
         IncrementLineNumber(NewlineCount(accepted_string));
-        EmitWarning("unterminated block comment", FiLoc());
+        EmitWarning("unterminated block comment", GetFiLoc());
         delete token;
         token = NULL;
         return Token::END_OF_FILE;
@@ -424,8 +424,8 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(accepted_string[0] == '\\');
         Uint32 value = strtol(accepted_string.c_str()+1, NULL, 8);
         if (value >= 0x100)
-            EmitError("octal character literal value out of range (" + accepted_string + ")", FiLoc());
-        token = new Ast::Char(Uint8(value), FiLoc());
+            EmitError("octal character literal value out of range (" + accepted_string + ")", GetFiLoc());
+        token = new Ast::Char(Uint8(value), GetFiLoc());
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 |
@@ -436,8 +436,8 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(accepted_string[1] == 'x');
         Uint32 value = strtol(accepted_string.c_str()+2, NULL, 16);
         if (value >= 0x100)
-            EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", FiLoc());
-        token = new Ast::Char(Uint8(value), FiLoc());
+            EmitError("hexadecimal character literal value out of range (" + accepted_string + ")", GetFiLoc());
+        token = new Ast::Char(Uint8(value), GetFiLoc());
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 |
@@ -445,7 +445,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %target.cpp {
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        Ast::Char *ch = new Ast::Char(Uint8(accepted_string[1]), FiLoc());
+        Ast::Char *ch = new Ast::Char(Uint8(accepted_string[1]), GetFiLoc());
         ch->Escape();
         token = ch;
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
@@ -454,22 +454,22 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     ({CHAR_NORMAL_CHAR})
     %target.cpp {
         assert(accepted_string.length() == 1);
-        token = new Ast::Char(Uint8(accepted_string[0]), FiLoc());
+        token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 |
     (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
     %target.cpp {
-        EmitError("unterminated character literal", FiLoc());
+        EmitError("unterminated character literal", GetFiLoc());
         return Token::END_OF_FILE;
     }
 |
     ({ANY}) // anything else just means it's malformed
     %target.cpp {
-        EmitError("unexpected character " + CharLiteral(accepted_string[0]) + " in character literal", FiLoc());
+        EmitError("unexpected character " + CharLiteral(accepted_string[0]) + " in character literal", GetFiLoc());
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
-        token = new Ast::Char(Uint8(accepted_string[0]), FiLoc());
+        token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 ;
@@ -485,7 +485,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
     %target.cpp {
-        EmitError("unterminated character literal", FiLoc());
+        EmitError("unterminated character literal", GetFiLoc());
         assert(token != NULL);
         delete token;
         token = NULL;
@@ -495,7 +495,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     ({ANY}) // anything else just means it's malformed
     %target.cpp {
-        EmitError("malformed character literal", FiLoc());
+        EmitError("malformed character literal", GetFiLoc());
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
         assert(token != NULL);
@@ -530,16 +530,16 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
             case ESRC_MALFORMED_HEX_CHAR:
                 EmitError(
                     "\\x with no trailing hex digits",
-                    FileLocation(token->FiLoc().Filename(),
-                          token->FiLoc().LineNumber() + status.m_line_number_offset));
+                    FiLoc(token->GetFiLoc().Filename(),
+                          token->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
                 
             case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 EmitError(
                     "hex/octal escape sequence out of range",
-                    FileLocation(token->FiLoc().Filename(),
-                          token->FiLoc().LineNumber() + status.m_line_number_offset));
+                    FiLoc(token->GetFiLoc().Filename(),
+                          token->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
         }
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
@@ -549,7 +549,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     (([^\\]|\\{ANY})*\\?{END_OF_FILE}) // everything up through EOF (which may be preceded by a hanging backslash)
     %target.cpp {
-        EmitError("unterminated string literal", FiLoc());
+        EmitError("unterminated string literal", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
         assert(token != NULL);
         delete token;
@@ -599,7 +599,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(token != NULL);
         delete token;
         token = NULL;
-        EmitError("unterminated regular expression", FiLoc());
+        EmitError("unterminated regular expression", GetFiLoc());
         return Token::END_OF_FILE;
     }
 ;
@@ -635,7 +635,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(token != NULL);
         delete token;
         token = NULL;
-        EmitError("unterminated bracket expression inside regular expression", FiLoc());
+        EmitError("unterminated bracket expression inside regular expression", GetFiLoc());
         return Token::END_OF_FILE;
     }
 ;
@@ -656,7 +656,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     ({ANY}*{END_OF_FILE}) // everything up through EOF
     %target.cpp {
-        EmitError("unterminated dumb code block (looking for %} delimiter)", FiLoc());
+        EmitError("unterminated dumb code block (looking for %} delimiter)", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
         assert(token != NULL);
         delete token;
@@ -726,7 +726,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(token != NULL);
         delete token;
         token = NULL;
-        EmitError("unterminated strict code block", FiLoc());
+        EmitError("unterminated strict code block", GetFiLoc());
         return Token::END_OF_FILE;
     }
 ;
@@ -746,7 +746,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(token != NULL);
         delete token;
         token = NULL;
-        EmitError("unterminated character literal in strict code block", FiLoc());
+        EmitError("unterminated character literal in strict code block", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
         return Token::END_OF_FILE;
     }
@@ -767,7 +767,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(token != NULL);
         delete token;
         token = NULL;
-        EmitError("unterminated string literal in strict code block", FiLoc());
+        EmitError("unterminated string literal in strict code block", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
         return Token::END_OF_FILE;
     }

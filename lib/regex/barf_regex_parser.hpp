@@ -283,7 +283,7 @@ public:
 #line 36 "barf_regex_parser.trison"
 
     using InputBase::IsOpen;
-    using InputBase::FiLoc;
+    using InputBase::GetFiLoc;
     using InputBase::InputName;
 
     // must override these (instead of just "using" them), so that
