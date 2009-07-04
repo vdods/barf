@@ -15,7 +15,7 @@
 namespace Barf {
 namespace Ast {
 
-string const &GetAstTypeString (AstType ast_type)
+string const &AstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_START_CUSTOM_TYPES_HERE_] =
     {
@@ -44,12 +44,12 @@ void Base::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
 
 void Char::Escape ()
 {
-    m_char = GetEscapedChar(m_char);
+    m_char = EscapedChar(m_char);
 }
 
 void Char::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharLiteral() << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << CharLiteral() << endl;
 }
 
 void SignedInteger::ShiftAndAdd (Sint32 value)
@@ -82,7 +82,7 @@ TextBase::~TextBase ()
 {
 }
 
-string TextBase::GetDirectiveTypeString (AstType ast_type)
+string TextBase::DirectiveTypeString (AstType ast_type)
 {
     if (ast_type == AST_STRING) return "%string";
     if (ast_type == AST_ID) return "%identifier";
@@ -95,7 +95,7 @@ string TextBase::GetDirectiveTypeString (AstType ast_type)
 
 void TextBase::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetStringLiteral(GetText()) << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << StringLiteral(GetText()) << endl;
 }
 
 void Id::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const

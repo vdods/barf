@@ -35,7 +35,7 @@ $ do comprehensive deleting of stuff (this might be hard with all the throwing)
   THEN
   do memory leak checking (valgrind)
 - get rid of AST hierarchy overviews once doxygen docs are to some decent state
-- use Ast::Directive::GetDirectiveString in error messages instead of
+- use Ast::Directive::DirectiveString in error messages instead of
   creating the error messages by hand -- make all directives derive from
   Ast::Directive
 - file locations should be "2d range" -- a starting line/column and an ending
@@ -46,7 +46,7 @@ $ do comprehensive deleting of stuff (this might be hard with all the throwing)
 - add metaprogramming stuff for integer types and compile time asserts
   (and smallest int stuff in targets)
 - add filename-sanitizing function -- i.e. to check for newlines and other stuff
-- get rid of Get/Set prefixes on accessors/modifiers, using method overloading
+- get rid of Get prefixes on accessors, using method overloading
   using simpler names instead.
 
 // ///////////////////////////////////////////////////////////////////////////

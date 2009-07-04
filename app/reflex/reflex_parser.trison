@@ -121,7 +121,7 @@ bool Parser::OpenFile (string const &input_filename)
 void Parser::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
 {
     ResetForNewInput();
-    EmitExecutionMessage("using string " + input_name + " (" + GetStringLiteral(input_string) + ") for input");
+    EmitExecutionMessage("using string " + input_name + " (" + StringLiteral(input_string) + ") for input");
     m_scanner.OpenString(input_string, input_name, use_line_numbers);
 }
 
@@ -201,7 +201,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Reflex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 
@@ -244,10 +244,10 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(m_target_map != NULL);
 
         // set the TargetMap's primary source path
-        m_target_map->SetSourcePath(m_scanner.GetInputName());
+        m_target_map->SetSourcePath(m_scanner.InputName());
         // make sure the %start_with_state_machine directive value specifies a real state machine
         if (start_with_state_machine_directive != NULL &&
-            state_machine_map->GetElement(start_with_state_machine_directive->m_state_machine_id->GetText()) == NULL)
+            state_machine_map->Element(start_with_state_machine_directive->m_state_machine_id->GetText()) == NULL)
         {
             EmitError(
                 "undeclared state \"" + start_with_state_machine_directive->m_state_machine_id->GetText() + "\"",
@@ -295,7 +295,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         assert(m_target_map != NULL);
         // if the given target doesn't exist in the target map, add it.
-        if (m_target_map->GetElement(target_id->GetText()) == NULL)
+        if (m_target_map->Element(target_id->GetText()) == NULL)
         {
             CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
             m_target_map->Add(target_id->GetText(), target);
@@ -386,15 +386,15 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id REGEX:macro_regex_string at_least_one_newline
     %target.cpp {
         Regex::Parser parser;
-        parser.ScannerDebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
-        parser.DebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_PARSER));
+        parser.ScannerDebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER));
+        parser.DebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER));
         istringstream in(macro_regex_string->GetText());
         parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
         try {
             Regex::RegularExpression *regex = NULL;
             if (parser.Parse(&regex, regular_expression_map) == Regex::Parser::PRC_SUCCESS)
             {
-                if (GetOptions().GetIsVerbose(OptionsBase::V_REGEX_AST))
+                if (GetOptions().IsVerbose(OptionsBase::V_REGEX_AST))
                     regex->Print(cerr);
                 regular_expression_map->Add(macro_id->GetText(), regex);
             }
@@ -476,7 +476,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 :
     DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' state_machine_rules:rule_list ';'
     %target.cpp {
-        StateMachine *state_machine = new StateMachine(state_machine_id, rule_list, mode_flags->GetValue());
+        StateMachine *state_machine = new StateMachine(state_machine_id, rule_list, mode_flags->Value());
         delete throwaway;
         delete mode_flags;
         return state_machine;
@@ -485,7 +485,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' %error ';'
     %target.cpp {
         EmitError("parse error in state machine rule list", throwaway->GetFiLoc());
-        StateMachine *state_machine = new StateMachine(state_machine_id, new RuleList(), mode_flags->GetValue());
+        StateMachine *state_machine = new StateMachine(state_machine_id, new RuleList(), mode_flags->Value());
         delete throwaway;
         delete mode_flags;
         return state_machine;
@@ -504,18 +504,18 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 :
     state_machine_mode_flags:mode_flags DIRECTIVE_CASE_INSENSITIVE:throwaway
     %target.cpp {
-        if (mode_flags->GetValue() & StateMachine::MF_CASE_INSENSITIVE)
+        if (mode_flags->Value() & StateMachine::MF_CASE_INSENSITIVE)
             EmitWarning("duplicate %case_insensitive", throwaway->GetFiLoc());
-        mode_flags->SetValue(mode_flags->GetValue() | StateMachine::MF_CASE_INSENSITIVE);
+        mode_flags->SetValue(mode_flags->Value() | StateMachine::MF_CASE_INSENSITIVE);
         delete throwaway;
         return mode_flags;
     }
 |
     state_machine_mode_flags:mode_flags DIRECTIVE_UNGREEDY:throwaway
     %target.cpp {
-        if (mode_flags->GetValue() & StateMachine::MF_UNGREEDY)
+        if (mode_flags->Value() & StateMachine::MF_UNGREEDY)
             EmitWarning("duplicate %ungreedy", throwaway->GetFiLoc());
-        mode_flags->SetValue(mode_flags->GetValue() | StateMachine::MF_UNGREEDY);
+        mode_flags->SetValue(mode_flags->Value() | StateMachine::MF_UNGREEDY);
         delete throwaway;
         return mode_flags;
     }
@@ -565,14 +565,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         Regex::RegularExpression *regex = NULL;
         {
             Regex::Parser parser;
-            parser.ScannerDebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_SCANNER));
-            parser.DebugSpew(GetOptions().GetIsVerbose(OptionsBase::V_REGEX_PARSER));
+            parser.ScannerDebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER));
+            parser.DebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER));
             istringstream in(regex_string->GetText());
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
                 if (parser.Parse(&regex, m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
                 {
-                    if (GetOptions().GetIsVerbose(OptionsBase::V_REGEX_AST))
+                    if (GetOptions().IsVerbose(OptionsBase::V_REGEX_AST))
                         regex->Print(cerr);
                 }
                 else
@@ -599,7 +599,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
              ++it)
         {
             string const &target_id = it->first;
-            if (rule_handler_map->GetElement(target_id) == NULL)
+            if (rule_handler_map->Element(target_id) == NULL)
             {
                 EmitWarning(
                     "missing rule handler for target \"" + target_id + "\"",
@@ -610,7 +610,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                     new CommonLang::RuleHandler(
                         new Ast::Id(target_id, FiLoc::ms_invalid),
                         new Ast::StrictCodeBlock(FiLoc::ms_invalid)));
-                assert(rule_handler_map->GetElement(target_id) != NULL);
+                assert(rule_handler_map->Element(target_id) != NULL);
             }
         }
 
@@ -641,7 +641,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         delete throwaway;
         assert(m_target_map != NULL);
-        if (m_target_map->GetElement(target_id->GetText()) == NULL)
+        if (m_target_map->Element(target_id->GetText()) == NULL)
             EmitWarning(
                 "undeclared target \"" + target_id->GetText() + "\"",
                 target_id->GetFiLoc());

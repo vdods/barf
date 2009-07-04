@@ -21,7 +21,7 @@ namespace Barf {
 // this anonymous namespace is for local-file-scoping of certain functions
 namespace {
 
-bool GetCharNeedsHexEscaping (Uint8 const c)
+bool CharNeedsHexEscaping (Uint8 const c)
 {
     // normal escaping will suffice for these (a b t n v f r are contiguous).
     if (c == '\0' || (c >= '\a' && c <= '\r'))
@@ -31,19 +31,19 @@ bool GetCharNeedsHexEscaping (Uint8 const c)
         return c < ' ' || c > '~';
 }
 
-bool GetCharLiteralCharNeedsNormalEscaping (Uint8 const c)
+bool CharLiteralCharNeedsNormalEscaping (Uint8 const c)
 {
     // normal escaping will suffice for these (a b t n v f r are contiguous).
     return c == '\0' || (c >= '\a' && c <= '\r') || c == '\\' || c == '\'';
 }
 
-bool GetStringLiteralCharNeedsNormalEscaping (Uint8 const c)
+bool StringLiteralCharNeedsNormalEscaping (Uint8 const c)
 {
     // normal escaping will suffice for these (a b t n v f r are contiguous).
     return c == '\0' || (c >= '\a' && c <= '\r') || c == '\\' || c == '\"';
 }
 
-Uint8 GetEscapeCode (Uint8 const c)
+Uint8 EscapeCode (Uint8 const c)
 {
     switch (c)
     {
@@ -69,7 +69,7 @@ bool IsHexDigit (Uint8 c)
     return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
 }
 
-Uint8 GetHexDigit (Uint8 c)
+Uint8 HexDigit (Uint8 c)
 {
     assert(IsHexDigit(c));
     if (c >= '0' && c <= '9')
@@ -80,7 +80,7 @@ Uint8 GetHexDigit (Uint8 c)
         return c - 'a' + 0xA;
 }
 
-Uint8 GetHexChar (Uint8 hex_digit)
+Uint8 HexChar (Uint8 hex_digit)
 {
     assert(hex_digit < 0x10);
     if (hex_digit < 0xA)
@@ -89,15 +89,15 @@ Uint8 GetHexChar (Uint8 hex_digit)
     return hex_digit + 'A';
 }
 
-string GetHexCharLiteral (Uint8 const c, bool with_quotes)
+string HexCharLiteral (Uint8 const c, bool with_quotes)
 {
     string retval;
     if (with_quotes)
         retval += '\'';
     retval += '\\';
     retval += 'x';
-    retval += (char)GetHexChar(c >> 4);
-    retval += (char)GetHexChar(c & 0xF);
+    retval += (char)HexChar(c >> 4);
+    retval += (char)HexChar(c & 0xF);
     if (with_quotes)
         retval += '\'';
     return retval;
@@ -137,7 +137,7 @@ void EscapeChar (Uint8 &c)
     }
 }
 
-Uint8 GetEscapedChar (Uint8 const c)
+Uint8 EscapedChar (Uint8 const c)
 {
     Uint8 retval = c;
     EscapeChar(retval);
@@ -221,7 +221,7 @@ EscapeStringStatus EscapeString (string &text)
             {
                 if (text[read_cursor] == '\n')
                     ++line_number_offset;
-                text[write_cursor] = GetEscapedChar(text[read_cursor]);
+                text[write_cursor] = EscapedChar(text[read_cursor]);
                 ++read_cursor;
             }
         }
@@ -239,7 +239,7 @@ EscapeStringStatus EscapeString (string &text)
     return EscapeStringStatus(return_code, line_number_offset);
 }
 
-string GetEscapedString (string const &text, EscapeStringStatus *escape_string_status)
+string EscapedString (string const &text, EscapeStringStatus *escape_string_status)
 {
     string retval(text);
     EscapeStringStatus status = EscapeString(retval);
@@ -248,16 +248,16 @@ string GetEscapedString (string const &text, EscapeStringStatus *escape_string_s
     return retval;
 }
 
-string GetCharLiteral (Uint8 const c, bool const with_quotes)
+string CharLiteral (Uint8 const c, bool const with_quotes)
 {
     string retval;
     if (with_quotes)
         retval += '\'';
 
-    if (GetCharLiteralCharNeedsNormalEscaping(c))
-        retval += '\\', retval += GetEscapeCode(c);
-    else if (GetCharNeedsHexEscaping(c))
-        retval += GetHexCharLiteral(c, false);
+    if (CharLiteralCharNeedsNormalEscaping(c))
+        retval += '\\', retval += EscapeCode(c);
+    else if (CharNeedsHexEscaping(c))
+        retval += HexCharLiteral(c, false);
     else
         retval += c;
 
@@ -266,7 +266,7 @@ string GetCharLiteral (Uint8 const c, bool const with_quotes)
     return retval;
 }
 
-string GetStringLiteral (string const &text, bool const with_quotes)
+string StringLiteral (string const &text, bool const with_quotes)
 {
     string retval;
     if (with_quotes)
@@ -278,10 +278,10 @@ string GetStringLiteral (string const &text, bool const with_quotes)
          ++it)
     {
         Uint8 c = *it;
-        if (GetStringLiteralCharNeedsNormalEscaping(c))
-            retval += '\\', retval += GetEscapeCode(c);
-        else if (GetCharNeedsHexEscaping(c))
-            retval += GetHexCharLiteral(c, false);
+        if (StringLiteralCharNeedsNormalEscaping(c))
+            retval += '\\', retval += EscapeCode(c);
+        else if (CharNeedsHexEscaping(c))
+            retval += HexCharLiteral(c, false);
         else
             retval += char(c);
     }
@@ -291,7 +291,7 @@ string GetStringLiteral (string const &text, bool const with_quotes)
     return retval;
 }
 
-Uint32 GetNewlineCount (string const &text)
+Uint32 NewlineCount (string const &text)
 {
     Uint32 newline_count = 0;
 
@@ -319,7 +319,7 @@ void ReplaceAllInString (
     }
 }
 
-string GetDirectoryPortion (string const &path)
+string DirectoryPortion (string const &path)
 {
     string::size_type last_slash = path.find_last_of(DIRECTORY_SLASH_STRING);
     if (last_slash == string::npos)
@@ -328,7 +328,7 @@ string GetDirectoryPortion (string const &path)
         return path.substr(0, last_slash+1);
 }
 
-string GetFilenamePortion (string const &path)
+string FilenamePortion (string const &path)
 {
     string::size_type last_slash = path.find_last_of(DIRECTORY_SLASH_STRING);
     if (last_slash == string::npos)
@@ -337,7 +337,7 @@ string GetFilenamePortion (string const &path)
         return path.substr(last_slash+1);
 }
 
-bool GetIsValidDirectory (string const &directory)
+bool IsValidDirectory (string const &directory)
 {
     DIR *dir = opendir(directory.c_str());
     if (dir == NULL)
@@ -349,7 +349,7 @@ bool GetIsValidDirectory (string const &directory)
     }
 }
 
-bool GetIsValidFile (string const &filename)
+bool IsValidFile (string const &filename)
 {
     int file_descriptor = open(filename.c_str(), O_RDONLY);
     if (file_descriptor == -1)
@@ -361,7 +361,7 @@ bool GetIsValidFile (string const &filename)
     }
 }
 
-string GetCurrentDateAndTimeString ()
+string CurrentDateAndTimeString ()
 {
     time_t timestamp;
     time(&timestamp);

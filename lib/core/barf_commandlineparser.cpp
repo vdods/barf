@@ -62,7 +62,7 @@ void CommandLineParser::PrintHelpMessage (ostream &stream) const
 
     stream << "usage: " << m_executable_filename << " " << m_usage_message << "\n";
 
-    if (!GetIsAControlOption(m_option[0]))
+    if (!IsAControlOption(m_option[0]))
         stream << "\n";
 
     for (CommandLineOption const *option = m_option,
@@ -70,7 +70,7 @@ void CommandLineParser::PrintHelpMessage (ostream &stream) const
          option != option_end;
          ++option)
     {
-        if (GetIsAControlOption(*option))
+        if (IsAControlOption(*option))
         {
             if (option->m_description.empty())
                 stream << endl;
@@ -101,14 +101,14 @@ void CommandLineParser::PrintHelpMessage (ostream &stream) const
     }
 }
 
-bool CommandLineParser::GetIsAControlOption (CommandLineOption const &option)
+bool CommandLineParser::IsAControlOption (CommandLineOption const &option)
 {
     return option.m_short_name == '\n';
 }
 
-bool CommandLineParser::GetIsAShortNameCollision (CommandLineOption const &option_0, CommandLineOption const &option_1)
+bool CommandLineParser::IsAShortNameCollision (CommandLineOption const &option_0, CommandLineOption const &option_1)
 {
-    if (GetIsAControlOption(option_0) || GetIsAControlOption(option_1))
+    if (IsAControlOption(option_0) || IsAControlOption(option_1))
         return false;
 
     if (option_0.m_short_name == '\0' || option_1.m_short_name == '\0')
@@ -117,9 +117,9 @@ bool CommandLineParser::GetIsAShortNameCollision (CommandLineOption const &optio
     return option_0.m_short_name == option_1.m_short_name;
 }
 
-bool CommandLineParser::GetIsALongNameCollision (CommandLineOption const &option_0, CommandLineOption const &option_1)
+bool CommandLineParser::IsALongNameCollision (CommandLineOption const &option_0, CommandLineOption const &option_1)
 {
-    if (GetIsAControlOption(option_0) || GetIsAControlOption(option_1))
+    if (IsAControlOption(option_0) || IsAControlOption(option_1))
         return false;
 
     if (option_0.m_long_name.empty() || option_1.m_long_name.empty())
@@ -137,7 +137,7 @@ void CommandLineParser::PerformOptionConsistencyCheck () const
          option != option_end;
          ++option)
     {
-        if (GetIsAControlOption(*option))
+        if (IsAControlOption(*option))
         {
             assert(option->m_long_name.empty() && "must not supply a long name for a control option");
             assert(option->m_handler_method_with_argument == NULL && "must not supply a handler method for a control option");
@@ -176,8 +176,8 @@ void CommandLineParser::PerformOptionConsistencyCheck () const
              option_1 != option_end_0;
              ++option_1)
         {
-            assert(!GetIsAShortNameCollision(*option_0, *option_1) && "option short-name collision");
-            assert(!GetIsALongNameCollision(*option_0, *option_1) && "option long-name collision");
+            assert(!IsAShortNameCollision(*option_0, *option_1) && "option short-name collision");
+            assert(!IsALongNameCollision(*option_0, *option_1) && "option long-name collision");
         }
     }
 }

@@ -48,7 +48,7 @@ enum
     AST_NONE = AstType(-1)
 };
 
-string const &GetAstTypeString (AstType ast_type);
+string const &AstTypeString (AstType ast_type);
 
 class Base
 {
@@ -64,7 +64,7 @@ public:
     inline FiLoc const &GetFiLoc () const { return m_filoc; }
     inline AstType GetAstType () const { return m_ast_type; }
 
-    virtual bool GetIsCodeBlock () const { return false; }
+    virtual bool IsCodeBlock () const { return false; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
@@ -72,7 +72,7 @@ protected:
 
     inline void SetFiLoc (FiLoc const &filoc)
     {
-        assert(filoc.GetHasLineNumber());
+        assert(filoc.HasLineNumber());
         m_filoc = filoc;
     }
 
@@ -100,12 +100,12 @@ struct List : private vector<ElementType *>
         for_each(begin(), end(), DeleteFunctor<ElementType>());
     }
 
-    inline ElementType const *GetElement (Uint32 index) const
+    inline ElementType const *Element (Uint32 index) const
     {
         assert(index < size());
         return vector<ElementType *>::operator[](index);
     }
-    inline ElementType *GetElement (Uint32 index)
+    inline ElementType *Element (Uint32 index)
     {
         assert(index < size());
         return vector<ElementType *>::operator[](index);
@@ -140,7 +140,7 @@ struct AstList : public Base, public List<ElementType>
         Base(filoc, ast_type),
         List<ElementType>()
     {
-        assert(filoc.GetHasLineNumber());
+        assert(filoc.HasLineNumber());
     }
 
     virtual void Append (ElementType *element)
@@ -149,7 +149,7 @@ struct AstList : public Base, public List<ElementType>
         List<ElementType>::Append(element);
         // if this list doesn't yet have a valid file location, and
         // the appending element does, use it as the list's file location
-        if (!GetFiLoc().GetHasLineNumber() && element->GetFiLoc().GetHasLineNumber())
+        if (!GetFiLoc().HasLineNumber() && element->GetFiLoc().HasLineNumber())
             SetFiLoc(element->GetFiLoc());
     }
 
@@ -178,12 +178,12 @@ struct Map : private map<string, ElementType *>
         for_each(begin(), end(), DeletePairSecondFunctor<typename map<string, ElementType *>::value_type>());
     }
 
-    inline ElementType const *GetElement (string const &key) const
+    inline ElementType const *Element (string const &key) const
     {
         const_iterator it = find(key);
         return (it != end()) ? it->second : NULL;
     }
-    inline ElementType *GetElement (string const &key)
+    inline ElementType *Element (string const &key)
     {
         iterator it = find(key);
         return (it != end()) ? it->second : NULL;
@@ -231,7 +231,7 @@ struct AstMap : public Base, public Map<ElementType>
         Base(filoc, ast_type),
         Map<ElementType>()
     {
-        assert(filoc.GetHasLineNumber());
+        assert(filoc.HasLineNumber());
     }
 
     virtual void Add (string const &key, ElementType *element)
@@ -240,7 +240,7 @@ struct AstMap : public Base, public Map<ElementType>
         Map<ElementType>::Add(key, element);
         // if this map doesn't yet have a valid file location, and
         // the appending element does, use it as the map's file location
-        if (!GetFiLoc().GetHasLineNumber() && element->GetFiLoc().GetHasLineNumber())
+        if (!GetFiLoc().HasLineNumber() && element->GetFiLoc().HasLineNumber())
             SetFiLoc(element->GetFiLoc());
     }
     virtual void Set (string const &key, ElementType *element)
@@ -249,7 +249,7 @@ struct AstMap : public Base, public Map<ElementType>
         Map<ElementType>::Set(key, element);
         // if this map doesn't yet have a valid file location, and
         // the appending element does, use it as the map's file location
-        if (!GetFiLoc().GetHasLineNumber() && element->GetFiLoc().GetHasLineNumber())
+        if (!GetFiLoc().HasLineNumber() && element->GetFiLoc().HasLineNumber())
             SetFiLoc(element->GetFiLoc());
     }
 
@@ -273,7 +273,7 @@ struct ThrowAway : public Base
         :
         Base(filoc, AST_THROW_AWAY)
     {
-        assert(filoc.GetIsValid());
+        assert(filoc.IsValid());
     }
 }; // end of struct ThrowAway
 
@@ -288,7 +288,7 @@ public:
     { }
 
     inline Uint8 GetChar () const { return m_char; }
-    inline string GetCharLiteral () const { return Barf::GetCharLiteral(m_char); }
+    inline string CharLiteral () const { return Barf::CharLiteral(m_char); }
 
     virtual void Escape ();
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -314,7 +314,7 @@ public:
         m_value(value)
     { }
 
-    inline Sint32 GetValue () const { return m_value; }
+    inline Sint32 Value () const { return m_value; }
     inline void SetValue (Sint32 value) { m_value = value; }
 
     void ShiftAndAdd (Sint32 value);
@@ -336,7 +336,7 @@ public:
         m_value(value)
     { }
 
-    inline Uint32 GetValue () const { return m_value; }
+    inline Uint32 Value () const { return m_value; }
     inline void SetValue (Uint32 value) { m_value = value; }
 
     void ShiftAndAdd (Uint32 value);
@@ -363,7 +363,7 @@ public:
     { }
     virtual ~TextBase () = 0;
 
-    static string GetDirectiveTypeString (AstType ast_type);
+    static string DirectiveTypeString (AstType ast_type);
 
     inline string const &GetText () const { return m_text; }
 
@@ -388,7 +388,7 @@ struct String : public TextBase
         TextBase(str, filoc, AST_STRING)
     { }
 
-    inline string GetStringLiteral () const { return Barf::GetStringLiteral(GetText()); }
+    inline string StringLiteral () const { return Barf::StringLiteral(GetText()); }
 }; // end of struct String
 
 struct Id : public TextBase
@@ -411,7 +411,7 @@ struct CodeBlock : public TextBase
     { }
     virtual ~CodeBlock () = 0;
 
-    virtual bool GetIsCodeBlock () const { return true; }
+    virtual bool IsCodeBlock () const { return true; }
 
     // just use Base's default print, because we don't want
     // to print out the entire contents of the CodeBlock.
@@ -442,7 +442,7 @@ public:
         TextBase(directive_id, filoc, AST_DIRECTIVE)
     { }
 
-    virtual string GetDirectiveString () const { return GetText(); }
+    virtual string DirectiveString () const { return GetText(); }
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 protected:

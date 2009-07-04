@@ -18,31 +18,31 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'W',
         "warnings-as-errors",
-        &OptionsBase::TreatWarningsAsErrors,
+        &OptionsBase::TreatWarningsAsErrors_Enable,
         "    Treat warnings as errors.  See also option -w."),
     CommandLineOption(
         'w',
         "warnings-not-as-errors",
-        &OptionsBase::TreatWarningsAsErrors,
+        &OptionsBase::TreatWarningsAsErrors_Enable,
         "    Warnings will not be treated as errors, and thus not abort the execution\n"
         "    of the program.  This is the default behavior.  See also option -W."),
     CommandLineOption(
         'E',
         "halt-on-first-error",
-        &OptionsBase::HaltOnFirstError,
+        &OptionsBase::HaltOnFirstError_Enable,
         "    All errors (and warnings, if option -W is specified) will be considered\n"
         "    fatal, and will abort execution immediately.  See also option -e."),
     CommandLineOption(
         'e',
         "dont-halt-on-first-error",
-        &OptionsBase::DontHaltOnFirstError,
+        &OptionsBase::HaltOnFirstError_Disable,
         "    The program will continue executing as long as possible before aborting\n"
         "    when errors occur.  This is the default behavior.  See also option -E."),
 #if DEBUG
     CommandLineOption(
         'A',
         "assert-on-error",
-        &OptionsBase::AssertOnError,
+        &OptionsBase::AssertOnError_Enable,
         "    All errors (and warnings, if option -W is specified) will cause an assert\n"
         "    which is only useful if you're developing BARF tools (in fact you should\n"
         "    only see this option if the binaries were compiled in debug mode).  See\n"
@@ -50,7 +50,7 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'a',
         "dont-assert-on-error",
-        &OptionsBase::DontAssertOnError,
+        &OptionsBase::AssertOnError_Disable,
         "    This negates the effect of option -A, and is the default behavior."),
 #endif
 
@@ -92,14 +92,14 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'L',
         "with-line-directives",
-        &Options::WithLineDirectives,
+        &Options::WithLineDirectives_Enable,
         "    Use #line directives in the generated source, so that compile errors and\n"
         "    debugging will use the parser source file when appropriate.  This is the\n"
         "    default behavior.  See also option -l."),
     CommandLineOption(
         'l',
         "without-line-directives",
-        &Options::WithoutLineDirectives,
+        &Options::WithLineDirectives_Disable,
         "    Do not use #line directives in the generated source.  This might be helpful\n"
         "    when the original parser source will not be available during compilation or\n"
         "    debugging, or if the target language doesn't support #line directives to\n"
@@ -113,7 +113,7 @@ CommandLineOption const Options::ms_option[] =
         "    be to stdout.  See also option --dont-generate-nfa-dot-graph."),
     CommandLineOption(
         "dont-generate-nfa-dot-graph",
-        &OptionsBase::DontGenerateNaDotGraph,
+        &OptionsBase::GenerateNaDotGraph_Disable,
         "    Do not create a `dot` graph file for the NFA.  This is the default\n"
         "    behavior.  See also option --generate-nfa-dot-graph."),
     CommandLineOption(
@@ -126,7 +126,7 @@ CommandLineOption const Options::ms_option[] =
         "    --dont-generate-dfa-got-graph."),
     CommandLineOption(
         "dont-generate-dfa-dot-graph",
-        &OptionsBase::DontGenerateDaDotGraph,
+        &OptionsBase::GenerateDaDotGraph_Disable,
         "    Do not create a `dot` graph file for the DFA.  This is the default\n"
         "    behavior.  See also option --generate-dfa-dot-graph."),
 
@@ -135,7 +135,7 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'D',
         "predefine",
-        &OptionsBase::Predefine,
+        &OptionsBase::AddPredefine,
         "    Defines a targetspec directive value for a given target before parsing\n"
         "    the primary source.  Directive values specified in the primary source will\n"
         "    override values defined via this commandline option.  The argument is of\n"
@@ -147,7 +147,7 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'd',
         "postdefine",
-        &OptionsBase::Postdefine,
+        &OptionsBase::AddPostdefine,
         "    Defines a targetspec directive value for a given target after parsing\n"
         "    the primary source.  Directive values specified in the primary source will\n"
         "    be overridden by values defined via this commandline option.  See option\n"
@@ -213,10 +213,10 @@ void Options::Parse (int const argc, char const *const *const argv)
     // only check for commandline option consistency if no output-and-quit
     // option was specified (e.g. help or print-targets-search-path)
     if (!AbortFlag() &&
-        !GetIsHelpRequested() &&
+        !IsHelpRequested() &&
         GetPrintSearchPathRequest() == PSPR_NONE)
     {
-        if (GetInputFilename().empty())
+        if (InputFilename().empty())
             ReportErrorAndSetAbortFlag("no input filename specified");
     }
 }

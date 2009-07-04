@@ -58,7 +58,7 @@ void Parser::ResetForNewInput ()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 63 "trison_parser.cpp"
  << " executing reset-for-new-input actions" << std::endl)
     
@@ -113,7 +113,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 118 "trison_parser.cpp"
  << " starting parse" << std::endl)
 
@@ -167,7 +167,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
         {
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 172 "trison_parser.cpp"
  << " begin error panic" << std::endl)
 
@@ -199,7 +199,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 204 "trison_parser.cpp"
  << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
                     // if the current state accepts error, then we check if the lookahead token
@@ -212,7 +212,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 217 "trison_parser.cpp"
  << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
                         m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
@@ -230,7 +230,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 235 "trison_parser.cpp"
  << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
                     }
@@ -238,7 +238,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 243 "trison_parser.cpp"
  << " end error panic; abort (stack is empty)" << std::endl)
                     }
@@ -305,7 +305,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 310 "trison_parser.cpp"
  << " current (relevant) lookahead(s):")
                     for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
@@ -325,7 +325,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             {
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 330 "trison_parser.cpp"
  << " current (relevant) lookahead(s):")
                 for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
@@ -336,7 +336,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 341 "trison_parser.cpp"
  << " exercising default transition" << std::endl)
                 // exercise the default transition.  a return value of true indicates
@@ -367,12 +367,12 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 372 "trison_parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 377 "trison_parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
@@ -383,7 +383,7 @@ void Parser::ThrowAwayToken_ (Token::Data &token_data) throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 388 "trison_parser.cpp"
  << " executing throw-away-token actions" << std::endl)
 
@@ -462,7 +462,7 @@ void Parser::ClearStack_ () throw()
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 467 "trison_parser.cpp"
  << " clearing the stack" << std::endl)
 
@@ -480,7 +480,7 @@ void Parser::ClearLookaheadQueue_ () throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 485 "trison_parser.cpp"
  << " clearing the lookahead queue" << std::endl)
 
@@ -497,7 +497,7 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
 
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 502 "trison_parser.cpp"
  << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl)
     }
@@ -517,7 +517,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             Rule_ const &rule = ms_rule_table_[transition.m_data];
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 522 "trison_parser.cpp"
  << " REDUCE " << rule.m_description << std::endl)
             assert(m_stack_.size() > rule.m_token_count);
@@ -529,7 +529,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 534 "trison_parser.cpp"
  << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
             return false; // indicating the parser isn't returning
@@ -538,7 +538,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
         case Transition_::RETURN:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 543 "trison_parser.cpp"
  << " RETURN" << std::endl)
             return true; // indicating the parser is returning
@@ -551,7 +551,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
                                                                // client error, so asserting here is ok.
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 556 "trison_parser.cpp"
  << " SHIFT " << Lookahead_(0) << std::endl)
             m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0).m_data));
@@ -561,7 +561,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
         case Transition_::ERROR_PANIC:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 566 "trison_parser.cpp"
  << " ERROR_PANIC" << std::endl)
             m_is_in_error_panic_ = true;
@@ -578,7 +578,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 583 "trison_parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
@@ -608,10 +608,10 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         assert(m_nonterminal_list != NULL);
 
         // set the TargetMap's primary source path
-        m_target_map->SetSourcePath(m_scanner.GetInputName());
+        m_target_map->SetSourcePath(m_scanner.InputName());
         // make sure the %default_parse_nonterminal directive value specifies a real nonterminal
         if (default_parse_nonterminal_id != NULL &&
-            nonterminal_map->GetElement(default_parse_nonterminal_id->GetText()) == NULL)
+            nonterminal_map->Element(default_parse_nonterminal_id->GetText()) == NULL)
         {
             EmitError(
                 "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"",
@@ -685,7 +685,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         assert(m_target_map != NULL);
         // if the given target doesn't exist in the target map, add it.
-        if (m_target_map->GetElement(target_id->GetText()) == NULL)
+        if (m_target_map->Element(target_id->GetText()) == NULL)
         {
             CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
             m_target_map->Add(target_id->GetText(), target);
@@ -1179,7 +1179,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         assert(m_token_index >= 0x100);
         assert(id != NULL);
         assert(assigned_type_map != NULL);
-        if (m_terminal_map->GetElement(id->GetText()) != NULL)
+        if (m_terminal_map->Element(id->GetText()) != NULL)
             EmitError("id collision with terminal " + id->GetText(), id->GetFiLoc());
         Nonterminal *nonterminal =
             new Nonterminal(
@@ -1284,11 +1284,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         Precedence *rule_precedence;
         if (rule_precedence_directive == NULL)
-            rule_precedence = m_precedence_map->GetElement("DEFAULT_");
-        else if ((rule_precedence = m_precedence_map->GetElement(rule_precedence_directive->GetText())) == NULL)
+            rule_precedence = m_precedence_map->Element("DEFAULT_");
+        else if ((rule_precedence = m_precedence_map->Element(rule_precedence_directive->GetText())) == NULL)
         {
             EmitError("undefined %prec value \"" + rule_precedence_directive->GetText() + "\"");
-            rule_precedence = m_precedence_map->GetElement("DEFAULT_");
+            rule_precedence = m_precedence_map->Element("DEFAULT_");
         }
 
         Rule *rule = new Rule(rule_token_list, rule_precedence, m_rule_count++);
@@ -1338,7 +1338,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         delete throwaway;
         assert(m_target_map != NULL);
-        if (m_target_map->GetElement(target_id->GetText()) == NULL)
+        if (m_target_map->Element(target_id->GetText()) == NULL)
             EmitWarning(
                 "undeclared target \"" + target_id->GetText() + "\"",
                 target_id->GetFiLoc());
@@ -1620,7 +1620,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
-        TokenId *token_id = new TokenId(GetCharLiteral(ch->GetChar()), 0, ch->GetFiLoc());
+        TokenId *token_id = new TokenId(CharLiteral(ch->GetChar()), 0, ch->GetFiLoc());
         delete ch;
         return token_id;
     
@@ -1718,7 +1718,7 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
 
     stream << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1723 "trison_parser.cpp"
  << " parser stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
@@ -1739,7 +1739,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     assert(string != NULL);
     stream << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1744 "trison_parser.cpp"
  << "    ";
     while (*string != '\0')
@@ -1747,7 +1747,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
         if (*string == '\n')
             stream << '\n' << 
 #line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1752 "trison_parser.cpp"
  << "    ";
         else
@@ -2932,7 +2932,7 @@ bool Parser::OpenFile (string const &input_filename)
 void Parser::OpenString (string const &input_string, string const &input_name, bool use_line_numbers)
 {
     ResetForNewInput();
-    EmitExecutionMessage("using string " + input_name + " (" + GetStringLiteral(input_string) + ") for input");
+    EmitExecutionMessage("using string " + input_name + " (" + StringLiteral(input_string) + ") for input");
     m_scanner.OpenString(input_string, input_name, use_line_numbers);
 }
 

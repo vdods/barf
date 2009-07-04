@@ -112,7 +112,7 @@ public:
     }
 
     inline bool IsValid () const { return m_real_pointer != NULL; }
-    inline Uint32 GetRefCount () const { return (m_ref_count != NULL) ? *m_ref_count : 0; }
+    inline Uint32 RefCount () const { return (m_ref_count != NULL) ? *m_ref_count : 0; }
 
     inline void Release ()
     {
@@ -228,7 +228,7 @@ public:
     }
 
     inline bool IsValid () const { return m_real_pointer != NULL; }
-    inline Uint32 GetRefCount () const { return (m_real_pointer != NULL) ? m_real_pointer->m_ref_count : 0; }
+    inline Uint32 RefCount () const { return (m_real_pointer != NULL) ? m_real_pointer->m_ref_count : 0; }
 
     inline void Release ()
     {
@@ -259,7 +259,7 @@ public:
     RefCounted () : m_ref_count(1) { }
     ~RefCounted () { assert(m_ref_count == 1); }
 
-    inline Uint32 GetRefCount () const { return m_ref_count; }
+    inline Uint32 RefCount () const { return m_ref_count; }
 
 private:
 

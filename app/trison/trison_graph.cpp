@@ -14,7 +14,7 @@
 
 namespace Trison {
 
-string const &GetTransitionTypeString (TransitionType transition_type)
+string const &TransitionTypeString (TransitionType transition_type)
 {
     static string const s_transition_type_string[TT_COUNT] =
     {

@@ -41,9 +41,9 @@ public:
     }
     virtual ~Symbol () { }
 
-    virtual bool GetIsScalarSymbol () const { return false; }
-    virtual bool GetIsArraySymbol () const { return false; }
-    virtual bool GetIsMapSymbol () const { return false; }
+    virtual bool IsScalarSymbol () const { return false; }
+    virtual bool IsArraySymbol () const { return false; }
+    virtual bool IsMapSymbol () const { return false; }
 
     virtual Uint32 Sizeof () const = 0;
     virtual Symbol *Clone () const = 0;
@@ -64,8 +64,8 @@ public:
 
     ScalarSymbol (string const &id) : Symbol(id), m_body(NULL) { }
 
-    virtual bool GetIsScalarSymbol () const { return true; }
-    Body const *GetScalarBody () const { return m_body; }
+    virtual bool IsScalarSymbol () const { return true; }
+    Body const *ScalarBody () const { return m_body; }
 
     void SetScalarBody (Body const *body) { assert(m_body == NULL); assert(body != NULL); m_body = body; }
 
@@ -88,9 +88,9 @@ public:
 
     ArraySymbol (string const &id) : Symbol(id) { }
 
-    virtual bool GetIsArraySymbol () const { return true; }
-    Uint32 GetArrayElementCount () const { return m_body_vector.size(); }
-    Body const *GetArrayElement (Uint32 index) const { return (index < m_body_vector.size()) ? m_body_vector[index] : NULL; }
+    virtual bool IsArraySymbol () const { return true; }
+    Uint32 ArrayElementCount () const { return m_body_vector.size(); }
+    Body const *ArrayElement (Uint32 index) const { return (index < m_body_vector.size()) ? m_body_vector[index] : NULL; }
 
     void AppendArrayElement (Body const *element) { assert(element != NULL); m_body_vector.push_back(element); }
     void ClearArrayElements () { m_body_vector.clear(); }
@@ -118,11 +118,11 @@ public:
 
     MapSymbol (string const &id) : Symbol(id) { }
 
-    virtual bool GetIsMapSymbol () const { return true; }
-    Uint32 GetMapElementCount () const { return m_body_map.size(); }
-    BodyMap::const_iterator GetBegin () const { return m_body_map.begin(); }
-    BodyMap::const_iterator GetEnd () const { return m_body_map.end(); }
-    Body const *GetMapElement (string const &key) const
+    virtual bool IsMapSymbol () const { return true; }
+    Uint32 MapElementCount () const { return m_body_map.size(); }
+    BodyMap::const_iterator Begin () const { return m_body_map.begin(); }
+    BodyMap::const_iterator End () const { return m_body_map.end(); }
+    Body const *MapElement (string const &key) const
     {
         BodyMap::const_iterator it;
         return Contains(m_body_map, key, it) ? it->second : NULL;

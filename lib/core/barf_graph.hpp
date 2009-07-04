@@ -146,20 +146,20 @@ public:
         struct Data
         {
             virtual ~Data () { }
-            virtual string GetAsText (Uint32 node_index) const = 0;
+            virtual string AsText (Uint32 node_index) const = 0;
             virtual Color DotGraphColor (Uint32 node_index) const { return Color::ms_white; }
-            virtual Uint32 GetNodePeripheries (Uint32 node_index) const { return 1; }
+            virtual Uint32 NodePeripheries (Uint32 node_index) const { return 1; }
         };
 
         Node (Data const *data = NULL) : m_data(data) { }
 
-        bool GetHasData () const { return m_data != NULL; }
-        Data const &GetData () const { assert(GetHasData()); return *m_data; }
+        bool HasData () const { return m_data != NULL; }
+        Data const &GetData () const { assert(HasData()); return *m_data; }
         template <typename DataType>
-        DataType const &GetDataAs () const { assert(GetHasData()); return *Dsc<DataType const *>(m_data); }
-        Uint32 GetTransitionCount () const { return m_transition_set.size(); }
-        TransitionSet::const_iterator GetTransitionSetBegin () const { return m_transition_set.begin(); }
-        TransitionSet::const_iterator GetTransitionSetEnd () const { return m_transition_set.end(); }
+        DataType const &DataAs () const { assert(HasData()); return *Dsc<DataType const *>(m_data); }
+        Uint32 TransitionCount () const { return m_transition_set.size(); }
+        TransitionSet::const_iterator TransitionSetBegin () const { return m_transition_set.begin(); }
+        TransitionSet::const_iterator TransitionSetEnd () const { return m_transition_set.end(); }
 
         inline void AddTransition (Transition const &transition)
         {
@@ -173,7 +173,7 @@ public:
         Data const *m_data;
     }; // end of class Graph::Node
 
-    Uint32 GetNodeCount () const { return m_node_array.size(); }
+    Uint32 NodeCount () const { return m_node_array.size(); }
     Node const &GetNode (Uint32 index) const
     {
         assert(index < m_node_array.size());

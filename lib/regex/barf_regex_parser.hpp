@@ -282,9 +282,9 @@ public:
 
 #line 36 "barf_regex_parser.trison"
 
-    using InputBase::GetIsOpen;
+    using InputBase::IsOpen;
     using InputBase::GetFiLoc;
-    using InputBase::GetInputName;
+    using InputBase::InputName;
 
     // must override these (instead of just "using" them), so that
     // ResetForNewInput can be called.

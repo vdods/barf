@@ -24,12 +24,12 @@ bool const g_minimal_npda_graphing = false;
 // NpdaNodeData
 // ///////////////////////////////////////////////////////////////////////////
 
-string NpdaNodeData::GetFullDescription (Uint32 min_width) const
+string NpdaNodeData::FullDescription (Uint32 min_width) const
 {
     ostringstream out;
     out.width(min_width);
     out.setf(ios_base::left);
-    out << GetOneLineDescription();
+    out << OneLineDescription();
     return out.str();
 }
 
@@ -52,20 +52,20 @@ struct RuleNpdaNodeData : public NpdaNodeData
     }
 
     // Graph::Node::Data interface methods
-    virtual string GetAsText (Uint32 node_index) const
+    virtual string AsText (Uint32 node_index) const
     {
         ostringstream out;
         out << "state " << node_index << endl;
-        out << "rule " << m_rule->m_rule_index << ": " << m_rule->GetAsText(m_stage);
+        out << "rule " << m_rule->m_rule_index << ": " << m_rule->AsText(m_stage);
         return out.str();
     }
     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color(0xB6FFAE); }
 
     // NpdaNodeData interface methods
-    virtual Nonterminal const *GetAssociatedNonterminal () const { return m_rule->m_owner_nonterminal; }
-    virtual Rule const *GetAssociatedRule () const { return m_rule; }
-    virtual Uint32 GetRuleStage () const { return m_stage; }
-    virtual string GetOneLineDescription () const { return FORMAT("rule " << m_rule->m_rule_index << ": " << m_rule->GetAsText(m_stage)); }
+    virtual Nonterminal const *AssociatedNonterminal () const { return m_rule->m_owner_nonterminal; }
+    virtual Rule const *AssociatedRule () const { return m_rule; }
+    virtual Uint32 RuleStage () const { return m_stage; }
+    virtual string OneLineDescription () const { return FORMAT("rule " << m_rule->m_rule_index << ": " << m_rule->AsText(m_stage)); }
 }; // end of struct RuleNpdaNodeData
 
 struct NonterminalHeadNpdaNodeData : public NpdaNodeData
@@ -80,7 +80,7 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
     }
 
     // Graph::Node::Data interface methods
-    virtual string GetAsText (Uint32 node_index) const
+    virtual string AsText (Uint32 node_index) const
     {
         Uint32 max_width = 0;
         for (RuleList::const_iterator it = m_nonterminal->m_rule_list->begin(),
@@ -90,7 +90,7 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
         {
             Rule const *rule = *it;
             assert(rule != NULL);
-            max_width = max(max_width, Uint32(rule->GetAsText(0).length()));
+            max_width = max(max_width, Uint32(rule->AsText(0).length()));
         }
 
         ostringstream out;
@@ -105,16 +105,16 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
             out << "rule " << rule->m_rule_index << ": ";
             out.width(max_width);
             out.setf(ios_base::left);
-            out << rule->GetAsText(0) << endl;
+            out << rule->AsText(0) << endl;
         }
         return out.str();
     }
     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return Graph::Color(0xAEF5FF); }
 
     // NpdaNodeData interface methods
-    virtual Nonterminal const *GetAssociatedNonterminal () const { return m_nonterminal; }
-    virtual string GetOneLineDescription () const { return "head of: " + m_nonterminal->GetText(); }
-    virtual string GetFullDescription (Uint32 min_width) const
+    virtual Nonterminal const *AssociatedNonterminal () const { return m_nonterminal; }
+    virtual string OneLineDescription () const { return "head of: " + m_nonterminal->GetText(); }
+    virtual string FullDescription (Uint32 min_width) const
     {
         ostringstream out;
         for (RuleList::const_iterator it = m_nonterminal->m_rule_list->begin(),
@@ -126,7 +126,7 @@ struct NonterminalHeadNpdaNodeData : public NpdaNodeData
             assert(rule != NULL);
             out.width(min_width);
             out.setf(ios_base::left);
-            out << FORMAT("rule " << rule->m_rule_index << ": " << rule->GetAsText(0));
+            out << FORMAT("rule " << rule->m_rule_index << ": " << rule->AsText(0));
             RuleList::const_iterator next_it = it;
             ++next_it;
             if (next_it != it_end)
@@ -152,7 +152,7 @@ struct GenericNpdaNodeData : public NpdaNodeData
     }
 
     // Graph::Node::Data interface methods
-    virtual string GetAsText (Uint32 node_index) const
+    virtual string AsText (Uint32 node_index) const
     {
         ostringstream out;
         out << "state " << node_index << endl;
@@ -162,7 +162,7 @@ struct GenericNpdaNodeData : public NpdaNodeData
     virtual Graph::Color DotGraphColor (Uint32 node_index) const { return m_dot_graph_color; }
 
     // NpdaNodeData interface methods
-    virtual string GetOneLineDescription () const { return m_text; }
+    virtual string OneLineDescription () const { return m_text; }
     virtual bool IsStartState () const { return m_is_start_state; }
     virtual bool IsReturnState () const { return m_is_return_state; }
 
@@ -213,8 +213,8 @@ void GenerateNpda (
     Uint32 end_index,
     Nonterminal const *owner_nonterminal)
 {
-    Terminal const *terminal = graph_context.m_primary_source.m_terminal_map->GetElement(rule_token.m_token_id);
-    Nonterminal const *nonterminal = graph_context.m_primary_source.m_nonterminal_map->GetElement(rule_token.m_token_id);
+    Terminal const *terminal = graph_context.m_primary_source.m_terminal_map->Element(rule_token.m_token_id);
+    Nonterminal const *nonterminal = graph_context.m_primary_source.m_nonterminal_map->Element(rule_token.m_token_id);
     if (terminal == NULL && nonterminal == NULL)
     {
         EmitError("undeclared token \"" + rule_token.m_token_id + "\"", rule_token.GetFiLoc());
@@ -235,7 +235,7 @@ void GenerateNpda (
         // it's a different nonterminal than the one owning this rule,
         // otherwise we'll have an epsilon-transition cycle)
         if (nonterminal != owner_nonterminal)
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaEpsilonTransition(nonterminal->GetNpdaGraphHeadState()));
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaEpsilonTransition(nonterminal->NpdaGraphHeadState()));
     }
 }
 
@@ -303,7 +303,7 @@ void EnsureGeneratedNpda (
     GraphContext &graph_context)
 {
     // if it's already graphed, we don't need to do anything
-    if (nonterminal.GetIsNpdaGraphed())
+    if (nonterminal.IsNpdaGraphed())
         return;
 
     // create the start, head and return states for this nonterminal
@@ -331,7 +331,7 @@ void EnsureGeneratedNpda (
 
 void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph)
 {
-    assert(npda_graph.GetNodeCount() == 0 && "must start with an empty graph");
+    assert(npda_graph.NodeCount() == 0 && "must start with an empty graph");
 
     GraphContext graph_context(primary_source, npda_graph);
     for (NonterminalList::const_iterator it = primary_source.m_nonterminal_list->begin(), it_end = primary_source.m_nonterminal_list->end();

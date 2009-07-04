@@ -14,7 +14,7 @@
 
 namespace Trison {
 
-string const &GetAstTypeString (AstType ast_type)
+string const &AstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_COUNT-CommonLang::AST_START_CUSTOM_TYPES_HERE_] =
     {
@@ -38,7 +38,7 @@ string const &GetAstTypeString (AstType ast_type)
 
     assert(ast_type < AST_COUNT);
     if (ast_type < CommonLang::AST_START_CUSTOM_TYPES_HERE_)
-        return CommonLang::GetAstTypeString(ast_type);
+        return CommonLang::AstTypeString(ast_type);
     else
         return s_ast_type_string[ast_type-CommonLang::AST_START_CUSTOM_TYPES_HERE_];
 }
@@ -66,19 +66,19 @@ void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
         stream << Tabs(indent_level+1) << "assigned id: " << m_assigned_id << endl;
 }
 
-string Rule::GetAsText (Uint32 stage) const
+string Rule::AsText (Uint32 stage) const
 {
     assert(m_owner_nonterminal != NULL);
 
     ostringstream out;
     out << m_owner_nonterminal->GetText() << " <-";
     for (Uint32 s = 0; s < min(stage, Uint32(m_rule_token_list->size())); ++s)
-        out << ' ' << m_rule_token_list->GetElement(s)->m_token_id;
+        out << ' ' << m_rule_token_list->Element(s)->m_token_id;
     if (stage <= m_rule_token_list->size())
     {
         out << " .";
         for (Uint32 s = stage; s < m_rule_token_list->size(); ++s)
-            out << ' ' << m_rule_token_list->GetElement(s)->m_token_id;
+            out << ' ' << m_rule_token_list->Element(s)->m_token_id;
     }
     return out.str();
 }
@@ -113,7 +113,7 @@ void Nonterminal::SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda
     assert(npda_graph_start_state != UINT32_UPPER_BOUND);
     assert(npda_graph_head_state != UINT32_UPPER_BOUND);
     assert(npda_graph_return_state != UINT32_UPPER_BOUND);
-    assert(!GetIsNpdaGraphed() && "already has states");
+    assert(!IsNpdaGraphed() && "already has states");
     m_npda_graph_start_state = npda_graph_start_state;
     m_npda_graph_head_state = npda_graph_head_state;
     m_npda_graph_return_state = npda_graph_return_state;
@@ -122,7 +122,7 @@ void Nonterminal::SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda
 void Nonterminal::SetDpdaGraphStates (Uint32 dpda_graph_start_state) const
 {
     assert(dpda_graph_start_state != UINT32_UPPER_BOUND);
-    assert(!GetIsDpdaGraphed() && "already has states");
+    assert(!IsDpdaGraphed() && "already has states");
     m_dpda_graph_start_state = dpda_graph_start_state;
 }
 
@@ -138,12 +138,12 @@ void Nonterminal::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
     m_rule_list->Print(stream, Stringify, indent_level);
 }
 
-Uint32 NonterminalList::GetRuleCount () const
+Uint32 NonterminalList::RuleCount () const
 {
     Uint32 rule_count = 0;
     for (Uint32 i = 0; i < size(); ++i)
     {
-        Nonterminal const *nonterminal = GetElement(i);
+        Nonterminal const *nonterminal = Element(i);
         assert(nonterminal != NULL);
         rule_count += nonterminal->m_rule_list->size();
     }
@@ -160,14 +160,14 @@ void Precedence::Print (ostream &stream, StringifyAstType Stringify, Uint32 inde
 
 Rule const *PrimarySource::GetRule (Uint32 rule_index) const
 {
-    assert(rule_index < GetRuleCount());
+    assert(rule_index < RuleCount());
     for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
     {
-        Nonterminal const *nonterminal = m_nonterminal_list->GetElement(i);
+        Nonterminal const *nonterminal = m_nonterminal_list->Element(i);
         assert(nonterminal != NULL);
         assert(nonterminal->m_rule_list != NULL);
         if (rule_index < nonterminal->m_rule_list->size())
-            return nonterminal->m_rule_list->GetElement(rule_index);
+            return nonterminal->m_rule_list->Element(rule_index);
         else
             rule_index -= nonterminal->m_rule_list->size();
     }
@@ -175,17 +175,17 @@ Rule const *PrimarySource::GetRule (Uint32 rule_index) const
     return NULL;
 }
 
-Uint32 PrimarySource::GetRuleTokenCount () const
+Uint32 PrimarySource::RuleTokenCount () const
 {
     Uint32 rule_token_count = 0;
     for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
     {
-        Nonterminal const *nonterminal = m_nonterminal_list->GetElement(i);
+        Nonterminal const *nonterminal = m_nonterminal_list->Element(i);
         assert(nonterminal != NULL);
         assert(nonterminal->m_rule_list != NULL);
         for (Uint32 j = 0; j < nonterminal->m_rule_list->size(); ++j)
         {
-            Rule const *rule = nonterminal->m_rule_list->GetElement(j);
+            Rule const *rule = nonterminal->m_rule_list->Element(j);
             assert(rule != NULL);
             assert(rule->m_rule_token_list != NULL);
             rule_token_count += rule->m_rule_token_list->size();
@@ -196,20 +196,20 @@ Uint32 PrimarySource::GetRuleTokenCount () const
 
 RuleToken const *PrimarySource::GetRuleToken (Uint32 rule_token_index) const
 {
-    assert(rule_token_index < GetRuleTokenCount());
+    assert(rule_token_index < RuleTokenCount());
     for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
     {
-        Nonterminal const *nonterminal = m_nonterminal_list->GetElement(i);
+        Nonterminal const *nonterminal = m_nonterminal_list->Element(i);
         assert(nonterminal != NULL);
         assert(nonterminal->m_rule_list != NULL);
         for (Uint32 j = 0; j < nonterminal->m_rule_list->size(); ++j)
         {
-            Rule const *rule = nonterminal->m_rule_list->GetElement(j);
+            Rule const *rule = nonterminal->m_rule_list->Element(j);
             assert(rule != NULL);
             assert(rule->m_rule_token_list != NULL);
 
             if (rule_token_index < rule->m_rule_token_list->size())
-                return rule->m_rule_token_list->GetElement(rule_token_index);
+                return rule->m_rule_token_list->Element(rule_token_index);
             else
                 rule_token_index -= rule->m_rule_token_list->size();
         }
@@ -218,23 +218,23 @@ RuleToken const *PrimarySource::GetRuleToken (Uint32 rule_token_index) const
     return NULL;
 }
 
-string const &PrimarySource::GetAssignedType (string const &token_id, string const &target_id) const
+string const &PrimarySource::AssignedType (string const &token_id, string const &target_id) const
 {
     assert(!token_id.empty());
     assert(!target_id.empty());
-    Terminal const *terminal = m_terminal_map->GetElement(token_id);
-    Nonterminal const *nonterminal = m_nonterminal_map->GetElement(token_id);
+    Terminal const *terminal = m_terminal_map->Element(token_id);
+    Nonterminal const *nonterminal = m_nonterminal_map->Element(token_id);
     assert((terminal != NULL && nonterminal == NULL) || (terminal == NULL && nonterminal != NULL));
-    TypeMap const *assigned_type_map = terminal != NULL ? terminal->GetAssignedTypeMap() : nonterminal->m_assigned_type_map;
+    TypeMap const *assigned_type_map = terminal != NULL ? terminal->AssignedTypeMap() : nonterminal->m_assigned_type_map;
     assert(assigned_type_map != NULL);
-    Ast::String const *assigned_type = assigned_type_map->GetElement(target_id);
+    Ast::String const *assigned_type = assigned_type_map->Element(target_id);
     return assigned_type != NULL ? assigned_type->GetText() : g_empty_string;
 }
 
 string PrimarySource::GetTokenId (Uint32 token_index) const
 {
     if (token_index < 0x100)
-        return GetCharLiteral(token_index);
+        return CharLiteral(token_index);
 
     TokenIdMap::const_iterator it = m_token_id_map.find(token_index);
     assert(it != m_token_id_map.end());
@@ -243,7 +243,7 @@ string PrimarySource::GetTokenId (Uint32 token_index) const
 
 void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
 {
-    Print(stream, GetAstTypeString, indent_level);
+    Print(stream, AstTypeString, indent_level);
 }
 
 void PrimarySource::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const

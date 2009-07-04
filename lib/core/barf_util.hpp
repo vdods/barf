@@ -87,27 +87,27 @@ struct EscapeStringStatus
 Uint8 SwitchCase (Uint8 c);
 // in-place char-escaping
 void EscapeChar (Uint8 &c);
-Uint8 GetEscapedChar (Uint8 c);
+Uint8 EscapedChar (Uint8 c);
 // in-place string-escaping
 EscapeStringStatus EscapeString (string &text);
-string GetEscapedString (string const &text, EscapeStringReturnCode *escape_string_return_code = NULL);
-string GetCharLiteral (Uint8 c, bool with_quotes = true);
-string GetStringLiteral (string const &text, bool with_quotes = true);
+string EscapedString (string const &text, EscapeStringReturnCode *escape_string_return_code = NULL);
+string CharLiteral (Uint8 c, bool with_quotes = true);
+string StringLiteral (string const &text, bool with_quotes = true);
 
-Uint32 GetNewlineCount (string const &text);
+Uint32 NewlineCount (string const &text);
 
 void ReplaceAllInString (
     string *string_to_replace_in,
     string const &replace_this,
     string const &replacement);
 
-string GetDirectoryPortion (string const &path);
-string GetFilenamePortion (string const &path);
+string DirectoryPortion (string const &path);
+string FilenamePortion (string const &path);
 
-bool GetIsValidDirectory (string const &directory);
-bool GetIsValidFile (string const &filename);
+bool IsValidDirectory (string const &directory);
+bool IsValidFile (string const &filename);
 
-string GetCurrentDateAndTimeString ();
+string CurrentDateAndTimeString ();
 
 } // end of namespace Barf
 

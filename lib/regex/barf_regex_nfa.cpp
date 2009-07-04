@@ -48,8 +48,8 @@ private:
 NodeData const &GetNodeData (Graph const &graph, Uint32 node_index)
 {
     Graph::Node const &node = graph.GetNode(node_index);
-    assert(node.GetHasData());
-    return node.GetDataAs<NodeData>();
+    assert(node.HasData());
+    return node.DataAs<NodeData>();
 }
 
 void GenerateNfa (Atom const &atom, GraphContext &graph_context, Uint32 start_index, Uint32 end_index);
@@ -61,7 +61,7 @@ void GenerateNfa (Piece const &piece, GraphContext &graph_context, Uint32 start_
     Uint32 end_of_required_repetitions_index;
     if (piece.GetBound()->m_lower_bound == piece.GetBound()->m_upper_bound)
         end_of_required_repetitions_index = end_index;
-    else if (piece.GetBound()->m_lower_bound == 0 && !piece.GetBound()->GetHasNoUpperBound())
+    else if (piece.GetBound()->m_lower_bound == 0 && !piece.GetBound()->HasNoUpperBound())
         end_of_required_repetitions_index = start_index;
     else
         end_of_required_repetitions_index = graph_context.m_graph.AddNode(new NodeData(NOT_START_NODE, NOT_ACCEPT_NODE));
@@ -91,7 +91,7 @@ void GenerateNfa (Piece const &piece, GraphContext &graph_context, Uint32 start_
     // transitions for the optional repetitions (i.e. the final infinity in "a{3,}" or final 2 in "a{3,5}")
 
     // special case for no-upper-bound -- "a{3,}"
-    if (piece.GetBound()->GetHasNoUpperBound())
+    if (piece.GetBound()->HasNoUpperBound())
     {
         GenerateNfa(*piece.GetAtom(), graph_context, end_of_required_repetitions_index, end_of_required_repetitions_index);
         graph_context.m_graph.AddTransition(end_of_required_repetitions_index, EpsilonTransition(end_index));
@@ -214,10 +214,10 @@ void GenerateNfa (BracketCharSet const &bracket_char_set, GraphContext &graph_co
     Uint16 c1;
     while (c0 < 256)
     {
-        if (bracket_char_set.GetIsCharInSet(c0, graph_context.IsCaseSensitive()))
+        if (bracket_char_set.IsCharInSet(c0, graph_context.IsCaseSensitive()))
         {
             c1 = c0;
-            while (c1 < 255 && bracket_char_set.GetIsCharInSet(c1+1, graph_context.IsCaseSensitive()))
+            while (c1 < 255 && bracket_char_set.IsCharInSet(c1+1, graph_context.IsCaseSensitive()))
                 ++c1;
 
             graph_context.m_graph.AddTransition(start_index, InputAtomRangeTransition(c0, c1, end_index));

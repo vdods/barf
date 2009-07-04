@@ -67,23 +67,23 @@ void ParseAndHandleOptions (int argc, char **argv)
     EmitExecutionMessage("beginning execution");
     g_options->ProcessSearchPath();
     
-    if (GetReflexOptions().GetAbort())
+    if (ReflexOptions().Abort())
     {
         exit(RS_COMMANDLINE_ABORT);
     }
-    else if (GetReflexOptions().GetIsHelpRequested())
+    else if (ReflexOptions().IsHelpRequested())
     {
-        GetReflexOptions().PrintHelpMessage(cerr);
+        ReflexOptions().PrintHelpMessage(cerr);
         exit(RS_SUCCESS);
     }
-    else if (GetReflexOptions().GetPrintSearchPathRequest() == Reflex::Options::PSPR_SHORT)
+    else if (ReflexOptions().GetPrintSearchPathRequest() == Reflex::Options::PSPR_SHORT)
     {
-        cout << GetReflexOptions().GetSearchPath().GetAsString("\n") << endl;
+        cout << ReflexOptions().GetSearchPath().AsString("\n") << endl;
         exit(RS_SUCCESS);
     }
-    else if (GetReflexOptions().GetPrintSearchPathRequest() == Reflex::Options::PSPR_VERBOSE)
+    else if (ReflexOptions().GetPrintSearchPathRequest() == Reflex::Options::PSPR_VERBOSE)
     {
-        cout << GetReflexOptions().GetSearchPath().GetAsVerboseString("\n") << endl;
+        cout << ReflexOptions().GetSearchPath().AsVerboseString("\n") << endl;
         exit(RS_SUCCESS);
     }
 }
@@ -98,16 +98,16 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     Ast::Base *parsed_tree_root = NULL;
     
     Reflex::Parser parser;
-    parser.ScannerDebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
-    parser.DebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER));
+    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
+    parser.DebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER));
 
     // go through the predefine commandline directives and parse them.
-    for (vector<string>::size_type i = 0; i < GetReflexOptions().GetPredefineCount(); ++i)
+    for (vector<string>::size_type i = 0; i < ReflexOptions().PredefineCount(); ++i)
     {
-        parser.OpenString(GetReflexOptions().GetPredefine(i), "<predefine>");
+        parser.OpenString(ReflexOptions().Predefine(i), "<predefine>");
 
         if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
-            EmitError("general reflex parse error (in predefine) -- " + GetReflexOptions().HowtoReportError());
+            EmitError("general reflex parse error (in predefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
             CommonLang::TargetDirective *target_directive = Dsc<CommonLang::TargetDirective *>(parsed_tree_root);
@@ -119,14 +119,14 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     if (g_errors_encountered)
         exit(RS_PREDEFINE_ERROR);
 
-    if (!parser.OpenFile(GetReflexOptions().GetInputFilename()))
-        EmitError("file not found: \"" + GetReflexOptions().GetInputFilename() + "\"");
+    if (!parser.OpenFile(ReflexOptions().InputFilename()))
+        EmitError("file not found: \"" + ReflexOptions().InputFilename() + "\"");
         
     if (g_errors_encountered)
         exit(RS_INPUT_FILE_ERROR);
         
     if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
-        EmitError("general reflex parse error -- " + GetReflexOptions().HowtoReportError(), FiLoc(GetReflexOptions().GetInputFilename()));
+        EmitError("general reflex parse error -- " + ReflexOptions().HowtoReportError(), FiLoc(ReflexOptions().InputFilename()));
     else if (g_errors_encountered)
         exit(RS_PRIMARY_SOURCE_ERROR);
     else
@@ -136,12 +136,12 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     }
 
     // go through the postdefine commandline directives and parse them.
-    for (vector<string>::size_type i = 0; i < GetReflexOptions().GetPostdefineCount(); ++i)
+    for (vector<string>::size_type i = 0; i < ReflexOptions().PostdefineCount(); ++i)
     {
-        parser.OpenString(GetReflexOptions().GetPostdefine(i), "<postdefine>");
+        parser.OpenString(ReflexOptions().Postdefine(i), "<postdefine>");
 
         if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
-            EmitError("general reflex parse error (in postdefine) -- " + GetReflexOptions().HowtoReportError());
+            EmitError("general reflex parse error (in postdefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
             CommonLang::TargetDirective *target_directive = Dsc<CommonLang::TargetDirective *>(parsed_tree_root);
@@ -154,7 +154,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
         exit(RS_POSTDEFINE_ERROR);
 
     primary_source->SetTargetMap(parser.StealTargetMap());
-    if (GetReflexOptions().GetIsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
         primary_source->Print(cerr);
         
     return primary_source;
@@ -192,7 +192,7 @@ void GenerateAndPrintNfaDotGraph (Reflex::PrimarySource const &primary_source, A
     EmitExecutionMessage("generating NFA graph");
     Reflex::GenerateNfa(primary_source, nfa);
     EmitExecutionMessage("done generating NFA graph");
-    PrintDotGraph(nfa.m_graph, GetReflexOptions().GetNaDotGraphPath(), "NFA");
+    PrintDotGraph(nfa.m_graph, ReflexOptions().NaDotGraphPath(), "NFA");
 }
 
 void GenerateAndPrintDfaDotGraph (Reflex::PrimarySource const &primary_source, Automaton const &nfa, Automaton &dfa)
@@ -204,9 +204,9 @@ void GenerateAndPrintDfaDotGraph (Reflex::PrimarySource const &primary_source, A
 
     try {
         EmitExecutionMessage("attempting to generate DFA graph");
-        Reflex::GenerateDfa(primary_source, nfa, primary_source.GetRuleCount(), dfa);
+        Reflex::GenerateDfa(primary_source, nfa, primary_source.RuleCount(), dfa);
         EmitExecutionMessage("generated DFA graph successfully");
-        PrintDotGraph(dfa.m_graph, GetReflexOptions().GetDaDotGraphPath(), "DFA");
+        PrintDotGraph(dfa.m_graph, ReflexOptions().DaDotGraphPath(), "DFA");
     } catch (string const &exception) {
         EmitError(exception);
     }
@@ -224,8 +224,8 @@ void ParseTargetspecs (Reflex::PrimarySource const &primary_source)
     // an error code.
 
     Targetspec::Parser parser;
-    parser.ScannerDebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER));
-    parser.DebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_TARGETSPEC_PARSER));
+    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER));
+    parser.DebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_PARSER));
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -248,8 +248,8 @@ void ParseCodespecs (Reflex::PrimarySource const &primary_source)
     // accumulated during this section, abort with an error code.
 
     Preprocessor::Parser parser;
-    parser.ScannerDebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_SCANNER));
-    parser.DebugSpew(GetReflexOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_PARSER));
+    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_SCANNER));
+    parser.DebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_PARSER));
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -292,7 +292,7 @@ void WriteTargets (Reflex::PrimarySource const &primary_source, Automaton const 
         Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
 
         Reflex::GenerateTargetDependentSymbols(primary_source, target_id, local_symbol_table);
-        if (GetReflexOptions().GetIsVerbose(Reflex::Options::V_CODESPEC_SYMBOLS))
+        if (ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_SYMBOLS))
             local_symbol_table.Print(cerr);
 
         target->GenerateCode(local_symbol_table);

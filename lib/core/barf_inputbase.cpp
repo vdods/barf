@@ -23,7 +23,7 @@ InputBase::~InputBase ()
     Close();
 }
 
-bool InputBase::GetIsOpen () const
+bool InputBase::IsOpen () const
 {
     // if no input stream, it can't be open.
     if (m_input_stream == NULL)
@@ -84,7 +84,7 @@ bool InputBase::Close ()
 {
     if (m_input_stream != NULL)
     {
-        assert(GetIsOpen());
+        assert(IsOpen());
         if (m_input_stream == &m_istringstream)
             m_istringstream.str("");
         else if (m_input_stream == &m_ifstream)
@@ -96,15 +96,15 @@ bool InputBase::Close ()
     }
     else
     {
-        assert(!GetIsOpen());
-        assert(!m_filoc.GetIsValid());
+        assert(!IsOpen());
+        assert(!m_filoc.IsValid());
         return false;
     }
 }
 
 void InputBase::IncrementLineNumber (Uint32 by_value)
 {
-    if (m_filoc.GetLineNumber() > 0)
+    if (m_filoc.LineNumber() > 0)
         m_filoc.IncrementLineNumber(by_value);
 }
 

@@ -19,35 +19,35 @@ namespace Barf {
 
 void EmitExecutionMessage (string const &message)
 {
-    if (GetOptions().GetIsVerbose(OptionsBase::V_EXECUTION))
-        cerr << GetOptions().GetProgramName() << ": " << message << endl;
+    if (GetOptions().IsVerbose(OptionsBase::V_EXECUTION))
+        cerr << GetOptions().ProgramName() << ": " << message << endl;
 }
 
 void EmitWarning (string const &message, FiLoc const &filoc)
 {
-    if (OptionsAreInitialized() && GetOptions().GetTreatWarningsAsErrors())
+    if (OptionsAreInitialized() && GetOptions().TreatWarningsAsErrors())
         EmitError(message, filoc);
-    else if (filoc.GetIsValid())
-        cerr << GetOptions().GetProgramName() << ": " << filoc << ": warning: " << message << endl;
+    else if (filoc.IsValid())
+        cerr << GetOptions().ProgramName() << ": " << filoc << ": warning: " << message << endl;
     else
-        cerr << GetOptions().GetProgramName() << ": " << "warning: " << message << endl;
+        cerr << GetOptions().ProgramName() << ": " << "warning: " << message << endl;
 }
 
 void EmitError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
-    if (OptionsAreInitialized() && GetOptions().GetHaltOnFirstError())
+    if (OptionsAreInitialized() && GetOptions().HaltOnFirstError())
         EmitFatalError(message, filoc);
     else
     {
 #if DEBUG
-        if (OptionsAreInitialized() && GetOptions().GetAssertOnError())
+        if (OptionsAreInitialized() && GetOptions().AssertOnError())
             assert(false && "you have requested to assert on error, human, and here it is");
 #endif
-        if (filoc.GetIsValid())
-            cerr << GetOptions().GetProgramName() << ": " << filoc << ": error: " << message << endl;
+        if (filoc.IsValid())
+            cerr << GetOptions().ProgramName() << ": " << filoc << ": error: " << message << endl;
         else
-            cerr << GetOptions().GetProgramName() << ": " << "error: " << message << endl;
+            cerr << GetOptions().ProgramName() << ": " << "error: " << message << endl;
     }
 }
 
@@ -55,13 +55,13 @@ void EmitFatalError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
 #if DEBUG
-    if (OptionsAreInitialized() && GetOptions().GetAssertOnError())
+    if (OptionsAreInitialized() && GetOptions().AssertOnError())
         assert(false && "you have requested to assert on error, human, and here it is");
 #endif
-    if (filoc.GetIsValid())
-        THROW_STRING(GetOptions().GetProgramName() << ": " << filoc << ": fatal error: " << message);
+    if (filoc.IsValid())
+        THROW_STRING(GetOptions().ProgramName() << ": " << filoc << ": fatal error: " << message);
     else
-        THROW_STRING(GetOptions().GetProgramName() << ": " << "fatal error: " << message);
+        THROW_STRING(GetOptions().ProgramName() << ": " << "fatal error: " << message);
 }
 
 } // end of namespace Barf

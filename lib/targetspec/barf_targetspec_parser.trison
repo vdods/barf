@@ -156,7 +156,7 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"TargetSpec::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 
@@ -216,10 +216,10 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
     %target.cpp {
         assert(m_add_codespec_list != NULL);
         assert(m_add_directive_map != NULL);
-        AddDirective *add_directive = m_add_directive_map->GetElement(filename_directive_id->GetText());
+        AddDirective *add_directive = m_add_directive_map->Element(filename_directive_id->GetText());
         if (add_directive == NULL)
             EmitError("undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive", throwaway->GetFiLoc());
-        if (add_directive == NULL || !add_directive->GetIsRequired() || add_directive->m_param_type != Ast::AST_STRING)
+        if (add_directive == NULL || !add_directive->IsRequired() || add_directive->m_param_type != Ast::AST_STRING)
             EmitError("directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string", throwaway->GetFiLoc());
         if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
             EmitError("filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters", throwaway->GetFiLoc());
@@ -254,9 +254,9 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
             directive);
         if (param_type->m_param_type != default_value->GetAstType())
             EmitError(
-                "type mismatch for default value for directive " + directive->GetDirectiveString() +
-                "; was expecting type " + Ast::TextBase::GetDirectiveTypeString(param_type->m_param_type) +
-                " but got type " + Ast::TextBase::GetDirectiveTypeString(default_value->GetAstType()),
+                "type mismatch for default value for directive " + directive->DirectiveString() +
+                "; was expecting type " + Ast::TextBase::DirectiveTypeString(param_type->m_param_type) +
+                " but got type " + Ast::TextBase::DirectiveTypeString(default_value->GetAstType()),
                 throwaway1->GetFiLoc());
         delete throwaway1;
         delete param_type;

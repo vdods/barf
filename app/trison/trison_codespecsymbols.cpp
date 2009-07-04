@@ -23,7 +23,7 @@ namespace Trison {
 void PopulateRuleCodeArraySymbol (Rule const &rule, string const &target_id, Preprocessor::ArraySymbol *rule_code)
 {
     assert(rule_code != NULL);
-    CommonLang::RuleHandler const *rule_handler = rule.m_rule_handler_map->GetElement(target_id);
+    CommonLang::RuleHandler const *rule_handler = rule.m_rule_handler_map->Element(target_id);
     if (rule_handler != NULL)
     {
         Ast::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
@@ -60,7 +60,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             Preprocessor::ScalarSymbol *rule_count =
                 symbol_table.DefineScalarSymbol("_rule_count", FiLoc::ms_invalid);
             rule_count->SetScalarBody(
-                new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
+                new Preprocessor::Body(Sint32(primary_source.RuleCount())));
         }
 
         Preprocessor::ScalarSymbol *rule_total_token_count =
@@ -73,7 +73,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             symbol_table.DefineArraySymbol("_rule_token_table_count", FiLoc::ms_invalid);
 
 
-        Uint32 rule_total_token_count_value = primary_source.GetRuleTokenCount();
+        Uint32 rule_total_token_count_value = primary_source.RuleTokenCount();
         rule_total_token_count->SetScalarBody(
             new Preprocessor::Body(Sint32(rule_total_token_count_value)));
         for (Uint32 i = 0; i < rule_total_token_count_value; ++i)
@@ -84,7 +84,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
                 new Preprocessor::Body(rule_token->m_assigned_id));
         }
 
-        Uint32 rule_count = primary_source.GetRuleCount();
+        Uint32 rule_count = primary_source.RuleCount();
         Uint32 token_table_offset = 0;
         for (Uint32 i = 0; i < rule_count; ++i)
         {
@@ -132,10 +132,10 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
         // these asserts aren't really necessary, but we want to make sure the special
         // "END_" and "ERROR_" terminals were added with specific token_index values (though
         // the specific values aren't actually that important either).
-        assert(primary_source.m_terminal_map->GetElement("END_") != NULL);
-        assert(primary_source.m_terminal_map->GetElement("END_")->m_token_index == 0x100);
-        assert(primary_source.m_terminal_map->GetElement("ERROR_") != NULL);
-        assert(primary_source.m_terminal_map->GetElement("ERROR_")->m_token_index == 0x101);
+        assert(primary_source.m_terminal_map->Element("END_") != NULL);
+        assert(primary_source.m_terminal_map->Element("END_")->m_token_index == 0x100);
+        assert(primary_source.m_terminal_map->Element("ERROR_") != NULL);
+        assert(primary_source.m_terminal_map->Element("ERROR_")->m_token_index == 0x101);
 
         for (TerminalList::const_iterator it = primary_source.m_terminal_list->begin(), it_end = primary_source.m_terminal_list->end();
              it != it_end;
@@ -155,8 +155,8 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
         // this assert isn't really necessary, but we want to make sure the special
         // "none_" nonterminal was added with specific token_index value of 0 (this
         // value is important).
-        assert(primary_source.m_nonterminal_map->GetElement("none_") != NULL);
-        assert(primary_source.m_nonterminal_map->GetElement("none_")->m_token_index == 0);
+        assert(primary_source.m_nonterminal_map->Element("none_") != NULL);
+        assert(primary_source.m_nonterminal_map->Element("none_")->m_token_index == 0);
 
         for (NonterminalList::const_iterator it = primary_source.m_nonterminal_list->begin(), it_end = primary_source.m_nonterminal_list->end();
              it != it_end;
@@ -268,7 +268,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
         Preprocessor::ArraySymbol *rule_description =
             symbol_table.DefineArraySymbol("_rule_description", FiLoc::ms_invalid);
 
-        for (Uint32 i = 0; i < primary_source.GetRuleCount(); ++i)
+        for (Uint32 i = 0; i < primary_source.RuleCount(); ++i)
         {
             Rule const &rule = *primary_source.GetRule(i);
 
@@ -286,7 +286,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
                 new Preprocessor::Body(Sint32(rule.m_rule_token_list->size())));
 
             rule_description->AppendArrayElement(
-                new Preprocessor::Body(GetStringLiteral(rule.GetAsText())));
+                new Preprocessor::Body(StringLiteral(rule.AsText())));
         }
     }
 
@@ -294,7 +294,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
 
 void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda_graph, Preprocessor::SymbolTable &symbol_table)
 {
-    assert(npda_graph.GetNodeCount() > 0);
+    assert(npda_graph.NodeCount() > 0);
 
     EmitExecutionMessage("generating NPDA codespec symbols");
     
@@ -314,7 +314,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             if (nonterminal->GetText() != "none_")
                 npda_nonterminal_start_state_index->SetMapElement(
                     nonterminal_name,
-                    new Preprocessor::Body(Sint32(nonterminal->GetNpdaGraphStartState())));
+                    new Preprocessor::Body(Sint32(nonterminal->NpdaGraphStartState())));
         }
     }
 
@@ -395,19 +395,19 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             symbol_table.DefineArraySymbol("_npda_transition_target_node_index", FiLoc::ms_invalid);
 
         npda_state_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(npda_graph.GetNodeCount())));
+            new Preprocessor::Body(Sint32(npda_graph.NodeCount())));
 
         Sint32 total_transition_count = 0;
 
-        for (Uint32 node_index = 0; node_index < npda_graph.GetNodeCount(); ++node_index)
+        for (Uint32 node_index = 0; node_index < npda_graph.NodeCount(); ++node_index)
         {
             Graph::Node const &node = npda_graph.GetNode(node_index);
-            NpdaNodeData const &node_data = node.GetDataAs<NpdaNodeData>();
+            NpdaNodeData const &node_data = node.DataAs<NpdaNodeData>();
             Sint32 node_transition_offset = total_transition_count;
             Sint32 node_transition_count = 0;
 
-            for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                                      it_end = node.GetTransitionSetEnd();
+            for (Graph::TransitionSet::const_iterator it = node.TransitionSetBegin(),
+                                                      it_end = node.TransitionSetEnd();
                  it != it_end;
                  ++it)
             {
@@ -416,7 +416,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
                 npda_transition_type_index->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Type())));
                 npda_transition_type_name->AppendArrayElement(
-                    new Preprocessor::Body(GetTransitionTypeString(transition.Type())));
+                    new Preprocessor::Body(TransitionTypeString(transition.Type())));
                 npda_transition_data_index->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Data(0))));
                 npda_transition_data_name->AppendArrayElement(
@@ -431,14 +431,14 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             }
 
             // figure out all the values for _npda_state_*
-            Nonterminal const *nonterminal = node_data.GetAssociatedNonterminal();
-            Rule const *rule = node_data.GetAssociatedRule();
+            Nonterminal const *nonterminal = node_data.AssociatedNonterminal();
+            Rule const *rule = node_data.AssociatedRule();
             npda_state_rule_index->AppendArrayElement(
-                new Preprocessor::Body(rule != NULL ? Sint32(rule->m_rule_index) : primary_source.GetRuleCount()));
+                new Preprocessor::Body(rule != NULL ? Sint32(rule->m_rule_index) : primary_source.RuleCount()));
             npda_state_rule_stage->AppendArrayElement(
-                new Preprocessor::Body(rule != NULL ? Sint32(node_data.GetRuleStage()) : 0));
+                new Preprocessor::Body(rule != NULL ? Sint32(node_data.RuleStage()) : 0));
             npda_state_description->AppendArrayElement(
-                new Preprocessor::Body(GetStringLiteral(node_data.GetOneLineDescription())));
+                new Preprocessor::Body(StringLiteral(node_data.OneLineDescription())));
             npda_state_nonterminal_index->AppendArrayElement(
                 new Preprocessor::Body(Sint32(nonterminal != NULL ? nonterminal->m_token_index : 0)));
             npda_state_nonterminal_name->AppendArrayElement(
@@ -456,7 +456,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
 
 void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda_graph, Preprocessor::SymbolTable &symbol_table)
 {
-    assert(dpda_graph.GetNodeCount() > 0);
+    assert(dpda_graph.NodeCount() > 0);
 
     EmitExecutionMessage("generating DPDA codespec symbols");
     
@@ -465,7 +465,7 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
 //         Preprocessor::ScalarSymbol *dpda_lalr_lookahead_count =
 //             symbol_table.DefineScalarSymbol("_dpda_lalr_lookahead_count", FiLoc::ms_invalid);
 //         npda_state_count->SetScalarBody(
-//             new Preprocessor::Body(Sint32(// TODOnpda_graph.GetNodeCount() )));
+//             new Preprocessor::Body(Sint32(// TODOnpda_graph.NodeCount() )));
     }
 
     // _dpda_nonterminal_start_state_index[nonterminal name] -- maps nonterminal name => node index
@@ -484,7 +484,7 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
             if (nonterminal->GetText() != "none_")
                 dpda_nonterminal_start_state_index->SetMapElement(
                     nonterminal_name,
-                    new Preprocessor::Body(Sint32(nonterminal->GetDpdaGraphStartState())));
+                    new Preprocessor::Body(Sint32(nonterminal->DpdaGraphStartState())));
         }
     }
 
@@ -562,32 +562,32 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
             symbol_table.DefineArraySymbol("_dpda_transition_lookahead_count", FiLoc::ms_invalid);
 
         dpda_state_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(dpda_graph.GetNodeCount())));
+            new Preprocessor::Body(Sint32(dpda_graph.NodeCount())));
 
         Sint32 total_lookahead_count = 0;
         Sint32 total_transition_count = 0;
 
-        for (Uint32 node_index = 0; node_index < dpda_graph.GetNodeCount(); ++node_index)
+        for (Uint32 node_index = 0; node_index < dpda_graph.NodeCount(); ++node_index)
         {
 //             cerr << "codespecsymbols'ing dpda node: " << node_index << endl;
             Graph::Node const &node = dpda_graph.GetNode(node_index);
-            DpdaNodeData const &node_data = node.GetDataAs<DpdaNodeData>();
+            DpdaNodeData const &node_data = node.DataAs<DpdaNodeData>();
             Sint32 node_transition_offset = total_transition_count;
             Sint32 node_transition_count = 0;
 
-            for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                                      it_end = node.GetTransitionSetEnd();
+            for (Graph::TransitionSet::const_iterator it = node.TransitionSetBegin(),
+                                                      it_end = node.TransitionSetEnd();
                  it != it_end;
                  ++it)
             {
                 Graph::Transition const &transition = *it;
 
-//                 cerr << "  transition: " << GetTransitionTypeString(transition.Type());
+//                 cerr << "  transition: " << TransitionTypeString(transition.Type());
 
                 dpda_transition_type_index->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Type())));
                 dpda_transition_type_name->AppendArrayElement(
-                    new Preprocessor::Body(GetTransitionTypeString(transition.Type())));
+                    new Preprocessor::Body(TransitionTypeString(transition.Type())));
                 dpda_transition_lookahead_offset->AppendArrayElement(
                     new Preprocessor::Body(total_lookahead_count));
 
@@ -642,7 +642,7 @@ void GenerateDpdaSymbols (PrimarySource const &primary_source, Graph const &dpda
 
             // figure out all the values for _dpda_state_*
             dpda_state_description->AppendArrayElement(
-                new Preprocessor::Body(GetStringLiteral(node_data.GetDescription())));
+                new Preprocessor::Body(StringLiteral(node_data.Description())));
             dpda_state_transition_offset->AppendArrayElement(
                 new Preprocessor::Body(Sint32(node_transition_offset)));
             dpda_state_transition_count->AppendArrayElement(
@@ -665,7 +665,7 @@ void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string
         Preprocessor::ArraySymbol *rule_code =
             symbol_table.DefineArraySymbol("_rule_code", FiLoc::ms_invalid);
 
-        for (Uint32 rule_index = 0; rule_index < primary_source.GetRuleCount(); ++rule_index)
+        for (Uint32 rule_index = 0; rule_index < primary_source.RuleCount(); ++rule_index)
         {
             Rule const *rule = primary_source.GetRule(rule_index);
             assert(rule != NULL);
@@ -683,13 +683,13 @@ void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string
         Preprocessor::ArraySymbol *rule_token_assigned_type =
             symbol_table.DefineArraySymbol("_rule_token_assigned_type", FiLoc::ms_invalid);
 
-        Uint32 rule_total_token_count = primary_source.GetRuleTokenCount();
+        Uint32 rule_total_token_count = primary_source.RuleTokenCount();
         for (Uint32 i = 0; i < rule_total_token_count; ++i)
         {
             RuleToken const *rule_token = primary_source.GetRuleToken(i);
             assert(rule_token != NULL);
             rule_token_assigned_type->AppendArrayElement(
-                new Preprocessor::Body(primary_source.GetAssignedType(rule_token->m_token_id, target_id)));
+                new Preprocessor::Body(primary_source.AssignedType(rule_token->m_token_id, target_id)));
         }
     }
 }

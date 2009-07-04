@@ -144,12 +144,12 @@ protected:
     }
 
     // for use in AutomatonApparatus_ only
-    BarfCpp_::Uint8 GetCurrentConditionalFlags_ ()
+    BarfCpp_::Uint8 CurrentConditionalFlags_ ()
     {
         UpdateConditionalFlags();
         return m_current_conditional_flags;
     }
-    BarfCpp_::Uint8 GetInputAtom_ ()
+    BarfCpp_::Uint8 InputAtom_ ()
     {
         FillBuffer();
         assert(m_read_cursor > 0);
@@ -434,8 +434,8 @@ protected:
 private:
 
     // these InputApparatus_ methods should not be accessable to Scanner
-    using InputApparatus_::GetCurrentConditionalFlags_;
-    using InputApparatus_::GetInputAtom_;
+    using InputApparatus_::CurrentConditionalFlags_;
+    using InputApparatus_::InputAtom_;
     using InputApparatus_::AdvanceReadCursor_;
     using InputApparatus_::SetAcceptCursor_;
     using InputApparatus_::Accept_;
@@ -445,8 +445,8 @@ private:
     {
         assert(m_current_state != NULL);
         // get the current conditional flags and input atom once before looping
-        BarfCpp_::Uint8 current_conditional_flags = GetCurrentConditionalFlags_();
-        BarfCpp_::Uint8 input_atom = GetInputAtom_();
+        BarfCpp_::Uint8 current_conditional_flags = CurrentConditionalFlags_();
+        BarfCpp_::Uint8 input_atom = InputAtom_();
         // iterate through the current state's transitions, exercising the first
         // acceptable one and returning the target state
         for (DfaTransition_ const *transition = m_current_state->m_transition,

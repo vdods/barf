@@ -179,7 +179,8 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 // When present, indicates that the code associated with debug spew will be
-// generated; the methods Get/SetDebugSpewFlags will be generated.
+// generated; additionally, the accessor "bool DebugSpew ()" and the modifier
+// "void DebugSpew (bool)" will be generated.
 %add_optional_directive generate_debug_spew_code
 // Specifies the C++ ostream "<<" style expression prefix to prepend to each
 // line of debug spew.  The default value is "class_name:" (where, of course,

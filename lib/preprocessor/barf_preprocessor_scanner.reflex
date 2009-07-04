@@ -37,9 +37,9 @@ class Text;
 %target.cpp.top_of_class {
 }
 %target.cpp.bottom_of_class {
-    using InputBase::GetIsOpen;
+    using InputBase::IsOpen;
     using InputBase::GetFiLoc;
-    using InputBase::GetInputName;
+    using InputBase::InputName;
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -151,7 +151,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     return In().get();
 }
 %target.cpp.rejection_actions {
-    EmitError("unrecognized character " + GetCharLiteral(rejected_atom), GetFiLoc());
+    EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 }
 %target.cpp.reset_for_new_input_actions {
     delete m_text;
@@ -163,7 +163,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 /* **************************************************************************/
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Preprocessor::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
@@ -216,7 +216,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 :
     ({ANY}*(<\||<\{))
     %target.cpp {
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
 
         // save whether or not we got <|
         m_is_reading_newline_sensitive_code = *accepted_string.rbegin() == '|';
@@ -348,7 +348,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     (([^\\]|\\{ANY})*") // everything up through the first unescaped double quote
     %target.cpp {
         assert(m_text != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         // get rid of the trailing endquote
         assert(accepted_string.length() >= 1);
         accepted_string.resize(accepted_string.length()-1);
@@ -367,16 +367,16 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
             case ESRC_MALFORMED_HEX_CHAR:
                 EmitError(
                     "\\x with no trailing hex digits",
-                    FiLoc(m_text->GetFiLoc().GetFilename(),
-                          m_text->GetFiLoc().GetLineNumber() + status.m_line_number_offset));
+                    FiLoc(m_text->GetFiLoc().Filename(),
+                          m_text->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
                 
             case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 EmitError(
                     "hex/octal escape sequence out of range",
-                    FiLoc(m_text->GetFiLoc().GetFilename(),
-                          m_text->GetFiLoc().GetLineNumber() + status.m_line_number_offset));
+                    FiLoc(m_text->GetFiLoc().Filename(),
+                          m_text->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
         }
         m_text->AppendText(accepted_string);
@@ -389,7 +389,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     (([^\\]|\\{ANY})*\\?{END_OF_FILE}) // everything up through EOF (which may be preceded by a hanging backslash)
     %target.cpp {
         EmitError("unterminated string literal", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         assert(m_text != NULL);
         delete m_text;
         m_text = NULL;

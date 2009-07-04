@@ -73,23 +73,23 @@ void ParseAndHandleOptions (int argc, char **argv)
     EmitExecutionMessage("beginning execution");
     g_options->ProcessSearchPath();
     
-    if (GetTrisonOptions().GetAbort())
+    if (TrisonOptions().Abort())
     {
         exit(RS_COMMANDLINE_ABORT);
     }
-    else if (GetTrisonOptions().GetIsHelpRequested())
+    else if (TrisonOptions().IsHelpRequested())
     {
-        GetTrisonOptions().PrintHelpMessage(cerr);
+        TrisonOptions().PrintHelpMessage(cerr);
         exit(RS_SUCCESS);
     }
-    else if (GetTrisonOptions().GetPrintSearchPathRequest() == Trison::Options::PSPR_SHORT)
+    else if (TrisonOptions().GetPrintSearchPathRequest() == Trison::Options::PSPR_SHORT)
     {
-        cout << GetTrisonOptions().GetSearchPath().GetAsString("\n") << endl;
+        cout << TrisonOptions().GetSearchPath().AsString("\n") << endl;
         exit(RS_SUCCESS);
     }
-    else if (GetTrisonOptions().GetPrintSearchPathRequest() == Trison::Options::PSPR_VERBOSE)
+    else if (TrisonOptions().GetPrintSearchPathRequest() == Trison::Options::PSPR_VERBOSE)
     {
-        cout << GetTrisonOptions().GetSearchPath().GetAsVerboseString("\n") << endl;
+        cout << TrisonOptions().GetSearchPath().AsVerboseString("\n") << endl;
         exit(RS_SUCCESS);
     }
 }
@@ -104,16 +104,16 @@ Trison::PrimarySource const *ParsePrimarySource ()
     Ast::Base *parsed_tree_root = NULL;
     
     Trison::Parser parser;
-    parser.ScannerDebugSpew(GetTrisonOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER));
-    parser.DebugSpew(GetTrisonOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER));
+    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER));
+    parser.DebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER));
 
     // go through the predefine commandline directives and parse them.
-    for (vector<string>::size_type i = 0; i < GetTrisonOptions().GetPredefineCount(); ++i)
+    for (vector<string>::size_type i = 0; i < TrisonOptions().PredefineCount(); ++i)
     {
-        parser.OpenString(GetTrisonOptions().GetPredefine(i), "<predefine>");
+        parser.OpenString(TrisonOptions().Predefine(i), "<predefine>");
 
         if (parser.Parse(&parsed_tree_root, Trison::Parser::ParseNonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
-            EmitError("general reflex parse error (in predefine) -- " + GetTrisonOptions().HowtoReportError());
+            EmitError("general reflex parse error (in predefine) -- " + TrisonOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
             CommonLang::TargetDirective *target_directive = Dsc<CommonLang::TargetDirective *>(parsed_tree_root);
@@ -125,14 +125,14 @@ Trison::PrimarySource const *ParsePrimarySource ()
     if (g_errors_encountered)
         exit(RS_PREDEFINE_ERROR);
 
-    if (!parser.OpenFile(GetTrisonOptions().GetInputFilename()))
-        EmitError("file not found: \"" + GetTrisonOptions().GetInputFilename() + "\"");
+    if (!parser.OpenFile(TrisonOptions().InputFilename()))
+        EmitError("file not found: \"" + TrisonOptions().InputFilename() + "\"");
 
     if (g_errors_encountered)
         exit(RS_INPUT_FILE_ERROR);
         
     if (parser.Parse(&parsed_tree_root) != Trison::Parser::PRC_SUCCESS)
-        EmitError("general trison parse error -- " + GetTrisonOptions().HowtoReportError(), FiLoc(GetTrisonOptions().GetInputFilename()));
+        EmitError("general trison parse error -- " + TrisonOptions().HowtoReportError(), FiLoc(TrisonOptions().InputFilename()));
     else if (g_errors_encountered)
         exit(RS_PRIMARY_SOURCE_ERROR);
     else
@@ -142,12 +142,12 @@ Trison::PrimarySource const *ParsePrimarySource ()
     }
 
     // go through the postdefine commandline directives and parse them.
-    for (vector<string>::size_type i = 0; i < GetTrisonOptions().GetPostdefineCount(); ++i)
+    for (vector<string>::size_type i = 0; i < TrisonOptions().PostdefineCount(); ++i)
     {
-        parser.OpenString(GetTrisonOptions().GetPostdefine(i), "<postdefine>");
+        parser.OpenString(TrisonOptions().Postdefine(i), "<postdefine>");
 
         if (parser.Parse(&parsed_tree_root, Trison::Parser::ParseNonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
-            EmitError("general reflex parse error (in postdefine) -- " + GetTrisonOptions().HowtoReportError());
+            EmitError("general reflex parse error (in postdefine) -- " + TrisonOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
             CommonLang::TargetDirective *target_directive = Dsc<CommonLang::TargetDirective *>(parsed_tree_root);
@@ -160,7 +160,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
         exit(RS_POSTDEFINE_ERROR);
 
     primary_source->SetTargetMap(parser.StealTargetMap());
-    if (GetTrisonOptions().GetIsVerbose(Trison::Options::V_PRIMARY_SOURCE_AST))
+    if (TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_AST))
         primary_source->Print(cerr);
             
     return primary_source;
@@ -198,7 +198,7 @@ void GenerateNpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
     EmitExecutionMessage("generating NPDA graph");
     Trison::GenerateNpda(primary_source, npda_graph);
     EmitExecutionMessage("done generating NPDA graph");
-    PrintDotGraph(npda_graph, GetTrisonOptions().GetNaDotGraphPath(), "NPDA");
+    PrintDotGraph(npda_graph, TrisonOptions().NaDotGraphPath(), "NPDA");
 }
 
 void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph)
@@ -212,7 +212,7 @@ void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
         EmitExecutionMessage("attempting to generate DPDA graph");
         Trison::GenerateDpda(primary_source, npda_graph, dpda_graph);
         EmitExecutionMessage("generated DPDA graph successfully");
-        PrintDotGraph(dpda_graph, GetTrisonOptions().GetDaDotGraphPath(), "DPDA");
+        PrintDotGraph(dpda_graph, TrisonOptions().DaDotGraphPath(), "DPDA");
     } catch (string const &exception) {
         EmitError(exception);
     }
@@ -227,7 +227,7 @@ void GenerateDpdaStatesFile (Trison::PrimarySource const &primary_source, Graph 
 
     // TODO -- check if the dpda was actually generated
 
-    string filename(GetTrisonOptions().GetDpdaStatesPath());
+    string filename(TrisonOptions().DpdaStatesPath());
 
     if (filename.empty())
         return;
@@ -260,8 +260,8 @@ void ParseTargetspecs (Trison::PrimarySource const &primary_source)
     // an error code.
 
     Targetspec::Parser parser;
-    parser.ScannerDebugSpew(GetTrisonOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_SCANNER));
-    parser.DebugSpew(GetTrisonOptions().GetIsVerbose(Trison::Options::V_TARGETSPEC_PARSER));
+    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_SCANNER));
+    parser.DebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_PARSER));
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -284,8 +284,8 @@ void ParseCodespecs (Trison::PrimarySource const &primary_source)
     // accumulated during this section, abort with an error code.
 
     Preprocessor::Parser parser;
-    parser.ScannerDebugSpew(GetTrisonOptions().GetIsVerbose(Trison::Options::V_CODESPEC_SCANNER));
-    parser.DebugSpew(GetTrisonOptions().GetIsVerbose(Trison::Options::V_CODESPEC_PARSER));
+    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_SCANNER));
+    parser.DebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_PARSER));
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -328,7 +328,7 @@ void WriteTargets (Trison::PrimarySource const &primary_source, Graph const &npd
         Preprocessor::SymbolTable local_symbol_table(global_symbol_table);
 
         Trison::GenerateTargetDependentSymbols(primary_source, target_id, local_symbol_table);
-        if (GetTrisonOptions().GetIsVerbose(Trison::Options::V_CODESPEC_SYMBOLS))
+        if (TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_SYMBOLS))
             local_symbol_table.Print(cerr);
 
         target->GenerateCode(local_symbol_table);

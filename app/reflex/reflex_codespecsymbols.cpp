@@ -64,7 +64,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
         Preprocessor::ScalarSymbol *accept_handler_count =
             symbol_table.DefineScalarSymbol("_accept_handler_count", FiLoc::ms_invalid);
         accept_handler_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(primary_source.GetRuleCount())));
+            new Preprocessor::Body(Sint32(primary_source.RuleCount())));
     }
 
     // _accept_handler_state_machine -- the name of the state machine this accept handler belongs to
@@ -121,7 +121,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
 
 void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_graph, vector<Uint32> const &nfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
 {
-    assert(nfa_graph.GetNodeCount() > 0);
+    assert(nfa_graph.NodeCount() > 0);
 
     EmitExecutionMessage("generating NFA codespec symbols");
     
@@ -151,7 +151,7 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
         Preprocessor::ScalarSymbol *nfa_state_count =
             symbol_table.DefineScalarSymbol("_nfa_state_count", FiLoc::ms_invalid);
         nfa_state_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(nfa_graph.GetNodeCount())));
+            new Preprocessor::Body(Sint32(nfa_graph.NodeCount())));
     }
 
     // _nfa_state_transition_offset[_nfa_state_count] -- gives the first index of the
@@ -201,14 +201,14 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
 
         Sint32 total_transition_count = 0;
 
-        for (Uint32 node_index = 0; node_index < nfa_graph.GetNodeCount(); ++node_index)
+        for (Uint32 node_index = 0; node_index < nfa_graph.NodeCount(); ++node_index)
         {
             Graph::Node const &node = nfa_graph.GetNode(node_index);
             Sint32 node_transition_offset = total_transition_count;
             Sint32 node_transition_count = 0;
 
-            for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                                      it_end = node.GetTransitionSetEnd();
+            for (Graph::TransitionSet::const_iterator it = node.TransitionSetBegin(),
+                                                      it_end = node.TransitionSetEnd();
                  it != it_end;
                  ++it)
             {
@@ -217,7 +217,7 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
                 nfa_transition_type_integer->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Type())));
                 nfa_transition_type_name->AppendArrayElement(
-                    new Preprocessor::Body(Regex::GetTransitionTypeString(transition.Type())));
+                    new Preprocessor::Body(Regex::TransitionTypeString(transition.Type())));
                 nfa_transition_data_0->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Data(0))));
                 nfa_transition_data_1->AppendArrayElement(
@@ -244,7 +244,7 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
 
 void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_graph, vector<Uint32> const &dfa_start_state_index, Preprocessor::SymbolTable &symbol_table)
 {
-    assert(dfa_graph.GetNodeCount() > 0);
+    assert(dfa_graph.NodeCount() > 0);
 
     EmitExecutionMessage("generating DFA codespec symbols");
     
@@ -274,7 +274,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
         Preprocessor::ScalarSymbol *dfa_state_count =
             symbol_table.DefineScalarSymbol("_dfa_state_count", FiLoc::ms_invalid);
         dfa_state_count->SetScalarBody(
-            new Preprocessor::Body(Sint32(dfa_graph.GetNodeCount())));
+            new Preprocessor::Body(Sint32(dfa_graph.NodeCount())));
     }
 
     // _dfa_state_accept_handler_index[_dfa_state_count] -- gives the accept-handler-index
@@ -335,18 +335,18 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
 
         Sint32 total_transition_count = 0;
 
-        for (Uint32 node_index = 0; node_index < dfa_graph.GetNodeCount(); ++node_index)
+        for (Uint32 node_index = 0; node_index < dfa_graph.NodeCount(); ++node_index)
         {
             Graph::Node const &node = dfa_graph.GetNode(node_index);
-            assert(node.GetHasData());
-            Regex::NodeData const &node_data = dfa_graph.GetNode(node_index).GetDataAs<Regex::NodeData>();
+            assert(node.HasData());
+            Regex::NodeData const &node_data = dfa_graph.GetNode(node_index).DataAs<Regex::NodeData>();
             assert(node_data.m_dfa_accept_handler_index <= SINT32_UPPER_BOUND);
             Sint32 node_accept_handler_index = node_data.m_dfa_accept_handler_index;
             Sint32 node_transition_offset = total_transition_count;
             Sint32 node_transition_count = 0;
 
-            for (Graph::TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                                      it_end = node.GetTransitionSetEnd();
+            for (Graph::TransitionSet::const_iterator it = node.TransitionSetBegin(),
+                                                      it_end = node.TransitionSetEnd();
                  it != it_end;
                  ++it)
             {
@@ -355,7 +355,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
                 dfa_transition_type_integer->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Type())));
                 dfa_transition_type_name->AppendArrayElement(
-                    new Preprocessor::Body(Regex::GetTransitionTypeString(transition.Type())));
+                    new Preprocessor::Body(Regex::TransitionTypeString(transition.Type())));
                 dfa_transition_data_0->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Data(0))));
                 dfa_transition_data_1->AppendArrayElement(
@@ -376,7 +376,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
             dfa_state_transition_count->AppendArrayElement(
                 new Preprocessor::Body(node_transition_count));
             dfa_state_description->AppendArrayElement(
-                new Preprocessor::Body(node_data.GetAsText(node_index)));
+                new Preprocessor::Body(node_data.AsText(node_index)));
         }
 
         dfa_transition_count->SetScalarBody(
@@ -387,7 +387,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
 void PopulateAcceptHandlerCodeArraySymbol (Rule const &rule, string const &target_id, Preprocessor::ArraySymbol *accept_handler_code)
 {
     assert(accept_handler_code != NULL);
-    CommonLang::RuleHandler const *rule_handler = rule.m_rule_handler_map->GetElement(target_id);
+    CommonLang::RuleHandler const *rule_handler = rule.m_rule_handler_map->Element(target_id);
     assert(rule_handler != NULL);
     Ast::CodeBlock const *rule_handler_code_block = rule_handler->m_rule_handler_code_block;
     assert(rule_handler_code_block != NULL);

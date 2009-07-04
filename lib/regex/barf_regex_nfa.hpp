@@ -52,7 +52,7 @@ struct NodeData : public Graph::Node::Data
         m_dfa_accept_handler_index(dfa_accept_handler_index)
     { }
 
-    virtual string GetAsText (Uint32 node_index) const
+    virtual string AsText (Uint32 node_index) const
     {
         ostringstream out;
         out << node_index;
@@ -67,7 +67,7 @@ struct NodeData : public Graph::Node::Data
         else
             return Graph::Color(0xFCFFAE);
     }
-    virtual Uint32 GetNodePeripheries (Uint32 node_index) const
+    virtual Uint32 NodePeripheries (Uint32 node_index) const
     {
         return m_is_start_node ? 2 : 1;
     }

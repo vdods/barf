@@ -13,7 +13,7 @@
 namespace Barf {
 namespace Regex {
 
-string const &GetConditionalTypeString (ConditionalType conditional_type)
+string const &ConditionalTypeString (ConditionalType conditional_type)
 {
     static string const s_conditional_type_string[CT_COUNT] =
     {
@@ -73,7 +73,7 @@ ConditionalType GetConditionalTypeFromConditional (Conditional &conditional)
     }
 }
 
-string const &GetBakedControlCharTypeString (BakedControlCharType baked_control_char_type)
+string const &BakedControlCharTypeString (BakedControlCharType baked_control_char_type)
 {
     static string const s_baked_control_char_type_string[BCCT_COUNT] =
     {

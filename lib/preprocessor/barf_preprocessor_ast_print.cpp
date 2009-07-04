@@ -19,7 +19,7 @@ namespace Preprocessor {
 // to be confused with Ast::Base::Print.
 void Body::Print (ostream &stream, Uint32 indent_level) const
 {
-    Print(stream, GetAstTypeString, indent_level);
+    Print(stream, AstTypeString, indent_level);
 }
 
 void Conditional::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -114,7 +114,7 @@ void Message::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_
 
 void Text::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetStringLiteral(m_text) << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << StringLiteral(m_text) << endl;
 }
 
 void Integer::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -136,7 +136,7 @@ void Dereference::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
         stream << Tabs(indent_level+1) << "element index expression:" << endl;
         m_element_index_expression->Print(stream, Stringify, indent_level+2);
     }
-    stream << Tabs(indent_level+1) << "dereference type: " << GetDereferenceTypeString(m_dereference_type) << endl;
+    stream << Tabs(indent_level+1) << "dereference type: " << DereferenceTypeString(m_dereference_type) << endl;
 }
 
 void Operation::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const

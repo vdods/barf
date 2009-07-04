@@ -51,8 +51,8 @@ DpdaNodeData::DpdaNodeData (Graph const &npda_graph, DpdaState const &dpda_state
             it != it_end;
             ++it)
     {
-        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
-        string const text(npda_node_data.GetFullDescription(0));
+        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).DataAs<NpdaNodeData>();
+        string const text(npda_node_data.FullDescription(0));
         Uint32 line_width_count = 0;
         for (string::const_iterator str_it = text.begin(), str_it_end = text.end();
                 str_it != str_it_end;
@@ -74,8 +74,8 @@ DpdaNodeData::DpdaNodeData (Graph const &npda_graph, DpdaState const &dpda_state
          it != it_end;
          ++it)
     {
-        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
-        m_description += npda_node_data.GetFullDescription(max_width);
+        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).DataAs<NpdaNodeData>();
+        m_description += npda_node_data.FullDescription(max_width);
         DpdaState::const_iterator next_it = it;
         ++next_it;
         if (next_it != it_end)
@@ -87,13 +87,13 @@ DpdaNodeData::DpdaNodeData (Graph const &npda_graph, DpdaState const &dpda_state
             it != it_end;
             ++it)
     {
-        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
+        NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).DataAs<NpdaNodeData>();
         m_is_start_state = m_is_start_state || npda_node_data.IsStartState();
         m_is_return_state = m_is_return_state || npda_node_data.IsReturnState();
     }
 }
 
-string DpdaNodeData::GetAsText (Uint32 node_index) const
+string DpdaNodeData::AsText (Uint32 node_index) const
 {
     return FORMAT("state " << node_index << ' ' << m_dpda_state << '\n' << m_description);
 }
@@ -106,7 +106,7 @@ Graph::Color DpdaNodeData::DotGraphColor (Uint32 node_index) const
         return Graph::Color(0xFCFFAE);
 }
 
-Uint32 DpdaNodeData::GetNodePeripheries (Uint32 node_index) const
+Uint32 DpdaNodeData::NodePeripheries (Uint32 node_index) const
 {
     return m_is_start_state ? 2 : 1;
 }
@@ -161,7 +161,7 @@ struct GraphContext
     Uint32 TransitionCount (DpdaState const &source_dpda_state)
     {
         assert(DpdaStateIsGenerated(source_dpda_state));
-        return m_dpda_graph.GetNode(DpdaStateIndex(source_dpda_state)).GetTransitionCount();
+        return m_dpda_graph.GetNode(DpdaStateIndex(source_dpda_state)).TransitionCount();
     }
 
 private:
@@ -171,7 +171,7 @@ private:
     Uint32 m_lalr_lookahead_count;
 }; // end of struct GraphContext
 
-string GetLookaheadSequenceString (PrimarySource const &primary_source, Graph::Transition::DataArray const &lookahead_sequence)
+string LookaheadSequenceString (PrimarySource const &primary_source, Graph::Transition::DataArray const &lookahead_sequence)
 {
     string ret;
     for (Graph::Transition::DataArray::const_iterator it = lookahead_sequence.begin(), it_end = lookahead_sequence.end();
@@ -210,9 +210,9 @@ public:
         m_flags(flags)
     {
         assert(graph_context.m_primary_source.m_nonterminal_list->size() >= 2);
-        assert(graph_context.m_primary_source.m_nonterminal_list->GetElement(0)->m_token_index == 0);
-        assert(graph_context.m_primary_source.m_nonterminal_list->GetElement(0)->GetText() == "none_");
-        m_lowest_nonterminal_index = graph_context.m_primary_source.m_nonterminal_list->GetElement(1)->m_token_index;
+        assert(graph_context.m_primary_source.m_nonterminal_list->Element(0)->m_token_index == 0);
+        assert(graph_context.m_primary_source.m_nonterminal_list->Element(0)->GetText() == "none_");
+        m_lowest_nonterminal_index = graph_context.m_primary_source.m_nonterminal_list->Element(1)->m_token_index;
 
         assert(m_lowest_nonterminal_index > 0x101); // 0x100 and 0x101 are END_ and ERROR_ respectively
         // start the TransitionIterator's major iterator pointing at the first
@@ -275,7 +275,7 @@ private:
         // if the minor iterator reached the end of the minor iteration,
         // then increment the major iterator (m_dpda_state_it) and set
         // the minor iterator to the beginning of the minor iteration.
-        if (m_transition_it == m_npda_graph.GetNode(*m_dpda_state_it).GetTransitionSetEnd())
+        if (m_transition_it == m_npda_graph.GetNode(*m_dpda_state_it).TransitionSetEnd())
         {
             // increment the major iterator and skip all empty DpdaState Graph::Nodes
             ++m_dpda_state_it;
@@ -285,13 +285,13 @@ private:
     void SkipEmpties ()
     {
         while (m_dpda_state_it != m_dpda_state.end() &&
-               m_npda_graph.GetNode(*m_dpda_state_it).GetTransitionSetBegin() == m_npda_graph.GetNode(*m_dpda_state_it).GetTransitionSetEnd())
+               m_npda_graph.GetNode(*m_dpda_state_it).TransitionSetBegin() == m_npda_graph.GetNode(*m_dpda_state_it).TransitionSetEnd())
         {
             ++m_dpda_state_it;
         }
         // set the minor iterator
         if (m_dpda_state_it != m_dpda_state.end())
-            m_transition_it = m_npda_graph.GetNode(*m_dpda_state_it).GetTransitionSetBegin();
+            m_transition_it = m_npda_graph.GetNode(*m_dpda_state_it).TransitionSetBegin();
     }
 
     Graph const &m_npda_graph;
@@ -549,8 +549,8 @@ private:
             }
             if (m_lookahead_nonterminal_token_index != none__)
                 stream << " (" << m_lookahead_nonterminal_token_index << ')';
-            NpdaNodeData const &top_state_npda_node_data = graph_context.m_npda_graph.GetNode(Top()).GetDataAs<NpdaNodeData>();
-            stream << " \"" << top_state_npda_node_data.GetOneLineDescription() << '\"' << endl;
+            NpdaNodeData const &top_state_npda_node_data = graph_context.m_npda_graph.GetNode(Top()).DataAs<NpdaNodeData>();
+            stream << " \"" << top_state_npda_node_data.OneLineDescription() << '\"' << endl;
             for (ShiftReferenceList::const_iterator it = m_shift_reference_list.begin(),
                                                     it_end = m_shift_reference_list.end();
                     it != it_end;
@@ -887,11 +887,11 @@ private:
             // only add a shift reference if there could be a conflict
             if (m_reduce_child != NULL)
             {
-                assert(graph_context.m_npda_graph.GetNode(target_state).GetHasData());
-                NpdaNodeData const &npda_node_data = graph_context.m_npda_graph.GetNode(target_state).GetDataAs<NpdaNodeData>();
-                ShiftReference shift_reference = m_shift_child->EnsureShiftReferenceExists(npda_node_data.GetAssociatedRule());
+                assert(graph_context.m_npda_graph.GetNode(target_state).HasData());
+                NpdaNodeData const &npda_node_data = graph_context.m_npda_graph.GetNode(target_state).DataAs<NpdaNodeData>();
+                ShiftReference shift_reference = m_shift_child->EnsureShiftReferenceExists(npda_node_data.AssociatedRule());
                 assert(&*shift_reference == m_shift_child);
-                shifted_branch->m_shift_reference_list.push_back(RuleShiftReferencePair(npda_node_data.GetAssociatedRule(), shift_reference));
+                shifted_branch->m_shift_reference_list.push_back(RuleShiftReferencePair(npda_node_data.AssociatedRule(), shift_reference));
             }
         }
         void ResolveShiftReduceConflicts ()
@@ -1098,7 +1098,7 @@ private:
         void Print (ostream &stream, GraphContext const &graph_context, Uint32 indent_level) const
         {
             stream << string(2*indent_level, ' ') << (m_parent != NULL ? "reduce " : "root ") << this
-                   << " \"" << m_reduction_rule->GetAsText() << '\"'
+                   << " \"" << m_reduction_rule->AsText() << '\"'
                    << ", precedence = " << m_reduction_rule->m_rule_precedence->m_precedence_level
                    << ", associativity = " << m_reduction_rule->m_rule_precedence->m_precedence_associativity
                    << ", rule index = " << m_reduction_rule->m_rule_index << endl;
@@ -1222,7 +1222,7 @@ private:
                     assert(shift_reference.InstanceIsValid());
                     stream << string(2*(indent_level+2), ' ') << rule;
                     if (rule != NULL)
-                        stream << " \"" << rule->GetAsText() << '\"'
+                        stream << " \"" << rule->AsText() << '\"'
                                << ", precedence = " << rule->m_rule_precedence->m_precedence_level
                                << ", associativity = " << rule->m_rule_precedence->m_precedence_associativity
                                << ", rule index = " << rule->m_rule_index
@@ -1249,7 +1249,7 @@ public:
         // create the tree root
         m_tree_root = new Action(TreeNode::ACTION);
         // create the initial branch with a rule stack level of 0
-        Branch *initial_branch = new Branch(start_nonterminal->GetNpdaGraphStartState());
+        Branch *initial_branch = new Branch(start_nonterminal->NpdaGraphStartState());
         // add the initial branch as a child to the tree
         m_tree_root->AddChildBranch(initial_branch);
         // add the initial branch to the action and parser branch lists
@@ -1472,7 +1472,7 @@ public:
     // runs the npda, with a sequence of lookahead tokens, until nothing more can be done without more input, or HasTrunk()
     void Run (GraphContext const &graph_context, Graph::Transition::DataArray lookahead_sequence)
     {
-//         cerr << __PRETTY_FUNCTION__ << ", lookahead_sequence: " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;
+//         cerr << __PRETTY_FUNCTION__ << ", lookahead_sequence: " << LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;
 
         assert(m_tree_root != NULL);
         assert(!m_parser_branch_list.IsEmpty());
@@ -1483,7 +1483,7 @@ public:
 
         while (true)
         {
-            DEBUG_CODE(cerr << endl << endl << "!!! iteration (lookahead_sequence: " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << ") !!!" << endl;)
+            DEBUG_CODE(cerr << endl << endl << "!!! iteration (lookahead_sequence: " << LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << ") !!!" << endl;)
 
             assert(!m_parser_branch_list.IsEmpty());
             assert(m_doomed_nonreturn_branch_list.IsEmpty());
@@ -1647,7 +1647,7 @@ public:
             {
                 Graph::Transition::DataArray lookahead_sequence(1, action.Data());
                 PerformShiftTransitions(graph_context, lookahead_sequence);
-                DEBUG_CODE(cerr << "*** shift " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << " ***" << endl;)
+                DEBUG_CODE(cerr << "*** shift " << LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << " ***" << endl;)
                 DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
                 DEBUG_CODE(cerr << "*** pruning all doomed branches ***" << endl;)
                 assert(!m_parser_branch_list.IsEmpty());
@@ -1724,11 +1724,11 @@ private:
         // that a branch should be cloned and added here.
         bool non_epsilon_transition_encountered = false;
         for (Graph::TransitionSet::const_iterator trans_it = (extra_state_stack.empty() ?
-                                                              graph_context.m_npda_graph.GetNode(source_branch.Top()).GetTransitionSetBegin() :
-                                                              graph_context.m_npda_graph.GetNode(extra_state_stack.back()).GetTransitionSetBegin()),
+                                                              graph_context.m_npda_graph.GetNode(source_branch.Top()).TransitionSetBegin() :
+                                                              graph_context.m_npda_graph.GetNode(extra_state_stack.back()).TransitionSetBegin()),
                                                   trans_it_end = (extra_state_stack.empty() ?
-                                                                  graph_context.m_npda_graph.GetNode(source_branch.Top()).GetTransitionSetEnd() :
-                                                                  graph_context.m_npda_graph.GetNode(extra_state_stack.back()).GetTransitionSetEnd());
+                                                                  graph_context.m_npda_graph.GetNode(source_branch.Top()).TransitionSetEnd() :
+                                                                  graph_context.m_npda_graph.GetNode(extra_state_stack.back()).TransitionSetEnd());
              trans_it != trans_it_end;
              ++trans_it)
         {
@@ -1781,8 +1781,8 @@ private:
             {
                 bool reduce_transitions_were_performed_on_this_branch = false;
                 Uint32 state = branch->Top();
-                for (Graph::TransitionSet::const_iterator it = graph_context.m_npda_graph.GetNode(state).GetTransitionSetBegin(),
-                                                          it_end = graph_context.m_npda_graph.GetNode(state).GetTransitionSetEnd();
+                for (Graph::TransitionSet::const_iterator it = graph_context.m_npda_graph.GetNode(state).TransitionSetBegin(),
+                                                          it_end = graph_context.m_npda_graph.GetNode(state).TransitionSetEnd();
                      it != it_end;
                      ++it)
                 {
@@ -1814,8 +1814,8 @@ private:
             {
                 bool reduce_transitions_were_performed_on_this_branch = false;
                 Uint32 state = branch->Top();
-                for (Graph::TransitionSet::const_iterator it = graph_context.m_npda_graph.GetNode(state).GetTransitionSetBegin(),
-                                                          it_end = graph_context.m_npda_graph.GetNode(state).GetTransitionSetEnd();
+                for (Graph::TransitionSet::const_iterator it = graph_context.m_npda_graph.GetNode(state).TransitionSetBegin(),
+                                                          it_end = graph_context.m_npda_graph.GetNode(state).TransitionSetEnd();
                      it != it_end;
                      ++it)
                 {
@@ -1880,8 +1880,8 @@ private:
             // all that match the current lookahead.
             Uint32 state = branch->Top();
             bool return_state_encountered = false;
-            for (Graph::TransitionSet::const_iterator it = graph_context.m_npda_graph.GetNode(state).GetTransitionSetBegin(),
-                                                      it_end = graph_context.m_npda_graph.GetNode(state).GetTransitionSetEnd();
+            for (Graph::TransitionSet::const_iterator it = graph_context.m_npda_graph.GetNode(state).TransitionSetBegin(),
+                                                      it_end = graph_context.m_npda_graph.GetNode(state).TransitionSetEnd();
                  it != it_end;
                  ++it)
             {
@@ -1962,7 +1962,7 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda);
 
 void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState const &source_dpda_state, Npda const &recurse_npda, ActionSpec const &default_action, Graph::Transition::DataArray &lookahead_sequence)
 {
-//     cerr << "Recurse(); lookahead_sequence: " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;
+//     cerr << "Recurse(); lookahead_sequence: " << LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;
 
     if (recurse_npda.CurrentDpdaState().empty())
         return;
@@ -2028,17 +2028,17 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                         break;
 
                     case AT_SHIFT:
-                        DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") adding shift (" << target_dpda_state << ") transition with lookaheads: " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;)
+                        DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") adding shift (" << target_dpda_state << ") transition with lookaheads: " << LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;)
                         graph_context.AddTransition(
                             source_dpda_state,
                             DpdaShiftTransition(
                                 lookahead_sequence,
-                                GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence),
+                                LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence),
                                 graph_context.DpdaStateIndex(target_dpda_state)));
                         break;
 
                     case AT_REDUCE:
-                        DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") adding reduce \"" << graph_context.m_primary_source.GetRule(action.Data())->GetAsText() << "\" transition with lookaheads: " << GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;)
+                        DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") adding reduce \"" << graph_context.m_primary_source.GetRule(action.Data())->AsText() << "\" transition with lookaheads: " << LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;)
                         assert(false && "i think the default action will necessarily preclude this case from ever happening");
                         break;
                 }
@@ -2141,15 +2141,15 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
             dpda_state,
             DpdaShiftTransition(
                 lookahead_sequence,
-                GetLookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence),
+                LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence),
                 graph_context.DpdaStateIndex(target_dpda_state)));
     }
 }
 
 void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph)
 {
-    assert(npda_graph.GetNodeCount() > 0 && "can't generate dpda_graph from an empty npda_graph");
-    assert(dpda_graph.GetNodeCount() == 0 && "must start with an empty dpda_graph");
+    assert(npda_graph.NodeCount() > 0 && "can't generate dpda_graph from an empty npda_graph");
+    assert(dpda_graph.NodeCount() == 0 && "must start with an empty dpda_graph");
 
     // graph_context contains the "globals" of this whole dpda-generating algorithm
     GraphContext graph_context(primary_source, npda_graph, dpda_graph);
@@ -2174,33 +2174,33 @@ void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph,
 
 void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_graph, ostream &stream)
 {
-    assert(primary_source.GetRuleCount() > 0);
-    Uint32 max_rule_index_width = FORMAT(primary_source.GetRuleCount()-1).length();
+    assert(primary_source.RuleCount() > 0);
+    Uint32 max_rule_index_width = FORMAT(primary_source.RuleCount()-1).length();
 
     stream << "//////////////////////////////////////////////////////////////////////////////" << endl
            << "// GRAMMAR" << endl
            << "//////////////////////////////////////////////////////////////////////////////" << endl
            << endl;
-    for (Uint32 i = 0; i < primary_source.GetRuleCount(); ++i)
+    for (Uint32 i = 0; i < primary_source.RuleCount(); ++i)
     {
         stream << "    rule ";
         stream.width(max_rule_index_width);
         stream.setf(ios_base::right);
-        stream << i << ": " << primary_source.GetRule(i)->GetAsText() << endl;
+        stream << i << ": " << primary_source.GetRule(i)->AsText() << endl;
     }
     stream << endl;
 
-    assert(npda_graph.GetNodeCount() > 0);
+    assert(npda_graph.NodeCount() > 0);
 
     stream << "//////////////////////////////////////////////////////////////////////////////" << endl
-           << "// DPDA STATE MACHINE - " << dpda_graph.GetNodeCount() << " STATES" << endl
+           << "// DPDA STATE MACHINE - " << dpda_graph.NodeCount() << " STATES" << endl
            << "//////////////////////////////////////////////////////////////////////////////" << endl
            << endl;
-    for (Uint32 i = 0; i < dpda_graph.GetNodeCount(); ++i)
+    for (Uint32 i = 0; i < dpda_graph.NodeCount(); ++i)
     {
         // print the state index and corresponding NPDA state indices
         Graph::Node const &dpda_node = dpda_graph.GetNode(i);
-        DpdaNodeData const &dpda_node_data = dpda_node.GetDataAs<DpdaNodeData>();
+        DpdaNodeData const &dpda_node_data = dpda_node.DataAs<DpdaNodeData>();
         stream << "State " << i << " - Corresponding NPDA states: " << dpda_node_data.GetDpdaState() << endl;
 
         // print the staged rules at this state
@@ -2209,10 +2209,10 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
              it != it_end;
              ++it)
         {
-            NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).GetDataAs<NpdaNodeData>();
+            NpdaNodeData const &npda_node_data = npda_graph.GetNode(*it).DataAs<NpdaNodeData>();
 
             stream << "    ";
-            string npda_node_description(npda_node_data.GetFullDescription());
+            string npda_node_description(npda_node_data.FullDescription());
             char const *s = npda_node_description.c_str();
             while (*s != '\0')
             {
@@ -2231,8 +2231,8 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
         // lookaheads so the transition printout can be all nice and justified
 
         // print the transitions
-        for (Graph::TransitionSet::const_iterator it = dpda_node.GetTransitionSetBegin(),
-                                                  it_end = dpda_node.GetTransitionSetEnd();
+        for (Graph::TransitionSet::const_iterator it = dpda_node.TransitionSetBegin(),
+                                                  it_end = dpda_node.TransitionSetEnd();
              it != it_end;
              ++it)
         {
@@ -2242,7 +2242,7 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
             stream << "   "; // 7 spaces, the 8th is '8' or ' ' depending
                                  // on if this is the default transition.
             // we want to indicate the default transition to avoid ambiguity.
-            if (it == dpda_node.GetTransitionSetBegin())
+            if (it == dpda_node.TransitionSetBegin())
                 stream << "*Default transition: ";
             else
                 stream << " ";
@@ -2250,7 +2250,7 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
             stream << transition.Label();
             // if it's a shift transition, the label doesn't have the ": SHIFT blah blah" part
             if (transition.Type() == TT_SHIFT)
-                stream << ": SHIFT " << GetLookaheadSequenceString(primary_source, Graph::Transition::DataArray(1, transition.Data(0))) << ", then push state " << transition.TargetIndex();
+                stream << ": SHIFT " << LookaheadSequenceString(primary_source, Graph::Transition::DataArray(1, transition.Data(0))) << ", then push state " << transition.TargetIndex();
             stream << endl;
         }
         stream << endl;

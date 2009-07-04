@@ -44,7 +44,7 @@ enum
     CT_COUNT
 };
 
-string const &GetConditionalTypeString (ConditionalType conditional_type);
+string const &ConditionalTypeString (ConditionalType conditional_type);
 
 // for pairing mask and conditional
 struct Conditional
@@ -69,7 +69,7 @@ enum BakedControlCharType
     BCCT_COUNT
 }; // end of enum BakedControlCharType
 
-string const &GetBakedControlCharTypeString (BakedControlCharType baked_control_char_type);
+string const &BakedControlCharTypeString (BakedControlCharType baked_control_char_type);
 
 } // end of namespace Regex
 } // end of namespace Barf

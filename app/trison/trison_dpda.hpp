@@ -27,12 +27,12 @@ struct DpdaNodeData : public Graph::Node::Data
 {
     DpdaNodeData (Graph const &npda_graph, DpdaState const &dpda_state);
 
-    virtual string GetAsText (Uint32 node_index) const;
+    virtual string AsText (Uint32 node_index) const;
     virtual Graph::Color DotGraphColor (Uint32 node_index) const;
-    virtual Uint32 GetNodePeripheries (Uint32 node_index) const;
+    virtual Uint32 NodePeripheries (Uint32 node_index) const;
 
     DpdaState const &GetDpdaState () const { return m_dpda_state; }
-    string const &GetDescription () const { return m_description; }
+    string const &Description () const { return m_description; }
 
 private:
 

@@ -41,42 +41,42 @@ int main (int argc, char **argv)
         g_options->Parse(argc, argv);
         g_options->ProcessSearchPath();
         
-        if (GetBppOptions().GetAbort())
+        if (BppOptions().Abort())
             return 1;
-        else if (GetBppOptions().GetIsHelpRequested())
+        else if (BppOptions().IsHelpRequested())
         {
-            GetBppOptions().PrintHelpMessage(cerr);
+            BppOptions().PrintHelpMessage(cerr);
             return 0;
         }
 
         EmitExecutionMessage("beginning execution");
         Preprocessor::Parser parser;
-        parser.ScannerDebugSpew(GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER));
-        parser.DebugSpew(GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
+        parser.ScannerDebugSpew(BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER));
+        parser.DebugSpew(BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
 
-        if (GetBppOptions().GetInputFilename() == "-" || GetBppOptions().GetInputFilename().empty())
+        if (BppOptions().InputFilename() == "-" || BppOptions().InputFilename().empty())
         {
             EmitExecutionMessage("using <stdin> for input");
             g_options->SetInputFilename("<stdin>");
-            parser.OpenUsingStream(&cin, GetBppOptions().GetInputFilename(), true);
+            parser.OpenUsingStream(&cin, BppOptions().InputFilename(), true);
         }
         else
         {
-            EmitExecutionMessage("opening file \"" + GetBppOptions().GetInputFilename() + "\" for input");
-            if (parser.OpenFile(GetBppOptions().GetInputFilename()))
+            EmitExecutionMessage("opening file \"" + BppOptions().InputFilename() + "\" for input");
+            if (parser.OpenFile(BppOptions().InputFilename()))
             {
-                EmitExecutionMessage("opened file \"" + GetBppOptions().GetInputFilename() + "\" successfully");
+                EmitExecutionMessage("opened file \"" + BppOptions().InputFilename() + "\" successfully");
             }
             else
             {
-                EmitError("file not found: \"" + GetBppOptions().GetInputFilename() + "\"");
+                EmitError("file not found: \"" + BppOptions().InputFilename() + "\"");
                 return 2;
             }
         }
 
         ostream *out = NULL;
         ofstream out_fstream;
-        if (GetBppOptions().GetOutputFilename() == "-" || GetBppOptions().GetOutputFilename().empty())
+        if (BppOptions().OutputFilename() == "-" || BppOptions().OutputFilename().empty())
         {
             EmitExecutionMessage("using <stdout> for output");
             g_options->SetOutputFilename("<stdout>");
@@ -84,15 +84,15 @@ int main (int argc, char **argv)
         }
         else
         {
-            EmitExecutionMessage("opening file \"" + GetBppOptions().GetOutputFilename() + "\" for output");
-            out_fstream.open(GetBppOptions().GetOutputFilename().c_str(), ofstream::out|ofstream::trunc);
+            EmitExecutionMessage("opening file \"" + BppOptions().OutputFilename() + "\" for output");
+            out_fstream.open(BppOptions().OutputFilename().c_str(), ofstream::out|ofstream::trunc);
             if (out_fstream.is_open())
             {
-                EmitExecutionMessage("opened file \"" + GetBppOptions().GetOutputFilename() + "\" successfully");
+                EmitExecutionMessage("opened file \"" + BppOptions().OutputFilename() + "\" successfully");
             }
             else
             {
-                EmitError("unable to open file \"" + GetBppOptions().GetOutputFilename() + "\" for writing");
+                EmitError("unable to open file \"" + BppOptions().OutputFilename() + "\" for writing");
                 return 3;
             }
             out = &out_fstream;
@@ -102,7 +102,7 @@ int main (int argc, char **argv)
         Ast::Base *parsed_tree_root = NULL;
         if (parser.Parse(&parsed_tree_root) != Preprocessor::Parser::PRC_SUCCESS)
         {
-            EmitError("general preprocessor parse error -- " + GetBppOptions().HowtoReportError(), FiLoc(GetBppOptions().GetInputFilename()));
+            EmitError("general preprocessor parse error -- " + BppOptions().HowtoReportError(), FiLoc(BppOptions().InputFilename()));
             return 4;
         }
 
@@ -112,12 +112,12 @@ int main (int argc, char **argv)
         Preprocessor::Body const *body = Dsc<Preprocessor::Body const *>(parsed_tree_root);
         assert(body != NULL);
 
-        if (GetBppOptions().GetIsVerbose(Bpp::Options::V_PRIMARY_SOURCE_AST))
+        if (BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_AST))
             body->Print(cerr);
 
         EmitExecutionMessage("preprocessing input and generating output");
-        Preprocessor::Textifier textifier(*out, GetBppOptions().GetOutputFilename());
-        textifier.SetGeneratesLineDirectives(false);
+        Preprocessor::Textifier textifier(*out, BppOptions().OutputFilename());
+        textifier.GeneratesLineDirectives(false);
         Preprocessor::SymbolTable symbol_table;
         body->Execute(textifier, symbol_table);
         if (g_errors_encountered)

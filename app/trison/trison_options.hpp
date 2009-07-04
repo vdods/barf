@@ -24,7 +24,7 @@ public:
     Options (string const &executable_filename);
 
     // output behavior option accessors
-    inline string GetDpdaStatesPath () const { return m_dpda_states_filename.empty() ? g_empty_string : GetOutputDirectory() + m_dpda_states_filename; }
+    inline string DpdaStatesPath () const { return m_dpda_states_filename.empty() ? g_empty_string : OutputDirectory() + m_dpda_states_filename; }
 
     // output behavior options
     void GenerateDpdaStatesFile (string const &dpda_states_filename);
@@ -43,6 +43,6 @@ private:
 
 } // end of namespace Trison
 
-inline Trison::Options const &GetTrisonOptions () { return *Dsc<Trison::Options const *>(&GetOptions()); }
+inline Trison::Options const &TrisonOptions () { return *Dsc<Trison::Options const *>(&GetOptions()); }
 
 #endif // !defined(TRISON_OPTIONS_HPP_)

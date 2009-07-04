@@ -18,10 +18,10 @@ namespace Barf {
 
 FiLoc const FiLoc::ms_invalid;
 
-string FiLoc::GetAsString () const
+string FiLoc::AsString () const
 {
     assert(this != &ms_invalid && "can't use FiLoc::ms_invalid in this manner");
-    assert(GetIsValid());
+    assert(IsValid());
 
     ostringstream out;
     out << m_filename;
@@ -30,13 +30,13 @@ string FiLoc::GetAsString () const
     return out.str();
 }
 
-string FiLoc::GetLineDirectiveString () const
+string FiLoc::LineDirectiveString () const
 {
     assert(this != &ms_invalid && "do not use this on a FiLoc without a line number");
-    assert(GetIsValid());
+    assert(IsValid());
 
     ostringstream out;
-    out << "#line " << m_line_number << " \"" << GetFilenamePortion(m_filename) << "\"";
+    out << "#line " << m_line_number << " \"" << FilenamePortion(m_filename) << "\"";
     return out.str();
 }
 
@@ -48,7 +48,7 @@ void FiLoc::IncrementLineNumber (Uint32 by_value)
 
 ostream &operator << (ostream &stream, FiLoc const &filoc)
 {
-    return stream << filoc.GetAsString();
+    return stream << filoc.AsString();
 }
 
 } // end of namespace Barf

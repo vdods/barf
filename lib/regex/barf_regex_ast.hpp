@@ -38,7 +38,7 @@ enum
     AST_COUNT
 };
 
-string const &GetAstTypeString (AstType ast_type);
+string const &AstTypeString (AstType ast_type);
 
 struct Atom : public Ast::Base
 {
@@ -66,12 +66,12 @@ struct Bound : public Ast::Base
         // either the lower bound <= the upper bound, or the special
         // case of the upper bound being -1 (indicating that there
         // is no upper bound).
-        assert(m_lower_bound <= m_upper_bound || GetHasNoUpperBound());
+        assert(m_lower_bound <= m_upper_bound || HasNoUpperBound());
     }
 
-    static Sint16 GetMaximumBoundValue () { return 255; }
+    static Sint16 MaximumBoundValue () { return 255; }
 
-    inline bool GetHasNoUpperBound () const { return m_upper_bound < 0; }
+    inline bool HasNoUpperBound () const { return m_upper_bound < 0; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct Bound
@@ -207,8 +207,8 @@ struct BracketCharSet : public Atom
             Negate();
     }
 
-    inline bool GetIsEmpty () const { return m_char_set.none(); }
-    bool GetIsCharInSet (Uint8 ch, bool is_case_sensitive) const;
+    inline bool IsEmpty () const { return m_char_set.none(); }
+    bool IsCharInSet (Uint8 ch, bool is_case_sensitive) const;
 
     void AddChar (Uint8 ch);
     void AddCharRange (Uint8 low_char, Uint8 high_char);

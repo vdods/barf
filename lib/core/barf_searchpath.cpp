@@ -17,7 +17,7 @@
 
 namespace Barf {
 
-string SearchPath::GetFilePath (string const &filename) const
+string SearchPath::FilePath (string const &filename) const
 {
     assert(!m_path_stack.empty() && "there must be at least one valid path");
     EmitExecutionMessage("looking for file \"" + filename + "\" in search path");
@@ -28,7 +28,7 @@ string SearchPath::GetFilePath (string const &filename) const
     {
         PathEntry const &path_entry = *it;
         string file_path(path_entry.GetPath() + filename);
-        if (GetIsValidFile(file_path))
+        if (IsValidFile(file_path))
         {
             EmitExecutionMessage("file \"" + filename + "\" was found in directory \"" + path_entry.GetPath() + "\"");
             return file_path;
@@ -52,7 +52,7 @@ SearchPath::AddPathReturnCode SearchPath::AddPath (string path, string const &se
         path += DIRECTORY_SLASH_CHAR;
         
     // only add the path if it actually exists.
-    if (!GetIsValidDirectory(path))
+    if (!IsValidDirectory(path))
         return ADD_PATH_FAILURE_INVALID;
     
     // add the path to the top of the stack and return success
@@ -60,7 +60,7 @@ SearchPath::AddPathReturnCode SearchPath::AddPath (string path, string const &se
     return ADD_PATH_SUCCESS;
 }
 
-string SearchPath::GetAsStringPrivate (string const &delimiter, SearchPath::Verbosity verbosity) const
+string SearchPath::AsString_Private (string const &delimiter, SearchPath::Verbosity verbosity) const
 {
     string path_string;
     for (PathEntryStack::const_reverse_iterator it = m_path_stack.rbegin(),
@@ -69,9 +69,9 @@ string SearchPath::GetAsStringPrivate (string const &delimiter, SearchPath::Verb
          ++it)
     {
         PathEntry const &path_entry = *it;
-        path_string += GetStringLiteral(path_entry.GetPath());
+        path_string += StringLiteral(path_entry.GetPath());
         if (verbosity == VERBOSE)
-            path_string += " (" + path_entry.GetSetBy() + ')';
+            path_string += " (" + path_entry.SetBy() + ')';
         // only add the delimiter if there's another path to iterate over.
         PathEntryStack::const_reverse_iterator next_it = it;
         ++next_it;

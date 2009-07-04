@@ -51,7 +51,7 @@ enum
     AST_COUNT
 };
 
-string const &GetAstTypeString (AstType ast_type);
+string const &AstTypeString (AstType ast_type);
 
 struct StartWithStateMachineDirective : public Ast::Directive
 {
@@ -142,7 +142,7 @@ struct StateMachine : public Ast::Base
         delete m_rule_list;
     }
 
-    Uint32 GetRuleCount () const { return m_rule_list->size(); }
+    Uint32 RuleCount () const { return m_rule_list->size(); }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class StateMachine
@@ -177,7 +177,7 @@ public:
         assert(m_state_machine_map != NULL);
     }
 
-    Uint32 GetRuleCount () const;
+    Uint32 RuleCount () const;
     Rule const *GetRule (Uint32 rule_index) const;
     CommonLang::TargetMap const &GetTargetMap () const
     {

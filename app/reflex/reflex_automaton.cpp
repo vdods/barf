@@ -55,13 +55,13 @@ void GenerateNfa (
 
 void GenerateNfa (PrimarySource const &primary_source, Automaton &nfa)
 {
-    assert(nfa.m_graph.GetNodeCount() == 0);
+    assert(nfa.m_graph.NodeCount() == 0);
     assert(nfa.m_start_state_index.empty());
 
     // pre-allocate all the accept handler state nodes, because the first
     // contiguous block of N nodes are reserved for accept states (where N
     // is the number of accept states).
-    for (Uint32 i = 0, accept_handler_count = primary_source.GetRuleCount();
+    for (Uint32 i = 0, accept_handler_count = primary_source.RuleCount();
          i < accept_handler_count;
          ++i)
     {
@@ -84,16 +84,16 @@ void GenerateNfa (PrimarySource const &primary_source, Automaton &nfa)
         GenerateNfa(*state_machine, nfa, next_accept_handler_index);
     }
 
-    assert(nfa.m_graph.GetNodeCount() >= primary_source.m_state_machine_map->size());
+    assert(nfa.m_graph.NodeCount() >= primary_source.m_state_machine_map->size());
     assert(nfa.m_start_state_index.size() == primary_source.m_state_machine_map->size());
 }
 
 void GenerateDfa (PrimarySource const &primary_source, Automaton const &nfa, Uint32 nfa_accept_state_count, Automaton &dfa)
 {
-    assert(dfa.m_graph.GetNodeCount() == 0);
+    assert(dfa.m_graph.NodeCount() == 0);
     assert(dfa.m_start_state_index.empty());
     Regex::GenerateDfa(nfa, nfa_accept_state_count, dfa);
-    assert(dfa.m_graph.GetNodeCount() >= primary_source.m_state_machine_map->size());
+    assert(dfa.m_graph.NodeCount() >= primary_source.m_state_machine_map->size());
     assert(dfa.m_start_state_index.size() == primary_source.m_state_machine_map->size());
 }
 

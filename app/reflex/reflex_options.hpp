@@ -33,6 +33,6 @@ private:
 
 } // end of namespace Reflex
 
-inline Reflex::Options const &GetReflexOptions () { return *Dsc<Reflex::Options const *>(&GetOptions()); }
+inline Reflex::Options const &ReflexOptions () { return *Dsc<Reflex::Options const *>(&GetOptions()); }
 
 #endif // !defined(REFLEX_OPTIONS_HPP_)

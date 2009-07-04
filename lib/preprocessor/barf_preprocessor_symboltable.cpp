@@ -34,8 +34,8 @@ void ScalarSymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 in
     stream << Tabs(indent_level) << m_id << " (scalar)" << endl;
     assert(m_body != NULL);
     assert(m_body->size() == 1);
-    assert(m_body->GetElement(0) != NULL);
-    m_body->GetElement(0)->Print(stream, Stringify, indent_level+1);
+    assert(m_body->Element(0) != NULL);
+    m_body->Element(0)->Print(stream, Stringify, indent_level+1);
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -58,9 +58,9 @@ void ArraySymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
         Body const *body = m_body_vector[i];
         assert(body != NULL);
         assert(body->size() == 1);
-        assert(body->GetElement(0) != NULL);
+        assert(body->Element(0) != NULL);
         stream << Tabs(indent_level+1) << "element " << i << endl;
-        body->GetElement(0)->Print(stream, Stringify, indent_level+2);
+        body->Element(0)->Print(stream, Stringify, indent_level+2);
     }
     stream << Tabs(indent_level) << '}' << endl;
 }
@@ -89,9 +89,9 @@ void MapSymbol::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
         Body const *body = it->second;
         assert(body != NULL);
         assert(body->size() == 1);
-        assert(body->GetElement(0) != NULL);
+        assert(body->Element(0) != NULL);
         stream << Tabs(indent_level+1) << "element \"" << key << '\"' << endl;
-        body->GetElement(0)->Print(stream, Stringify, indent_level+2);
+        body->Element(0)->Print(stream, Stringify, indent_level+2);
     }
     stream << Tabs(indent_level) << '}' << endl;
 }
@@ -225,7 +225,7 @@ void SymbolTable::Print (ostream &stream) const
     {
         Symbol const *symbol = it->second;
         assert(symbol != NULL);
-        symbol->Print(stream, GetAstTypeString, 1);
+        symbol->Print(stream, AstTypeString, 1);
     }
     stream << '}' << endl;
 }

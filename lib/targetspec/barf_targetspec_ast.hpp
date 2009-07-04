@@ -74,7 +74,7 @@ enum
     AST_COUNT
 };
 
-string const &GetAstTypeString (AstType ast_type);
+string const &AstTypeString (AstType ast_type);
 
 struct AddCodespec : public Ast::Directive
 {
@@ -118,8 +118,8 @@ struct AddDirective : public Ast::Directive
                m_param_type == Ast::AST_NONE);
     }
 
-    virtual bool GetIsRequired () const { return false; }
-    virtual Ast::TextBase const *GetDefaultValue () const { return NULL; }
+    virtual bool IsRequired () const { return false; }
+    virtual Ast::TextBase const *DefaultValue () const { return NULL; }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class AddDirective
@@ -136,7 +136,7 @@ struct AddRequiredDirective : public AddDirective
         AddDirective(directive_to_add_id, param_type, "%add_required_directive")
     { }
 
-    virtual bool GetIsRequired () const { return true; }
+    virtual bool IsRequired () const { return true; }
 }; // end of class AddRequiredDirective
 
 struct AddOptionalDirective : public AddDirective
@@ -149,7 +149,7 @@ struct AddOptionalDirective : public AddDirective
         m_default_value(default_value)
     { }
 
-    virtual Ast::TextBase const *GetDefaultValue () const { return m_default_value; }
+    virtual Ast::TextBase const *DefaultValue () const { return m_default_value; }
 }; // end of class AddOptionalDirective
 
 struct ParamType : public Ast::Base
@@ -168,7 +168,7 @@ struct ParamType : public Ast::Base
                m_param_type == Ast::AST_NONE);
     }
 
-    static string const &GetParamTypeString (AstType ast_type);
+    static string const &ParamTypeString (AstType ast_type);
 }; // end of class ParamType
 
 struct Specification : public Ast::Base

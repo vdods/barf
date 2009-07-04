@@ -17,7 +17,7 @@
 namespace Barf {
 namespace Regex {
 
-string const &GetAstTypeString (AstType ast_type)
+string const &AstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_COUNT-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
@@ -34,7 +34,7 @@ string const &GetAstTypeString (AstType ast_type)
 
     assert(ast_type < AST_COUNT);
     if (ast_type < Ast::AST_START_CUSTOM_TYPES_HERE_)
-        return Ast::GetAstTypeString(ast_type);
+        return Ast::AstTypeString(ast_type);
     else
         return s_ast_type_string[ast_type-Ast::AST_START_CUSTOM_TYPES_HERE_];
 }
@@ -88,7 +88,7 @@ void Branch::AddBound (Bound *bound)
 {
     assert(size() > 0);
     assert(bound != NULL);
-    Piece *last_piece = GetElement(size()-1);
+    Piece *last_piece = Element(size()-1);
     last_piece->ReplaceBound(bound);
 }
 
@@ -119,7 +119,7 @@ Atom *Char::Escaped ()
         // escaping '0' should not provide a literal '\0'.
         case '0': break;
         // otherwise, do normal char escaping (e.g. '\t', '\n', etc).
-        default : m_char = GetEscapedChar(m_char); break;
+        default : m_char = EscapedChar(m_char); break;
     }
 
     return escaped;
@@ -132,13 +132,13 @@ void Char::EscapeInsideBracketExpression ()
         // escaping '0' should not provide a literal '\0'.
         case '0': break;
         // otherwise, do normal char escaping (e.g. '\t', '\n', etc).
-        default : m_char = GetEscapedChar(m_char); break;
+        default : m_char = EscapedChar(m_char); break;
     }
 }
 
 void Char::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetCharLiteral(m_char) << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << CharLiteral(m_char) << endl;
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -147,7 +147,7 @@ void Char::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
 
 void ConditionalChar::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetConditionalTypeString(m_conditional_type) << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << ConditionalTypeString(m_conditional_type) << endl;
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -156,14 +156,14 @@ void ConditionalChar::Print (ostream &stream, StringifyAstType Stringify, Uint32
 
 void BakedControlChar::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
-    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << GetBakedControlCharTypeString(m_baked_control_char_type) << endl;
+    stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << BakedControlCharTypeString(m_baked_control_char_type) << endl;
 }
 
 // ///////////////////////////////////////////////////////////////////////////
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-bool BracketCharSet::GetIsCharInSet (Uint8 ch, bool is_case_sensitive) const
+bool BracketCharSet::IsCharInSet (Uint8 ch, bool is_case_sensitive) const
 {
     return m_char_set.test(ch)
            ||
@@ -296,11 +296,11 @@ void BracketCharSet::Print (ostream &stream, StringifyAstType Stringify, Uint32 
 
             assert(c0 < 256 && c1 < 256);
             if (c0 == c1)
-                stream << GetCharLiteral(c0, false);
+                stream << CharLiteral(c0, false);
             else if (c0+1 == c1)
-                stream << GetCharLiteral(c0, false) << GetCharLiteral(c1, false);
+                stream << CharLiteral(c0, false) << CharLiteral(c1, false);
             else
-                stream << GetCharLiteral(c0, false) << '-' << GetCharLiteral(c1, false);
+                stream << CharLiteral(c0, false) << '-' << CharLiteral(c1, false);
 
             c0 = c1;
         }
@@ -316,7 +316,7 @@ void BracketCharSet::Print (ostream &stream, StringifyAstType Stringify, Uint32 
 
 void RegularExpression::Print (ostream &stream, Uint32 indent_level) const
 {
-    Print(stream, GetAstTypeString, indent_level);
+    Print(stream, AstTypeString, indent_level);
 }
 
 void RegularExpression::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -331,7 +331,7 @@ void RegularExpression::Print (ostream &stream, StringifyAstType Stringify, Uint
 
 void RegularExpressionMap::Print (ostream &stream, Uint32 indent_level) const
 {
-    Ast::AstMap<RegularExpression>::Print(stream, GetAstTypeString, indent_level);
+    Ast::AstMap<RegularExpression>::Print(stream, AstTypeString, indent_level);
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -380,7 +380,7 @@ bool NodesAreEqual (Ast::Base const *left, Ast::Base const *right)
                 return false;
             }
             for (Branch::size_type i = 0; i < left_branch->size(); ++i)
-                if (!NodesAreEqual(left_branch->GetElement(i), right_branch->GetElement(i)))
+                if (!NodesAreEqual(left_branch->Element(i), right_branch->Element(i)))
                     return false;
             return true;
         }
@@ -413,7 +413,7 @@ bool NodesAreEqual (Ast::Base const *left, Ast::Base const *right)
             if (left_regex->size() != right_regex->size())
                 return false;
             for (Branch::size_type i = 0; i < left_regex->size(); ++i)
-                if (!NodesAreEqual(left_regex->GetElement(i), right_regex->GetElement(i)))
+                if (!NodesAreEqual(left_regex->Element(i), right_regex->Element(i)))
                     return false;
             return true;
         }

@@ -46,7 +46,7 @@ enum
     AST_COUNT
 };
 
-string const &GetAstTypeString (AstType ast_type);
+string const &AstTypeString (AstType ast_type);
 
 struct TypeMap : public Ast::AstMap<Ast::String>
 {
@@ -82,7 +82,7 @@ struct Terminal : public TokenId
     }
     Terminal (Ast::Char const *ch)
         :
-        TokenId(GetCharLiteral(ch->GetChar()), (Uint32)ch->GetChar(), ch->GetFiLoc(), AST_TERMINAL),
+        TokenId(CharLiteral(ch->GetChar()), (Uint32)ch->GetChar(), ch->GetFiLoc(), AST_TERMINAL),
         m_is_id(false),
         m_char(ch->GetChar()),
         m_assigned_type_map(NULL)
@@ -90,7 +90,7 @@ struct Terminal : public TokenId
         delete ch;
     }
 
-    TypeMap const *GetAssignedTypeMap () const { assert(m_assigned_type_map != NULL); return m_assigned_type_map; }
+    TypeMap const *AssignedTypeMap () const { assert(m_assigned_type_map != NULL); return m_assigned_type_map; }
 
     void SetAssignedTypeMap (TypeMap const *assigned_type_map);
 
@@ -154,7 +154,7 @@ struct Rule : public Ast::Base
         assert(m_rule_precedence != NULL);
     }
 
-    string GetAsText (Uint32 stage = UINT32_UPPER_BOUND) const;
+    string AsText (Uint32 stage = UINT32_UPPER_BOUND) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct Rule
@@ -187,12 +187,12 @@ struct Nonterminal : public TokenId
     }
 
     // TODO: these shouldn't be in here, they should be in some separate thing associated with the npda/dpda graphs
-    bool GetIsNpdaGraphed () const { return m_npda_graph_start_state != UINT32_UPPER_BOUND; }
-    Uint32 GetNpdaGraphStartState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_start_state; }
-    Uint32 GetNpdaGraphHeadState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_head_state; }
-    Uint32 GetNpdaGraphReturnState () const { assert(GetIsNpdaGraphed()); return m_npda_graph_return_state; }
-    bool GetIsDpdaGraphed () const { return m_dpda_graph_start_state != UINT32_UPPER_BOUND; }
-    Uint32 GetDpdaGraphStartState () const { assert(GetIsDpdaGraphed()); return m_dpda_graph_start_state; }
+    bool IsNpdaGraphed () const { return m_npda_graph_start_state != UINT32_UPPER_BOUND; }
+    Uint32 NpdaGraphStartState () const { assert(IsNpdaGraphed()); return m_npda_graph_start_state; }
+    Uint32 NpdaGraphHeadState () const { assert(IsNpdaGraphed()); return m_npda_graph_head_state; }
+    Uint32 NpdaGraphReturnState () const { assert(IsNpdaGraphed()); return m_npda_graph_return_state; }
+    bool IsDpdaGraphed () const { return m_dpda_graph_start_state != UINT32_UPPER_BOUND; }
+    Uint32 DpdaGraphStartState () const { assert(IsDpdaGraphed()); return m_dpda_graph_start_state; }
 
     void SetRuleList (RuleList *rule_list);
     void SetNpdaGraphStates (Uint32 npda_graph_start_state, Uint32 npda_graph_head_state, Uint32 npda_graph_return_state) const;
@@ -217,7 +217,7 @@ struct NonterminalList : public Ast::AstList<Nonterminal>
 {
     NonterminalList () : Ast::AstList<Nonterminal>(AST_NONTERMINAL_LIST) { }
 
-    Uint32 GetRuleCount () const;
+    Uint32 RuleCount () const;
 }; // end of struct NonterminalList
 
 struct NonterminalMap : public Ast::AstMap<Nonterminal>
@@ -307,25 +307,25 @@ struct PrimarySource : public Ast::Base
 
         for (Uint32 i = 0; i < m_terminal_list->size(); ++i)
         {
-            Terminal const *terminal = m_terminal_list->GetElement(i);
+            Terminal const *terminal = m_terminal_list->Element(i);
             assert(terminal != NULL);
             assert(m_token_id_map.find(terminal->m_token_index) == m_token_id_map.end());
             m_token_id_map[terminal->m_token_index] = terminal->GetText();
         }
         for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
         {
-            Nonterminal const *nonterminal = m_nonterminal_list->GetElement(i);
+            Nonterminal const *nonterminal = m_nonterminal_list->Element(i);
             assert(nonterminal != NULL);
             assert(m_token_id_map.find(nonterminal->m_token_index) == m_token_id_map.end());
             m_token_id_map[nonterminal->m_token_index] = nonterminal->GetText();
         }
     }
 
-    Uint32 GetRuleCount () const { return m_nonterminal_list->GetRuleCount(); }
+    Uint32 RuleCount () const { return m_nonterminal_list->RuleCount(); }
     Rule const *GetRule (Uint32 rule_index) const;
-    Uint32 GetRuleTokenCount () const;
+    Uint32 RuleTokenCount () const;
     RuleToken const *GetRuleToken (Uint32 rule_token_index) const;
-    string const &GetAssignedType (string const &token_id, string const &target_id) const;
+    string const &AssignedType (string const &token_id, string const &target_id) const;
     string GetTokenId (Uint32 token_index) const;
     CommonLang::TargetMap const &GetTargetMap () const
     {

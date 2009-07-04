@@ -39,26 +39,26 @@ public:
         assert(m_line_number > 0);
     }
 
-    inline bool GetIsValid () const
+    inline bool IsValid () const
     {
         return !m_filename.empty();
     }
-    inline bool GetHasLineNumber () const
+    inline bool HasLineNumber () const
     {
         return !m_filename.empty() && m_line_number > 0;
     }
-    inline string const &GetFilename () const
+    inline string const &Filename () const
     {
         assert(this != &ms_invalid && "can't use FiLoc::ms_invalid in this manner");
         return m_filename;
     }
-    inline Uint32 GetLineNumber () const
+    inline Uint32 LineNumber () const
     {
         assert(this != &ms_invalid && "can't use FiLoc::ms_invalid in this manner");
         return m_line_number;
     }
-    string GetAsString () const;
-    string GetLineDirectiveString () const;
+    string AsString () const;
+    string LineDirectiveString () const;
 
     inline void SetFilename (string const &filename)
     {

@@ -31,33 +31,33 @@ void OptionsBase::SetInputFilename (string const &input_filename)
     m_input_filename = input_filename;
 }
 
-void OptionsBase::TreatWarningsAsErrors ()
+void OptionsBase::TreatWarningsAsErrors_Enable ()
 {
     m_treat_warnings_as_errors = true;
 }
 
-void OptionsBase::DontTreatWarningsAsErrors ()
+void OptionsBase::TreatWarningsAsErrors_Disable ()
 {
     m_treat_warnings_as_errors = false;
 }
 
-void OptionsBase::HaltOnFirstError ()
+void OptionsBase::HaltOnFirstError_Enable ()
 {
     m_halt_on_first_error = true;
 }
 
-void OptionsBase::DontHaltOnFirstError ()
+void OptionsBase::HaltOnFirstError_Disable ()
 {
     m_halt_on_first_error = false;
 }
 
 #if DEBUG
-void OptionsBase::AssertOnError ()
+void OptionsBase::AssertOnError_Enable ()
 {
     m_assert_on_error = true;
 }
 
-void OptionsBase::DontAssertOnError ()
+void OptionsBase::AssertOnError_Disable ()
 {
     m_assert_on_error = false;
 }
@@ -86,12 +86,12 @@ void OptionsBase::SetOutputDirectory (string const &output_directory)
         m_output_directory += DIRECTORY_SLASH_CHAR;
 }
 
-void OptionsBase::WithLineDirectives ()
+void OptionsBase::WithLineDirectives_Enable ()
 {
     m_with_line_directives = true;
 }
 
-void OptionsBase::WithoutLineDirectives ()
+void OptionsBase::WithLineDirectives_Disable ()
 {
     m_with_line_directives = false;
 }
@@ -101,7 +101,7 @@ void OptionsBase::GenerateNaDotGraph (string const &na_dot_graph_filename)
     m_na_dot_graph_filename = na_dot_graph_filename;
 }
 
-void OptionsBase::DontGenerateNaDotGraph ()
+void OptionsBase::GenerateNaDotGraph_Disable ()
 {
     m_na_dot_graph_filename.clear();
 }
@@ -111,17 +111,17 @@ void OptionsBase::GenerateDaDotGraph (string const &da_dot_graph_filename)
     m_da_dot_graph_filename = da_dot_graph_filename;
 }
 
-void OptionsBase::DontGenerateDaDotGraph ()
+void OptionsBase::GenerateDaDotGraph_Disable ()
 {
     m_da_dot_graph_filename.clear();
 }
 
-void OptionsBase::Predefine (string const &arg)
+void OptionsBase::AddPredefine (string const &arg)
 {
     m_predefine.push_back(arg);
 }
 
-void OptionsBase::Postdefine (string const &arg)
+void OptionsBase::AddPostdefine (string const &arg)
 {
     m_postdefine.push_back(arg);
 }
@@ -180,7 +180,7 @@ void OptionsBase::ProcessSearchPath ()
         AddSearchPath(it->m_search_path, it->m_set_by, it->m_ignore_add_failure);
     }
 
-    if (m_search_path.GetIsEmpty())
+    if (m_search_path.IsEmpty())
         m_search_path.AddPath(string(".") + DIRECTORY_SLASH_CHAR, "set as default targets search path");
 }
 
@@ -193,12 +193,12 @@ void OptionsBase::ReportErrorAndSetAbortFlag (string const &error_message)
 
 void OptionsBase::AddSearchPath (string const &search_path, string const &set_by, bool ignore_add_failure)
 {
-    EmitExecutionMessage("attempting to add " + GetStringLiteral(search_path) + " (" + set_by + ") to targets search path");
+    EmitExecutionMessage("attempting to add " + StringLiteral(search_path) + " (" + set_by + ") to targets search path");
     
     switch (m_search_path.AddPath(search_path, set_by))
     {
         case SearchPath::ADD_PATH_SUCCESS:
-            EmitExecutionMessage("successfully added " + GetStringLiteral(search_path) + " (" + set_by + ") to targets search path");
+            EmitExecutionMessage("successfully added " + StringLiteral(search_path) + " (" + set_by + ") to targets search path");
             break;
 
         case SearchPath::ADD_PATH_FAILURE_EMPTY:
@@ -210,9 +210,9 @@ void OptionsBase::AddSearchPath (string const &search_path, string const &set_by
             
         case SearchPath::ADD_PATH_FAILURE_INVALID:
             if (!ignore_add_failure)
-                ReportErrorAndSetAbortFlag("invalid targets search path " + GetStringLiteral(search_path) + " (" + set_by + ')');
+                ReportErrorAndSetAbortFlag("invalid targets search path " + StringLiteral(search_path) + " (" + set_by + ')');
             else
-                EmitExecutionMessage("invalid targets search path " + GetStringLiteral(search_path) + " (" + set_by + ')');
+                EmitExecutionMessage("invalid targets search path " + StringLiteral(search_path) + " (" + set_by + ')');
             break;
 
         default:

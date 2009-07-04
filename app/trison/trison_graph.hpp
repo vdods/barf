@@ -34,7 +34,7 @@ enum
     TT_COUNT
 };
 
-string const &GetTransitionTypeString (TransitionType transition_type);
+string const &TransitionTypeString (TransitionType transition_type);
 
 // ///////////////////////////////////////////////////////////////////////////
 // NPDA transitions

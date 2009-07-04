@@ -15,7 +15,7 @@
 namespace Barf {
 namespace Targetspec {
 
-string const &GetAstTypeString (AstType ast_type)
+string const &AstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_COUNT-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
@@ -30,14 +30,14 @@ string const &GetAstTypeString (AstType ast_type)
 
     assert(ast_type < AST_COUNT);
     if (ast_type < Ast::AST_START_CUSTOM_TYPES_HERE_)
-        return Ast::GetAstTypeString(ast_type);
+        return Ast::AstTypeString(ast_type);
     else
         return s_ast_type_string[ast_type-Ast::AST_START_CUSTOM_TYPES_HERE_];
 }
 
 void Specification::Print (ostream &stream, Uint32 indent_level) const
 {
-    Print(stream, GetAstTypeString, indent_level);
+    Print(stream, AstTypeString, indent_level);
 }
 
 void Specification::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -51,9 +51,9 @@ void Specification::Print (ostream &stream, StringifyAstType Stringify, Uint32 i
 void AddDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
-    stream << Tabs(indent_level+1) << (GetIsRequired() ? "required" : "optional") << endl;
+    stream << Tabs(indent_level+1) << (IsRequired() ? "required" : "optional") << endl;
     m_directive_to_add_id->Print(stream, Stringify, indent_level+1);
-    stream << Tabs(indent_level+1) << ParamType::GetParamTypeString(m_param_type) << endl;
+    stream << Tabs(indent_level+1) << ParamType::ParamTypeString(m_param_type) << endl;
 }
 
 void AddCodespec::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
@@ -63,7 +63,7 @@ void AddCodespec::Print (ostream &stream, StringifyAstType Stringify, Uint32 ind
     m_filename_directive_id->Print(stream, Stringify, indent_level+1);
 }
 
-string const &ParamType::GetParamTypeString (AstType ast_type)
+string const &ParamType::ParamTypeString (AstType ast_type)
 {
     static string const s_id("%identifier");
     static string const s_string("%string");

@@ -23,16 +23,16 @@ public:
 
     enum AddPathReturnCode { ADD_PATH_SUCCESS, ADD_PATH_FAILURE_EMPTY, ADD_PATH_FAILURE_INVALID };
 
-    inline bool GetIsEmpty () const { return m_path_stack.empty(); }
+    inline bool IsEmpty () const { return m_path_stack.empty(); }
     // returns a string containing the search path directories, from highest
     // search priority to lowest, each delimited by the given delimiter.
-    inline string GetAsString (string const &delimiter = ", ") const { return GetAsStringPrivate(delimiter, NON_VERBOSE); }
+    inline string AsString (string const &delimiter = ", ") const { return AsString_Private(delimiter, NON_VERBOSE); }
     // returns a string containing the search path directories, from highest
     // search priority to lowest, each followed by their "set by" strings, 
     // each delimited by the given delimiter.
-    string GetAsVerboseString (string const &delimiter = "\n") const { return GetAsStringPrivate(delimiter, VERBOSE); }
+    string AsVerboseString (string const &delimiter = "\n") const { return AsString_Private(delimiter, VERBOSE); }
     // returns the full path to the matching file, or empty if none matched
-    string GetFilePath (string const &filename) const;
+    string FilePath (string const &filename) const;
 
     // add another path to the top of the path stack (with higher priority).
     AddPathReturnCode AddPath (string path, string const &set_by);
@@ -41,7 +41,7 @@ private:
 
     enum Verbosity { NON_VERBOSE, VERBOSE };
 
-    string GetAsStringPrivate (string const &delimiter, Verbosity verbosity) const;
+    string AsString_Private (string const &delimiter, Verbosity verbosity) const;
 
     class PathEntry
     {
@@ -57,7 +57,7 @@ private:
         }
 
         string const &GetPath () const { return m_path; }
-        string const &GetSetBy () const { return m_set_by; }
+        string const &SetBy () const { return m_set_by; }
 
     private:
 

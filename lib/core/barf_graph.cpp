@@ -47,19 +47,19 @@ void Graph::AddTransition (Uint32 source_index, Transition const &transition)
 
 void Graph::PrintDotGraph (ostream &stream, string const &graph_name) const
 {
-    stream << "digraph " << GetStringLiteral(graph_name) << " {" << endl
+    stream << "digraph " << StringLiteral(graph_name) << " {" << endl
            << "    fontname=courier;" << endl
            << "    subgraph cluster {" << endl
-           << "        label=" << GetStringLiteral(graph_name) << ";" << endl;
+           << "        label=" << StringLiteral(graph_name) << ";" << endl;
 
     for (Uint32 i = 0; i < m_node_array.size(); ++i)
     {
         Node const &node = m_node_array[i];
-        if (node.GetHasData())
-            stream << "        node [label=" << GetStringLiteral(node.GetData().GetAsText(i))
+        if (node.HasData())
+            stream << "        node [label=" << StringLiteral(node.GetData().AsText(i))
                    << ", style=filled, fillcolor=\"#" << node.GetData().DotGraphColor(i)
                    << "\", shape=box, fontname=courier, peripheries="
-                   << node.GetData().GetNodePeripheries(i) << "];" << endl;
+                   << node.GetData().NodePeripheries(i) << "];" << endl;
         else
             stream << "        node [label=\"\\N\", style=solid, shape=box, fontname=courier, peripheries=1];" << endl;
         stream << "        " << i << endl;
@@ -71,14 +71,14 @@ void Graph::PrintDotGraph (ostream &stream, string const &graph_name) const
     {
         Node const &node = m_node_array[i];
 
-        for (TransitionSet::const_iterator it = node.GetTransitionSetBegin(),
-                                           it_end = node.GetTransitionSetEnd();
+        for (TransitionSet::const_iterator it = node.TransitionSetBegin(),
+                                           it_end = node.TransitionSetEnd();
              it != it_end;
              ++it)
         {
             Transition const &transition = *it;
 
-            stream << "        edge [label=" << GetStringLiteral(transition.Label())
+            stream << "        edge [label=" << StringLiteral(transition.Label())
                    << ", fontname=courier, color=\"#" << transition.DotGraphColor()
                    << "\", fontcolor=\"#" << transition.DotGraphColor()
                    << "\", dir=" << (transition.HasTarget() ? "forward" : "none") << "];" << endl;

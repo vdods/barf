@@ -29,9 +29,9 @@ public:
     InputBase ();
     ~InputBase ();
 
-    bool GetIsOpen () const;
+    bool IsOpen () const;
     FiLoc const &GetFiLoc () const { return m_filoc; }
-    string const &GetInputName () const { return m_filoc.GetFilename(); }
+    string const &InputName () const { return m_filoc.Filename(); }
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);

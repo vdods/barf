@@ -29,7 +29,7 @@ void Conditional::Execute (Textifier &textifier, SymbolTable &symbol_table) cons
 {
     assert(m_if_body != NULL);
 
-    if (m_if_expression->GetIntegerValue(symbol_table) != 0)
+    if (m_if_expression->IntegerValue(symbol_table) != 0)
         m_if_body->Execute(textifier, symbol_table);
     else if (m_else_body != NULL)
         m_else_body->Execute(textifier, symbol_table);
@@ -71,7 +71,7 @@ void DefineArrayElement::Execute (Textifier &textifier, SymbolTable &symbol_tabl
     assert(m_body != NULL);
 
     Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
-    if (symbol != NULL && !symbol->GetIsArraySymbol())
+    if (symbol != NULL && !symbol->IsArraySymbol())
     {
         EmitError("macro \"" + m_id->GetText() + "\" is not an array", m_id->GetFiLoc());
         return;
@@ -94,7 +94,7 @@ void DefineMapElement::Execute (Textifier &textifier, SymbolTable &symbol_table)
     assert(m_body != NULL);
 
     Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
-    if (symbol != NULL && !symbol->GetIsMapSymbol())
+    if (symbol != NULL && !symbol->IsMapSymbol())
     {
         EmitError("macro \"" + m_id->GetText() + "\" is not a map", m_id->GetFiLoc());
         return;
@@ -141,7 +141,7 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         symbol->SetScalarBody(m_iterator_integer_body);
     }
 
-    Sint32 iteration_count = m_iteration_count_expression->GetIntegerValue(symbol_table);
+    Sint32 iteration_count = m_iteration_count_expression->IntegerValue(symbol_table);
     if (iteration_count < 0)
     {
         ostringstream out;
@@ -150,8 +150,8 @@ void Loop::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         return;
     }
     for (m_iterator_integer->SetValue(0);
-         m_iterator_integer->GetIntegerValue(symbol_table) < iteration_count;
-         m_iterator_integer->SetValue(m_iterator_integer->GetIntegerValue(symbol_table)+1))
+         m_iterator_integer->IntegerValue(symbol_table) < iteration_count;
+         m_iterator_integer->SetValue(m_iterator_integer->IntegerValue(symbol_table)+1))
     {
         m_body->Execute(textifier, symbol_table);
     }
@@ -172,7 +172,7 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
             EmitError("undefined macro \"" + m_map_id->GetText() + "\"", m_map_id->GetFiLoc());
             return;
         }
-        if (!symbol->GetIsMapSymbol())
+        if (!symbol->IsMapSymbol())
         {
             EmitError("macro \"" + m_map_id->GetText() + "\" is not a map", m_map_id->GetFiLoc());
             return;
@@ -200,8 +200,8 @@ void ForEach::Execute (Textifier &textifier, SymbolTable &symbol_table) const
         symbol->SetScalarBody(m_key_text_body);
     }
 
-    for (MapSymbol::BodyMap::const_iterator it = map_symbol->GetBegin(),
-                                            it_end = map_symbol->GetEnd();
+    for (MapSymbol::BodyMap::const_iterator it = map_symbol->Begin(),
+                                            it_end = map_symbol->End();
          it != it_end;
          ++it)
     {
@@ -217,12 +217,12 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
     if (m_include_body_root == NULL)
     {
-        string filename_expression(m_include_filename_expression->GetTextValue(symbol_table));
+        string filename_expression(m_include_filename_expression->TextValue(symbol_table));
         EmitExecutionMessage("preprocessor encountered include(\"" + filename_expression + "\") directive");
         Parser parser;
         // figure out the pathname from the targets search path
         string filename(
-            GetOptions().GetSearchPath().GetFilePath(
+            GetOptions().GetSearchPath().FilePath(
                 filename_expression));
         if (filename.empty() || !parser.OpenFile(filename))
         {
@@ -251,7 +251,7 @@ void Include::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 
 void Message::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    string message_text(m_message_expression->GetTextValue(symbol_table));
+    string message_text(m_message_expression->TextValue(symbol_table));
     switch (m_criticality)
     {
         case WARNING:
@@ -279,17 +279,17 @@ void Text::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 
 void Integer::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    textifier << GetIntegerValue(symbol_table);
+    textifier << IntegerValue(symbol_table);
 }
 
 void Sizeof::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    textifier << GetIntegerValue(symbol_table);
+    textifier << IntegerValue(symbol_table);
 }
 
 void Dereference::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    Body const *dereferenced_body = GetDereferencedBody(symbol_table);
+    Body const *dereferenced_body = DereferencedBody(symbol_table);
     if (dereferenced_body == NULL)
         return;
 
@@ -298,15 +298,15 @@ void Dereference::Execute (Textifier &textifier, SymbolTable &symbol_table) cons
 
 void IsDefined::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    textifier << GetIntegerValue(symbol_table);
+    textifier << IntegerValue(symbol_table);
 }
 
 void Operation::Execute (Textifier &textifier, SymbolTable &symbol_table) const
 {
-    if (GetIsTextOperation())
-        textifier << GetTextValue(symbol_table);
+    if (IsTextOperation())
+        textifier << TextValue(symbol_table);
     else
-        textifier << GetIntegerValue(symbol_table);
+        textifier << IntegerValue(symbol_table);
 }
 
 } // end of namespace Preprocessor

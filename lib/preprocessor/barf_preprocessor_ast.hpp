@@ -49,7 +49,7 @@ enum DereferenceType
     DEREFERENCE_IFF_DEFINED
 }; // end of enum DereferenceType
 
-string const &GetDereferenceTypeString (DereferenceType dereference_type);
+string const &DereferenceTypeString (DereferenceType dereference_type);
 
 enum
 {
@@ -79,7 +79,7 @@ enum
     AST_COUNT
 };
 
-string const &GetAstTypeString (AstType ast_type);
+string const &AstTypeString (AstType ast_type);
 
 class Executable
 {
@@ -116,7 +116,7 @@ public:
     Body (string const &body_text, FiLoc const &source_filoc = FiLoc::ms_invalid);
     Body (Sint32 body_integer, FiLoc const &source_filoc = FiLoc::ms_invalid);
 
-    bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const;
+    bool IsNativeIntegerValue (SymbolTable &symbol_table) const;
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
 
@@ -157,10 +157,10 @@ public:
         ExecutableAst(filoc, ast_type)
     { }
 
-    virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const = 0;
+    virtual bool IsNativeIntegerValue (SymbolTable &symbol_table) const = 0;
 
-    virtual Sint32 GetIntegerValue (SymbolTable &symbol_table) const = 0;
-    virtual string GetTextValue (SymbolTable &symbol_table) const = 0;
+    virtual Sint32 IntegerValue (SymbolTable &symbol_table) const = 0;
+    virtual string TextValue (SymbolTable &symbol_table) const = 0;
 }; // end of class Expression
 
 class Conditional : public ExecutableAst
@@ -515,10 +515,10 @@ public:
     }
     void AppendChar (Uint8 c) { m_text += c; }
 
-    virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return false; }
+    virtual bool IsNativeIntegerValue (SymbolTable &symbol_table) const { return false; }
 
-    virtual Sint32 GetIntegerValue (SymbolTable &symbol_table) const;
-    virtual string GetTextValue (SymbolTable &symbol_table) const;
+    virtual Sint32 IntegerValue (SymbolTable &symbol_table) const;
+    virtual string TextValue (SymbolTable &symbol_table) const;
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -538,13 +538,13 @@ public:
         m_value(value)
     { }
 
-    Sint32 GetValue () const { return m_value; }
+    Sint32 Value () const { return m_value; }
     void SetValue (Sint32 value) { m_value = value; }
 
-    virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }
+    virtual bool IsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }
 
-    virtual Sint32 GetIntegerValue (SymbolTable &symbol_table) const;
-    virtual string GetTextValue (SymbolTable &symbol_table) const;
+    virtual Sint32 IntegerValue (SymbolTable &symbol_table) const;
+    virtual string TextValue (SymbolTable &symbol_table) const;
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -567,10 +567,10 @@ public:
     }
     virtual ~Sizeof ();
 
-    virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }
+    virtual bool IsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }
 
-    virtual Sint32 GetIntegerValue (SymbolTable &symbol_table) const;
-    virtual string GetTextValue (SymbolTable &symbol_table) const;
+    virtual Sint32 IntegerValue (SymbolTable &symbol_table) const;
+    virtual string TextValue (SymbolTable &symbol_table) const;
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -597,10 +597,10 @@ public:
     }
     virtual ~Dereference ();
 
-    virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const;
+    virtual bool IsNativeIntegerValue (SymbolTable &symbol_table) const;
 
-    virtual Sint32 GetIntegerValue (SymbolTable &symbol_table) const;
-    virtual string GetTextValue (SymbolTable &symbol_table) const;
+    virtual Sint32 IntegerValue (SymbolTable &symbol_table) const;
+    virtual string TextValue (SymbolTable &symbol_table) const;
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
@@ -618,7 +618,7 @@ protected:
         // m_element_index_expression can be NULL
     }
 
-    Body const *GetDereferencedBody (SymbolTable &symbol_table) const;
+    Body const *DereferencedBody (SymbolTable &symbol_table) const;
 
     Ast::Id *const m_id;
     Expression *const m_element_index_expression;
@@ -634,10 +634,10 @@ public:
         Dereference(id, element_index_expression, DEREFERENCE_ALWAYS, AST_IS_DEFINED)
     { }
 
-    virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }
+    virtual bool IsNativeIntegerValue (SymbolTable &symbol_table) const { return true; }
 
-    virtual Sint32 GetIntegerValue (SymbolTable &symbol_table) const;
-    virtual string GetTextValue (SymbolTable &symbol_table) const;
+    virtual Sint32 IntegerValue (SymbolTable &symbol_table) const;
+    virtual string TextValue (SymbolTable &symbol_table) const;
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
 }; // end of class IsDefined
@@ -698,17 +698,17 @@ public:
     }
     virtual ~Operation ();
 
-    virtual bool GetIsNativeIntegerValue (SymbolTable &symbol_table) const;
+    virtual bool IsNativeIntegerValue (SymbolTable &symbol_table) const;
 
-    virtual Sint32 GetIntegerValue (SymbolTable &symbol_table) const;
-    virtual string GetTextValue (SymbolTable &symbol_table) const;
+    virtual Sint32 IntegerValue (SymbolTable &symbol_table) const;
+    virtual string TextValue (SymbolTable &symbol_table) const;
 
     virtual void Execute (Textifier &textifier, SymbolTable &symbol_table) const;
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 
 private:
 
-    bool GetIsTextOperation () const
+    bool IsTextOperation () const
     {
         return m_op == CONCATENATE ||
                m_op == STRING_CAST ||

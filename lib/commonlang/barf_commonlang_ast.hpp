@@ -49,7 +49,7 @@ enum
     AST_START_CUSTOM_TYPES_HERE_
 };
 
-string const &GetAstTypeString (AstType ast_type);
+string const &AstTypeString (AstType ast_type);
 
 class TargetDirective : public Ast::Directive
 {
@@ -78,7 +78,7 @@ public:
     // to be confused with Ast::Base::Print.
     void Print (ostream &stream, Uint32 indent_level = 0) const;
 
-    virtual string GetDirectiveString () const;
+    virtual string DirectiveString () const;
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of class TargetDirective
 

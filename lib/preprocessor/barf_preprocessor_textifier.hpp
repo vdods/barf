@@ -40,10 +40,10 @@ public:
         m_generates_line_directives(false)
     { }
 
-    FiLoc const &GetOutputFiLoc () const { return m_output_filoc; }
-    bool GetGeneratesLineDirectives () const { return m_generates_line_directives; }
+    FiLoc const &OutputFiLoc () const { return m_output_filoc; }
+    bool GeneratesLineDirectives () const { return m_generates_line_directives; }
 
-    void SetGeneratesLineDirectives (bool generates_line_directives)
+    void GeneratesLineDirectives (bool generates_line_directives)
     {
         m_generates_line_directives = generates_line_directives;
     }

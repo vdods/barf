@@ -82,9 +82,9 @@ namespace CommonLang {
 }
 %target.cpp.scan_method_parameters { Ast::Base *&token }
 %target.cpp.bottom_of_class {
-    using InputBase::GetIsOpen;
+    using InputBase::IsOpen;
     using InputBase::GetFiLoc;
-    using InputBase::GetInputName;
+    using InputBase::InputName;
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -166,7 +166,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
     if (scanner_token_type < 0x100)
     {
         assert(scanner_token_type >= 0);
-        return stream << GetCharLiteral(Uint8(scanner_token_type));
+        return stream << CharLiteral(Uint8(scanner_token_type));
     }
     else
     {
@@ -248,7 +248,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     return In().get();
 }
 %target.cpp.rejection_actions {
-    EmitError("unrecognized character " + GetCharLiteral(rejected_atom), GetFiLoc());
+    EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 }
 %target.cpp.reset_for_new_input_actions {
     m_is_in_preamble = true;
@@ -261,7 +261,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 /* **************************************************************************/
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
@@ -391,7 +391,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     (.)
     %target.cpp {
-        EmitError("unexpected character " + GetCharLiteral(accepted_string[0]), GetFiLoc());
+        EmitError("unexpected character " + CharLiteral(accepted_string[0]), GetFiLoc());
         return Token::BAD_TOKEN;
     }
 ;
@@ -400,7 +400,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 :
     ({ANY}*[*]/) // everything up through the closing delimiter of a block comment
     %target.cpp {
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         if (token != NULL)
             Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
         SwitchToStateMachine(m_return_state);
@@ -408,7 +408,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     ({ANY}*{END_OF_FILE}) // everything up through EOF
     %target.cpp {
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         EmitWarning("unterminated block comment", GetFiLoc());
         delete token;
         token = NULL;
@@ -466,7 +466,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 |
     ({ANY}) // anything else just means it's malformed
     %target.cpp {
-        EmitError("unexpected character " + GetCharLiteral(accepted_string[0]) + " in character literal", GetFiLoc());
+        EmitError("unexpected character " + CharLiteral(accepted_string[0]) + " in character literal", GetFiLoc());
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
         token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
@@ -511,7 +511,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     (([^\\]|\\{ANY})*") // everything up through the first unescaped double quote
     %target.cpp {
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         // get rid of the trailing endquote
         assert(accepted_string.length() >= 1);
         accepted_string.resize(accepted_string.length()-1);
@@ -530,16 +530,16 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
             case ESRC_MALFORMED_HEX_CHAR:
                 EmitError(
                     "\\x with no trailing hex digits",
-                    FiLoc(token->GetFiLoc().GetFilename(),
-                          token->GetFiLoc().GetLineNumber() + status.m_line_number_offset));
+                    FiLoc(token->GetFiLoc().Filename(),
+                          token->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
                 
             case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 EmitError(
                     "hex/octal escape sequence out of range",
-                    FiLoc(token->GetFiLoc().GetFilename(),
-                          token->GetFiLoc().GetLineNumber() + status.m_line_number_offset));
+                    FiLoc(token->GetFiLoc().Filename(),
+                          token->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
         }
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
@@ -550,7 +550,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     (([^\\]|\\{ANY})*\\?{END_OF_FILE}) // everything up through EOF (which may be preceded by a hanging backslash)
     %target.cpp {
         EmitError("unterminated string literal", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         assert(token != NULL);
         delete token;
         token = NULL;
@@ -590,7 +590,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     (([^()\[\]\\]|\\{ANY})+) // any not-()[]-or-backslash, or any escaped char
     %target.cpp {
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
     }
 |
@@ -626,7 +626,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     (([^\[\]\\]|\\{ANY})+) // any non-delimiter non-backslash or any escaped char
     %target.cpp {
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
     }
 |
@@ -648,7 +648,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         assert(accepted_string.length() >= 2);
         // take off the %} at the end
         accepted_string.resize(accepted_string.length()-2);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
         SwitchToStateMachine(StateMachine::MAIN);
         return Token::DUMB_CODE_BLOCK;
@@ -657,7 +657,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     ({ANY}*{END_OF_FILE}) // everything up through EOF
     %target.cpp {
         EmitError("unterminated dumb code block (looking for %} delimiter)", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         assert(token != NULL);
         delete token;
         token = NULL;
@@ -717,7 +717,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     ([^{}'"/]+|.) // any non-delimiter char or just any single char
     %target.cpp {
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
     }
 |
@@ -736,7 +736,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     (([^\\]|\\{ANY})*') // everything up through the first unescaped single quote
     %target.cpp {
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::StrictCodeBlock *>(token)->AppendText(accepted_string);
         SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
     }
@@ -747,7 +747,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         delete token;
         token = NULL;
         EmitError("unterminated character literal in strict code block", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         return Token::END_OF_FILE;
     }
 ;
@@ -758,7 +758,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     %target.cpp {
         assert(token != NULL);
         Dsc<Ast::StrictCodeBlock *>(token)->AppendText(accepted_string);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
     }
 |
@@ -768,7 +768,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
         delete token;
         token = NULL;
         EmitError("unterminated string literal in strict code block", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         return Token::END_OF_FILE;
     }
 ;

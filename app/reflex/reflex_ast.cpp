@@ -12,7 +12,7 @@
 
 namespace Reflex {
 
-string const &GetAstTypeString (AstType ast_type)
+string const &AstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_COUNT-CommonLang::AST_START_CUSTOM_TYPES_HERE_] =
     {
@@ -26,7 +26,7 @@ string const &GetAstTypeString (AstType ast_type)
 
     assert(ast_type < AST_COUNT);
     if (ast_type < CommonLang::AST_START_CUSTOM_TYPES_HERE_)
-        return CommonLang::GetAstTypeString(ast_type);
+        return CommonLang::AstTypeString(ast_type);
     else
         return s_ast_type_string[ast_type-CommonLang::AST_START_CUSTOM_TYPES_HERE_];
 }
@@ -63,7 +63,7 @@ void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_lev
     m_rule_handler_map->Print(stream, Stringify, indent_level+1);
 }
 
-Uint32 PrimarySource::GetRuleCount () const
+Uint32 PrimarySource::RuleCount () const
 {
     Uint32 accept_handler_count = 0;
     for (StateMachineMap::const_iterator it = m_state_machine_map->begin(),
@@ -73,14 +73,14 @@ Uint32 PrimarySource::GetRuleCount () const
     {
         StateMachine const *state_machine = it->second;
         assert(state_machine != NULL);
-        accept_handler_count += state_machine->GetRuleCount();
+        accept_handler_count += state_machine->RuleCount();
     }
     return accept_handler_count;
 }
 
 Rule const *PrimarySource::GetRule (Uint32 rule_index) const
 {
-    assert(rule_index < GetRuleCount());
+    assert(rule_index < RuleCount());
     for (StateMachineMap::const_iterator it = m_state_machine_map->begin(),
                                          it_end = m_state_machine_map->end();
          it != it_end;
@@ -88,18 +88,18 @@ Rule const *PrimarySource::GetRule (Uint32 rule_index) const
     {
         StateMachine const *state_machine = it->second;
         assert(state_machine != NULL);
-        if (rule_index < state_machine->GetRuleCount())
-            return state_machine->m_rule_list->GetElement(rule_index);
+        if (rule_index < state_machine->RuleCount())
+            return state_machine->m_rule_list->Element(rule_index);
         else
-            rule_index -= state_machine->GetRuleCount();
+            rule_index -= state_machine->RuleCount();
     }
-    assert(false && "GetRuleCount() doesn't match reality");
+    assert(false && "RuleCount() doesn't match reality");
     return NULL;
 }
 
 void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
 {
-    Print(stream, GetAstTypeString, indent_level);
+    Print(stream, AstTypeString, indent_level);
 }
 
 void PrimarySource::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const

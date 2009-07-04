@@ -62,7 +62,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
     if (scanner_token_type < 0x100)
     {
         assert(scanner_token_type >= 0);
-        return stream << GetCharLiteral(Uint8(scanner_token_type));
+        return stream << CharLiteral(Uint8(scanner_token_type));
     }
     else
     {
@@ -183,7 +183,7 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
 #line 264 "barf_commonlang_scanner.reflex"
-"CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 188 "barf_commonlang_scanner.cpp"
  << " switching to state machine "
                   << ms_state_machine_name_[state_machine];
@@ -205,7 +205,7 @@ void Scanner::ResetForNewInput ()
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
 #line 264 "barf_commonlang_scanner.reflex"
-"CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 210 "barf_commonlang_scanner.cpp"
  << " executing reset-for-new-input actions and switching to state machine "
                   << ms_state_machine_name_[StateMachine::START_];
@@ -273,7 +273,7 @@ Scanner::Token::Type Scanner::Scan (
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
 #line 264 "barf_commonlang_scanner.reflex"
-"CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 278 "barf_commonlang_scanner.cpp"
  << " rejecting string ";
                 PrintString_(rejected_string);
@@ -289,7 +289,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 250 "barf_commonlang_scanner.reflex"
 
-    EmitError("unrecognized character " + GetCharLiteral(rejected_atom), GetFiLoc());
+    EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 
 #line 295 "barf_commonlang_scanner.cpp"
 
@@ -304,7 +304,7 @@ Scanner::Token::Type Scanner::Scan (
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
 #line 264 "barf_commonlang_scanner.reflex"
-"CommonLang::Scanner" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"
+"CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 309 "barf_commonlang_scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
@@ -320,7 +320,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 402 "barf_commonlang_scanner.reflex"
 
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         if (token != NULL)
             Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
         SwitchToStateMachine(m_return_state);
@@ -335,7 +335,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 410 "barf_commonlang_scanner.reflex"
 
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         EmitWarning("unterminated block comment", GetFiLoc());
         delete token;
         token = NULL;
@@ -482,7 +482,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 468 "barf_commonlang_scanner.reflex"
 
-        EmitError("unexpected character " + GetCharLiteral(accepted_string[0]) + " in character literal", GetFiLoc());
+        EmitError("unexpected character " + CharLiteral(accepted_string[0]) + " in character literal", GetFiLoc());
         if (accepted_string[0] == '\n')
             IncrementLineNumber();
         token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
@@ -499,7 +499,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 737 "barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::StrictCodeBlock *>(token)->AppendText(accepted_string);
         SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
     
@@ -517,7 +517,7 @@ Scanner::Token::Type Scanner::Scan (
         delete token;
         token = NULL;
         EmitError("unterminated character literal in strict code block", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         return Token::END_OF_FILE;
     
 #line 524 "barf_commonlang_scanner.cpp"
@@ -534,7 +534,7 @@ Scanner::Token::Type Scanner::Scan (
         assert(accepted_string.length() >= 2);
         // take off the %} at the end
         accepted_string.resize(accepted_string.length()-2);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
         SwitchToStateMachine(StateMachine::MAIN);
         return Token::DUMB_CODE_BLOCK;
@@ -550,7 +550,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 658 "barf_commonlang_scanner.reflex"
 
         EmitError("unterminated dumb code block (looking for %} delimiter)", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         assert(token != NULL);
         delete token;
         token = NULL;
@@ -740,7 +740,7 @@ Scanner::Token::Type Scanner::Scan (
 
 #line 393 "barf_commonlang_scanner.reflex"
 
-        EmitError("unexpected character " + GetCharLiteral(accepted_string[0]), GetFiLoc());
+        EmitError("unexpected character " + CharLiteral(accepted_string[0]), GetFiLoc());
         return Token::BAD_TOKEN;
     
 #line 747 "barf_commonlang_scanner.cpp"
@@ -802,7 +802,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 591 "barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
     
 #line 809 "barf_commonlang_scanner.cpp"
@@ -863,7 +863,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 627 "barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
     
 #line 870 "barf_commonlang_scanner.cpp"
@@ -982,7 +982,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 718 "barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
     
 #line 989 "barf_commonlang_scanner.cpp"
@@ -1012,7 +1012,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 512 "barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         // get rid of the trailing endquote
         assert(accepted_string.length() >= 1);
         accepted_string.resize(accepted_string.length()-1);
@@ -1031,16 +1031,16 @@ Scanner::Token::Type Scanner::Scan (
             case ESRC_MALFORMED_HEX_CHAR:
                 EmitError(
                     "\\x with no trailing hex digits",
-                    FiLoc(token->GetFiLoc().GetFilename(),
-                          token->GetFiLoc().GetLineNumber() + status.m_line_number_offset));
+                    FiLoc(token->GetFiLoc().Filename(),
+                          token->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
                 
             case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 EmitError(
                     "hex/octal escape sequence out of range",
-                    FiLoc(token->GetFiLoc().GetFilename(),
-                          token->GetFiLoc().GetLineNumber() + status.m_line_number_offset));
+                    FiLoc(token->GetFiLoc().Filename(),
+                          token->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
         }
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
@@ -1058,7 +1058,7 @@ Scanner::Token::Type Scanner::Scan (
 #line 551 "barf_commonlang_scanner.reflex"
 
         EmitError("unterminated string literal", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         assert(token != NULL);
         delete token;
         token = NULL;
@@ -1076,7 +1076,7 @@ Scanner::Token::Type Scanner::Scan (
 
         assert(token != NULL);
         Dsc<Ast::StrictCodeBlock *>(token)->AppendText(accepted_string);
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
     
 #line 1083 "barf_commonlang_scanner.cpp"
@@ -1093,7 +1093,7 @@ Scanner::Token::Type Scanner::Scan (
         delete token;
         token = NULL;
         EmitError("unterminated string literal in strict code block", GetFiLoc());
-        IncrementLineNumber(GetNewlineCount(accepted_string));
+        IncrementLineNumber(NewlineCount(accepted_string));
         return Token::END_OF_FILE;
     
 #line 1100 "barf_commonlang_scanner.cpp"

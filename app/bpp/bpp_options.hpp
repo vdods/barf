@@ -23,7 +23,7 @@ public:
 
     Options (string const &executable_filename);
 
-    string const &GetOutputFilename () const { return m_output_filename; }
+    string const &OutputFilename () const { return m_output_filename; }
 
     virtual void Parse (int argc, char const *const *argv);
 
@@ -41,6 +41,6 @@ private:
 
 } // end of namespace Bpp
 
-inline Bpp::Options const &GetBppOptions () { return *Dsc<Bpp::Options const *>(&GetOptions()); }
+inline Bpp::Options const &BppOptions () { return *Dsc<Bpp::Options const *>(&GetOptions()); }
 
 #endif // !defined(BPP_OPTIONS_HPP_)

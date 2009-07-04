@@ -18,31 +18,31 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'W',
         "warnings-as-errors",
-        &OptionsBase::TreatWarningsAsErrors,
+        &OptionsBase::TreatWarningsAsErrors_Enable,
         "    Treat warnings as errors.  See also option -w."),
     CommandLineOption(
         'w',
         "warnings-not-as-errors",
-        &OptionsBase::TreatWarningsAsErrors,
+        &OptionsBase::TreatWarningsAsErrors_Enable,
         "    Warnings will not be treated as errors, and thus not abort the execution\n"
         "    of the program.  This is the default behavior.  See also option -W."),
     CommandLineOption(
         'E',
         "halt-on-first-error",
-        &OptionsBase::HaltOnFirstError,
+        &OptionsBase::HaltOnFirstError_Enable,
         "    All errors (and warnings, if option -W is specified) will be considered\n"
         "    fatal, and will abort execution immediately.  See also option -e."),
     CommandLineOption(
         'e',
         "dont-halt-on-first-error",
-        &OptionsBase::DontHaltOnFirstError,
+        &OptionsBase::HaltOnFirstError_Disable,
         "    The program will continue executing as long as possible before aborting\n"
         "    when errors occur.  This is the default behavior.  See also option -E."),
 #if DEBUG
     CommandLineOption(
         'A',
         "assert-on-error",
-        &OptionsBase::AssertOnError,
+        &OptionsBase::AssertOnError_Enable,
         "    All errors (and warnings, if option -W is specified) will cause an assert\n"
         "    which is only useful if you're developing BARF tools (in fact you should\n"
         "    only see this option if the binaries were compiled in debug mode).  See\n"
@@ -50,7 +50,7 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'a',
         "dont-assert-on-error",
-        &OptionsBase::DontAssertOnError,
+        &OptionsBase::AssertOnError_Disable,
         "    This negates the effect of option -A, and is the default behavior."),
 #endif
 
@@ -94,7 +94,7 @@ CommandLineOption const Options::ms_option[] =
     CommandLineOption(
         'D',
         "define",
-        &OptionsBase::Predefine,
+        &OptionsBase::AddPredefine,
         "    Defines a macro value before parsing the input file.  Macro values\n"
         "    specified in the input file will override values defined via this\n"
         "    commandline option.  The argument is of the form:\n"

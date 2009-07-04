@@ -30,10 +30,10 @@ enum
     TT_COUNT
 };
 
-string const &GetTransitionTypeString (TransitionType transition_type);
+string const &TransitionTypeString (TransitionType transition_type);
 
-string GetDfaTransitionString (Graph::Transition const &transition);
-string GetNfaTransitionString (Graph::Transition const &transition);
+string DfaTransitionString (Graph::Transition const &transition);
+string NfaTransitionString (Graph::Transition const &transition);
 
 Graph::Transition InputAtomTransition (Uint8 input_atom, Uint32 target_index);
 Graph::Transition InputAtomRangeTransition (Uint8 range_lower, Uint8 range_upper, Uint32 target_index);

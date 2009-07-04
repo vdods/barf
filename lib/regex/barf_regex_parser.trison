@@ -34,9 +34,9 @@ namespace Regex {
 %target.cpp.class_inheritance { protected InputBase }
 %target.cpp.parse_method_access "private:"
 %target.cpp.bottom_of_class {
-    using InputBase::GetIsOpen;
+    using InputBase::IsOpen;
     using InputBase::GetFiLoc;
-    using InputBase::GetInputName;
+    using InputBase::InputName;
 
     // must override these (instead of just "using" them), so that
     // ResetForNewInput can be called.
@@ -275,7 +275,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
             // anything else is an invalid char
             default:
                 m_active_backslash = false;
-                THROW_STRING("invalid char (use hex char " << GetCharLiteral(c, false) << " instead)");
+                THROW_STRING("invalid char (use hex char " << CharLiteral(c, false) << " instead)");
                 break;
         }
     }
@@ -287,7 +287,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Regex::Parser" << (GetFiLoc().GetIsValid() ? " ("+GetFiLoc().GetAsString()+")" : g_empty_string) << ":"}
+%target.cpp.debug_spew_prefix {"Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
 %target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
@@ -335,7 +335,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     regex:regex '|' branch:branch
     %target.cpp {
         for (RegularExpression::size_type i = 0; i < regex->size(); ++i)
-            if (Regex::NodesAreEqual(branch, regex->GetElement(i)))
+            if (Regex::NodesAreEqual(branch, regex->Element(i)))
                 THROW_STRING("duplicated branch");
                 
         regex->Append(branch);
@@ -399,7 +399,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
         assert(macro_name != NULL);
         if (m_macro_map == NULL)
             THROW_STRING("undefined macro \"" + macro_name->GetText() + "\" (no macro map was provided)");
-        RegularExpression *macro_regex = m_macro_map->GetElement(macro_name->GetText());
+        RegularExpression *macro_regex = m_macro_map->Element(macro_name->GetText());
         if (macro_regex == NULL)
             THROW_STRING("undefined macro \"" + macro_name->GetText() + "\"");
         return macro_regex;
@@ -435,42 +435,42 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 |
     '{' integer:exact_bound '}'
     %target.cpp {
-        assert(exact_bound->GetValue() >= 0);
-        Bound *bound = new Bound(exact_bound->GetValue(), exact_bound->GetValue());
+        assert(exact_bound->Value() >= 0);
+        Bound *bound = new Bound(exact_bound->Value(), exact_bound->Value());
         delete exact_bound;
         return bound;
     }
 |
     '{' integer:lower_bound ',' '}'
     %target.cpp {
-        assert(lower_bound->GetValue() >= 0);
-        return new Bound(lower_bound->GetValue(), Bound::NO_UPPER_BOUND);
+        assert(lower_bound->Value() >= 0);
+        return new Bound(lower_bound->Value(), Bound::NO_UPPER_BOUND);
     }
 |
     '{' integer:lower_bound ',' integer:upper_bound '}'
     %target.cpp {
-        assert(lower_bound->GetValue() >= 0);
-        assert(upper_bound->GetValue() >= 0);
-        if (lower_bound->GetValue() > upper_bound->GetValue() ||
-            (lower_bound->GetValue() == 0 && upper_bound->GetValue() == 0))
+        assert(lower_bound->Value() >= 0);
+        assert(upper_bound->Value() >= 0);
+        if (lower_bound->Value() > upper_bound->Value() ||
+            (lower_bound->Value() == 0 && upper_bound->Value() == 0))
         {
             ostringstream out;
-            out << "invalid bound {" << lower_bound->GetValue() << ',' << upper_bound->GetValue() << '}';
+            out << "invalid bound {" << lower_bound->Value() << ',' << upper_bound->Value() << '}';
             throw out.str();
         }
-        else if (lower_bound->GetValue() > Bound::GetMaximumBoundValue())
+        else if (lower_bound->Value() > Bound::MaximumBoundValue())
         {
             ostringstream out;
-            out << "bound value " << lower_bound->GetValue() << " is out of range (max 255)";
+            out << "bound value " << lower_bound->Value() << " is out of range (max 255)";
             throw out.str();
         }
-        else if (upper_bound->GetValue() > Bound::GetMaximumBoundValue())
+        else if (upper_bound->Value() > Bound::MaximumBoundValue())
         {
             ostringstream out;
-            out << "bound value " << upper_bound->GetValue() << " is out of range (max 255)";
+            out << "bound value " << upper_bound->Value() << " is out of range (max 255)";
             throw out.str();
         }
-        Bound *bound = new Bound(lower_bound->GetValue(), upper_bound->GetValue());
+        Bound *bound = new Bound(lower_bound->Value(), upper_bound->Value());
         delete lower_bound;
         delete upper_bound;
         return bound;
@@ -485,14 +485,14 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 :
     '[' bracket_char_set:bracket_char_set ']'
     %target.cpp {
-        if (bracket_char_set->GetIsEmpty())
+        if (bracket_char_set->IsEmpty())
             THROW_STRING("invalid empty bracket expression");
         return bracket_char_set;
     }
 |
     '[' '^' bracket_char_set:bracket_char_set ']'
     %target.cpp {
-        if (bracket_char_set->GetIsEmpty())
+        if (bracket_char_set->IsEmpty())
             THROW_STRING("invalid empty bracket expression");
         bracket_char_set->Negate();
         return bracket_char_set;
@@ -511,7 +511,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     bracket_char_set:bracket_char_set bracket_expression_char:begin_range '-' bracket_expression_char:end_range
     %target.cpp {
         if (end_range->GetChar() < begin_range->GetChar())
-            THROW_STRING("invalid bracketed range [" << GetCharLiteral(begin_range->GetChar(), false) << '-' << GetCharLiteral(end_range->GetChar(), false) << ']');
+            THROW_STRING("invalid bracketed range [" << CharLiteral(begin_range->GetChar(), false) << '-' << CharLiteral(end_range->GetChar(), false) << ']');
         bracket_char_set->AddCharRange(
             begin_range->GetChar(),
             end_range->GetChar());
@@ -702,7 +702,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
     integer:integer DIGIT:digit
     %target.cpp {
         integer->ShiftAndAdd(digit->GetChar() - '0');
-        if (integer->GetValue() > 255)
+        if (integer->Value() > 255)
             integer->SetValue(255);
         delete digit;
         return integer;

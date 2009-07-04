@@ -100,51 +100,51 @@ public:
     }
 
     // returns the name of this program, e.g. "reflex", "trison", "bpp"
-    string const &GetProgramName () const { return m_program_name; }
+    string const &ProgramName () const { return m_program_name; }
     // indicates if there were problems with the specified options
     // and that the program should not continue executing.
-    bool GetAbort () const { return m_abort_flag || !GetParseSucceeded(); }
+    bool Abort () const { return m_abort_flag || !ParseSucceeded(); }
 
     // returns a string containing instructions on how to report an error
     // in the application.
     string const &HowtoReportError () const;
 
     // non-option argument accessor
-    string const &GetInputFilename () const { return m_input_filename; }
+    string const &InputFilename () const { return m_input_filename; }
     // warning and error option accessors
-    bool GetTreatWarningsAsErrors () const { return m_treat_warnings_as_errors; }
-    bool GetHaltOnFirstError () const { return m_halt_on_first_error; }
+    bool TreatWarningsAsErrors () const { return m_treat_warnings_as_errors; }
+    bool HaltOnFirstError () const { return m_halt_on_first_error; }
 #if DEBUG
-    bool GetAssertOnError () const { return m_assert_on_error; }
+    bool AssertOnError () const { return m_assert_on_error; }
 #endif
     // input options
     SearchPath const &GetSearchPath () const { return m_search_path; }
     PrintSearchPathRequest GetPrintSearchPathRequest () const { return m_print_search_path_request; }
     // output options
-    string GetOutputDirectory () const { return m_output_directory; }
-    bool GetWithLineDirectives () const { return m_with_line_directives; }
-    string GetNaDotGraphPath () const { return m_na_dot_graph_filename.empty() ? g_empty_string : GetOutputDirectory() + m_na_dot_graph_filename; }
-    string GetDaDotGraphPath () const { return m_da_dot_graph_filename.empty() ? g_empty_string : GetOutputDirectory() + m_da_dot_graph_filename; }
+    string OutputDirectory () const { return m_output_directory; }
+    bool WithLineDirectives () const { return m_with_line_directives; }
+    string NaDotGraphPath () const { return m_na_dot_graph_filename.empty() ? g_empty_string : OutputDirectory() + m_na_dot_graph_filename; }
+    string DaDotGraphPath () const { return m_da_dot_graph_filename.empty() ? g_empty_string : OutputDirectory() + m_da_dot_graph_filename; }
     // target-related options
-    vector<string>::size_type GetPredefineCount () const { return m_predefine.size(); }
-    string const &GetPredefine (vector<string>::size_type index) const { assert(index < m_predefine.size()); return m_predefine[index]; }
-    vector<string>::size_type GetPostdefineCount () const { return m_postdefine.size(); }
-    string const &GetPostdefine (vector<string>::size_type index) const { assert(index < m_postdefine.size()); return m_postdefine[index]; }
+    vector<string>::size_type PredefineCount () const { return m_predefine.size(); }
+    string const &Predefine (vector<string>::size_type index) const { assert(index < m_predefine.size()); return m_predefine[index]; }
+    vector<string>::size_type PostdefineCount () const { return m_postdefine.size(); }
+    string const &Postdefine (vector<string>::size_type index) const { assert(index < m_postdefine.size()); return m_postdefine[index]; }
     // verbosity options
-    bool GetIsVerbose (Verbosity verbosity) const { assert((verbosity & ~V_ALL) == 0); return (m_enabled_verbosity & verbosity) != 0; }
+    bool IsVerbose (Verbosity verbosity) const { assert((verbosity & ~V_ALL) == 0); return (m_enabled_verbosity & verbosity) != 0; }
     // help option
-    bool GetIsHelpRequested () const { return m_is_help_requested; }
+    bool IsHelpRequested () const { return m_is_help_requested; }
 
     // non-option argument handler
     void SetInputFilename (string const &input_filename);
     // warning and error options
-    void TreatWarningsAsErrors ();
-    void DontTreatWarningsAsErrors ();
-    void HaltOnFirstError ();
-    void DontHaltOnFirstError ();
+    void TreatWarningsAsErrors_Enable ();
+    void TreatWarningsAsErrors_Disable ();
+    void HaltOnFirstError_Enable ();
+    void HaltOnFirstError_Disable ();
 #if DEBUG
-    void AssertOnError ();
-    void DontAssertOnError ();
+    void AssertOnError_Enable ();
+    void AssertOnError_Disable ();
 #endif
     // input options
     void IncludeSearchPath (string const &search_path);
@@ -152,15 +152,15 @@ public:
     void RequestVerbosePrintSearchPath ();
     // output options
     void SetOutputDirectory (string const &output_directory);
-    void WithLineDirectives ();
-    void WithoutLineDirectives ();
+    void WithLineDirectives_Enable ();
+    void WithLineDirectives_Disable ();
     void GenerateNaDotGraph (string const &na_dot_graph_filename);
-    void DontGenerateNaDotGraph ();
+    void GenerateNaDotGraph_Disable ();
     void GenerateDaDotGraph (string const &da_dot_graph_filename);
-    void DontGenerateDaDotGraph ();
+    void GenerateDaDotGraph_Disable ();
     // target-related options
-    void Predefine (string const &arg);
-    void Postdefine (string const &arg);
+    void AddPredefine (string const &arg);
+    void AddPostdefine (string const &arg);
     // verbosity options
     void EnableVerbosity (string const &verbosity_string);
     void DisableVerbosity (string const &verbosity_string);

@@ -18,7 +18,7 @@
 namespace Barf {
 namespace Preprocessor {
 
-string const &GetDereferenceTypeString (DereferenceType dereference_type)
+string const &DereferenceTypeString (DereferenceType dereference_type)
 {
     static string const s_dereference_type_string[2] =
     {
@@ -30,7 +30,7 @@ string const &GetDereferenceTypeString (DereferenceType dereference_type)
     return s_dereference_type_string[dereference_type];
 }
 
-string const &GetAstTypeString (AstType ast_type)
+string const &AstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_COUNT-Ast::AST_START_CUSTOM_TYPES_HERE_] =
     {
@@ -60,7 +60,7 @@ string const &GetAstTypeString (AstType ast_type)
 
     assert(ast_type < AST_COUNT);
     if (ast_type < Ast::AST_START_CUSTOM_TYPES_HERE_)
-        return Ast::GetAstTypeString(ast_type);
+        return Ast::AstTypeString(ast_type);
     else
         return s_ast_type_string[ast_type-Ast::AST_START_CUSTOM_TYPES_HERE_];
 }
@@ -85,11 +85,11 @@ Body::Body (Sint32 body_integer, FiLoc const &source_filoc)
     Append(new Integer(body_integer, source_filoc));
 }
 
-bool Body::GetIsNativeIntegerValue (SymbolTable &symbol_table) const
+bool Body::IsNativeIntegerValue (SymbolTable &symbol_table) const
 {
     return size() == 1 &&
-           dynamic_cast<Expression const *>(GetElement(0)) != NULL &&
-           static_cast<Expression const *>(GetElement(0))->GetIsNativeIntegerValue(symbol_table);
+           dynamic_cast<Expression const *>(Element(0)) != NULL &&
+           static_cast<Expression const *>(Element(0))->IsNativeIntegerValue(symbol_table);
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -204,7 +204,7 @@ ostream &operator << (ostream &stream, Message::Criticality criticality)
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-Sint32 Text::GetIntegerValue (SymbolTable &symbol_table) const
+Sint32 Text::IntegerValue (SymbolTable &symbol_table) const
 {
     istringstream in(m_text);
     Sint32 retval = 0;
@@ -212,7 +212,7 @@ Sint32 Text::GetIntegerValue (SymbolTable &symbol_table) const
     return retval;
 }
 
-string Text::GetTextValue (SymbolTable &symbol_table) const
+string Text::TextValue (SymbolTable &symbol_table) const
 {
     return m_text;
 }
@@ -221,15 +221,15 @@ string Text::GetTextValue (SymbolTable &symbol_table) const
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-Sint32 Integer::GetIntegerValue (SymbolTable &symbol_table) const
+Sint32 Integer::IntegerValue (SymbolTable &symbol_table) const
 {
     return m_value;
 }
 
-string Integer::GetTextValue (SymbolTable &symbol_table) const
+string Integer::TextValue (SymbolTable &symbol_table) const
 {
     ostringstream out;
-    out << GetIntegerValue(symbol_table);
+    out << IntegerValue(symbol_table);
     return out.str();
 }
 
@@ -242,7 +242,7 @@ Sizeof::~Sizeof ()
     delete m_id;
 }
 
-Sint32 Sizeof::GetIntegerValue (SymbolTable &symbol_table) const
+Sint32 Sizeof::IntegerValue (SymbolTable &symbol_table) const
 {
     Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
     if (symbol != NULL)
@@ -254,10 +254,10 @@ Sint32 Sizeof::GetIntegerValue (SymbolTable &symbol_table) const
     }
 }
 
-string Sizeof::GetTextValue (SymbolTable &symbol_table) const
+string Sizeof::TextValue (SymbolTable &symbol_table) const
 {
     ostringstream out;
-    out << GetIntegerValue(symbol_table);
+    out << IntegerValue(symbol_table);
     return out.str();
 }
 
@@ -271,23 +271,23 @@ Dereference::~Dereference ()
     delete m_element_index_expression;
 }
 
-bool Dereference::GetIsNativeIntegerValue (SymbolTable &symbol_table) const
+bool Dereference::IsNativeIntegerValue (SymbolTable &symbol_table) const
 {
-    Body const *dereferenced_body = GetDereferencedBody(symbol_table);
+    Body const *dereferenced_body = DereferencedBody(symbol_table);
     return (dereferenced_body != NULL) ?
-           dereferenced_body->GetIsNativeIntegerValue(symbol_table) :
+           dereferenced_body->IsNativeIntegerValue(symbol_table) :
            false;
 }
 
-Sint32 Dereference::GetIntegerValue (SymbolTable &symbol_table) const
+Sint32 Dereference::IntegerValue (SymbolTable &symbol_table) const
 {
-    Body const *dereferenced_body = GetDereferencedBody(symbol_table);
+    Body const *dereferenced_body = DereferencedBody(symbol_table);
     if (dereferenced_body == NULL)
         return 0;
 
     ostringstream out;
     Textifier textifier(out);
-    textifier.SetGeneratesLineDirectives(GetOptions().GetWithLineDirectives());
+    textifier.GeneratesLineDirectives(GetOptions().WithLineDirectives());
     dereferenced_body->Execute(textifier, symbol_table);
     istringstream in(out.str());
     Sint32 retval = 0;
@@ -295,20 +295,20 @@ Sint32 Dereference::GetIntegerValue (SymbolTable &symbol_table) const
     return retval;
 }
 
-string Dereference::GetTextValue (SymbolTable &symbol_table) const
+string Dereference::TextValue (SymbolTable &symbol_table) const
 {
-    Body const *dereferenced_body = GetDereferencedBody(symbol_table);
+    Body const *dereferenced_body = DereferencedBody(symbol_table);
     if (dereferenced_body == NULL)
         return g_empty_string;
 
     ostringstream out;
     Textifier textifier(out);
-    textifier.SetGeneratesLineDirectives(GetOptions().GetWithLineDirectives());
+    textifier.GeneratesLineDirectives(GetOptions().WithLineDirectives());
     dereferenced_body->Execute(textifier, symbol_table);
     return out.str();
 }
 
-Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
+Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
 {
     Symbol *symbol = symbol_table.GetSymbol(m_id->GetText());
     if (symbol == NULL)
@@ -319,24 +319,24 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
     }
 
     Body const *dereferenced_body = NULL;
-    if (symbol->GetIsScalarSymbol())
+    if (symbol->IsScalarSymbol())
     {
         if (m_element_index_expression != NULL)
         {
             EmitError("trying to dereference a scalar macro as an array or map", GetFiLoc());
             return NULL;
         }
-        dereferenced_body = Dsc<ScalarSymbol *>(symbol)->GetScalarBody();
+        dereferenced_body = Dsc<ScalarSymbol *>(symbol)->ScalarBody();
         assert(dereferenced_body != NULL);
     }
-    else if (symbol->GetIsArraySymbol())
+    else if (symbol->IsArraySymbol())
     {
         if (m_element_index_expression == NULL)
         {
             EmitError("trying to dereference an array macro without an array index", GetFiLoc());
             return NULL;
         }
-        Sint32 element_index = m_element_index_expression->GetIntegerValue(symbol_table);
+        Sint32 element_index = m_element_index_expression->IntegerValue(symbol_table);
         if (element_index < 0)
         {
             ostringstream out;
@@ -344,7 +344,7 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
             EmitError(out.str(), GetFiLoc());
             return 0;
         }
-        dereferenced_body = Dsc<ArraySymbol *>(symbol)->GetArrayElement(Uint32(element_index));
+        dereferenced_body = Dsc<ArraySymbol *>(symbol)->ArrayElement(Uint32(element_index));
         if (dereferenced_body == NULL)
         {
             ostringstream out;
@@ -355,18 +355,18 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
     }
     else
     {
-        assert(symbol->GetIsMapSymbol());
+        assert(symbol->IsMapSymbol());
         if (m_element_index_expression == NULL)
         {
             EmitError("trying to dereference a map macro without a map key", GetFiLoc());
             return NULL;
         }
-        string element_key = m_element_index_expression->GetTextValue(symbol_table);
-        dereferenced_body = Dsc<MapSymbol *>(symbol)->GetMapElement(element_key);
+        string element_key = m_element_index_expression->TextValue(symbol_table);
+        dereferenced_body = Dsc<MapSymbol *>(symbol)->MapElement(element_key);
         if (dereferenced_body == NULL)
         {
             EmitError(
-                "macro \"" + m_id->GetText() + "\" has no such element " + GetStringLiteral(element_key),
+                "macro \"" + m_id->GetText() + "\" has no such element " + StringLiteral(element_key),
                 GetFiLoc());
             return NULL;
         }
@@ -379,18 +379,18 @@ Body const *Dereference::GetDereferencedBody (SymbolTable &symbol_table) const
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-Sint32 IsDefined::GetIntegerValue (SymbolTable &symbol_table) const
+Sint32 IsDefined::IntegerValue (SymbolTable &symbol_table) const
 {
     if (m_element_index_expression == NULL)
         return (symbol_table.GetSymbol(m_id->GetText()) != NULL) ? 1 : 0;
     else
-        return (GetDereferencedBody(symbol_table) != NULL) ? 1 : 0;
+        return (DereferencedBody(symbol_table) != NULL) ? 1 : 0;
 }
 
-string IsDefined::GetTextValue (SymbolTable &symbol_table) const
+string IsDefined::TextValue (SymbolTable &symbol_table) const
 {
     ostringstream out;
-    out << GetIntegerValue(symbol_table);
+    out << IntegerValue(symbol_table);
     return out.str();
 }
 
@@ -404,7 +404,7 @@ Operation::~Operation ()
     delete m_right;
 }
 
-bool Operation::GetIsNativeIntegerValue (SymbolTable &symbol_table) const
+bool Operation::IsNativeIntegerValue (SymbolTable &symbol_table) const
 {
     switch (m_op)
     {
@@ -439,12 +439,12 @@ bool Operation::GetIsNativeIntegerValue (SymbolTable &symbol_table) const
     }
 }
 
-Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
+Sint32 Operation::IntegerValue (SymbolTable &symbol_table) const
 {
-    if (GetIsTextOperation())
+    if (IsTextOperation())
     {
         EmitWarning("retrieving integer value from non-integer expression", GetFiLoc());
-        istringstream in(GetTextValue(symbol_table));
+        istringstream in(TextValue(symbol_table));
         Sint32 retval = 0;
         in >> retval;
         return retval;
@@ -453,95 +453,95 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
     switch (m_op)
     {
         case PLUS:
-            return m_left->GetIntegerValue(symbol_table) + m_right->GetIntegerValue(symbol_table);
+            return m_left->IntegerValue(symbol_table) + m_right->IntegerValue(symbol_table);
 
         case MINUS:
-            return m_left->GetIntegerValue(symbol_table) - m_right->GetIntegerValue(symbol_table);
+            return m_left->IntegerValue(symbol_table) - m_right->IntegerValue(symbol_table);
 
         case NEGATIVE:
-            return -m_right->GetIntegerValue(symbol_table);
+            return -m_right->IntegerValue(symbol_table);
 
         case MULTIPLY:
-            return m_left->GetIntegerValue(symbol_table) * m_right->GetIntegerValue(symbol_table);
+            return m_left->IntegerValue(symbol_table) * m_right->IntegerValue(symbol_table);
 
         case DIVIDE:
         {
-            Sint32 right_operand = m_right->GetIntegerValue(symbol_table);
+            Sint32 right_operand = m_right->IntegerValue(symbol_table);
             if (right_operand == 0)
             {
                 EmitWarning("divide by zero", GetFiLoc());
                 return 0;
             }
             else
-                return m_left->GetIntegerValue(symbol_table) / right_operand;
+                return m_left->IntegerValue(symbol_table) / right_operand;
         }
 
         case REMAINDER:
         {
-            Sint32 right_operand = m_right->GetIntegerValue(symbol_table);
+            Sint32 right_operand = m_right->IntegerValue(symbol_table);
             if (right_operand == 0)
             {
                 EmitWarning("divide by zero", GetFiLoc());
                 return 0;
             }
             else
-                return m_left->GetIntegerValue(symbol_table) % right_operand;
+                return m_left->IntegerValue(symbol_table) % right_operand;
         }
 
         case LOGICAL_NOT:
-            return (m_right->GetIntegerValue(symbol_table) == 0) ? 1 : 0;
+            return (m_right->IntegerValue(symbol_table) == 0) ? 1 : 0;
 
         case LOGICAL_AND:
-            return (m_left->GetIntegerValue(symbol_table) != 0 && m_right->GetIntegerValue(symbol_table) != 0) ? 1 : 0;
+            return (m_left->IntegerValue(symbol_table) != 0 && m_right->IntegerValue(symbol_table) != 0) ? 1 : 0;
 
         case LOGICAL_OR:
-            return (m_left->GetIntegerValue(symbol_table) != 0 || m_right->GetIntegerValue(symbol_table) != 0) ? 1 : 0;
+            return (m_left->IntegerValue(symbol_table) != 0 || m_right->IntegerValue(symbol_table) != 0) ? 1 : 0;
 
         case EQUAL:
-            if (m_left->GetIsNativeIntegerValue(symbol_table) != m_right->GetIsNativeIntegerValue(symbol_table))
+            if (m_left->IsNativeIntegerValue(symbol_table) != m_right->IsNativeIntegerValue(symbol_table))
             {
                 EmitError("int/string type mismatch for == operator", m_left->GetFiLoc());
                 return 0;
             }
-            if (m_left->GetIsNativeIntegerValue(symbol_table))
-                return (m_left->GetIntegerValue(symbol_table) == m_right->GetIntegerValue(symbol_table)) ? 1 : 0;
+            if (m_left->IsNativeIntegerValue(symbol_table))
+                return (m_left->IntegerValue(symbol_table) == m_right->IntegerValue(symbol_table)) ? 1 : 0;
             else
-                return (m_left->GetTextValue(symbol_table) == m_right->GetTextValue(symbol_table)) ? 1 : 0;
+                return (m_left->TextValue(symbol_table) == m_right->TextValue(symbol_table)) ? 1 : 0;
 
         case NOT_EQUAL:
-            if (m_left->GetIsNativeIntegerValue(symbol_table) != m_right->GetIsNativeIntegerValue(symbol_table))
+            if (m_left->IsNativeIntegerValue(symbol_table) != m_right->IsNativeIntegerValue(symbol_table))
             {
                 EmitError("int/string type mismatch for != operator", m_left->GetFiLoc());
                 return 0;
             }
-            if (m_left->GetIsNativeIntegerValue(symbol_table))
-                return (m_left->GetIntegerValue(symbol_table) != m_right->GetIntegerValue(symbol_table)) ? 1 : 0;
+            if (m_left->IsNativeIntegerValue(symbol_table))
+                return (m_left->IntegerValue(symbol_table) != m_right->IntegerValue(symbol_table)) ? 1 : 0;
             else
-                return (m_left->GetTextValue(symbol_table) != m_right->GetTextValue(symbol_table)) ? 1 : 0;
+                return (m_left->TextValue(symbol_table) != m_right->TextValue(symbol_table)) ? 1 : 0;
 
         case LESS_THAN:
-            return (m_left->GetIntegerValue(symbol_table) < m_right->GetIntegerValue(symbol_table)) ? 1 : 0;
+            return (m_left->IntegerValue(symbol_table) < m_right->IntegerValue(symbol_table)) ? 1 : 0;
 
         case LESS_THAN_OR_EQUAL:
-            return (m_left->GetIntegerValue(symbol_table) <= m_right->GetIntegerValue(symbol_table)) ? 1 : 0;
+            return (m_left->IntegerValue(symbol_table) <= m_right->IntegerValue(symbol_table)) ? 1 : 0;
 
         case GREATER_THAN:
-            return (m_left->GetIntegerValue(symbol_table) > m_right->GetIntegerValue(symbol_table)) ? 1 : 0;
+            return (m_left->IntegerValue(symbol_table) > m_right->IntegerValue(symbol_table)) ? 1 : 0;
 
         case GREATER_THAN_OR_EQUAL:
-            return (m_left->GetIntegerValue(symbol_table) >= m_right->GetIntegerValue(symbol_table)) ? 1 : 0;
+            return (m_left->IntegerValue(symbol_table) >= m_right->IntegerValue(symbol_table)) ? 1 : 0;
 
         case INT_CAST:
-            return m_right->GetIntegerValue(symbol_table);
+            return m_right->IntegerValue(symbol_table);
 
         case STRING_LENGTH:
-            if (m_right->GetIsNativeIntegerValue(symbol_table))
+            if (m_right->IsNativeIntegerValue(symbol_table))
             {
                 EmitError("type mismatch for string_length operator (expecting a string)", m_left->GetFiLoc());
                 return 0;
             }
             else
-                return m_right->GetTextValue(symbol_table).length();
+                return m_right->TextValue(symbol_table).length();
 
         default:
             assert(false && "invalid operator");
@@ -549,34 +549,34 @@ Sint32 Operation::GetIntegerValue (SymbolTable &symbol_table) const
     }
 }
 
-string Operation::GetTextValue (SymbolTable &symbol_table) const
+string Operation::TextValue (SymbolTable &symbol_table) const
 {
-    if (!GetIsTextOperation())
+    if (!IsTextOperation())
     {
         EmitWarning("retrieving text value from non-text expression", GetFiLoc());
         ostringstream out;
-        out << GetIntegerValue(symbol_table);
+        out << IntegerValue(symbol_table);
         return out.str();
     }
 
     switch (m_op)
     {
         case CONCATENATE:
-            return m_left->GetTextValue(symbol_table) + m_right->GetTextValue(symbol_table);
+            return m_left->TextValue(symbol_table) + m_right->TextValue(symbol_table);
 
         case STRING_CAST:
-            return m_right->GetTextValue(symbol_table);
+            return m_right->TextValue(symbol_table);
 
         case TO_CHARACTER_LITERAL:
         {
-            Sint32 character_index = m_right->GetIntegerValue(symbol_table);
+            Sint32 character_index = m_right->IntegerValue(symbol_table);
             if (character_index < 0 || character_index > 255)
                 EmitWarning(FORMAT("truncating character literal index (" << character_index << ") to within 0-255"), GetFiLoc());
-            return GetCharLiteral(Uint8(character_index));
+            return CharLiteral(Uint8(character_index));
         }
 
         case TO_STRING_LITERAL:
-            return GetStringLiteral(m_right->GetTextValue(symbol_table));
+            return StringLiteral(m_right->TextValue(symbol_table));
 
         default:
             assert(false && "invalid operator");
