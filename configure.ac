@@ -1,4 +1,4 @@
-AC_INIT(BARF, 0.9.20090505, victor.dods@gmail.com, barf)
+AC_INIT(BARF, 0.9.20091108, victor.dods@gmail.com, barf)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE
 
@@ -101,7 +101,7 @@ AC_SUBST(STABLE_TRISON)
 # add BARFDATADIR (the absolute path to where the targets/ dir and other stuff
 # is installed) to config.h
 ##############################################################################
-  
+
 temp=${datadir}/barf
 eval temp="\"$temp\""
 eval temp="\"$temp\""

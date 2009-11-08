@@ -184,9 +184,12 @@ noinst_LTLIBRARIES = \
 # installed into $(bindir)
 bin_PROGRAMS = \
 	bpp \
-	playground \
 	reflex \
 	trison
+
+# not installed
+noinst_PROGRAMS = \
+	playground
 
 # installed into $(pkgdatadir) as executable
 nobase_pkgdata_SCRIPTS = \

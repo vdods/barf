@@ -212,8 +212,8 @@ Options::Options (string const &executable_filename)
         ms_option,
         ms_option_count,
         executable_filename,
-        "Trison - A context-free-grammar-parser generator.\n"
-        "Part of the BARF compiler tool suite - written by Victor Dods.",
+        "Trison - a context-free-grammar parser generator - version " PACKAGE_VERSION "\n"
+        "Part of the BARF compiler tool suite - written by Victor Dods",
         "[options] <input_filename>")
 { }
 
