@@ -62,6 +62,9 @@ namespace Calculator {
 // ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.return_type "Parser::Token"
+// we definitely want interactive, because the calculator will almost always
+// be used from the commandline.
+%target.cpp.generate_interactive_scanner
 %target.cpp.return_true_iff_input_is_at_end {
     return m_input.peek() == char_traits<char>::eof();
 }

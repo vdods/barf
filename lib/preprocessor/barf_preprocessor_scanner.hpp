@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <deque>
+#include <iterator>
 #include <string>
 
 #if !defined(BarfCpp_namespace_)
@@ -96,18 +97,19 @@ class InputApparatus_
 {
 protected:
 
-    typedef bool (InputApparatus_::*IsInputAtEndMethod_)();
-    typedef BarfCpp_::Uint8 (InputApparatus_::*ReadNextAtomMethod_)();
-
-    InputApparatus_ (IsInputAtEndMethod_ IsInputAtEnd, ReadNextAtomMethod_ ReadNextAtom)
+    InputApparatus_ ()
         :
-        m_IsInputAtEnd(IsInputAtEnd),
-        m_ReadNextAtom(ReadNextAtom)
+        m_input_readahead(1024) // default, arbitrary reasonable lookahead
     {
         // subclasses must call InputApparatus_::ResetForNewInput_ in their constructors.
     }
 
     bool IsAtEndOfInput () { return IsConditionalMet(CF_END_OF_INPUT, CF_END_OF_INPUT); }
+
+    std::istream_iterator<char> const IstreamIterator () const { return m_it; }
+    void IstreamIterator (std::istream_iterator<char> it) { m_it = it; }
+    BarfCpp_::Size InputReadahead () const { return m_input_readahead; }
+    void InputReadahead (BarfCpp_::Size input_readahead) { m_input_readahead = input_readahead; }
 
     void PrepareToScan_ ()
     {
@@ -141,6 +143,7 @@ protected:
         m_kept_string_cursor = 1;
         m_accept_cursor = 0;
         m_keep_string_has_been_called = false;
+        m_it = m_it_end;
     }
 
     // for use in AutomatonApparatus_ only
@@ -188,7 +191,7 @@ protected:
             ++m_accept_cursor;
         AcceptRejectCommon(s);
     }
-    
+
 private:
 
     void AcceptRejectCommon (std::string &s)
@@ -210,7 +213,7 @@ private:
         m_read_cursor = m_accept_cursor;
         m_kept_string_cursor = m_accept_cursor;
     }
-    
+
     enum ConditionalFlag
     {
         CF_BEGINNING_OF_INPUT = (1 << 0),
@@ -243,19 +246,29 @@ private:
             assert(m_read_cursor < m_buffer.size());
             return;
         }
-        // if we're at the end of input, push a null char
-        if ((this->*m_IsInputAtEnd)())
+
+        // if we're at end of input, push a null char.
+        if (m_it == m_it_end)
             m_buffer.push_back('\0');
-        // otherwise retrieve and push the next input atom
+        // otherwise read stuff
         else
         {
-            BarfCpp_::Uint8 atom = (this->*m_ReadNextAtom)();
-            assert(atom != '\0' && "may not return '\\0' from return_next_input_char");
-            m_buffer.push_back(atom);
+            // if our readahead is unbounded, read the whole input and
+            // stick a null char at the end to signal end of input.
+            if (m_input_readahead == 0)
+            {
+                copy(m_it, m_it_end, std::back_inserter(m_buffer));
+                m_buffer.push_back('\0');
+            }
+            // otherwise, read the readahead number of bytes.
+            else
+                for (BarfCpp_::Size i = 0; i < m_input_readahead && m_it != m_it_end; ++i, ++m_it)
+                    m_buffer.push_back(*m_it);
         }
+
         // ensure there is at least one atom on each side of the read cursor.
         assert(m_buffer.size() >= 2);
-        assert(m_read_cursor == m_buffer.size()-1);
+        assert(m_read_cursor < m_buffer.size());
     }
     void UpdateConditionalFlags ()
     {
@@ -287,8 +300,14 @@ private:
     Buffer::size_type m_accept_cursor;
     // indicates if KeepString has been called during the accept/reject handler
     bool m_keep_string_has_been_called;
-    IsInputAtEndMethod_ m_IsInputAtEnd;
-    ReadNextAtomMethod_ m_ReadNextAtom;
+    // an istream_iterator to read through the input source
+    std::istream_iterator<char> m_it;
+    // keep a handy end-of-stream input iterator
+    std::istream_iterator<char> m_it_end;
+    // the max number of bytes that will be put into the buffer each time the
+    // input is pulled for bytes.  a value of 0 indicates that the input will
+    // be read until EOF is hit.
+    BarfCpp_::Size m_input_readahead;
 }; // end of class ReflexCpp_::InputApparatus_
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -303,8 +322,8 @@ protected:
     // state machine mode flags
     enum
     {
-        MF_CASE_INSENSITIVE_ = 0x01,
-        MF_UNGREEDY_         = 0x02
+        MF_CASE_INSENSITIVE_ = (1 << 0),
+        MF_UNGREEDY_         = (1 << 1)
     };
 
     struct DfaTransition_;
@@ -375,11 +394,9 @@ protected:
         BarfCpp_::Size state_count,
         DfaTransition_ const *transition_table,
         BarfCpp_::Size transition_count,
-        BarfCpp_::Uint32 accept_handler_count,
-        IsInputAtEndMethod_ IsInputAtEnd,
-        ReadNextAtomMethod_ ReadNextAtom)
+        BarfCpp_::Uint32 accept_handler_count)
         :
-        InputApparatus_(IsInputAtEnd, ReadNextAtom),
+        InputApparatus_(),
         m_accept_handler_count(accept_handler_count)
     {
         CheckDfa(state_table, state_count, transition_table, transition_count);
@@ -595,12 +612,12 @@ namespace Preprocessor {
 
 class Text;
 
-#line 599 "barf_preprocessor_scanner.hpp"
+#line 616 "barf_preprocessor_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_, 
 #line 36 "barf_preprocessor_scanner.reflex"
  protected InputBase 
-#line 604 "barf_preprocessor_scanner.hpp"
+#line 621 "barf_preprocessor_scanner.hpp"
 
 {
 public:
@@ -623,7 +640,7 @@ public:
 #line 37 "barf_preprocessor_scanner.reflex"
 
 
-#line 627 "barf_preprocessor_scanner.hpp"
+#line 644 "barf_preprocessor_scanner.hpp"
 
 public:
 
@@ -637,6 +654,9 @@ public:
     void SwitchToStateMachine (StateMachine::Name state_machine);
 
     using AutomatonApparatus_::IsAtEndOfInput;
+    using AutomatonApparatus_::IstreamIterator;
+    using AutomatonApparatus_::InputReadahead;
+
     void ResetForNewInput ();
 
     Parser::Token Scan () throw();
@@ -663,7 +683,7 @@ private:
     bool m_is_reading_newline_sensitive_code;
     Text *m_text;
 
-#line 667 "barf_preprocessor_scanner.hpp"
+#line 687 "barf_preprocessor_scanner.hpp"
 
 
 private:
@@ -678,9 +698,6 @@ private:
     using AutomatonApparatus_::InitialState_;
     using AutomatonApparatus_::ResetForNewInput_;
     using AutomatonApparatus_::RunDfa_;
-
-    bool IsInputAtEnd_ () throw();
-    BarfCpp_::Uint8 ReadNextAtom_ () throw();
 
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
@@ -713,4 +730,4 @@ private:
 
 #endif // !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 
-#line 717 "barf_preprocessor_scanner.hpp"
+#line 734 "barf_preprocessor_scanner.hpp"

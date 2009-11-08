@@ -21,7 +21,12 @@ bool Scanner::OpenFile (string const &input_filename)
 {
     bool open_succeeded = InputBase::OpenFile(input_filename);
     if (open_succeeded)
+    {
         ResetForNewInput();
+        IstreamIterator(istream_iterator<char>(In()));
+        // unlimited readahead (read the whole file immediately)
+        InputReadahead(0);
+    }
     return open_succeeded;
 }
 
@@ -29,12 +34,18 @@ void Scanner::OpenString (string const &input_string, string const &input_name, 
 {
     InputBase::OpenString(input_string, input_name, use_line_numbers);
     ResetForNewInput();
+    IstreamIterator(istream_iterator<char>(In()));
+    // unlimited readahead (read the whole file immediately)
+    InputReadahead(0);
 }
 
 void Scanner::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
     ResetForNewInput();
+    IstreamIterator(istream_iterator<char>(In()));
+    // unlimited readahead (read the whole file immediately)
+    InputReadahead(0);
 }
 
 Parser::Token Scanner::ParseKeyword (string const &accepted_string)
@@ -69,7 +80,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     return Parser::Token(Parser::Terminal::ID, new Ast::Id(accepted_string, GetFiLoc()));
 }
 
-#line 73 "barf_preprocessor_scanner.cpp"
+#line 84 "barf_preprocessor_scanner.cpp"
 
 Scanner::Scanner ()
     :
@@ -78,18 +89,16 @@ Scanner::Scanner ()
         ms_state_count_,
         ms_transition_table_,
         ms_transition_count_,
-        ms_accept_handler_count_,
-        static_cast<ReflexCpp_::InputApparatus_::IsInputAtEndMethod_>(&Scanner::IsInputAtEnd_),
-        static_cast<ReflexCpp_::InputApparatus_::ReadNextAtomMethod_>(&Scanner::ReadNextAtom_))
+        ms_accept_handler_count_)
 {
     DebugSpew(false);
 
 
-#line 126 "barf_preprocessor_scanner.reflex"
+#line 137 "barf_preprocessor_scanner.reflex"
 
     m_text = NULL;
 
-#line 93 "barf_preprocessor_scanner.cpp"
+#line 102 "barf_preprocessor_scanner.cpp"
 
     ResetForNewInput();
 }
@@ -97,12 +106,12 @@ Scanner::Scanner ()
 Scanner::~Scanner ()
 {
 
-#line 129 "barf_preprocessor_scanner.reflex"
+#line 140 "barf_preprocessor_scanner.reflex"
 
     delete m_text;
     m_text = NULL;
 
-#line 106 "barf_preprocessor_scanner.cpp"
+#line 115 "barf_preprocessor_scanner.cpp"
 }
 
 Scanner::StateMachine::Name Scanner::CurrentStateMachine () const
@@ -132,9 +141,9 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
         (false && "invalid StateMachine::Name"));
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
-#line 166 "barf_preprocessor_scanner.reflex"
+#line 171 "barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 138 "barf_preprocessor_scanner.cpp"
+#line 147 "barf_preprocessor_scanner.cpp"
  << " switching to state machine "
                   << ms_state_machine_name_[state_machine];
         if (ms_state_machine_mode_flags_[state_machine] != 0)
@@ -154,9 +163,9 @@ void Scanner::ResetForNewInput ()
 {
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
-#line 166 "barf_preprocessor_scanner.reflex"
+#line 171 "barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 160 "barf_preprocessor_scanner.cpp"
+#line 169 "barf_preprocessor_scanner.cpp"
  << " executing reset-for-new-input actions and switching to state machine "
                   << ms_state_machine_name_[StateMachine::START_];
         if (ms_state_machine_mode_flags_[StateMachine::START_] != 0)
@@ -171,12 +180,12 @@ void Scanner::ResetForNewInput ()
     assert(CurrentStateMachine() == StateMachine::START_);
 
 
-#line 156 "barf_preprocessor_scanner.reflex"
+#line 161 "barf_preprocessor_scanner.reflex"
 
     delete m_text;
     m_text = NULL;
 
-#line 180 "barf_preprocessor_scanner.cpp"
+#line 189 "barf_preprocessor_scanner.cpp"
 }
 
 Parser::Token Scanner::Scan () throw()
@@ -192,7 +201,7 @@ Parser::Token Scanner::Scan () throw()
         work_string.clear();
         // reset the char buffer and other stuff
         PrepareToScan_();
-    
+
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
         BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(work_string);
@@ -208,12 +217,12 @@ Parser::Token Scanner::Scan () throw()
 
             std::string &rejected_string = work_string;
             BarfCpp_::Uint8 rejected_atom = rejected_string.empty() ? '\0' : *rejected_string.rbegin();
-            
+
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
-#line 166 "barf_preprocessor_scanner.reflex"
+#line 171 "barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 217 "barf_preprocessor_scanner.cpp"
+#line 226 "barf_preprocessor_scanner.cpp"
  << " rejecting string ";
                 PrintString_(rejected_string);
                 std::cerr << " (rejected_atom is \'";
@@ -226,11 +235,11 @@ Parser::Token Scanner::Scan () throw()
             do
             {
 
-#line 153 "barf_preprocessor_scanner.reflex"
+#line 158 "barf_preprocessor_scanner.reflex"
 
     EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 
-#line 234 "barf_preprocessor_scanner.cpp"
+#line 243 "barf_preprocessor_scanner.cpp"
 
             }
             while (false);
@@ -239,17 +248,17 @@ Parser::Token Scanner::Scan () throw()
         else
         {
             std::string &accepted_string = work_string;
-        
+
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
-#line 166 "barf_preprocessor_scanner.reflex"
+#line 171 "barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 248 "barf_preprocessor_scanner.cpp"
+#line 257 "barf_preprocessor_scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
-                std::cerr << " in state machine " << ms_state_machine_name_[CurrentStateMachine()] 
+                std::cerr << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
                           << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
-                
+
             // execute the appropriate accept handler.
             // the accepted string is in accepted_string.
             switch (accept_handler_index_)
@@ -257,12 +266,12 @@ Parser::Token Scanner::Scan () throw()
                 case 0:
                 {
 
-#line 403 "barf_preprocessor_scanner.reflex"
+#line 408 "barf_preprocessor_scanner.reflex"
 
         assert(false && "this should never happen");
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     
-#line 266 "barf_preprocessor_scanner.cpp"
+#line 275 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -270,11 +279,11 @@ Parser::Token Scanner::Scan () throw()
                 case 1:
                 {
 
-#line 409 "barf_preprocessor_scanner.reflex"
+#line 414 "barf_preprocessor_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::END_);
     
-#line 278 "barf_preprocessor_scanner.cpp"
+#line 287 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -282,13 +291,13 @@ Parser::Token Scanner::Scan () throw()
                 case 2:
                 {
 
-#line 218 "barf_preprocessor_scanner.reflex"
+#line 223 "barf_preprocessor_scanner.reflex"
 
         IncrementLineNumber(NewlineCount(accepted_string));
 
         // save whether or not we got <|
         m_is_reading_newline_sensitive_code = *accepted_string.rbegin() == '|';
-        
+
         // take off the <| or <{ at the end
         assert(accepted_string.length() >= 2);
         accepted_string.resize(accepted_string.length()-2);
@@ -305,7 +314,7 @@ Parser::Token Scanner::Scan () throw()
         m_text = NULL;
         return Parser::Token(Parser::Terminal::TEXT, token);
     
-#line 309 "barf_preprocessor_scanner.cpp"
+#line 318 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -313,7 +322,7 @@ Parser::Token Scanner::Scan () throw()
                 case 3:
                 {
 
-#line 242 "barf_preprocessor_scanner.reflex"
+#line 247 "barf_preprocessor_scanner.reflex"
 
         // if there's already a body text in progress, continue it.
         if (m_text != NULL)
@@ -327,7 +336,7 @@ Parser::Token Scanner::Scan () throw()
         m_text = NULL;
         return Parser::Token(Parser::Terminal::TEXT, token);
     
-#line 331 "barf_preprocessor_scanner.cpp"
+#line 340 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -335,11 +344,11 @@ Parser::Token Scanner::Scan () throw()
                 case 4:
                 {
 
-#line 275 "barf_preprocessor_scanner.reflex"
+#line 280 "barf_preprocessor_scanner.reflex"
 
         // ignore whitespace
     
-#line 343 "barf_preprocessor_scanner.cpp"
+#line 352 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -347,7 +356,7 @@ Parser::Token Scanner::Scan () throw()
                 case 5:
                 {
 
-#line 280 "barf_preprocessor_scanner.reflex"
+#line 285 "barf_preprocessor_scanner.reflex"
 
         IncrementLineNumber(1);
         // we only return from the scanner on a newline if we're scanning
@@ -358,7 +367,7 @@ Parser::Token Scanner::Scan () throw()
             return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         }
     
-#line 362 "barf_preprocessor_scanner.cpp"
+#line 371 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -366,7 +375,7 @@ Parser::Token Scanner::Scan () throw()
                 case 6:
                 {
 
-#line 292 "barf_preprocessor_scanner.reflex"
+#line 297 "barf_preprocessor_scanner.reflex"
 
         SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         if (m_is_reading_newline_sensitive_code)
@@ -374,7 +383,7 @@ Parser::Token Scanner::Scan () throw()
         else
             EmitError("unexpected end of file encountered within preprocessor code section", GetFiLoc());
     
-#line 378 "barf_preprocessor_scanner.cpp"
+#line 387 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -382,7 +391,7 @@ Parser::Token Scanner::Scan () throw()
                 case 7:
                 {
 
-#line 301 "barf_preprocessor_scanner.reflex"
+#line 306 "barf_preprocessor_scanner.reflex"
 
         if (!m_is_reading_newline_sensitive_code)
         {
@@ -395,7 +404,7 @@ Parser::Token Scanner::Scan () throw()
             return Parser::Token(Parser::Terminal::BAD_TOKEN);
         }
     
-#line 399 "barf_preprocessor_scanner.cpp"
+#line 408 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -403,11 +412,11 @@ Parser::Token Scanner::Scan () throw()
                 case 8:
                 {
 
-#line 315 "barf_preprocessor_scanner.reflex"
+#line 320 "barf_preprocessor_scanner.reflex"
 
         return Parser::Token(Parser::Token::Id(accepted_string[0]));
     
-#line 411 "barf_preprocessor_scanner.cpp"
+#line 420 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -415,11 +424,11 @@ Parser::Token Scanner::Scan () throw()
                 case 9:
                 {
 
-#line 320 "barf_preprocessor_scanner.reflex"
+#line 325 "barf_preprocessor_scanner.reflex"
 
         return ParseKeyword(accepted_string);
     
-#line 423 "barf_preprocessor_scanner.cpp"
+#line 432 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -427,14 +436,14 @@ Parser::Token Scanner::Scan () throw()
                 case 10:
                 {
 
-#line 325 "barf_preprocessor_scanner.reflex"
+#line 330 "barf_preprocessor_scanner.reflex"
 
         Sint32 value = 0;
         istringstream in(accepted_string);
         in >> value;
         return Parser::Token(Parser::Terminal::INTEGER_LITERAL, new Integer(value, GetFiLoc()));
     
-#line 438 "barf_preprocessor_scanner.cpp"
+#line 447 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -442,13 +451,13 @@ Parser::Token Scanner::Scan () throw()
                 case 11:
                 {
 
-#line 333 "barf_preprocessor_scanner.reflex"
+#line 338 "barf_preprocessor_scanner.reflex"
 
         assert(m_text == NULL);
         m_text = new Text("", GetFiLoc());
         SwitchToStateMachine(StateMachine::READING_CODE_STRING_LITERAL_GUTS);
     
-#line 452 "barf_preprocessor_scanner.cpp"
+#line 461 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -456,12 +465,12 @@ Parser::Token Scanner::Scan () throw()
                 case 12:
                 {
 
-#line 340 "barf_preprocessor_scanner.reflex"
+#line 345 "barf_preprocessor_scanner.reflex"
 
         EmitError("unrecognized character encountered within preprocessor code section", GetFiLoc());
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     
-#line 465 "barf_preprocessor_scanner.cpp"
+#line 474 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -469,7 +478,7 @@ Parser::Token Scanner::Scan () throw()
                 case 13:
                 {
 
-#line 349 "barf_preprocessor_scanner.reflex"
+#line 354 "barf_preprocessor_scanner.reflex"
 
         assert(m_text != NULL);
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -483,18 +492,18 @@ Parser::Token Scanner::Scan () throw()
             case ESRC_SUCCESS:
                 // awesome
                 break;
-                
+
             case ESRC_UNEXPECTED_EOI:
                 assert(false && "the formulation of the regex should prevent this");
                 break;
-                
+
             case ESRC_MALFORMED_HEX_CHAR:
                 EmitError(
                     "\\x with no trailing hex digits",
                     FiLoc(m_text->GetFiLoc().Filename(),
                           m_text->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
-                
+
             case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 EmitError(
@@ -509,7 +518,7 @@ Parser::Token Scanner::Scan () throw()
         m_text = NULL;
         return Parser::Token(Parser::Terminal::STRING_LITERAL, token);
     
-#line 513 "barf_preprocessor_scanner.cpp"
+#line 522 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -517,7 +526,7 @@ Parser::Token Scanner::Scan () throw()
                 case 14:
                 {
 
-#line 390 "barf_preprocessor_scanner.reflex"
+#line 395 "barf_preprocessor_scanner.reflex"
 
         EmitError("unterminated string literal", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -526,7 +535,7 @@ Parser::Token Scanner::Scan () throw()
         m_text = NULL;
         return Parser::Token(Parser::Terminal::END_);
     
-#line 530 "barf_preprocessor_scanner.cpp"
+#line 539 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -534,7 +543,7 @@ Parser::Token Scanner::Scan () throw()
                 case 15:
                 {
 
-#line 262 "barf_preprocessor_scanner.reflex"
+#line 267 "barf_preprocessor_scanner.reflex"
 
         assert(m_text == NULL);
         SwitchToStateMachine(StateMachine::READING_CODE);
@@ -543,7 +552,7 @@ Parser::Token Scanner::Scan () throw()
         else
             return Parser::Token(Parser::Terminal::START_CODE);
     
-#line 547 "barf_preprocessor_scanner.cpp"
+#line 556 "barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -554,37 +563,17 @@ Parser::Token Scanner::Scan () throw()
     }
 
 
-#line 133 "barf_preprocessor_scanner.reflex"
+#line 144 "barf_preprocessor_scanner.reflex"
 
     assert(false && "you didn't handle EOF properly");
     return Parser::Token(Parser::Terminal::END_);
 
-#line 563 "barf_preprocessor_scanner.cpp"
+#line 572 "barf_preprocessor_scanner.cpp"
 }
 
 // ///////////////////////////////////////////////////////////////////////
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
-
-bool Scanner::IsInputAtEnd_ () throw()
-{
-
-#line 147 "barf_preprocessor_scanner.reflex"
-
-    return In().peek() == char_traits<char>::eof();
-
-#line 577 "barf_preprocessor_scanner.cpp"
-}
-
-BarfCpp_::Uint8 Scanner::ReadNextAtom_ () throw()
-{
-
-#line 150 "barf_preprocessor_scanner.reflex"
-
-    return In().get();
-
-#line 587 "barf_preprocessor_scanner.cpp"
-}
 
 void Scanner::PrintAtom_ (BarfCpp_::Uint8 atom)
 {
@@ -869,9 +858,9 @@ BarfCpp_::Uint32 const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_ac
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 137 "barf_preprocessor_scanner.reflex"
+#line 148 "barf_preprocessor_scanner.reflex"
 
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 878 "barf_preprocessor_scanner.cpp"
+#line 867 "barf_preprocessor_scanner.cpp"

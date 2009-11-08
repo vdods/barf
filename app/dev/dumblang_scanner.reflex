@@ -26,6 +26,7 @@
 
 
 %target.cpp.return_type "Parser::Token"
+%target.cpp.generate_interactive_scanner
 %target.cpp.return_true_iff_input_is_at_end {
     return cin.peek() == char_traits<char>::eof();
 }

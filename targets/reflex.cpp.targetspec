@@ -150,15 +150,6 @@
 // value is void so as to not require a return value in the Scan method.
 // e.g. use "TrisonParserClass::Token" -- when reflex is used with trison.
 %add_optional_directive return_type                         %string             %default "void"
-// This value's code should return true only when the next read operation will
-// produce the end-of-file condition.  The default value is an example for
-// indicating EOF for stdin.
-%add_optional_directive return_true_iff_input_is_at_end     %strict_code_block  %default { return std::cin.peek() == std::char_traits<char>::eof(); }
-// This value's code should return the next input character.  The null char
-// '\0' should not be returned by this code; correspondingly, this code will
-// never be called once the end-of-file condition has been reached.  The
-// default value is an example for returning the next character from stdin.
-%add_optional_directive return_next_input_char              %strict_code_block  %default { return std::cin.get(); }
 // This value's code is executed when the input is not matched by any regex
 // rule in the scanner's current state.  The rejected string is in the
 // local variable rejected_string.  This is never called at the end of input;
@@ -169,6 +160,23 @@
 // to start scanning from a new source.  This code is executed in addition to
 // various internal state-machine-related initialization that is required.
 %add_optional_directive reset_for_new_input_actions         %strict_code_block
+// This directive indicates that the scanner should be made "interactive" --
+// one input atom is read at a time -- suitable for scanners which need to
+// read input in realtime.  If this directive is specified, then the
+// return_true_iff_input_is_at_end and return_next_input_char directives are
+// required.  The default behavior is "non-interactive", in which a
+// std::istream_iterator must be passed to IstreamIterator() in order to
+// specify the input source.
+%add_optional_directive generate_interactive_scanner
+// This value's code should return true only when the next read operation will
+// produce the end-of-file condition.  The default value is an example for
+// indicating EOF for stdin.
+%add_optional_directive return_true_iff_input_is_at_end     %strict_code_block  //%default { return std::cin.peek() == std::char_traits<char>::eof(); }
+// This value's code should return the next input character.  The null char
+// '\0' should not be returned by this code; correspondingly, this code will
+// never be called once the end-of-file condition has been reached.  The
+// default value is an example for returning the next character from stdin.
+%add_optional_directive return_next_input_char              %strict_code_block  //%default { return std::cin.get(); }
 
 // ///////////////////////////////////////////////////////////////////////////
 // Miscellaneous directives

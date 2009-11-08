@@ -40,24 +40,32 @@ void EmitError (string const &message, FiLoc const &filoc)
         EmitFatalError(message, filoc);
     else
     {
-#if DEBUG
-        if (OptionsAreInitialized() && GetOptions().AssertOnError())
-            assert(false && "you have requested to assert on error, human, and here it is");
-#endif
         if (filoc.IsValid())
             cerr << GetOptions().ProgramName() << ": " << filoc << ": error: " << message << endl;
         else
             cerr << GetOptions().ProgramName() << ": " << "error: " << message << endl;
+
+#if DEBUG
+        if (OptionsAreInitialized() && GetOptions().AssertOnError())
+            assert(false && "you have requested to assert on error, human, and here it is");
+#endif
     }
 }
 
 void EmitFatalError (string const &message, FiLoc const &filoc)
 {
     g_errors_encountered = true;
+    
 #if DEBUG
+    if (filoc.IsValid())
+        cerr << GetOptions().ProgramName() << ": " << filoc << ": error: " << message << endl;
+    else
+        cerr << GetOptions().ProgramName() << ": " << "error: " << message << endl;
+        
     if (OptionsAreInitialized() && GetOptions().AssertOnError())
         assert(false && "you have requested to assert on error, human, and here it is");
 #endif
+
     if (filoc.IsValid())
         THROW_STRING(GetOptions().ProgramName() << ": " << filoc << ": fatal error: " << message);
     else

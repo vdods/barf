@@ -75,7 +75,12 @@ bool Scanner::OpenFile (string const &input_filename)
 {
     bool open_succeeded = InputBase::OpenFile(input_filename);
     if (open_succeeded)
+    {
         ResetForNewInput();
+        IstreamIterator(istream_iterator<char>(In()));
+        // unlimited readahead (read the whole file immediately)
+        InputReadahead(0);
+    }
     return open_succeeded;
 }
 
@@ -83,12 +88,18 @@ void Scanner::OpenString (string const &input_string, string const &input_name, 
 {
     InputBase::OpenString(input_string, input_name, use_line_numbers);
     ResetForNewInput();
+    IstreamIterator(istream_iterator<char>(In()));
+    // unlimited readahead (read the whole file immediately)
+    InputReadahead(0);
 }
 
 void Scanner::OpenUsingStream (istream *input_stream, string const &input_name, bool use_line_numbers)
 {
     InputBase::OpenUsingStream(input_stream, input_name, use_line_numbers);
     ResetForNewInput();
+    IstreamIterator(istream_iterator<char>(In()));
+    // unlimited readahead (read the whole file immediately)
+    InputReadahead(0);
 }
 
 Parser::Token Scanner::ParseKeyword (string const &accepted_string)
@@ -144,12 +155,6 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 /* **************************************************************************/
 
 %target.cpp.return_type "Parser::Token"
-%target.cpp.return_true_iff_input_is_at_end {
-    return In().peek() == char_traits<char>::eof();
-}
-%target.cpp.return_next_input_char {
-    return In().get();
-}
 %target.cpp.rejection_actions {
     EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 }
@@ -220,7 +225,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
 
         // save whether or not we got <|
         m_is_reading_newline_sensitive_code = *accepted_string.rbegin() == '|';
-        
+
         // take off the <| or <{ at the end
         assert(accepted_string.length() >= 2);
         accepted_string.resize(accepted_string.length()-2);
@@ -359,18 +364,18 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
             case ESRC_SUCCESS:
                 // awesome
                 break;
-                
+
             case ESRC_UNEXPECTED_EOI:
                 assert(false && "the formulation of the regex should prevent this");
                 break;
-                
+
             case ESRC_MALFORMED_HEX_CHAR:
                 EmitError(
                     "\\x with no trailing hex digits",
                     FiLoc(m_text->GetFiLoc().Filename(),
                           m_text->GetFiLoc().LineNumber() + status.m_line_number_offset));
                 break;
-                
+
             case ESRC_HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case ESRC_OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 EmitError(

@@ -157,12 +157,6 @@ $ do comprehensive deleting of stuff (this might be hard with all the throwing)
 // ///////////////////////////////////////////////////////////////////////////
 
 - maybe consistencize the codespec symbol names
-$ add interactive/noninteractive option to target -- interactive will do
-  char-by-char input, while noninteractive will do the faster chunk reading
-  and buffering.  flex-like interactive scanner option -- if it's enabled,
-  you must specify the "get next char" directive, otherwise you must specify
-  the "read chars" directive (which reads a big chunk of input for faster
-  reads).  the default should be non-interactive, so the default is fast
 
 // ///////////////////////////////////////////////////////////////////////////
 // reflex/trison common
@@ -185,9 +179,6 @@ $ also add post-undefine option
   code generation (preprocessor) stage -- ones that don't appear at all in
   any codespec, not necessarily to indicate they weren't used in one particular
   case.
-* in the codespecsymbols, add some sort of "description" property so that
-  when you dump the symbols, it's self documenting.  then verify the commandline
-  option for dumping symbols works correctly
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
