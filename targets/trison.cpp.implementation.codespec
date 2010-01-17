@@ -272,7 +272,7 @@ void <{class_name}::ResetForNewInput ()
                 if (lookahead_sequence_matched)
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " current (relevant) lookahead(s):")
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " currently usable lookahead(s):")
                     for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
@@ -290,7 +290,7 @@ void <{class_name}::ResetForNewInput ()
             if (!transition_exercised)
             {
 <|if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " current (relevant) lookahead(s):")
+                TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " currently usable lookahead(s):")
                 for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
@@ -361,6 +361,8 @@ void <{class_name}::ThrowAwayToken_ (Token::Data &token_data) throw()
 
 <{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
 {
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing scan actions" << std::endl)
+
 <|scan_actions
 }
 

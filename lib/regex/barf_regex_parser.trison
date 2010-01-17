@@ -197,7 +197,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
                 {
                     m_active_backslash = false;
                     return Token::Id('\\');
-                }                
+                }
                 // if the next char isn't 'x' (i.e. we will not be
                 // parsing a hex char), then this backslash is active.
                 if (In().peek() != 'x')
@@ -223,11 +223,11 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
                     hex_value <<= 4;
                     hex_value |= HexDigitValue(c);
                 }
-                
+
                 // (for now) prevent usage of the null char \x00, since
                 // the scanner implementation uses '\0' as a sentinel value.
                 if (hex_value == 0)
-                    THROW_STRING("can't use hex char \x00");
+                    THROW_STRING("can't use hex char \\x00");
 
                 return Token(Terminal::HEX_CHAR, new Char(hex_value));
             }
@@ -337,7 +337,7 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
         for (RegularExpression::size_type i = 0; i < regex->size(); ++i)
             if (Regex::NodesAreEqual(branch, regex->Element(i)))
                 THROW_STRING("duplicated branch");
-                
+
         regex->Append(branch);
         return regex;
     }

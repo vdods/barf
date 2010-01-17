@@ -8,6 +8,10 @@
   :
     (
   ;
+- bug (in trison) -- lack of a parse error handler for:
+    %terminal XXX %type "Blah"
+  which should be
+    %terminal XXX %type.cpp "Blah"
 
 // ///////////////////////////////////////////////////////////////////////////
 // BARF general
