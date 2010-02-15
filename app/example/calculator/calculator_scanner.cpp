@@ -64,25 +64,43 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
     assert(
         state_machine == StateMachine::MAIN ||
         (false && "invalid StateMachine::Name"));
-    InitialState_(ms_state_table_ + state_machine);
     REFLEX_CPP_DEBUG_CODE_(
-        std::cerr << "Scanner:" << " transitioning to state machine ";
-        PrintStateMachineName_(state_machine);
+        std::cerr << "Scanner:" << " switching to state machine "
+                  << ms_state_machine_name_[state_machine];
+        if (ms_state_machine_mode_flags_[state_machine] != 0)
+        {
+            if ((ms_state_machine_mode_flags_[state_machine] & AutomatonApparatus_::MF_CASE_INSENSITIVE_) != 0)
+                std::cerr << " %case_insensitive";
+            if ((ms_state_machine_mode_flags_[state_machine] & AutomatonApparatus_::MF_UNGREEDY_) != 0)
+                std::cerr << " %ungreedy";
+        }
         std::cerr << std::endl)
+    InitialState_(ms_state_table_ + ms_state_machine_start_state_index_[state_machine]);
+    ModeFlags_(ms_state_machine_mode_flags_[state_machine]);
     assert(CurrentStateMachine() == state_machine);
 }
 
 void Scanner::ResetForNewInput ()
 {
-    REFLEX_CPP_DEBUG_CODE_(std::cerr << "Scanner:" << " executing reset-for-new-input actions" << std::endl)
-                
-    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + StateMachine::START_);
+    REFLEX_CPP_DEBUG_CODE_(
+        std::cerr << "Scanner:" << " executing reset-for-new-input actions and switching to state machine "
+                  << ms_state_machine_name_[StateMachine::START_];
+        if (ms_state_machine_mode_flags_[StateMachine::START_] != 0)
+        {
+            if ((ms_state_machine_mode_flags_[StateMachine::START_] & AutomatonApparatus_::MF_CASE_INSENSITIVE_) != 0)
+                std::cerr << " %case_insensitive";
+            if ((ms_state_machine_mode_flags_[StateMachine::START_] & AutomatonApparatus_::MF_UNGREEDY_) != 0)
+                std::cerr << " %ungreedy";
+        }
+        std::cerr << std::endl)
+    ReflexCpp_::AutomatonApparatus_::ResetForNewInput_(ms_state_table_ + ms_state_machine_start_state_index_[StateMachine::START_], ms_state_machine_mode_flags_[StateMachine::START_]);
+    assert(CurrentStateMachine() == StateMachine::START_);
 
 
-#line 74 "calculator_scanner.reflex"
+#line 77 "calculator_scanner.reflex"
 
 
-#line 86 "calculator_scanner.cpp"
+#line 104 "calculator_scanner.cpp"
 }
 
 Parser::Token Scanner::Scan () throw()
@@ -98,7 +116,7 @@ Parser::Token Scanner::Scan () throw()
         work_string.clear();
         // reset the char buffer and other stuff
         PrepareToScan_();
-    
+
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
         BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(work_string);
@@ -114,7 +132,7 @@ Parser::Token Scanner::Scan () throw()
 
             std::string &rejected_string = work_string;
             BarfCpp_::Uint8 rejected_atom = rejected_string.empty() ? '\0' : *rejected_string.rbegin();
-            
+
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << "Scanner:" << " rejecting string ";
                 PrintString_(rejected_string);
@@ -128,11 +146,11 @@ Parser::Token Scanner::Scan () throw()
             do
             {
 
-#line 71 "calculator_scanner.reflex"
+#line 74 "calculator_scanner.reflex"
 
     assert(false && "we should have handled this in the catch-all rule");
 
-#line 136 "calculator_scanner.cpp"
+#line 154 "calculator_scanner.cpp"
 
             }
             while (false);
@@ -141,14 +159,13 @@ Parser::Token Scanner::Scan () throw()
         else
         {
             std::string &accepted_string = work_string;
-        
+
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << "Scanner:" << " accepting string ";
                 PrintString_(accepted_string);
-                std::cerr << " in state machine ";
-                PrintStateMachineName_(CurrentStateMachine());
-                std::cerr << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
-                
+                std::cerr << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
+                          << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
+
             // execute the appropriate accept handler.
             // the accepted string is in accepted_string.
             switch (accept_handler_index_)
@@ -156,11 +173,11 @@ Parser::Token Scanner::Scan () throw()
                 case 0:
                 {
 
-#line 112 "calculator_scanner.reflex"
+#line 115 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, strtod(accepted_string.c_str(), NULL));
     
-#line 164 "calculator_scanner.cpp"
+#line 181 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -168,11 +185,11 @@ Parser::Token Scanner::Scan () throw()
                 case 1:
                 {
 
-#line 117 "calculator_scanner.reflex"
+#line 120 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, strtod(accepted_string.c_str(), NULL));
     
-#line 176 "calculator_scanner.cpp"
+#line 193 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -180,11 +197,11 @@ Parser::Token Scanner::Scan () throw()
                 case 2:
                 {
 
-#line 122 "calculator_scanner.reflex"
+#line 125 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, M_PI);
     
-#line 188 "calculator_scanner.cpp"
+#line 205 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -192,11 +209,11 @@ Parser::Token Scanner::Scan () throw()
                 case 3:
                 {
 
-#line 127 "calculator_scanner.reflex"
+#line 130 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, M_E);
     
-#line 200 "calculator_scanner.cpp"
+#line 217 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -204,11 +221,11 @@ Parser::Token Scanner::Scan () throw()
                 case 4:
                 {
 
-#line 132 "calculator_scanner.reflex"
+#line 135 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::RESULT);
     
-#line 212 "calculator_scanner.cpp"
+#line 229 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -216,11 +233,11 @@ Parser::Token Scanner::Scan () throw()
                 case 5:
                 {
 
-#line 137 "calculator_scanner.reflex"
+#line 140 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::LOG);
     
-#line 224 "calculator_scanner.cpp"
+#line 241 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -228,11 +245,11 @@ Parser::Token Scanner::Scan () throw()
                 case 6:
                 {
 
-#line 142 "calculator_scanner.reflex"
+#line 145 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::HELP);
     
-#line 236 "calculator_scanner.cpp"
+#line 253 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -240,11 +257,11 @@ Parser::Token Scanner::Scan () throw()
                 case 7:
                 {
 
-#line 147 "calculator_scanner.reflex"
+#line 150 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::MOD);
     
-#line 248 "calculator_scanner.cpp"
+#line 265 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -252,11 +269,11 @@ Parser::Token Scanner::Scan () throw()
                 case 8:
                 {
 
-#line 152 "calculator_scanner.reflex"
+#line 155 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Token::Id(accepted_string[0]));
     
-#line 260 "calculator_scanner.cpp"
+#line 277 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -264,11 +281,11 @@ Parser::Token Scanner::Scan () throw()
                 case 9:
                 {
 
-#line 157 "calculator_scanner.reflex"
+#line 160 "calculator_scanner.reflex"
 
         // ignore all non-newline whitespace
     
-#line 272 "calculator_scanner.cpp"
+#line 289 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -276,11 +293,11 @@ Parser::Token Scanner::Scan () throw()
                 case 10:
                 {
 
-#line 162 "calculator_scanner.reflex"
+#line 165 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NEWLINE);
     
-#line 284 "calculator_scanner.cpp"
+#line 301 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -288,11 +305,11 @@ Parser::Token Scanner::Scan () throw()
                 case 11:
                 {
 
-#line 167 "calculator_scanner.reflex"
+#line 170 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::END_);
     
-#line 296 "calculator_scanner.cpp"
+#line 313 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -300,11 +317,11 @@ Parser::Token Scanner::Scan () throw()
                 case 12:
                 {
 
-#line 172 "calculator_scanner.reflex"
+#line 175 "calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     
-#line 308 "calculator_scanner.cpp"
+#line 325 "calculator_scanner.cpp"
 
                 }
                 break;
@@ -319,7 +336,7 @@ Parser::Token Scanner::Scan () throw()
 
     return Parser::Token(Parser::Terminal::BAD_TOKEN);
 
-#line 323 "calculator_scanner.cpp"
+#line 340 "calculator_scanner.cpp"
 }
 
 // ///////////////////////////////////////////////////////////////////////
@@ -329,21 +346,21 @@ Parser::Token Scanner::Scan () throw()
 bool Scanner::IsInputAtEnd_ () throw()
 {
 
-#line 65 "calculator_scanner.reflex"
+#line 68 "calculator_scanner.reflex"
 
     return m_input.peek() == char_traits<char>::eof();
 
-#line 337 "calculator_scanner.cpp"
+#line 354 "calculator_scanner.cpp"
 }
 
 BarfCpp_::Uint8 Scanner::ReadNextAtom_ () throw()
 {
 
-#line 68 "calculator_scanner.reflex"
+#line 71 "calculator_scanner.reflex"
 
     return m_input.get();
 
-#line 347 "calculator_scanner.cpp"
+#line 364 "calculator_scanner.cpp"
 }
 
 void Scanner::PrintAtom_ (BarfCpp_::Uint8 atom)
@@ -393,11 +410,19 @@ void Scanner::PrintString_ (std::string const &s)
     std::cerr.precision(saved_stream_precision);
 }
 
-void Scanner::PrintStateMachineName_ (StateMachine::Name state_machine)
+BarfCpp_::Uint32 const Scanner::ms_state_machine_start_state_index_[] =
 {
-    if (false) { }
-    else if (state_machine == StateMachine::MAIN) { std::cerr << "MAIN"; }
-}
+    0,
+};
+BarfCpp_::Uint8 const Scanner::ms_state_machine_mode_flags_[] =
+{
+    0,
+};
+char const *const Scanner::ms_state_machine_name_[] =
+{
+    "MAIN",
+};
+BarfCpp_::Uint32 const Scanner::ms_state_machine_count_ = sizeof(Scanner::ms_state_machine_name_) / sizeof(*Scanner::ms_state_machine_name_);
 
 // the order of the states indicates priority (only for accept states).
 // the lower the state's index in this array, the higher its priority.
@@ -552,4 +577,4 @@ BarfCpp_::Uint32 const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_ac
 
 } // end of namespace Calculator
 
-#line 556 "calculator_scanner.cpp"
+#line 581 "calculator_scanner.cpp"

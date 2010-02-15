@@ -58,7 +58,7 @@ bool Parser::IsAtEndOfInput ()
 void Parser::ResetForNewInput ()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << "Parser:" << " executing reset-for-new-input actions" << std::endl)
-    
+
     // clean up stuff that might be hanging around from the last parse's input.
     ClearStack_();
     ClearLookaheadQueue_();
@@ -227,7 +227,7 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, ParseNonterminal:
                 // and break out of this inner (transition) loop.
                 if (lookahead_sequence_matched)
                 {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << "Parser:" << " current (relevant) lookahead(s):")
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << "Parser:" << " currently usable lookahead(s):")
                     for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
@@ -243,7 +243,7 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, ParseNonterminal:
             // if no transition was exercised, then exercise the default transition
             if (!transition_exercised)
             {
-                TRISON_CPP_DEBUG_CODE_(std::cerr << "Parser:" << " current (relevant) lookahead(s):")
+                TRISON_CPP_DEBUG_CODE_(std::cerr << "Parser:" << " currently usable lookahead(s):")
                 for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
@@ -291,13 +291,15 @@ void Parser::ThrowAwayToken_ (Token::Data &token_data) throw()
 
 Parser::Token Parser::Scan_ () throw()
 {
+    TRISON_CPP_DEBUG_CODE_(std::cerr << "Parser:" << " executing scan actions" << std::endl)
+
 
 #line 84 "calculator_parser.trison"
 
     assert(m_scanner != NULL);
     return m_scanner->Scan();
 
-#line 301 "calculator_parser.cpp"
+#line 303 "calculator_parser.cpp"
 }
 
 void Parser::ClearStack_ () throw()
@@ -405,7 +407,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         m_should_print_result = false;
         return 0.0;
     
-#line 409 "calculator_parser.cpp"
+#line 411 "calculator_parser.cpp"
             break;
         }
 
@@ -421,7 +423,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             m_last_result = result;
         return result;
     
-#line 425 "calculator_parser.cpp"
+#line 427 "calculator_parser.cpp"
             break;
         }
 
@@ -434,7 +436,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         m_should_print_result = false;
         return 0.0;
     
-#line 438 "calculator_parser.cpp"
+#line 440 "calculator_parser.cpp"
             break;
         }
 
@@ -446,7 +448,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 136 "calculator_parser.trison"
  return MODULO(lhs + rhs); 
-#line 450 "calculator_parser.cpp"
+#line 452 "calculator_parser.cpp"
             break;
         }
 
@@ -458,7 +460,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 138 "calculator_parser.trison"
  return MODULO(lhs - rhs); 
-#line 462 "calculator_parser.cpp"
+#line 464 "calculator_parser.cpp"
             break;
         }
 
@@ -470,7 +472,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 140 "calculator_parser.trison"
  return MODULO(lhs * rhs); 
-#line 474 "calculator_parser.cpp"
+#line 476 "calculator_parser.cpp"
             break;
         }
 
@@ -491,7 +493,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         else
             return lhs / rhs;
     
-#line 495 "calculator_parser.cpp"
+#line 497 "calculator_parser.cpp"
             break;
         }
 
@@ -502,7 +504,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 154 "calculator_parser.trison"
  return MODULO(ex); 
-#line 506 "calculator_parser.cpp"
+#line 508 "calculator_parser.cpp"
             break;
         }
 
@@ -513,7 +515,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 156 "calculator_parser.trison"
  return MODULO(-ex); 
-#line 517 "calculator_parser.cpp"
+#line 519 "calculator_parser.cpp"
             break;
         }
 
@@ -524,7 +526,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 158 "calculator_parser.trison"
  return log(ex); 
-#line 528 "calculator_parser.cpp"
+#line 530 "calculator_parser.cpp"
             break;
         }
 
@@ -545,7 +547,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         else
             return MODULO(pow(base, power));
     
-#line 549 "calculator_parser.cpp"
+#line 551 "calculator_parser.cpp"
             break;
         }
 
@@ -556,7 +558,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 172 "calculator_parser.trison"
  return ex; 
-#line 560 "calculator_parser.cpp"
+#line 562 "calculator_parser.cpp"
             break;
         }
 
@@ -567,7 +569,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 174 "calculator_parser.trison"
  return MODULO(number); 
-#line 571 "calculator_parser.cpp"
+#line 573 "calculator_parser.cpp"
             break;
         }
 
@@ -577,7 +579,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 176 "calculator_parser.trison"
  return m_last_result; 
-#line 581 "calculator_parser.cpp"
+#line 583 "calculator_parser.cpp"
             break;
         }
 
@@ -602,7 +604,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
                 "               of 0 indicates no result truncation." << endl;
         return 0.0;
     
-#line 606 "calculator_parser.cpp"
+#line 608 "calculator_parser.cpp"
             break;
         }
 
@@ -622,7 +624,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             cerr << "error: invalid modulus (must be non-negative)" << endl;
         return 0.0;
     
-#line 626 "calculator_parser.cpp"
+#line 628 "calculator_parser.cpp"
             break;
         }
 
@@ -635,7 +637,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         cout << "current modulus: " << m_modulus << endl;
         return 0.0;
     
-#line 639 "calculator_parser.cpp"
+#line 641 "calculator_parser.cpp"
             break;
         }
 
@@ -645,7 +647,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 220 "calculator_parser.trison"
  return 0.0; 
-#line 649 "calculator_parser.cpp"
+#line 651 "calculator_parser.cpp"
             break;
         }
 
@@ -655,7 +657,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 222 "calculator_parser.trison"
  return 0.0; 
-#line 659 "calculator_parser.cpp"
+#line 661 "calculator_parser.cpp"
             break;
         }
 
@@ -1354,4 +1356,4 @@ void Parser::SetInputString (string const &input_string)
 
 } // end of namespace Calculator
 
-#line 1358 "calculator_parser.cpp"
+#line 1360 "calculator_parser.cpp"

@@ -48,7 +48,7 @@ protected:
         :
 <|if(is_defined(generate_interactive_scanner))
         m_IsInputAtEnd(IsInputAtEnd),
-        m_ReadNextAtom(ReadNextAtom),
+        m_ReadNextAtom(ReadNextAtom)
 <|else
         m_input_readahead(1024) // default, arbitrary reasonable lookahead
 <|end_if
