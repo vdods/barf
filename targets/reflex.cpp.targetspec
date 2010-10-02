@@ -182,6 +182,12 @@
 // Miscellaneous directives
 // ///////////////////////////////////////////////////////////////////////////
 
+// When present, prefers conserving size (in the DFA transition tables) over
+// speed.  The default behavior is to generate relatively large lookup tables
+// which have the advantage of making each transition constant-time.  The
+// slow, space-saving transition tables have runtime complexity O(n), where
+// n is the number of transitions.
+%add_optional_directive small_and_slow
 // When present, indicates that the code associated with debug spew will be
 // generated; the accessor and modifier methods DebugSpew will be generated.
 // The default behavior is not to generate debug spew code.

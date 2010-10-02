@@ -124,7 +124,7 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
     assert(nfa_graph.NodeCount() > 0);
 
     EmitExecutionMessage("generating NFA codespec symbols");
-    
+
     // _nfa_initial_node_index[state machine name] -- maps state machine name => node index
     {
         Preprocessor::MapSymbol *nfa_initial_node_index =
@@ -247,7 +247,7 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
     assert(dfa_graph.NodeCount() > 0);
 
     EmitExecutionMessage("generating DFA codespec symbols");
-    
+
     // _dfa_initial_node_index[state machine name] -- maps state machine name => node index
     {
         Preprocessor::MapSymbol *dfa_initial_node_index =
@@ -277,6 +277,11 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
             new Preprocessor::Body(Sint32(dfa_graph.NodeCount())));
     }
 
+    // DEFINITION: a 'fast' transition is one that uses a lookup table to determine
+    // the next state.  this gives constant-time transitions (neglecting buffer-filling).
+    // a non-fast transition is one that runs through a list of transitions to determine
+    // the next state.  this gives linear time complexity.
+    //
     // _dfa_state_accept_handler_index[_dfa_state_count] -- gives the accept-handler-index
     // for this node, or _dfa_state_count if this is not an accept state
     //
@@ -285,6 +290,28 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
     //
     // _dfa_state_transition_count[_dfa_state_count] -- gives the number of transitions for
     // this node (the number of contiguous transitions which apply to this node).
+    //
+    // _dfa_state_fast_transition_offset[_dfa_state_count] -- gives the offset into the
+    // transition table for the transitions belonging to this state.
+    //
+    // _dfa_state_fast_transition_count[_dfa_state_count] -- gives the number of transitions
+    // belonging to this state; the state's lookup table consists of the transitions having
+    // indices in the range [_dfa_state_fast_transition_offset[i],
+    // _dfa_state_fast_transition_offset[i]+_dfa_state_fast_transition_count[i]), noting
+    // that the range is [ , ), i.e. the right endpoint is not included.
+    //
+    // _dfa_state_fast_transition_first_index[_dfa_state_count] -- if the state's transition
+    // type is INPUT_ATOM, then this gives the lowest input_atom value in the transition
+    // table.  it is byte-valued (i.e. the range is [0,255].  for any other transition type,
+    // this value is not used.
+    //
+    // _dfa_state_fast_transition_type_integer[_dfa_state_count] -- this gives the
+    // integer-valued transition type of the state, which can only be 0=INPUT_ATOM or
+    // 2=CONDITIONAL.
+    //
+    // _dfa_state_fast_transition_type_name[_dfa_state_count] -- this gives the
+    // text name of the transition type of the state, which can only be "INPUT_ATOM"
+    // or "CONDITIONAL".
     //
     // _dfa_state_description[_dfa_state_count] -- the description of this graph node
     // (e.g. "25:SCAN_TEXT, 5, 8").
@@ -311,6 +338,13 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
     //
     // _dfa_transition_target_node_index[_dfa_transition_count] gives the index of
     // the node which to transition to if this transition is exercised.
+    //
+    // _dfa_fast_transition_count -- gives the number of fast transitions in this DFA
+    //
+    // _dfa_fast_transition_target_node_index[_dfa_fast_transition_count] -- this is
+    // the array of all lookup tables for 'fast' transitions.  the value is the index of
+    // the 'next state' for when the transition in question is exercised.  the values
+    // in _dfa_state_fast_transition_offset give offsets into this lookup table.
     {
         Preprocessor::ArraySymbol *dfa_state_accept_handler_index =
             symbol_table.DefineArraySymbol("_dfa_state_accept_handler_index", FiLoc::ms_invalid);
@@ -318,8 +352,19 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
             symbol_table.DefineArraySymbol("_dfa_state_transition_offset", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_state_transition_count =
             symbol_table.DefineArraySymbol("_dfa_state_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_fast_transition_offset =
+            symbol_table.DefineArraySymbol("_dfa_state_fast_transition_offset", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_fast_transition_count =
+            symbol_table.DefineArraySymbol("_dfa_state_fast_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_fast_transition_first_index =
+            symbol_table.DefineArraySymbol("_dfa_state_fast_transition_first_index", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_fast_transition_type_integer =
+            symbol_table.DefineArraySymbol("_dfa_state_fast_transition_type_integer", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_state_fast_transition_type_name =
+            symbol_table.DefineArraySymbol("_dfa_state_fast_transition_type_name", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_state_description =
             symbol_table.DefineArraySymbol("_dfa_state_description", FiLoc::ms_invalid);
+
         Preprocessor::ScalarSymbol *dfa_transition_count =
             symbol_table.DefineScalarSymbol("_dfa_transition_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *dfa_transition_type_integer =
@@ -333,7 +378,13 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
         Preprocessor::ArraySymbol *dfa_transition_target_node_index =
             symbol_table.DefineArraySymbol("_dfa_transition_target_node_index", FiLoc::ms_invalid);
 
+        Preprocessor::ScalarSymbol *dfa_fast_transition_count =
+            symbol_table.DefineScalarSymbol("_dfa_fast_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *dfa_fast_transition_target_node_index =
+            symbol_table.DefineArraySymbol("_dfa_fast_transition_target_node_index", FiLoc::ms_invalid);
+
         Sint32 total_transition_count = 0;
+        Sint32 total_fast_transition_count = 0;
 
         for (Uint32 node_index = 0; node_index < dfa_graph.NodeCount(); ++node_index)
         {
@@ -343,8 +394,52 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
             assert(node_data.m_dfa_accept_handler_index <= SINT32_UPPER_BOUND);
             Sint32 node_accept_handler_index = node_data.m_dfa_accept_handler_index;
             Sint32 node_transition_offset = total_transition_count;
+            Sint32 node_fast_transition_offset = total_fast_transition_count;
             Sint32 node_transition_count = 0;
+            Sint32 node_fast_transition_count = 0;
 
+            // ensure that the transition type is the same for all transitions at this node
+            // TODO: is this checked somewhere earlier?
+            if (node.TransitionCount() > 0)
+            {
+                Graph::Transition const &first_transition = *node.TransitionSetBegin();
+                for (Graph::TransitionSet::const_iterator it = node.TransitionSetBegin(),
+                                                          it_end = node.TransitionSetEnd();
+                     it != it_end;
+                     ++it)
+                {
+                    Graph::Transition const &transition = *it;
+                    switch (first_transition.Type())
+                    {
+                        case Regex::TT_INPUT_ATOM:
+                        case Regex::TT_INPUT_ATOM_RANGE:
+                            assert(transition.Type() == Regex::TT_INPUT_ATOM || transition.Type() == Regex::TT_INPUT_ATOM_RANGE);
+                            break;
+
+                        case Regex::TT_CONDITIONAL:
+                            assert(transition.Type() == Regex::TT_CONDITIONAL);
+                            assert(transition.Data(0) == first_transition.Data(0)); // make sure the bitmask is the same
+                            break;
+
+                        case Regex::TT_EPSILON:
+                        default:
+                            assert(false && "should not happen in DFA");
+                            break;
+                    }
+                }
+            }
+
+            // construct lookup tables for the 'fast' transition symbols
+            Uint32 input_atom_target_index[256];
+            Uint32 input_atom_lowest = 256;
+            Uint32 input_atom_highest = 0;
+            Uint32 conditional_target_index[1<<Regex::CT_FLAG_COUNT];
+            for (Uint32 i = 0; i < 256; ++i)
+                input_atom_target_index[i] = dfa_graph.NodeCount(); // sentinel value is the node count (= _dfa_state_count)
+            for (Uint32 flags = 0; flags < (1<<Regex::CT_FLAG_COUNT); ++flags)
+                conditional_target_index[flags] = dfa_graph.NodeCount(); // sentinel value is the node count (= _dfa_state_count)
+
+            // iterate through all the transitions and fill the symbols
             for (Graph::TransitionSet::const_iterator it = node.TransitionSetBegin(),
                                                       it_end = node.TransitionSetEnd();
                  it != it_end;
@@ -365,8 +460,47 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);
                 ++node_transition_count;
-                assert(node_transition_count < SINT32_UPPER_BOUND);
+                assert(total_transition_count < SINT32_UPPER_BOUND);
                 ++total_transition_count;
+
+                switch (transition.Type())
+                {
+                    case Regex::TT_INPUT_ATOM:
+                        assert(transition.Data(0) < 256);
+                        input_atom_target_index[transition.Data(0)] = transition.TargetIndex();
+                        input_atom_lowest = min(input_atom_lowest, transition.Data(0));
+                        input_atom_highest = max(input_atom_highest, transition.Data(0));
+                        break;
+
+                    case Regex::TT_INPUT_ATOM_RANGE:
+                        assert(transition.Data(0) < transition.Data(1));
+                        assert(transition.Data(1) < 256);
+                        for (Uint32 i = transition.Data(0); i <= transition.Data(1); ++i)
+                            input_atom_target_index[i] = transition.TargetIndex();
+                        input_atom_lowest = min(input_atom_lowest, transition.Data(0));
+                        input_atom_highest = max(input_atom_highest, transition.Data(1));
+                        break;
+
+                    case Regex::TT_CONDITIONAL:
+                        assert(transition.Data(0) < (1<<Regex::CT_FLAG_COUNT));
+                        assert(transition.Data(1) < (1<<Regex::CT_FLAG_COUNT));
+                        for (Uint32 flags = 0; flags < (1<<Regex::CT_FLAG_COUNT); ++flags)
+                        {
+                            // data 0 is the bitmask, data 1 is the flag values
+                            if ((flags & transition.Data(0)) == transition.Data(1))
+                            {
+                                assert(conditional_target_index[flags] == dfa_graph.NodeCount());
+                                conditional_target_index[flags] = transition.TargetIndex();
+                                assert(conditional_target_index[flags] != dfa_graph.NodeCount());
+                            }
+                        }
+                        break;
+
+                    case Regex::TT_EPSILON:
+                    default:
+                        assert(false && "should not happen in DFA");
+                        break;
+                }
             }
 
             dfa_state_accept_handler_index->AppendArrayElement(
@@ -375,12 +509,70 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
                 new Preprocessor::Body(node_transition_offset));
             dfa_state_transition_count->AppendArrayElement(
                 new Preprocessor::Body(node_transition_count));
+
+            dfa_state_fast_transition_offset->AppendArrayElement(
+                new Preprocessor::Body(node_fast_transition_offset));
+            // determine and set the fast transition count and first-index,
+            // fill in dfa_fast_transition_target_node_index
+            if (node.TransitionCount() > 0)
+            {
+                Graph::Transition const &first_transition = *node.TransitionSetBegin();
+
+                Sint32 count = 0;
+                Uint8 first_index = 0;
+                if (first_transition.Type() == Regex::TT_CONDITIONAL)
+                {
+                    count = (1<<Regex::CT_FLAG_COUNT);
+                    first_index = 0; // arbitrary, since it is unused
+                    for (Uint32 flags = 0; flags < (1<<Regex::CT_FLAG_COUNT); ++flags)
+                        dfa_fast_transition_target_node_index->AppendArrayElement(
+                            new Preprocessor::Body(Sint32(conditional_target_index[flags])));
+                }
+                else
+                {
+                    assert(input_atom_lowest <= input_atom_highest);
+                    assert(input_atom_highest < 256);
+                    count = input_atom_highest - input_atom_lowest + 1;
+                    first_index = input_atom_lowest;
+                    for (Uint32 i = input_atom_lowest; i <= input_atom_highest; ++i)
+                        dfa_fast_transition_target_node_index->AppendArrayElement(
+                            new Preprocessor::Body(Sint32(input_atom_target_index[i])));
+                }
+                dfa_state_fast_transition_count->AppendArrayElement(
+                    new Preprocessor::Body(count));
+                dfa_state_fast_transition_first_index->AppendArrayElement(
+                    new Preprocessor::Body(first_index));
+                assert(node_fast_transition_count < SINT32_UPPER_BOUND-count);
+                node_fast_transition_count += count;
+                assert(total_fast_transition_count < SINT32_UPPER_BOUND-count);
+                total_fast_transition_count += count;
+
+                TransitionType fast_transition_type = first_transition.Type() == Regex::TT_CONDITIONAL ? Regex::TT_CONDITIONAL : Regex::TT_INPUT_ATOM;
+                dfa_state_fast_transition_type_integer->AppendArrayElement(
+                    new Preprocessor::Body(Sint32(fast_transition_type)));
+                dfa_state_fast_transition_type_name->AppendArrayElement(
+                    new Preprocessor::Body(Regex::TransitionTypeString(fast_transition_type)));
+            }
+            else
+            {
+                dfa_state_fast_transition_count->AppendArrayElement(
+                    new Preprocessor::Body(0));
+                dfa_state_fast_transition_first_index->AppendArrayElement(
+                    new Preprocessor::Body(0));
+                dfa_state_fast_transition_type_integer->AppendArrayElement(
+                    new Preprocessor::Body(Sint32(Regex::TT_INPUT_ATOM))); // arbitrary
+                dfa_state_fast_transition_type_name->AppendArrayElement(
+                    new Preprocessor::Body(Regex::TransitionTypeString(Regex::TT_INPUT_ATOM))); // same as above line
+            }
+
             dfa_state_description->AppendArrayElement(
                 new Preprocessor::Body(node_data.AsText(node_index)));
         }
 
         dfa_transition_count->SetScalarBody(
             new Preprocessor::Body(total_transition_count));
+        dfa_fast_transition_count->SetScalarBody(
+            new Preprocessor::Body(total_fast_transition_count));
     }
 }
 
@@ -415,7 +607,7 @@ void PopulateAcceptHandlerCodeArraySymbol (StateMachine const &state_machine, st
 void GenerateTargetDependentSymbols (PrimarySource const &primary_source, string const &target_id, Preprocessor::SymbolTable &symbol_table)
 {
     EmitExecutionMessage("generating codespec symbols for target \"" + target_id + "\"");
-    
+
     // _accept_handler_code[_accept_handler_count] -- specifies code
     // for all accept handlers.
     {

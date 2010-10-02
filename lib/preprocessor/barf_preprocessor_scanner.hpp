@@ -168,7 +168,7 @@ protected:
         m_it = m_it_end;
     }
 
-    // for use in AutomatonApparatus_Noninteractive_ only
+    // for use in AutomatonApparatus_FastAndBig_Noninteractive_ only
     BarfCpp_::Uint8 CurrentConditionalFlags_ ()
     {
         UpdateConditionalFlags();
@@ -374,7 +374,7 @@ private:
 // -- it contains all the generalized state machinery for running a reflex DFA.
 // /////////////////////////////////////////////////////////////////////////////
 
-class AutomatonApparatus_Noninteractive_ : protected InputApparatus_Noninteractive_
+class AutomatonApparatus_FastAndBig_Noninteractive_ : protected InputApparatus_Noninteractive_
 {
 protected:
 
@@ -388,66 +388,22 @@ protected:
     struct DfaState_
     {
         BarfCpp_::Uint32 m_accept_handler_index;
-        BarfCpp_::Size m_transition_count;
+        BarfCpp_::Uint32 m_transition_count;
         BarfCpp_::Uint32 m_transition_offset;
-    }; // end of struct ReflexCpp_::AutomatonApparatus_Noninteractive_::DfaState_
+        BarfCpp_::Uint8 m_transition_type;
+        BarfCpp_::Uint8 m_transition_first_index;
+    }; // end of struct ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaState_
     struct DfaTransition_
     {
         enum Type
         {
             INPUT_ATOM = 0, INPUT_ATOM_RANGE, CONDITIONAL
-        }; // end of enum ReflexCpp_::AutomatonApparatus_Noninteractive_::DfaTransition_::Type
+        }; // end of enum ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_::Type
 
-        BarfCpp_::Uint8 m_transition_type;
-        BarfCpp_::Uint8 m_data_0;
-        BarfCpp_::Uint8 m_data_1;
         BarfCpp_::Uint32 m_target_dfa_state_offset;
+    }; // end of struct ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_
 
-        bool AcceptsInputAtom (BarfCpp_::Uint8 input_atom, bool is_case_insensitive) const
-        {
-            assert(m_transition_type == INPUT_ATOM || m_transition_type == INPUT_ATOM_RANGE);
-            // returns true iff this transition is INPUT_ATOM and input_atom
-            // matches m_data_0, or this transition is INPUT_ATOM_RANGE and
-            // input_atom is within the range [m_data_0, m_data_1] inclusive.
-            if (is_case_insensitive)
-            {
-                BarfCpp_::Uint8 switched_case_input_atom = SwitchCase(input_atom);
-                return (m_transition_type == INPUT_ATOM
-                        &&
-                        (m_data_0 == input_atom || m_data_0 == switched_case_input_atom))
-                       ||
-                       (m_transition_type == INPUT_ATOM_RANGE
-                        &&
-                        ((m_data_0 <= input_atom && input_atom <= m_data_1)
-                         ||
-                         (m_data_0 <= switched_case_input_atom && switched_case_input_atom <= m_data_1)));
-            }
-            else // case sensitive
-                return (m_transition_type == INPUT_ATOM &&
-                        m_data_0 == input_atom)
-                       ||
-                       (m_transition_type == INPUT_ATOM_RANGE &&
-                        m_data_0 <= input_atom && input_atom <= m_data_1);
-        }
-        bool AcceptsConditionalFlags (BarfCpp_::Uint8 conditional_flags) const
-        {
-            assert(m_transition_type == CONDITIONAL);
-            // returns true iff this transition is CONDITIONAL and no relevant bits
-            // in conditional_flags conflict with this transition's conditional mask
-            // (m_data_0) and flags (m_data_1).
-            return ((conditional_flags ^ m_data_1) & m_data_0) == 0;
-        }
-        static BarfCpp_::Uint8 SwitchCase (BarfCpp_::Uint8 c)
-        {
-            if (c >= 'a' && c <= 'z')
-                return c - 'a' + 'A';
-            if (c >= 'A' && c <= 'Z')
-                return c - 'A' + 'a';
-            return c;
-        }
-    }; // end of struct ReflexCpp_::AutomatonApparatus_Noninteractive_::DfaTransition_
-
-    AutomatonApparatus_Noninteractive_ (
+    AutomatonApparatus_FastAndBig_Noninteractive_ (
         DfaState_ const *state_table,
         BarfCpp_::Size state_count,
         DfaTransition_ const *transition_table,
@@ -457,7 +413,9 @@ protected:
         InputApparatus_Noninteractive_(),
         m_accept_handler_count(accept_handler_count),
         m_state_table(state_table),
-        m_transition_table(transition_table)
+        m_state_count(state_count),
+        m_transition_table(transition_table),
+        m_transition_count(transition_count)
     {
         CheckDfa(state_table, state_count, transition_table, transition_count);
         // subclasses must call ReflexCpp_::InputApparatus_Noninteractive_::ResetForNewInput_ in their constructors.
@@ -552,50 +510,54 @@ private:
     DfaState_ const *ProcessInputAtom ()
     {
         assert(m_current_state != NULL);
-        // get the current conditional flags and input atom once before looping
-        BarfCpp_::Uint8 current_conditional_flags;
-        BarfCpp_::Uint8 input_atom = InputAtom_();
-        // only calculate the current conditional flags if this is a state whose
-        // transitions are conditional transitions (the transition type is the
-        // same for all transitions in this state).
-        if (m_current_state->m_transition_count > 0 &&
-            m_transition_table[m_current_state->m_transition_offset].m_transition_type == DfaTransition_::CONDITIONAL)
+        BarfCpp_::Uint32 target_dfa_state_offset = m_state_count;
+        if (m_current_state->m_transition_type == DfaTransition_::CONDITIONAL)
         {
-            current_conditional_flags = CurrentConditionalFlags_();
+            target_dfa_state_offset = m_transition_table[m_current_state->m_transition_offset + CurrentConditionalFlags_()].m_target_dfa_state_offset;
+            // don't advance the read cursor, because no input was actualy eaten
         }
-        // calculate the case sensitivity
-        bool is_case_insensitive = (m_mode_flags & MF_CASE_INSENSITIVE_) != 0;
-        // iterate through the current state's transitions, exercising the first
-        // acceptable one and returning the target state
-        for (DfaTransition_ const *transition = m_transition_table + m_current_state->m_transition_offset,
-                                  *transition_end = transition + m_current_state->m_transition_count;
-             transition != transition_end;
-             ++transition)
+        else // m_current_state->m_transition_type == DfaTransition_::INPUT_ATOM
         {
-            assert(transition->m_transition_type == DfaTransition_::INPUT_ATOM ||
-                   transition->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE ||
-                   transition->m_transition_type == DfaTransition_::CONDITIONAL);
-            // if it's an atomic transition, check if it accepts input_atom.
-            if (transition->m_transition_type == DfaTransition_::INPUT_ATOM ||
-                transition->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE)
+            BarfCpp_::Uint8 input_atom = InputAtom_();
+
+            // only do the lookup if the input atom is in range of the table
+            if (input_atom >= m_current_state->m_transition_first_index &&
+                input_atom < m_current_state->m_transition_first_index + m_current_state->m_transition_count)
             {
-                if (transition->AcceptsInputAtom(input_atom, is_case_insensitive))
+                target_dfa_state_offset = m_transition_table[m_current_state->m_transition_offset + input_atom - m_current_state->m_transition_first_index].m_target_dfa_state_offset;
+            }
+
+            // if we're case-insensitive and the above check didn't match, try
+            // the switched case input atom
+            if ((m_mode_flags & MF_CASE_INSENSITIVE_) != 0 && target_dfa_state_offset == m_state_count)
+            {
+                input_atom = SwitchCase(input_atom);
+                // only do the lookup if the input atom is in range of the table
+                if (input_atom >= m_current_state->m_transition_first_index &&
+                    input_atom < m_current_state->m_transition_first_index + m_current_state->m_transition_count)
                 {
-                    AdvanceReadCursor_();
-                    return m_state_table + transition->m_target_dfa_state_offset;
+                    target_dfa_state_offset = m_transition_table[m_current_state->m_transition_offset + input_atom - m_current_state->m_transition_first_index].m_target_dfa_state_offset;
                 }
             }
-            // otherwise it must be a conditional transition, so check the flags.
-            else if (transition->AcceptsConditionalFlags(current_conditional_flags))
-                return m_state_table + transition->m_target_dfa_state_offset;
+
+            // only advance the read cursor if the transition was valid
+            if (target_dfa_state_offset < m_state_count)
+                AdvanceReadCursor_();
         }
-        // if we reached here, no transition was possible, so return NULL.
-        return NULL;
+        return target_dfa_state_offset < m_state_count ? m_state_table + target_dfa_state_offset : NULL;
     }
     bool IsAcceptState (DfaState_ const *state) const
     {
         assert(state != NULL);
         return state->m_accept_handler_index < m_accept_handler_count;
+    }
+    static BarfCpp_::Uint8 SwitchCase (BarfCpp_::Uint8 c)
+    {
+        if (c >= 'a' && c <= 'z')
+            return c - 'a' + 'A';
+        if (c >= 'A' && c <= 'Z')
+            return c - 'A' + 'a';
+        return c;
     }
     static void CheckDfa (
         DfaState_ const *state_table,
@@ -614,6 +576,8 @@ private:
                  s != s_end;
                  ++s)
             {
+                assert(s->m_transition_type == DfaTransition_::INPUT_ATOM ||
+                       s->m_transition_type == DfaTransition_::CONDITIONAL);
                 assert(transition_table + s->m_transition_offset == t &&
                        "states' transitions must be contiguous and in ascending order");
                 t += s->m_transition_count;
@@ -627,38 +591,21 @@ private:
              t != t_end;
              ++t)
         {
-            assert((t->m_transition_type == DfaTransition_::INPUT_ATOM ||
-                    t->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE ||
-                    t->m_transition_type == DfaTransition_::CONDITIONAL)
-                   &&
-                   "invalid DfaTransition_::Type");
-            assert(state_table + t->m_target_dfa_state_offset < state_table + state_count &&
-                   "transition target state out of range "
-                   "(does not point to a valid state)");
-            if (t->m_transition_type == DfaTransition_::INPUT_ATOM_RANGE)
-            {
-                assert(t->m_data_0 < t->m_data_1 &&
-                       "can't specify a single-element range of atoms");
-            }
-            else if (t->m_transition_type == DfaTransition_::CONDITIONAL)
-            {
-                assert(t->m_data_0 != 0 &&
-                       "can't have a conditional with a mask of zero");
-                assert((t->m_data_1 & ~t->m_data_0) == 0 &&
-                       "there are bits set in the conditional flags "
-                       "which are outside of the conditional mask");
-            }
+            assert(t->m_target_dfa_state_offset <= state_count &&
+                   "transition target state out of range (highest acceptable value is state count)");
         }
     }
 
     BarfCpp_::Uint32 const m_accept_handler_count;
     DfaState_ const *const m_state_table;
+    BarfCpp_::Size const m_state_count;
     DfaTransition_ const *const m_transition_table;
+    BarfCpp_::Size const m_transition_count;
     DfaState_ const *m_initial_state;
     DfaState_ const *m_current_state;
     DfaState_ const *m_accept_state;
     BarfCpp_::Uint8 m_mode_flags;
-}; // end of class ReflexCpp_::AutomatonApparatus_Noninteractive_
+}; // end of class ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_
 
 } // end of namespace ReflexCpp_
 #endif // !defined(ReflexCpp_namespace_)
@@ -681,12 +628,12 @@ namespace Preprocessor {
 
 class Text;
 
-#line 685 "barf_preprocessor_scanner.hpp"
+#line 632 "barf_preprocessor_scanner.hpp"
 
-class Scanner : private ReflexCpp_::AutomatonApparatus_Noninteractive_, 
+class Scanner : private ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_, 
 #line 36 "barf_preprocessor_scanner.reflex"
  protected InputBase 
-#line 690 "barf_preprocessor_scanner.hpp"
+#line 637 "barf_preprocessor_scanner.hpp"
 
 {
 public:
@@ -709,7 +656,7 @@ public:
 #line 37 "barf_preprocessor_scanner.reflex"
 
 
-#line 713 "barf_preprocessor_scanner.hpp"
+#line 660 "barf_preprocessor_scanner.hpp"
 
 public:
 
@@ -722,9 +669,9 @@ public:
     StateMachine::Name CurrentStateMachine () const;
     void SwitchToStateMachine (StateMachine::Name state_machine);
 
-    using AutomatonApparatus_Noninteractive_::IsAtEndOfInput;
-    using AutomatonApparatus_Noninteractive_::IstreamIterator;
-    using AutomatonApparatus_Noninteractive_::InputReadahead;
+    using AutomatonApparatus_FastAndBig_Noninteractive_::IsAtEndOfInput;
+    using AutomatonApparatus_FastAndBig_Noninteractive_::IstreamIterator;
+    using AutomatonApparatus_FastAndBig_Noninteractive_::InputReadahead;
 
     void ResetForNewInput ();
 
@@ -752,7 +699,7 @@ private:
     bool m_is_reading_newline_sensitive_code;
     Text *m_text;
 
-#line 756 "barf_preprocessor_scanner.hpp"
+#line 703 "barf_preprocessor_scanner.hpp"
 
 
 private:
@@ -767,9 +714,9 @@ private:
     using InputApparatus_Noninteractive_::PrepareToScan_;
     using InputApparatus_Noninteractive_::ResetForNewInput_;
 
-    using AutomatonApparatus_Noninteractive_::InitialState_;
-    using AutomatonApparatus_Noninteractive_::ResetForNewInput_;
-    using AutomatonApparatus_Noninteractive_::RunDfa_;
+    using AutomatonApparatus_FastAndBig_Noninteractive_::InitialState_;
+    using AutomatonApparatus_FastAndBig_Noninteractive_::ResetForNewInput_;
+    using AutomatonApparatus_FastAndBig_Noninteractive_::RunDfa_;
 
     // debug spew methods
     static void PrintAtom_ (BarfCpp_::Uint8 atom);
@@ -782,9 +729,9 @@ private:
     static BarfCpp_::Uint8 const ms_state_machine_mode_flags_[];
     static char const *const ms_state_machine_name_[];
     static BarfCpp_::Uint32 const ms_state_machine_count_;
-    static AutomatonApparatus_Noninteractive_::DfaState_ const ms_state_table_[];
+    static AutomatonApparatus_FastAndBig_Noninteractive_::DfaState_ const ms_state_table_[];
     static BarfCpp_::Size const ms_state_count_;
-    static AutomatonApparatus_Noninteractive_::DfaTransition_ const ms_transition_table_[];
+    static AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_ const ms_transition_table_[];
     static BarfCpp_::Size const ms_transition_count_;
     static char const *const ms_accept_handler_regex_[];
     static BarfCpp_::Uint32 const ms_accept_handler_count_;
@@ -802,4 +749,4 @@ private:
 
 #endif // !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 
-#line 806 "barf_preprocessor_scanner.hpp"
+#line 753 "barf_preprocessor_scanner.hpp"

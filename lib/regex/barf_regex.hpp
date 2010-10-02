@@ -41,7 +41,9 @@ enum
     CT_WORD_BOUNDARY,
     CT_NOT_WORD_BOUNDARY,
 
-    CT_COUNT
+    CT_COUNT,
+
+    CT_FLAG_COUNT = 5 // should be the number of bits required to store a condition flag set
 };
 
 string const &ConditionalTypeString (ConditionalType conditional_type);
