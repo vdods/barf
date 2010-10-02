@@ -182,10 +182,6 @@
 // Miscellaneous directives
 // ///////////////////////////////////////////////////////////////////////////
 
-// When present, indicates that the KeepString, Unaccept and Unreject methods
-// (the scanner augmentation methods) will be available in the generated
-// scanner class.  The default behavior is not to generate them.
-%add_optional_directive generate_scanner_augmentation_methods
 // When present, indicates that the code associated with debug spew will be
 // generated; the accessor and modifier methods DebugSpew will be generated.
 // The default behavior is not to generate debug spew code.

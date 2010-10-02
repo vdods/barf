@@ -188,6 +188,7 @@ $ also add post-undefine option
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
+- pass reference instead of double pointer to Parse
 ! refactor the DPDA generation to be simpler and faster (difficult)
 - make NPDA states file (?)
 - correctly determine LALR(0) (which is when all shift transitions have
