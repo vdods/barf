@@ -20,7 +20,6 @@
 - write man pages for reflex, trison, bpp (hopefully somehow get doxygen to
   do this)
 - figure out how to generate/install docs
-- rename "lib" directory to "barf" (?)
 - guarantee that errors will be reported such that the line numbers never
   decrease.
 - bug: getting "file not found" error when a file exists but the permissions
@@ -31,7 +30,6 @@
 - error when any output file is the same as an input file, or when any two
   output files are the same.
 - change comments to %/ and %* *% in primary sources?
-- add _barf_version to preprocessor shit?
 - move trison/reflex stuff into lib/trison and lib/reflex? and only keep
   main, options and main header file in app dir (so test apps can link the
   libs and run tests)?  put stuff in Barf::Xxx namespace
@@ -47,8 +45,6 @@ $ do comprehensive deleting of stuff (this might be hard with all the throwing)
   nonterminal expressions can then be the union of the file locations of their
   component parts.  this technique will be useful later in compiler design for
   debugging info.
-- add metaprogramming stuff for integer types and compile time asserts
-  (and smallest int stuff in targets)
 - add filename-sanitizing function -- i.e. to check for newlines and other stuff
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -160,6 +156,11 @@ $ do comprehensive deleting of stuff (this might be hard with all the throwing)
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
+- instead of always extracting the accepted string and passing it in,
+  make it available through an accessor, so it can be constructed lazily.
+  OR
+  somehow just return pointers into the buffer for the accepted string, so
+  that there is as little overhead as possible when running the scanner.
 - maybe consistencize the codespec symbol names
 
 // ///////////////////////////////////////////////////////////////////////////
