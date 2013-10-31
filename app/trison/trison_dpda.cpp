@@ -420,10 +420,52 @@ private:
     struct Branch : public TreeNode, public ActionBranch, public ParserBranch
     {
         typedef vector<RuleShiftReferencePair> ShiftReferenceList;
-        ShiftReferenceList m_shift_reference_list;
+        mutable ShiftReferenceList m_shift_reference_list;
         StateStack m_state_stack;
         TokenIndex m_lookahead_nonterminal_token_index;
         bool m_is_epsilon_closed;
+
+        void AssertThatShiftReferenceListIsValid () const
+        {
+            for (ShiftReferenceList::const_iterator it = m_shift_reference_list.begin(), it_end = m_shift_reference_list.end();
+                 it != it_end;
+                 ++it)
+            {
+                RuleShiftReferencePair const &rule_shift_reference_pair = *it;
+                assert(rule_shift_reference_pair.second.InstanceIsValid());
+            }
+        }
+        void CleanUpShiftReferenceListIfNecessary () const
+        {
+            bool cleanup_is_necessary = false;
+            for (ShiftReferenceList::iterator it = m_shift_reference_list.begin(), it_end = m_shift_reference_list.end();
+                 it != it_end;
+                 ++it)
+            {
+                RuleShiftReferencePair const &rule_shift_reference_pair = *it;
+                if (!rule_shift_reference_pair.second.InstanceIsValid())
+                {
+                    cleanup_is_necessary = true;
+                    break;
+                }
+            }
+
+            if (cleanup_is_necessary)
+            {
+                // inefficient, but who cares?
+                ShiftReferenceList temp;
+                for (ShiftReferenceList::iterator it = m_shift_reference_list.begin(), it_end = m_shift_reference_list.end();
+                     it != it_end;
+                     ++it)
+                {
+                    RuleShiftReferencePair const &rule_shift_reference_pair = *it;
+                    if (rule_shift_reference_pair.second.InstanceIsValid())
+                        temp.push_back(rule_shift_reference_pair);
+                }
+                m_shift_reference_list = temp;
+            }
+            AssertThatShiftReferenceListIsValid();
+        }
 
         Branch (Uint32 starting_state)
             :
@@ -432,6 +474,7 @@ private:
             m_is_epsilon_closed(false)
         {
             m_state_stack.push_back(starting_state);
+            AssertThatShiftReferenceListIsValid();
         }
         ~Branch ()
         {
@@ -477,6 +520,7 @@ private:
 
         Branch *DeepCopy (DeepCopyShiftReferenceMap &deep_copy_shift_reference_map) const
         {
+            CleanUpShiftReferenceListIfNecessary();
             Branch *copied_branch = new Branch(m_state_stack, m_lookahead_nonterminal_token_index);
             copied_branch->m_is_epsilon_closed = m_is_epsilon_closed;
             DeepCopyGutsInto(*copied_branch, deep_copy_shift_reference_map);
@@ -484,10 +528,12 @@ private:
         }
         void DeepCopyGutsInto (Branch &copied_branch, DeepCopyShiftReferenceMap &deep_copy_shift_reference_map) const
         {
+            CleanUpShiftReferenceListIfNecessary();
             copied_branch.m_is_epsilon_closed = m_is_epsilon_closed;
         }
         void DeepCopyShiftReferencesInto (Branch &copied_branch, DeepCopyShiftReferenceMap &deep_copy_shift_reference_map) const
         {
+            CleanUpShiftReferenceListIfNecessary();
             for (ShiftReferenceList::const_iterator it = m_shift_reference_list.begin(), it_end = m_shift_reference_list.end();
                  it != it_end;
                  ++it)
@@ -503,11 +549,13 @@ private:
 
         Uint32 Top () const
         {
+            CleanUpShiftReferenceListIfNecessary();
             assert(!m_state_stack.empty());
             return m_state_stack.back();
         }
         Branch *Clone () const
         {
+            CleanUpShiftReferenceListIfNecessary();
             Branch *cloned = new Branch(m_state_stack, m_lookahead_nonterminal_token_index);
             assert(cloned->m_parent == NULL);
             // duplicate the shift reference list
@@ -530,6 +578,7 @@ private:
         }
         void RemoveFromBranchList (BranchListType branch_list_type)
         {
+            CleanUpShiftReferenceListIfNecessary();
             assert(branch_list_type == BLT_PARSER || branch_list_type == BLT_ACTION);
             if (branch_list_type == BLT_PARSER)
                 ParserBranch::Remove();
@@ -539,6 +588,7 @@ private:
 
         void Print (ostream &stream, GraphContext const &graph_context, Uint32 indent_level) const
         {
+            CleanUpShiftReferenceListIfNecessary();
             stream << string(2*indent_level, ' ') << (m_is_epsilon_closed ? 'c' : '_') << " branch " << this;
             for (StateStack::const_iterator it = m_state_stack.begin(), it_end = m_state_stack.end();
                  it != it_end;
@@ -578,6 +628,7 @@ private:
             m_is_epsilon_closed(false)
         {
             assert(!m_state_stack.empty());
+            AssertThatShiftReferenceListIsValid();
         }
     }; // end of struct Npda::Branch
     struct ActionBranchList : public List<ActionBranch>
@@ -700,7 +751,7 @@ private:
             else if (m_reduce_child == NULL && m_shift_child != NULL && m_action_branch_list.IsEmpty())
                 return m_shift_child;
             else if (m_reduce_child == NULL && m_shift_child == NULL && !m_action_branch_list.IsEmpty() && m_action_branch_list.Front() == m_action_branch_list.Back())
-                return static_cast<Branch const *>(m_action_branch_list.Front());
+                return static_cast<Branch *>(const_cast<ActionBranch *>(m_action_branch_list.Front()));
             else
                 return NULL;
         }
@@ -1045,16 +1096,21 @@ private:
 
         void AssertActionAndParserBranchListsAreConsistent (ParserBranch const *&parser_branch) const
         {
+            //cerr << "AssertActionAndParserBranchListsAreConsistent(parser_branch = " << parser_branch << ")\n";
             if (parser_branch == NULL)
                 assert(!HasChildren());
             for (ActionBranch const *action_branch = m_action_branch_list.Front();
                  action_branch != NULL;
-                 action_branch = action_branch->Next(), parser_branch = parser_branch != NULL ? parser_branch->Next() : parser_branch)
+                 // action_branch = action_branch->Next(), parser_branch = parser_branch != NULL ? parser_branch->Next() : parser_branch)
+                 action_branch = action_branch->Next(), parser_branch = parser_branch->Next())
             {
-//                 cerr << "checking parser branch " << static_cast<Branch const *>(parser_branch)
-//                           << " against action branch " << static_cast<Branch const *>(action_branch)
-//                           << endl;
-                assert(parser_branch != NULL && static_cast<Branch const *>(parser_branch) == static_cast<Branch const *>(action_branch));
+                // cerr << "checking parser branch " << static_cast<Branch const *>(parser_branch)
+                //      << " (raw value " << parser_branch << ") "
+                //      << " against action branch " << static_cast<Branch const *>(action_branch)
+                //      << " (raw value " << action_branch << ") "
+                //      << endl;
+                assert(parser_branch != NULL);
+                assert(static_cast<Branch const *>(parser_branch) == static_cast<Branch const *>(action_branch));
             }
             if (m_reduce_child != NULL)
                 m_reduce_child->AssertActionAndParserBranchListsAreConsistent(parser_branch);
@@ -1493,7 +1549,9 @@ public:
             // should only be done on non-closed branches.  the rule stack level should
             // be incremented on the transition after an e-closure.
             DEBUG_CODE(cerr << "*** e-close ***" << endl;)
+            CheckBranches();
             PerformEpsilonClosure(graph_context);
+            CheckBranches();
             DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
             // only schedule reduce transitions if no branches have nonterminal lookaheads
             // (equivalent to not being shift-blocked)
@@ -1503,7 +1561,10 @@ public:
             // lookahead nonterminals.  we must wait to shift the lookahead nonterminals
             // so all branches can stay in lock-step with the scanner input.
             if (!m_is_shift_blocked)
+            {
                 PerformReduceTransitions(graph_context);
+                CheckBranches();
+            }
 
             if (m_reduce_transitions_were_performed)
             {
@@ -1525,6 +1586,7 @@ public:
                 // branches which have a nonterminal lookahead.  during shift-transition
                 // scheduling, if a branch has no transitions, it is scheduled to be pruned.
                 PerformShiftTransitions(graph_context, lookahead_sequence);
+                CheckBranches();
                 if (m_shift_transitions_were_performed)
                 {
                     DEBUG_CODE(if (m_is_shift_blocked)
@@ -1552,7 +1614,9 @@ public:
                         // TODO: figure out if deleting these branch lists in this order guarantees
                         // no shift/reduce conflicts will be resolved incorrectly
                         PruneBranchList(graph_context, m_doomed_return_branch_list);
+                        CheckBranches();
                         PruneBranchList(graph_context, m_doomed_nonreturn_branch_list);
+                        CheckBranches();
                         DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
                         assert(m_tree_root->AssertActionAndParserBranchListsAreConsistent(m_parser_branch_list));
                     }
@@ -1564,6 +1628,7 @@ public:
                         DEBUG_CODE(cerr << "*** pruning doomed non-return branches only ***" << endl;)
                         assert(m_parser_branch_list.IsEmpty());
                         PruneBranchList(graph_context, m_doomed_nonreturn_branch_list);
+                        CheckBranches();
                         DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
                         assert(m_doomed_nonreturn_branch_list.IsEmpty());
 
@@ -1610,6 +1675,7 @@ public:
                 // we want to e-close before quitting,
                 DEBUG_CODE(cerr << "*** e-close ***" << endl;)
                 PerformEpsilonClosure(graph_context);
+                CheckBranches();
                 DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
                 break;
             }
@@ -1697,6 +1763,15 @@ private:
         return transition.Type() == TT_SHIFT && transition.Data(0) == token_index;
     }
 
+    void CheckBranches () const
+    {
+        for (ParserBranch const *parser_branch = m_parser_branch_list.Front(); parser_branch != NULL; parser_branch = parser_branch->Next())
+        {
+            Branch const *branch = static_cast<Branch const *>(parser_branch);
+            branch->CleanUpShiftReferenceListIfNecessary();
+            branch->AssertThatShiftReferenceListIsValid();
+        }
+    }
     void PerformEpsilonClosure (GraphContext const &graph_context)
     {
         // perform epsilon closure on the top stack states
@@ -1771,7 +1846,7 @@ private:
         assert(!m_is_shift_blocked);
         assert(!m_reduce_transitions_were_performed);
         ParserBranch *parser_branch = m_parser_branch_list.Front();
-        while (parser_branch != NULL)
+        while (parser_branch != NULL && parser_branch->IsAnElement()) //(parser_branch != NULL)
         {
             Branch *branch = static_cast<Branch *>(parser_branch);
             parser_branch = parser_branch->Next();
@@ -1812,7 +1887,7 @@ private:
             // only attempt to transition from non-transition-fromed branches
             if (branch->m_is_epsilon_closed)
             {
-                bool reduce_transitions_were_performed_on_this_branch = false;
+                //bool reduce_transitions_were_performed_on_this_branch = false;
                 Uint32 state = branch->Top();
                 for (Graph::TransitionSet::const_iterator it = graph_context.m_npda_graph.GetNode(state).TransitionSetBegin(),
                                                           it_end = graph_context.m_npda_graph.GetNode(state).TransitionSetEnd();
@@ -1823,7 +1898,7 @@ private:
                     if (transition.Type() == TT_REDUCE && transition.Data(0) == rule_index)
                     {
                         PerformReduceTransition(graph_context, *branch, graph_context.m_primary_source.GetRule(transition.Data(0)));
-                        reduce_transitions_were_performed_on_this_branch = true;
+                        //reduce_transitions_were_performed_on_this_branch = true;
                     }
                 }
 

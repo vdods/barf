@@ -30,7 +30,7 @@ AC_ARG_ENABLE(
     AC_HELP_STRING(
         [--enable-debug],
         [enable debugging information and disable optimizations (disabled by default)]),
-    [ENABLE_DEBUG=$withval],
+    [ENABLE_DEBUG=$enableval],
     [ENABLE_DEBUG="no"])
 
 AC_ARG_ENABLE(

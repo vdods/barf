@@ -44,7 +44,7 @@ void Parser::ResetForNewInput ()
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 46 "barf_targetspec_parser.cpp"
  << " executing reset-for-new-input actions" << std::endl)
-    
+
     // clean up stuff that might be hanging around from the last parse's input.
     ClearStack_();
     ClearLookaheadQueue_();
@@ -257,7 +257,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 260 "barf_targetspec_parser.cpp"
- << " current (relevant) lookahead(s):")
+ << " currently usable lookahead(s):")
                     for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
@@ -277,7 +277,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 280 "barf_targetspec_parser.cpp"
- << " current (relevant) lookahead(s):")
+ << " currently usable lookahead(s):")
                 for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
@@ -347,6 +347,12 @@ void Parser::ThrowAwayToken_ (Token::Data &token_data) throw()
 
 Parser::Token Parser::Scan_ () throw()
 {
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 354 "barf_targetspec_parser.cpp"
+ << " executing scan actions" << std::endl)
+
 
 #line 106 "barf_targetspec_parser.trison"
 
@@ -399,7 +405,7 @@ Parser::Token Parser::Scan_ () throw()
             return Token(Terminal::BAD_TOKEN);
     }
 
-#line 403 "barf_targetspec_parser.cpp"
+#line 409 "barf_targetspec_parser.cpp"
 }
 
 void Parser::ClearStack_ () throw()
@@ -410,7 +416,7 @@ void Parser::ClearStack_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 414 "barf_targetspec_parser.cpp"
+#line 420 "barf_targetspec_parser.cpp"
  << " clearing the stack" << std::endl)
 
     Stack_::iterator it = m_stack_.begin();
@@ -428,7 +434,7 @@ void Parser::ClearLookaheadQueue_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 432 "barf_targetspec_parser.cpp"
+#line 438 "barf_targetspec_parser.cpp"
  << " clearing the lookahead queue" << std::endl)
 
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
@@ -445,7 +451,7 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 449 "barf_targetspec_parser.cpp"
+#line 455 "barf_targetspec_parser.cpp"
  << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl)
     }
     return m_lookahead_queue_[index];
@@ -465,7 +471,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 469 "barf_targetspec_parser.cpp"
+#line 475 "barf_targetspec_parser.cpp"
  << " REDUCE " << rule.m_description << std::endl)
             assert(m_stack_.size() > rule.m_token_count);
             m_lookahead_queue_.push_front(
@@ -477,7 +483,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 481 "barf_targetspec_parser.cpp"
+#line 487 "barf_targetspec_parser.cpp"
  << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
             return false; // indicating the parser isn't returning
         }
@@ -486,7 +492,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 490 "barf_targetspec_parser.cpp"
+#line 496 "barf_targetspec_parser.cpp"
  << " RETURN" << std::endl)
             return true; // indicating the parser is returning
 
@@ -499,7 +505,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 503 "barf_targetspec_parser.cpp"
+#line 509 "barf_targetspec_parser.cpp"
  << " SHIFT " << Lookahead_(0) << std::endl)
             m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0).m_data));
             m_lookahead_queue_.pop_front();
@@ -509,7 +515,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 513 "barf_targetspec_parser.cpp"
+#line 519 "barf_targetspec_parser.cpp"
  << " ERROR_PANIC" << std::endl)
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
@@ -526,7 +532,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 530 "barf_targetspec_parser.cpp"
+#line 536 "barf_targetspec_parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
@@ -547,7 +553,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             m_add_codespec_list,
             m_add_directive_map);
     
-#line 551 "barf_targetspec_parser.cpp"
+#line 557 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -557,7 +563,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 206 "barf_targetspec_parser.trison"
  return NULL; 
-#line 561 "barf_targetspec_parser.cpp"
+#line 567 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -567,7 +573,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 208 "barf_targetspec_parser.trison"
  return NULL; 
-#line 571 "barf_targetspec_parser.cpp"
+#line 577 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -577,7 +583,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 210 "barf_targetspec_parser.trison"
  return NULL; 
-#line 581 "barf_targetspec_parser.cpp"
+#line 587 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -603,7 +609,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete throwaway;
         return NULL;
     
-#line 607 "barf_targetspec_parser.cpp"
+#line 613 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -624,7 +630,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete param_type;
         return NULL;
     
-#line 628 "barf_targetspec_parser.cpp"
+#line 634 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -658,7 +664,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete throwaway2;
         return NULL;
     
-#line 662 "barf_targetspec_parser.cpp"
+#line 668 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -679,7 +685,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete param_type;
         return NULL;
     
-#line 683 "barf_targetspec_parser.cpp"
+#line 689 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -691,7 +697,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         return new ParamType(Ast::AST_NONE);
     
-#line 695 "barf_targetspec_parser.cpp"
+#line 701 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -705,7 +711,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete throwaway;
         return new ParamType(Ast::AST_ID);
     
-#line 709 "barf_targetspec_parser.cpp"
+#line 715 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -719,7 +725,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete throwaway;
         return new ParamType(Ast::AST_STRING);
     
-#line 723 "barf_targetspec_parser.cpp"
+#line 729 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -733,7 +739,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete throwaway;
         return new ParamType(Ast::AST_DUMB_CODE_BLOCK);
     
-#line 737 "barf_targetspec_parser.cpp"
+#line 743 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -747,7 +753,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         delete throwaway;
         return new ParamType(Ast::AST_STRICT_CODE_BLOCK);
     
-#line 751 "barf_targetspec_parser.cpp"
+#line 757 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -758,7 +764,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 313 "barf_targetspec_parser.trison"
  return value; 
-#line 762 "barf_targetspec_parser.cpp"
+#line 768 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -769,7 +775,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 314 "barf_targetspec_parser.trison"
  return value; 
-#line 773 "barf_targetspec_parser.cpp"
+#line 779 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -780,7 +786,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 315 "barf_targetspec_parser.trison"
  return value; 
-#line 784 "barf_targetspec_parser.cpp"
+#line 790 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -791,7 +797,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 316 "barf_targetspec_parser.trison"
  return value; 
-#line 795 "barf_targetspec_parser.cpp"
+#line 801 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -801,7 +807,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 325 "barf_targetspec_parser.trison"
  return NULL; 
-#line 805 "barf_targetspec_parser.cpp"
+#line 811 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -811,7 +817,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 327 "barf_targetspec_parser.trison"
  return NULL; 
-#line 815 "barf_targetspec_parser.cpp"
+#line 821 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -821,7 +827,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 332 "barf_targetspec_parser.trison"
  return NULL; 
-#line 825 "barf_targetspec_parser.cpp"
+#line 831 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -831,7 +837,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 334 "barf_targetspec_parser.trison"
  return NULL; 
-#line 835 "barf_targetspec_parser.cpp"
+#line 841 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -848,7 +854,7 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 852 "barf_targetspec_parser.cpp"
+#line 858 "barf_targetspec_parser.cpp"
  << " parser stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -869,7 +875,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     stream << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 873 "barf_targetspec_parser.cpp"
+#line 879 "barf_targetspec_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -877,7 +883,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 881 "barf_targetspec_parser.cpp"
+#line 887 "barf_targetspec_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -1457,4 +1463,4 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#line 1461 "barf_targetspec_parser.cpp"
+#line 1467 "barf_targetspec_parser.cpp"

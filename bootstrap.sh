@@ -15,8 +15,8 @@ case ${ARGUMENT} in
 	aclocal
 	# generate config.h.in
 	autoheader
-	# generate ltmain.sh and others
-	libtoolize
+	# generate ltmain.sh and others (mac os X's binary is called glibtoolize)
+	glibtoolize || libtoolize
 	# recursively generate Makefile.in from all Makefile.am
 	automake --add-missing
 	# generate configure
@@ -26,7 +26,7 @@ case ${ARGUMENT} in
 (purge)
 	echo "Deleting files that can be auto-generated..."
 	echo ""
-	
+
 	rm -frv aclocal.m4 \
 	        autom4te.cache \
             compile \
@@ -43,7 +43,7 @@ case ${ARGUMENT} in
             ylwrap
 	find -name "Makefile.in" -type f -exec rm -fv {} \;
 	;;
-	
+
 (help)
 	echo "Usage: ${0} [bootstrap|purge|help]"
 	echo ""

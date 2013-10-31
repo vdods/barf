@@ -129,10 +129,10 @@ struct List
         assert(m_tail.NodeClass() == ListNode<ElementType>::CT_TAIL);
         return m_head.m_next == &m_tail;
     }
-    ElementType *Front () { return m_head.Next(); }
-    ElementType const *Front () const { return m_head.Next(); }
-    ElementType *Back () { return m_tail.Prev(); }
-    ElementType const *Back () const { return m_tail.Prev(); }
+    ElementType *Front () { return IsEmpty() ? NULL : m_head.Next(); }
+    ElementType const *Front () const { return IsEmpty() ? NULL : m_head.Next(); }
+    ElementType *Back () { return IsEmpty() ? NULL : m_tail.Prev(); }
+    ElementType const *Back () const { return IsEmpty() ? NULL : m_tail.Prev(); }
 
     void Prepend (List<ElementType> &list)
     {
