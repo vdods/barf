@@ -1,4 +1,4 @@
-AC_INIT(BARF, 0.9.20101002, victor.dods@gmail.com, barf)
+AC_INIT(BARF, 1.0.20131031, victor.dods@gmail.com, barf)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE
 
