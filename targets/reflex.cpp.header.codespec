@@ -451,8 +451,7 @@ protected:
         m_accept_handler_count(accept_handler_count),
         m_state_table(state_table),
         m_state_count(state_count),
-        m_transition_table(transition_table),
-        m_transition_count(transition_count)
+        m_transition_table(transition_table)
     {
         CheckDfa(state_table, state_count, transition_table, transition_count);
         // subclasses must call ReflexCpp_::<{input_apparatus}::ResetForNewInput_ in their constructors.
@@ -705,7 +704,6 @@ private:
     DfaState_ const *const m_state_table;
     BarfCpp_::Size const m_state_count;
     DfaTransition_ const *const m_transition_table;
-    BarfCpp_::Size const m_transition_count;
     DfaState_ const *m_initial_state;
     DfaState_ const *m_current_state;
     DfaState_ const *m_accept_state;

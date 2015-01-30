@@ -414,8 +414,7 @@ protected:
         m_accept_handler_count(accept_handler_count),
         m_state_table(state_table),
         m_state_count(state_count),
-        m_transition_table(transition_table),
-        m_transition_count(transition_count)
+        m_transition_table(transition_table)
     {
         CheckDfa(state_table, state_count, transition_table, transition_count);
         // subclasses must call ReflexCpp_::InputApparatus_Noninteractive_::ResetForNewInput_ in their constructors.
@@ -600,7 +599,6 @@ private:
     DfaState_ const *const m_state_table;
     BarfCpp_::Size const m_state_count;
     DfaTransition_ const *const m_transition_table;
-    BarfCpp_::Size const m_transition_count;
     DfaState_ const *m_initial_state;
     DfaState_ const *m_current_state;
     DfaState_ const *m_accept_state;
@@ -631,12 +629,12 @@ class Base;
 
 namespace CommonLang {
 
-#line 635 "barf_commonlang_scanner.hpp"
+#line 633 "barf_commonlang_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
-#line 640 "barf_commonlang_scanner.hpp"
+#line 638 "barf_commonlang_scanner.hpp"
 
 {
 public:
@@ -706,7 +704,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 710 "barf_commonlang_scanner.hpp"
+#line 708 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -728,7 +726,7 @@ public:
     Scanner::Token::Type Scan (
 #line 83 "barf_commonlang_scanner.reflex"
  Ast::Base *&token 
-#line 732 "barf_commonlang_scanner.hpp"
+#line 730 "barf_commonlang_scanner.hpp"
 ) throw();
 
 public:
@@ -756,7 +754,7 @@ private:
     Uint32 m_code_block_bracket_level;
     StateMachine::Name m_return_state;
 
-#line 760 "barf_commonlang_scanner.hpp"
+#line 758 "barf_commonlang_scanner.hpp"
 
 
 private:
@@ -808,4 +806,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 812 "barf_commonlang_scanner.hpp"
+#line 810 "barf_commonlang_scanner.hpp"

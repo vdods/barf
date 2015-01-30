@@ -414,8 +414,7 @@ protected:
         m_accept_handler_count(accept_handler_count),
         m_state_table(state_table),
         m_state_count(state_count),
-        m_transition_table(transition_table),
-        m_transition_count(transition_count)
+        m_transition_table(transition_table)
     {
         CheckDfa(state_table, state_count, transition_table, transition_count);
         // subclasses must call ReflexCpp_::InputApparatus_Noninteractive_::ResetForNewInput_ in their constructors.
@@ -600,7 +599,6 @@ private:
     DfaState_ const *const m_state_table;
     BarfCpp_::Size const m_state_count;
     DfaTransition_ const *const m_transition_table;
-    BarfCpp_::Size const m_transition_count;
     DfaState_ const *m_initial_state;
     DfaState_ const *m_current_state;
     DfaState_ const *m_accept_state;
@@ -628,12 +626,12 @@ namespace Preprocessor {
 
 class Text;
 
-#line 632 "barf_preprocessor_scanner.hpp"
+#line 630 "barf_preprocessor_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_, 
 #line 36 "barf_preprocessor_scanner.reflex"
  protected InputBase 
-#line 637 "barf_preprocessor_scanner.hpp"
+#line 635 "barf_preprocessor_scanner.hpp"
 
 {
 public:
@@ -656,7 +654,7 @@ public:
 #line 37 "barf_preprocessor_scanner.reflex"
 
 
-#line 660 "barf_preprocessor_scanner.hpp"
+#line 658 "barf_preprocessor_scanner.hpp"
 
 public:
 
@@ -699,7 +697,7 @@ private:
     bool m_is_reading_newline_sensitive_code;
     Text *m_text;
 
-#line 703 "barf_preprocessor_scanner.hpp"
+#line 701 "barf_preprocessor_scanner.hpp"
 
 
 private:
@@ -749,4 +747,4 @@ private:
 
 #endif // !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 
-#line 753 "barf_preprocessor_scanner.hpp"
+#line 751 "barf_preprocessor_scanner.hpp"
