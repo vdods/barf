@@ -314,7 +314,7 @@ void BracketCharSet::Print (ostream &stream, StringifyAstType Stringify, Uint32 
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-void RegularExpression::Print (ostream &stream, Uint32 indent_level) const
+void RegularExpression::TopLevelPrint (ostream &stream, Uint32 indent_level) const
 {
     Print(stream, AstTypeString, indent_level);
 }
@@ -329,7 +329,7 @@ void RegularExpression::Print (ostream &stream, StringifyAstType Stringify, Uint
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-void RegularExpressionMap::Print (ostream &stream, Uint32 indent_level) const
+void RegularExpressionMap::TopLevelPrint (ostream &stream, Uint32 indent_level) const
 {
     Ast::AstMap<RegularExpression>::Print(stream, AstTypeString, indent_level);
 }

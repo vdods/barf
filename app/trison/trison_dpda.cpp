@@ -386,7 +386,7 @@ private:
 
         struct Order
         {
-            bool operator () (Rule const *left, Rule const *right)
+            bool operator () (Rule const *left, Rule const *right) const
             {
                 // prefer NULL over non-NULL rules, and then go by Npda::ShiftReduceConflict::IsHigherPriority
                 if (left == NULL && right == NULL)

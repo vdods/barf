@@ -232,7 +232,7 @@ struct RegularExpression : public Atom, public Ast::List<Branch>
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
-    void Print (ostream &stream, Uint32 indent_level = 0) const;
+    void TopLevelPrint (ostream &stream, Uint32 indent_level = 0) const;
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct RegularExpression
@@ -243,7 +243,7 @@ struct RegularExpressionMap : public Ast::AstMap<RegularExpression>
 
     // this is the non-virtual, top-level Print method, not
     // to be confused with Ast::Base::Print.
-    void Print (ostream &stream, Uint32 indent_level = 0) const;
+    void TopLevelPrint (ostream &stream, Uint32 indent_level = 0) const;
 }; // end of struct RegularExpressionMap
 
 bool NodesAreEqual (Ast::Base const *left, Ast::Base const *right);

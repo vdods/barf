@@ -863,7 +863,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             if (parser.Parse(&regex, regular_expression_map) == Regex::Parser::PRC_SUCCESS)
             {
                 if (GetOptions().IsVerbose(OptionsBase::V_REGEX_AST))
-                    regex->Print(cerr);
+                    regex->TopLevelPrint(cerr);
                 regular_expression_map->Add(macro_id->GetText(), regex);
             }
             else
@@ -1167,7 +1167,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
                 if (parser.Parse(&regex, m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
                 {
                     if (GetOptions().IsVerbose(OptionsBase::V_REGEX_AST))
-                        regex->Print(cerr);
+                        regex->TopLevelPrint(cerr);
                 }
                 else
                 {

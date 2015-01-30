@@ -21,10 +21,10 @@ namespace Barf {
 
 namespace Targetspec {
 
-class AddCodespec;
-class AddDirective;
+struct AddCodespec;
+struct AddDirective;
 class Parser;
-class Specification;
+struct Specification;
 
 } // end of namespace Targetspec
 

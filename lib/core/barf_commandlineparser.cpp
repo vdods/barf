@@ -340,7 +340,7 @@ CommandLineOption const *CommandLineParser::FindOptionByLongName (char const *co
     assert(*long_name != '\0');
 
     string option_name = long_name;
-    if (option_name.find_first_of('=') >= 0)
+    if (option_name.find_first_of('=') != string::npos)
         option_name = option_name.substr(0, option_name.find_first_of('='));
 
     for (CommandLineOption const *option = m_option,

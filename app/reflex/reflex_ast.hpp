@@ -32,7 +32,7 @@ class SymbolTable;
 
 namespace Regex {
 
-class RegularExpression;
+struct RegularExpression;
 
 } // end of namespace Regex
 } // end of namespace Barf

@@ -105,13 +105,13 @@ class Base;
 
 namespace CommonLang {
 
-class TargetMap;
+struct TargetMap;
 
 } // end of namespace CommonLang
 
 namespace Regex {
 
-class RegularExpressionMap;
+struct RegularExpressionMap;
 
 } // end of namespace Regex
 } // end of namespace Barf

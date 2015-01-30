@@ -29,7 +29,7 @@ int main (int argc, char **argv)
             cerr << "unhandled parse error" << endl;
         else
         {
-            regex->Print(cerr);
+            regex->TopLevelPrint(cerr);
             delete regex;
         }
     } catch (std::string const &exception) {
@@ -42,7 +42,7 @@ int main (int argc, char **argv)
         cerr << "unhandled parse error (on \"no problem\")" << endl;
     else
     {
-        regex->Print(cerr);
+        regex->TopLevelPrint(cerr);
         delete regex;
     }
 

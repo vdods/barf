@@ -89,7 +89,7 @@ struct List : private vector<ElementType *>
     typedef typename vector<ElementType *>::const_iterator const_iterator;
 
     using vector<ElementType *>::size;
-    using vector<ElementType *>::size_type;
+    using typename vector<ElementType *>::size_type;
     using vector<ElementType *>::empty;
     using vector<ElementType *>::clear;
     using vector<ElementType *>::begin;

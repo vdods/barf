@@ -98,14 +98,14 @@ namespace Barf {
 namespace Ast {
 
 class Base;
-class IdMap;
+struct IdMap;
 class IntegerMap;
 
 } // end of namespace Ast
 
 namespace CommonLang {
 
-class TargetMap;
+struct TargetMap;
 
 } // end of namespace CommonLang
 } // end of namespace Barf

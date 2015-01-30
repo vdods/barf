@@ -59,7 +59,7 @@ void StateMachine::Print (ostream &stream, StringifyAstType Stringify, Uint32 in
 void Rule::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     stream << Tabs(indent_level) << Stringify(GetAstType()) << ' ' << m_rule_regex_string << endl;
-    m_rule_regex->Print(stream, indent_level+1);
+    m_rule_regex->TopLevelPrint(stream, indent_level+1);
     m_rule_handler_map->Print(stream, Stringify, indent_level+1);
 }
 
@@ -108,7 +108,7 @@ void PrimarySource::Print (ostream &stream, StringifyAstType Stringify, Uint32 i
     
     Ast::Base::Print(stream, Stringify, indent_level);
     m_target_map->Print(stream, Stringify, indent_level+1);
-    m_regex_macro_map->Print(stream, indent_level+1);
+    m_regex_macro_map->TopLevelPrint(stream, indent_level+1);
     if (m_start_with_state_machine_directive != NULL)
         m_start_with_state_machine_directive->Print(stream, Stringify, indent_level+1);
     m_state_machine_map->Print(stream, Stringify, indent_level+1);

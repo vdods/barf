@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <sstream>
 #include <stdlib.h>
+#include <unistd.h> // In Windows, it has been suggested that io.h is an equivalent header.
 
 namespace Barf {
 
@@ -67,17 +68,6 @@ bool IsOctalDigit (Uint8 c)
 bool IsHexDigit (Uint8 c)
 {
     return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
-}
-
-Uint8 HexDigit (Uint8 c)
-{
-    assert(IsHexDigit(c));
-    if (c >= '0' && c <= '9')
-        return c - '0';
-    else if (c >= 'A' && c <= 'F')
-        return c - 'A' + 0xA;
-    else
-        return c - 'a' + 0xA;
 }
 
 Uint8 HexChar (Uint8 hex_digit)

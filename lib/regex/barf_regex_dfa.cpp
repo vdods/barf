@@ -28,7 +28,7 @@ typedef map<DfaState, Uint32> DfaStateMap;
 // for ordering Conditional instances
 struct ConditionalOrder
 {
-    bool operator () (Conditional const &c0, Conditional const &c1)
+    bool operator () (Conditional const &c0, Conditional const &c1) const
     {
         return c0.m_mask < c1.m_mask || (c0.m_mask == c1.m_mask && c0.m_flags < c1.m_flags);
     }
@@ -56,7 +56,7 @@ void PerformTransitionClosure (GraphContext const &graph_context, Uint32 nfa_sta
 {
     // early-out if we've already visited this conditional+nfa_state
     {
-        TargetStateMap::const_iterator it;
+        TargetStateMap::iterator it;
         if (Contains(visited, conditional, it) && Contains(it->second, nfa_state))
             return;
     }

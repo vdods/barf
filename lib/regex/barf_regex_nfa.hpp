@@ -79,7 +79,7 @@ NodeData const &GetNodeData (Graph const &graph, Uint32 node_index);
 //
 // ///////////////////////////////////////////////////////////////////////////
 
-class RegularExpression;
+struct RegularExpression;
 
 void GenerateNfa (RegularExpression const &regular_expression, Graph &nfa_graph, Uint32 start_index, Uint32 end_index);
 

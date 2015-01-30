@@ -34,13 +34,13 @@ class Base;
 
 namespace CommonLang {
 
-class TargetMap;
+struct TargetMap;
 
 } // end of namespace CommonLang
 
 namespace Regex {
 
-class RegularExpressionMap;
+struct RegularExpressionMap;
 
 } // end of namespace Regex
 } // end of namespace Barf
@@ -395,7 +395,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
             if (parser.Parse(&regex, regular_expression_map) == Regex::Parser::PRC_SUCCESS)
             {
                 if (GetOptions().IsVerbose(OptionsBase::V_REGEX_AST))
-                    regex->Print(cerr);
+                    regex->TopLevelPrint(cerr);
                 regular_expression_map->Add(macro_id->GetText(), regex);
             }
             else
@@ -573,7 +573,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 if (parser.Parse(&regex, m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
                 {
                     if (GetOptions().IsVerbose(OptionsBase::V_REGEX_AST))
-                        regex->Print(cerr);
+                        regex->TopLevelPrint(cerr);
                 }
                 else
                 {

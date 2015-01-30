@@ -26,7 +26,7 @@ string const &DereferenceTypeString (DereferenceType dereference_type)
         "DEREFERENCE_IFF_DEFINED"
     };
 
-    assert(dereference_type >= 0 && dereference_type < 2);
+    assert(Uint32(dereference_type) < 2);
     return s_dereference_type_string[dereference_type];
 }
 
