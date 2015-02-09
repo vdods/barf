@@ -2221,7 +2221,7 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
     }
 }
 
-void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph)
+void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph, Uint32 &lalr_lookahead_count)
 {
     assert(npda_graph.NodeCount() > 0 && "can't generate dpda_graph from an empty npda_graph");
     assert(dpda_graph.NodeCount() == 0 && "must start with an empty dpda_graph");
@@ -2245,15 +2245,16 @@ void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph,
     }
 
     EmitExecutionMessage(FORMAT("grammar is LALR(" << graph_context.LalrLookaheadCount() << ')'));
+    lalr_lookahead_count = graph_context.LalrLookaheadCount();
 }
 
-void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_graph, ostream &stream)
+void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_graph, Uint32 lalr_lookahead_count, ostream &stream)
 {
     assert(primary_source.RuleCount() > 0);
     Uint32 max_rule_index_width = FORMAT(primary_source.RuleCount()-1).length();
 
     stream << "//////////////////////////////////////////////////////////////////////////////" << endl
-           << "// GRAMMAR" << endl
+           << "// GRAMMAR (which is LALR(" << lalr_lookahead_count << "))" << endl
            << "//////////////////////////////////////////////////////////////////////////////" << endl
            << endl;
     for (Uint32 i = 0; i < primary_source.RuleCount(); ++i)

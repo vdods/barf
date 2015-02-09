@@ -201,7 +201,7 @@ void GenerateNpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
     PrintDotGraph(npda_graph, TrisonOptions().NaDotGraphPath(), "NPDA");
 }
 
-void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph)
+void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph, Uint32 &lalr_lookahead_count)
 {
     // generate the DPDA and print it (if the filename is even specified).
     // GenerateDpda may throw an exception, which should be interpreted
@@ -210,7 +210,7 @@ void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
 
     try {
         EmitExecutionMessage("attempting to generate DPDA graph");
-        Trison::GenerateDpda(primary_source, npda_graph, dpda_graph);
+        Trison::GenerateDpda(primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
         EmitExecutionMessage("generated DPDA graph successfully");
         PrintDotGraph(dpda_graph, TrisonOptions().DaDotGraphPath(), "DPDA");
     } catch (string const &exception) {
@@ -221,7 +221,7 @@ void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
         exit(RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR);
 }
 
-void GenerateDpdaStatesFile (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_graph)
+void GenerateDpdaStatesFile (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_graph, Uint32 lalr_lookahead_count)
 {
     // generate the bison-like .states file associated with the DPDA parser.
 
@@ -235,7 +235,7 @@ void GenerateDpdaStatesFile (Trison::PrimarySource const &primary_source, Graph 
     if (filename == "-")
     {
         EmitExecutionMessage("printing DPDA states file to <stdout>");
-        Trison::PrintDpdaStatesFile(primary_source, npda_graph, dpda_graph, cout);
+        Trison::PrintDpdaStatesFile(primary_source, npda_graph, dpda_graph, lalr_lookahead_count, cout);
     }
     else
     {
@@ -244,7 +244,7 @@ void GenerateDpdaStatesFile (Trison::PrimarySource const &primary_source, Graph 
         if (file.is_open())
         {
             EmitExecutionMessage("opened file \"" + filename + "\" successfully");
-            Trison::PrintDpdaStatesFile(primary_source, npda_graph, dpda_graph, file);
+            Trison::PrintDpdaStatesFile(primary_source, npda_graph, dpda_graph, lalr_lookahead_count, file);
         }
         else
             EmitError("could not open file \"" + filename + "\" for writing");
@@ -343,12 +343,13 @@ int main (int argc, char **argv)
     try {
         Trison::PrimarySource const *primary_source = NULL;
         Graph npda_graph, dpda_graph;
+        Uint32 lalr_lookahead_count = static_cast<Uint32>(-1);
 
         ParseAndHandleOptions(argc, argv);
         primary_source = ParsePrimarySource();
         GenerateNpdaGraphAndPrintDotGraph(*primary_source, npda_graph);
-        GenerateDpdaGraphAndPrintDotGraph(*primary_source, npda_graph, dpda_graph);
-        GenerateDpdaStatesFile(*primary_source, npda_graph, dpda_graph);
+        GenerateDpdaGraphAndPrintDotGraph(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
+        GenerateDpdaStatesFile(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
         ParseTargetspecs(*primary_source);
         ParseCodespecs(*primary_source);
         WriteTargets(*primary_source, npda_graph, dpda_graph);

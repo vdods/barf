@@ -42,8 +42,8 @@ private:
     bool m_is_return_state;
 }; // end of struct DpdaNodeData
 
-void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph);
-void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_state, ostream &stream);
+void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph, Uint32 &lalr_lookahead_count);
+void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_state, Uint32 lalr_lookahead_count, ostream &stream);
 
 } // end of namespace Trison
 
