@@ -377,6 +377,11 @@ private:
     {
         static bool IsHigherPriority (Rule const &left, Rule const &right)
         {
+            DEBUG_CODE(
+                cerr << "ShiftReduceConflict::IsHigherPriority(" << &left << ", " << &right << ')'
+                     << ", left.m_rule_precedence->m_precedence_level = " << left.m_rule_precedence->m_precedence_level
+                     << ", right.m_rule_precedence->m_precedence_level = " << right.m_rule_precedence->m_precedence_level << endl;
+            )
             return left.m_rule_precedence->m_precedence_level > right.m_rule_precedence->m_precedence_level;
         }
         static bool IsEqualPriority (Rule const &left, Rule const &right)
@@ -2042,13 +2047,20 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
     if (recurse_npda.CurrentDpdaState().empty())
         return;
 
+    DEBUG_CODE(cerr << "~~~ determining shift terminal transitions." << endl;)
+
     set<Uint32> transition_token_index;
     for (TransitionIterator it(graph_context, recurse_npda.CurrentDpdaState(), IT_SHIFT_TERMINAL_TRANSITIONS); !it.IsDone(); ++it)
         transition_token_index.insert(it->Data(0));
 
-    for (set<Uint32>::const_iterator it = transition_token_index.begin(), it_end = transition_token_index.end();
-         it != it_end;
-         ++it)
+    DEBUG_CODE(
+        cerr << "~~~ transition_token_index: ";
+        for (set<Uint32>::const_iterator it = transition_token_index.begin(), it_end = transition_token_index.end();it != it_end; ++it)
+            cerr << *it;
+        cerr << endl;
+    )
+
+    for (set<Uint32>::const_iterator it = transition_token_index.begin(), it_end = transition_token_index.end(); it != it_end; ++it)
     {
         ActionSpec action;
         // this block of code is entirely for the purpose of determining what lookaheads
