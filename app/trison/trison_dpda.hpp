@@ -14,6 +14,8 @@
 #include "trison.hpp"
 
 #include <set>
+#include <string>
+#include <vector>
 
 #include "trison_ast.hpp"
 #include "trison_graph.hpp"
@@ -22,6 +24,19 @@ namespace Trison {
 
 // a set of npda states constitutes a single dpda state
 typedef set<Uint32> DpdaState;
+
+struct ConflictResolution
+{
+    string m_annotation;
+    vector<Rule const *> m_shift_rules;
+    Rule const *m_reduce_rule;
+
+    ConflictResolution (string const &annotation, vector<Rule const *> const &shift_rules, Rule const *reduce_rule)
+        : m_annotation(annotation)
+        , m_shift_rules(shift_rules)
+        , m_reduce_rule(reduce_rule)
+    { }
+};
 
 struct DpdaNodeData : public Graph::Node::Data
 {
@@ -33,6 +48,9 @@ struct DpdaNodeData : public Graph::Node::Data
 
     DpdaState const &GetDpdaState () const { return m_dpda_state; }
     string const &Description () const { return m_description; }
+    vector<ConflictResolution *> const &ConflictResolutions () const { return m_conflict_resolutions; }
+
+    void AddConflictResolution (ConflictResolution *conflict_resolution);
 
 private:
 
@@ -40,6 +58,7 @@ private:
     string m_description;
     bool m_is_start_state;
     bool m_is_return_state;
+    vector<ConflictResolution *> m_conflict_resolutions;
 }; // end of struct DpdaNodeData
 
 void GenerateDpda (PrimarySource const &primary_source, Graph const &npda_graph, Graph &dpda_graph, Uint32 &lalr_lookahead_count);

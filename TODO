@@ -12,6 +12,7 @@
     %terminal XXX %type "Blah"
   which should be
     %terminal XXX %type.cpp "Blah"
+- looks like trison doesn't catch EOF before ; in a nonterminal declaration
 
 // ///////////////////////////////////////////////////////////////////////////
 // BARF general

@@ -111,6 +111,12 @@ Uint32 DpdaNodeData::NodePeripheries (Uint32 node_index) const
     return m_is_start_state ? 2 : 1;
 }
 
+void DpdaNodeData::AddConflictResolution (ConflictResolution *conflict_resolution)
+{
+    assert(conflict_resolution != NULL);
+    m_conflict_resolutions.push_back(conflict_resolution);
+}
+
 typedef map<DpdaState, Uint32> GeneratedDpdaStateMap;
 
 struct GraphContext
@@ -653,12 +659,14 @@ private:
         Reduce *m_reduce_child;
         Shift *m_shift_child;
         ActionBranchList m_action_branch_list;
+        DpdaNodeData *m_dpda_node_data;
 
         Action (TreeNodeType tree_node_type)
             :
             TreeNode(tree_node_type),
             m_reduce_child(NULL),
-            m_shift_child(NULL)
+            m_shift_child(NULL),
+            m_dpda_node_data(NULL)
         { }
         ~Action ()
         {
@@ -716,6 +724,9 @@ private:
                 copied_action.m_shift_child = m_shift_child->DeepCopy(deep_copy_shift_reference_map, source_parser_branch, target_parser_branch_list);
                 copied_action.m_shift_child->m_parent = &copied_action;
             }
+
+            // Because Action doesn't own the pointer m_dpda_node_data, there's no need to deep copy it, just copy the pointer value.
+            copied_action.m_dpda_node_data = m_dpda_node_data;
         }
         void DeepCopyShiftReferencesInto (Action &copied_action, DeepCopyShiftReferenceMap &deep_copy_shift_reference_map) const
         {
@@ -1006,14 +1017,20 @@ private:
             //
             // case 6 can not be resolved at this point.
 
+            ConflictResolution *conflict_resolution = new ConflictResolution("", m_shift_child->OrderedRuleRange(), reduce_rule);
+
             if (ShiftReduceConflict::IsHigherPriority(*low_shift_rule, *reduce_rule))
             {   // case 1
+                if (m_dpda_node_data != NULL)
+                    conflict_resolution->m_annotation = "Favored shift rule(s) over reduce rule because shift rule(s) had higher precedence";
                 delete m_reduce_child;
                 m_reduce_child = NULL;
                 m_shift_child->ClearRuleRange();
             }
             else if (ShiftReduceConflict::IsHigherPriority(*reduce_rule, *high_shift_rule))
             {   // case 5
+                if (m_dpda_node_data != NULL)
+                    conflict_resolution->m_annotation = "Favored reduce rule over shift rule(s) because reduce rule had higher precedence";
                 delete m_shift_child;
                 m_shift_child = NULL;
             }
@@ -1026,11 +1043,15 @@ private:
                 assert(reduce_rule->m_rule_precedence->m_precedence_associativity == high_shift_rule->m_rule_precedence->m_precedence_associativity);
                 if (reduce_rule->m_rule_precedence->m_precedence_associativity == A_LEFT)
                 {
+                    if (m_dpda_node_data != NULL)
+                        conflict_resolution->m_annotation = "Favored reduce rule over shift rule(s) because reduce rule has equal precedence as shift rule(s) and reduce rule has left associativity";
                     delete m_shift_child;
                     m_shift_child = NULL;
                 }
                 else if (reduce_rule->m_rule_precedence->m_precedence_associativity == A_RIGHT)
                 {
+                    if (m_dpda_node_data != NULL)
+                        conflict_resolution->m_annotation = "Favored reduce rule over shift rule(s) because reduce rule has equal precedence as shift rule(s) and reduce rule has right associativity";
                     delete m_reduce_child;
                     m_reduce_child = NULL;
                     m_shift_child->ClearRuleRange();
@@ -1039,6 +1060,7 @@ private:
                 {
                     assert(reduce_rule->m_rule_precedence->m_precedence_associativity == A_NONASSOC);
                     assert(false && "nonassoc error handling not implemented yet");
+                    throw std::runtime_error("nonassoc error handling not implemented yet");
                 }
             }
             else if (ShiftReduceConflict::IsEqualPriority(*reduce_rule, *high_shift_rule) &&
@@ -1048,6 +1070,8 @@ private:
                 assert(reduce_rule->m_rule_precedence->m_precedence_associativity == high_shift_rule->m_rule_precedence->m_precedence_associativity);
                 if (reduce_rule->m_rule_precedence->m_precedence_associativity == A_LEFT)
                 {
+                    if (m_dpda_node_data != NULL)
+                        conflict_resolution->m_annotation = "Favored reduce rule over shift rule(s) because reduce rule has equal precedence as highest shift rule and reduce rule has left associativity";
                     delete m_shift_child;
                     m_shift_child = NULL;
                 }
@@ -1059,6 +1083,8 @@ private:
                 assert(reduce_rule->m_rule_precedence->m_precedence_associativity == low_shift_rule->m_rule_precedence->m_precedence_associativity);
                 if (reduce_rule->m_rule_precedence->m_precedence_associativity == A_RIGHT)
                 {
+                    if (m_dpda_node_data != NULL)
+                        conflict_resolution->m_annotation = "Favored shift rule(s) over reduce rule because reduce rule has equal precedence as lowest shift rule and reduce rule has right associativity";
                     delete m_reduce_child;
                     m_reduce_child = NULL;
                     m_shift_child->ClearRuleRange();
@@ -1068,6 +1094,9 @@ private:
             {   // case 6
                 // nothing can be done at this point
             }
+
+            if (m_dpda_node_data != NULL)
+                m_dpda_node_data->AddConflictResolution(conflict_resolution);
         }
 
         void Print (ostream &stream, GraphContext const &graph_context, Uint32 indent_level) const
@@ -1125,7 +1154,7 @@ private:
         void PrivatePrint (ostream &stream, GraphContext const &graph_context, Uint32 indent_level) const
         {
             assert(m_parent == NULL);
-            stream << string(2*indent_level, ' ') << "root " << this << endl;
+            stream << string(2*indent_level, ' ') << "root " << this << ", m_reduce_child = " << m_reduce_child << ", m_shift_child = " << m_shift_child << ", m_dpda_node_data = " << m_dpda_node_data << endl;
             PrintChildNodes(stream, graph_context, indent_level+1);
         }
     }; // end of struct Npda::Action
@@ -1159,7 +1188,9 @@ private:
         void Print (ostream &stream, GraphContext const &graph_context, Uint32 indent_level) const
         {
             stream << string(2*indent_level, ' ') << (m_parent != NULL ? "reduce " : "root ") << this
-                   << " \"" << m_reduction_rule->AsText() << '\"'
+                   << ", m_reduce_child = " << m_reduce_child
+                   << ", m_shift_child = " << m_shift_child
+                   << ", \"" << m_reduction_rule->AsText() << '\"'
                    << ", precedence = " << m_reduction_rule->m_rule_precedence->m_precedence_level
                    << ", associativity = " << m_reduction_rule->m_rule_precedence->m_precedence_associativity
                    << ", rule index = " << m_reduction_rule->m_rule_index << endl;
@@ -1206,6 +1237,18 @@ private:
         }
 
         bool IsRuleRangeEmpty () const { return m_rule_range.empty(); }
+        vector<Rule const *> OrderedRuleRange () const
+        {
+            vector<Rule const *> retval;
+            for (ShiftReferenceMap::const_iterator it = m_rule_range.begin(), it_end = m_rule_range.end();
+                 it != it_end;
+                 ++it)
+            {
+                Rule const *rule = it->first;
+                retval.push_back(rule);
+            }
+            return retval;
+        }
         Rule const *RangeRuleHigh () const { assert(!m_rule_range.empty()); return m_rule_range.begin()->first; }
         Rule const *RangeRuleLow () const { assert(!m_rule_range.empty()); return m_rule_range.rbegin()->first; }
 
@@ -1266,7 +1309,8 @@ private:
 
         void Print (ostream &stream, GraphContext const &graph_context, Uint32 indent_level) const
         {
-            stream << string(2*indent_level, ' ') << (m_parent != NULL ? "shift " : "root ") << this << endl;
+            stream << string(2*indent_level, ' ') << (m_parent != NULL ? "shift " : "root ") << this << ", m_reduce_child = " << m_reduce_child
+                   << ", m_shift_child = " << m_shift_child << endl;
             if (!m_rule_range.empty())
                 stream << string(2*(indent_level+1), ' ') << "rule range" << endl;
             for (ShiftReferenceMap::const_iterator it = m_rule_range.begin(), it_end = m_rule_range.end();
@@ -1503,6 +1547,12 @@ public:
             m_tree_root = static_cast<Action *>(single_child);
         }
     }
+    void SetTreeRootDpdaNodeData (DpdaNodeData *dpda_node_data)
+    {
+        assert(m_tree_root != NULL);
+        assert(m_tree_root->m_dpda_node_data == NULL);
+        m_tree_root->m_dpda_node_data = dpda_node_data;
+    }
 
     // runs the npda, with no input, until nothing more can be done without more input, or HasTrunk()
     void Run (GraphContext const &graph_context)
@@ -1539,6 +1589,7 @@ public:
         assert(!m_parser_branch_list.IsEmpty());
 
         DEBUG_CODE(cerr << "!!! start !!!" << endl;)
+
         DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
         assert(m_tree_root->AssertActionAndParserBranchListsAreConsistent(m_parser_branch_list));
 
@@ -1557,6 +1608,7 @@ public:
             CheckBranches();
             PerformEpsilonClosure(graph_context);
             CheckBranches();
+
             DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
             // only schedule reduce transitions if no branches have nonterminal lookaheads
             // (equivalent to not being shift-blocked)
@@ -1614,14 +1666,18 @@ public:
                     // doomed branches (because there was a valid transition)
                     if (m_shift_transitions_were_performed)
                     {
-                        DEBUG_CODE(cerr << "*** pruning all doomed branches ***" << endl;)
+                        DEBUG_CODE(cerr << "*** pruning all doomed return branches ***" << endl;)
                         assert(!m_parser_branch_list.IsEmpty());
                         // TODO: figure out if deleting these branch lists in this order guarantees
                         // no shift/reduce conflicts will be resolved incorrectly
                         PruneBranchList(graph_context, m_doomed_return_branch_list);
                         CheckBranches();
+                        DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
+
+                        DEBUG_CODE(cerr << "*** pruning all doomed nonreturn branches ***" << endl;)
                         PruneBranchList(graph_context, m_doomed_nonreturn_branch_list);
                         CheckBranches();
+
                         DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
                         assert(m_tree_root->AssertActionAndParserBranchListsAreConsistent(m_parser_branch_list));
                     }
@@ -1634,6 +1690,7 @@ public:
                         assert(m_parser_branch_list.IsEmpty());
                         PruneBranchList(graph_context, m_doomed_nonreturn_branch_list);
                         CheckBranches();
+
                         DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
                         assert(m_doomed_nonreturn_branch_list.IsEmpty());
 
@@ -1681,6 +1738,7 @@ public:
                 DEBUG_CODE(cerr << "*** e-close ***" << endl;)
                 PerformEpsilonClosure(graph_context);
                 CheckBranches();
+
                 DEBUG_CODE(m_tree_root->Print(cerr, graph_context, 0);)
                 break;
             }
@@ -2038,15 +2096,14 @@ private:
     bool m_nonassoc_error_encountered;
 }; // end of class Npda
 
-void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda);
+void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda &npda);
 
 void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState const &source_dpda_state, Npda const &recurse_npda, ActionSpec const &default_action, Graph::Transition::DataArray &lookahead_sequence)
 {
-//     cerr << "Recurse(); lookahead_sequence: " << LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;
-
     if (recurse_npda.CurrentDpdaState().empty())
         return;
 
+    DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") Recurse(); lookahead_sequence: " << LookaheadSequenceString(graph_context.m_primary_source, lookahead_sequence) << endl;)
     DEBUG_CODE(cerr << "~~~ determining shift terminal transitions." << endl;)
 
     set<Uint32> transition_token_index;
@@ -2056,7 +2113,7 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
     DEBUG_CODE(
         cerr << "~~~ transition_token_index: ";
         for (set<Uint32>::const_iterator it = transition_token_index.begin(), it_end = transition_token_index.end();it != it_end; ++it)
-            cerr << *it;
+            cerr << *it << ", ";
         cerr << endl;
     )
 
@@ -2070,6 +2127,19 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
             Npda child_npda(recurse_npda, graph_context);
             child_npda.Run(graph_context, *it);
             action = child_npda.FirstTrunkAction(lookahead_sequence.empty() ? *it : lookahead_sequence[0]);
+            DEBUG_CODE(
+                cerr << "++ (at " << source_dpda_state << ") transition_token_index = " << *it << ", action.Type() = ";
+                switch (action.Type())
+                {
+                    case AT_ERROR_PANIC: cerr << "AT_ERROR_PANIC"; break;
+                    case AT_NONE: cerr << "AT_NONE"; break;
+                    case AT_REDUCE: cerr << "AT_REDUCE"; break;
+                    case AT_RETURN: cerr << "AT_RETURN"; break;
+                    case AT_SHIFT: cerr << "AT_SHIFT"; break;
+                    default: cerr << "invalid"; break;
+                }
+                cerr << ", action.Data() = " << action.Data() << endl;
+            )
             if (action.Type() == AT_NONE)
             {
                 // add the iterator token to the lookahead sequence
@@ -2080,6 +2150,7 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                 lookahead_sequence.pop_back();
                 // this continue statement is so child_npda and retry_npda (below)
                 // don't both exist in memory at the same time.
+                DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") action.Type() == AT_NONE, etc, continuing" << endl;)
                 continue;
             }
         }
@@ -2130,14 +2201,20 @@ void Recurse (GraphContext &graph_context, Npda const &source_npda, DpdaState co
                         break;
                 }
             }
+            else
+            {
+                DEBUG_CODE(cerr << "++ (at " << source_dpda_state << ") transition_token_index = " << *it << ", action matched default action; not adding" << endl;)
+            }
 
             // pop the iterator token
             lookahead_sequence.pop_back();
         }
     }
+
+    DEBUG_CODE(cerr << endl;)
 }
 
-void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
+void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda &npda)
 {
     assert(!npda.HasTrunk());
 
@@ -2145,9 +2222,11 @@ void EnsureDpdaStateIsGenerated (GraphContext &graph_context, Npda const &npda)
     // check if this dpda_state has already been generated
     if (graph_context.DpdaStateIsGenerated(dpda_state))
         return; // nothing needs to be done
-//     cerr << "EnsureDpdaStateIsGenerated(); generating " << dpda_state << endl;
+    DEBUG_CODE(cerr << "EnsureDpdaStateIsGenerated(); generating state " << dpda_state << endl;)
     // dpda_state is now considered "generated"
-    graph_context.AddDpdaState(dpda_state, new DpdaNodeData(graph_context.m_npda_graph, dpda_state));
+    DpdaNodeData *dpda_node_data = new DpdaNodeData(graph_context.m_npda_graph, dpda_state);
+    graph_context.AddDpdaState(dpda_state, dpda_node_data);
+    npda.SetTreeRootDpdaNodeData(dpda_node_data);
 
     // run the npda with no input, so we can decide what the default action is
     {
@@ -2342,6 +2421,37 @@ void PrintDpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
             stream << endl;
         }
         stream << endl;
+
+        // print the log of conflict resolutions and reasons for each resolution, suggesting
+        // ways to change the resolution (e.g. changing precedence or associativity)
+        if (!dpda_node_data.ConflictResolutions().empty())
+        {
+            stream << "    Conflict resolutions (reduce/reduce conflicts are resolved by precedence then rule index; rules with lower index have higher priority):" << endl
+                   << endl;
+            for (vector<ConflictResolution *>::const_iterator it = dpda_node_data.ConflictResolutions().begin(),
+                                                              it_end = dpda_node_data.ConflictResolutions().end();
+                 it != it_end;
+                 ++it)
+            {
+                ConflictResolution const &conflict_resolution = **it;
+                stream << "    " << conflict_resolution.m_annotation << ';' << endl;
+                stream << "        Shift rule(s):" << endl;
+                for (vector<Rule const *>::const_iterator rule_it = conflict_resolution.m_shift_rules.begin(),
+                                                          rule_it_end = conflict_resolution.m_shift_rules.end();
+                     rule_it != rule_it_end;
+                     ++rule_it)
+                {
+                    Rule const *rule = *rule_it;
+                    assert(rule != NULL);
+                    stream << "            rule " << rule->m_rule_index << ": " << rule->AsText() << endl;
+                }
+                Rule const *reduce_rule = conflict_resolution.m_reduce_rule;
+                assert(reduce_rule != NULL);
+                stream << "        Reduce rule:" << endl;
+                stream << "            rule " << reduce_rule->m_rule_index << ": " << reduce_rule->AsText() << endl
+                       << endl;
+            }
+        }
     }
 }
 
