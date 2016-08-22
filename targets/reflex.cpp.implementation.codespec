@@ -69,7 +69,7 @@
 <{class_name}::StateMachine::Name <{class_name}::CurrentStateMachine () const
 {
     assert(InitialState_() != NULL);
-    BarfCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
+    std::size_t initial_node_index = InitialState_() - ms_state_table_;
     assert(initial_node_index < ms_state_count_);
     switch (initial_node_index)
     {
@@ -151,7 +151,7 @@ void <{class_name}::ResetForNewInput ()
 
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
-        BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(work_string);
+        std::uint32_t accept_handler_index_ = RunDfa_(work_string);
         // if no valid accept_handler_index_ was returned, then work_string
         // was filled with everything up to the char after the keep_string
         // cursor (i.e. the rejected atom).
@@ -163,7 +163,7 @@ void <{class_name}::ResetForNewInput ()
                 break;
 
             std::string &rejected_string = work_string;
-            BarfCpp_::Uint8 rejected_atom = rejected_string.empty() ? '\0' : *rejected_string.rbegin();
+            std::uint8_t rejected_atom = rejected_string.empty() ? '\0' : *rejected_string.rbegin();
 
 <|if(is_defined(generate_debug_spew_code))
             REFLEX_CPP_DEBUG_CODE_(
@@ -240,13 +240,13 @@ void <{class_name}::KeepString ()
     <{automaton_apparatus}::KeepString();
 }
 
-void <{class_name}::Unaccept (BarfCpp_::Uint32 unaccept_char_count)
+void <{class_name}::Unaccept (std::uint32_t unaccept_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)
     <{automaton_apparatus}::Unaccept(unaccept_char_count);
 }
 
-void <{class_name}::Unreject (BarfCpp_::Uint32 unreject_char_count)
+void <{class_name}::Unreject (std::uint32_t unreject_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
     <{automaton_apparatus}::Unreject(unreject_char_count);
@@ -263,14 +263,14 @@ bool <{class_name}::IsInputAtEnd_ () throw()
 <|return_true_iff_input_is_at_end
 }
 
-BarfCpp_::Uint8 <{class_name}::ReadNextAtom_ () throw()
+std::uint8_t <{class_name}::ReadNextAtom_ () throw()
 {
 <|return_next_input_char
 }
 
 <|end_if
 <|if(is_defined(generate_debug_spew_code))
-void <{class_name}::PrintAtom_ (BarfCpp_::Uint8 atom)
+void <{class_name}::PrintAtom_ (std::uint8_t atom)
 {
     if (atom == '\\')                    std::cerr << "\\\\";
     else if (atom == '"')                std::cerr << "\\\"";
@@ -281,7 +281,7 @@ void <{class_name}::PrintAtom_ (BarfCpp_::Uint8 atom)
     else
     {
         std::cerr.width(2);
-        std::cerr << "\\x" << std::hex << std::uppercase << BarfCpp_::Uint16(atom);
+        std::cerr << "\\x" << std::hex << std::uppercase << std::uint16_t(atom);
         std::cerr.width(1);
     }
 }
@@ -318,13 +318,13 @@ void <{class_name}::PrintString_ (std::string const &s)
 }
 
 <|end_if
-BarfCpp_::Uint32 const <{class_name}::ms_state_machine_start_state_index_[] =
+std::uint32_t const <{class_name}::ms_state_machine_start_state_index_[] =
 {
 <|for_each(key, _state_machine_mode_flags)
     <{_dfa_initial_node_index[key]},
 <|end_for_each
 };
-BarfCpp_::Uint8 const <{class_name}::ms_state_machine_mode_flags_[] =
+std::uint8_t const <{class_name}::ms_state_machine_mode_flags_[] =
 {
 <|for_each(key, _state_machine_mode_flags)
     <{_state_machine_mode_flags[key]},
@@ -337,9 +337,9 @@ char const *const <{class_name}::ms_state_machine_name_[] =
     <{to_string_literal(key)},
 <|end_for_each
 };
-BarfCpp_::Uint32 const <{class_name}::ms_state_machine_count_ = sizeof(<{class_name}::ms_state_machine_name_) / sizeof(*<{class_name}::ms_state_machine_name_);
+std::uint32_t const <{class_name}::ms_state_machine_count_ = sizeof(<{class_name}::ms_state_machine_name_) / sizeof(*<{class_name}::ms_state_machine_name_);
 <|else
-BarfCpp_::Uint32 const <{class_name}::ms_state_machine_count_ = <{sizeof(_dfa_initial_node_index)};
+std::uint32_t const <{class_name}::ms_state_machine_count_ = <{sizeof(_dfa_initial_node_index)};
 <|end_if
 
 // the order of the states indicates priority (only for accept states).
@@ -351,7 +351,7 @@ ReflexCpp_::<{automaton_apparatus}::DfaState_ const <{class_name}::ms_state_tabl
     { <{_dfa_state_accept_handler_index[i]}, <{_dfa_state_transition_count[i]}, <{_dfa_state_transition_offset[i]} }<{if(i < _dfa_state_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
+std::size_t const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
 
 ReflexCpp_::<{automaton_apparatus}::DfaTransition_ const <{class_name}::ms_transition_table_[] =
 {
@@ -359,7 +359,7 @@ ReflexCpp_::<{automaton_apparatus}::DfaTransition_ const <{class_name}::ms_trans
     { <{_dfa_transition_target_node_index[i]}, ReflexCpp_::<{automaton_apparatus}::DfaTransition_::<{_dfa_transition_type_name[i]}, <{_dfa_transition_data_0[i]}, <{_dfa_transition_data_1[i]} }<{if(i < _dfa_transition_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
+std::size_t const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
 <|else
 ReflexCpp_::<{automaton_apparatus}::DfaState_ const <{class_name}::ms_state_table_[] =
 {
@@ -367,7 +367,7 @@ ReflexCpp_::<{automaton_apparatus}::DfaState_ const <{class_name}::ms_state_tabl
     { <{_dfa_state_accept_handler_index[i]}, <{_dfa_state_fast_transition_count[i]}, <{_dfa_state_fast_transition_offset[i]}, ReflexCpp_::<{automaton_apparatus}::DfaTransition_::<{_dfa_state_fast_transition_type_name[i]}, <{_dfa_state_fast_transition_first_index[i]} }<{if(i < _dfa_state_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
+std::size_t const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
 
 ReflexCpp_::<{automaton_apparatus}::DfaTransition_ const <{class_name}::ms_transition_table_[] =
 {
@@ -375,7 +375,7 @@ ReflexCpp_::<{automaton_apparatus}::DfaTransition_ const <{class_name}::ms_trans
     { <{_dfa_fast_transition_target_node_index[i]} }<{if(i < _dfa_fast_transition_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
+std::size_t const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
 <|end_if
 
 <|if(is_defined(generate_debug_spew_code))
@@ -385,9 +385,9 @@ char const *const <{class_name}::ms_accept_handler_regex_[] =
     <{to_string_literal(_accept_handler_regex[i])}<{if(i < _accept_handler_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Uint32 const <{class_name}::ms_accept_handler_count_ = sizeof(<{class_name}::ms_accept_handler_regex_) / sizeof(*<{class_name}::ms_accept_handler_regex_);
+std::uint32_t const <{class_name}::ms_accept_handler_count_ = sizeof(<{class_name}::ms_accept_handler_regex_) / sizeof(*<{class_name}::ms_accept_handler_regex_);
 <|else
-BarfCpp_::Uint32 const <{class_name}::ms_accept_handler_count_ = <{_accept_handler_count};
+std::uint32_t const <{class_name}::ms_accept_handler_count_ = <{_accept_handler_count};
 <|end_if
 
 // ///////////////////////////////////////////////////////////////////////

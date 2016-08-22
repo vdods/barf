@@ -148,7 +148,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %target.cpp.token_data_type "Ast::Base *"
 %target.cpp.token_data_default "NULL"
-%target.cpp.custom_token_data_type_cast Dsc
+%target.cpp.custom_token_data_type_cast "Dsc"
 %target.cpp.throw_away_token_actions {
     delete token_data;
 }

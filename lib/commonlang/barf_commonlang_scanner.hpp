@@ -3,87 +3,13 @@
 // from barf_commonlang_scanner.reflex using reflex.cpp.targetspec and reflex.cpp.header.codespec
 // DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY
 
+#pragma once
+
 #include <cassert>
+#include <cstdint>
 #include <deque>
 #include <iterator>
 #include <string>
-
-#if !defined(BarfCpp_namespace_)
-#define BarfCpp_namespace_
-namespace BarfCpp_ {
-
-// /////////////////////////////////////////////////////////////////////////////
-// a bunch of template metaprogramming to intelligently determine what type to
-// use for an integer of the given bit width or value range.
-// /////////////////////////////////////////////////////////////////////////////
-
-template <bool condition, typename Then, typename Else> struct If;
-template <typename Then, typename Else> struct If<true,Then,Else> { typedef Then T; };
-template <typename Then, typename Else> struct If<false,Then,Else> { typedef Else T; };
-
-template <bool condition> struct Assert;
-template <> struct Assert<true> { static bool const v = true; operator bool () { return v; } };
-
-template <typename Sint, typename Uint> struct IntPair { typedef Sint S; typedef Uint U; };
-
-template <int bits> struct Integer
-{
-private:
-
-    typedef
-        typename If<bits == 8*sizeof(char),      IntPair<char,unsigned char>,
-        typename If<bits == 8*sizeof(short),     IntPair<short,unsigned short>,
-        typename If<bits == 8*sizeof(int),       IntPair<int,unsigned int>,
-        typename If<bits == 8*sizeof(long),      IntPair<long,unsigned long>,
-        typename If<bits == 8*sizeof(long long), IntPair<long long,unsigned long long>,
-        Integer<0> // if no match, cause a compile error
-        >::T >::T >::T >::T >::T PrivateIntPair;
-    static bool const assert_size =
-        Assert<bits == 8*sizeof(typename PrivateIntPair::S) &&
-               bits == 8*sizeof(typename PrivateIntPair::U)>::v;
-
-public:
-
-    typedef typename PrivateIntPair::S Signed;
-    typedef typename PrivateIntPair::U Unsigned;
-};
-template <> struct Integer<0> { }; // empty for intentional compile errors
-
-// /////////////////////////////////////////////////////////////////////////////
-// use the above to define specific integer types.  you could trivially add
-// 64-bit integers here, but for the purposes of this file, there is no reason
-// to use them (though on a 64-bit machine, Diff and Size WILL be 64-bit).
-// /////////////////////////////////////////////////////////////////////////////
-
-typedef Integer<8> ::Signed                Sint8;
-typedef Integer<8> ::Unsigned              Uint8;
-typedef Integer<16>::Signed                Sint16;
-typedef Integer<16>::Unsigned              Uint16;
-typedef Integer<32>::Signed                Sint32;
-typedef Integer<32>::Unsigned              Uint32;
-typedef Integer<8*sizeof(void*)>::Signed   Diff; // difference between pointers
-typedef Integer<8*sizeof(void*)>::Unsigned Size; // size of blocks of memory
-
-// /////////////////////////////////////////////////////////////////////////////
-// here are a few compile-time assertions to check that the integers actually
-// turned out to be the right sizes.
-// /////////////////////////////////////////////////////////////////////////////
-
-enum
-{
-    TYPE_SIZE_ASSERTIONS =
-        Assert<sizeof(Sint8)  == 1>::v &&
-        Assert<sizeof(Uint8)  == 1>::v &&
-        Assert<sizeof(Sint16) == 2>::v &&
-        Assert<sizeof(Uint16) == 2>::v &&
-        Assert<sizeof(Sint32) == 4>::v &&
-        Assert<sizeof(Uint32) == 4>::v &&
-        Assert<sizeof(Diff)   == sizeof(void*)>::v &&
-        Assert<sizeof(Size)   == sizeof(void*)>::v
-};
-
-} // end of namespace BarfCpp_
-#endif // !defined(BarfCpp_namespace_)
 
 #if !defined(ReflexCpp_namespace_)
 #define ReflexCpp_namespace_
@@ -108,8 +34,8 @@ protected:
 
     std::istream_iterator<char> const IstreamIterator () const { return m_it; }
     void IstreamIterator (std::istream_iterator<char> it) { m_it = it; }
-    BarfCpp_::Size InputReadahead () const { return m_input_readahead; }
-    void InputReadahead (BarfCpp_::Size input_readahead) { m_input_readahead = input_readahead; }
+    std::size_t InputReadahead () const { return m_input_readahead; }
+    void InputReadahead (std::size_t input_readahead) { m_input_readahead = input_readahead; }
 
     void KeepString ()
     {
@@ -122,12 +48,12 @@ protected:
         m_kept_string_cursor = m_accept_cursor;
         // leave the accept cursor to be reset in the next loop
     }
-    void Unaccept (BarfCpp_::Uint32 unaccept_char_count)
+    void Unaccept (std::uint32_t unaccept_char_count)
     {
         assert(m_accept_cursor > m_start_cursor && "may only Unaccept within accept handler code");
         UnacceptUnrejectCommon(unaccept_char_count);
     }
-    void Unreject (BarfCpp_::Uint32 unreject_char_count)
+    void Unreject (std::uint32_t unreject_char_count)
     {
         assert(m_accept_cursor == m_start_cursor+1 && "may only Unreject within accept handler code");
         UnacceptUnrejectCommon(unreject_char_count);
@@ -169,12 +95,12 @@ protected:
     }
 
     // for use in AutomatonApparatus_FastAndBig_Noninteractive_ only
-    BarfCpp_::Uint8 CurrentConditionalFlags_ ()
+    std::uint8_t CurrentConditionalFlags_ ()
     {
         UpdateConditionalFlags();
         return m_current_conditional_flags;
     }
-    BarfCpp_::Uint8 InputAtom_ ()
+    std::uint8_t InputAtom_ ()
     {
         FillBuffer();
         assert(m_read_cursor > 0);
@@ -216,7 +142,7 @@ protected:
 
 private:
 
-    void UnacceptUnrejectCommon (BarfCpp_::Uint32 char_count)
+    void UnacceptUnrejectCommon (std::uint32_t char_count)
     {
         assert(!m_keep_string_has_been_called && "may only Unaccept/Unreject before KeepString");
         assert(char_count <= m_start_cursor && "can't Unaccept/Unreject more characters than were rejected");
@@ -257,7 +183,7 @@ private:
         CF_WORD_BOUNDARY      = (1 << 4)
     }; // end of enum ReflexCpp_::InputApparatus_Noninteractive_::ConditionalFlag
 
-    bool IsConditionalMet (BarfCpp_::Uint8 conditional_mask, BarfCpp_::Uint8 conditional_flags)
+    bool IsConditionalMet (std::uint8_t conditional_mask, std::uint8_t conditional_flags)
     {
         UpdateConditionalFlags();
         // return true iff no bits indicated by conditional_mask differ between
@@ -296,7 +222,7 @@ private:
             }
             // otherwise, read the readahead number of bytes.
             else
-                for (BarfCpp_::Size i = 0; i < m_input_readahead && m_it != m_it_end; ++i, ++m_it)
+                for (std::size_t i = 0; i < m_input_readahead && m_it != m_it_end; ++i, ++m_it)
                     m_buffer.push_back(*m_it);
         }
 
@@ -318,11 +244,11 @@ private:
         if (m_buffer[m_read_cursor] == '\0' || m_buffer[m_read_cursor] == '\n')           m_current_conditional_flags |= CF_END_OF_LINE;
         if (IsWordChar(m_buffer[m_read_cursor-1]) != IsWordChar(m_buffer[m_read_cursor])) m_current_conditional_flags |= CF_WORD_BOUNDARY;
     }
-    static bool IsWordChar (BarfCpp_::Uint8 c)
+    static bool IsWordChar (std::uint8_t c)
     {
         // the return value should be
         // (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
-        static BarfCpp_::Uint8 const s_is_word_char_table[256] =
+        static std::uint8_t const s_is_word_char_table[256] =
         {
             0, 0, 0, 0, 0, 0, 0, 0,     0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,     0, 0, 0, 0, 0, 0, 0, 0,
@@ -345,9 +271,9 @@ private:
         return s_is_word_char_table[c] != 0;
     }
 
-    typedef std::deque<BarfCpp_::Uint8> Buffer;
+    typedef std::deque<std::uint8_t> Buffer;
 
-    BarfCpp_::Uint8 m_current_conditional_flags;
+    std::uint8_t m_current_conditional_flags;
     Buffer m_buffer;
     // indicates the "previous" atom (of the kept string)
     Buffer::size_type m_start_cursor;
@@ -366,7 +292,7 @@ private:
     // the max number of bytes that will be put into the buffer each time the
     // input is pulled for bytes.  a value of 0 indicates that the input will
     // be read until EOF is hit.
-    BarfCpp_::Size m_input_readahead;
+    std::size_t m_input_readahead;
 }; // end of class ReflexCpp_::InputApparatus_Noninteractive_
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -387,11 +313,11 @@ protected:
 
     struct DfaState_
     {
-        BarfCpp_::Uint32 m_accept_handler_index;
-        BarfCpp_::Uint32 m_transition_count;
-        BarfCpp_::Uint32 m_transition_offset;
-        BarfCpp_::Uint8 m_transition_type;
-        BarfCpp_::Uint8 m_transition_first_index;
+        std::uint32_t m_accept_handler_index;
+        std::uint32_t m_transition_count;
+        std::uint32_t m_transition_offset;
+        std::uint8_t m_transition_type;
+        std::uint8_t m_transition_first_index;
     }; // end of struct ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaState_
     struct DfaTransition_
     {
@@ -400,15 +326,15 @@ protected:
             INPUT_ATOM = 0, INPUT_ATOM_RANGE, CONDITIONAL
         }; // end of enum ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_::Type
 
-        BarfCpp_::Uint32 m_target_dfa_state_offset;
+        std::uint32_t m_target_dfa_state_offset;
     }; // end of struct ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_
 
     AutomatonApparatus_FastAndBig_Noninteractive_ (
         DfaState_ const *state_table,
-        BarfCpp_::Size state_count,
+        std::size_t state_count,
         DfaTransition_ const *transition_table,
-        BarfCpp_::Size transition_count,
-        BarfCpp_::Uint32 accept_handler_count)
+        std::size_t transition_count,
+        std::uint32_t accept_handler_count)
         :
         InputApparatus_Noninteractive_(),
         m_accept_handler_count(accept_handler_count),
@@ -429,11 +355,11 @@ protected:
         assert(initial_state != NULL);
         m_initial_state = initial_state;
     }
-    void ModeFlags_ (BarfCpp_::Uint8 mode_flags)
+    void ModeFlags_ (std::uint8_t mode_flags)
     {
         m_mode_flags = mode_flags;
     }
-    void ResetForNewInput_ (DfaState_ const *initial_state, BarfCpp_::Uint8 mode_flags)
+    void ResetForNewInput_ (DfaState_ const *initial_state, std::uint8_t mode_flags)
     {
         InputApparatus_Noninteractive_::ResetForNewInput_();
         if (initial_state != NULL)
@@ -442,7 +368,7 @@ protected:
         m_accept_state = NULL;
         m_mode_flags = mode_flags;
     }
-    BarfCpp_::Uint32 RunDfa_ (std::string &s)
+    std::uint32_t RunDfa_ (std::string &s)
     {
         assert(s.empty());
         // reset the current state to the initial state.
@@ -480,7 +406,7 @@ protected:
             // extract the accepted string from the buffer
             Accept_(s);
             // save off the accept handler index
-            BarfCpp_::Uint32 accept_handler_index = m_accept_state->m_accept_handler_index;
+            std::uint32_t accept_handler_index = m_accept_state->m_accept_handler_index;
             // clear the accept state for next time
             m_accept_state = NULL;
             // return accept_handler_index to indicate which handler to call
@@ -509,7 +435,7 @@ private:
     DfaState_ const *ProcessInputAtom ()
     {
         assert(m_current_state != NULL);
-        BarfCpp_::Uint32 target_dfa_state_offset = m_state_count;
+        std::uint32_t target_dfa_state_offset = m_state_count;
         if (m_current_state->m_transition_type == DfaTransition_::CONDITIONAL)
         {
             target_dfa_state_offset = m_transition_table[m_current_state->m_transition_offset + CurrentConditionalFlags_()].m_target_dfa_state_offset;
@@ -517,7 +443,7 @@ private:
         }
         else // m_current_state->m_transition_type == DfaTransition_::INPUT_ATOM
         {
-            BarfCpp_::Uint8 input_atom = InputAtom_();
+            std::uint8_t input_atom = InputAtom_();
 
             // only do the lookup if the input atom is in range of the table
             if (input_atom >= m_current_state->m_transition_first_index &&
@@ -550,7 +476,7 @@ private:
         assert(state != NULL);
         return state->m_accept_handler_index < m_accept_handler_count;
     }
-    static BarfCpp_::Uint8 SwitchCase (BarfCpp_::Uint8 c)
+    static std::uint8_t SwitchCase (std::uint8_t c)
     {
         if (c >= 'a' && c <= 'z')
             return c - 'a' + 'A';
@@ -560,9 +486,9 @@ private:
     }
     static void CheckDfa (
         DfaState_ const *state_table,
-        BarfCpp_::Size state_count,
+        std::size_t state_count,
         DfaTransition_ const *transition_table,
-        BarfCpp_::Size transition_count)
+        std::size_t transition_count)
     {
         // if any assertions in this method fail, the state and/or
         // transition tables were created incorrectly.
@@ -595,14 +521,14 @@ private:
         }
     }
 
-    BarfCpp_::Uint32 const m_accept_handler_count;
+    std::uint32_t const m_accept_handler_count;
     DfaState_ const *const m_state_table;
-    BarfCpp_::Size const m_state_count;
+    std::size_t const m_state_count;
     DfaTransition_ const *const m_transition_table;
     DfaState_ const *m_initial_state;
     DfaState_ const *m_current_state;
     DfaState_ const *m_accept_state;
-    BarfCpp_::Uint8 m_mode_flags;
+    std::uint8_t m_mode_flags;
 }; // end of class ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_
 
 } // end of namespace ReflexCpp_
@@ -629,12 +555,12 @@ class Base;
 
 namespace CommonLang {
 
-#line 633 "barf_commonlang_scanner.hpp"
+#line 559 "barf_commonlang_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_, 
 #line 39 "barf_commonlang_scanner.reflex"
  protected InputBase 
-#line 638 "barf_commonlang_scanner.hpp"
+#line 564 "barf_commonlang_scanner.hpp"
 
 {
 public:
@@ -704,7 +630,7 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 708 "barf_commonlang_scanner.hpp"
+#line 634 "barf_commonlang_scanner.hpp"
 
 public:
 
@@ -726,7 +652,7 @@ public:
     Scanner::Token::Type Scan (
 #line 83 "barf_commonlang_scanner.reflex"
  Ast::Base *&token 
-#line 730 "barf_commonlang_scanner.hpp"
+#line 656 "barf_commonlang_scanner.hpp"
 ) throw();
 
 public:
@@ -754,14 +680,14 @@ private:
     Uint32 m_code_block_bracket_level;
     StateMachine::Name m_return_state;
 
-#line 758 "barf_commonlang_scanner.hpp"
+#line 684 "barf_commonlang_scanner.hpp"
 
 
 private:
 
     void KeepString ();
-    void Unaccept (BarfCpp_::Uint32 unaccept_char_count);
-    void Unreject (BarfCpp_::Uint32 unreject_char_count);
+    void Unaccept (std::uint32_t unaccept_char_count);
+    void Unreject (std::uint32_t unreject_char_count);
     // ///////////////////////////////////////////////////////////////////////
     // begin internal reflex-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
@@ -774,22 +700,22 @@ private:
     using AutomatonApparatus_FastAndBig_Noninteractive_::RunDfa_;
 
     // debug spew methods
-    static void PrintAtom_ (BarfCpp_::Uint8 atom);
+    static void PrintAtom_ (std::uint8_t atom);
     static void PrintString_ (std::string const &s);
 
     bool m_debug_spew_;
 
     // state machine and automaton data
-    static BarfCpp_::Uint32 const ms_state_machine_start_state_index_[];
-    static BarfCpp_::Uint8 const ms_state_machine_mode_flags_[];
+    static std::uint32_t const ms_state_machine_start_state_index_[];
+    static std::uint8_t const ms_state_machine_mode_flags_[];
     static char const *const ms_state_machine_name_[];
-    static BarfCpp_::Uint32 const ms_state_machine_count_;
+    static std::uint32_t const ms_state_machine_count_;
     static AutomatonApparatus_FastAndBig_Noninteractive_::DfaState_ const ms_state_table_[];
-    static BarfCpp_::Size const ms_state_count_;
+    static std::size_t const ms_state_count_;
     static AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_ const ms_transition_table_[];
-    static BarfCpp_::Size const ms_transition_count_;
+    static std::size_t const ms_transition_count_;
     static char const *const ms_accept_handler_regex_[];
-    static BarfCpp_::Uint32 const ms_accept_handler_count_;
+    static std::uint32_t const ms_accept_handler_count_;
 
     // ///////////////////////////////////////////////////////////////////////
     // end of internal reflex-generated parser guts
@@ -806,4 +732,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 810 "barf_commonlang_scanner.hpp"
+#line 736 "barf_commonlang_scanner.hpp"

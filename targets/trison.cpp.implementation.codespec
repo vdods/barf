@@ -131,7 +131,7 @@ void <{class_name}::ResetForNewInput ()
 <|end_if
 <|end_for_each
            ) && "invalid nonterminal_to_parse");
-    m_stack_.push_back(StackElement_(nonterminal_to_parse, <{token_data_default}));
+    m_stack_.push_back(StackElement_(nonterminal_to_parse, Token(Nonterminal_::none_, <{token_data_default})));
     // main parser loop
     while (true)
     {
@@ -145,7 +145,7 @@ void <{class_name}::ResetForNewInput ()
             {
                 // get the current state (top of the stack)
                 assert(!m_stack_.empty());
-                BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+                std::uint32_t current_state_index = m_stack_.back().m_state_index;
                 assert(current_state_index < ms_state_count_);
                 State_ const &current_state = ms_state_table_[current_state_index];
 <|if(is_defined(generate_debug_spew_code))
@@ -186,7 +186,7 @@ void <{class_name}::ResetForNewInput ()
                         m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
                     }
                     else
-                        ThrowAwayToken_(m_lookahead_queue_[0].m_data);
+                        ThrowAwayToken_(m_lookahead_queue_[0]);
                     m_lookahead_queue_[0].m_id = Terminal::ERROR_;
                     m_lookahead_queue_[0].m_data = <{token_data_default};
                     m_is_in_error_panic_ = false;
@@ -206,7 +206,7 @@ void <{class_name}::ResetForNewInput ()
 <|end_if
                     // otherwise throw away the data at the top of the stack, and pop the stack.
                     // then if the stack is empty, an unhandled parse error occurred.
-                    ThrowAwayToken_(m_stack_.rbegin()->m_token_data);
+                    ThrowAwayStackElement_(m_stack_.back());
                     m_stack_.resize(m_stack_.size()-1);
                     if (m_stack_.empty())
                     {
@@ -227,7 +227,7 @@ void <{class_name}::ResetForNewInput ()
         {
             // get the current state (top of the stack)
             assert(!m_stack_.empty());
-            BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+            std::uint32_t current_state_index = m_stack_.back().m_state_index;
             assert(current_state_index < ms_state_count_);
             State_ const &current_state = ms_state_table_[current_state_index];
 <|if(is_defined(generate_debug_spew_code))
@@ -239,8 +239,9 @@ void <{class_name}::ResetForNewInput ()
             // loop through the current state's transitions and see if any match
             bool transition_exercised = false;
 <|if(is_defined(generate_debug_spew_code))
-            BarfCpp_::Uint32 tested_lookahead_count = 0;
+            std::uint32_t tested_lookahead_count = 0;
 <|end_if
+            TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " current transitions:" << std::endl)
             for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
                                    *transition_end = current_state.m_transition_table+current_state.m_transition_count;
                 transition != transition_end;
@@ -249,10 +250,18 @@ void <{class_name}::ResetForNewInput ()
                 // the non-default transitions can only be REDUCE or SHIFT
                 assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
 
+                // make sure enough lookaheads are in the queue (this must be done before
+                // checking if the lookaheads match because otherwise the debug-spew printing will
+                // be interrupted by the debug-spew printing that happens in the call to Looahead_).
+                if (transition->m_lookahead_count > 0)
+                    Lookahead_(transition->m_lookahead_count - 1);
+
                 // check if the lookaheads match those of this transition.
                 bool lookahead_sequence_matched = true;
-                for (BarfCpp_::Uint32 i = 0; i < transition->m_lookahead_count; ++i)
+                TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
+                for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
                 {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << ms_token_name_table_[transition->m_lookahead_sequence[i]])
                     if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
                     {
                         lookahead_sequence_matched = false;
@@ -266,6 +275,7 @@ void <{class_name}::ResetForNewInput ()
                     }
 <|end_if
                 }
+                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
 
                 // if all the lookaheads matched, then exercise this transition,
                 // and break out of this inner (transition) loop.
@@ -273,7 +283,7 @@ void <{class_name}::ResetForNewInput ()
                 {
 <|if(is_defined(generate_debug_spew_code))
                     TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " currently usable lookahead(s):")
-                    for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                    for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
                     }
@@ -291,7 +301,7 @@ void <{class_name}::ResetForNewInput ()
             {
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " currently usable lookahead(s):")
-                for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
                 }
@@ -306,13 +316,13 @@ void <{class_name}::ResetForNewInput ()
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
                     // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == BarfCpp_::Uint32(nonterminal_to_parse));
+                    assert(m_stack_[0].m_state_index == std::uint32_t(nonterminal_to_parse));
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
-                    *return_token = m_stack_.rbegin()->m_token_data;
+                    *return_token = m_stack_.back().m_token.m_data;
                     // take the return token out of the stack, so it's not thrown away
                     // when we clear the stack later.
-                    m_stack_.rbegin()->m_token_data = <{token_data_default};
+                    m_stack_.back().m_token.m_data = <{token_data_default};
                     break;
                 }
             }
@@ -350,19 +360,35 @@ void <{class_name}::ResetForNewInput ()
     return parser_return_code_;
 }
 
-void <{class_name}::ThrowAwayToken_ (Token::Data &token_data) throw()
+void <{class_name}::ThrowAwayToken_ (Token &token_) throw()
 {
 <|if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions" << std::endl)
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions on token " << token_ << std::endl)
 
 <|end_if
+    ThrowAwayTokenData_(token_.m_data);
+}
+
+void <{class_name}::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
+{
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
+
+<|end_if
+    ThrowAwayTokenData_(stack_element_.m_token.m_data);
+}
+
+void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} &token_data) throw()
+{
 <|throw_away_token_actions?
 }
 
 <{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
 {
+<|if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing scan actions" << std::endl)
 
+<|end_if
 <|scan_actions
 }
 
@@ -381,7 +407,7 @@ void <{class_name}::ClearStack_ () throw()
     // contains the start state and no token data.
     ++it;
     for ( ; it != it_end; ++it)
-        ThrowAwayToken_(it->m_token_data);
+        ThrowAwayStackElement_(*it);
     m_stack_.clear();
 }
 
@@ -392,7 +418,7 @@ void <{class_name}::ClearLookaheadQueue_ () throw()
 
 <|end_if
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
-        ThrowAwayToken_(it->m_data);
+        ThrowAwayToken_(*it);
     m_lookahead_queue_.clear();
 }
 
@@ -403,7 +429,7 @@ void <{class_name}::ClearLookaheadQueue_ () throw()
         m_lookahead_queue_.push_back(Scan_());
 <|if(is_defined(generate_debug_spew_code))
 
-        TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl)
+        TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
 <|end_if
     }
     return m_lookahead_queue_[index];
@@ -432,6 +458,7 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
 <|if(is_defined(generate_debug_spew_code))
             assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
             TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << std::endl)
 <|end_if
             return false; // indicating the parser isn't returning
         }
@@ -439,6 +466,7 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
         case Transition_::RETURN:
 <|if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " RETURN" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << std::endl)
 <|end_if
             return true; // indicating the parser is returning
 
@@ -450,14 +478,16 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
             assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
                                                                // client error, so asserting here is ok.
             TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " SHIFT " << Lookahead_(0) << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << std::endl)
 <|end_if
-            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0).m_data));
+            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
             m_lookahead_queue_.pop_front();
             return false; // indicating the parser isn't returning
 
         case Transition_::ERROR_PANIC:
 <|if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " ERROR_PANIC" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << std::endl)
 <|end_if
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
@@ -468,7 +498,7 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
     }
 }
 
-<{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if}
+<{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (std::uint32_t const rule_index_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if}
 {
     assert(rule_index_ < ms_rule_count_);
 <|if(is_defined(generate_debug_spew_code))
@@ -486,7 +516,7 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 <|loop(j, _rule_token_table_count[i])
 <|if(_rule_token_assigned_id[_rule_token_table_offset[i]+j] != "")
-            <{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}<{else}<{token_data_type}<{end_if} <{_rule_token_assigned_id[_rule_token_table_offset[i]+j]}(<{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{custom_token_data_type_cast}<<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}>(m_stack_[m_stack_.size()-<{_rule_token_count[i]-j}].m_token_data)<{else}m_stack_[m_stack_.size()-<{_rule_token_count[i]-j}].m_token_data<{end_if});
+            <{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}<{else}<{token_data_type}<{end_if} <{_rule_token_assigned_id[_rule_token_table_offset[i]+j]}(<{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{custom_token_data_type_cast}<<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}>(m_stack_[m_stack_.size()-<{_rule_token_count[i]-j}].m_token.m_data)<{else}m_stack_[m_stack_.size()-<{_rule_token_count[i]-j}].m_token.m_data<{end_if});
 <|end_if
 <|end_loop
 <|_rule_code[i]
@@ -507,7 +537,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &stream) const
 {
     assert(!m_stack_.empty());
 
-    stream << <{debug_spew_prefix} << " parser stack: ";
+    stream << <{debug_spew_prefix} << " parser state stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
         stream << it->m_state_index;
@@ -517,7 +547,26 @@ void <{class_name}::PrintParserStatus_ (std::ostream &stream) const
     }
     stream << std::endl;
 
-    PrintIndented_(stream, ms_state_table_[m_stack_.rbegin()->m_state_index].m_description);
+    assert(m_stack_.size() >= 1);
+    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal_::none_));
+    stream << <{debug_spew_prefix} << " parser stack tokens . lookahead queue: ";
+    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
+    {
+        // the first token is always Nonterminal_::none_, which doesn't correspond to a real token, so skip it.
+        if (it == m_stack_.begin())
+            continue;
+        stream << it->m_token << ' ';
+    }
+    stream << '.';
+    for (LookaheadQueue_::const_iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
+    {
+        Token const &lookahead_token = *it;
+        assert(lookahead_token.m_id < ms_token_name_count_ && "Token id out of range");
+        stream << ' ' << lookahead_token;
+    }
+    stream << std::endl;
+
+    PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
     stream << std::endl;
 }
 
@@ -538,7 +587,7 @@ void <{class_name}::PrintIndented_ (std::ostream &stream, char const *string) co
 std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token)
 {
     if (token.m_id < <{class_name}::ms_token_name_count_)
-        stream << '(' << <{class_name}::ms_token_name_table_[token.m_id] << ')';
+        stream << <{class_name}::ms_token_name_table_[token.m_id];
     else
         stream << "!INVALID TOKEN!";
     return stream;
@@ -551,7 +600,7 @@ std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &tok
     { <{class_name}::Nonterminal_::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(*<{class_name}::ms_rule_table_);
+std::size_t const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(*<{class_name}::ms_rule_table_);
 
 <{class_name}::State_ const <{class_name}::ms_state_table_[] =
 {
@@ -559,7 +608,7 @@ BarfCpp_::Size const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_ru
     { <{_dpda_state_transition_count[i]}, ms_transition_table_+<{_dpda_state_transition_offset[i]}<{if(is_defined(generate_debug_spew_code))}, <{_dpda_state_description[i]}<{end_if} }<{if(i < _dpda_state_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
+std::size_t const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);
 
 <{class_name}::Transition_ const <{class_name}::ms_transition_table_[] =
 {
@@ -567,7 +616,7 @@ BarfCpp_::Size const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_s
     { <{class_name}::Transition_::<{_dpda_transition_type_name[i]}, <{_dpda_transition_data[i]}, <{_dpda_transition_lookahead_count[i]}, ms_lookahead_table_+<{_dpda_transition_lookahead_offset[i]} }<{if(i < _dpda_transition_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
+std::size_t const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);
 
 <{class_name}::Token::Id const <{class_name}::ms_lookahead_table_[] =
 {
@@ -581,7 +630,7 @@ BarfCpp_::Size const <{class_name}::ms_transition_count_ = sizeof(<{class_name}:
 <{if(i < _dpda_lookahead_count-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_lookahead_count_ = sizeof(<{class_name}::ms_lookahead_table_) / sizeof(*<{class_name}::ms_lookahead_table_);
+std::size_t const <{class_name}::ms_lookahead_count_ = sizeof(<{class_name}::ms_lookahead_table_) / sizeof(*<{class_name}::ms_lookahead_table_);
 
 <|if(is_defined(generate_debug_spew_code))
 char const *const <{class_name}::ms_token_name_table_[] =
@@ -597,7 +646,7 @@ char const *const <{class_name}::ms_token_name_table_[] =
 <{if(i < 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1-1)},<{end_if}
 <|end_loop
 };
-BarfCpp_::Size const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
+std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
 
 <|end_if
 // ///////////////////////////////////////////////////////////////////////

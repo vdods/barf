@@ -16,13 +16,14 @@
 // from <{_source_filename} using <{_targetspec_filename} and <{_codespec_filename}
 // DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY ! DO NOT MODIFY
 
+#pragma once
+
 #include <cassert>
+#include <cstdint>
 #include <deque>
 <|if(is_defined(generate_debug_spew_code))
 #include <iostream>
 <|end_if
-
-<|include("barf.cpp.include.codespec")
 
 <|top_of_header_file?
 
@@ -118,7 +119,7 @@ public:
       */
     struct Token
     {
-        typedef BarfCpp_::Uint32 Id; // TODO -- smallest int
+        typedef std::uint32_t Id; // TODO -- smallest int
         typedef <{token_data_type} Data;
 
         Id m_id;
@@ -132,15 +133,7 @@ public:
           *
           * @brief Constructor for Token struct.
           */
-        Token (Id id, Data const &data = <{token_data_default})
-            :
-            m_id(id),
-            m_data(data)
-        {
-            assert(m_id != Nonterminal_::none_ &&
-                   m_id != Terminal::ERROR_ &&
-                   "do not construct a token with this id");
-        }
+        Token (Id id, Data const &data = <{token_data_default}) : m_id(id), m_data(data) { }
     }; // end of struct <{class_name}::Token
 
 <|if(is_defined(top_of_class))
@@ -333,18 +326,18 @@ private:
 
     struct StackElement_
     {
-        BarfCpp_::Uint32 m_state_index;
-        Token::Data m_token_data;
+        std::uint32_t m_state_index;
+        Token m_token;
 
         StackElement_ ()
             :
-            m_state_index(BarfCpp_::Uint32(-1)),
-            m_token_data(<{token_data_default})
+            m_state_index(std::uint32_t(-1)),
+            m_token(Nonterminal_::none_, <{token_data_default})
         { }
-        StackElement_ (BarfCpp_::Uint32 state_index, Token::Data token_data)
+        StackElement_ (std::uint32_t state_index, Token const &token)
             :
             m_state_index(state_index),
-            m_token_data(token_data)
+            m_token(token)
         { }
     }; // end of struct <{class_name}::StackElement_
 
@@ -352,14 +345,16 @@ private:
     typedef std::deque<Token> LookaheadQueue_;
 
     ParserReturnCode Parse_ (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse);
-    void ThrowAwayToken_ (Token::Data &token_data) throw();
+    void ThrowAwayToken_ (Token &token) throw();
+    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
+    void ThrowAwayTokenData_ (<{token_data_type} &token_data) throw();
     void ResetForNewInput_ () throw();
     Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
     void ClearStack_ () throw();
     void ClearLookaheadQueue_ () throw();
     Token const &Lookahead_ (LookaheadQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
     bool ExerciseTransition_ (Transition_ const &transition);
-    Token::Data ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
 <|if(is_defined(generate_debug_spew_code))
     // debug spew methods
     void PrintParserStatus_ (std::ostream &stream) const;
@@ -369,7 +364,7 @@ private:
     struct Rule_
     {
         Token::Id m_reduction_nonterminal_token_id;
-        BarfCpp_::Uint32 m_token_count;
+        std::uint32_t m_token_count;
 <|if(is_defined(generate_debug_spew_code))
         char const *m_description;
 <|end_if
@@ -377,7 +372,7 @@ private:
 
     struct State_
     {
-        BarfCpp_::Size const m_transition_count; // TODO: smallest int
+        std::size_t const m_transition_count; // TODO: smallest int
         Transition_ const *m_transition_table;
 <|if(is_defined(generate_debug_spew_code))
         char const *m_description;
@@ -387,9 +382,9 @@ private:
     struct Transition_
     {
         enum Type { ERROR_PANIC = 0, RETURN, REDUCE, SHIFT };
-        BarfCpp_::Uint8 m_type;
-        BarfCpp_::Uint32 m_data; // TODO: smallest int
-        BarfCpp_::Uint32 m_lookahead_count; // TODO smallest int
+        std::uint8_t m_type;
+        std::uint32_t m_data; // TODO: smallest int
+        std::uint32_t m_lookahead_count; // TODO smallest int
         Token::Id const *m_lookahead_sequence;
     }; // end of struct <{class_name}::Transition_
 
@@ -401,16 +396,16 @@ private:
 <|end_if
 
     static Rule_ const ms_rule_table_[];
-    static BarfCpp_::Size const ms_rule_count_;
+    static std::size_t const ms_rule_count_;
     static State_ const ms_state_table_[];
-    static BarfCpp_::Size const ms_state_count_;
+    static std::size_t const ms_state_count_;
     static Transition_ const ms_transition_table_[];
-    static BarfCpp_::Size const ms_transition_count_;
+    static std::size_t const ms_transition_count_;
     static Token::Id const ms_lookahead_table_[];
-    static BarfCpp_::Size const ms_lookahead_count_;
+    static std::size_t const ms_lookahead_count_;
 <|if(is_defined(generate_debug_spew_code))
     static char const *const ms_token_name_table_[];
-    static BarfCpp_::Size const ms_token_name_count_;
+    static std::size_t const ms_token_name_count_;
 
     friend std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
 <|end_if

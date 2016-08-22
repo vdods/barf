@@ -225,7 +225,6 @@ nobase_pkgdata_DATA = \
 	app/example/calculator/Makefile.am \
 	LICENSE \
 	README \
-	targets/barf.cpp.include.codespec \
 	targets/reflex.cpp.header.codespec \
 	targets/reflex.cpp.implementation.codespec \
 	targets/reflex.cpp.targetspec \
@@ -266,7 +265,6 @@ EXTRA_DIST = \
     doc/doxygen_pages/targetspec_and_codespec.dox \
     doc/doxygen_pages/trison_guts.dox \
     extra/barf.xml \
-    targets/barf.cpp.include.codespec \
     targets/reflex.cpp.header.codespec \
     targets/reflex.cpp.implementation.codespec \
     targets/reflex.cpp.targetspec \

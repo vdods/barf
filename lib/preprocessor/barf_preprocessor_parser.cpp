@@ -134,7 +134,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
            || nonterminal_to_parse == ParseNonterminal::if_statement
            || nonterminal_to_parse == ParseNonterminal::loop
            ) && "invalid nonterminal_to_parse");
-    m_stack_.push_back(StackElement_(nonterminal_to_parse, NULL));
+    m_stack_.push_back(StackElement_(nonterminal_to_parse, Token(Nonterminal_::none_, NULL)));
     // main parser loop
     while (true)
     {
@@ -150,7 +150,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             {
                 // get the current state (top of the stack)
                 assert(!m_stack_.empty());
-                BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+                std::uint32_t current_state_index = m_stack_.back().m_state_index;
                 assert(current_state_index < ms_state_count_);
                 State_ const &current_state = ms_state_table_[current_state_index];
                 TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
@@ -193,7 +193,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                         m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
                     }
                     else
-                        ThrowAwayToken_(m_lookahead_queue_[0].m_data);
+                        ThrowAwayToken_(m_lookahead_queue_[0]);
                     m_lookahead_queue_[0].m_id = Terminal::ERROR_;
                     m_lookahead_queue_[0].m_data = NULL;
                     m_is_in_error_panic_ = false;
@@ -219,7 +219,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     }
                     // otherwise throw away the data at the top of the stack, and pop the stack.
                     // then if the stack is empty, an unhandled parse error occurred.
-                    ThrowAwayToken_(m_stack_.rbegin()->m_token_data);
+                    ThrowAwayStackElement_(m_stack_.back());
                     m_stack_.resize(m_stack_.size()-1);
                     if (m_stack_.empty())
                     {
@@ -240,7 +240,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
         {
             // get the current state (top of the stack)
             assert(!m_stack_.empty());
-            BarfCpp_::Uint32 current_state_index = m_stack_.rbegin()->m_state_index;
+            std::uint32_t current_state_index = m_stack_.back().m_state_index;
             assert(current_state_index < ms_state_count_);
             State_ const &current_state = ms_state_table_[current_state_index];
             TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
@@ -249,7 +249,12 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
 
             // loop through the current state's transitions and see if any match
             bool transition_exercised = false;
-            BarfCpp_::Uint32 tested_lookahead_count = 0;
+            std::uint32_t tested_lookahead_count = 0;
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 141 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 257 "barf_preprocessor_parser.cpp"
+ << " current transitions:" << std::endl)
             for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
                                    *transition_end = current_state.m_transition_table+current_state.m_transition_count;
                 transition != transition_end;
@@ -258,10 +263,22 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 // the non-default transitions can only be REDUCE or SHIFT
                 assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
 
+                // make sure enough lookaheads are in the queue (this must be done before
+                // checking if the lookaheads match because otherwise the debug-spew printing will
+                // be interrupted by the debug-spew printing that happens in the call to Looahead_).
+                if (transition->m_lookahead_count > 0)
+                    Lookahead_(transition->m_lookahead_count - 1);
+
                 // check if the lookaheads match those of this transition.
                 bool lookahead_sequence_matched = true;
-                for (BarfCpp_::Uint32 i = 0; i < transition->m_lookahead_count; ++i)
+                TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 141 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 278 "barf_preprocessor_parser.cpp"
+ << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
+                for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
                 {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << ms_token_name_table_[transition->m_lookahead_sequence[i]])
                     if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
                     {
                         lookahead_sequence_matched = false;
@@ -273,6 +290,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                             tested_lookahead_count = i+1;
                     }
                 }
+                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
 
                 // if all the lookaheads matched, then exercise this transition,
                 // and break out of this inner (transition) loop.
@@ -281,9 +299,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 285 "barf_preprocessor_parser.cpp"
+#line 303 "barf_preprocessor_parser.cpp"
  << " currently usable lookahead(s):")
-                    for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                    for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
                     {
                         TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
                     }
@@ -301,9 +319,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 305 "barf_preprocessor_parser.cpp"
+#line 323 "barf_preprocessor_parser.cpp"
  << " currently usable lookahead(s):")
-                for (BarfCpp_::Uint32 i = 0; i < tested_lookahead_count; ++i)
+                for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
                 {
                     TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
                 }
@@ -312,7 +330,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 316 "barf_preprocessor_parser.cpp"
+#line 334 "barf_preprocessor_parser.cpp"
  << " exercising default transition" << std::endl)
                 // exercise the default transition.  a return value of true indicates
                 // that the parser should return.
@@ -321,13 +339,13 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
                     // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == BarfCpp_::Uint32(nonterminal_to_parse));
+                    assert(m_stack_[0].m_state_index == std::uint32_t(nonterminal_to_parse));
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
-                    *return_token = m_stack_.rbegin()->m_token_data;
+                    *return_token = m_stack_.back().m_token.m_data;
                     // take the return token out of the stack, so it's not thrown away
                     // when we clear the stack later.
-                    m_stack_.rbegin()->m_token_data = NULL;
+                    m_stack_.back().m_token.m_data = NULL;
                     break;
                 }
             }
@@ -343,31 +361,47 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 347 "barf_preprocessor_parser.cpp"
+#line 365 "barf_preprocessor_parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 352 "barf_preprocessor_parser.cpp"
+#line 370 "barf_preprocessor_parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
     return parser_return_code_;
 }
 
-void Parser::ThrowAwayToken_ (Token::Data &token_data) throw()
+void Parser::ThrowAwayToken_ (Token &token_) throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 363 "barf_preprocessor_parser.cpp"
- << " executing throw-away-token actions" << std::endl)
+#line 381 "barf_preprocessor_parser.cpp"
+ << " executing throw-away-token actions on token " << token_ << std::endl)
 
+    ThrowAwayTokenData_(token_.m_data);
+}
+
+void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 141 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 392 "barf_preprocessor_parser.cpp"
+ << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
+
+    ThrowAwayTokenData_(stack_element_.m_token.m_data);
+}
+
+void Parser::ThrowAwayTokenData_ (Ast::Base * &token_data) throw()
+{
 
 #line 131 "barf_preprocessor_parser.trison"
 
     delete token_data;
 
-#line 371 "barf_preprocessor_parser.cpp"
+#line 405 "barf_preprocessor_parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
@@ -375,7 +409,7 @@ Parser::Token Parser::Scan_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 379 "barf_preprocessor_parser.cpp"
+#line 413 "barf_preprocessor_parser.cpp"
  << " executing scan actions" << std::endl)
 
 
@@ -384,7 +418,7 @@ Parser::Token Parser::Scan_ () throw()
     assert(m_scanner != NULL);
     return m_scanner->Scan();
 
-#line 388 "barf_preprocessor_parser.cpp"
+#line 422 "barf_preprocessor_parser.cpp"
 }
 
 void Parser::ClearStack_ () throw()
@@ -395,7 +429,7 @@ void Parser::ClearStack_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 399 "barf_preprocessor_parser.cpp"
+#line 433 "barf_preprocessor_parser.cpp"
  << " clearing the stack" << std::endl)
 
     Stack_::iterator it = m_stack_.begin();
@@ -404,7 +438,7 @@ void Parser::ClearStack_ () throw()
     // contains the start state and no token data.
     ++it;
     for ( ; it != it_end; ++it)
-        ThrowAwayToken_(it->m_token_data);
+        ThrowAwayStackElement_(*it);
     m_stack_.clear();
 }
 
@@ -413,11 +447,11 @@ void Parser::ClearLookaheadQueue_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 417 "barf_preprocessor_parser.cpp"
+#line 451 "barf_preprocessor_parser.cpp"
  << " clearing the lookahead queue" << std::endl)
 
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
-        ThrowAwayToken_(it->m_data);
+        ThrowAwayToken_(*it);
     m_lookahead_queue_.clear();
 }
 
@@ -430,8 +464,8 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 434 "barf_preprocessor_parser.cpp"
- << " pushed " << *m_lookahead_queue_.rbegin() << " onto back of lookahead queue" << std::endl)
+#line 468 "barf_preprocessor_parser.cpp"
+ << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
     }
     return m_lookahead_queue_[index];
 }
@@ -450,7 +484,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 454 "barf_preprocessor_parser.cpp"
+#line 488 "barf_preprocessor_parser.cpp"
  << " REDUCE " << rule.m_description << std::endl)
             assert(m_stack_.size() > rule.m_token_count);
             m_lookahead_queue_.push_front(
@@ -462,8 +496,13 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 466 "barf_preprocessor_parser.cpp"
+#line 500 "barf_preprocessor_parser.cpp"
  << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 141 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 505 "barf_preprocessor_parser.cpp"
+ << std::endl)
             return false; // indicating the parser isn't returning
         }
 
@@ -471,8 +510,13 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 475 "barf_preprocessor_parser.cpp"
+#line 514 "barf_preprocessor_parser.cpp"
  << " RETURN" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 141 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 519 "barf_preprocessor_parser.cpp"
+ << std::endl)
             return true; // indicating the parser is returning
 
         case Transition_::SHIFT:
@@ -484,9 +528,14 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 488 "barf_preprocessor_parser.cpp"
+#line 532 "barf_preprocessor_parser.cpp"
  << " SHIFT " << Lookahead_(0) << std::endl)
-            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0).m_data));
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 141 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 537 "barf_preprocessor_parser.cpp"
+ << std::endl)
+            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
             m_lookahead_queue_.pop_front();
             return false; // indicating the parser isn't returning
 
@@ -494,8 +543,13 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 498 "barf_preprocessor_parser.cpp"
+#line 547 "barf_preprocessor_parser.cpp"
  << " ERROR_PANIC" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 141 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 552 "barf_preprocessor_parser.cpp"
+ << std::endl)
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
 
@@ -505,13 +559,13 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
     }
 }
 
-Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_index_) throw()
+Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_) throw()
 {
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 515 "barf_preprocessor_parser.cpp"
+#line 569 "barf_preprocessor_parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
@@ -527,14 +581,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
         return new Body();
     
-#line 531 "barf_preprocessor_parser.cpp"
+#line 585 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 1:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Text * text(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Text * text(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 192 "barf_preprocessor_parser.trison"
 
@@ -542,15 +596,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         body->Append(text);
         return body;
     
-#line 546 "barf_preprocessor_parser.cpp"
+#line 600 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 2:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token_data));
-            ExecutableAst * executable(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            ExecutableAst * executable(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 199 "barf_preprocessor_parser.trison"
 
@@ -558,16 +612,16 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
             body->Append(executable);
         return body;
     
-#line 562 "barf_preprocessor_parser.cpp"
+#line 616 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 3:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-3].m_token_data));
-            ExecutableAst * executable(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token_data));
-            Text * text(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            ExecutableAst * executable(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Text * text(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 206 "barf_preprocessor_parser.trison"
 
@@ -576,100 +630,100 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         body->Append(text);
         return body;
     
-#line 580 "barf_preprocessor_parser.cpp"
+#line 634 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 4:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ExecutableAst * code(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-1].m_token_data));
+            ExecutableAst * code(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 217 "barf_preprocessor_parser.trison"
 
         return code;
     
-#line 593 "barf_preprocessor_parser.cpp"
+#line 647 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 5:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 222 "barf_preprocessor_parser.trison"
 
         return conditional;
     
-#line 606 "barf_preprocessor_parser.cpp"
+#line 660 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 6:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 227 "barf_preprocessor_parser.trison"
 
         define->SetBody(body);
         return define;
     
-#line 621 "barf_preprocessor_parser.cpp"
+#line 675 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 7:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Loop * loop(Dsc<Loop *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Loop * loop(Dsc<Loop *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 233 "barf_preprocessor_parser.trison"
 
         loop->SetBody(body);
         return loop;
     
-#line 636 "barf_preprocessor_parser.cpp"
+#line 690 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 8:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ForEach * for_each(Dsc<ForEach *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token_data));
+            ForEach * for_each(Dsc<ForEach *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 239 "barf_preprocessor_parser.trison"
 
         for_each->SetBody(body);
         return for_each;
     
-#line 651 "barf_preprocessor_parser.cpp"
+#line 705 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 9:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ExecutableAst * code_body(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token_data));
+            ExecutableAst * code_body(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 247 "barf_preprocessor_parser.trison"
  return code_body; 
-#line 662 "barf_preprocessor_parser.cpp"
+#line 716 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 10:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ExecutableAst * code_body(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token_data));
+            ExecutableAst * code_body(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 249 "barf_preprocessor_parser.trison"
  return code_body; 
-#line 673 "barf_preprocessor_parser.cpp"
+#line 727 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -679,18 +733,18 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 255 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 683 "barf_preprocessor_parser.cpp"
+#line 737 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 12:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 258 "barf_preprocessor_parser.trison"
  return expression; 
-#line 694 "barf_preprocessor_parser.cpp"
+#line 748 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -700,104 +754,104 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 261 "barf_preprocessor_parser.trison"
  return new DumpSymbolTable(); 
-#line 704 "barf_preprocessor_parser.cpp"
+#line 758 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 14:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 264 "barf_preprocessor_parser.trison"
  return new Undefine(id); 
-#line 715 "barf_preprocessor_parser.cpp"
+#line 769 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 15:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 267 "barf_preprocessor_parser.trison"
  return new DeclareArray(id); 
-#line 726 "barf_preprocessor_parser.cpp"
+#line 780 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 16:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 270 "barf_preprocessor_parser.trison"
  return new DeclareMap(id); 
-#line 737 "barf_preprocessor_parser.cpp"
+#line 791 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 17:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * include_filename_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * include_filename_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 273 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, false); 
-#line 748 "barf_preprocessor_parser.cpp"
+#line 802 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 18:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * include_filename_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * include_filename_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 276 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, true); 
-#line 759 "barf_preprocessor_parser.cpp"
+#line 813 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 19:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 279 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::WARNING); 
-#line 770 "barf_preprocessor_parser.cpp"
+#line 824 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 20:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 282 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::ERROR); 
-#line 781 "barf_preprocessor_parser.cpp"
+#line 835 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 21:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 285 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::FATAL_ERROR); 
-#line 792 "barf_preprocessor_parser.cpp"
+#line 846 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 22:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Body * if_body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token_data));
-            Body * else_body(Dsc<Body *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Body * if_body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Body * else_body(Dsc<Body *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 291 "barf_preprocessor_parser.trison"
 
@@ -805,7 +859,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         conditional->SetElseBody(else_body);
         return conditional;
     
-#line 809 "barf_preprocessor_parser.cpp"
+#line 863 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -815,27 +869,27 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 300 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 819 "barf_preprocessor_parser.cpp"
+#line 873 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 24:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 302 "barf_preprocessor_parser.trison"
  return body; 
-#line 830 "barf_preprocessor_parser.cpp"
+#line 884 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 25:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Body * if_body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token_data));
-            Body * else_body(Dsc<Body *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Body * if_body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Body * else_body(Dsc<Body *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 305 "barf_preprocessor_parser.trison"
 
@@ -845,29 +899,29 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
         body->Append(conditional);
         return body;
     
-#line 849 "barf_preprocessor_parser.cpp"
+#line 903 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 26:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 317 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 860 "barf_preprocessor_parser.cpp"
+#line 914 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 27:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 320 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 871 "barf_preprocessor_parser.cpp"
+#line 925 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -877,7 +931,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 325 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 881 "barf_preprocessor_parser.cpp"
+#line 935 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -887,29 +941,29 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 327 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 891 "barf_preprocessor_parser.cpp"
+#line 945 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 30:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 333 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 902 "barf_preprocessor_parser.cpp"
+#line 956 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 31:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 336 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 913 "barf_preprocessor_parser.cpp"
+#line 967 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -919,7 +973,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 341 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 923 "barf_preprocessor_parser.cpp"
+#line 977 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -929,108 +983,108 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 343 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 933 "barf_preprocessor_parser.cpp"
+#line 987 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 34:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 348 "barf_preprocessor_parser.trison"
  return define; 
-#line 944 "barf_preprocessor_parser.cpp"
+#line 998 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 35:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 350 "barf_preprocessor_parser.trison"
  return define; 
-#line 955 "barf_preprocessor_parser.cpp"
+#line 1009 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 36:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 352 "barf_preprocessor_parser.trison"
  return define; 
-#line 966 "barf_preprocessor_parser.cpp"
+#line 1020 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 37:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 358 "barf_preprocessor_parser.trison"
  return new Define(id); 
-#line 977 "barf_preprocessor_parser.cpp"
+#line 1031 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 38:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 361 "barf_preprocessor_parser.trison"
  return new Define(id); 
-#line 988 "barf_preprocessor_parser.cpp"
+#line 1042 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 39:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
 
 #line 367 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
-#line 999 "barf_preprocessor_parser.cpp"
+#line 1053 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 40:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
 
 #line 370 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
-#line 1010 "barf_preprocessor_parser.cpp"
+#line 1064 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 41:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-6].m_token_data));
-            Text * key(Dsc<Text *>(m_stack_[m_stack_.size()-4].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-6].m_token.m_data));
+            Text * key(Dsc<Text *>(m_stack_[m_stack_.size()-4].m_token.m_data));
 
 #line 376 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
-#line 1022 "barf_preprocessor_parser.cpp"
+#line 1076 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 42:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-6].m_token_data));
-            Text * key(Dsc<Text *>(m_stack_[m_stack_.size()-4].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-6].m_token.m_data));
+            Text * key(Dsc<Text *>(m_stack_[m_stack_.size()-4].m_token.m_data));
 
 #line 379 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
-#line 1034 "barf_preprocessor_parser.cpp"
+#line 1088 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1040,7 +1094,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 384 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1044 "barf_preprocessor_parser.cpp"
+#line 1098 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1050,31 +1104,31 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 386 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1054 "barf_preprocessor_parser.cpp"
+#line 1108 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 45:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * iterator_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Expression * iteration_count_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::Id * iterator_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Expression * iteration_count_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 392 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
-#line 1066 "barf_preprocessor_parser.cpp"
+#line 1120 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 46:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * iterator_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Expression * iteration_count_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::Id * iterator_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Expression * iteration_count_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 395 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
-#line 1078 "barf_preprocessor_parser.cpp"
+#line 1132 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1084,7 +1138,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 400 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1088 "barf_preprocessor_parser.cpp"
+#line 1142 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1094,31 +1148,31 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 402 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1098 "barf_preprocessor_parser.cpp"
+#line 1152 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 49:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * key_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Ast::Id * map_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::Id * key_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Ast::Id * map_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 408 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
-#line 1110 "barf_preprocessor_parser.cpp"
+#line 1164 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 50:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * key_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Ast::Id * map_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::Id * key_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Ast::Id * map_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 411 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
-#line 1122 "barf_preprocessor_parser.cpp"
+#line 1176 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1128,7 +1182,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 416 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1132 "barf_preprocessor_parser.cpp"
+#line 1186 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1138,365 +1192,365 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (BarfCpp_::Uint32 const rule_i
 
 #line 418 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1142 "barf_preprocessor_parser.cpp"
+#line 1196 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 53:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Text * str(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Text * str(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 424 "barf_preprocessor_parser.trison"
  return str; 
-#line 1153 "barf_preprocessor_parser.cpp"
+#line 1207 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 54:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Integer * integer(Dsc<Integer *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Integer * integer(Dsc<Integer *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 427 "barf_preprocessor_parser.trison"
  return integer; 
-#line 1164 "barf_preprocessor_parser.cpp"
+#line 1218 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 55:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 430 "barf_preprocessor_parser.trison"
  return new Sizeof(id); 
-#line 1175 "barf_preprocessor_parser.cpp"
+#line 1229 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 56:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 433 "barf_preprocessor_parser.trison"
  return new Operation(Operation::INT_CAST, expression); 
-#line 1186 "barf_preprocessor_parser.cpp"
+#line 1240 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 57:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 436 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_CAST, expression); 
-#line 1197 "barf_preprocessor_parser.cpp"
+#line 1251 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 58:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 439 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_LENGTH, expression); 
-#line 1208 "barf_preprocessor_parser.cpp"
+#line 1262 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 59:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * character_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * character_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 442 "barf_preprocessor_parser.trison"
  return new Operation(Operation::TO_CHARACTER_LITERAL, character_index_expression); 
-#line 1219 "barf_preprocessor_parser.cpp"
+#line 1273 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 60:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * string_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * string_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 445 "barf_preprocessor_parser.trison"
  return new Operation(Operation::TO_STRING_LITERAL, string_expression); 
-#line 1230 "barf_preprocessor_parser.cpp"
+#line 1284 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 61:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 448 "barf_preprocessor_parser.trison"
  return new IsDefined(id, NULL); 
-#line 1241 "barf_preprocessor_parser.cpp"
+#line 1295 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 62:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 451 "barf_preprocessor_parser.trison"
  return new IsDefined(id, element_index_expression); 
-#line 1253 "barf_preprocessor_parser.cpp"
+#line 1307 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 63:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 454 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
-#line 1264 "barf_preprocessor_parser.cpp"
+#line 1318 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 64:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token_data));
-            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 457 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); 
-#line 1276 "barf_preprocessor_parser.cpp"
+#line 1330 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 65:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 460 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
-#line 1287 "barf_preprocessor_parser.cpp"
+#line 1341 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 66:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token_data));
-            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
 
 #line 463 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); 
-#line 1299 "barf_preprocessor_parser.cpp"
+#line 1353 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 67:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 466 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::CONCATENATE, right); 
-#line 1311 "barf_preprocessor_parser.cpp"
+#line 1365 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 68:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 469 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_OR, right); 
-#line 1323 "barf_preprocessor_parser.cpp"
+#line 1377 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 69:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 472 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_AND, right); 
-#line 1335 "barf_preprocessor_parser.cpp"
+#line 1389 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 70:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 475 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::EQUAL, right); 
-#line 1347 "barf_preprocessor_parser.cpp"
+#line 1401 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 71:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 478 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::NOT_EQUAL, right); 
-#line 1359 "barf_preprocessor_parser.cpp"
+#line 1413 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 72:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 481 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN, right); 
-#line 1371 "barf_preprocessor_parser.cpp"
+#line 1425 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 73:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 484 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN_OR_EQUAL, right); 
-#line 1383 "barf_preprocessor_parser.cpp"
+#line 1437 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 74:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 487 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN, right); 
-#line 1395 "barf_preprocessor_parser.cpp"
+#line 1449 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 75:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 490 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN_OR_EQUAL, right); 
-#line 1407 "barf_preprocessor_parser.cpp"
+#line 1461 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 76:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 493 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::PLUS, right); 
-#line 1419 "barf_preprocessor_parser.cpp"
+#line 1473 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 77:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 496 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MINUS, right); 
-#line 1431 "barf_preprocessor_parser.cpp"
+#line 1485 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 78:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 499 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MULTIPLY, right); 
-#line 1443 "barf_preprocessor_parser.cpp"
+#line 1497 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 79:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 502 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::DIVIDE, right); 
-#line 1455 "barf_preprocessor_parser.cpp"
+#line 1509 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 80:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 505 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::REMAINDER, right); 
-#line 1467 "barf_preprocessor_parser.cpp"
+#line 1521 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 81:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 508 "barf_preprocessor_parser.trison"
  return new Operation(Operation::NEGATIVE, expression); 
-#line 1478 "barf_preprocessor_parser.cpp"
+#line 1532 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 82:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 511 "barf_preprocessor_parser.trison"
  return new Operation(Operation::LOGICAL_NOT, expression); 
-#line 1489 "barf_preprocessor_parser.cpp"
+#line 1543 "barf_preprocessor_parser.cpp"
             break;
         }
 
         case 83:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token_data));
+            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 514 "barf_preprocessor_parser.trison"
  return expression; 
-#line 1500 "barf_preprocessor_parser.cpp"
+#line 1554 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1513,8 +1567,8 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1517 "barf_preprocessor_parser.cpp"
- << " parser stack: ";
+#line 1571 "barf_preprocessor_parser.cpp"
+ << " parser state stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
         stream << it->m_state_index;
@@ -1524,7 +1578,30 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     }
     stream << std::endl;
 
-    PrintIndented_(stream, ms_state_table_[m_stack_.rbegin()->m_state_index].m_description);
+    assert(m_stack_.size() >= 1);
+    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal_::none_));
+    stream << 
+#line 141 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1587 "barf_preprocessor_parser.cpp"
+ << " parser stack tokens . lookahead queue: ";
+    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
+    {
+        // the first token is always Nonterminal_::none_, which doesn't correspond to a real token, so skip it.
+        if (it == m_stack_.begin())
+            continue;
+        stream << it->m_token << ' ';
+    }
+    stream << '.';
+    for (LookaheadQueue_::const_iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
+    {
+        Token const &lookahead_token = *it;
+        assert(lookahead_token.m_id < ms_token_name_count_ && "Token id out of range");
+        stream << ' ' << lookahead_token;
+    }
+    stream << std::endl;
+
+    PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
     stream << std::endl;
 }
 
@@ -1534,7 +1611,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     stream << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1538 "barf_preprocessor_parser.cpp"
+#line 1615 "barf_preprocessor_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -1542,7 +1619,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1546 "barf_preprocessor_parser.cpp"
+#line 1623 "barf_preprocessor_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -1553,7 +1630,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
 {
     if (token.m_id < Parser::ms_token_name_count_)
-        stream << '(' << Parser::ms_token_name_table_[token.m_id] << ')';
+        stream << Parser::ms_token_name_table_[token.m_id];
     else
         stream << "!INVALID TOKEN!";
     return stream;
@@ -1646,7 +1723,7 @@ Parser::Rule_ const Parser::ms_rule_table_[] =
     { Parser::Nonterminal_::expression, 2, "expression <- '!' expression" },
     { Parser::Nonterminal_::expression, 3, "expression <- '(' expression ')'" }
 };
-BarfCpp_::Size const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
+std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
@@ -1996,7 +2073,7 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 15, ms_transition_table_+1934, "START expression                                                 \nrule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
     { 13, ms_transition_table_+1949, "RETURN expression                                     \nrule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " }
 };
-BarfCpp_::Size const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
+std::size_t const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
 
 Parser::Transition_ const Parser::ms_transition_table_[] =
 {
@@ -3963,7 +4040,7 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+1615 },
     { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+1616 }
 };
-BarfCpp_::Size const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
+std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
 
 Parser::Token::Id const Parser::ms_lookahead_table_[] =
 {
@@ -5585,7 +5662,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     '>',
     '|'
 };
-BarfCpp_::Size const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
+std::size_t const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
 
 char const *const Parser::ms_token_name_table_[] =
 {
@@ -5903,7 +5980,7 @@ char const *const Parser::ms_token_name_table_[] =
     "end_for_each",
     "expression"
 };
-BarfCpp_::Size const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
+std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
 
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
@@ -5956,4 +6033,4 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 5960 "barf_preprocessor_parser.cpp"
+#line 6037 "barf_preprocessor_parser.cpp"

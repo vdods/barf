@@ -117,7 +117,7 @@ Scanner::~Scanner ()
 Scanner::StateMachine::Name Scanner::CurrentStateMachine () const
 {
     assert(InitialState_() != NULL);
-    BarfCpp_::Size initial_node_index = InitialState_() - ms_state_table_;
+    std::size_t initial_node_index = InitialState_() - ms_state_table_;
     assert(initial_node_index < ms_state_count_);
     switch (initial_node_index)
     {
@@ -204,7 +204,7 @@ Parser::Token Scanner::Scan () throw()
 
         bool was_at_end_of_input_ = IsAtEndOfInput();
 
-        BarfCpp_::Uint32 accept_handler_index_ = RunDfa_(work_string);
+        std::uint32_t accept_handler_index_ = RunDfa_(work_string);
         // if no valid accept_handler_index_ was returned, then work_string
         // was filled with everything up to the char after the keep_string
         // cursor (i.e. the rejected atom).
@@ -216,7 +216,7 @@ Parser::Token Scanner::Scan () throw()
                 break;
 
             std::string &rejected_string = work_string;
-            BarfCpp_::Uint8 rejected_atom = rejected_string.empty() ? '\0' : *rejected_string.rbegin();
+            std::uint8_t rejected_atom = rejected_string.empty() ? '\0' : *rejected_string.rbegin();
 
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
@@ -581,7 +581,7 @@ void Scanner::KeepString ()
     AutomatonApparatus_FastAndBig_Noninteractive_::KeepString();
 }
 
-void Scanner::Unaccept (BarfCpp_::Uint32 unaccept_char_count)
+void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
 #line 171 "barf_preprocessor_scanner.reflex"
@@ -591,7 +591,7 @@ void Scanner::Unaccept (BarfCpp_::Uint32 unaccept_char_count)
     AutomatonApparatus_FastAndBig_Noninteractive_::Unaccept(unaccept_char_count);
 }
 
-void Scanner::Unreject (BarfCpp_::Uint32 unreject_char_count)
+void Scanner::Unreject (std::uint32_t unreject_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
 #line 171 "barf_preprocessor_scanner.reflex"
@@ -605,7 +605,7 @@ void Scanner::Unreject (BarfCpp_::Uint32 unreject_char_count)
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-void Scanner::PrintAtom_ (BarfCpp_::Uint8 atom)
+void Scanner::PrintAtom_ (std::uint8_t atom)
 {
     if (atom == '\\')                    std::cerr << "\\\\";
     else if (atom == '"')                std::cerr << "\\\"";
@@ -616,7 +616,7 @@ void Scanner::PrintAtom_ (BarfCpp_::Uint8 atom)
     else
     {
         std::cerr.width(2);
-        std::cerr << "\\x" << std::hex << std::uppercase << BarfCpp_::Uint16(atom);
+        std::cerr << "\\x" << std::hex << std::uppercase << std::uint16_t(atom);
         std::cerr.width(1);
     }
 }
@@ -652,7 +652,7 @@ void Scanner::PrintString_ (std::string const &s)
     std::cerr.precision(saved_stream_precision);
 }
 
-BarfCpp_::Uint32 const Scanner::ms_state_machine_start_state_index_[] =
+std::uint32_t const Scanner::ms_state_machine_start_state_index_[] =
 {
     0,
     4,
@@ -660,7 +660,7 @@ BarfCpp_::Uint32 const Scanner::ms_state_machine_start_state_index_[] =
     28,
     38,
 };
-BarfCpp_::Uint8 const Scanner::ms_state_machine_mode_flags_[] =
+std::uint8_t const Scanner::ms_state_machine_mode_flags_[] =
 {
     0,
     2,
@@ -676,7 +676,7 @@ char const *const Scanner::ms_state_machine_name_[] =
     "READING_CODE_STRING_LITERAL_GUTS",
     "TRANSITION_TO_CODE",
 };
-BarfCpp_::Uint32 const Scanner::ms_state_machine_count_ = sizeof(Scanner::ms_state_machine_name_) / sizeof(*Scanner::ms_state_machine_name_);
+std::uint32_t const Scanner::ms_state_machine_count_ = sizeof(Scanner::ms_state_machine_name_) / sizeof(*Scanner::ms_state_machine_name_);
 
 // the order of the states indicates priority (only for accept states).
 // the lower the state's index in this array, the higher its priority.
@@ -722,7 +722,7 @@ ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaState_ const Scann
     { 13, 255, 4570, ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_::INPUT_ATOM, 1 },
     { 15, 0, 4825, ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_::INPUT_ATOM, 0 }
 };
-BarfCpp_::Size const Scanner::ms_state_count_ = sizeof(Scanner::ms_state_table_) / sizeof(*Scanner::ms_state_table_);
+std::size_t const Scanner::ms_state_count_ = sizeof(Scanner::ms_state_table_) / sizeof(*Scanner::ms_state_table_);
 
 ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_ const Scanner::ms_transition_table_[] =
 {
@@ -5552,7 +5552,7 @@ ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::DfaTransition_ const 
     { 30 },
     { 30 }
 };
-BarfCpp_::Size const Scanner::ms_transition_count_ = sizeof(Scanner::ms_transition_table_) / sizeof(*Scanner::ms_transition_table_);
+std::size_t const Scanner::ms_transition_count_ = sizeof(Scanner::ms_transition_table_) / sizeof(*Scanner::ms_transition_table_);
 
 char const *const Scanner::ms_accept_handler_regex_[] =
 {
@@ -5573,7 +5573,7 @@ char const *const Scanner::ms_accept_handler_regex_[] =
     "([^\\\\]|\\\\{ANY})*\\\\?{END_OF_FILE}",
     ""
 };
-BarfCpp_::Uint32 const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_accept_handler_regex_) / sizeof(*Scanner::ms_accept_handler_regex_);
+std::uint32_t const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_accept_handler_regex_) / sizeof(*Scanner::ms_accept_handler_regex_);
 
 // ///////////////////////////////////////////////////////////////////////
 // end of internal reflex-generated parser guts

@@ -156,7 +156,7 @@
 // token_data_type to the type specified in the corresponding terminal
 // directive.  The custom_token_data_type_cast must have the same semantics as
 // static_cast (e.g. dynamic_cast, or make your own special cast function).
-%add_optional_directive custom_token_data_type_cast         %identifier         %default static_cast
+%add_optional_directive custom_token_data_type_cast         %string             %default "static_cast"
 // During error handling and cleanup, token data is "thrown away", and this
 // directive specifies the code to execute in order to "throw away" said data.
 // The token_data variable, of type specified by token_data_type, is what
