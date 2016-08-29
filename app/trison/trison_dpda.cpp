@@ -864,16 +864,8 @@ private:
             // clone the source branch and operate on it
             Branch *reduced_branch = source_branch.Clone();
             assert(reduced_branch != NULL);
-            if (g_minimal_npda_graphing)
-            {
-                assert(reduced_branch->m_state_stack.size() > reduction_rule->m_rule_token_list->size() + 1);
-                reduced_branch->m_state_stack.resize(reduced_branch->m_state_stack.size() - (reduction_rule->m_rule_token_list->size() + 1));
-            }
-            else
-            {
-                assert(reduced_branch->m_state_stack.size() > reduction_rule->m_rule_token_list->size() + 2);
-                reduced_branch->m_state_stack.resize(reduced_branch->m_state_stack.size() - (reduction_rule->m_rule_token_list->size() + 2));
-            }
+            assert(reduced_branch->m_state_stack.size() > reduction_rule->m_rule_token_list->size() + 2);
+            reduced_branch->m_state_stack.resize(reduced_branch->m_state_stack.size() - (reduction_rule->m_rule_token_list->size() + 2));
             reduced_branch->m_lookahead_nonterminal_token_index = reduction_rule->m_owner_nonterminal->m_token_index;
             // add the reduced branch as a child of the reduce child
             m_reduce_child->AddChildBranch(reduced_branch);

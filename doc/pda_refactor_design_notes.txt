@@ -1,0 +1,667 @@
+design notes for trison error handling via state machine:
+
+// ///////////////////////////////////////////////////////////////////////////
+// design notes for trison error handling via state machine:
+// ///////////////////////////////////////////////////////////////////////////
+
+- trison should disallow a reduction rule from having two %error terminals in a row
+- if return, reduce, or shift can't be done (including shifting a lookahead of ERROR_ pursuant
+  to some parser rules), then this is a parse error.
+  * if
+      ERROR_ has just been shifted (can be inferred from the current state, i.e. the top of the state stack)
+      and
+      the first lookahead token is not END_ (END_ can never be absorbed by ERROR_),
+  * then the first lookahead token should be thrown away; this can be thought of as the ERROR_ absorbing the lookahead.
+  * otherwise if
+      the first lookahead token is ERROR_
+    then pop the stack (throwing away the top stack token); this can be thought of as the pre-existing error
+    panic pop sequence where the ERROR_ absorbs the stack tokens until it reaches a state which accepts ERROR_.
+  * otherwise ERROR_ should be inserted into the front of the lookahead queue.
+- this requires adding new parser actions, in addition to RETURN, REDUCE, SHIFT:
+  * DISCARD_LOOKAHEAD  - discard the first lookahead (and throw away token) (but don't alter the parser state stack).
+  * INSERT_LOOKAHEAD X - insert token X before the lookahead queue (maybe should be INSERT_ERROR_LOOKAHEAD, 
+                         since that's all that it'll ever be used for)
+  * POP_STATE_STACK    - pop the top of the state stack (and throw away token)
+- the above requires that:
+  * if ERROR_ has just been shifted, then END_ should have a transition of
+    ~ POP_STATE_STACK
+  * if ERROR_ has just been shifted, and there isn't a valid reduce rule, then the default action should be
+    ~ DISCARD_LOOKAHEAD
+    but does this screw up rules like `exp <- '(' %error`, where the %error should be able to suck up as many
+    tokens as it needs?  One clear way `exp <- '(' %error` would reduce is if it encountered END_, because
+    the error token couldn't absorb END_.  Having this rule read the rest of the file would make sense, because
+    it could be used to mean there's no matching ')'.  %error should mostly be used to look for a stop-gap
+    delimiter, such as ')', or '}', or ';', etc. in a rule like `exp <- '(' %error ')'`.  Perhaps the default
+    action of DISCARD_LOOKAHEAD could supercede any reduce rules, and a rule like `exp <- '(' %error` could
+    only be reduced by an explicit lookahead of END_.  Then a rule like `exp <- '(' %error` would be used
+    as a last resort, and should have the lowest priority.
+- here's an idea: require that once END_ has been returned by the scanner, it's always returned by the scanner.
+  e.g. the input
+    "4+5"
+  would return the token sequence
+    INTEGER_LITERAL(4) '+' INTEGER_LITERAL(5) END_ END_ END_ END_ END_ ...
+  then disallow %error from being the last token in a rule; one would have to explicitly use %end after %error.
+  there would still need to be some restriction where ERROR_ can't absorb END_.
+
+
+example grammar
+
+%prec.left ADD
+%prec.left MUL
+%prec.right POW
+
+%nonterminal expr
+:
+    INTEGER_LITERAL                   // rule 0
+|   expr '+' expr %prec ADD           // rule 1
+|   expr '*' expr %prec MUL           // rule 2
+|   expr '^' expr %prec POW           // rule 3
+|   '(' expr ')'                      // rule 4
+|   '(' %error ')'                    // rule 5
+|   '(' %error %end                   // rule 6
+|   %error ')'                        // rule 7
+|   %error %end                       // rule 8
+;
+
+state 0
+    START expr
+    rule 0: expr <- . INTEGER_LITERAL
+    rule 1: expr <- . expr '+' expr
+    rule 2: expr <- . expr '*' expr
+    rule 3: expr <- . expr '^' expr
+    rule 4: expr <- . '(' expr ')'
+    rule 5: expr <- . '(' %error ')'
+    rule 6: expr <- . '(' %error %end
+
+   *Default action  : INSERT_LOOKAHEAD ERROR_
+    INTEGER_LITERAL : SHIFT INTEGER_LITERAL then push state 1
+    '('             : SHIFT '(' then push state 2
+    expr            : SHIFT expr then push state 7
+    ERROR_          : POP_STATE_STACK
+
+state 1
+    rule 0: expr <- INTEGER_LITERAL .
+
+   *Default action  : REDUCE rule 0
+
+state 2
+    rule 0: expr <- . INTEGER_LITERAL
+    rule 1: expr <- . expr '+' expr
+    rule 2: expr <- . expr '*' expr
+    rule 3: expr <- . expr '^' expr
+    rule 4: expr <- . '(' expr ')'
+    rule 4: expr <- '(' . expr ')'
+    rule 5: expr <- . '(' %error ')'
+    rule 5: expr <- '(' . %error ')'
+    rule 6: expr <- . '(' %error
+    rule 6: expr <- '(' . %error
+
+   *Default action  : INSERT_LOOKAHEAD ERROR_
+    INTEGER_LITERAL : shift INTEGER_LITERAL then push state 1
+    ERROR_          : SHIFT ERROR_ then push state 3
+    expr            : SHIFT expr then push state 5
+
+state 3                               -- ERROR_ has just been shifted
+    rule 5: expr <- '(' %error . ')'
+    rule 6: expr <- '(' %error .
+
+   *Default action  : DISCARD_LOOKAHEAD
+    ')'             : SHIFT ')' then push state 4
+    END_            : REDUCE rule 6
+
+state 4
+    rule 5: expr <- '(' %error ')' .
+
+   *Default action  : REDUCE rule 5
+
+state 5
+    rule 1: expr <- expr . '+' expr
+    rule 2: expr <- expr . '*' expr
+    rule 3: expr <- expr . '^' expr
+    rule 4: expr <- '(' expr . ')'
+
+   *Default action  : INSERT_LOOKAHEAD ERROR_
+    '+'             : SHIFT '+' then push state 8
+    '*'             : SHIFT '*' then push state 9
+    '^'             : SHIFT '^' then push state 10
+    ')'             : SHIFT ')' then push state 6
+    ERROR_          : POP_STATE_STACK
+
+
+state 6
+    rule 4: expr <- '(' expr ')' .
+
+   *Default action  : REDUCE rule 4
+
+state 7
+    rule 1: expr <- expr . '+' expr
+    rule 2: expr <- expr . '*' expr
+    rule 3: expr <- expr . '^' expr
+
+   *Default action  : TODO
+    '+'             : SHIFT '+' then push state 8
+    '*'             : SHIFT '*' then push state 9
+    '^'             : SHIFT '^' then push state 10
+
+state 8
+    rule 0: expr <- . INTEGER_LITERAL
+    rule 1: expr <- . expr '+' expr
+    rule 1: expr <- expr '+' . expr
+    rule 2: expr <- . expr '*' expr
+    rule 3: expr <- . expr '^' expr
+    rule 4: expr <- . '(' expr ')'
+    rule 5: expr <- . '(' %error ')'
+    rule 6: expr <- . '(' %error
+
+
+action-generating logic; has to do with if there is %error before or after the cursor.
+
+if (ERROR_ has just been shifted) {                 // then we want to discard unusable lookahead tokens
+    if (can reduce) {                               // i.e. %error occurs last in some rule e.g. rule A <- i j k %error .
+        END_            : REDUCE rule A             // because %error can't absorb END_
+    } otherwise {
+        END_            : POP_STATE_STACK 2         // this may result in an empty stack, but we have to pop past the state on
+                                                    // the stack that accepts %error.
+    }
+    Default action      : DISCARD_LOOKAHEAD         // but %error can absorb anything besides END_
+} otherwise {
+    if (can reduce) {                               // i.e. %error does not occur last in any rule e.g. rule B <- p q %error r .
+        Default action  : REDUCE rule B             // there could be several rules that are reducable; resolve based on precedence.
+    } otherwise {
+        Default action  : INSERT_LOOKAHEAD ERROR_   // initiate error panic
+    }
+}
+
+The above nested if-statement could be refactored as
+
+if (can reduce) {
+    if (ERROR_ has just been shifted) {
+        END_            : REDUCE                    // the only way to reduce a rule ending with %error is by seeing END_.
+        default         : DISCARD_LOOKAHEAD         // throw away everything until END_
+        NOTE: maybe it should reduce by default, in case it's possible to use enclosing nonterminal's ending terminal to end %error.
+        for now, just do the END_ option, so that a nonterminal that ends with %error can only be reduced upon END_.
+    } otherwise {
+        default         : REDUCE                    // normal operation
+    }
+} otherwise {
+    if (ERROR_ has just been shifted) {
+        END_            : POP_STATE_STACK 2         // popping only once would cause an infinite loop because ERROR_ can't accept END_
+        default         : DISCARD_LOOKAHEAD         // throw away everything until a real token is shifted
+    } otherwise {
+        default         : INSERT_LOOKAHEAD ERROR_   // if we can't reduce, then the default action is to initiate error panic.
+    }
+}
+
+if (ERROR_ occurs as acceptable next token) {
+    ERROR_ : SHIFT ERROR_ then push state X
+} otherwise {
+    ERROR_ : POP_STATE_STACK 1
+}
+
+finally, add all the other normal shift rules, inluding ones that may generate actions for END_ lookahead.  note that
+consecutive %error tokens can't occur in a reduction rule.
+
+another example grammar
+
+%prec.left ADD
+
+%nonterminal statement
+:
+    expr ';'            // rule 0
+;
+
+%nonterminal expr
+:
+    INTEGER_LITERAL     // rule 1
+|   '(' expr ')'        // rule 2
+|   expr '+' expr       // rule 3
+|   '(' %error ')'      // rule 4
+|   '(' %error          // rule 5
+|   %error              // rule 6
+;
+
+state 0 (0,0 1,0 2,0 3,0 4,0 5,0 6,0)
+    START statement
+    rule 0,0 : statement <- . expr ';'
+    rule 1,0 : expr <- . INTEGER_LITERAL
+    rule 2,0 : expr <- . '(' expr ')'
+    rule 3,0 : expr <- . expr '+' expr
+    rule 4,0 : expr <- . '(' %error ')'
+    rule 5,0 : expr <- . '(' %error
+    rule 6,0 : expr <- . %error
+
+    ERROR_ has not just been shifted
+    ERROR_ could now be shifted
+
+    Default action  : INSERT_LOOKAHEAD ERROR_
+    ERROR_          : SHIFT ERROR_ then push state 1 (6,1)
+    INTEGER_LITERAL : SHIFT INTEGER_LITERAL then push state 2 (1,1)
+    '('             : SHIFT '(' then push state 3 (2,1 4,1 5,1)
+    expr            : SHIFT expr then push state 4 (0,1 3,1)
+
+state 1 (6,1)
+    rule 6,1 : expr <- %error .
+
+    ERROR_ has just been shifted
+    ERROR_ could not now be shifted
+
+    Default action  : DISCARD_LOOKAHEAD
+    END_            : REDUCE rule 6
+    // really want this to occur
+    ';'
+
+state 2 (1,1)
+
+state 3 (2,1 4,1 5,1)
+
+state 4 (0,1 3,1)
+
+
+-----------
+
+NPDA:
+
+rule 0,0 : statement <- . expr ';'
+rule 1,0 : expr <- . INTEGER_LITERAL
+rule 2,0 : expr <- . '(' expr ')'
+rule 3,0 : expr <- . expr '+' expr
+rule 4,0 : expr <- . '(' %error ')'
+rule 5,0 : expr <- . '(' %error
+rule 6,0 : expr <- . %error
+
+input is "-;a"
+
+(0,0)                                                                       . '-' ';' 'a' END_
+    INSERT_LOOKAHEAD ERROR_ -> (0,0)                                        . ERROR_ '-' ';' 'a' END_           *
+        SHIFT ERROR_ -> (0,0 6,1)                                           ERROR_ . '-' ';' 'a' END_
+            REDUCE rule 6 -> (0,0)                                          . expr '-' ';' 'a' END_
+                SHIFT expr -> (0,0 0,1)                                     expr . '-' ';' 'a' END_
+                    INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)                    expr . ERROR_ '-' ';' 'a' END_
+                        POP_STATE_STACK -> (0,0)                            . ERROR_ '-' ';' 'a' END_           inf. loop; identical to *; kill branch
+                SHIFT expr -> (0,0 3,1)                                     expr . '-' ';' 'a' END_
+                    INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)                    expr . ERROR '-' ';' 'a' END_
+                        POP_STATE_STACK -> (0,0)                            . ERROR '-' ';' 'a' END_            inf. loop; identical to *; kill branch
+            DISCARD_LOOKAHEAD '-' -> (0,0 6,1)                              ERROR_ . ';' 'a' END_
+                REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+                    SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+                        SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                    SHIFT expr -> (0,0 3,1)                                 expr . ';' 'a' END_
+                        INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)                expr . ERROR_ ';' 'a' END_
+                DISCARD_LOOKAHEAD ';' -> (0,0 6,1)                          ERROR_ . 'a' END_
+                    REDUCE rule 6 -> (0,0)                                  . expr 'a' END_
+                        SHIFT expr -> (0,0 0,1)                             expr . 'a' END_
+                            INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)            expr . ERROR_ 'a' END_
+                        SHIFT expr -> (0,0 3,1)                             expr . 'a' END_
+                            INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)            expr . ERROR_ 'a' END_
+                    DISCARD_LOOKAHEAD 'a' -> (0,0 6,1)                      ERROR_ . END_
+                        REDUCE rule 6 -> (0,0)                              . expr END_
+                            SHIFT expr -> (0,0 0,1)                         expr . END_
+                            SHIFT expr -> (0,0 3,1)                         expr . END_
+
+(0,0)                                                                       . '-' ';' 'a' END_
+    INSERT_LOOKAHEAD ERROR_ -> (0,0)                                        . ERROR_ '-' ';' 'a' END_
+        SHIFT ERROR_ -> (0,0 6,1)                                           ERROR_ . '-' ';' 'a' END_
+            DISCARD_LOOKAHEAD '-' -> (0,0 6,1)                              ERROR_ . ';' 'a' END_
+                REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+                    SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+                        SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                    SHIFT expr -> (0,0 3,1)                                 expr . ';' 'a' END_
+                        INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)                expr . ERROR_ ';' 'a' END_
+                DISCARD_LOOKAHEAD ';' -> (0,0 6,1)                          ERROR_ . 'a' END_
+                    REDUCE rule 6 -> (0,0)                                  . expr 'a' END_
+                        SHIFT expr -> (0,0 0,1)                             expr . 'a' END_
+                            INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)            expr . ERROR_ 'a' END_
+                        SHIFT expr -> (0,0 3,1)                             expr . 'a' END_
+                            INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)            expr . ERROR_ 'a' END_
+                    DISCARD_LOOKAHEAD 'a' -> (0,0 6,1)                      ERROR_ . END_
+                        REDUCE rule 6 -> (0,0)                              . expr END_
+                            SHIFT expr -> (0,0 0,1)                         expr . END_
+                            SHIFT expr -> (0,0 3,1)                         expr . END_
+
+execute and discard trunk
+    INSERT_LOOKAHEAD ERROR_
+    SHIFT ERROR_
+    DISCARD_LOOKAHEAD '-'
+
+(0,0 6,1)                                                       ERROR_ . ';' 'a' END_           *
+    REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+        SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+            SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                REDUCE rule 0 -> (0,0)                          . statement 'a' END_
+                    RETURN_LOOKAHEAD statement
+        SHIFT expr -> (0,0 3,1)                                 expr . ';' 'a' END_
+            INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)                expr . ERROR_ ';' 'a' END_
+                POP_STATE_STACK -> (0,0)                        . ERROR_ ';' 'a' END_
+                    SHIFT ERROR_ -> (0,0 6,1)                   ERROR_ . ';' 'a' END_           inf. loop; identical to *; kill branch
+    DISCARD_LOOKAHEAD ';' -> (0,0 6,1)                          ERROR_ . 'a' END_               **
+        REDUCE rule 6 -> (0,0)                                  . expr 'a' END_
+            SHIFT expr -> (0,0 0,1)                             expr . 'a' END_
+                INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)            expr . ERROR_ 'a' END_          <- it looked at 'a' at this point, thereby becoming LR(2) (though if the outcome was the same for all values of the second lookahead, then it's really LR(1))
+                    POP_STATE_STACK -> (0,0)                    . ERROR_ 'a' END_
+                        SHIFT ERROR_ -> (0,0 6,1)               ERROR_ . 'a' END_               inf. loop; identical to **; kill branch
+            SHIFT expr -> (0,0 3,1)                             expr . 'a' END_
+                INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)            expr . ERROR_ 'a' END_
+                    POP_STATE_STACK -> (0,0)                    . ERROR_ 'a' END_
+                        SHIFT ERROR_ -> (0,0 6,1)               ERROR_ . 'a' END_               inf. loop; identical to **; kill branch
+        DISCARD_LOOKAHEAD 'a' -> (0,0 6,1)                      ERROR_ . END_
+            REDUCE rule 6 -> (0,0)                              . expr END_
+                SHIFT expr -> (0,0 0,1)                         expr . END_
+                SHIFT expr -> (0,0 3,1)                         expr . END_
+
+(0,0 6,1)                                                       ERROR_ . ';' 'a' END_
+    REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+        SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+            SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                REDUCE rule 0 -> (0,0)                          . statement 'a' END_
+                    RETURN_LOOKAHEAD statement
+    DISCARD_LOOKAHEAD ';' -> (0,0 6,1)                          ERROR_ . 'a' END_
+        DISCARD_LOOKAHEAD 'a' -> (0,0 6,1)                      ERROR_ . END_                   *
+            REDUCE rule 6 -> (0,0)                              . expr END_
+                SHIFT expr -> (0,0 0,1)                         expr . END_
+                    INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)        expr . ERROR_ END_
+                        POP_STATE_STACK -> (0,0)                . ERROR_ END_
+                            SHIFT ERROR_ -> (0,0 6,1)           ERROR_ . END_                   inf. loop; identical to *; kill branch
+                SHIFT expr -> (0,0 3,1)                         expr . END_
+                    INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)        expr . ERROR_ END_
+                        POP_STATE_STACK -> (0,0)                . ERROR_ END_
+                            SHIFT ERROR_ -> (0,0 6,1)           ERROR_ . END_                   inf. loop; identical to *; kill branch
+
+(0,0 6,1)                                                       ERROR_ . ';' 'a' END_
+    REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+        SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+            SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                REDUCE rule 0 -> (0,0)                          . statement 'a' END_
+                    RETURN_LOOKAHEAD statement
+
+execute and discard trunk
+    REDUCE rule 6
+    SHIFT expr
+    SHIFT ';'
+    REDUCE rule 0
+    RETURN_LOOKAHEAD statement
+
+complete log of actions:
+    INSERT_LOOKAHEAD ERROR_
+    SHIFT ERROR_
+    DISCARD_LOOKAHEAD '-'
+    REDUCE rule 6 : expr <- %error
+    SHIFT expr
+    SHIFT ';'
+    REDUCE rule 0 : statement <- expr ';'
+    RETURN_LOOKAHEAD statement
+
+
+----------
+
+%prec.left ADD
+%prec.left MUL
+
+start.e (has epsilon transitions to each e reduction rule)
+rule 0 : e <- I
+rule 1 : e <- e + e %prec ADD
+rule 2 : e <- e * e %prec MUL
+rule 3 : e <- ( e )
+rule 4 : e <- ( %error )
+
+NPDA state machine:
+
+parse.e
+    epsilon : go to state start.e
+    e       : shift (e), then push state return.e
+
+return.e
+    default : return top of stack
+
+start.e
+    epsilon : go to state 0,0
+    epsilon : go to state 1,0
+    epsilon : go to state 2,0
+    epsilon : go to state 3,0
+    epsilon : go to state 4,0
+
+0,0
+    I       : shift (I), then push state 0,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+0,1
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 0
+
+1,0
+    epsilon : go to state start.e
+    e       : shift (e), then push state 1,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+1,1
+    +       : shift (+), then push state 1,2
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+1,2
+    epsilon : go to state start.e
+    e       : shift (e), then push state 1,3
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+1,3
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 1
+
+2,0
+    epsilon : go to state start.e
+    e       : shift (e), then push state 2,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+2,1
+    *       : shift (+), then push state 2,2
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+2,2
+    epsilon : go to state start.e
+    e       : shift (e), then push state 2,3
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+2,3
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 2
+
+3,0
+    (       : shift ('('), then push state 3,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+3,1
+    epsilon : go to state start.e
+    e       : shift (e), then push state 3,2
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+3,2
+    )       : shift (')'), then push state 3,3
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+3,3
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 3
+
+4,0
+    (       : shift ('('), then push state 4,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+4,1
+    ERROR_  : shift (ERROR_), then push state 4,2
+    default : insert lookahead ERROR_
+
+4,2
+    )       : shift (')'), then push state 4,3
+    ERROR_  : pop state stack
+    default : throw away lookahead
+
+4,3
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 4
+
+
+test
+
+input is "e+e*e"
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        (start.e 1,1) (start.e 2,1)                                                 e . + e * e
+
+At this point, the trunk is SHIFT, so assign:
+    in state epsilon_closure_of(start.e), lookahead sequence "e" results in SHIFT, then PUSH epsilon_closure_of((1,1) (2,1))
+prune the trunk and continue
+
+TODO: Figure out if pruning the trunk and continuing is reasonable, in case error handling needs to happen.  Probably any time a pop
+is encountered in the trunk, it should stop there; the resulting state is not explicitly known, but that's ok.
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            (start.e 1,1 1,2)                                                       e + . e * e
+        INSERT_LOOKAHEAD ERROR_                                                     e . ERROR_ + e * e
+            (start.e 2,1)                                                           e . ERROR_ + e * e
+
+At this point, there is a conflict between SHIFT (+) and INSERT_LOOKAHEAD ERROR_, which should ideally resolve in favor of SHIFT.  Probably should make the action INSERT_LOOKAHEAD_ERROR_, and make it have the lowest priority, only surviving if there are no competing actions (such as SHIFT).
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                (start.e 1,1 1,2 1,1)                                               e + e . * e
+                (start.e 1,1 1,2 1,3)                                               e + e . * e
+                (start.e 1,1 1,2 2,1)                                               e + e . * e
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                INSERT_LOOKAHEAD_ERROR_                                             e + e . ERROR_ * e
+                    (start.e 1,1 1,2 1,1)                                           e + e . ERROR_ * e
+                REDUCE rule 3                                                       . e * e
+                    (start.e)                                                       . e * e
+                SHIFT (*)                                                           e + e * . e
+                    (start.e 1,1 1,2 2,1 2,2)                                       e + e * . e
+
+At this point, INSERT_LOOKAHEAD_ERROR_ dies because it's automatically outcompeted by any other action, leaving a shift/reduce conflict.
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                REDUCE rule 3                                                       . e * e
+                    (start.e)                                                       . e * e
+                SHIFT (*)                                                           e + e * . e
+                    (start.e 1,1 1,2 2,1 2,2)                                       e + e * . e
+
+At this point, the shift/reduce conflict is resolved by precedence in favor of SHIFT.
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                SHIFT (*)                                                           e + e * . e
+                    (start.e 1,1 1,2 2,1 2,2)                                       e + e * . e
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                SHIFT (*)                                                           e + e * . e
+                    SHIFT (e)                                                       e + e * e .
+                        REDUCE rule 2                                               e + . e
+                            SHIFT (e)                                               e + e .
+                                REDUCE rule 1                                       . e
+                                    (start.e)                                       . e
+
+If the starting state was parse.e (as was added later), then the action now would be RETURN_LOOKAHEAD.
+
+
+
+Actions:
+
+SHIFT (then push state X)
+REDUCE (rule Y)
+INSERT_LOOKAHEAD_ERROR      -- must have low precedence, probably lowest of all
+DISCARD_LOOKAHEAD           -- maybe should have precedence lower than all shift, but equal to all reduce (though this defies a linear order)
+POP_STATE_STACK (Z times)   -- this only happens when ERROR_ is the lookahead and there's no rule to accept ERROR_
+RETURN_TOP_OF_STACK         -- must have low precedence, but higher than INSERT_LOOKAHEAD_ERROR
+
+
+-----------
+
+Another try with a different formatting scheme, where ^ indicates lookahead knowledge cursor
+
+input is "e+e*e"
+
+ROOT -> (parse.e)                                                           . ^ e + e * e
+    SHIFT (e) -> (parse.e return.e) (parse.e 1,1) (parse.e 2,1)             e . ^ + e * e
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (return.e) (1,1) (2,1)                                              e . ^ + e * e
+    RETURN_TOP_OF_STACK -> (return.e)                                       e . ^ + e * e
+    SHIFT (+) -> (1,1 1,2)                                                  e + . ^ e * e
+    INSERT_LOOKAHEAD_ERROR -> (2,1 2,2)                                     e . ^ ERROR_ + e * e
+
+At this point, INSERT_LOOKAHEAD_ERROR should probably lose to SHIFT and RETURN_TOP_OF_STACK.
+RETURN_TOP_OF_STACK should lose to SHIFT, since RETURN_TOP_OF_STACK could be considered a REDUCE action in a way, which
+should have low priority.
+
+ROOT -> (return.e) (1,1) (2,1)                                              e . ^ + e * e
+    SHIFT (+) -> (1,1 1,2)                                                  e + . ^ e * e
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (1,2)                                                               e + . ^ e * e
+    SHIFT (e) -> (1,2 1,3) (1,2 1,1) (1,2 2,1)                              e + e . ^ * e
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (1,3) (1,1) (2,1)                                                   e + e . ^ * e
+    REDUCE rule 1 -> (x)                                                    . e ^ * e
+    SHIFT (*) -> (2,1 2,2)                                                  e + e * . ^ e
+
+Because rule 2 has higher precedence than rule 1, the REDUCE loses.
+
+ROOT -> (1,3) (1,1) (2,1)                                                   e + e . ^ * e
+    SHIFT (*) -> (2,1 2,2)                                                  e + e * . ^ e
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (2,2)                                                               e + e * . ^ e
+    SHIFT (e) -> (2,2 2,3)                                                  e + e * e . ^
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (2,3)                                                               e + e * e . ^
+    REDUCE rule 2 -> (x)                                                    e + . e ^
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -22,6 +22,9 @@ string const &TransitionTypeString (TransitionType transition_type)
         "RETURN",
         "REDUCE",
         "SHIFT",
+        "INSERT_LOOKAHEAD_ERROR",
+        "DISCARD_LOOKAHEAD",
+        "POP_STACK",
         "EPSILON"
     };
     assert(transition_type < TT_COUNT);
@@ -34,8 +37,16 @@ string const &TransitionTypeString (TransitionType transition_type)
 
 Graph::Transition NpdaReduceTransition (Uint32 reduction_rule_index)
 {
-    Graph::Transition transition(TT_REDUCE, 1, Graph::Transition::ms_no_target_index, FORMAT("REDUCE rule " << reduction_rule_index), Graph::Color::ms_green);
+    Graph::Transition transition(TT_REDUCE, 1, Graph::Transition::ms_no_target_index, FORMAT("REDUCE rule " << reduction_rule_index), Graph::Color::ms_blue);
     transition.SetData(0, reduction_rule_index);
+    return transition;
+}
+
+Graph::Transition NpdaReduceTransition (Uint32 reduction_rule_index, Uint32 transition_token_id, string const &token_label)
+{
+    Graph::Transition transition(TT_REDUCE, 2, Graph::Transition::ms_no_target_index, FORMAT(token_label << ":REDUCE rule " << reduction_rule_index), Graph::Color::ms_blue);
+    transition.SetData(0, reduction_rule_index);
+    transition.SetData(1, transition_token_id);
     return transition;
 }
 
@@ -48,14 +59,33 @@ Graph::Transition NpdaReturnTransition (string const &nonterminal_name, Uint32 n
 
 Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &token_label, Uint32 target_index)
 {
-    Graph::Transition transition(TT_SHIFT, 1, target_index, token_label);
+    Graph::Transition transition(TT_SHIFT, 1, target_index, token_label + ":SHIFT");
     transition.SetData(0, transition_token_id);
+    return transition;
+}
+
+Graph::Transition NpdaInsertLookaheadErrorTransition ()
+{
+    Graph::Transition transition(TT_INSERT_LOOKAHEAD_ERROR, 0, Graph::Transition::ms_no_target_index, "INSERT_LOOKAHEAD_ERROR", Graph::Color::ms_red);
+    return transition;
+}
+
+Graph::Transition NpdaDiscardLookaheadTransition ()
+{
+    Graph::Transition transition(TT_DISCARD_LOOKAHEAD, 0, Graph::Transition::ms_no_target_index, "DISCARD_LOOKAHEAD", Graph::Color::ms_red);
+    return transition;
+}
+
+Graph::Transition NpdaPopStackTransition (Uint32 transition_token_id, string const &token_label, Uint32 pop_count)
+{
+    Graph::Transition transition(TT_POP_STACK, 1, Graph::Transition::ms_no_target_index, FORMAT(token_label << ":POP_STACK " << pop_count), Graph::Color::ms_red);
+    transition.SetData(0, pop_count);
     return transition;
 }
 
 Graph::Transition NpdaEpsilonTransition (Uint32 target_index)
 {
-    return Graph::Transition(TT_EPSILON, 0, target_index, "(e)", Graph::Color::ms_red);
+    return Graph::Transition(TT_EPSILON, 0, target_index, "(e)", Graph::Color::ms_green);
 }
 
 // ///////////////////////////////////////////////////////////////////////////
