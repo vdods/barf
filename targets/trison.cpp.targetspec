@@ -63,8 +63,8 @@
 // When present, causes the generated class' destructor to be virtual.
 %add_optional_directive force_virtual_destructor
 // Specifies the class access of the generated Parse method.  Valid values are
-// "public:", "protected:" or "private:".  The default access is "public:".
-%add_optional_directive parse_method_access                 %string
+// "public", "protected" or "private".  The default access is "public".
+%add_optional_directive parse_method_access                 %string             %default "public"
 // Similar to top_of_class, this facilitates class declarations at the bottom,
 // which may be necessary when declarations from the middle of the generated
 // class are needed.  Again, the default class access level is public.

@@ -1,10 +1,3 @@
-<|if(is_defined(parse_method_access))
-<|  if(parse_method_access != "public:" && parse_method_access != "protected:" && parse_method_access != "private:")
-<|      error("invalid parse_method_access \"" . parse_method_access . "\"")
-<|  end_if
-<|else
-<{  define(parse_method_access)}public:<|end_define
-<|end_if
 <|if(is_defined(constructor_definition_parameters) && !is_defined(constructor_parameters))
 <|  error("can't specify constructor_definition_parameters without specifying constructor_parameters")
 <|end_if

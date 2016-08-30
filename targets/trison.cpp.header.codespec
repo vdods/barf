@@ -1,12 +1,8 @@
 <|if(header_filename == implementation_filename)
 <|  error("collision between header_filename \"" . header_filename . "\" and implementation_filename \"" . implementation_filename . "\"")
 <|end_if
-<|if(is_defined(parse_method_access))
-<|  if(parse_method_access != "public:" && parse_method_access != "protected:" && parse_method_access != "private:")
-<|      error("invalid parse_method_access \"" . parse_method_access . "\"")
-<|  end_if
-<|else
-<{  define(parse_method_access)}public:<|end_define
+<|if(parse_method_access != "public" && parse_method_access != "protected" && parse_method_access != "private")
+<|  error("invalid parse_method_access \"" . parse_method_access . "\"; must be one of \"public\", \"protected\", or \"private\"")
 <|end_if
 <|if(!is_defined(debug_spew_prefix))
 <{  define(debug_spew_prefix)}"<{class_name}:"<|end_define
@@ -193,7 +189,7 @@ public:
       */
     void ResetForNewInput ();
 
-<|if(parse_method_access == "public:")
+<|define(parse_method_declaration)
     /** The %target.cpp.parse_method_access directive can be used to specify the
       * access level of this method.
       *
@@ -225,82 +221,25 @@ public:
       *        the nonterminal specified.
       */
     ParserReturnCode Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::<{_default_parse_nonterminal});
+<|end_define
+<|if(parse_method_access == "public")
+<|parse_method_declaration
 
 <|end_if
 <|if(is_defined(bottom_of_class))
 <{bottom_of_class}
 
 <|end_if
-<|if(parse_method_access == "protected:")
+<|if(parse_method_access == "protected")
 protected:
 
-    /** The %target.cpp.parse_method_access directive can be used to specify the
-      * access level of this method.
-      *
-      * The %target.cpp.top_of_parse_method_actions and
-      * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
-      * code to execute at the beginning and end, respectively, of the Parse() method.
-      * This includes the ability to enclose the body of the Parse() method within a
-      * try {} block, for exception handling (if exceptions are thrown in scan_actions
-      * or any reduction rule code, then the %target.cpp.enable_scan_actions_exceptions
-      * or %target.cpp.enable_reduction_rule_exceptions directives must be specified
-      * respectively; this will cause the parser to catch and rethrow any exceptions
-      * thrown by scan_actions or reduction rule code, allowing it to clean up
-      * dynamically allocated memory, etc.
-      *
-      * @param return_token A pointer to the value which will be assigned to upon
-      *        successfully parsing the requested nonterminal. If the parse fails,
-      *        the value of the %target.cpp.token_data_default directive will
-      *        be assigned.
-      * @param nonterminal_to_parse The Parse() method can attempt to parse any
-      *        nonterminal declared in the primary source.  If unspecified, the
-      *        Parse() method will attempt to parse the nonterminal specified by the
-      *        %default_parse_nonterminal directive.
-      * @return <{class_name}::PRC_SUCCESS if the parse was successful (which includes
-      *         occurrences of parse errors which were handled by client-specified
-      *         %error-accepting rules), or <{class_name}::PRC_UNHANDLED_PARSE_ERROR
-      *         if a parse error was not handled by any %error-accepting rules.
-      *
-      * @brief This is the main method of the parser; it will attempt to parse
-      *        the nonterminal specified.
-      */
-    ParserReturnCode Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::<{_default_parse_nonterminal});
+<|parse_method_declaration
 
 <|end_if
 private:
 
-<|if(parse_method_access == "private:")
-    /** The %target.cpp.parse_method_access directive can be used to specify the
-      * access level of this method.
-      *
-      * The %target.cpp.top_of_parse_method_actions and
-      * %target.cpp.bottom_of_parse_method_actions directives can be used to specify
-      * code to execute at the beginning and end, respectively, of the Parse() method.
-      * This includes the ability to enclose the body of the Parse() method within a
-      * try {} block, for exception handling (if exceptions are thrown in scan_actions
-      * or any reduction rule code, then the %target.cpp.enable_scan_actions_exceptions
-      * or %target.cpp.enable_reduction_rule_exceptions directives must be specified
-      * respectively; this will cause the parser to catch and rethrow any exceptions
-      * thrown by scan_actions or reduction rule code, allowing it to clean up
-      * dynamically allocated memory, etc.
-      *
-      * @param return_token A pointer to the value which will be assigned to upon
-      *        successfully parsing the requested nonterminal. If the parse fails,
-      *        the value of the %target.cpp.token_data_default directive will
-      *        be assigned.
-      * @param nonterminal_to_parse The Parse() method can attempt to parse any
-      *        nonterminal declared in the primary source.  If unspecified, the
-      *        Parse() method will attempt to parse the nonterminal specified by the
-      *        %default_parse_nonterminal directive.
-      * @return <{class_name}::PRC_SUCCESS if the parse was successful (which includes
-      *         occurrences of parse errors which were handled by client-specified
-      *         %error-accepting rules), or <{class_name}::PRC_UNHANDLED_PARSE_ERROR
-      *         if a parse error was not handled by any %error-accepting rules.
-      *
-      * @brief This is the main method of the parser; it will attempt to parse
-      *        the nonterminal specified.
-      */
-    ParserReturnCode Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::<{_default_parse_nonterminal});
+<|if(parse_method_access == "private")
+<|parse_method_declaration
 
 <|end_if
     // ///////////////////////////////////////////////////////////////////////

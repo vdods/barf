@@ -197,7 +197,6 @@ public:
       */
     void ResetForNewInput ();
 
-
 #line 36 "barf_regex_parser.trison"
 
     using InputBase::IsOpen;
@@ -229,7 +228,7 @@ private:
     // job; parsing of hex chars, e.g. \xA7)
     bool m_active_backslash;
 
-#line 233 "barf_regex_parser.hpp"
+#line 232 "barf_regex_parser.hpp"
 
 
 private:
@@ -385,4 +384,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 389 "barf_regex_parser.hpp"
+#line 388 "barf_regex_parser.hpp"
