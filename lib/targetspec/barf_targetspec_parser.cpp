@@ -78,888 +78,13 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::
 // begin internal trison-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
-{
-    switch (nonterminal)
-    {
-        case Nonterminal::add_codespec: return 32;
-        case Nonterminal::add_directive: return 34;
-        case Nonterminal::at_least_one_newline: return 42;
-        case Nonterminal::at_least_zero_newlines: return 40;
-        case Nonterminal::default_value: return 38;
-        case Nonterminal::directives: return 30;
-        case Nonterminal::param_spec: return 36;
-        case Nonterminal::root: return 0;
-        default: assert(false && "invalid nonterminal"); return 0;
-    }
-}
-
-Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
-{
-    assert(return_token != NULL && "the return-token pointer must be non-NULL");
-
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 105 "barf_targetspec_parser.cpp"
- << " starting parse" << std::endl)
-
-    ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
-    *return_token = NULL;
-
-    // make sure all our structures are empty and variables initialized.
-    // we don't clear the lookahead queue here because we might want to
-    // parse multiple times from the same input, and the lookahead queue
-    // could have the next few tokens in it.
-    ClearStack_();
-    m_is_in_error_panic_ = false;
-
-    // push the initial state of the DPDA.
-    std::uint32_t nonterminal_start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
-    m_stack_.push_back(StackElement_(nonterminal_start_state_index, Token(Nonterminal::none_, NULL)));
-    // main parser loop
-    while (true)
-    {
-        if (m_is_in_error_panic_)
-        {
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 129 "barf_targetspec_parser.cpp"
- << " begin error panic" << std::endl)
-
-            while (true)
-            {
-                // get the current state (top of the stack)
-                assert(!m_stack_.empty());
-                std::uint32_t current_state_index = m_stack_.back().m_state_index;
-                assert(current_state_index < ms_state_count_);
-                State_ const &current_state = ms_state_table_[current_state_index];
-                TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
-
-                // check if the current state accepts ERROR_ (only need to check the
-                // non-default transitions, since the default transition can't be a shift).
-                bool accepts_error = false;
-                for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
-                                       *transition_end = current_state.m_transition_table+current_state.m_transition_count;
-                     transition != transition_end;
-                     ++transition)
-                {
-                    if (transition->m_type == Transition_::SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
-                    {
-                        accepts_error = true;
-                        break;
-                    }
-                }
-
-                if (accepts_error)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 161 "barf_targetspec_parser.cpp"
- << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
-                    // if the current state accepts error, then we check if the lookahead token
-                    // is Terminal::END_.  if it is, then we add a dummy Terminal::ERROR_ token
-                    // in before it (since %error can't accept END_).  otherwise, we throw away
-                    // the lookahead token, then clear the thrown-away token data, and set the
-                    // token id to ERROR_.
-                    assert(!m_lookahead_queue_.empty());
-                    if (m_lookahead_queue_[0].m_id == Terminal::END_)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 174 "barf_targetspec_parser.cpp"
- << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
-                        m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
-                    }
-                    else
-                        ThrowAwayToken_(m_lookahead_queue_[0]);
-                    m_lookahead_queue_[0].m_id = Terminal::ERROR_;
-                    m_lookahead_queue_[0].m_data = NULL;
-                    m_is_in_error_panic_ = false;
-                    break;
-                }
-                else
-                {
-                    if (m_stack_.size() > 1)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 192 "barf_targetspec_parser.cpp"
- << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
-                    }
-                    else
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 200 "barf_targetspec_parser.cpp"
- << " end error panic; abort (stack is empty)" << std::endl)
-                    }
-                    // otherwise throw away the data at the top of the stack, and pop the stack.
-                    // then if the stack is empty, an unhandled parse error occurred.
-                    ThrowAwayStackElement_(m_stack_.back());
-                    m_stack_.resize(m_stack_.size()-1);
-                    if (m_stack_.empty())
-                    {
-                        // parser_return_code_ and return_token are already appropriately
-                        // set, so just break out of the inner loop.
-                        break;
-                    }
-                }
-            }
-
-            // if we're still in error panic, then this indicates that we bottomed-
-            // out the stack and it's an unhandled parse error, so break from the
-            // main loop.
-            if (m_is_in_error_panic_)
-                break;
-        }
-        else // !m_is_in_error_panic_
-        {
-            // get the current state (top of the stack)
-            assert(!m_stack_.empty());
-            std::uint32_t current_state_index = m_stack_.back().m_state_index;
-            assert(current_state_index < ms_state_count_);
-            State_ const &current_state = ms_state_table_[current_state_index];
-            TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
-
-            // TODO -- binary search for faster transition matching?
-
-            // loop through the current state's transitions and see if any match
-            bool transition_exercised = false;
-            std::uint32_t tested_lookahead_count = 0;
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 239 "barf_targetspec_parser.cpp"
- << " current transitions:" << std::endl)
-            for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
-                                   *transition_end = current_state.m_transition_table+current_state.m_transition_count;
-                transition != transition_end;
-                ++transition)
-            {
-                // the non-default transitions can only be REDUCE or SHIFT
-                assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
-
-                // make sure enough lookaheads are in the queue (this must be done before
-                // checking if the lookaheads match because otherwise the debug-spew printing will
-                // be interrupted by the debug-spew printing that happens in the call to Looahead_).
-                if (transition->m_lookahead_count > 0)
-                    Lookahead_(transition->m_lookahead_count - 1);
-
-                // check if the lookaheads match those of this transition.
-                bool lookahead_sequence_matched = true;
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 260 "barf_targetspec_parser.cpp"
- << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
-                for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << ms_token_name_table_[transition->m_lookahead_sequence[i]])
-                    if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
-                    {
-                        lookahead_sequence_matched = false;
-                        break;
-                    }
-                    else
-                    {
-                        if (i+1 > tested_lookahead_count)
-                            tested_lookahead_count = i+1;
-                    }
-                }
-                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                // if all the lookaheads matched, then exercise this transition,
-                // and break out of this inner (transition) loop.
-                if (lookahead_sequence_matched)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 285 "barf_targetspec_parser.cpp"
- << " currently usable lookahead(s):")
-                    for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
-                    }
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                    ExerciseTransition_(*transition);
-                    transition_exercised = true;
-                    break;
-                }
-            }
-
-            // if no transition was exercised, then exercise the default transition
-            if (!transition_exercised)
-            {
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 305 "barf_targetspec_parser.cpp"
- << " currently usable lookahead(s):")
-                for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
-                }
-                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 316 "barf_targetspec_parser.cpp"
- << " exercising default transition" << std::endl)
-                // exercise the default transition.  a return value of true indicates
-                // that the parser should return.
-                if (ExerciseTransition_(*current_state.m_transition_table))
-                {
-                    // the token (data) on the top of the stack is the return token.
-                    // set parser_return_code_ and assign the top stack token data to
-                    // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == nonterminal_start_state_index);
-                    assert(m_stack_.size() == 2);
-                    parser_return_code_ = PRC_SUCCESS;
-                    *return_token = m_stack_.back().m_token.m_data;
-                    // take the return token out of the stack, so it's not thrown away
-                    // when we clear the stack later.
-                    m_stack_.back().m_token.m_data = NULL;
-                    break;
-                }
-            }
-        }
-    }
-
-    // clear the stack, because we won't need it for the next parse.
-    // we don't clear the lookahead queue here because we might want to
-    // parse multiple times from the same input, and the lookahead queue
-    // could have the next few tokens in it.
-    ClearStack_();
-
-    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 347 "barf_targetspec_parser.cpp"
- << " Parse() is returning PRC_SUCCESS" << std::endl)
-    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 352 "barf_targetspec_parser.cpp"
- << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
-
-    return parser_return_code_;
-}
-
-void Parser::ThrowAwayToken_ (Token &token_) throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 363 "barf_targetspec_parser.cpp"
- << " executing throw-away-token actions on token " << token_ << std::endl)
-
-    ThrowAwayTokenData_(token_.m_data);
-}
-
-void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 374 "barf_targetspec_parser.cpp"
- << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
-
-    ThrowAwayTokenData_(stack_element_.m_token.m_data);
-}
-
-void Parser::ThrowAwayTokenData_ (Ast::Base * &token_data) throw()
-{
-
-#line 103 "barf_targetspec_parser.trison"
-
-    delete token_data;
-
-#line 387 "barf_targetspec_parser.cpp"
-}
-
-Parser::Token Parser::Scan_ () throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 395 "barf_targetspec_parser.cpp"
- << " executing scan actions" << std::endl)
-
-
-#line 106 "barf_targetspec_parser.trison"
-
-    Ast::Base *lookahead_token_data = NULL;
-    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(lookahead_token_data);
-    assert(scanner_token_type >= 0);
-    if (scanner_token_type < 0x100)
-        return Token(scanner_token_type);
-    switch (scanner_token_type)
-    {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                  return Token(Terminal::END_, lookahead_token_data);
-        case CommonLang::Scanner::Token::BAD_TOKEN:                        return Token(Terminal::BAD_TOKEN, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:           return Token(Terminal::DIRECTIVE_ADD_CODESPEC, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE: return Token(Terminal::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE: return Token(Terminal::DIRECTIVE_ADD_REQUIRED_DIRECTIVE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:                return Token(Terminal::DIRECTIVE_DEFAULT, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:        return Token(Terminal::DIRECTIVE_DUMB_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_ID:                     return Token(Terminal::DIRECTIVE_ID, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:      return Token(Terminal::DIRECTIVE_STRICT_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_STRING:                 return Token(Terminal::DIRECTIVE_STRING, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                 return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                  return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::END_OF_FILE:                      return Token(Terminal::END_, lookahead_token_data);
-        case CommonLang::Scanner::Token::ID:                               return Token(Terminal::ID, lookahead_token_data);
-        case CommonLang::Scanner::Token::NEWLINE:                          return Token(Terminal::NEWLINE, lookahead_token_data);
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::STRING_LITERAL:                   return Token(Terminal::STRING_LITERAL, lookahead_token_data);
-
-        case CommonLang::Scanner::Token::CHAR_LITERAL:
-        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:
-        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:
-        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
-        case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:
-        case CommonLang::Scanner::Token::DIRECTIVE_PREC:
-        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE:
-        case CommonLang::Scanner::Token::DIRECTIVE_STATE_MACHINE:
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:
-        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
-        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
-        case CommonLang::Scanner::Token::END_PREAMBLE:
-        case CommonLang::Scanner::Token::REGEX:
-            assert(lookahead_token_data != NULL);
-            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
-            delete lookahead_token_data;
-            lookahead_token_data = NULL;
-            return Token(Terminal::BAD_TOKEN);
-
-        default:
-            assert(false && "this should never happen");
-            return Token(Terminal::BAD_TOKEN);
-    }
-
-#line 450 "barf_targetspec_parser.cpp"
-}
-
-void Parser::ClearStack_ () throw()
-{
-    if (m_stack_.empty())
-        return; // nothing to do
-
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 461 "barf_targetspec_parser.cpp"
- << " clearing the stack" << std::endl)
-
-    Stack_::iterator it = m_stack_.begin();
-    Stack_::iterator it_end = m_stack_.end();
-    // skip the bottom of the stack, since it
-    // contains the start state and no token data.
-    ++it;
-    for ( ; it != it_end; ++it)
-        ThrowAwayStackElement_(*it);
-    m_stack_.clear();
-}
-
-void Parser::ClearLookaheadQueue_ () throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 479 "barf_targetspec_parser.cpp"
- << " clearing the lookahead queue" << std::endl)
-
-    for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
-        ThrowAwayToken_(*it);
-    m_lookahead_queue_.clear();
-}
-
-Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw()
-{
-    while (index >= m_lookahead_queue_.size())
-    {
-        m_lookahead_queue_.push_back(Scan_());
-
-        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 496 "barf_targetspec_parser.cpp"
- << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
-    }
-    return m_lookahead_queue_[index];
-}
-
-bool Parser::ExerciseTransition_ (Transition_ const &transition)
-{
-    switch (transition.m_type)
-    {
-        case Transition_::REDUCE:
-        {
-            // execute the indicated reduction rule, push the returned Token
-            // onto the front of the lookahead queue, then pop the corresponding
-            // number of stack elements.
-            assert(transition.m_data < ms_rule_count_);
-            Rule_ const &rule = ms_rule_table_[transition.m_data];
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 516 "barf_targetspec_parser.cpp"
- << " REDUCE " << rule.m_description << std::endl)
-            assert(m_stack_.size() > rule.m_token_count);
-            m_lookahead_queue_.push_front(
-                Token(
-                    rule.m_reduction_nonterminal_token_id,
-                    ExecuteReductionRule_(transition.m_data)));
-            m_stack_.resize(m_stack_.size() - rule.m_token_count);
-            assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 528 "barf_targetspec_parser.cpp"
- << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 533 "barf_targetspec_parser.cpp"
- << std::endl)
-            return false; // indicating the parser isn't returning
-        }
-
-        case Transition_::RETURN:
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 542 "barf_targetspec_parser.cpp"
- << " RETURN" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 547 "barf_targetspec_parser.cpp"
- << std::endl)
-            return true; // indicating the parser is returning
-
-        case Transition_::SHIFT:
-            // push the state (indicated by the shift transition) and token data
-            // onto the stack, then pop the corresponding lookahead.
-            assert(transition.m_data < ms_state_count_);
-            assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
-                                                               // client error, so asserting here is ok.
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 560 "barf_targetspec_parser.cpp"
- << " SHIFT " << Lookahead_(0) << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 565 "barf_targetspec_parser.cpp"
- << std::endl)
-            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
-            m_lookahead_queue_.pop_front();
-            return false; // indicating the parser isn't returning
-
-        case Transition_::ERROR_PANIC:
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 575 "barf_targetspec_parser.cpp"
- << " ERROR_PANIC" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 580 "barf_targetspec_parser.cpp"
- << std::endl)
-            m_is_in_error_panic_ = true;
-            return false; // indicating the parser isn't returning
-
-        default:
-            assert(false && "invalid transition type (bad state machine, or memory corruption)");
-            return false; // indicating the parser isn't returning
-    }
-}
-
-Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_) throw()
-{
-    assert(rule_index_ < ms_rule_count_);
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 597 "barf_targetspec_parser.cpp"
- << " executing reduction rule " << rule_index_ << std::endl)
-    switch (rule_index_)
-    {
-        default:
-            assert(false && "this should never happen");
-            return NULL;
-
-        case 0:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 190 "barf_targetspec_parser.trison"
-
-        assert(m_add_codespec_list != NULL);
-        assert(m_add_directive_map != NULL);
-        return new Specification(
-            new Ast::Id(m_target_id, FiLoc::ms_invalid),
-            m_add_codespec_list,
-            m_add_directive_map);
-    
-#line 618 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 1:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 206 "barf_targetspec_parser.trison"
- return NULL; 
-#line 628 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 2:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 208 "barf_targetspec_parser.trison"
- return NULL; 
-#line 638 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 3:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 210 "barf_targetspec_parser.trison"
- return NULL; 
-#line 648 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 4:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::String * filename(Dsc<Ast::String *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Ast::Id * filename_directive_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 216 "barf_targetspec_parser.trison"
-
-        assert(m_add_codespec_list != NULL);
-        assert(m_add_directive_map != NULL);
-        AddDirective *add_directive = m_add_directive_map->Element(filename_directive_id->GetText());
-        if (add_directive == NULL)
-            EmitError("undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive", throwaway->GetFiLoc());
-        if (add_directive == NULL || !add_directive->IsRequired() || add_directive->m_param_type != Ast::AST_STRING)
-            EmitError("directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string", throwaway->GetFiLoc());
-        if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
-            EmitError("filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters", throwaway->GetFiLoc());
-        m_add_codespec_list->Append(new AddCodespec(filename, filename_directive_id));
-        delete throwaway;
-        return NULL;
-    
-#line 674 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 5:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * directive_to_add_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            ParamType * param_type(Dsc<ParamType *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 235 "barf_targetspec_parser.trison"
-
-        assert(m_add_directive_map != NULL);
-        m_add_directive_map->Add(
-            directive_to_add_id->GetText(),
-            new AddOptionalDirective(directive_to_add_id, param_type->m_param_type, NULL));
-        delete throwaway;
-        delete param_type;
-        return NULL;
-    
-#line 695 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 6:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway1(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Ast::Id * directive_to_add_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            ParamType * param_type(Dsc<ParamType *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::ThrowAway * throwaway2(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Ast::TextBase * default_value(Dsc<Ast::TextBase *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 246 "barf_targetspec_parser.trison"
-
-        assert(m_add_directive_map != NULL);
-        AddDirective *directive =
-            new AddOptionalDirective(
-                directive_to_add_id,
-                param_type->m_param_type, default_value);
-        m_add_directive_map->Add(
-            directive_to_add_id->GetText(),
-            directive);
-        if (param_type->m_param_type != default_value->GetAstType())
-            EmitError(
-                "type mismatch for default value for directive " + directive->DirectiveString() +
-                "; was expecting type " + Ast::TextBase::DirectiveTypeString(param_type->m_param_type) +
-                " but got type " + Ast::TextBase::DirectiveTypeString(default_value->GetAstType()),
-                throwaway1->GetFiLoc());
-        delete throwaway1;
-        delete param_type;
-        delete throwaway2;
-        return NULL;
-    
-#line 729 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 7:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * directive_to_add_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            ParamType * param_type(Dsc<ParamType *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 268 "barf_targetspec_parser.trison"
-
-        assert(m_add_directive_map != NULL);
-        m_add_directive_map->Add(
-            directive_to_add_id->GetText(),
-            new AddRequiredDirective(directive_to_add_id, param_type->m_param_type));
-        delete throwaway;
-        delete param_type;
-        return NULL;
-    
-#line 750 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 8:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 282 "barf_targetspec_parser.trison"
-
-        return new ParamType(Ast::AST_NONE);
-    
-#line 762 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 9:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Base * throwaway(m_stack_[m_stack_.size()-1].m_token.m_data);
-
-#line 287 "barf_targetspec_parser.trison"
-
-        delete throwaway;
-        return new ParamType(Ast::AST_ID);
-    
-#line 776 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 10:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Base * throwaway(m_stack_[m_stack_.size()-1].m_token.m_data);
-
-#line 293 "barf_targetspec_parser.trison"
-
-        delete throwaway;
-        return new ParamType(Ast::AST_STRING);
-    
-#line 790 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 11:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Base * throwaway(m_stack_[m_stack_.size()-1].m_token.m_data);
-
-#line 299 "barf_targetspec_parser.trison"
-
-        delete throwaway;
-        return new ParamType(Ast::AST_DUMB_CODE_BLOCK);
-    
-#line 804 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 12:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Base * throwaway(m_stack_[m_stack_.size()-1].m_token.m_data);
-
-#line 305 "barf_targetspec_parser.trison"
-
-        delete throwaway;
-        return new ParamType(Ast::AST_STRICT_CODE_BLOCK);
-    
-#line 818 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 13:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * value(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 313 "barf_targetspec_parser.trison"
- return value; 
-#line 829 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 14:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::String * value(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 314 "barf_targetspec_parser.trison"
- return value; 
-#line 840 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 15:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 315 "barf_targetspec_parser.trison"
- return value; 
-#line 851 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 16:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 316 "barf_targetspec_parser.trison"
- return value; 
-#line 862 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 17:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 325 "barf_targetspec_parser.trison"
- return NULL; 
-#line 872 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 18:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 327 "barf_targetspec_parser.trison"
- return NULL; 
-#line 882 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 19:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 332 "barf_targetspec_parser.trison"
- return NULL; 
-#line 892 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-        case 20:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 334 "barf_targetspec_parser.trison"
- return NULL; 
-#line 902 "barf_targetspec_parser.cpp"
-            break;
-        }
-
-    }
-
-    assert(false && "no value returned from reduction rule code block");
-    return NULL;
-}
-
-void Parser::PrintParserStatus_ (std::ostream &stream) const
-{
-    assert(!m_stack_.empty());
-
-    stream << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 919 "barf_targetspec_parser.cpp"
- << " parser state stack: ";
-    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
-    {
-        stream << it->m_state_index;
-        Stack_::const_iterator next_it = it;
-        if (++next_it != it_end)
-            stream << ' ';
-    }
-    stream << std::endl;
-
-    assert(m_stack_.size() >= 1);
-    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal::none_));
-    stream << 
-#line 159 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 935 "barf_targetspec_parser.cpp"
- << " parser stack tokens . lookahead queue: ";
-    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
-    {
-        // the first token is always Nonterminal::none_, which doesn't correspond to a real token, so skip it.
-        if (it == m_stack_.begin())
-            continue;
-        stream << it->m_token << ' ';
-    }
-    stream << '.';
-    for (LookaheadQueue_::const_iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
-    {
-        Token const &lookahead_token = *it;
-        assert(lookahead_token.m_id < ms_token_name_count_ && "Token id out of range");
-        stream << ' ' << lookahead_token;
-    }
-    stream << std::endl;
-
-    PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
-    stream << std::endl;
-}
-
 void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
 {
     assert(string != NULL);
     stream << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 963 "barf_targetspec_parser.cpp"
+#line 88 "barf_targetspec_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -967,7 +92,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 159 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 971 "barf_targetspec_parser.cpp"
+#line 96 "barf_targetspec_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -1009,231 +134,6 @@ Parser::Rule_ const Parser::ms_rule_table_[] =
     { Parser::Nonterminal::at_least_one_newline, 1, "at_least_one_newline <- NEWLINE" }
 };
 std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
-
-Parser::State_ const Parser::ms_state_table_[] =
-{
-    { 3, ms_transition_table_+0, "START root                                                         \nrule 0: root <- . at_least_zero_newlines directives                \nrule 17: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 18: at_least_zero_newlines <- .                               " },
-    { 1, ms_transition_table_+3, "RETURN root" },
-    { 3, ms_transition_table_+4, "rule 0: root <- at_least_zero_newlines . directives                  \nrule 17: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE  \nrule 1: directives <- . directives add_codespec at_least_one_newline \nrule 2: directives <- . directives add_directive at_least_one_newline\nrule 3: directives <- .                                              " },
-    { 1, ms_transition_table_+7, "rule 17: at_least_zero_newlines <- at_least_zero_newlines NEWLINE ." },
-    { 6, ms_transition_table_+8, "rule 0: root <- at_least_zero_newlines directives .                                                      \nrule 1: directives <- directives . add_codespec at_least_one_newline                                     \nrule 4: add_codespec <- . DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID                                       \nrule 2: directives <- directives . add_directive at_least_one_newline                                    \nrule 5: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec                                \nrule 6: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value\nrule 7: add_directive <- . DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec                                " },
-    { 2, ms_transition_table_+14, "rule 4: add_codespec <- DIRECTIVE_ADD_CODESPEC . STRING_LITERAL ID" },
-    { 2, ms_transition_table_+16, "rule 4: add_codespec <- DIRECTIVE_ADD_CODESPEC STRING_LITERAL . ID" },
-    { 1, ms_transition_table_+18, "rule 4: add_codespec <- DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID ." },
-    { 2, ms_transition_table_+19, "rule 5: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE . ID param_spec                                \nrule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE . ID param_spec DIRECTIVE_DEFAULT default_value" },
-    { 6, ms_transition_table_+21, "rule 5: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID . param_spec                                \nrule 8: param_spec <- .                                                                                  \nrule 9: param_spec <- . DIRECTIVE_ID                                                                     \nrule 10: param_spec <- . DIRECTIVE_STRING                                                                \nrule 11: param_spec <- . DIRECTIVE_DUMB_CODE_BLOCK                                                       \nrule 12: param_spec <- . DIRECTIVE_STRICT_CODE_BLOCK                                                     \nrule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID . param_spec DIRECTIVE_DEFAULT default_value" },
-    { 1, ms_transition_table_+27, "rule 11: param_spec <- DIRECTIVE_DUMB_CODE_BLOCK ." },
-    { 1, ms_transition_table_+28, "rule 9: param_spec <- DIRECTIVE_ID ." },
-    { 1, ms_transition_table_+29, "rule 12: param_spec <- DIRECTIVE_STRICT_CODE_BLOCK ." },
-    { 1, ms_transition_table_+30, "rule 10: param_spec <- DIRECTIVE_STRING ." },
-    { 2, ms_transition_table_+31, "rule 5: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec .                                \nrule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec . DIRECTIVE_DEFAULT default_value" },
-    { 6, ms_transition_table_+33, "rule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT . default_value\nrule 13: default_value <- . ID                                                                           \nrule 14: default_value <- . STRING_LITERAL                                                               \nrule 15: default_value <- . DUMB_CODE_BLOCK                                                              \nrule 16: default_value <- . STRICT_CODE_BLOCK                                                            " },
-    { 1, ms_transition_table_+39, "rule 15: default_value <- DUMB_CODE_BLOCK ." },
-    { 1, ms_transition_table_+40, "rule 13: default_value <- ID ." },
-    { 1, ms_transition_table_+41, "rule 16: default_value <- STRICT_CODE_BLOCK ." },
-    { 1, ms_transition_table_+42, "rule 14: default_value <- STRING_LITERAL ." },
-    { 1, ms_transition_table_+43, "rule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value ." },
-    { 2, ms_transition_table_+44, "rule 7: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE . ID param_spec" },
-    { 6, ms_transition_table_+46, "rule 8: param_spec <- .                                                  \nrule 9: param_spec <- . DIRECTIVE_ID                                     \nrule 10: param_spec <- . DIRECTIVE_STRING                                \nrule 11: param_spec <- . DIRECTIVE_DUMB_CODE_BLOCK                       \nrule 12: param_spec <- . DIRECTIVE_STRICT_CODE_BLOCK                     \nrule 7: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID . param_spec" },
-    { 1, ms_transition_table_+52, "rule 7: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec ." },
-    { 3, ms_transition_table_+53, "rule 1: directives <- directives add_codespec . at_least_one_newline\nrule 19: at_least_one_newline <- . at_least_one_newline NEWLINE     \nrule 20: at_least_one_newline <- . NEWLINE                          " },
-    { 1, ms_transition_table_+56, "rule 20: at_least_one_newline <- NEWLINE ." },
-    { 2, ms_transition_table_+57, "rule 1: directives <- directives add_codespec at_least_one_newline .\nrule 19: at_least_one_newline <- at_least_one_newline . NEWLINE     " },
-    { 1, ms_transition_table_+59, "rule 19: at_least_one_newline <- at_least_one_newline NEWLINE ." },
-    { 3, ms_transition_table_+60, "rule 19: at_least_one_newline <- . at_least_one_newline NEWLINE      \nrule 20: at_least_one_newline <- . NEWLINE                           \nrule 2: directives <- directives add_directive . at_least_one_newline" },
-    { 2, ms_transition_table_+63, "rule 19: at_least_one_newline <- at_least_one_newline . NEWLINE      \nrule 2: directives <- directives add_directive at_least_one_newline ." },
-    { 2, ms_transition_table_+65, "START directives                                                     \nrule 1: directives <- . directives add_codespec at_least_one_newline \nrule 2: directives <- . directives add_directive at_least_one_newline\nrule 3: directives <- .                                              " },
-    { 6, ms_transition_table_+67, "RETURN directives                                                                                        \nrule 1: directives <- directives . add_codespec at_least_one_newline                                     \nrule 4: add_codespec <- . DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID                                       \nrule 2: directives <- directives . add_directive at_least_one_newline                                    \nrule 5: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec                                \nrule 6: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value\nrule 7: add_directive <- . DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec                                " },
-    { 3, ms_transition_table_+73, "START add_codespec                                                \nrule 4: add_codespec <- . DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID" },
-    { 1, ms_transition_table_+76, "RETURN add_codespec" },
-    { 4, ms_transition_table_+77, "START add_directive                                                                                      \nrule 5: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec                                \nrule 6: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value\nrule 7: add_directive <- . DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec                                " },
-    { 1, ms_transition_table_+81, "RETURN add_directive" },
-    { 6, ms_transition_table_+82, "START param_spec                                    \nrule 8: param_spec <- .                             \nrule 9: param_spec <- . DIRECTIVE_ID                \nrule 10: param_spec <- . DIRECTIVE_STRING           \nrule 11: param_spec <- . DIRECTIVE_DUMB_CODE_BLOCK  \nrule 12: param_spec <- . DIRECTIVE_STRICT_CODE_BLOCK" },
-    { 1, ms_transition_table_+88, "RETURN param_spec" },
-    { 6, ms_transition_table_+89, "START default_value                          \nrule 13: default_value <- . ID               \nrule 14: default_value <- . STRING_LITERAL   \nrule 15: default_value <- . DUMB_CODE_BLOCK  \nrule 16: default_value <- . STRICT_CODE_BLOCK" },
-    { 1, ms_transition_table_+95, "RETURN default_value" },
-    { 2, ms_transition_table_+96, "START at_least_zero_newlines                                       \nrule 17: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 18: at_least_zero_newlines <- .                               " },
-    { 2, ms_transition_table_+98, "RETURN at_least_zero_newlines                                      \nrule 17: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE" },
-    { 3, ms_transition_table_+100, "START at_least_one_newline                                     \nrule 19: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 20: at_least_one_newline <- . NEWLINE                     " },
-    { 2, ms_transition_table_+103, "RETURN at_least_one_newline                                    \nrule 19: at_least_one_newline <- at_least_one_newline . NEWLINE" }
-};
-std::size_t const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
-
-Parser::Transition_ const Parser::ms_transition_table_[] =
-{
-    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+0 },
-    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+0 },
-    { Parser::Transition_::SHIFT, 2, 1, ms_lookahead_table_+1 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+2 },
-    { Parser::Transition_::REDUCE, 3, 0, ms_lookahead_table_+2 },
-    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+2 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+3 },
-    { Parser::Transition_::REDUCE, 17, 0, ms_lookahead_table_+4 },
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+4 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+4 },
-    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+5 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+6 },
-    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+7 },
-    { Parser::Transition_::SHIFT, 28, 1, ms_lookahead_table_+8 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+9 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+9 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+10 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+10 },
-    { Parser::Transition_::REDUCE, 4, 0, ms_lookahead_table_+11 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+11 },
-    { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+11 },
-    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+12 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+12 },
-    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+13 },
-    { Parser::Transition_::SHIFT, 12, 1, ms_lookahead_table_+14 },
-    { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+15 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+16 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+17 },
-    { Parser::Transition_::REDUCE, 9, 0, ms_lookahead_table_+17 },
-    { Parser::Transition_::REDUCE, 12, 0, ms_lookahead_table_+17 },
-    { Parser::Transition_::REDUCE, 10, 0, ms_lookahead_table_+17 },
-    { Parser::Transition_::REDUCE, 5, 0, ms_lookahead_table_+17 },
-    { Parser::Transition_::SHIFT, 15, 1, ms_lookahead_table_+17 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+18 },
-    { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+18 },
-    { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+19 },
-    { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+20 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+21 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+22 },
-    { Parser::Transition_::REDUCE, 15, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::REDUCE, 13, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::REDUCE, 14, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::REDUCE, 6, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+23 },
-    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+23 },
-    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+24 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+24 },
-    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+25 },
-    { Parser::Transition_::SHIFT, 12, 1, ms_lookahead_table_+26 },
-    { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+27 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+28 },
-    { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+29 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+29 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+29 },
-    { Parser::Transition_::SHIFT, 26, 1, ms_lookahead_table_+30 },
-    { Parser::Transition_::REDUCE, 20, 0, ms_lookahead_table_+31 },
-    { Parser::Transition_::REDUCE, 1, 0, ms_lookahead_table_+31 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+31 },
-    { Parser::Transition_::REDUCE, 19, 0, ms_lookahead_table_+32 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+32 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+32 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+33 },
-    { Parser::Transition_::REDUCE, 2, 0, ms_lookahead_table_+34 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+34 },
-    { Parser::Transition_::REDUCE, 3, 0, ms_lookahead_table_+35 },
-    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+35 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+36 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+36 },
-    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+37 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+38 },
-    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+39 },
-    { Parser::Transition_::SHIFT, 28, 1, ms_lookahead_table_+40 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+41 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+41 },
-    { Parser::Transition_::SHIFT, 33, 1, ms_lookahead_table_+42 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+43 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+43 },
-    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+43 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+44 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+45 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+46 },
-    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+46 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+46 },
-    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+47 },
-    { Parser::Transition_::SHIFT, 12, 1, ms_lookahead_table_+48 },
-    { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+49 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+50 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+51 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+51 },
-    { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+51 },
-    { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+52 },
-    { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+53 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+54 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+55 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+56 },
-    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+56 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+56 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+57 },
-    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+57 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+58 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+58 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+59 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+60 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+60 }
-};
-std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
-
-Parser::Token::Id const Parser::ms_lookahead_table_[] =
-{
-    Parser::Nonterminal::root,
-    Parser::Nonterminal::at_least_zero_newlines,
-    Parser::Terminal::NEWLINE,
-    Parser::Nonterminal::directives,
-    Parser::Terminal::DIRECTIVE_ADD_CODESPEC,
-    Parser::Terminal::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
-    Parser::Terminal::DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
-    Parser::Nonterminal::add_codespec,
-    Parser::Nonterminal::add_directive,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::ID,
-    Parser::Terminal::ID,
-    Parser::Terminal::DIRECTIVE_DUMB_CODE_BLOCK,
-    Parser::Terminal::DIRECTIVE_ID,
-    Parser::Terminal::DIRECTIVE_STRICT_CODE_BLOCK,
-    Parser::Terminal::DIRECTIVE_STRING,
-    Parser::Nonterminal::param_spec,
-    Parser::Terminal::DIRECTIVE_DEFAULT,
-    Parser::Terminal::DUMB_CODE_BLOCK,
-    Parser::Terminal::ID,
-    Parser::Terminal::STRICT_CODE_BLOCK,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Nonterminal::default_value,
-    Parser::Terminal::ID,
-    Parser::Terminal::DIRECTIVE_DUMB_CODE_BLOCK,
-    Parser::Terminal::DIRECTIVE_ID,
-    Parser::Terminal::DIRECTIVE_STRICT_CODE_BLOCK,
-    Parser::Terminal::DIRECTIVE_STRING,
-    Parser::Nonterminal::param_spec,
-    Parser::Terminal::NEWLINE,
-    Parser::Nonterminal::at_least_one_newline,
-    Parser::Terminal::NEWLINE,
-    Parser::Terminal::NEWLINE,
-    Parser::Nonterminal::at_least_one_newline,
-    Parser::Terminal::NEWLINE,
-    Parser::Nonterminal::directives,
-    Parser::Terminal::DIRECTIVE_ADD_CODESPEC,
-    Parser::Terminal::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
-    Parser::Terminal::DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
-    Parser::Nonterminal::add_codespec,
-    Parser::Nonterminal::add_directive,
-    Parser::Terminal::DIRECTIVE_ADD_CODESPEC,
-    Parser::Nonterminal::add_codespec,
-    Parser::Terminal::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
-    Parser::Terminal::DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
-    Parser::Nonterminal::add_directive,
-    Parser::Terminal::DIRECTIVE_DUMB_CODE_BLOCK,
-    Parser::Terminal::DIRECTIVE_ID,
-    Parser::Terminal::DIRECTIVE_STRICT_CODE_BLOCK,
-    Parser::Terminal::DIRECTIVE_STRING,
-    Parser::Nonterminal::param_spec,
-    Parser::Terminal::DUMB_CODE_BLOCK,
-    Parser::Terminal::ID,
-    Parser::Terminal::STRICT_CODE_BLOCK,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Nonterminal::default_value,
-    Parser::Nonterminal::at_least_zero_newlines,
-    Parser::Terminal::NEWLINE,
-    Parser::Terminal::NEWLINE,
-    Parser::Nonterminal::at_least_one_newline,
-    Parser::Terminal::NEWLINE
-};
-std::size_t const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
 
 char const *const Parser::ms_token_name_table_[] =
 {
@@ -1521,6 +421,1106 @@ char const *const Parser::ms_token_name_table_[] =
 };
 std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
 
+
+std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
+{
+    switch (nonterminal)
+    {
+        case Nonterminal::add_codespec: return 32;
+        case Nonterminal::add_directive: return 34;
+        case Nonterminal::at_least_one_newline: return 42;
+        case Nonterminal::at_least_zero_newlines: return 40;
+        case Nonterminal::default_value: return 38;
+        case Nonterminal::directives: return 30;
+        case Nonterminal::param_spec: return 36;
+        case Nonterminal::root: return 0;
+        default: assert(false && "invalid nonterminal"); return 0;
+    }
+}
+
+Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
+{
+    assert(return_token != NULL && "the return-token pointer must be non-NULL");
+
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 449 "barf_targetspec_parser.cpp"
+ << " starting parse" << std::endl)
+
+    ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
+    *return_token = NULL;
+
+    // make sure all our structures are empty and variables initialized.
+    // we don't clear the lookahead queue here because we might want to
+    // parse multiple times from the same input, and the lookahead queue
+    // could have the next few tokens in it.
+    ClearStack_();
+    m_is_in_error_panic_ = false;
+
+    // push the initial state of the DPDA.
+    std::uint32_t nonterminal_start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
+    m_stack_.push_back(StackElement_(nonterminal_start_state_index, Token(Nonterminal::none_, NULL)));
+    // main parser loop
+    while (true)
+    {
+        if (m_is_in_error_panic_)
+        {
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 473 "barf_targetspec_parser.cpp"
+ << " begin error panic" << std::endl)
+
+            while (true)
+            {
+                // get the current state (top of the stack)
+                assert(!m_stack_.empty());
+                std::uint32_t current_state_index = m_stack_.back().m_state_index;
+                assert(current_state_index < ms_state_count_);
+                State_ const &current_state = ms_state_table_[current_state_index];
+                TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
+
+                // check if the current state accepts ERROR_ (only need to check the
+                // non-default transitions, since the default transition can't be a shift).
+                bool accepts_error = false;
+                for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
+                                       *transition_end = current_state.m_transition_table+current_state.m_transition_count;
+                     transition != transition_end;
+                     ++transition)
+                {
+                    if (transition->m_type == Transition_::SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
+                    {
+                        accepts_error = true;
+                        break;
+                    }
+                }
+
+                if (accepts_error)
+                {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 505 "barf_targetspec_parser.cpp"
+ << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
+                    // if the current state accepts error, then we check if the lookahead token
+                    // is Terminal::END_.  if it is, then we add a dummy Terminal::ERROR_ token
+                    // in before it (since %error can't accept END_).  otherwise, we throw away
+                    // the lookahead token, then clear the thrown-away token data, and set the
+                    // token id to ERROR_.
+                    assert(!m_lookahead_queue_.empty());
+                    if (m_lookahead_queue_[0].m_id == Terminal::END_)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 518 "barf_targetspec_parser.cpp"
+ << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
+                        m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
+                    }
+                    else
+                        ThrowAwayToken_(m_lookahead_queue_[0]);
+                    m_lookahead_queue_[0].m_id = Terminal::ERROR_;
+                    m_lookahead_queue_[0].m_data = NULL;
+                    m_is_in_error_panic_ = false;
+                    break;
+                }
+                else
+                {
+                    if (m_stack_.size() > 1)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 536 "barf_targetspec_parser.cpp"
+ << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
+                    }
+                    else
+                    {
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 544 "barf_targetspec_parser.cpp"
+ << " end error panic; abort (stack is empty)" << std::endl)
+                    }
+                    // otherwise throw away the data at the top of the stack, and pop the stack.
+                    // then if the stack is empty, an unhandled parse error occurred.
+                    ThrowAwayStackElement_(m_stack_.back());
+                    m_stack_.resize(m_stack_.size()-1);
+                    if (m_stack_.empty())
+                    {
+                        // parser_return_code_ and return_token are already appropriately
+                        // set, so just break out of the inner loop.
+                        break;
+                    }
+                }
+            }
+
+            // if we're still in error panic, then this indicates that we bottomed-
+            // out the stack and it's an unhandled parse error, so break from the
+            // main loop.
+            if (m_is_in_error_panic_)
+                break;
+        }
+        else // !m_is_in_error_panic_
+        {
+            // get the current state (top of the stack)
+            assert(!m_stack_.empty());
+            std::uint32_t current_state_index = m_stack_.back().m_state_index;
+            assert(current_state_index < ms_state_count_);
+            State_ const &current_state = ms_state_table_[current_state_index];
+            TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
+
+            // TODO -- binary search for faster transition matching?
+
+            // loop through the current state's transitions and see if any match
+            bool transition_exercised = false;
+            std::uint32_t tested_lookahead_count = 0;
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 583 "barf_targetspec_parser.cpp"
+ << " current transitions:" << std::endl)
+            for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
+                                   *transition_end = current_state.m_transition_table+current_state.m_transition_count;
+                transition != transition_end;
+                ++transition)
+            {
+                // the non-default transitions can only be REDUCE or SHIFT
+                assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
+
+                // make sure enough lookaheads are in the queue (this must be done before
+                // checking if the lookaheads match because otherwise the debug-spew printing will
+                // be interrupted by the debug-spew printing that happens in the call to Looahead_).
+                if (transition->m_lookahead_count > 0)
+                    Lookahead_(transition->m_lookahead_count - 1);
+
+                // check if the lookaheads match those of this transition.
+                bool lookahead_sequence_matched = true;
+                TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 604 "barf_targetspec_parser.cpp"
+ << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
+                for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
+                {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << ms_token_name_table_[transition->m_lookahead_sequence[i]])
+                    if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
+                    {
+                        lookahead_sequence_matched = false;
+                        break;
+                    }
+                    else
+                    {
+                        if (i+1 > tested_lookahead_count)
+                            tested_lookahead_count = i+1;
+                    }
+                }
+                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
+
+                // if all the lookaheads matched, then exercise this transition,
+                // and break out of this inner (transition) loop.
+                if (lookahead_sequence_matched)
+                {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 629 "barf_targetspec_parser.cpp"
+ << " currently usable lookahead(s):")
+                    for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
+                    }
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
+
+                    ExerciseTransition_(*transition);
+                    transition_exercised = true;
+                    break;
+                }
+            }
+
+            // if no transition was exercised, then exercise the default transition
+            if (!transition_exercised)
+            {
+                TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 649 "barf_targetspec_parser.cpp"
+ << " currently usable lookahead(s):")
+                for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
+                {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
+                }
+                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
+
+                TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 660 "barf_targetspec_parser.cpp"
+ << " exercising default transition" << std::endl)
+                // exercise the default transition.  a return value of true indicates
+                // that the parser should return.
+                if (ExerciseTransition_(*current_state.m_transition_table))
+                {
+                    // the token (data) on the top of the stack is the return token.
+                    // set parser_return_code_ and assign the top stack token data to
+                    // *return_token and then break out of the main parser loop.
+                    assert(m_stack_[0].m_state_index == nonterminal_start_state_index);
+                    assert(m_stack_.size() == 2);
+                    parser_return_code_ = PRC_SUCCESS;
+                    *return_token = m_stack_.back().m_token.m_data;
+                    // take the return token out of the stack, so it's not thrown away
+                    // when we clear the stack later.
+                    m_stack_.back().m_token.m_data = NULL;
+                    break;
+                }
+            }
+        }
+    }
+
+    // clear the stack, because we won't need it for the next parse.
+    // we don't clear the lookahead queue here because we might want to
+    // parse multiple times from the same input, and the lookahead queue
+    // could have the next few tokens in it.
+    ClearStack_();
+
+    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 691 "barf_targetspec_parser.cpp"
+ << " Parse() is returning PRC_SUCCESS" << std::endl)
+    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 696 "barf_targetspec_parser.cpp"
+ << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
+
+    return parser_return_code_;
+}
+
+void Parser::ThrowAwayToken_ (Token &token_) throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 707 "barf_targetspec_parser.cpp"
+ << " executing throw-away-token actions on token " << token_ << std::endl)
+
+    ThrowAwayTokenData_(token_.m_data);
+}
+
+void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 718 "barf_targetspec_parser.cpp"
+ << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
+
+    ThrowAwayTokenData_(stack_element_.m_token.m_data);
+}
+
+void Parser::ThrowAwayTokenData_ (Ast::Base * &token_data) throw()
+{
+
+#line 103 "barf_targetspec_parser.trison"
+
+    delete token_data;
+
+#line 731 "barf_targetspec_parser.cpp"
+}
+
+Parser::Token Parser::Scan_ () throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 739 "barf_targetspec_parser.cpp"
+ << " executing scan actions" << std::endl)
+
+
+#line 106 "barf_targetspec_parser.trison"
+
+    Ast::Base *lookahead_token_data = NULL;
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(lookahead_token_data);
+    assert(scanner_token_type >= 0);
+    if (scanner_token_type < 0x100)
+        return Token(scanner_token_type);
+    switch (scanner_token_type)
+    {
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                  return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::BAD_TOKEN:                        return Token(Terminal::BAD_TOKEN, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:           return Token(Terminal::DIRECTIVE_ADD_CODESPEC, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE: return Token(Terminal::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE: return Token(Terminal::DIRECTIVE_ADD_REQUIRED_DIRECTIVE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:                return Token(Terminal::DIRECTIVE_DEFAULT, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:        return Token(Terminal::DIRECTIVE_DUMB_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_ID:                     return Token(Terminal::DIRECTIVE_ID, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:      return Token(Terminal::DIRECTIVE_STRICT_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_STRING:                 return Token(Terminal::DIRECTIVE_STRING, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                 return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                  return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_OF_FILE:                      return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::ID:                               return Token(Terminal::ID, lookahead_token_data);
+        case CommonLang::Scanner::Token::NEWLINE:                          return Token(Terminal::NEWLINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRING_LITERAL:                   return Token(Terminal::STRING_LITERAL, lookahead_token_data);
+
+        case CommonLang::Scanner::Token::CHAR_LITERAL:
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:
+        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
+        case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:
+        case CommonLang::Scanner::Token::DIRECTIVE_PREC:
+        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE:
+        case CommonLang::Scanner::Token::DIRECTIVE_STATE_MACHINE:
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:
+        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:
+        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:
+        case CommonLang::Scanner::Token::END_PREAMBLE:
+        case CommonLang::Scanner::Token::REGEX:
+            assert(lookahead_token_data != NULL);
+            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
+            delete lookahead_token_data;
+            lookahead_token_data = NULL;
+            return Token(Terminal::BAD_TOKEN);
+
+        default:
+            assert(false && "this should never happen");
+            return Token(Terminal::BAD_TOKEN);
+    }
+
+#line 794 "barf_targetspec_parser.cpp"
+}
+
+void Parser::ClearStack_ () throw()
+{
+    if (m_stack_.empty())
+        return; // nothing to do
+
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 805 "barf_targetspec_parser.cpp"
+ << " clearing the stack" << std::endl)
+
+    Stack_::iterator it = m_stack_.begin();
+    Stack_::iterator it_end = m_stack_.end();
+    // skip the bottom of the stack, since it
+    // contains the start state and no token data.
+    ++it;
+    for ( ; it != it_end; ++it)
+        ThrowAwayStackElement_(*it);
+    m_stack_.clear();
+}
+
+void Parser::ClearLookaheadQueue_ () throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 823 "barf_targetspec_parser.cpp"
+ << " clearing the lookahead queue" << std::endl)
+
+    for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
+        ThrowAwayToken_(*it);
+    m_lookahead_queue_.clear();
+}
+
+Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw()
+{
+    while (index >= m_lookahead_queue_.size())
+    {
+        m_lookahead_queue_.push_back(Scan_());
+
+        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 840 "barf_targetspec_parser.cpp"
+ << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
+    }
+    return m_lookahead_queue_[index];
+}
+
+bool Parser::ExerciseTransition_ (Transition_ const &transition)
+{
+    switch (transition.m_type)
+    {
+        case Transition_::REDUCE:
+        {
+            // execute the indicated reduction rule, push the returned Token
+            // onto the front of the lookahead queue, then pop the corresponding
+            // number of stack elements.
+            assert(transition.m_data < ms_rule_count_);
+            Rule_ const &rule = ms_rule_table_[transition.m_data];
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 860 "barf_targetspec_parser.cpp"
+ << " REDUCE " << rule.m_description << std::endl)
+            assert(m_stack_.size() > rule.m_token_count);
+            m_lookahead_queue_.push_front(
+                Token(
+                    rule.m_reduction_nonterminal_token_id,
+                    ExecuteReductionRule_(transition.m_data)));
+            m_stack_.resize(m_stack_.size() - rule.m_token_count);
+            assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 872 "barf_targetspec_parser.cpp"
+ << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 877 "barf_targetspec_parser.cpp"
+ << std::endl)
+            return false; // indicating the parser isn't returning
+        }
+
+        case Transition_::RETURN:
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 886 "barf_targetspec_parser.cpp"
+ << " RETURN" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 891 "barf_targetspec_parser.cpp"
+ << std::endl)
+            return true; // indicating the parser is returning
+
+        case Transition_::SHIFT:
+            // push the state (indicated by the shift transition) and token data
+            // onto the stack, then pop the corresponding lookahead.
+            assert(transition.m_data < ms_state_count_);
+            assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
+                                                               // client error, so asserting here is ok.
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 904 "barf_targetspec_parser.cpp"
+ << " SHIFT " << Lookahead_(0) << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 909 "barf_targetspec_parser.cpp"
+ << std::endl)
+            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
+            m_lookahead_queue_.pop_front();
+            return false; // indicating the parser isn't returning
+
+        case Transition_::ERROR_PANIC:
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 919 "barf_targetspec_parser.cpp"
+ << " ERROR_PANIC" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 924 "barf_targetspec_parser.cpp"
+ << std::endl)
+            m_is_in_error_panic_ = true;
+            return false; // indicating the parser isn't returning
+
+        default:
+            assert(false && "invalid transition type (bad state machine, or memory corruption)");
+            return false; // indicating the parser isn't returning
+    }
+}
+
+Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_) throw()
+{
+    assert(rule_index_ < ms_rule_count_);
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 941 "barf_targetspec_parser.cpp"
+ << " executing reduction rule " << rule_index_ << std::endl)
+    switch (rule_index_)
+    {
+        default:
+            assert(false && "this should never happen");
+            return NULL;
+
+        case 0:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 190 "barf_targetspec_parser.trison"
+
+        assert(m_add_codespec_list != NULL);
+        assert(m_add_directive_map != NULL);
+        return new Specification(
+            new Ast::Id(m_target_id, FiLoc::ms_invalid),
+            m_add_codespec_list,
+            m_add_directive_map);
+    
+#line 962 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 1:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 206 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 972 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 2:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 208 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 982 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 3:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 210 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 992 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 4:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::String * filename(Dsc<Ast::String *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::Id * filename_directive_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 216 "barf_targetspec_parser.trison"
+
+        assert(m_add_codespec_list != NULL);
+        assert(m_add_directive_map != NULL);
+        AddDirective *add_directive = m_add_directive_map->Element(filename_directive_id->GetText());
+        if (add_directive == NULL)
+            EmitError("undeclared directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive", throwaway->GetFiLoc());
+        if (add_directive == NULL || !add_directive->IsRequired() || add_directive->m_param_type != Ast::AST_STRING)
+            EmitError("directive id \"" + filename_directive_id->GetText() + "\" in add_codespec directive must refer to a required directive accepting param type %string", throwaway->GetFiLoc());
+        if (filename->GetText().find_first_of(DIRECTORY_SLASH_STRING) != string::npos)
+            EmitError("filename portion \"" + filename->GetText() + "\" of %add_codespec directive may not contain slash (directory-delimiting) characters", throwaway->GetFiLoc());
+        m_add_codespec_list->Append(new AddCodespec(filename, filename_directive_id));
+        delete throwaway;
+        return NULL;
+    
+#line 1018 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 5:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * directive_to_add_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            ParamType * param_type(Dsc<ParamType *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 235 "barf_targetspec_parser.trison"
+
+        assert(m_add_directive_map != NULL);
+        m_add_directive_map->Add(
+            directive_to_add_id->GetText(),
+            new AddOptionalDirective(directive_to_add_id, param_type->m_param_type, NULL));
+        delete throwaway;
+        delete param_type;
+        return NULL;
+    
+#line 1039 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 6:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway1(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Ast::Id * directive_to_add_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            ParamType * param_type(Dsc<ParamType *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::ThrowAway * throwaway2(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::TextBase * default_value(Dsc<Ast::TextBase *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 246 "barf_targetspec_parser.trison"
+
+        assert(m_add_directive_map != NULL);
+        AddDirective *directive =
+            new AddOptionalDirective(
+                directive_to_add_id,
+                param_type->m_param_type, default_value);
+        m_add_directive_map->Add(
+            directive_to_add_id->GetText(),
+            directive);
+        if (param_type->m_param_type != default_value->GetAstType())
+            EmitError(
+                "type mismatch for default value for directive " + directive->DirectiveString() +
+                "; was expecting type " + Ast::TextBase::DirectiveTypeString(param_type->m_param_type) +
+                " but got type " + Ast::TextBase::DirectiveTypeString(default_value->GetAstType()),
+                throwaway1->GetFiLoc());
+        delete throwaway1;
+        delete param_type;
+        delete throwaway2;
+        return NULL;
+    
+#line 1073 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 7:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * directive_to_add_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            ParamType * param_type(Dsc<ParamType *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 268 "barf_targetspec_parser.trison"
+
+        assert(m_add_directive_map != NULL);
+        m_add_directive_map->Add(
+            directive_to_add_id->GetText(),
+            new AddRequiredDirective(directive_to_add_id, param_type->m_param_type));
+        delete throwaway;
+        delete param_type;
+        return NULL;
+    
+#line 1094 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 8:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 282 "barf_targetspec_parser.trison"
+
+        return new ParamType(Ast::AST_NONE);
+    
+#line 1106 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 9:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Base * throwaway(m_stack_[m_stack_.size()-1].m_token.m_data);
+
+#line 287 "barf_targetspec_parser.trison"
+
+        delete throwaway;
+        return new ParamType(Ast::AST_ID);
+    
+#line 1120 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 10:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Base * throwaway(m_stack_[m_stack_.size()-1].m_token.m_data);
+
+#line 293 "barf_targetspec_parser.trison"
+
+        delete throwaway;
+        return new ParamType(Ast::AST_STRING);
+    
+#line 1134 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 11:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Base * throwaway(m_stack_[m_stack_.size()-1].m_token.m_data);
+
+#line 299 "barf_targetspec_parser.trison"
+
+        delete throwaway;
+        return new ParamType(Ast::AST_DUMB_CODE_BLOCK);
+    
+#line 1148 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 12:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Base * throwaway(m_stack_[m_stack_.size()-1].m_token.m_data);
+
+#line 305 "barf_targetspec_parser.trison"
+
+        delete throwaway;
+        return new ParamType(Ast::AST_STRICT_CODE_BLOCK);
+    
+#line 1162 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 13:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Id * value(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 313 "barf_targetspec_parser.trison"
+ return value; 
+#line 1173 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 14:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::String * value(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 314 "barf_targetspec_parser.trison"
+ return value; 
+#line 1184 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 15:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 315 "barf_targetspec_parser.trison"
+ return value; 
+#line 1195 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 16:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 316 "barf_targetspec_parser.trison"
+ return value; 
+#line 1206 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 17:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 325 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 1216 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 18:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 327 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 1226 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 19:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 332 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 1236 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+        case 20:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 334 "barf_targetspec_parser.trison"
+ return NULL; 
+#line 1246 "barf_targetspec_parser.cpp"
+            break;
+        }
+
+    }
+
+    assert(false && "no value returned from reduction rule code block");
+    return NULL;
+}
+
+void Parser::PrintParserStatus_ (std::ostream &stream) const
+{
+    assert(!m_stack_.empty());
+
+    stream << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1263 "barf_targetspec_parser.cpp"
+ << " parser state stack: ";
+    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
+    {
+        stream << it->m_state_index;
+        Stack_::const_iterator next_it = it;
+        if (++next_it != it_end)
+            stream << ' ';
+    }
+    stream << std::endl;
+
+    assert(m_stack_.size() >= 1);
+    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal::none_));
+    stream << 
+#line 159 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1279 "barf_targetspec_parser.cpp"
+ << " parser stack tokens . lookahead queue: ";
+    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
+    {
+        // the first token is always Nonterminal::none_, which doesn't correspond to a real token, so skip it.
+        if (it == m_stack_.begin())
+            continue;
+        stream << it->m_token << ' ';
+    }
+    stream << '.';
+    for (LookaheadQueue_::const_iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
+    {
+        Token const &lookahead_token = *it;
+        assert(lookahead_token.m_id < ms_token_name_count_ && "Token id out of range");
+        stream << ' ' << lookahead_token;
+    }
+    stream << std::endl;
+
+    PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
+    stream << std::endl;
+}
+
+Parser::State_ const Parser::ms_state_table_[] =
+{
+    { 3, ms_transition_table_+0, "START root                                                         \nrule 0: root <- . at_least_zero_newlines directives                \nrule 17: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 18: at_least_zero_newlines <- .                               " },
+    { 1, ms_transition_table_+3, "RETURN root" },
+    { 3, ms_transition_table_+4, "rule 0: root <- at_least_zero_newlines . directives                  \nrule 17: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE  \nrule 1: directives <- . directives add_codespec at_least_one_newline \nrule 2: directives <- . directives add_directive at_least_one_newline\nrule 3: directives <- .                                              " },
+    { 1, ms_transition_table_+7, "rule 17: at_least_zero_newlines <- at_least_zero_newlines NEWLINE ." },
+    { 6, ms_transition_table_+8, "rule 0: root <- at_least_zero_newlines directives .                                                      \nrule 1: directives <- directives . add_codespec at_least_one_newline                                     \nrule 4: add_codespec <- . DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID                                       \nrule 2: directives <- directives . add_directive at_least_one_newline                                    \nrule 5: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec                                \nrule 6: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value\nrule 7: add_directive <- . DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec                                " },
+    { 2, ms_transition_table_+14, "rule 4: add_codespec <- DIRECTIVE_ADD_CODESPEC . STRING_LITERAL ID" },
+    { 2, ms_transition_table_+16, "rule 4: add_codespec <- DIRECTIVE_ADD_CODESPEC STRING_LITERAL . ID" },
+    { 1, ms_transition_table_+18, "rule 4: add_codespec <- DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID ." },
+    { 2, ms_transition_table_+19, "rule 5: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE . ID param_spec                                \nrule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE . ID param_spec DIRECTIVE_DEFAULT default_value" },
+    { 6, ms_transition_table_+21, "rule 5: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID . param_spec                                \nrule 8: param_spec <- .                                                                                  \nrule 9: param_spec <- . DIRECTIVE_ID                                                                     \nrule 10: param_spec <- . DIRECTIVE_STRING                                                                \nrule 11: param_spec <- . DIRECTIVE_DUMB_CODE_BLOCK                                                       \nrule 12: param_spec <- . DIRECTIVE_STRICT_CODE_BLOCK                                                     \nrule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID . param_spec DIRECTIVE_DEFAULT default_value" },
+    { 1, ms_transition_table_+27, "rule 11: param_spec <- DIRECTIVE_DUMB_CODE_BLOCK ." },
+    { 1, ms_transition_table_+28, "rule 9: param_spec <- DIRECTIVE_ID ." },
+    { 1, ms_transition_table_+29, "rule 12: param_spec <- DIRECTIVE_STRICT_CODE_BLOCK ." },
+    { 1, ms_transition_table_+30, "rule 10: param_spec <- DIRECTIVE_STRING ." },
+    { 2, ms_transition_table_+31, "rule 5: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec .                                \nrule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec . DIRECTIVE_DEFAULT default_value" },
+    { 6, ms_transition_table_+33, "rule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT . default_value\nrule 13: default_value <- . ID                                                                           \nrule 14: default_value <- . STRING_LITERAL                                                               \nrule 15: default_value <- . DUMB_CODE_BLOCK                                                              \nrule 16: default_value <- . STRICT_CODE_BLOCK                                                            " },
+    { 1, ms_transition_table_+39, "rule 15: default_value <- DUMB_CODE_BLOCK ." },
+    { 1, ms_transition_table_+40, "rule 13: default_value <- ID ." },
+    { 1, ms_transition_table_+41, "rule 16: default_value <- STRICT_CODE_BLOCK ." },
+    { 1, ms_transition_table_+42, "rule 14: default_value <- STRING_LITERAL ." },
+    { 1, ms_transition_table_+43, "rule 6: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value ." },
+    { 2, ms_transition_table_+44, "rule 7: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE . ID param_spec" },
+    { 6, ms_transition_table_+46, "rule 8: param_spec <- .                                                  \nrule 9: param_spec <- . DIRECTIVE_ID                                     \nrule 10: param_spec <- . DIRECTIVE_STRING                                \nrule 11: param_spec <- . DIRECTIVE_DUMB_CODE_BLOCK                       \nrule 12: param_spec <- . DIRECTIVE_STRICT_CODE_BLOCK                     \nrule 7: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID . param_spec" },
+    { 1, ms_transition_table_+52, "rule 7: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec ." },
+    { 3, ms_transition_table_+53, "rule 1: directives <- directives add_codespec . at_least_one_newline\nrule 19: at_least_one_newline <- . at_least_one_newline NEWLINE     \nrule 20: at_least_one_newline <- . NEWLINE                          " },
+    { 1, ms_transition_table_+56, "rule 20: at_least_one_newline <- NEWLINE ." },
+    { 2, ms_transition_table_+57, "rule 1: directives <- directives add_codespec at_least_one_newline .\nrule 19: at_least_one_newline <- at_least_one_newline . NEWLINE     " },
+    { 1, ms_transition_table_+59, "rule 19: at_least_one_newline <- at_least_one_newline NEWLINE ." },
+    { 3, ms_transition_table_+60, "rule 19: at_least_one_newline <- . at_least_one_newline NEWLINE      \nrule 20: at_least_one_newline <- . NEWLINE                           \nrule 2: directives <- directives add_directive . at_least_one_newline" },
+    { 2, ms_transition_table_+63, "rule 19: at_least_one_newline <- at_least_one_newline . NEWLINE      \nrule 2: directives <- directives add_directive at_least_one_newline ." },
+    { 2, ms_transition_table_+65, "START directives                                                     \nrule 1: directives <- . directives add_codespec at_least_one_newline \nrule 2: directives <- . directives add_directive at_least_one_newline\nrule 3: directives <- .                                              " },
+    { 6, ms_transition_table_+67, "RETURN directives                                                                                        \nrule 1: directives <- directives . add_codespec at_least_one_newline                                     \nrule 4: add_codespec <- . DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID                                       \nrule 2: directives <- directives . add_directive at_least_one_newline                                    \nrule 5: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec                                \nrule 6: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value\nrule 7: add_directive <- . DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec                                " },
+    { 3, ms_transition_table_+73, "START add_codespec                                                \nrule 4: add_codespec <- . DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID" },
+    { 1, ms_transition_table_+76, "RETURN add_codespec" },
+    { 4, ms_transition_table_+77, "START add_directive                                                                                      \nrule 5: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec                                \nrule 6: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value\nrule 7: add_directive <- . DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec                                " },
+    { 1, ms_transition_table_+81, "RETURN add_directive" },
+    { 6, ms_transition_table_+82, "START param_spec                                    \nrule 8: param_spec <- .                             \nrule 9: param_spec <- . DIRECTIVE_ID                \nrule 10: param_spec <- . DIRECTIVE_STRING           \nrule 11: param_spec <- . DIRECTIVE_DUMB_CODE_BLOCK  \nrule 12: param_spec <- . DIRECTIVE_STRICT_CODE_BLOCK" },
+    { 1, ms_transition_table_+88, "RETURN param_spec" },
+    { 6, ms_transition_table_+89, "START default_value                          \nrule 13: default_value <- . ID               \nrule 14: default_value <- . STRING_LITERAL   \nrule 15: default_value <- . DUMB_CODE_BLOCK  \nrule 16: default_value <- . STRICT_CODE_BLOCK" },
+    { 1, ms_transition_table_+95, "RETURN default_value" },
+    { 2, ms_transition_table_+96, "START at_least_zero_newlines                                       \nrule 17: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 18: at_least_zero_newlines <- .                               " },
+    { 2, ms_transition_table_+98, "RETURN at_least_zero_newlines                                      \nrule 17: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE" },
+    { 3, ms_transition_table_+100, "START at_least_one_newline                                     \nrule 19: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 20: at_least_one_newline <- . NEWLINE                     " },
+    { 2, ms_transition_table_+103, "RETURN at_least_one_newline                                    \nrule 19: at_least_one_newline <- at_least_one_newline . NEWLINE" }
+};
+std::size_t const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
+
+Parser::Transition_ const Parser::ms_transition_table_[] =
+{
+    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+0 },
+    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+0 },
+    { Parser::Transition_::SHIFT, 2, 1, ms_lookahead_table_+1 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+2 },
+    { Parser::Transition_::REDUCE, 3, 0, ms_lookahead_table_+2 },
+    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+2 },
+    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+3 },
+    { Parser::Transition_::REDUCE, 17, 0, ms_lookahead_table_+4 },
+    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+4 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+4 },
+    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+5 },
+    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+6 },
+    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+7 },
+    { Parser::Transition_::SHIFT, 28, 1, ms_lookahead_table_+8 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+9 },
+    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+9 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+10 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+10 },
+    { Parser::Transition_::REDUCE, 4, 0, ms_lookahead_table_+11 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+11 },
+    { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+11 },
+    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+12 },
+    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+12 },
+    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+13 },
+    { Parser::Transition_::SHIFT, 12, 1, ms_lookahead_table_+14 },
+    { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+15 },
+    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+16 },
+    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+17 },
+    { Parser::Transition_::REDUCE, 9, 0, ms_lookahead_table_+17 },
+    { Parser::Transition_::REDUCE, 12, 0, ms_lookahead_table_+17 },
+    { Parser::Transition_::REDUCE, 10, 0, ms_lookahead_table_+17 },
+    { Parser::Transition_::REDUCE, 5, 0, ms_lookahead_table_+17 },
+    { Parser::Transition_::SHIFT, 15, 1, ms_lookahead_table_+17 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+18 },
+    { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+18 },
+    { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+19 },
+    { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+20 },
+    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+21 },
+    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+22 },
+    { Parser::Transition_::REDUCE, 15, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 13, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 14, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 6, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+23 },
+    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+23 },
+    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+24 },
+    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+24 },
+    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+25 },
+    { Parser::Transition_::SHIFT, 12, 1, ms_lookahead_table_+26 },
+    { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+27 },
+    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+28 },
+    { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+29 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+29 },
+    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+29 },
+    { Parser::Transition_::SHIFT, 26, 1, ms_lookahead_table_+30 },
+    { Parser::Transition_::REDUCE, 20, 0, ms_lookahead_table_+31 },
+    { Parser::Transition_::REDUCE, 1, 0, ms_lookahead_table_+31 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+31 },
+    { Parser::Transition_::REDUCE, 19, 0, ms_lookahead_table_+32 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+32 },
+    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+32 },
+    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+33 },
+    { Parser::Transition_::REDUCE, 2, 0, ms_lookahead_table_+34 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+34 },
+    { Parser::Transition_::REDUCE, 3, 0, ms_lookahead_table_+35 },
+    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+35 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+36 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+36 },
+    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+37 },
+    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+38 },
+    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+39 },
+    { Parser::Transition_::SHIFT, 28, 1, ms_lookahead_table_+40 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+41 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+41 },
+    { Parser::Transition_::SHIFT, 33, 1, ms_lookahead_table_+42 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+43 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+43 },
+    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+43 },
+    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+44 },
+    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+45 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+46 },
+    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+46 },
+    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+46 },
+    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+47 },
+    { Parser::Transition_::SHIFT, 12, 1, ms_lookahead_table_+48 },
+    { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+49 },
+    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+50 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+51 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+51 },
+    { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+51 },
+    { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+52 },
+    { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+53 },
+    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+54 },
+    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+55 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+56 },
+    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+56 },
+    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+56 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+57 },
+    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+57 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+58 },
+    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+58 },
+    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+59 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+60 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+60 }
+};
+std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
+
+Parser::Token::Id const Parser::ms_lookahead_table_[] =
+{
+    Parser::Nonterminal::root,
+    Parser::Nonterminal::at_least_zero_newlines,
+    Parser::Terminal::NEWLINE,
+    Parser::Nonterminal::directives,
+    Parser::Terminal::DIRECTIVE_ADD_CODESPEC,
+    Parser::Terminal::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
+    Parser::Terminal::DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
+    Parser::Nonterminal::add_codespec,
+    Parser::Nonterminal::add_directive,
+    Parser::Terminal::STRING_LITERAL,
+    Parser::Terminal::ID,
+    Parser::Terminal::ID,
+    Parser::Terminal::DIRECTIVE_DUMB_CODE_BLOCK,
+    Parser::Terminal::DIRECTIVE_ID,
+    Parser::Terminal::DIRECTIVE_STRICT_CODE_BLOCK,
+    Parser::Terminal::DIRECTIVE_STRING,
+    Parser::Nonterminal::param_spec,
+    Parser::Terminal::DIRECTIVE_DEFAULT,
+    Parser::Terminal::DUMB_CODE_BLOCK,
+    Parser::Terminal::ID,
+    Parser::Terminal::STRICT_CODE_BLOCK,
+    Parser::Terminal::STRING_LITERAL,
+    Parser::Nonterminal::default_value,
+    Parser::Terminal::ID,
+    Parser::Terminal::DIRECTIVE_DUMB_CODE_BLOCK,
+    Parser::Terminal::DIRECTIVE_ID,
+    Parser::Terminal::DIRECTIVE_STRICT_CODE_BLOCK,
+    Parser::Terminal::DIRECTIVE_STRING,
+    Parser::Nonterminal::param_spec,
+    Parser::Terminal::NEWLINE,
+    Parser::Nonterminal::at_least_one_newline,
+    Parser::Terminal::NEWLINE,
+    Parser::Terminal::NEWLINE,
+    Parser::Nonterminal::at_least_one_newline,
+    Parser::Terminal::NEWLINE,
+    Parser::Nonterminal::directives,
+    Parser::Terminal::DIRECTIVE_ADD_CODESPEC,
+    Parser::Terminal::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
+    Parser::Terminal::DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
+    Parser::Nonterminal::add_codespec,
+    Parser::Nonterminal::add_directive,
+    Parser::Terminal::DIRECTIVE_ADD_CODESPEC,
+    Parser::Nonterminal::add_codespec,
+    Parser::Terminal::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE,
+    Parser::Terminal::DIRECTIVE_ADD_REQUIRED_DIRECTIVE,
+    Parser::Nonterminal::add_directive,
+    Parser::Terminal::DIRECTIVE_DUMB_CODE_BLOCK,
+    Parser::Terminal::DIRECTIVE_ID,
+    Parser::Terminal::DIRECTIVE_STRICT_CODE_BLOCK,
+    Parser::Terminal::DIRECTIVE_STRING,
+    Parser::Nonterminal::param_spec,
+    Parser::Terminal::DUMB_CODE_BLOCK,
+    Parser::Terminal::ID,
+    Parser::Terminal::STRICT_CODE_BLOCK,
+    Parser::Terminal::STRING_LITERAL,
+    Parser::Nonterminal::default_value,
+    Parser::Nonterminal::at_least_zero_newlines,
+    Parser::Terminal::NEWLINE,
+    Parser::Terminal::NEWLINE,
+    Parser::Nonterminal::at_least_one_newline,
+    Parser::Terminal::NEWLINE
+};
+std::size_t const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
 // ///////////////////////////////////////////////////////////////////////

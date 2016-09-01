@@ -252,6 +252,13 @@ private:
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
+    struct Rule_
+    {
+        Token::Id m_reduction_nonterminal_token_id;
+        std::uint32_t m_token_count;
+        char const *m_description;
+    }; // end of struct Parser::Rule_
+
     struct Transition_;
 
     struct StackElement_
@@ -271,32 +278,6 @@ private:
         { }
     }; // end of struct Parser::StackElement_
 
-    typedef std::deque<StackElement_> Stack_;
-    typedef std::deque<Token> LookaheadQueue_;
-
-    static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
-    ParserReturnCode Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse);
-    void ThrowAwayToken_ (Token &token) throw();
-    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
-    void ThrowAwayTokenData_ (Ast::Base * &token_data) throw();
-    void ResetForNewInput_ () throw();
-    Token Scan_ () throw();
-    void ClearStack_ () throw();
-    void ClearLookaheadQueue_ () throw();
-    Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
-    bool ExerciseTransition_ (Transition_ const &transition);
-    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_) throw();
-    // debug spew methods
-    void PrintParserStatus_ (std::ostream &stream) const;
-    void PrintIndented_ (std::ostream &stream, char const *string) const;
-
-    struct Rule_
-    {
-        Token::Id m_reduction_nonterminal_token_id;
-        std::uint32_t m_token_count;
-        char const *m_description;
-    }; // end of struct Parser::Rule_
-
     struct State_
     {
         std::size_t const m_transition_count; // TODO: smallest int
@@ -313,27 +294,49 @@ private:
         Token::Id const *m_lookahead_sequence;
     }; // end of struct Parser::Transition_
 
-    Stack_ m_stack_;
-    LookaheadQueue_ m_lookahead_queue_;
-    bool m_is_in_error_panic_;
+    typedef std::deque<StackElement_> Stack_;
+    typedef std::deque<Token> LookaheadQueue_;
+
+    // debug spew methods
+    void PrintIndented_ (std::ostream &stream, char const *string) const;
+
     bool m_debug_spew_;
 
     static Rule_ const ms_rule_table_[];
     static std::size_t const ms_rule_count_;
+    static char const *const ms_token_name_table_[];
+    static std::size_t const ms_token_name_count_;
+
+    static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
+    ParserReturnCode Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse);
+    void ThrowAwayToken_ (Token &token) throw();
+    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
+    void ThrowAwayTokenData_ (Ast::Base * &token_data) throw();
+    void ResetForNewInput_ () throw();
+    Token Scan_ () throw();
+    void ClearStack_ () throw();
+    void ClearLookaheadQueue_ () throw();
+    Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
+    bool ExerciseTransition_ (Transition_ const &transition);
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_) throw();
+    // debug spew methods
+    void PrintParserStatus_ (std::ostream &stream) const;
+
+    Stack_ m_stack_;
+    LookaheadQueue_ m_lookahead_queue_;
+    bool m_is_in_error_panic_;
+
     static State_ const ms_state_table_[];
     static std::size_t const ms_state_count_;
     static Transition_ const ms_transition_table_[];
     static std::size_t const ms_transition_count_;
     static Token::Id const ms_lookahead_table_[];
     static std::size_t const ms_lookahead_count_;
-    static char const *const ms_token_name_table_[];
-    static std::size_t const ms_token_name_count_;
-
-    friend std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
-
     // ///////////////////////////////////////////////////////////////////////
     // end of internal trison-generated parser guts
     // ///////////////////////////////////////////////////////////////////////
+
+    friend std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 }; // end of class Parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
@@ -346,4 +349,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 350 "barf_targetspec_parser.hpp"
+#line 353 "barf_targetspec_parser.hpp"

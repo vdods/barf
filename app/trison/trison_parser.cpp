@@ -107,1730 +107,13 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::
 // begin internal trison-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
-{
-    switch (nonterminal)
-    {
-        case Nonterminal::any_type_of_code_block: return 154;
-        case Nonterminal::at_least_one_newline: return 148;
-        case Nonterminal::at_least_zero_newlines: return 146;
-        case Nonterminal::nonterminal: return 126;
-        case Nonterminal::nonterminal_specification: return 128;
-        case Nonterminal::nonterminals: return 124;
-        case Nonterminal::precedence_directive: return 120;
-        case Nonterminal::precedence_directives: return 118;
-        case Nonterminal::root: return 0;
-        case Nonterminal::rule: return 132;
-        case Nonterminal::rule_handler: return 138;
-        case Nonterminal::rule_handlers: return 136;
-        case Nonterminal::rule_precedence_directive: return 144;
-        case Nonterminal::rule_specification: return 134;
-        case Nonterminal::rule_token: return 142;
-        case Nonterminal::rule_token_list: return 140;
-        case Nonterminal::rules: return 130;
-        case Nonterminal::start_directive: return 122;
-        case Nonterminal::target_directive: return 108;
-        case Nonterminal::target_directive_param: return 110;
-        case Nonterminal::target_directives: return 106;
-        case Nonterminal::target_ids: return 104;
-        case Nonterminal::targets_directive: return 102;
-        case Nonterminal::terminal: return 152;
-        case Nonterminal::terminal_directive: return 114;
-        case Nonterminal::terminal_directives: return 112;
-        case Nonterminal::terminals: return 116;
-        case Nonterminal::token_id: return 150;
-        case Nonterminal::type_spec: return 156;
-        default: assert(false && "invalid nonterminal"); return 0;
-    }
-}
-
-Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
-{
-    assert(return_token != NULL && "the return-token pointer must be non-NULL");
-
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 155 "trison_parser.cpp"
- << " starting parse" << std::endl)
-
-    ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
-    *return_token = NULL;
-
-    // make sure all our structures are empty and variables initialized.
-    // we don't clear the lookahead queue here because we might want to
-    // parse multiple times from the same input, and the lookahead queue
-    // could have the next few tokens in it.
-    ClearStack_();
-    m_is_in_error_panic_ = false;
-
-    // push the initial state of the DPDA.
-    std::uint32_t nonterminal_start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
-    m_stack_.push_back(StackElement_(nonterminal_start_state_index, Token(Nonterminal::none_, NULL)));
-    // main parser loop
-    while (true)
-    {
-        if (m_is_in_error_panic_)
-        {
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 179 "trison_parser.cpp"
- << " begin error panic" << std::endl)
-
-            while (true)
-            {
-                // get the current state (top of the stack)
-                assert(!m_stack_.empty());
-                std::uint32_t current_state_index = m_stack_.back().m_state_index;
-                assert(current_state_index < ms_state_count_);
-                State_ const &current_state = ms_state_table_[current_state_index];
-                TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
-
-                // check if the current state accepts ERROR_ (only need to check the
-                // non-default transitions, since the default transition can't be a shift).
-                bool accepts_error = false;
-                for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
-                                       *transition_end = current_state.m_transition_table+current_state.m_transition_count;
-                     transition != transition_end;
-                     ++transition)
-                {
-                    if (transition->m_type == Transition_::SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
-                    {
-                        accepts_error = true;
-                        break;
-                    }
-                }
-
-                if (accepts_error)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 211 "trison_parser.cpp"
- << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
-                    // if the current state accepts error, then we check if the lookahead token
-                    // is Terminal::END_.  if it is, then we add a dummy Terminal::ERROR_ token
-                    // in before it (since %error can't accept END_).  otherwise, we throw away
-                    // the lookahead token, then clear the thrown-away token data, and set the
-                    // token id to ERROR_.
-                    assert(!m_lookahead_queue_.empty());
-                    if (m_lookahead_queue_[0].m_id == Terminal::END_)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 224 "trison_parser.cpp"
- << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
-                        m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
-                    }
-                    else
-                        ThrowAwayToken_(m_lookahead_queue_[0]);
-                    m_lookahead_queue_[0].m_id = Terminal::ERROR_;
-                    m_lookahead_queue_[0].m_data = NULL;
-                    m_is_in_error_panic_ = false;
-                    break;
-                }
-                else
-                {
-                    if (m_stack_.size() > 1)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 242 "trison_parser.cpp"
- << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
-                    }
-                    else
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 250 "trison_parser.cpp"
- << " end error panic; abort (stack is empty)" << std::endl)
-                    }
-                    // otherwise throw away the data at the top of the stack, and pop the stack.
-                    // then if the stack is empty, an unhandled parse error occurred.
-                    ThrowAwayStackElement_(m_stack_.back());
-                    m_stack_.resize(m_stack_.size()-1);
-                    if (m_stack_.empty())
-                    {
-                        // parser_return_code_ and return_token are already appropriately
-                        // set, so just break out of the inner loop.
-                        break;
-                    }
-                }
-            }
-
-            // if we're still in error panic, then this indicates that we bottomed-
-            // out the stack and it's an unhandled parse error, so break from the
-            // main loop.
-            if (m_is_in_error_panic_)
-                break;
-        }
-        else // !m_is_in_error_panic_
-        {
-            // get the current state (top of the stack)
-            assert(!m_stack_.empty());
-            std::uint32_t current_state_index = m_stack_.back().m_state_index;
-            assert(current_state_index < ms_state_count_);
-            State_ const &current_state = ms_state_table_[current_state_index];
-            TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
-
-            // TODO -- binary search for faster transition matching?
-
-            // loop through the current state's transitions and see if any match
-            bool transition_exercised = false;
-            std::uint32_t tested_lookahead_count = 0;
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 289 "trison_parser.cpp"
- << " current transitions:" << std::endl)
-            for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
-                                   *transition_end = current_state.m_transition_table+current_state.m_transition_count;
-                transition != transition_end;
-                ++transition)
-            {
-                // the non-default transitions can only be REDUCE or SHIFT
-                assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
-
-                // make sure enough lookaheads are in the queue (this must be done before
-                // checking if the lookaheads match because otherwise the debug-spew printing will
-                // be interrupted by the debug-spew printing that happens in the call to Looahead_).
-                if (transition->m_lookahead_count > 0)
-                    Lookahead_(transition->m_lookahead_count - 1);
-
-                // check if the lookaheads match those of this transition.
-                bool lookahead_sequence_matched = true;
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 310 "trison_parser.cpp"
- << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
-                for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << ms_token_name_table_[transition->m_lookahead_sequence[i]])
-                    if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
-                    {
-                        lookahead_sequence_matched = false;
-                        break;
-                    }
-                    else
-                    {
-                        if (i+1 > tested_lookahead_count)
-                            tested_lookahead_count = i+1;
-                    }
-                }
-                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                // if all the lookaheads matched, then exercise this transition,
-                // and break out of this inner (transition) loop.
-                if (lookahead_sequence_matched)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 335 "trison_parser.cpp"
- << " currently usable lookahead(s):")
-                    for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
-                    }
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                    ExerciseTransition_(*transition);
-                    transition_exercised = true;
-                    break;
-                }
-            }
-
-            // if no transition was exercised, then exercise the default transition
-            if (!transition_exercised)
-            {
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 355 "trison_parser.cpp"
- << " currently usable lookahead(s):")
-                for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
-                }
-                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 366 "trison_parser.cpp"
- << " exercising default transition" << std::endl)
-                // exercise the default transition.  a return value of true indicates
-                // that the parser should return.
-                if (ExerciseTransition_(*current_state.m_transition_table))
-                {
-                    // the token (data) on the top of the stack is the return token.
-                    // set parser_return_code_ and assign the top stack token data to
-                    // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == nonterminal_start_state_index);
-                    assert(m_stack_.size() == 2);
-                    parser_return_code_ = PRC_SUCCESS;
-                    *return_token = m_stack_.back().m_token.m_data;
-                    // take the return token out of the stack, so it's not thrown away
-                    // when we clear the stack later.
-                    m_stack_.back().m_token.m_data = NULL;
-                    break;
-                }
-            }
-        }
-    }
-
-    // clear the stack, because we won't need it for the next parse.
-    // we don't clear the lookahead queue here because we might want to
-    // parse multiple times from the same input, and the lookahead queue
-    // could have the next few tokens in it.
-    ClearStack_();
-
-    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 397 "trison_parser.cpp"
- << " Parse() is returning PRC_SUCCESS" << std::endl)
-    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 402 "trison_parser.cpp"
- << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
-
-    return parser_return_code_;
-}
-
-void Parser::ThrowAwayToken_ (Token &token_) throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 413 "trison_parser.cpp"
- << " executing throw-away-token actions on token " << token_ << std::endl)
-
-    ThrowAwayTokenData_(token_.m_data);
-}
-
-void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 424 "trison_parser.cpp"
- << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
-
-    ThrowAwayTokenData_(stack_element_.m_token.m_data);
-}
-
-void Parser::ThrowAwayTokenData_ (Ast::Base * &token_data) throw()
-{
-
-#line 152 "trison_parser.trison"
-
-    delete token_data;
-
-#line 437 "trison_parser.cpp"
-}
-
-Parser::Token Parser::Scan_ () throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 445 "trison_parser.cpp"
- << " executing scan actions" << std::endl)
-
-
-#line 155 "trison_parser.trison"
-
-    Ast::Base *lookahead_token_data = NULL;
-    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(lookahead_token_data);
-    assert(scanner_token_type >= 0);
-    if (scanner_token_type < 0x100)
-        return Token(Parser::Token::Id(scanner_token_type), lookahead_token_data);
-    switch (scanner_token_type)
-    {
-        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                     return Token(Terminal::END_, lookahead_token_data);
-        case CommonLang::Scanner::Token::BAD_TOKEN:                           return Token(Terminal::BAD_TOKEN, lookahead_token_data);
-        case CommonLang::Scanner::Token::CHAR_LITERAL:                        return Token(Terminal::CHAR_LITERAL, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Token(Terminal::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_END:                       return Token(Terminal::DIRECTIVE_END, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:                     return Token(Terminal::DIRECTIVE_ERROR, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:               return Token(Terminal::DIRECTIVE_NONTERMINAL, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_PREC:                      return Token(Terminal::DIRECTIVE_PREC, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                    return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                   return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:                  return Token(Terminal::DIRECTIVE_TERMINAL, lookahead_token_data);
-        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:                      return Token(Terminal::DIRECTIVE_TYPE, lookahead_token_data);
-        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                     return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::END_OF_FILE:                         return Token(Terminal::END_, lookahead_token_data);
-        case CommonLang::Scanner::Token::END_PREAMBLE:                        return Token(Terminal::END_PREAMBLE, lookahead_token_data);
-        case CommonLang::Scanner::Token::ID:                                  return Token(Terminal::ID, lookahead_token_data);
-        case CommonLang::Scanner::Token::NEWLINE:                             return Token(Terminal::NEWLINE, lookahead_token_data);
-        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                   return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
-        case CommonLang::Scanner::Token::STRING_LITERAL:                      return Token(Terminal::STRING_LITERAL, lookahead_token_data);
-
-        case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
-        case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
-        case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:
-        case CommonLang::Scanner::Token::DIRECTIVE_CASE_INSENSITIVE:
-        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:
-        case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:
-        case CommonLang::Scanner::Token::DIRECTIVE_ID:
-        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
-        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE:
-        case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
-        case CommonLang::Scanner::Token::DIRECTIVE_STRING:
-        case CommonLang::Scanner::Token::DIRECTIVE_UNGREEDY:
-        case CommonLang::Scanner::Token::REGEX:
-            assert(lookahead_token_data != NULL);
-            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
-            delete lookahead_token_data;
-            return Token(Terminal::BAD_TOKEN);
-
-        default:
-            assert(false && "this should never happen");
-            if (lookahead_token_data != NULL)
-                delete lookahead_token_data;
-            return Token(Terminal::BAD_TOKEN);
-    }
-
-#line 503 "trison_parser.cpp"
-}
-
-void Parser::ClearStack_ () throw()
-{
-    if (m_stack_.empty())
-        return; // nothing to do
-
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 514 "trison_parser.cpp"
- << " clearing the stack" << std::endl)
-
-    Stack_::iterator it = m_stack_.begin();
-    Stack_::iterator it_end = m_stack_.end();
-    // skip the bottom of the stack, since it
-    // contains the start state and no token data.
-    ++it;
-    for ( ; it != it_end; ++it)
-        ThrowAwayStackElement_(*it);
-    m_stack_.clear();
-}
-
-void Parser::ClearLookaheadQueue_ () throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 532 "trison_parser.cpp"
- << " clearing the lookahead queue" << std::endl)
-
-    for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
-        ThrowAwayToken_(*it);
-    m_lookahead_queue_.clear();
-}
-
-Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw()
-{
-    while (index >= m_lookahead_queue_.size())
-    {
-        m_lookahead_queue_.push_back(Scan_());
-
-        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 549 "trison_parser.cpp"
- << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
-    }
-    return m_lookahead_queue_[index];
-}
-
-bool Parser::ExerciseTransition_ (Transition_ const &transition)
-{
-    switch (transition.m_type)
-    {
-        case Transition_::REDUCE:
-        {
-            // execute the indicated reduction rule, push the returned Token
-            // onto the front of the lookahead queue, then pop the corresponding
-            // number of stack elements.
-            assert(transition.m_data < ms_rule_count_);
-            Rule_ const &rule = ms_rule_table_[transition.m_data];
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 569 "trison_parser.cpp"
- << " REDUCE " << rule.m_description << std::endl)
-            assert(m_stack_.size() > rule.m_token_count);
-            m_lookahead_queue_.push_front(
-                Token(
-                    rule.m_reduction_nonterminal_token_id,
-                    ExecuteReductionRule_(transition.m_data)));
-            m_stack_.resize(m_stack_.size() - rule.m_token_count);
-            assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 581 "trison_parser.cpp"
- << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 586 "trison_parser.cpp"
- << std::endl)
-            return false; // indicating the parser isn't returning
-        }
-
-        case Transition_::RETURN:
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 595 "trison_parser.cpp"
- << " RETURN" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 600 "trison_parser.cpp"
- << std::endl)
-            return true; // indicating the parser is returning
-
-        case Transition_::SHIFT:
-            // push the state (indicated by the shift transition) and token data
-            // onto the stack, then pop the corresponding lookahead.
-            assert(transition.m_data < ms_state_count_);
-            assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
-                                                               // client error, so asserting here is ok.
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 613 "trison_parser.cpp"
- << " SHIFT " << Lookahead_(0) << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 618 "trison_parser.cpp"
- << std::endl)
-            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
-            m_lookahead_queue_.pop_front();
-            return false; // indicating the parser isn't returning
-
-        case Transition_::ERROR_PANIC:
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 628 "trison_parser.cpp"
- << " ERROR_PANIC" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 633 "trison_parser.cpp"
- << std::endl)
-            m_is_in_error_panic_ = true;
-            return false; // indicating the parser isn't returning
-
-        default:
-            assert(false && "invalid transition type (bad state machine, or memory corruption)");
-            return false; // indicating the parser isn't returning
-    }
-}
-
-Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_) throw()
-{
-    assert(rule_index_ < ms_rule_count_);
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 650 "trison_parser.cpp"
- << " executing reduction rule " << rule_index_ << std::endl)
-    switch (rule_index_)
-    {
-        default:
-            assert(false && "this should never happen");
-            return NULL;
-
-        case 0:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            TerminalMap * terminal_map(Dsc<TerminalMap *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            PrecedenceMap * precedence_map(Dsc<PrecedenceMap *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Ast::Id * default_parse_nonterminal_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            NonterminalMap * nonterminal_map(Dsc<NonterminalMap *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 255 "trison_parser.trison"
-
-        assert(m_target_map != NULL);
-        assert(m_terminal_list != NULL);
-        assert(m_terminal_map != NULL);
-        assert(terminal_map == m_terminal_map);
-        assert(m_precedence_list != NULL);
-        assert(precedence_map != NULL);
-        assert(m_precedence_map == precedence_map);
-        assert(m_nonterminal_list != NULL);
-
-        // set the TargetMap's primary source path
-        m_target_map->SetSourcePath(m_scanner.InputName());
-        // make sure the %default_parse_nonterminal directive value specifies a real nonterminal
-        if (default_parse_nonterminal_id != NULL &&
-            nonterminal_map->Element(default_parse_nonterminal_id->GetText()) == NULL)
-        {
-            EmitError(
-                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"",
-                default_parse_nonterminal_id->GetFiLoc());
-        }
-
-        PrimarySource *primary_source =
-            new PrimarySource(
-                m_terminal_list,
-                terminal_map,
-                precedence_map,
-                m_precedence_list,
-                default_parse_nonterminal_id->GetText(),
-                throwaway->GetFiLoc(),
-                m_nonterminal_list,
-                nonterminal_map);
-        delete throwaway;
-        delete default_parse_nonterminal_id;
-        return primary_source;
-    
-#line 703 "trison_parser.cpp"
-            break;
-        }
-
-        case 1:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 299 "trison_parser.trison"
-
-        delete throwaway;
-        return NULL;
-    
-#line 717 "trison_parser.cpp"
-            break;
-        }
-
-        case 2:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 305 "trison_parser.trison"
-
-        return NULL;
-    
-#line 729 "trison_parser.cpp"
-            break;
-        }
-
-        case 3:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 310 "trison_parser.trison"
-
-        EmitError("parse error in directive %targets", throwaway->GetFiLoc());
-        return NULL;
-    
-#line 743 "trison_parser.cpp"
-            break;
-        }
-
-        case 4:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 319 "trison_parser.trison"
-
-        assert(m_target_map != NULL);
-        // if the given target doesn't exist in the target map, add it.
-        if (m_target_map->Element(target_id->GetText()) == NULL)
-        {
-            CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
-            m_target_map->Add(target_id->GetText(), target);
-        }
-        // otherwise delete the target_id since we don't need it
-        else
-        {
-            delete target_id;
-        }
-        return NULL;
-    
-#line 768 "trison_parser.cpp"
-            break;
-        }
-
-        case 5:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 336 "trison_parser.trison"
-
-        assert(m_target_map != NULL);
-        return NULL;
-    
-#line 781 "trison_parser.cpp"
-            break;
-        }
-
-        case 6:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            CommonLang::TargetDirective * target_directive(Dsc<CommonLang::TargetDirective *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 349 "trison_parser.trison"
-
-        assert(m_target_map != NULL);
-        m_target_map->SetTargetDirective(target_directive);
-        return NULL;
-    
-#line 796 "trison_parser.cpp"
-            break;
-        }
-
-        case 7:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 356 "trison_parser.trison"
-
-        assert(m_target_map != NULL);
-        return NULL;
-    
-#line 809 "trison_parser.cpp"
-            break;
-        }
-
-        case 8:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-6].m_token.m_data));
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Ast::TextBase * param(Dsc<Ast::TextBase *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 365 "trison_parser.trison"
-
-        delete throwaway;
-        return new CommonLang::TargetDirective(target_id, target_directive, param);
-    
-#line 826 "trison_parser.cpp"
-            break;
-        }
-
-        case 9:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-6].m_token.m_data));
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 371 "trison_parser.trison"
-
-        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
-        delete throwaway;
-        delete target_id;
-        delete target_directive;
-        return NULL;
-    
-#line 845 "trison_parser.cpp"
-            break;
-        }
-
-        case 10:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 380 "trison_parser.trison"
-
-        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
-        delete throwaway;
-        delete target_id;
-        return NULL;
-    
-#line 862 "trison_parser.cpp"
-            break;
-        }
-
-        case 11:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 388 "trison_parser.trison"
-
-        EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
-        delete throwaway;
-        return NULL;
-    
-#line 877 "trison_parser.cpp"
-            break;
-        }
-
-        case 12:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * value(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 397 "trison_parser.trison"
- return value; 
-#line 888 "trison_parser.cpp"
-            break;
-        }
-
-        case 13:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::String * value(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 398 "trison_parser.trison"
- return value; 
-#line 899 "trison_parser.cpp"
-            break;
-        }
-
-        case 14:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 399 "trison_parser.trison"
- return value; 
-#line 910 "trison_parser.cpp"
-            break;
-        }
-
-        case 15:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 400 "trison_parser.trison"
- return value; 
-#line 921 "trison_parser.cpp"
-            break;
-        }
-
-        case 16:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 401 "trison_parser.trison"
- return NULL; 
-#line 931 "trison_parser.cpp"
-            break;
-        }
-
-        case 17:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            TerminalMap * terminal_map(Dsc<TerminalMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 411 "trison_parser.trison"
-
-        assert(terminal_map == m_terminal_map);
-        return terminal_map;
-    
-#line 945 "trison_parser.cpp"
-            break;
-        }
-
-        case 18:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 417 "trison_parser.trison"
-
-        m_terminal_list = new TerminalList();
-        m_terminal_map = new TerminalMap();
-
-        Ast::Id *id;
-        Trison::Terminal *terminal;
-
-        // create and add the special END_ and ERROR_ terminals (with
-        // token_index 0x100 and 0x101 respectively.
-        assert(m_token_index == 0 && "must go from 0 to 0x100, all terminals, then all nonterminals");
-        m_token_index = 0x100;
-
-        id = new Ast::Id("END_", FiLoc::ms_invalid);
-        terminal = new Trison::Terminal(id, m_token_index++);
-        terminal->SetAssignedTypeMap(new TypeMap()); // default type
-        m_terminal_list->Append(terminal);
-        m_terminal_map->Add(terminal->GetText(), terminal);
-
-        id = new Ast::Id("ERROR_", FiLoc::ms_invalid);
-        terminal = new Trison::Terminal(id, m_token_index++);
-        terminal->SetAssignedTypeMap(new TypeMap()); // default type
-        m_terminal_list->Append(terminal);
-        m_terminal_map->Add(terminal->GetText(), terminal);
-
-        return m_terminal_map;
-    
-#line 980 "trison_parser.cpp"
-            break;
-        }
-
-        case 19:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            TerminalList * terminal_list(Dsc<TerminalList *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            TypeMap * assigned_type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 448 "trison_parser.trison"
-
-        assert(m_terminal_map != NULL);
-        assert(terminal_list != NULL);
-        assert(assigned_type_map != NULL);
-        for (TerminalList::iterator it = terminal_list->begin(),
-                                    it_end = terminal_list->end();
-             it != it_end;
-             ++it)
-        {
-            Trison::Terminal *terminal = *it;
-            assert(terminal != NULL);
-            terminal->SetAssignedTypeMap(assigned_type_map);
-            m_terminal_list->Append(terminal);
-            m_terminal_map->Add(terminal->GetText(), terminal);
-        }
-        terminal_list->clear();
-        delete throwaway;
-        delete terminal_list;
-        return NULL;
-    
-#line 1012 "trison_parser.cpp"
-            break;
-        }
-
-        case 20:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            TerminalList * terminal_list(Dsc<TerminalList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Trison::Terminal * terminal(Dsc<Trison::Terminal *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 473 "trison_parser.trison"
-
-        if (terminal != NULL)
-            terminal_list->Append(terminal);
-        return terminal_list;
-    
-#line 1028 "trison_parser.cpp"
-            break;
-        }
-
-        case 21:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Trison::Terminal * terminal(Dsc<Trison::Terminal *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 480 "trison_parser.trison"
-
-        TerminalList *terminal_list = new TerminalList();
-        if (terminal != NULL)
-            terminal_list->Append(terminal);
-        return terminal_list;
-    
-#line 1044 "trison_parser.cpp"
-            break;
-        }
-
-        case 22:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            PrecedenceMap * precedence_map(Dsc<PrecedenceMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 495 "trison_parser.trison"
-
-        assert(precedence_map != NULL);
-        assert(m_precedence_map == precedence_map);
-        assert(m_precedence_list != NULL);
-        return precedence_map;
-    
-#line 1060 "trison_parser.cpp"
-            break;
-        }
-
-        case 23:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 503 "trison_parser.trison"
-
-        assert(m_precedence_list == NULL);
-        assert(m_precedence_map == NULL);
-        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FiLoc::ms_invalid, 0);
-        m_precedence_list = new PrecedenceList();
-        m_precedence_list->Append(precedence);
-        m_precedence_map = new PrecedenceMap();
-        m_precedence_map->Add("DEFAULT_", precedence);
-        return m_precedence_map;
-    
-#line 1079 "trison_parser.cpp"
-            break;
-        }
-
-        case 24:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 518 "trison_parser.trison"
-
-        assert(m_precedence_list != NULL);
-        assert(m_precedence_map != NULL);
-        Precedence *precedence =
-            new Precedence(
-                id->GetText(),
-                A_NONASSOC,
-                id->GetFiLoc(),
-                m_precedence_map->size());
-        m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_id, precedence);
-        delete throwaway;
-        delete id;
-        return m_precedence_map;
-    
-#line 1105 "trison_parser.cpp"
-            break;
-        }
-
-        case 25:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Ast::Id * associativity_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 535 "trison_parser.trison"
-
-        assert(m_precedence_list != NULL);
-        assert(m_precedence_map != NULL);
-        assert(associativity_id != NULL);
-
-        Associativity associativity = A_LEFT;
-        if (associativity_id->GetText() == "left")
-            associativity = A_LEFT;
-        else if (associativity_id->GetText() == "nonassoc")
-            associativity = A_NONASSOC;
-        else if (associativity_id->GetText() == "right")
-            associativity = A_RIGHT;
-        else
-            EmitError("invalid associativity specifier \"" + associativity_id->GetText() + "\"", throwaway->GetFiLoc());
-
-        Precedence *precedence =
-            new Precedence(
-                id->GetText(),
-                associativity,
-                id->GetFiLoc(),
-                m_precedence_map->size());
-        m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_id, precedence);
-        delete throwaway;
-        delete id;
-        return m_precedence_map;
-    
-#line 1144 "trison_parser.cpp"
-            break;
-        }
-
-        case 26:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 571 "trison_parser.trison"
-
-        delete throwaway;
-        return id;
-    
-#line 1159 "trison_parser.cpp"
-            break;
-        }
-
-        case 27:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            NonterminalMap * nonterminal_map(Dsc<NonterminalMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Trison::Nonterminal * nonterminal(Dsc<Trison::Nonterminal *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 584 "trison_parser.trison"
-
-        assert(m_terminal_map != NULL);
-        assert(m_nonterminal_list != NULL);
-        if (nonterminal != NULL)
-        {
-            nonterminal_map->Add(nonterminal->GetText(), nonterminal);
-            m_nonterminal_list->Append(nonterminal);
-        }
-        return nonterminal_map;
-    
-#line 1180 "trison_parser.cpp"
-            break;
-        }
-
-        case 28:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 596 "trison_parser.trison"
-
-        assert(m_nonterminal_list == NULL);
-        m_nonterminal_list = new NonterminalList();
-        NonterminalMap *nonterminal_map = new NonterminalMap();
-
-        // add the special "none_" nonterminal with token_index 0 and empty rule list
-        Trison::Nonterminal *nonterminal = new Trison::Nonterminal("none_", 0, FiLoc::ms_invalid);
-        nonterminal->SetRuleList(new RuleList());
-        nonterminal_map->Add(nonterminal->GetText(), nonterminal);
-        m_nonterminal_list->Append(nonterminal);
-
-        return nonterminal_map;
-    
-#line 1202 "trison_parser.cpp"
-            break;
-        }
-
-        case 29:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Trison::Nonterminal * nonterminal(Dsc<Trison::Nonterminal *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 614 "trison_parser.trison"
-
-        if (nonterminal != NULL)
-            nonterminal->SetRuleList(rule_list);
-        else
-            delete rule_list;
-        return nonterminal;
-    
-#line 1220 "trison_parser.cpp"
-            break;
-        }
-
-        case 30:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 623 "trison_parser.trison"
-
-        EmitError("syntax error in nonterminal definition", GetFiLoc());
-        return NULL;
-    
-#line 1233 "trison_parser.cpp"
-            break;
-        }
-
-        case 31:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            TypeMap * assigned_type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 632 "trison_parser.trison"
-
-        assert(m_terminal_map != NULL);
-        assert(m_token_index >= 0x100);
-        assert(id != NULL);
-        assert(assigned_type_map != NULL);
-        if (m_terminal_map->Element(id->GetText()) != NULL)
-            EmitError("id collision with terminal " + id->GetText(), id->GetFiLoc());
-        Trison::Nonterminal *nonterminal =
-            new Trison::Nonterminal(
-                id->GetText(),
-                m_token_index++,
-                id->GetFiLoc(),
-                assigned_type_map);
-        delete throwaway;
-        delete id;
-        return nonterminal;
-    
-#line 1262 "trison_parser.cpp"
-            break;
-        }
-
-        case 32:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 651 "trison_parser.trison"
-
-        assert(throwaway != NULL);
-        EmitError("syntax error while parsing nonterminal specification", throwaway->GetFiLoc());
-        delete throwaway;
-        return NULL;
-    
-#line 1278 "trison_parser.cpp"
-            break;
-        }
-
-        case 33:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 659 "trison_parser.trison"
-
-        assert(id != NULL);
-        EmitError("syntax error in %nonterminal directive", id->GetFiLoc());
-        delete throwaway;
-        delete id;
-        return NULL;
-    
-#line 1296 "trison_parser.cpp"
-            break;
-        }
-
-        case 34:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 675 "trison_parser.trison"
-
-        rule_list->Append(rule);
-        return rule_list;
-    
-#line 1311 "trison_parser.cpp"
-            break;
-        }
-
-        case 35:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 681 "trison_parser.trison"
-
-        RuleList *rule_list = new RuleList();
-        rule_list->Append(rule);
-        return rule_list;
-    
-#line 1326 "trison_parser.cpp"
-            break;
-        }
-
-        case 36:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 691 "trison_parser.trison"
-
-        rule->m_rule_handler_map = rule_handler_map;
-        return rule;
-    
-#line 1341 "trison_parser.cpp"
-            break;
-        }
-
-        case 37:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            RuleTokenList * rule_token_list(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Ast::Id * rule_precedence_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 700 "trison_parser.trison"
-
-        Precedence *rule_precedence;
-        if (rule_precedence_directive == NULL)
-            rule_precedence = m_precedence_map->Element("DEFAULT_");
-        else if ((rule_precedence = m_precedence_map->Element(rule_precedence_directive->GetText())) == NULL)
-        {
-            EmitError("undefined %prec value \"" + rule_precedence_directive->GetText() + "\"");
-            rule_precedence = m_precedence_map->Element("DEFAULT_");
-        }
-
-        Rule *rule = new Rule(rule_token_list, rule_precedence, m_rule_count++);
-        delete rule_precedence_directive;
-        return rule;
-    
-#line 1366 "trison_parser.cpp"
-            break;
-        }
-
-        case 38:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            CommonLang::RuleHandler * rule_handler(Dsc<CommonLang::RuleHandler *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 719 "trison_parser.trison"
-
-        if (rule_handler != NULL)
-            rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
-        return rule_handler_map;
-    
-#line 1382 "trison_parser.cpp"
-            break;
-        }
-
-        case 39:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 726 "trison_parser.trison"
-
-        return new CommonLang::RuleHandlerMap();
-    
-#line 1394 "trison_parser.cpp"
-            break;
-        }
-
-        case 40:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 734 "trison_parser.trison"
-
-        delete throwaway;
-        assert(m_target_map != NULL);
-        if (m_target_map->Element(target_id->GetText()) == NULL)
-            EmitWarning(
-                "undeclared target \"" + target_id->GetText() + "\"",
-                target_id->GetFiLoc());
-        return new CommonLang::RuleHandler(target_id, code_block);
-    
-#line 1415 "trison_parser.cpp"
-            break;
-        }
-
-        case 41:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 745 "trison_parser.trison"
-
-        assert(m_target_map != NULL);
-        EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
-        delete throwaway;
-        delete code_block;
-        return NULL;
-    
-#line 1433 "trison_parser.cpp"
-            break;
-        }
-
-        case 42:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 754 "trison_parser.trison"
-
-        assert(m_target_map != NULL);
-        EmitError("parse error in directive %target", throwaway->GetFiLoc());
-        delete throwaway;
-        return NULL;
-    
-#line 1449 "trison_parser.cpp"
-            break;
-        }
-
-        case 43:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 762 "trison_parser.trison"
-
-        assert(m_target_map != NULL);
-        EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
-        delete code_block;
-        return NULL;
-    
-#line 1465 "trison_parser.cpp"
-            break;
-        }
-
-        case 44:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            RuleTokenList * rule_token_list(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            RuleToken * rule_token(Dsc<RuleToken *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 773 "trison_parser.trison"
-
-        rule_token_list->Append(rule_token);
-        return rule_token_list;
-    
-#line 1480 "trison_parser.cpp"
-            break;
-        }
-
-        case 45:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 779 "trison_parser.trison"
-
-        return new RuleTokenList();
-    
-#line 1492 "trison_parser.cpp"
-            break;
-        }
-
-        case 46:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            TokenId * token_id(Dsc<TokenId *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 787 "trison_parser.trison"
-
-        RuleToken *rule_token =
-            token_id != NULL ?
-            new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id->GetText()) :
-            NULL;
-        delete token_id;
-        delete assigned_id;
-        return rule_token;
-    
-#line 1512 "trison_parser.cpp"
-            break;
-        }
-
-        case 47:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            TokenId * token_id(Dsc<TokenId *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 798 "trison_parser.trison"
-
-        RuleToken *rule_token =
-            token_id != NULL ?
-            new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
-            NULL;
-        delete token_id;
-        return rule_token;
-    
-#line 1530 "trison_parser.cpp"
-            break;
-        }
-
-        case 48:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 808 "trison_parser.trison"
-
-        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc(), assigned_id->GetText());
-        delete throwaway;
-        delete assigned_id;
-        return rule_token;
-    
-#line 1547 "trison_parser.cpp"
-            break;
-        }
-
-        case 49:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 816 "trison_parser.trison"
-
-        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
-        delete throwaway;
-        return rule_token;
-    
-#line 1562 "trison_parser.cpp"
-            break;
-        }
-
-        case 50:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 823 "trison_parser.trison"
-
-        EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
-        delete throwaway;
-        delete assigned_id;
-        return NULL;
-    
-#line 1579 "trison_parser.cpp"
-            break;
-        }
-
-        case 51:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 831 "trison_parser.trison"
-
-        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
-        delete throwaway;
-        return rule_token;
-    
-#line 1594 "trison_parser.cpp"
-            break;
-        }
-
-        case 52:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 841 "trison_parser.trison"
-
-        delete throwaway;
-        return id;
-    
-#line 1609 "trison_parser.cpp"
-            break;
-        }
-
-        case 53:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 847 "trison_parser.trison"
-
-        return NULL;
-    
-#line 1621 "trison_parser.cpp"
-            break;
-        }
-
-        case 54:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 858 "trison_parser.trison"
- return NULL; 
-#line 1631 "trison_parser.cpp"
-            break;
-        }
-
-        case 55:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 860 "trison_parser.trison"
- return NULL; 
-#line 1641 "trison_parser.cpp"
-            break;
-        }
-
-        case 56:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 865 "trison_parser.trison"
- return NULL; 
-#line 1651 "trison_parser.cpp"
-            break;
-        }
-
-        case 57:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 867 "trison_parser.trison"
- return NULL; 
-#line 1661 "trison_parser.cpp"
-            break;
-        }
-
-        case 58:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 873 "trison_parser.trison"
-
-        // here, the token_index doesn't matter, since this rule isn't used
-        // in the terminal declarations.
-        TokenId *token_id = new TokenId(id->GetText(), 0, id->GetFiLoc());
-        delete id;
-        return token_id;
-    
-#line 1678 "trison_parser.cpp"
-            break;
-        }
-
-        case 59:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 882 "trison_parser.trison"
-
-        // here, the token_index doesn't matter, since this rule isn't used
-        // in the terminal declarations.
-        TokenId *token_id = new TokenId(CharLiteral(ch->GetChar()), 0, ch->GetFiLoc());
-        delete ch;
-        return token_id;
-    
-#line 1695 "trison_parser.cpp"
-            break;
-        }
-
-        case 60:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 893 "trison_parser.trison"
- return new Trison::Terminal(id, m_token_index++); 
-#line 1706 "trison_parser.cpp"
-            break;
-        }
-
-        case 61:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 895 "trison_parser.trison"
- return new Trison::Terminal(ch); 
-#line 1717 "trison_parser.cpp"
-            break;
-        }
-
-        case 62:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 900 "trison_parser.trison"
- return dumb_code_block; 
-#line 1728 "trison_parser.cpp"
-            break;
-        }
-
-        case 63:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 902 "trison_parser.trison"
- return strict_code_block; 
-#line 1739 "trison_parser.cpp"
-            break;
-        }
-
-        case 64:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            TypeMap * type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Ast::String * assigned_type(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 908 "trison_parser.trison"
-
-        assert(type_map != NULL);
-        assert(target_id != NULL);
-        assert(assigned_type != NULL);
-        type_map->Add(target_id->GetText(), assigned_type);
-        delete throwaway;
-        delete target_id;
-        return type_map;
-    
-#line 1761 "trison_parser.cpp"
-            break;
-        }
-
-        case 65:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 919 "trison_parser.trison"
-
-        return new TypeMap();
-    
-#line 1773 "trison_parser.cpp"
-            break;
-        }
-
-    }
-
-    assert(false && "no value returned from reduction rule code block");
-    return NULL;
-}
-
-void Parser::PrintParserStatus_ (std::ostream &stream) const
-{
-    assert(!m_stack_.empty());
-
-    stream << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1790 "trison_parser.cpp"
- << " parser state stack: ";
-    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
-    {
-        stream << it->m_state_index;
-        Stack_::const_iterator next_it = it;
-        if (++next_it != it_end)
-            stream << ' ';
-    }
-    stream << std::endl;
-
-    assert(m_stack_.size() >= 1);
-    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal::none_));
-    stream << 
-#line 214 "trison_parser.trison"
-"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1806 "trison_parser.cpp"
- << " parser stack tokens . lookahead queue: ";
-    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
-    {
-        // the first token is always Nonterminal::none_, which doesn't correspond to a real token, so skip it.
-        if (it == m_stack_.begin())
-            continue;
-        stream << it->m_token << ' ';
-    }
-    stream << '.';
-    for (LookaheadQueue_::const_iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
-    {
-        Token const &lookahead_token = *it;
-        assert(lookahead_token.m_id < ms_token_name_count_ && "Token id out of range");
-        stream << ' ' << lookahead_token;
-    }
-    stream << std::endl;
-
-    PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
-    stream << std::endl;
-}
-
 void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
 {
     assert(string != NULL);
     stream << 
 #line 214 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1834 "trison_parser.cpp"
+#line 117 "trison_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -1838,7 +121,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 214 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1842 "trison_parser.cpp"
+#line 125 "trison_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -1925,6 +208,2033 @@ Parser::Rule_ const Parser::ms_rule_table_[] =
     { Parser::Nonterminal::type_spec, 0, "type_spec <-" }
 };
 std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
+
+char const *const Parser::ms_token_name_table_[] =
+{
+    "'\\0'",
+    "'\\x01'",
+    "'\\x02'",
+    "'\\x03'",
+    "'\\x04'",
+    "'\\x05'",
+    "'\\x06'",
+    "'\\a'",
+    "'\\b'",
+    "'\\t'",
+    "'\\n'",
+    "'\\v'",
+    "'\\f'",
+    "'\\r'",
+    "'\\x0E'",
+    "'\\x0F'",
+    "'\\x10'",
+    "'\\x11'",
+    "'\\x12'",
+    "'\\x13'",
+    "'\\x14'",
+    "'\\x15'",
+    "'\\x16'",
+    "'\\x17'",
+    "'\\x18'",
+    "'\\x19'",
+    "'\\x1A'",
+    "'\\x1B'",
+    "'\\x1C'",
+    "'\\x1D'",
+    "'\\x1E'",
+    "'\\x1F'",
+    "' '",
+    "'!'",
+    "'\"'",
+    "'#'",
+    "'$'",
+    "'%'",
+    "'&'",
+    "'\\''",
+    "'('",
+    "')'",
+    "'*'",
+    "'+'",
+    "','",
+    "'-'",
+    "'.'",
+    "'/'",
+    "'0'",
+    "'1'",
+    "'2'",
+    "'3'",
+    "'4'",
+    "'5'",
+    "'6'",
+    "'7'",
+    "'8'",
+    "'9'",
+    "':'",
+    "';'",
+    "'<'",
+    "'='",
+    "'>'",
+    "'?'",
+    "'@'",
+    "'A'",
+    "'B'",
+    "'C'",
+    "'D'",
+    "'E'",
+    "'F'",
+    "'G'",
+    "'H'",
+    "'I'",
+    "'J'",
+    "'K'",
+    "'L'",
+    "'M'",
+    "'N'",
+    "'O'",
+    "'P'",
+    "'Q'",
+    "'R'",
+    "'S'",
+    "'T'",
+    "'U'",
+    "'V'",
+    "'W'",
+    "'X'",
+    "'Y'",
+    "'Z'",
+    "'['",
+    "'\\\\'",
+    "']'",
+    "'^'",
+    "'_'",
+    "'`'",
+    "'a'",
+    "'b'",
+    "'c'",
+    "'d'",
+    "'e'",
+    "'f'",
+    "'g'",
+    "'h'",
+    "'i'",
+    "'j'",
+    "'k'",
+    "'l'",
+    "'m'",
+    "'n'",
+    "'o'",
+    "'p'",
+    "'q'",
+    "'r'",
+    "'s'",
+    "'t'",
+    "'u'",
+    "'v'",
+    "'w'",
+    "'x'",
+    "'y'",
+    "'z'",
+    "'{'",
+    "'|'",
+    "'}'",
+    "'~'",
+    "'\\x7F'",
+    "'\\x80'",
+    "'\\x81'",
+    "'\\x82'",
+    "'\\x83'",
+    "'\\x84'",
+    "'\\x85'",
+    "'\\x86'",
+    "'\\x87'",
+    "'\\x88'",
+    "'\\x89'",
+    "'\\x8A'",
+    "'\\x8B'",
+    "'\\x8C'",
+    "'\\x8D'",
+    "'\\x8E'",
+    "'\\x8F'",
+    "'\\x90'",
+    "'\\x91'",
+    "'\\x92'",
+    "'\\x93'",
+    "'\\x94'",
+    "'\\x95'",
+    "'\\x96'",
+    "'\\x97'",
+    "'\\x98'",
+    "'\\x99'",
+    "'\\x9A'",
+    "'\\x9B'",
+    "'\\x9C'",
+    "'\\x9D'",
+    "'\\x9E'",
+    "'\\x9F'",
+    "'\\xA0'",
+    "'\\xA1'",
+    "'\\xA2'",
+    "'\\xA3'",
+    "'\\xA4'",
+    "'\\xA5'",
+    "'\\xA6'",
+    "'\\xA7'",
+    "'\\xA8'",
+    "'\\xA9'",
+    "'\\xAA'",
+    "'\\xAB'",
+    "'\\xAC'",
+    "'\\xAD'",
+    "'\\xAE'",
+    "'\\xAF'",
+    "'\\xB0'",
+    "'\\xB1'",
+    "'\\xB2'",
+    "'\\xB3'",
+    "'\\xB4'",
+    "'\\xB5'",
+    "'\\xB6'",
+    "'\\xB7'",
+    "'\\xB8'",
+    "'\\xB9'",
+    "'\\xBA'",
+    "'\\xBB'",
+    "'\\xBC'",
+    "'\\xBD'",
+    "'\\xBE'",
+    "'\\xBF'",
+    "'\\xC0'",
+    "'\\xC1'",
+    "'\\xC2'",
+    "'\\xC3'",
+    "'\\xC4'",
+    "'\\xC5'",
+    "'\\xC6'",
+    "'\\xC7'",
+    "'\\xC8'",
+    "'\\xC9'",
+    "'\\xCA'",
+    "'\\xCB'",
+    "'\\xCC'",
+    "'\\xCD'",
+    "'\\xCE'",
+    "'\\xCF'",
+    "'\\xD0'",
+    "'\\xD1'",
+    "'\\xD2'",
+    "'\\xD3'",
+    "'\\xD4'",
+    "'\\xD5'",
+    "'\\xD6'",
+    "'\\xD7'",
+    "'\\xD8'",
+    "'\\xD9'",
+    "'\\xDA'",
+    "'\\xDB'",
+    "'\\xDC'",
+    "'\\xDD'",
+    "'\\xDE'",
+    "'\\xDF'",
+    "'\\xE0'",
+    "'\\xE1'",
+    "'\\xE2'",
+    "'\\xE3'",
+    "'\\xE4'",
+    "'\\xE5'",
+    "'\\xE6'",
+    "'\\xE7'",
+    "'\\xE8'",
+    "'\\xE9'",
+    "'\\xEA'",
+    "'\\xEB'",
+    "'\\xEC'",
+    "'\\xED'",
+    "'\\xEE'",
+    "'\\xEF'",
+    "'\\xF0'",
+    "'\\xF1'",
+    "'\\xF2'",
+    "'\\xF3'",
+    "'\\xF4'",
+    "'\\xF5'",
+    "'\\xF6'",
+    "'\\xF7'",
+    "'\\xF8'",
+    "'\\xF9'",
+    "'\\xFA'",
+    "'\\xFB'",
+    "'\\xFC'",
+    "'\\xFD'",
+    "'\\xFE'",
+    "'\\xFF'",
+    "END_",
+    "ERROR_",
+    "BAD_TOKEN",
+    "CHAR_LITERAL",
+    "DIRECTIVE_DEFAULT_PARSE_NONTERMINAL",
+    "DIRECTIVE_END",
+    "DIRECTIVE_ERROR",
+    "DIRECTIVE_NONTERMINAL",
+    "DIRECTIVE_PREC",
+    "DIRECTIVE_TARGET",
+    "DIRECTIVE_TARGETS",
+    "DIRECTIVE_TERMINAL",
+    "DIRECTIVE_TYPE",
+    "DUMB_CODE_BLOCK",
+    "END_PREAMBLE",
+    "ID",
+    "NEWLINE",
+    "STRICT_CODE_BLOCK",
+    "STRING_LITERAL",
+    "root",
+    "targets_directive",
+    "target_ids",
+    "target_directives",
+    "target_directive",
+    "target_directive_param",
+    "terminal_directives",
+    "terminal_directive",
+    "terminals",
+    "precedence_directives",
+    "precedence_directive",
+    "start_directive",
+    "nonterminals",
+    "nonterminal",
+    "nonterminal_specification",
+    "rules",
+    "rule",
+    "rule_specification",
+    "rule_handlers",
+    "rule_handler",
+    "rule_token_list",
+    "rule_token",
+    "rule_precedence_directive",
+    "at_least_zero_newlines",
+    "at_least_one_newline",
+    "token_id",
+    "terminal",
+    "any_type_of_code_block",
+    "type_spec"
+};
+std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
+
+
+std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
+{
+    switch (nonterminal)
+    {
+        case Nonterminal::any_type_of_code_block: return 154;
+        case Nonterminal::at_least_one_newline: return 148;
+        case Nonterminal::at_least_zero_newlines: return 146;
+        case Nonterminal::nonterminal: return 126;
+        case Nonterminal::nonterminal_specification: return 128;
+        case Nonterminal::nonterminals: return 124;
+        case Nonterminal::precedence_directive: return 120;
+        case Nonterminal::precedence_directives: return 118;
+        case Nonterminal::root: return 0;
+        case Nonterminal::rule: return 132;
+        case Nonterminal::rule_handler: return 138;
+        case Nonterminal::rule_handlers: return 136;
+        case Nonterminal::rule_precedence_directive: return 144;
+        case Nonterminal::rule_specification: return 134;
+        case Nonterminal::rule_token: return 142;
+        case Nonterminal::rule_token_list: return 140;
+        case Nonterminal::rules: return 130;
+        case Nonterminal::start_directive: return 122;
+        case Nonterminal::target_directive: return 108;
+        case Nonterminal::target_directive_param: return 110;
+        case Nonterminal::target_directives: return 106;
+        case Nonterminal::target_ids: return 104;
+        case Nonterminal::targets_directive: return 102;
+        case Nonterminal::terminal: return 152;
+        case Nonterminal::terminal_directive: return 114;
+        case Nonterminal::terminal_directives: return 112;
+        case Nonterminal::terminals: return 116;
+        case Nonterminal::token_id: return 150;
+        case Nonterminal::type_spec: return 156;
+        default: assert(false && "invalid nonterminal"); return 0;
+    }
+}
+
+Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
+{
+    assert(return_token != NULL && "the return-token pointer must be non-NULL");
+
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 567 "trison_parser.cpp"
+ << " starting parse" << std::endl)
+
+    ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
+    *return_token = NULL;
+
+    // make sure all our structures are empty and variables initialized.
+    // we don't clear the lookahead queue here because we might want to
+    // parse multiple times from the same input, and the lookahead queue
+    // could have the next few tokens in it.
+    ClearStack_();
+    m_is_in_error_panic_ = false;
+
+    // push the initial state of the DPDA.
+    std::uint32_t nonterminal_start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
+    m_stack_.push_back(StackElement_(nonterminal_start_state_index, Token(Nonterminal::none_, NULL)));
+    // main parser loop
+    while (true)
+    {
+        if (m_is_in_error_panic_)
+        {
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 591 "trison_parser.cpp"
+ << " begin error panic" << std::endl)
+
+            while (true)
+            {
+                // get the current state (top of the stack)
+                assert(!m_stack_.empty());
+                std::uint32_t current_state_index = m_stack_.back().m_state_index;
+                assert(current_state_index < ms_state_count_);
+                State_ const &current_state = ms_state_table_[current_state_index];
+                TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
+
+                // check if the current state accepts ERROR_ (only need to check the
+                // non-default transitions, since the default transition can't be a shift).
+                bool accepts_error = false;
+                for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
+                                       *transition_end = current_state.m_transition_table+current_state.m_transition_count;
+                     transition != transition_end;
+                     ++transition)
+                {
+                    if (transition->m_type == Transition_::SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
+                    {
+                        accepts_error = true;
+                        break;
+                    }
+                }
+
+                if (accepts_error)
+                {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 623 "trison_parser.cpp"
+ << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
+                    // if the current state accepts error, then we check if the lookahead token
+                    // is Terminal::END_.  if it is, then we add a dummy Terminal::ERROR_ token
+                    // in before it (since %error can't accept END_).  otherwise, we throw away
+                    // the lookahead token, then clear the thrown-away token data, and set the
+                    // token id to ERROR_.
+                    assert(!m_lookahead_queue_.empty());
+                    if (m_lookahead_queue_[0].m_id == Terminal::END_)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 636 "trison_parser.cpp"
+ << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
+                        m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
+                    }
+                    else
+                        ThrowAwayToken_(m_lookahead_queue_[0]);
+                    m_lookahead_queue_[0].m_id = Terminal::ERROR_;
+                    m_lookahead_queue_[0].m_data = NULL;
+                    m_is_in_error_panic_ = false;
+                    break;
+                }
+                else
+                {
+                    if (m_stack_.size() > 1)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 654 "trison_parser.cpp"
+ << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
+                    }
+                    else
+                    {
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 662 "trison_parser.cpp"
+ << " end error panic; abort (stack is empty)" << std::endl)
+                    }
+                    // otherwise throw away the data at the top of the stack, and pop the stack.
+                    // then if the stack is empty, an unhandled parse error occurred.
+                    ThrowAwayStackElement_(m_stack_.back());
+                    m_stack_.resize(m_stack_.size()-1);
+                    if (m_stack_.empty())
+                    {
+                        // parser_return_code_ and return_token are already appropriately
+                        // set, so just break out of the inner loop.
+                        break;
+                    }
+                }
+            }
+
+            // if we're still in error panic, then this indicates that we bottomed-
+            // out the stack and it's an unhandled parse error, so break from the
+            // main loop.
+            if (m_is_in_error_panic_)
+                break;
+        }
+        else // !m_is_in_error_panic_
+        {
+            // get the current state (top of the stack)
+            assert(!m_stack_.empty());
+            std::uint32_t current_state_index = m_stack_.back().m_state_index;
+            assert(current_state_index < ms_state_count_);
+            State_ const &current_state = ms_state_table_[current_state_index];
+            TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
+
+            // TODO -- binary search for faster transition matching?
+
+            // loop through the current state's transitions and see if any match
+            bool transition_exercised = false;
+            std::uint32_t tested_lookahead_count = 0;
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 701 "trison_parser.cpp"
+ << " current transitions:" << std::endl)
+            for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
+                                   *transition_end = current_state.m_transition_table+current_state.m_transition_count;
+                transition != transition_end;
+                ++transition)
+            {
+                // the non-default transitions can only be REDUCE or SHIFT
+                assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
+
+                // make sure enough lookaheads are in the queue (this must be done before
+                // checking if the lookaheads match because otherwise the debug-spew printing will
+                // be interrupted by the debug-spew printing that happens in the call to Looahead_).
+                if (transition->m_lookahead_count > 0)
+                    Lookahead_(transition->m_lookahead_count - 1);
+
+                // check if the lookaheads match those of this transition.
+                bool lookahead_sequence_matched = true;
+                TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 722 "trison_parser.cpp"
+ << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
+                for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
+                {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << ms_token_name_table_[transition->m_lookahead_sequence[i]])
+                    if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
+                    {
+                        lookahead_sequence_matched = false;
+                        break;
+                    }
+                    else
+                    {
+                        if (i+1 > tested_lookahead_count)
+                            tested_lookahead_count = i+1;
+                    }
+                }
+                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
+
+                // if all the lookaheads matched, then exercise this transition,
+                // and break out of this inner (transition) loop.
+                if (lookahead_sequence_matched)
+                {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 747 "trison_parser.cpp"
+ << " currently usable lookahead(s):")
+                    for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
+                    }
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
+
+                    ExerciseTransition_(*transition);
+                    transition_exercised = true;
+                    break;
+                }
+            }
+
+            // if no transition was exercised, then exercise the default transition
+            if (!transition_exercised)
+            {
+                TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 767 "trison_parser.cpp"
+ << " currently usable lookahead(s):")
+                for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
+                {
+                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
+                }
+                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
+
+                TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 778 "trison_parser.cpp"
+ << " exercising default transition" << std::endl)
+                // exercise the default transition.  a return value of true indicates
+                // that the parser should return.
+                if (ExerciseTransition_(*current_state.m_transition_table))
+                {
+                    // the token (data) on the top of the stack is the return token.
+                    // set parser_return_code_ and assign the top stack token data to
+                    // *return_token and then break out of the main parser loop.
+                    assert(m_stack_[0].m_state_index == nonterminal_start_state_index);
+                    assert(m_stack_.size() == 2);
+                    parser_return_code_ = PRC_SUCCESS;
+                    *return_token = m_stack_.back().m_token.m_data;
+                    // take the return token out of the stack, so it's not thrown away
+                    // when we clear the stack later.
+                    m_stack_.back().m_token.m_data = NULL;
+                    break;
+                }
+            }
+        }
+    }
+
+    // clear the stack, because we won't need it for the next parse.
+    // we don't clear the lookahead queue here because we might want to
+    // parse multiple times from the same input, and the lookahead queue
+    // could have the next few tokens in it.
+    ClearStack_();
+
+    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 809 "trison_parser.cpp"
+ << " Parse() is returning PRC_SUCCESS" << std::endl)
+    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 814 "trison_parser.cpp"
+ << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
+
+    return parser_return_code_;
+}
+
+void Parser::ThrowAwayToken_ (Token &token_) throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 825 "trison_parser.cpp"
+ << " executing throw-away-token actions on token " << token_ << std::endl)
+
+    ThrowAwayTokenData_(token_.m_data);
+}
+
+void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 836 "trison_parser.cpp"
+ << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
+
+    ThrowAwayTokenData_(stack_element_.m_token.m_data);
+}
+
+void Parser::ThrowAwayTokenData_ (Ast::Base * &token_data) throw()
+{
+
+#line 152 "trison_parser.trison"
+
+    delete token_data;
+
+#line 849 "trison_parser.cpp"
+}
+
+Parser::Token Parser::Scan_ () throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 857 "trison_parser.cpp"
+ << " executing scan actions" << std::endl)
+
+
+#line 155 "trison_parser.trison"
+
+    Ast::Base *lookahead_token_data = NULL;
+    CommonLang::Scanner::Token::Type scanner_token_type = m_scanner.Scan(lookahead_token_data);
+    assert(scanner_token_type >= 0);
+    if (scanner_token_type < 0x100)
+        return Token(Parser::Token::Id(scanner_token_type), lookahead_token_data);
+    switch (scanner_token_type)
+    {
+        case CommonLang::Scanner::Token::BAD_END_OF_FILE:                     return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::BAD_TOKEN:                           return Token(Terminal::BAD_TOKEN, lookahead_token_data);
+        case CommonLang::Scanner::Token::CHAR_LITERAL:                        return Token(Terminal::CHAR_LITERAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Token(Terminal::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_END:                       return Token(Terminal::DIRECTIVE_END, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_ERROR:                     return Token(Terminal::DIRECTIVE_ERROR, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:               return Token(Terminal::DIRECTIVE_NONTERMINAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_PREC:                      return Token(Terminal::DIRECTIVE_PREC, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGET:                    return Token(Terminal::DIRECTIVE_TARGET, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TARGETS:                   return Token(Terminal::DIRECTIVE_TARGETS, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TERMINAL:                  return Token(Terminal::DIRECTIVE_TERMINAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_TYPE:                      return Token(Terminal::DIRECTIVE_TYPE, lookahead_token_data);
+        case CommonLang::Scanner::Token::DUMB_CODE_BLOCK:                     return Token(Terminal::DUMB_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_OF_FILE:                         return Token(Terminal::END_, lookahead_token_data);
+        case CommonLang::Scanner::Token::END_PREAMBLE:                        return Token(Terminal::END_PREAMBLE, lookahead_token_data);
+        case CommonLang::Scanner::Token::ID:                                  return Token(Terminal::ID, lookahead_token_data);
+        case CommonLang::Scanner::Token::NEWLINE:                             return Token(Terminal::NEWLINE, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRICT_CODE_BLOCK:                   return Token(Terminal::STRICT_CODE_BLOCK, lookahead_token_data);
+        case CommonLang::Scanner::Token::STRING_LITERAL:                      return Token(Terminal::STRING_LITERAL, lookahead_token_data);
+
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_CODESPEC:
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
+        case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:
+        case CommonLang::Scanner::Token::DIRECTIVE_CASE_INSENSITIVE:
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:
+        case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:
+        case CommonLang::Scanner::Token::DIRECTIVE_ID:
+        case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
+        case CommonLang::Scanner::Token::DIRECTIVE_START_IN_STATE_MACHINE:
+        case CommonLang::Scanner::Token::DIRECTIVE_STRICT_CODE_BLOCK:
+        case CommonLang::Scanner::Token::DIRECTIVE_STRING:
+        case CommonLang::Scanner::Token::DIRECTIVE_UNGREEDY:
+        case CommonLang::Scanner::Token::REGEX:
+            assert(lookahead_token_data != NULL);
+            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
+            delete lookahead_token_data;
+            return Token(Terminal::BAD_TOKEN);
+
+        default:
+            assert(false && "this should never happen");
+            if (lookahead_token_data != NULL)
+                delete lookahead_token_data;
+            return Token(Terminal::BAD_TOKEN);
+    }
+
+#line 915 "trison_parser.cpp"
+}
+
+void Parser::ClearStack_ () throw()
+{
+    if (m_stack_.empty())
+        return; // nothing to do
+
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 926 "trison_parser.cpp"
+ << " clearing the stack" << std::endl)
+
+    Stack_::iterator it = m_stack_.begin();
+    Stack_::iterator it_end = m_stack_.end();
+    // skip the bottom of the stack, since it
+    // contains the start state and no token data.
+    ++it;
+    for ( ; it != it_end; ++it)
+        ThrowAwayStackElement_(*it);
+    m_stack_.clear();
+}
+
+void Parser::ClearLookaheadQueue_ () throw()
+{
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 944 "trison_parser.cpp"
+ << " clearing the lookahead queue" << std::endl)
+
+    for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
+        ThrowAwayToken_(*it);
+    m_lookahead_queue_.clear();
+}
+
+Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw()
+{
+    while (index >= m_lookahead_queue_.size())
+    {
+        m_lookahead_queue_.push_back(Scan_());
+
+        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 961 "trison_parser.cpp"
+ << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
+    }
+    return m_lookahead_queue_[index];
+}
+
+bool Parser::ExerciseTransition_ (Transition_ const &transition)
+{
+    switch (transition.m_type)
+    {
+        case Transition_::REDUCE:
+        {
+            // execute the indicated reduction rule, push the returned Token
+            // onto the front of the lookahead queue, then pop the corresponding
+            // number of stack elements.
+            assert(transition.m_data < ms_rule_count_);
+            Rule_ const &rule = ms_rule_table_[transition.m_data];
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 981 "trison_parser.cpp"
+ << " REDUCE " << rule.m_description << std::endl)
+            assert(m_stack_.size() > rule.m_token_count);
+            m_lookahead_queue_.push_front(
+                Token(
+                    rule.m_reduction_nonterminal_token_id,
+                    ExecuteReductionRule_(transition.m_data)));
+            m_stack_.resize(m_stack_.size() - rule.m_token_count);
+            assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 993 "trison_parser.cpp"
+ << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 998 "trison_parser.cpp"
+ << std::endl)
+            return false; // indicating the parser isn't returning
+        }
+
+        case Transition_::RETURN:
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1007 "trison_parser.cpp"
+ << " RETURN" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1012 "trison_parser.cpp"
+ << std::endl)
+            return true; // indicating the parser is returning
+
+        case Transition_::SHIFT:
+            // push the state (indicated by the shift transition) and token data
+            // onto the stack, then pop the corresponding lookahead.
+            assert(transition.m_data < ms_state_count_);
+            assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
+                                                               // client error, so asserting here is ok.
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1025 "trison_parser.cpp"
+ << " SHIFT " << Lookahead_(0) << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1030 "trison_parser.cpp"
+ << std::endl)
+            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
+            m_lookahead_queue_.pop_front();
+            return false; // indicating the parser isn't returning
+
+        case Transition_::ERROR_PANIC:
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1040 "trison_parser.cpp"
+ << " ERROR_PANIC" << std::endl)
+            TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1045 "trison_parser.cpp"
+ << std::endl)
+            m_is_in_error_panic_ = true;
+            return false; // indicating the parser isn't returning
+
+        default:
+            assert(false && "invalid transition type (bad state machine, or memory corruption)");
+            return false; // indicating the parser isn't returning
+    }
+}
+
+Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_) throw()
+{
+    assert(rule_index_ < ms_rule_count_);
+    TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1062 "trison_parser.cpp"
+ << " executing reduction rule " << rule_index_ << std::endl)
+    switch (rule_index_)
+    {
+        default:
+            assert(false && "this should never happen");
+            return NULL;
+
+        case 0:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            TerminalMap * terminal_map(Dsc<TerminalMap *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            PrecedenceMap * precedence_map(Dsc<PrecedenceMap *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Ast::Id * default_parse_nonterminal_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            NonterminalMap * nonterminal_map(Dsc<NonterminalMap *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 255 "trison_parser.trison"
+
+        assert(m_target_map != NULL);
+        assert(m_terminal_list != NULL);
+        assert(m_terminal_map != NULL);
+        assert(terminal_map == m_terminal_map);
+        assert(m_precedence_list != NULL);
+        assert(precedence_map != NULL);
+        assert(m_precedence_map == precedence_map);
+        assert(m_nonterminal_list != NULL);
+
+        // set the TargetMap's primary source path
+        m_target_map->SetSourcePath(m_scanner.InputName());
+        // make sure the %default_parse_nonterminal directive value specifies a real nonterminal
+        if (default_parse_nonterminal_id != NULL &&
+            nonterminal_map->Element(default_parse_nonterminal_id->GetText()) == NULL)
+        {
+            EmitError(
+                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"",
+                default_parse_nonterminal_id->GetFiLoc());
+        }
+
+        PrimarySource *primary_source =
+            new PrimarySource(
+                m_terminal_list,
+                terminal_map,
+                precedence_map,
+                m_precedence_list,
+                default_parse_nonterminal_id->GetText(),
+                throwaway->GetFiLoc(),
+                m_nonterminal_list,
+                nonterminal_map);
+        delete throwaway;
+        delete default_parse_nonterminal_id;
+        return primary_source;
+    
+#line 1115 "trison_parser.cpp"
+            break;
+        }
+
+        case 1:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+
+#line 299 "trison_parser.trison"
+
+        delete throwaway;
+        return NULL;
+    
+#line 1129 "trison_parser.cpp"
+            break;
+        }
+
+        case 2:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 305 "trison_parser.trison"
+
+        return NULL;
+    
+#line 1141 "trison_parser.cpp"
+            break;
+        }
+
+        case 3:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+
+#line 310 "trison_parser.trison"
+
+        EmitError("parse error in directive %targets", throwaway->GetFiLoc());
+        return NULL;
+    
+#line 1155 "trison_parser.cpp"
+            break;
+        }
+
+        case 4:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 319 "trison_parser.trison"
+
+        assert(m_target_map != NULL);
+        // if the given target doesn't exist in the target map, add it.
+        if (m_target_map->Element(target_id->GetText()) == NULL)
+        {
+            CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
+            m_target_map->Add(target_id->GetText(), target);
+        }
+        // otherwise delete the target_id since we don't need it
+        else
+        {
+            delete target_id;
+        }
+        return NULL;
+    
+#line 1180 "trison_parser.cpp"
+            break;
+        }
+
+        case 5:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 336 "trison_parser.trison"
+
+        assert(m_target_map != NULL);
+        return NULL;
+    
+#line 1193 "trison_parser.cpp"
+            break;
+        }
+
+        case 6:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            CommonLang::TargetDirective * target_directive(Dsc<CommonLang::TargetDirective *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 349 "trison_parser.trison"
+
+        assert(m_target_map != NULL);
+        m_target_map->SetTargetDirective(target_directive);
+        return NULL;
+    
+#line 1208 "trison_parser.cpp"
+            break;
+        }
+
+        case 7:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 356 "trison_parser.trison"
+
+        assert(m_target_map != NULL);
+        return NULL;
+    
+#line 1221 "trison_parser.cpp"
+            break;
+        }
+
+        case 8:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-6].m_token.m_data));
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::TextBase * param(Dsc<Ast::TextBase *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 365 "trison_parser.trison"
+
+        delete throwaway;
+        return new CommonLang::TargetDirective(target_id, target_directive, param);
+    
+#line 1238 "trison_parser.cpp"
+            break;
+        }
+
+        case 9:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-6].m_token.m_data));
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Ast::Id * target_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 371 "trison_parser.trison"
+
+        EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
+        delete throwaway;
+        delete target_id;
+        delete target_directive;
+        return NULL;
+    
+#line 1257 "trison_parser.cpp"
+            break;
+        }
+
+        case 10:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 380 "trison_parser.trison"
+
+        EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
+        delete throwaway;
+        delete target_id;
+        return NULL;
+    
+#line 1274 "trison_parser.cpp"
+            break;
+        }
+
+        case 11:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 388 "trison_parser.trison"
+
+        EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
+        delete throwaway;
+        return NULL;
+    
+#line 1289 "trison_parser.cpp"
+            break;
+        }
+
+        case 12:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Id * value(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 397 "trison_parser.trison"
+ return value; 
+#line 1300 "trison_parser.cpp"
+            break;
+        }
+
+        case 13:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::String * value(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 398 "trison_parser.trison"
+ return value; 
+#line 1311 "trison_parser.cpp"
+            break;
+        }
+
+        case 14:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 399 "trison_parser.trison"
+ return value; 
+#line 1322 "trison_parser.cpp"
+            break;
+        }
+
+        case 15:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 400 "trison_parser.trison"
+ return value; 
+#line 1333 "trison_parser.cpp"
+            break;
+        }
+
+        case 16:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 401 "trison_parser.trison"
+ return NULL; 
+#line 1343 "trison_parser.cpp"
+            break;
+        }
+
+        case 17:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            TerminalMap * terminal_map(Dsc<TerminalMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 411 "trison_parser.trison"
+
+        assert(terminal_map == m_terminal_map);
+        return terminal_map;
+    
+#line 1357 "trison_parser.cpp"
+            break;
+        }
+
+        case 18:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 417 "trison_parser.trison"
+
+        m_terminal_list = new TerminalList();
+        m_terminal_map = new TerminalMap();
+
+        Ast::Id *id;
+        Trison::Terminal *terminal;
+
+        // create and add the special END_ and ERROR_ terminals (with
+        // token_index 0x100 and 0x101 respectively.
+        assert(m_token_index == 0 && "must go from 0 to 0x100, all terminals, then all nonterminals");
+        m_token_index = 0x100;
+
+        id = new Ast::Id("END_", FiLoc::ms_invalid);
+        terminal = new Trison::Terminal(id, m_token_index++);
+        terminal->SetAssignedTypeMap(new TypeMap()); // default type
+        m_terminal_list->Append(terminal);
+        m_terminal_map->Add(terminal->GetText(), terminal);
+
+        id = new Ast::Id("ERROR_", FiLoc::ms_invalid);
+        terminal = new Trison::Terminal(id, m_token_index++);
+        terminal->SetAssignedTypeMap(new TypeMap()); // default type
+        m_terminal_list->Append(terminal);
+        m_terminal_map->Add(terminal->GetText(), terminal);
+
+        return m_terminal_map;
+    
+#line 1392 "trison_parser.cpp"
+            break;
+        }
+
+        case 19:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            TerminalList * terminal_list(Dsc<TerminalList *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            TypeMap * assigned_type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 448 "trison_parser.trison"
+
+        assert(m_terminal_map != NULL);
+        assert(terminal_list != NULL);
+        assert(assigned_type_map != NULL);
+        for (TerminalList::iterator it = terminal_list->begin(),
+                                    it_end = terminal_list->end();
+             it != it_end;
+             ++it)
+        {
+            Trison::Terminal *terminal = *it;
+            assert(terminal != NULL);
+            terminal->SetAssignedTypeMap(assigned_type_map);
+            m_terminal_list->Append(terminal);
+            m_terminal_map->Add(terminal->GetText(), terminal);
+        }
+        terminal_list->clear();
+        delete throwaway;
+        delete terminal_list;
+        return NULL;
+    
+#line 1424 "trison_parser.cpp"
+            break;
+        }
+
+        case 20:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            TerminalList * terminal_list(Dsc<TerminalList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Trison::Terminal * terminal(Dsc<Trison::Terminal *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 473 "trison_parser.trison"
+
+        if (terminal != NULL)
+            terminal_list->Append(terminal);
+        return terminal_list;
+    
+#line 1440 "trison_parser.cpp"
+            break;
+        }
+
+        case 21:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Trison::Terminal * terminal(Dsc<Trison::Terminal *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 480 "trison_parser.trison"
+
+        TerminalList *terminal_list = new TerminalList();
+        if (terminal != NULL)
+            terminal_list->Append(terminal);
+        return terminal_list;
+    
+#line 1456 "trison_parser.cpp"
+            break;
+        }
+
+        case 22:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            PrecedenceMap * precedence_map(Dsc<PrecedenceMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 495 "trison_parser.trison"
+
+        assert(precedence_map != NULL);
+        assert(m_precedence_map == precedence_map);
+        assert(m_precedence_list != NULL);
+        return precedence_map;
+    
+#line 1472 "trison_parser.cpp"
+            break;
+        }
+
+        case 23:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 503 "trison_parser.trison"
+
+        assert(m_precedence_list == NULL);
+        assert(m_precedence_map == NULL);
+        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FiLoc::ms_invalid, 0);
+        m_precedence_list = new PrecedenceList();
+        m_precedence_list->Append(precedence);
+        m_precedence_map = new PrecedenceMap();
+        m_precedence_map->Add("DEFAULT_", precedence);
+        return m_precedence_map;
+    
+#line 1491 "trison_parser.cpp"
+            break;
+        }
+
+        case 24:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 518 "trison_parser.trison"
+
+        assert(m_precedence_list != NULL);
+        assert(m_precedence_map != NULL);
+        Precedence *precedence =
+            new Precedence(
+                id->GetText(),
+                A_NONASSOC,
+                id->GetFiLoc(),
+                m_precedence_map->size());
+        m_precedence_list->Append(precedence);
+        m_precedence_map->Add(precedence->m_precedence_id, precedence);
+        delete throwaway;
+        delete id;
+        return m_precedence_map;
+    
+#line 1517 "trison_parser.cpp"
+            break;
+        }
+
+        case 25:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Ast::Id * associativity_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 535 "trison_parser.trison"
+
+        assert(m_precedence_list != NULL);
+        assert(m_precedence_map != NULL);
+        assert(associativity_id != NULL);
+
+        Associativity associativity = A_LEFT;
+        if (associativity_id->GetText() == "left")
+            associativity = A_LEFT;
+        else if (associativity_id->GetText() == "nonassoc")
+            associativity = A_NONASSOC;
+        else if (associativity_id->GetText() == "right")
+            associativity = A_RIGHT;
+        else
+            EmitError("invalid associativity specifier \"" + associativity_id->GetText() + "\"", throwaway->GetFiLoc());
+
+        Precedence *precedence =
+            new Precedence(
+                id->GetText(),
+                associativity,
+                id->GetFiLoc(),
+                m_precedence_map->size());
+        m_precedence_list->Append(precedence);
+        m_precedence_map->Add(precedence->m_precedence_id, precedence);
+        delete throwaway;
+        delete id;
+        return m_precedence_map;
+    
+#line 1556 "trison_parser.cpp"
+            break;
+        }
+
+        case 26:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 571 "trison_parser.trison"
+
+        delete throwaway;
+        return id;
+    
+#line 1571 "trison_parser.cpp"
+            break;
+        }
+
+        case 27:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            NonterminalMap * nonterminal_map(Dsc<NonterminalMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Trison::Nonterminal * nonterminal(Dsc<Trison::Nonterminal *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 584 "trison_parser.trison"
+
+        assert(m_terminal_map != NULL);
+        assert(m_nonterminal_list != NULL);
+        if (nonterminal != NULL)
+        {
+            nonterminal_map->Add(nonterminal->GetText(), nonterminal);
+            m_nonterminal_list->Append(nonterminal);
+        }
+        return nonterminal_map;
+    
+#line 1592 "trison_parser.cpp"
+            break;
+        }
+
+        case 28:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 596 "trison_parser.trison"
+
+        assert(m_nonterminal_list == NULL);
+        m_nonterminal_list = new NonterminalList();
+        NonterminalMap *nonterminal_map = new NonterminalMap();
+
+        // add the special "none_" nonterminal with token_index 0 and empty rule list
+        Trison::Nonterminal *nonterminal = new Trison::Nonterminal("none_", 0, FiLoc::ms_invalid);
+        nonterminal->SetRuleList(new RuleList());
+        nonterminal_map->Add(nonterminal->GetText(), nonterminal);
+        m_nonterminal_list->Append(nonterminal);
+
+        return nonterminal_map;
+    
+#line 1614 "trison_parser.cpp"
+            break;
+        }
+
+        case 29:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Trison::Nonterminal * nonterminal(Dsc<Trison::Nonterminal *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 614 "trison_parser.trison"
+
+        if (nonterminal != NULL)
+            nonterminal->SetRuleList(rule_list);
+        else
+            delete rule_list;
+        return nonterminal;
+    
+#line 1632 "trison_parser.cpp"
+            break;
+        }
+
+        case 30:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 623 "trison_parser.trison"
+
+        EmitError("syntax error in nonterminal definition", GetFiLoc());
+        return NULL;
+    
+#line 1645 "trison_parser.cpp"
+            break;
+        }
+
+        case 31:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            TypeMap * assigned_type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 632 "trison_parser.trison"
+
+        assert(m_terminal_map != NULL);
+        assert(m_token_index >= 0x100);
+        assert(id != NULL);
+        assert(assigned_type_map != NULL);
+        if (m_terminal_map->Element(id->GetText()) != NULL)
+            EmitError("id collision with terminal " + id->GetText(), id->GetFiLoc());
+        Trison::Nonterminal *nonterminal =
+            new Trison::Nonterminal(
+                id->GetText(),
+                m_token_index++,
+                id->GetFiLoc(),
+                assigned_type_map);
+        delete throwaway;
+        delete id;
+        return nonterminal;
+    
+#line 1674 "trison_parser.cpp"
+            break;
+        }
+
+        case 32:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 651 "trison_parser.trison"
+
+        assert(throwaway != NULL);
+        EmitError("syntax error while parsing nonterminal specification", throwaway->GetFiLoc());
+        delete throwaway;
+        return NULL;
+    
+#line 1690 "trison_parser.cpp"
+            break;
+        }
+
+        case 33:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 659 "trison_parser.trison"
+
+        assert(id != NULL);
+        EmitError("syntax error in %nonterminal directive", id->GetFiLoc());
+        delete throwaway;
+        delete id;
+        return NULL;
+    
+#line 1708 "trison_parser.cpp"
+            break;
+        }
+
+        case 34:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            RuleList * rule_list(Dsc<RuleList *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 675 "trison_parser.trison"
+
+        rule_list->Append(rule);
+        return rule_list;
+    
+#line 1723 "trison_parser.cpp"
+            break;
+        }
+
+        case 35:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 681 "trison_parser.trison"
+
+        RuleList *rule_list = new RuleList();
+        rule_list->Append(rule);
+        return rule_list;
+    
+#line 1738 "trison_parser.cpp"
+            break;
+        }
+
+        case 36:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Rule * rule(Dsc<Rule *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 691 "trison_parser.trison"
+
+        rule->m_rule_handler_map = rule_handler_map;
+        return rule;
+    
+#line 1753 "trison_parser.cpp"
+            break;
+        }
+
+        case 37:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            RuleTokenList * rule_token_list(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::Id * rule_precedence_directive(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 700 "trison_parser.trison"
+
+        Precedence *rule_precedence;
+        if (rule_precedence_directive == NULL)
+            rule_precedence = m_precedence_map->Element("DEFAULT_");
+        else if ((rule_precedence = m_precedence_map->Element(rule_precedence_directive->GetText())) == NULL)
+        {
+            EmitError("undefined %prec value \"" + rule_precedence_directive->GetText() + "\"");
+            rule_precedence = m_precedence_map->Element("DEFAULT_");
+        }
+
+        Rule *rule = new Rule(rule_token_list, rule_precedence, m_rule_count++);
+        delete rule_precedence_directive;
+        return rule;
+    
+#line 1778 "trison_parser.cpp"
+            break;
+        }
+
+        case 38:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            CommonLang::RuleHandler * rule_handler(Dsc<CommonLang::RuleHandler *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 719 "trison_parser.trison"
+
+        if (rule_handler != NULL)
+            rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
+        return rule_handler_map;
+    
+#line 1794 "trison_parser.cpp"
+            break;
+        }
+
+        case 39:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 726 "trison_parser.trison"
+
+        return new CommonLang::RuleHandlerMap();
+    
+#line 1806 "trison_parser.cpp"
+            break;
+        }
+
+        case 40:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 734 "trison_parser.trison"
+
+        delete throwaway;
+        assert(m_target_map != NULL);
+        if (m_target_map->Element(target_id->GetText()) == NULL)
+            EmitWarning(
+                "undeclared target \"" + target_id->GetText() + "\"",
+                target_id->GetFiLoc());
+        return new CommonLang::RuleHandler(target_id, code_block);
+    
+#line 1827 "trison_parser.cpp"
+            break;
+        }
+
+        case 41:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 745 "trison_parser.trison"
+
+        assert(m_target_map != NULL);
+        EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
+        delete throwaway;
+        delete code_block;
+        return NULL;
+    
+#line 1845 "trison_parser.cpp"
+            break;
+        }
+
+        case 42:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+
+#line 754 "trison_parser.trison"
+
+        assert(m_target_map != NULL);
+        EmitError("parse error in directive %target", throwaway->GetFiLoc());
+        delete throwaway;
+        return NULL;
+    
+#line 1861 "trison_parser.cpp"
+            break;
+        }
+
+        case 43:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 762 "trison_parser.trison"
+
+        assert(m_target_map != NULL);
+        EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
+        delete code_block;
+        return NULL;
+    
+#line 1877 "trison_parser.cpp"
+            break;
+        }
+
+        case 44:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            RuleTokenList * rule_token_list(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            RuleToken * rule_token(Dsc<RuleToken *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 773 "trison_parser.trison"
+
+        rule_token_list->Append(rule_token);
+        return rule_token_list;
+    
+#line 1892 "trison_parser.cpp"
+            break;
+        }
+
+        case 45:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 779 "trison_parser.trison"
+
+        return new RuleTokenList();
+    
+#line 1904 "trison_parser.cpp"
+            break;
+        }
+
+        case 46:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            TokenId * token_id(Dsc<TokenId *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 787 "trison_parser.trison"
+
+        RuleToken *rule_token =
+            token_id != NULL ?
+            new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id->GetText()) :
+            NULL;
+        delete token_id;
+        delete assigned_id;
+        return rule_token;
+    
+#line 1924 "trison_parser.cpp"
+            break;
+        }
+
+        case 47:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            TokenId * token_id(Dsc<TokenId *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 798 "trison_parser.trison"
+
+        RuleToken *rule_token =
+            token_id != NULL ?
+            new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
+            NULL;
+        delete token_id;
+        return rule_token;
+    
+#line 1942 "trison_parser.cpp"
+            break;
+        }
+
+        case 48:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 808 "trison_parser.trison"
+
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc(), assigned_id->GetText());
+        delete throwaway;
+        delete assigned_id;
+        return rule_token;
+    
+#line 1959 "trison_parser.cpp"
+            break;
+        }
+
+        case 49:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 816 "trison_parser.trison"
+
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
+        delete throwaway;
+        return rule_token;
+    
+#line 1974 "trison_parser.cpp"
+            break;
+        }
+
+        case 50:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 823 "trison_parser.trison"
+
+        EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
+        delete throwaway;
+        delete assigned_id;
+        return NULL;
+    
+#line 1991 "trison_parser.cpp"
+            break;
+        }
+
+        case 51:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 831 "trison_parser.trison"
+
+        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
+        delete throwaway;
+        return rule_token;
+    
+#line 2006 "trison_parser.cpp"
+            break;
+        }
+
+        case 52:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 841 "trison_parser.trison"
+
+        delete throwaway;
+        return id;
+    
+#line 2021 "trison_parser.cpp"
+            break;
+        }
+
+        case 53:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 847 "trison_parser.trison"
+
+        return NULL;
+    
+#line 2033 "trison_parser.cpp"
+            break;
+        }
+
+        case 54:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 858 "trison_parser.trison"
+ return NULL; 
+#line 2043 "trison_parser.cpp"
+            break;
+        }
+
+        case 55:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 860 "trison_parser.trison"
+ return NULL; 
+#line 2053 "trison_parser.cpp"
+            break;
+        }
+
+        case 56:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 865 "trison_parser.trison"
+ return NULL; 
+#line 2063 "trison_parser.cpp"
+            break;
+        }
+
+        case 57:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 867 "trison_parser.trison"
+ return NULL; 
+#line 2073 "trison_parser.cpp"
+            break;
+        }
+
+        case 58:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 873 "trison_parser.trison"
+
+        // here, the token_index doesn't matter, since this rule isn't used
+        // in the terminal declarations.
+        TokenId *token_id = new TokenId(id->GetText(), 0, id->GetFiLoc());
+        delete id;
+        return token_id;
+    
+#line 2090 "trison_parser.cpp"
+            break;
+        }
+
+        case 59:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 882 "trison_parser.trison"
+
+        // here, the token_index doesn't matter, since this rule isn't used
+        // in the terminal declarations.
+        TokenId *token_id = new TokenId(CharLiteral(ch->GetChar()), 0, ch->GetFiLoc());
+        delete ch;
+        return token_id;
+    
+#line 2107 "trison_parser.cpp"
+            break;
+        }
+
+        case 60:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 893 "trison_parser.trison"
+ return new Trison::Terminal(id, m_token_index++); 
+#line 2118 "trison_parser.cpp"
+            break;
+        }
+
+        case 61:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 895 "trison_parser.trison"
+ return new Trison::Terminal(ch); 
+#line 2129 "trison_parser.cpp"
+            break;
+        }
+
+        case 62:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 900 "trison_parser.trison"
+ return dumb_code_block; 
+#line 2140 "trison_parser.cpp"
+            break;
+        }
+
+        case 63:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 902 "trison_parser.trison"
+ return strict_code_block; 
+#line 2151 "trison_parser.cpp"
+            break;
+        }
+
+        case 64:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            TypeMap * type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
+            Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::String * assigned_type(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 908 "trison_parser.trison"
+
+        assert(type_map != NULL);
+        assert(target_id != NULL);
+        assert(assigned_type != NULL);
+        type_map->Add(target_id->GetText(), assigned_type);
+        delete throwaway;
+        delete target_id;
+        return type_map;
+    
+#line 2173 "trison_parser.cpp"
+            break;
+        }
+
+        case 65:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+
+#line 919 "trison_parser.trison"
+
+        return new TypeMap();
+    
+#line 2185 "trison_parser.cpp"
+            break;
+        }
+
+    }
+
+    assert(false && "no value returned from reduction rule code block");
+    return NULL;
+}
+
+void Parser::PrintParserStatus_ (std::ostream &stream) const
+{
+    assert(!m_stack_.empty());
+
+    stream << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2202 "trison_parser.cpp"
+ << " parser state stack: ";
+    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
+    {
+        stream << it->m_state_index;
+        Stack_::const_iterator next_it = it;
+        if (++next_it != it_end)
+            stream << ' ';
+    }
+    stream << std::endl;
+
+    assert(m_stack_.size() >= 1);
+    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal::none_));
+    stream << 
+#line 214 "trison_parser.trison"
+"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2218 "trison_parser.cpp"
+ << " parser stack tokens . lookahead queue: ";
+    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
+    {
+        // the first token is always Nonterminal::none_, which doesn't correspond to a real token, so skip it.
+        if (it == m_stack_.begin())
+            continue;
+        stream << it->m_token << ' ';
+    }
+    stream << '.';
+    for (LookaheadQueue_::const_iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
+    {
+        Token const &lookahead_token = *it;
+        assert(lookahead_token.m_id < ms_token_name_count_ && "Token id out of range");
+        stream << ' ' << lookahead_token;
+    }
+    stream << std::endl;
+
+    PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
+    stream << std::endl;
+}
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
@@ -2684,316 +2994,6 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::DIRECTIVE_TYPE
 };
 std::size_t const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
-
-char const *const Parser::ms_token_name_table_[] =
-{
-    "'\\0'",
-    "'\\x01'",
-    "'\\x02'",
-    "'\\x03'",
-    "'\\x04'",
-    "'\\x05'",
-    "'\\x06'",
-    "'\\a'",
-    "'\\b'",
-    "'\\t'",
-    "'\\n'",
-    "'\\v'",
-    "'\\f'",
-    "'\\r'",
-    "'\\x0E'",
-    "'\\x0F'",
-    "'\\x10'",
-    "'\\x11'",
-    "'\\x12'",
-    "'\\x13'",
-    "'\\x14'",
-    "'\\x15'",
-    "'\\x16'",
-    "'\\x17'",
-    "'\\x18'",
-    "'\\x19'",
-    "'\\x1A'",
-    "'\\x1B'",
-    "'\\x1C'",
-    "'\\x1D'",
-    "'\\x1E'",
-    "'\\x1F'",
-    "' '",
-    "'!'",
-    "'\"'",
-    "'#'",
-    "'$'",
-    "'%'",
-    "'&'",
-    "'\\''",
-    "'('",
-    "')'",
-    "'*'",
-    "'+'",
-    "','",
-    "'-'",
-    "'.'",
-    "'/'",
-    "'0'",
-    "'1'",
-    "'2'",
-    "'3'",
-    "'4'",
-    "'5'",
-    "'6'",
-    "'7'",
-    "'8'",
-    "'9'",
-    "':'",
-    "';'",
-    "'<'",
-    "'='",
-    "'>'",
-    "'?'",
-    "'@'",
-    "'A'",
-    "'B'",
-    "'C'",
-    "'D'",
-    "'E'",
-    "'F'",
-    "'G'",
-    "'H'",
-    "'I'",
-    "'J'",
-    "'K'",
-    "'L'",
-    "'M'",
-    "'N'",
-    "'O'",
-    "'P'",
-    "'Q'",
-    "'R'",
-    "'S'",
-    "'T'",
-    "'U'",
-    "'V'",
-    "'W'",
-    "'X'",
-    "'Y'",
-    "'Z'",
-    "'['",
-    "'\\\\'",
-    "']'",
-    "'^'",
-    "'_'",
-    "'`'",
-    "'a'",
-    "'b'",
-    "'c'",
-    "'d'",
-    "'e'",
-    "'f'",
-    "'g'",
-    "'h'",
-    "'i'",
-    "'j'",
-    "'k'",
-    "'l'",
-    "'m'",
-    "'n'",
-    "'o'",
-    "'p'",
-    "'q'",
-    "'r'",
-    "'s'",
-    "'t'",
-    "'u'",
-    "'v'",
-    "'w'",
-    "'x'",
-    "'y'",
-    "'z'",
-    "'{'",
-    "'|'",
-    "'}'",
-    "'~'",
-    "'\\x7F'",
-    "'\\x80'",
-    "'\\x81'",
-    "'\\x82'",
-    "'\\x83'",
-    "'\\x84'",
-    "'\\x85'",
-    "'\\x86'",
-    "'\\x87'",
-    "'\\x88'",
-    "'\\x89'",
-    "'\\x8A'",
-    "'\\x8B'",
-    "'\\x8C'",
-    "'\\x8D'",
-    "'\\x8E'",
-    "'\\x8F'",
-    "'\\x90'",
-    "'\\x91'",
-    "'\\x92'",
-    "'\\x93'",
-    "'\\x94'",
-    "'\\x95'",
-    "'\\x96'",
-    "'\\x97'",
-    "'\\x98'",
-    "'\\x99'",
-    "'\\x9A'",
-    "'\\x9B'",
-    "'\\x9C'",
-    "'\\x9D'",
-    "'\\x9E'",
-    "'\\x9F'",
-    "'\\xA0'",
-    "'\\xA1'",
-    "'\\xA2'",
-    "'\\xA3'",
-    "'\\xA4'",
-    "'\\xA5'",
-    "'\\xA6'",
-    "'\\xA7'",
-    "'\\xA8'",
-    "'\\xA9'",
-    "'\\xAA'",
-    "'\\xAB'",
-    "'\\xAC'",
-    "'\\xAD'",
-    "'\\xAE'",
-    "'\\xAF'",
-    "'\\xB0'",
-    "'\\xB1'",
-    "'\\xB2'",
-    "'\\xB3'",
-    "'\\xB4'",
-    "'\\xB5'",
-    "'\\xB6'",
-    "'\\xB7'",
-    "'\\xB8'",
-    "'\\xB9'",
-    "'\\xBA'",
-    "'\\xBB'",
-    "'\\xBC'",
-    "'\\xBD'",
-    "'\\xBE'",
-    "'\\xBF'",
-    "'\\xC0'",
-    "'\\xC1'",
-    "'\\xC2'",
-    "'\\xC3'",
-    "'\\xC4'",
-    "'\\xC5'",
-    "'\\xC6'",
-    "'\\xC7'",
-    "'\\xC8'",
-    "'\\xC9'",
-    "'\\xCA'",
-    "'\\xCB'",
-    "'\\xCC'",
-    "'\\xCD'",
-    "'\\xCE'",
-    "'\\xCF'",
-    "'\\xD0'",
-    "'\\xD1'",
-    "'\\xD2'",
-    "'\\xD3'",
-    "'\\xD4'",
-    "'\\xD5'",
-    "'\\xD6'",
-    "'\\xD7'",
-    "'\\xD8'",
-    "'\\xD9'",
-    "'\\xDA'",
-    "'\\xDB'",
-    "'\\xDC'",
-    "'\\xDD'",
-    "'\\xDE'",
-    "'\\xDF'",
-    "'\\xE0'",
-    "'\\xE1'",
-    "'\\xE2'",
-    "'\\xE3'",
-    "'\\xE4'",
-    "'\\xE5'",
-    "'\\xE6'",
-    "'\\xE7'",
-    "'\\xE8'",
-    "'\\xE9'",
-    "'\\xEA'",
-    "'\\xEB'",
-    "'\\xEC'",
-    "'\\xED'",
-    "'\\xEE'",
-    "'\\xEF'",
-    "'\\xF0'",
-    "'\\xF1'",
-    "'\\xF2'",
-    "'\\xF3'",
-    "'\\xF4'",
-    "'\\xF5'",
-    "'\\xF6'",
-    "'\\xF7'",
-    "'\\xF8'",
-    "'\\xF9'",
-    "'\\xFA'",
-    "'\\xFB'",
-    "'\\xFC'",
-    "'\\xFD'",
-    "'\\xFE'",
-    "'\\xFF'",
-    "END_",
-    "ERROR_",
-    "BAD_TOKEN",
-    "CHAR_LITERAL",
-    "DIRECTIVE_DEFAULT_PARSE_NONTERMINAL",
-    "DIRECTIVE_END",
-    "DIRECTIVE_ERROR",
-    "DIRECTIVE_NONTERMINAL",
-    "DIRECTIVE_PREC",
-    "DIRECTIVE_TARGET",
-    "DIRECTIVE_TARGETS",
-    "DIRECTIVE_TERMINAL",
-    "DIRECTIVE_TYPE",
-    "DUMB_CODE_BLOCK",
-    "END_PREAMBLE",
-    "ID",
-    "NEWLINE",
-    "STRICT_CODE_BLOCK",
-    "STRING_LITERAL",
-    "root",
-    "targets_directive",
-    "target_ids",
-    "target_directives",
-    "target_directive",
-    "target_directive_param",
-    "terminal_directives",
-    "terminal_directive",
-    "terminals",
-    "precedence_directives",
-    "precedence_directive",
-    "start_directive",
-    "nonterminals",
-    "nonterminal",
-    "nonterminal_specification",
-    "rules",
-    "rule",
-    "rule_specification",
-    "rule_handlers",
-    "rule_handler",
-    "rule_token_list",
-    "rule_token",
-    "rule_precedence_directive",
-    "at_least_zero_newlines",
-    "at_least_one_newline",
-    "token_id",
-    "terminal",
-    "any_type_of_code_block",
-    "type_spec"
-};
-std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
-
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
 // ///////////////////////////////////////////////////////////////////////
