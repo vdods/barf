@@ -47,6 +47,8 @@ $ do comprehensive deleting of stuff (this might be hard with all the throwing)
   component parts.  this technique will be useful later in compiler design for
   debugging info.
 - add filename-sanitizing function -- i.e. to check for newlines and other stuff
+- save off FiLoc where each error panic starts, so that if it's a general parse
+  error, at least some info can be printed.
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
