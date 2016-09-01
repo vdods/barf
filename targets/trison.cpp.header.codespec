@@ -294,6 +294,9 @@ private:
     typedef std::deque<Token> LookaheadQueue_;
 
 <|if(is_defined(generate_debug_spew_code))
+    // debug spew methods
+    void PrintIndented_ (std::ostream &stream, char const *string) const;
+
     bool m_debug_spew_;
 
 <|end_if
@@ -304,35 +307,7 @@ private:
     static std::size_t const ms_token_name_count_;
 <|end_if
 
-    static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
-    ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
-    void ThrowAwayToken_ (Token &token) throw();
-    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
-    void ThrowAwayTokenData_ (<{token_data_type} &token_data) throw();
-    void ResetForNewInput_ () throw();
-    Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
-    void ClearStack_ () throw();
-    void ClearLookaheadQueue_ () throw();
-    Token const &Lookahead_ (LookaheadQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
-    bool ExerciseTransition_ (Transition_ const &transition);
-    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
-<|if(is_defined(generate_debug_spew_code))
-    // debug spew methods
-    void PrintParserStatus_ (std::ostream &stream) const;
-    void PrintIndented_ (std::ostream &stream, char const *string) const;
-<|end_if
-
-    Stack_ m_stack_;
-    LookaheadQueue_ m_lookahead_queue_;
-    bool m_is_in_error_panic_;
-
-    static State_ const ms_state_table_[];
-    static std::size_t const ms_state_count_;
-    static Transition_ const ms_transition_table_[];
-    static std::size_t const ms_transition_count_;
-    static Token::Id const ms_lookahead_table_[];
-    static std::size_t const ms_lookahead_count_;
-
+<|include("trison.cpp.dpda.header.codespec")
     // ///////////////////////////////////////////////////////////////////////
     // end of internal trison-generated parser guts
     // ///////////////////////////////////////////////////////////////////////
