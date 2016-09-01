@@ -106,7 +106,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(ReflexOptions().Predefine(i), "<predefine>");
 
-        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::Nonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in predefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -140,7 +140,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(ReflexOptions().Postdefine(i), "<postdefine>");
 
-        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::Nonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in postdefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {

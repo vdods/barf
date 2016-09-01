@@ -89,41 +89,34 @@ public:
         }; // end of enum Parser::Terminal::Name
     }; // end of struct Parser::Terminal
 
-    /// "Namespace" for Parser::ParseNonterminal::Name, which enumerates
-    /// all valid nonterminals this parser can recognize.
-    struct ParseNonterminal
+    /// "Namespace" for Parser::Nonterminal::Name, which enumerates all nonterminals.
+    /// This is used internally by the parser, but is also used by the client to specify which
+    /// nonterminal should be parsed by the parser.
+    struct Nonterminal
     {
-        /** The Parse() method doesn't necessarily have to start with the
-          * value of the %default_parse_nonterminal directive; it can
-          * attempt to parse any of the nonterminals defined in the primary
-          * source file.  These enums are the way to specify which nonterminal
-          * to parse.
-          *
-          * @brief Acceptable nonterminals recognizable by this parser.
+        /** There is one special nonterminal: none_.  This should not be used by the client,
+          * as it is only used internally by the parser.
           */
         enum Name
         {
-            atom = 111,
-            atom_control_char = 122,
-            atom_normal_char = 124,
-            bound = 113,
-            bracket_char_set = 118,
-            bracket_expression = 116,
-            bracket_expression_char = 120,
-            bracket_expression_control_char = 126,
-            bracket_expression_normal_char = 128,
-            branch = 103,
-            branch_which_didnt_just_accept_an_atom = 105,
-            branch_which_just_accepted_an_atom = 108,
-            id = 130,
-            integer = 132,
-            regex = 0,
-            /// Nonterminal which will be attempted to be parsed by the Parse()
-            /// method by default (specified by the %default_parse_nonterminal
-            /// directive).
-            default_ = regex
-        }; // end of enum Parser::ParseNonterminal::Name
-    }; // end of struct Parser::ParseNonterminal
+            none_ = 0,
+            regex = 263,
+            branch = 264,
+            branch_which_didnt_just_accept_an_atom = 265,
+            branch_which_just_accepted_an_atom = 266,
+            atom = 267,
+            bound = 268,
+            bracket_expression = 269,
+            bracket_char_set = 270,
+            bracket_expression_char = 271,
+            atom_control_char = 272,
+            atom_normal_char = 273,
+            bracket_expression_control_char = 274,
+            bracket_expression_normal_char = 275,
+            id = 276,
+            integer = 277
+        }; // end of enum Parser::Nonterminal::Name
+    }; // end of struct Parser::Nonterminal
 
     /** The client should package-up and return a Parser::Token from
       * the code specified by %target.cpp.scan_actions, which delivers the
@@ -197,6 +190,7 @@ public:
       */
     void ResetForNewInput ();
 
+
 #line 36 "barf_regex_parser.trison"
 
     using InputBase::IsOpen;
@@ -228,7 +222,7 @@ private:
     // job; parsing of hex chars, e.g. \xA7)
     bool m_active_backslash;
 
-#line 232 "barf_regex_parser.hpp"
+#line 226 "barf_regex_parser.hpp"
 
 
 private:
@@ -263,34 +257,12 @@ private:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::regex);
+    ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::regex);
 
     // ///////////////////////////////////////////////////////////////////////
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    struct Nonterminal_
-    {
-        enum Name
-        {
-            none_ = 0,
-            regex = 263,
-            branch = 264,
-            branch_which_didnt_just_accept_an_atom = 265,
-            branch_which_just_accepted_an_atom = 266,
-            atom = 267,
-            bound = 268,
-            bracket_expression = 269,
-            bracket_char_set = 270,
-            bracket_expression_char = 271,
-            atom_control_char = 272,
-            atom_normal_char = 273,
-            bracket_expression_control_char = 274,
-            bracket_expression_normal_char = 275,
-            id = 276,
-            integer = 277
-        }; // end of enum Parser::Nonterminal_::Name
-    }; // end of struct Parser::Nonterminal_
     struct Transition_;
 
     struct StackElement_
@@ -301,7 +273,7 @@ private:
         StackElement_ ()
             :
             m_state_index(std::uint32_t(-1)),
-            m_token(Nonterminal_::none_, NULL)
+            m_token(Nonterminal::none_, NULL)
         { }
         StackElement_ (std::uint32_t state_index, Token const &token)
             :
@@ -313,7 +285,8 @@ private:
     typedef std::deque<StackElement_> Stack_;
     typedef std::deque<Token> LookaheadQueue_;
 
-    ParserReturnCode Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse);
+    static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
+    ParserReturnCode Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token &token) throw();
     void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
     void ThrowAwayTokenData_ (Ast::Base * &token_data) throw();
@@ -384,4 +357,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 388 "barf_regex_parser.hpp"
+#line 361 "barf_regex_parser.hpp"

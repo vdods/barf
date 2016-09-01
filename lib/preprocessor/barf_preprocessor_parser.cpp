@@ -65,7 +65,7 @@ void Parser::ResetForNewInput ()
     ClearLookaheadQueue_();
 }
 
-Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
+Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
 {
 
 #line 74 "barf_preprocessor_parser.trison"
@@ -91,14 +91,42 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, ParseNontermi
 // begin internal trison-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
+std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
+{
+    switch (nonterminal)
+    {
+        case Nonterminal::body: return 0;
+        case Nonterminal::code: return 257;
+        case Nonterminal::code_body: return 261;
+        case Nonterminal::conditional_series: return 263;
+        case Nonterminal::conditional_series_end: return 267;
+        case Nonterminal::define: return 285;
+        case Nonterminal::define_array_element: return 299;
+        case Nonterminal::define_map_element: return 311;
+        case Nonterminal::define_scalar: return 289;
+        case Nonterminal::else_if_statement: return 277;
+        case Nonterminal::else_statement: return 273;
+        case Nonterminal::end_define: return 323;
+        case Nonterminal::end_for_each: return 339;
+        case Nonterminal::end_if: return 281;
+        case Nonterminal::end_loop: return 331;
+        case Nonterminal::executable: return 255;
+        case Nonterminal::expression: return 343;
+        case Nonterminal::for_each: return 335;
+        case Nonterminal::if_statement: return 271;
+        case Nonterminal::loop: return 327;
+        default: assert(false && "invalid nonterminal"); return 0;
+    }
+}
+
+Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
 {
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 102 "barf_preprocessor_parser.cpp"
+#line 130 "barf_preprocessor_parser.cpp"
  << " starting parse" << std::endl)
 
     ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
@@ -112,29 +140,8 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
     m_is_in_error_panic_ = false;
 
     // push the initial state of the DPDA.
-    assert((false
-           || nonterminal_to_parse == ParseNonterminal::body
-           || nonterminal_to_parse == ParseNonterminal::code
-           || nonterminal_to_parse == ParseNonterminal::code_body
-           || nonterminal_to_parse == ParseNonterminal::conditional_series
-           || nonterminal_to_parse == ParseNonterminal::conditional_series_end
-           || nonterminal_to_parse == ParseNonterminal::define
-           || nonterminal_to_parse == ParseNonterminal::define_array_element
-           || nonterminal_to_parse == ParseNonterminal::define_map_element
-           || nonterminal_to_parse == ParseNonterminal::define_scalar
-           || nonterminal_to_parse == ParseNonterminal::else_if_statement
-           || nonterminal_to_parse == ParseNonterminal::else_statement
-           || nonterminal_to_parse == ParseNonterminal::end_define
-           || nonterminal_to_parse == ParseNonterminal::end_for_each
-           || nonterminal_to_parse == ParseNonterminal::end_if
-           || nonterminal_to_parse == ParseNonterminal::end_loop
-           || nonterminal_to_parse == ParseNonterminal::executable
-           || nonterminal_to_parse == ParseNonterminal::expression
-           || nonterminal_to_parse == ParseNonterminal::for_each
-           || nonterminal_to_parse == ParseNonterminal::if_statement
-           || nonterminal_to_parse == ParseNonterminal::loop
-           ) && "invalid nonterminal_to_parse");
-    m_stack_.push_back(StackElement_(nonterminal_to_parse, Token(Nonterminal_::none_, NULL)));
+    std::uint32_t nonterminal_start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
+    m_stack_.push_back(StackElement_(nonterminal_start_state_index, Token(Nonterminal::none_, NULL)));
     // main parser loop
     while (true)
     {
@@ -143,7 +150,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 147 "barf_preprocessor_parser.cpp"
+#line 154 "barf_preprocessor_parser.cpp"
  << " begin error panic" << std::endl)
 
             while (true)
@@ -175,7 +182,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 179 "barf_preprocessor_parser.cpp"
+#line 186 "barf_preprocessor_parser.cpp"
  << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
                     // if the current state accepts error, then we check if the lookahead token
                     // is Terminal::END_.  if it is, then we add a dummy Terminal::ERROR_ token
@@ -188,7 +195,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 192 "barf_preprocessor_parser.cpp"
+#line 199 "barf_preprocessor_parser.cpp"
  << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
                         m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
                     }
@@ -206,7 +213,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 210 "barf_preprocessor_parser.cpp"
+#line 217 "barf_preprocessor_parser.cpp"
  << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
                     }
                     else
@@ -214,7 +221,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 218 "barf_preprocessor_parser.cpp"
+#line 225 "barf_preprocessor_parser.cpp"
  << " end error panic; abort (stack is empty)" << std::endl)
                     }
                     // otherwise throw away the data at the top of the stack, and pop the stack.
@@ -253,7 +260,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 257 "barf_preprocessor_parser.cpp"
+#line 264 "barf_preprocessor_parser.cpp"
  << " current transitions:" << std::endl)
             for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
                                    *transition_end = current_state.m_transition_table+current_state.m_transition_count;
@@ -274,7 +281,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 278 "barf_preprocessor_parser.cpp"
+#line 285 "barf_preprocessor_parser.cpp"
  << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
                 for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
                 {
@@ -299,7 +306,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 303 "barf_preprocessor_parser.cpp"
+#line 310 "barf_preprocessor_parser.cpp"
  << " currently usable lookahead(s):")
                     for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
                     {
@@ -319,7 +326,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 323 "barf_preprocessor_parser.cpp"
+#line 330 "barf_preprocessor_parser.cpp"
  << " currently usable lookahead(s):")
                 for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
                 {
@@ -330,7 +337,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 334 "barf_preprocessor_parser.cpp"
+#line 341 "barf_preprocessor_parser.cpp"
  << " exercising default transition" << std::endl)
                 // exercise the default transition.  a return value of true indicates
                 // that the parser should return.
@@ -339,7 +346,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
                     // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == std::uint32_t(nonterminal_to_parse));
+                    assert(m_stack_[0].m_state_index == nonterminal_start_state_index);
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
                     *return_token = m_stack_.back().m_token.m_data;
@@ -361,12 +368,12 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 365 "barf_preprocessor_parser.cpp"
+#line 372 "barf_preprocessor_parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 370 "barf_preprocessor_parser.cpp"
+#line 377 "barf_preprocessor_parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
     return parser_return_code_;
@@ -377,7 +384,7 @@ void Parser::ThrowAwayToken_ (Token &token_) throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 381 "barf_preprocessor_parser.cpp"
+#line 388 "barf_preprocessor_parser.cpp"
  << " executing throw-away-token actions on token " << token_ << std::endl)
 
     ThrowAwayTokenData_(token_.m_data);
@@ -388,7 +395,7 @@ void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 392 "barf_preprocessor_parser.cpp"
+#line 399 "barf_preprocessor_parser.cpp"
  << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
 
     ThrowAwayTokenData_(stack_element_.m_token.m_data);
@@ -401,7 +408,7 @@ void Parser::ThrowAwayTokenData_ (Ast::Base * &token_data) throw()
 
     delete token_data;
 
-#line 405 "barf_preprocessor_parser.cpp"
+#line 412 "barf_preprocessor_parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
@@ -409,7 +416,7 @@ Parser::Token Parser::Scan_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 413 "barf_preprocessor_parser.cpp"
+#line 420 "barf_preprocessor_parser.cpp"
  << " executing scan actions" << std::endl)
 
 
@@ -418,7 +425,7 @@ Parser::Token Parser::Scan_ () throw()
     assert(m_scanner != NULL);
     return m_scanner->Scan();
 
-#line 422 "barf_preprocessor_parser.cpp"
+#line 429 "barf_preprocessor_parser.cpp"
 }
 
 void Parser::ClearStack_ () throw()
@@ -429,7 +436,7 @@ void Parser::ClearStack_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 433 "barf_preprocessor_parser.cpp"
+#line 440 "barf_preprocessor_parser.cpp"
  << " clearing the stack" << std::endl)
 
     Stack_::iterator it = m_stack_.begin();
@@ -447,7 +454,7 @@ void Parser::ClearLookaheadQueue_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 451 "barf_preprocessor_parser.cpp"
+#line 458 "barf_preprocessor_parser.cpp"
  << " clearing the lookahead queue" << std::endl)
 
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
@@ -464,7 +471,7 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 468 "barf_preprocessor_parser.cpp"
+#line 475 "barf_preprocessor_parser.cpp"
  << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
     }
     return m_lookahead_queue_[index];
@@ -484,7 +491,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 488 "barf_preprocessor_parser.cpp"
+#line 495 "barf_preprocessor_parser.cpp"
  << " REDUCE " << rule.m_description << std::endl)
             assert(m_stack_.size() > rule.m_token_count);
             m_lookahead_queue_.push_front(
@@ -496,12 +503,12 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 500 "barf_preprocessor_parser.cpp"
+#line 507 "barf_preprocessor_parser.cpp"
  << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 505 "barf_preprocessor_parser.cpp"
+#line 512 "barf_preprocessor_parser.cpp"
  << std::endl)
             return false; // indicating the parser isn't returning
         }
@@ -510,12 +517,12 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 514 "barf_preprocessor_parser.cpp"
+#line 521 "barf_preprocessor_parser.cpp"
  << " RETURN" << std::endl)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 519 "barf_preprocessor_parser.cpp"
+#line 526 "barf_preprocessor_parser.cpp"
  << std::endl)
             return true; // indicating the parser is returning
 
@@ -528,12 +535,12 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 532 "barf_preprocessor_parser.cpp"
+#line 539 "barf_preprocessor_parser.cpp"
  << " SHIFT " << Lookahead_(0) << std::endl)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 537 "barf_preprocessor_parser.cpp"
+#line 544 "barf_preprocessor_parser.cpp"
  << std::endl)
             m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
             m_lookahead_queue_.pop_front();
@@ -543,12 +550,12 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 547 "barf_preprocessor_parser.cpp"
+#line 554 "barf_preprocessor_parser.cpp"
  << " ERROR_PANIC" << std::endl)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 552 "barf_preprocessor_parser.cpp"
+#line 559 "barf_preprocessor_parser.cpp"
  << std::endl)
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
@@ -565,7 +572,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 569 "barf_preprocessor_parser.cpp"
+#line 576 "barf_preprocessor_parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
@@ -581,7 +588,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return new Body();
     
-#line 585 "barf_preprocessor_parser.cpp"
+#line 592 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -596,7 +603,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         body->Append(text);
         return body;
     
-#line 600 "barf_preprocessor_parser.cpp"
+#line 607 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -612,7 +619,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             body->Append(executable);
         return body;
     
-#line 616 "barf_preprocessor_parser.cpp"
+#line 623 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -630,7 +637,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         body->Append(text);
         return body;
     
-#line 634 "barf_preprocessor_parser.cpp"
+#line 641 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -643,7 +650,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return code;
     
-#line 647 "barf_preprocessor_parser.cpp"
+#line 654 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -656,7 +663,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return conditional;
     
-#line 660 "barf_preprocessor_parser.cpp"
+#line 667 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -671,7 +678,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         define->SetBody(body);
         return define;
     
-#line 675 "barf_preprocessor_parser.cpp"
+#line 682 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -686,7 +693,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         loop->SetBody(body);
         return loop;
     
-#line 690 "barf_preprocessor_parser.cpp"
+#line 697 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -701,7 +708,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         for_each->SetBody(body);
         return for_each;
     
-#line 705 "barf_preprocessor_parser.cpp"
+#line 712 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -712,7 +719,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 247 "barf_preprocessor_parser.trison"
  return code_body; 
-#line 716 "barf_preprocessor_parser.cpp"
+#line 723 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -723,7 +730,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 249 "barf_preprocessor_parser.trison"
  return code_body; 
-#line 727 "barf_preprocessor_parser.cpp"
+#line 734 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -733,7 +740,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 255 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 737 "barf_preprocessor_parser.cpp"
+#line 744 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -744,7 +751,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 258 "barf_preprocessor_parser.trison"
  return expression; 
-#line 748 "barf_preprocessor_parser.cpp"
+#line 755 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -754,7 +761,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 261 "barf_preprocessor_parser.trison"
  return new DumpSymbolTable(); 
-#line 758 "barf_preprocessor_parser.cpp"
+#line 765 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -765,7 +772,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 264 "barf_preprocessor_parser.trison"
  return new Undefine(id); 
-#line 769 "barf_preprocessor_parser.cpp"
+#line 776 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -776,7 +783,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 267 "barf_preprocessor_parser.trison"
  return new DeclareArray(id); 
-#line 780 "barf_preprocessor_parser.cpp"
+#line 787 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -787,7 +794,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 270 "barf_preprocessor_parser.trison"
  return new DeclareMap(id); 
-#line 791 "barf_preprocessor_parser.cpp"
+#line 798 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -798,7 +805,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 273 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, false); 
-#line 802 "barf_preprocessor_parser.cpp"
+#line 809 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -809,7 +816,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 276 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, true); 
-#line 813 "barf_preprocessor_parser.cpp"
+#line 820 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -820,7 +827,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 279 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::WARNING); 
-#line 824 "barf_preprocessor_parser.cpp"
+#line 831 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -831,7 +838,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 282 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::ERROR); 
-#line 835 "barf_preprocessor_parser.cpp"
+#line 842 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -842,7 +849,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 285 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::FATAL_ERROR); 
-#line 846 "barf_preprocessor_parser.cpp"
+#line 853 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -859,7 +866,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         conditional->SetElseBody(else_body);
         return conditional;
     
-#line 863 "barf_preprocessor_parser.cpp"
+#line 870 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -869,7 +876,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 300 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 873 "barf_preprocessor_parser.cpp"
+#line 880 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -880,7 +887,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 302 "barf_preprocessor_parser.trison"
  return body; 
-#line 884 "barf_preprocessor_parser.cpp"
+#line 891 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -899,7 +906,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         body->Append(conditional);
         return body;
     
-#line 903 "barf_preprocessor_parser.cpp"
+#line 910 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -910,7 +917,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 317 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 914 "barf_preprocessor_parser.cpp"
+#line 921 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -921,7 +928,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 320 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 925 "barf_preprocessor_parser.cpp"
+#line 932 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -931,7 +938,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 325 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 935 "barf_preprocessor_parser.cpp"
+#line 942 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -941,7 +948,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 327 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 945 "barf_preprocessor_parser.cpp"
+#line 952 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -952,7 +959,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 333 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 956 "barf_preprocessor_parser.cpp"
+#line 963 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -963,7 +970,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 336 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 967 "barf_preprocessor_parser.cpp"
+#line 974 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -973,7 +980,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 341 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 977 "barf_preprocessor_parser.cpp"
+#line 984 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -983,7 +990,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 343 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 987 "barf_preprocessor_parser.cpp"
+#line 994 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -994,7 +1001,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 348 "barf_preprocessor_parser.trison"
  return define; 
-#line 998 "barf_preprocessor_parser.cpp"
+#line 1005 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1005,7 +1012,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 350 "barf_preprocessor_parser.trison"
  return define; 
-#line 1009 "barf_preprocessor_parser.cpp"
+#line 1016 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1016,7 +1023,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 352 "barf_preprocessor_parser.trison"
  return define; 
-#line 1020 "barf_preprocessor_parser.cpp"
+#line 1027 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1027,7 +1034,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 358 "barf_preprocessor_parser.trison"
  return new Define(id); 
-#line 1031 "barf_preprocessor_parser.cpp"
+#line 1038 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1038,7 +1045,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 361 "barf_preprocessor_parser.trison"
  return new Define(id); 
-#line 1042 "barf_preprocessor_parser.cpp"
+#line 1049 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1049,7 +1056,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 367 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
-#line 1053 "barf_preprocessor_parser.cpp"
+#line 1060 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1060,7 +1067,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 370 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
-#line 1064 "barf_preprocessor_parser.cpp"
+#line 1071 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1072,7 +1079,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 376 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
-#line 1076 "barf_preprocessor_parser.cpp"
+#line 1083 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1084,7 +1091,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 379 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
-#line 1088 "barf_preprocessor_parser.cpp"
+#line 1095 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1094,7 +1101,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 384 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1098 "barf_preprocessor_parser.cpp"
+#line 1105 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1104,7 +1111,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 386 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1108 "barf_preprocessor_parser.cpp"
+#line 1115 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1116,7 +1123,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 392 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
-#line 1120 "barf_preprocessor_parser.cpp"
+#line 1127 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1128,7 +1135,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 395 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
-#line 1132 "barf_preprocessor_parser.cpp"
+#line 1139 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1138,7 +1145,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 400 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1142 "barf_preprocessor_parser.cpp"
+#line 1149 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1148,7 +1155,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 402 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1152 "barf_preprocessor_parser.cpp"
+#line 1159 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1160,7 +1167,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 408 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
-#line 1164 "barf_preprocessor_parser.cpp"
+#line 1171 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1172,7 +1179,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 411 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
-#line 1176 "barf_preprocessor_parser.cpp"
+#line 1183 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1182,7 +1189,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 416 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1186 "barf_preprocessor_parser.cpp"
+#line 1193 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1192,7 +1199,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 418 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1196 "barf_preprocessor_parser.cpp"
+#line 1203 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1203,7 +1210,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 424 "barf_preprocessor_parser.trison"
  return str; 
-#line 1207 "barf_preprocessor_parser.cpp"
+#line 1214 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1214,7 +1221,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 427 "barf_preprocessor_parser.trison"
  return integer; 
-#line 1218 "barf_preprocessor_parser.cpp"
+#line 1225 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1225,7 +1232,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 430 "barf_preprocessor_parser.trison"
  return new Sizeof(id); 
-#line 1229 "barf_preprocessor_parser.cpp"
+#line 1236 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1236,7 +1243,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 433 "barf_preprocessor_parser.trison"
  return new Operation(Operation::INT_CAST, expression); 
-#line 1240 "barf_preprocessor_parser.cpp"
+#line 1247 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1247,7 +1254,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 436 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_CAST, expression); 
-#line 1251 "barf_preprocessor_parser.cpp"
+#line 1258 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1258,7 +1265,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 439 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_LENGTH, expression); 
-#line 1262 "barf_preprocessor_parser.cpp"
+#line 1269 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1269,7 +1276,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 442 "barf_preprocessor_parser.trison"
  return new Operation(Operation::TO_CHARACTER_LITERAL, character_index_expression); 
-#line 1273 "barf_preprocessor_parser.cpp"
+#line 1280 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1280,7 +1287,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 445 "barf_preprocessor_parser.trison"
  return new Operation(Operation::TO_STRING_LITERAL, string_expression); 
-#line 1284 "barf_preprocessor_parser.cpp"
+#line 1291 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1291,7 +1298,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 448 "barf_preprocessor_parser.trison"
  return new IsDefined(id, NULL); 
-#line 1295 "barf_preprocessor_parser.cpp"
+#line 1302 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1303,7 +1310,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 451 "barf_preprocessor_parser.trison"
  return new IsDefined(id, element_index_expression); 
-#line 1307 "barf_preprocessor_parser.cpp"
+#line 1314 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1314,7 +1321,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 454 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
-#line 1318 "barf_preprocessor_parser.cpp"
+#line 1325 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1326,7 +1333,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 457 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); 
-#line 1330 "barf_preprocessor_parser.cpp"
+#line 1337 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1337,7 +1344,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 460 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
-#line 1341 "barf_preprocessor_parser.cpp"
+#line 1348 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1349,7 +1356,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 463 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); 
-#line 1353 "barf_preprocessor_parser.cpp"
+#line 1360 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1361,7 +1368,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 466 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::CONCATENATE, right); 
-#line 1365 "barf_preprocessor_parser.cpp"
+#line 1372 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1373,7 +1380,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 469 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_OR, right); 
-#line 1377 "barf_preprocessor_parser.cpp"
+#line 1384 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1385,7 +1392,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 472 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_AND, right); 
-#line 1389 "barf_preprocessor_parser.cpp"
+#line 1396 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1397,7 +1404,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 475 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::EQUAL, right); 
-#line 1401 "barf_preprocessor_parser.cpp"
+#line 1408 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1409,7 +1416,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 478 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::NOT_EQUAL, right); 
-#line 1413 "barf_preprocessor_parser.cpp"
+#line 1420 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1421,7 +1428,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 481 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN, right); 
-#line 1425 "barf_preprocessor_parser.cpp"
+#line 1432 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1433,7 +1440,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 484 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN_OR_EQUAL, right); 
-#line 1437 "barf_preprocessor_parser.cpp"
+#line 1444 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1445,7 +1452,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 487 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN, right); 
-#line 1449 "barf_preprocessor_parser.cpp"
+#line 1456 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1457,7 +1464,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 490 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN_OR_EQUAL, right); 
-#line 1461 "barf_preprocessor_parser.cpp"
+#line 1468 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1469,7 +1476,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 493 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::PLUS, right); 
-#line 1473 "barf_preprocessor_parser.cpp"
+#line 1480 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1481,7 +1488,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 496 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MINUS, right); 
-#line 1485 "barf_preprocessor_parser.cpp"
+#line 1492 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1493,7 +1500,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 499 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MULTIPLY, right); 
-#line 1497 "barf_preprocessor_parser.cpp"
+#line 1504 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1505,7 +1512,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 502 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::DIVIDE, right); 
-#line 1509 "barf_preprocessor_parser.cpp"
+#line 1516 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1517,7 +1524,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 505 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::REMAINDER, right); 
-#line 1521 "barf_preprocessor_parser.cpp"
+#line 1528 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1528,7 +1535,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 508 "barf_preprocessor_parser.trison"
  return new Operation(Operation::NEGATIVE, expression); 
-#line 1532 "barf_preprocessor_parser.cpp"
+#line 1539 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1539,7 +1546,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 511 "barf_preprocessor_parser.trison"
  return new Operation(Operation::LOGICAL_NOT, expression); 
-#line 1543 "barf_preprocessor_parser.cpp"
+#line 1550 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1550,7 +1557,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 514 "barf_preprocessor_parser.trison"
  return expression; 
-#line 1554 "barf_preprocessor_parser.cpp"
+#line 1561 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1567,7 +1574,7 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1571 "barf_preprocessor_parser.cpp"
+#line 1578 "barf_preprocessor_parser.cpp"
  << " parser state stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -1579,15 +1586,15 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << std::endl;
 
     assert(m_stack_.size() >= 1);
-    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal_::none_));
+    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal::none_));
     stream << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1587 "barf_preprocessor_parser.cpp"
+#line 1594 "barf_preprocessor_parser.cpp"
  << " parser stack tokens . lookahead queue: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
-        // the first token is always Nonterminal_::none_, which doesn't correspond to a real token, so skip it.
+        // the first token is always Nonterminal::none_, which doesn't correspond to a real token, so skip it.
         if (it == m_stack_.begin())
             continue;
         stream << it->m_token << ' ';
@@ -1611,7 +1618,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     stream << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1615 "barf_preprocessor_parser.cpp"
+#line 1622 "barf_preprocessor_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -1619,7 +1626,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 141 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1623 "barf_preprocessor_parser.cpp"
+#line 1630 "barf_preprocessor_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -1638,90 +1645,90 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
 
 Parser::Rule_ const Parser::ms_rule_table_[] =
 {
-    { Parser::Nonterminal_::body, 0, "body <-" },
-    { Parser::Nonterminal_::body, 1, "body <- TEXT" },
-    { Parser::Nonterminal_::body, 2, "body <- body executable" },
-    { Parser::Nonterminal_::body, 3, "body <- body executable TEXT" },
-    { Parser::Nonterminal_::executable, 1, "executable <- code" },
-    { Parser::Nonterminal_::executable, 1, "executable <- conditional_series" },
-    { Parser::Nonterminal_::executable, 3, "executable <- define body end_define" },
-    { Parser::Nonterminal_::executable, 3, "executable <- loop body end_loop" },
-    { Parser::Nonterminal_::executable, 3, "executable <- for_each body end_for_each" },
-    { Parser::Nonterminal_::code, 3, "code <- START_CODE code_body END_CODE" },
-    { Parser::Nonterminal_::code, 3, "code <- CODE_LINE code_body CODE_NEWLINE" },
-    { Parser::Nonterminal_::code_body, 0, "code_body <-" },
-    { Parser::Nonterminal_::code_body, 1, "code_body <- expression" },
-    { Parser::Nonterminal_::code_body, 3, "code_body <- DUMP_SYMBOL_TABLE '(' ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- UNDEFINE '(' ID ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- DECLARE_ARRAY '(' ID ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- DECLARE_MAP '(' ID ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- INCLUDE '(' expression ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- SANDBOX_INCLUDE '(' expression ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- WARNING '(' expression ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- ERROR '(' expression ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- FATAL_ERROR '(' expression ')'" },
-    { Parser::Nonterminal_::conditional_series, 3, "conditional_series <- if_statement body conditional_series_end" },
-    { Parser::Nonterminal_::conditional_series_end, 1, "conditional_series_end <- end_if" },
-    { Parser::Nonterminal_::conditional_series_end, 3, "conditional_series_end <- else_statement body end_if" },
-    { Parser::Nonterminal_::conditional_series_end, 3, "conditional_series_end <- else_if_statement body conditional_series_end" },
-    { Parser::Nonterminal_::if_statement, 6, "if_statement <- START_CODE IF '(' expression ')' END_CODE" },
-    { Parser::Nonterminal_::if_statement, 6, "if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::else_statement, 3, "else_statement <- START_CODE ELSE END_CODE" },
-    { Parser::Nonterminal_::else_statement, 3, "else_statement <- CODE_LINE ELSE CODE_NEWLINE" },
-    { Parser::Nonterminal_::else_if_statement, 6, "else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE" },
-    { Parser::Nonterminal_::else_if_statement, 6, "else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::end_if, 3, "end_if <- START_CODE END_IF END_CODE" },
-    { Parser::Nonterminal_::end_if, 3, "end_if <- CODE_LINE END_IF CODE_NEWLINE" },
-    { Parser::Nonterminal_::define, 1, "define <- define_scalar" },
-    { Parser::Nonterminal_::define, 1, "define <- define_array_element" },
-    { Parser::Nonterminal_::define, 1, "define <- define_map_element" },
-    { Parser::Nonterminal_::define_scalar, 6, "define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE" },
-    { Parser::Nonterminal_::define_scalar, 6, "define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::define_array_element, 8, "define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE" },
-    { Parser::Nonterminal_::define_array_element, 8, "define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::define_map_element, 9, "define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { Parser::Nonterminal_::define_map_element, 9, "define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::end_define, 3, "end_define <- START_CODE END_DEFINE END_CODE" },
-    { Parser::Nonterminal_::end_define, 3, "end_define <- CODE_LINE END_DEFINE CODE_NEWLINE" },
-    { Parser::Nonterminal_::loop, 8, "loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE" },
-    { Parser::Nonterminal_::loop, 8, "loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::end_loop, 3, "end_loop <- START_CODE END_LOOP END_CODE" },
-    { Parser::Nonterminal_::end_loop, 3, "end_loop <- CODE_LINE END_LOOP CODE_NEWLINE" },
-    { Parser::Nonterminal_::for_each, 8, "for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE" },
-    { Parser::Nonterminal_::for_each, 8, "for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::end_for_each, 3, "end_for_each <- START_CODE END_FOR_EACH END_CODE" },
-    { Parser::Nonterminal_::end_for_each, 3, "end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE" },
-    { Parser::Nonterminal_::expression, 1, "expression <- STRING_LITERAL" },
-    { Parser::Nonterminal_::expression, 1, "expression <- INTEGER_LITERAL" },
-    { Parser::Nonterminal_::expression, 4, "expression <- SIZEOF '(' ID ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- KEYWORD_INT '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- KEYWORD_STRING '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- STRING_LENGTH '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- TO_CHARACTER_LITERAL '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- TO_STRING_LITERAL '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- IS_DEFINED '(' ID ')'" },
-    { Parser::Nonterminal_::expression, 7, "expression <- IS_DEFINED '(' ID '[' expression ']' ')'" },
-    { Parser::Nonterminal_::expression, 1, "expression <- ID" },
-    { Parser::Nonterminal_::expression, 4, "expression <- ID '[' expression ']'" },
-    { Parser::Nonterminal_::expression, 2, "expression <- ID '?'" },
-    { Parser::Nonterminal_::expression, 5, "expression <- ID '[' expression ']' '?'" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '.' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '|' '|' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '&' '&' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '=' '=' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '!' '=' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '<' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '<' '=' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '>' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '>' '=' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '+' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '-' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '*' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '/' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '%' expression" },
-    { Parser::Nonterminal_::expression, 2, "expression <- '-' expression" },
-    { Parser::Nonterminal_::expression, 2, "expression <- '!' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- '(' expression ')'" }
+    { Parser::Nonterminal::body, 0, "body <-" },
+    { Parser::Nonterminal::body, 1, "body <- TEXT" },
+    { Parser::Nonterminal::body, 2, "body <- body executable" },
+    { Parser::Nonterminal::body, 3, "body <- body executable TEXT" },
+    { Parser::Nonterminal::executable, 1, "executable <- code" },
+    { Parser::Nonterminal::executable, 1, "executable <- conditional_series" },
+    { Parser::Nonterminal::executable, 3, "executable <- define body end_define" },
+    { Parser::Nonterminal::executable, 3, "executable <- loop body end_loop" },
+    { Parser::Nonterminal::executable, 3, "executable <- for_each body end_for_each" },
+    { Parser::Nonterminal::code, 3, "code <- START_CODE code_body END_CODE" },
+    { Parser::Nonterminal::code, 3, "code <- CODE_LINE code_body CODE_NEWLINE" },
+    { Parser::Nonterminal::code_body, 0, "code_body <-" },
+    { Parser::Nonterminal::code_body, 1, "code_body <- expression" },
+    { Parser::Nonterminal::code_body, 3, "code_body <- DUMP_SYMBOL_TABLE '(' ')'" },
+    { Parser::Nonterminal::code_body, 4, "code_body <- UNDEFINE '(' ID ')'" },
+    { Parser::Nonterminal::code_body, 4, "code_body <- DECLARE_ARRAY '(' ID ')'" },
+    { Parser::Nonterminal::code_body, 4, "code_body <- DECLARE_MAP '(' ID ')'" },
+    { Parser::Nonterminal::code_body, 4, "code_body <- INCLUDE '(' expression ')'" },
+    { Parser::Nonterminal::code_body, 4, "code_body <- SANDBOX_INCLUDE '(' expression ')'" },
+    { Parser::Nonterminal::code_body, 4, "code_body <- WARNING '(' expression ')'" },
+    { Parser::Nonterminal::code_body, 4, "code_body <- ERROR '(' expression ')'" },
+    { Parser::Nonterminal::code_body, 4, "code_body <- FATAL_ERROR '(' expression ')'" },
+    { Parser::Nonterminal::conditional_series, 3, "conditional_series <- if_statement body conditional_series_end" },
+    { Parser::Nonterminal::conditional_series_end, 1, "conditional_series_end <- end_if" },
+    { Parser::Nonterminal::conditional_series_end, 3, "conditional_series_end <- else_statement body end_if" },
+    { Parser::Nonterminal::conditional_series_end, 3, "conditional_series_end <- else_if_statement body conditional_series_end" },
+    { Parser::Nonterminal::if_statement, 6, "if_statement <- START_CODE IF '(' expression ')' END_CODE" },
+    { Parser::Nonterminal::if_statement, 6, "if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::else_statement, 3, "else_statement <- START_CODE ELSE END_CODE" },
+    { Parser::Nonterminal::else_statement, 3, "else_statement <- CODE_LINE ELSE CODE_NEWLINE" },
+    { Parser::Nonterminal::else_if_statement, 6, "else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE" },
+    { Parser::Nonterminal::else_if_statement, 6, "else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::end_if, 3, "end_if <- START_CODE END_IF END_CODE" },
+    { Parser::Nonterminal::end_if, 3, "end_if <- CODE_LINE END_IF CODE_NEWLINE" },
+    { Parser::Nonterminal::define, 1, "define <- define_scalar" },
+    { Parser::Nonterminal::define, 1, "define <- define_array_element" },
+    { Parser::Nonterminal::define, 1, "define <- define_map_element" },
+    { Parser::Nonterminal::define_scalar, 6, "define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE" },
+    { Parser::Nonterminal::define_scalar, 6, "define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::define_array_element, 8, "define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE" },
+    { Parser::Nonterminal::define_array_element, 8, "define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::define_map_element, 9, "define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { Parser::Nonterminal::define_map_element, 9, "define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::end_define, 3, "end_define <- START_CODE END_DEFINE END_CODE" },
+    { Parser::Nonterminal::end_define, 3, "end_define <- CODE_LINE END_DEFINE CODE_NEWLINE" },
+    { Parser::Nonterminal::loop, 8, "loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE" },
+    { Parser::Nonterminal::loop, 8, "loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::end_loop, 3, "end_loop <- START_CODE END_LOOP END_CODE" },
+    { Parser::Nonterminal::end_loop, 3, "end_loop <- CODE_LINE END_LOOP CODE_NEWLINE" },
+    { Parser::Nonterminal::for_each, 8, "for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE" },
+    { Parser::Nonterminal::for_each, 8, "for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::end_for_each, 3, "end_for_each <- START_CODE END_FOR_EACH END_CODE" },
+    { Parser::Nonterminal::end_for_each, 3, "end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE" },
+    { Parser::Nonterminal::expression, 1, "expression <- STRING_LITERAL" },
+    { Parser::Nonterminal::expression, 1, "expression <- INTEGER_LITERAL" },
+    { Parser::Nonterminal::expression, 4, "expression <- SIZEOF '(' ID ')'" },
+    { Parser::Nonterminal::expression, 4, "expression <- KEYWORD_INT '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, "expression <- KEYWORD_STRING '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, "expression <- STRING_LENGTH '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, "expression <- TO_CHARACTER_LITERAL '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, "expression <- TO_STRING_LITERAL '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, "expression <- IS_DEFINED '(' ID ')'" },
+    { Parser::Nonterminal::expression, 7, "expression <- IS_DEFINED '(' ID '[' expression ']' ')'" },
+    { Parser::Nonterminal::expression, 1, "expression <- ID" },
+    { Parser::Nonterminal::expression, 4, "expression <- ID '[' expression ']'" },
+    { Parser::Nonterminal::expression, 2, "expression <- ID '?'" },
+    { Parser::Nonterminal::expression, 5, "expression <- ID '[' expression ']' '?'" },
+    { Parser::Nonterminal::expression, 3, "expression <- expression '.' expression" },
+    { Parser::Nonterminal::expression, 4, "expression <- expression '|' '|' expression" },
+    { Parser::Nonterminal::expression, 4, "expression <- expression '&' '&' expression" },
+    { Parser::Nonterminal::expression, 4, "expression <- expression '=' '=' expression" },
+    { Parser::Nonterminal::expression, 4, "expression <- expression '!' '=' expression" },
+    { Parser::Nonterminal::expression, 3, "expression <- expression '<' expression" },
+    { Parser::Nonterminal::expression, 4, "expression <- expression '<' '=' expression" },
+    { Parser::Nonterminal::expression, 3, "expression <- expression '>' expression" },
+    { Parser::Nonterminal::expression, 4, "expression <- expression '>' '=' expression" },
+    { Parser::Nonterminal::expression, 3, "expression <- expression '+' expression" },
+    { Parser::Nonterminal::expression, 3, "expression <- expression '-' expression" },
+    { Parser::Nonterminal::expression, 3, "expression <- expression '*' expression" },
+    { Parser::Nonterminal::expression, 3, "expression <- expression '/' expression" },
+    { Parser::Nonterminal::expression, 3, "expression <- expression '%' expression" },
+    { Parser::Nonterminal::expression, 2, "expression <- '-' expression" },
+    { Parser::Nonterminal::expression, 2, "expression <- '!' expression" },
+    { Parser::Nonterminal::expression, 3, "expression <- '(' expression ')'" }
 };
 std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
 
@@ -4045,19 +4052,19 @@ std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_ta
 Parser::Token::Id const Parser::ms_lookahead_table_[] =
 {
     Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
+    Parser::Nonterminal::body,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
+    Parser::Nonterminal::executable,
+    Parser::Nonterminal::code,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::if_statement,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
+    Parser::Nonterminal::loop,
+    Parser::Nonterminal::for_each,
     '!',
     '(',
     '-',
@@ -4084,8 +4091,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -4099,7 +4106,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -4113,7 +4120,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -4127,7 +4134,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '?',
     '[',
     '!',
@@ -4143,7 +4150,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '(',
     Parser::Terminal::ID,
     ')',
@@ -4164,7 +4171,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '(',
     '!',
     '(',
@@ -4179,7 +4186,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '(',
     '!',
     '(',
@@ -4194,7 +4201,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '(',
     '!',
     '(',
@@ -4209,7 +4216,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '(',
     '!',
     '(',
@@ -4224,7 +4231,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '(',
     '!',
     '(',
@@ -4239,7 +4246,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4267,7 +4274,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '%',
     '*',
     '+',
@@ -4289,7 +4296,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -4303,7 +4310,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -4317,7 +4324,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '%',
     '*',
     '/',
@@ -4334,7 +4341,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -4348,7 +4355,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '%',
     '*',
     '/',
@@ -4365,7 +4372,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '%',
     '*',
     '+',
@@ -4385,7 +4392,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -4399,7 +4406,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '%',
     '*',
     '+',
@@ -4426,7 +4433,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -4440,7 +4447,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '%',
     '*',
     '+',
@@ -4467,7 +4474,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '*',
@@ -4492,7 +4499,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '%',
     '*',
     '+',
@@ -4515,7 +4522,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4633,7 +4640,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4662,7 +4669,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4714,7 +4721,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4749,7 +4756,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4777,7 +4784,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4805,7 +4812,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4833,7 +4840,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4861,7 +4868,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4902,8 +4909,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     '(',
     '!',
     '(',
@@ -4918,7 +4925,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4961,7 +4968,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -4985,23 +4992,23 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CODE_NEWLINE,
     Parser::Terminal::TEXT,
     Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
+    Parser::Nonterminal::body,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::conditional_series_end,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::else_statement,
-    Parser::Nonterminal_::else_if_statement,
-    Parser::Nonterminal_::end_if,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
+    Parser::Nonterminal::executable,
+    Parser::Nonterminal::code,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::conditional_series_end,
+    Parser::Nonterminal::if_statement,
+    Parser::Nonterminal::else_statement,
+    Parser::Nonterminal::else_if_statement,
+    Parser::Nonterminal::end_if,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
+    Parser::Nonterminal::loop,
+    Parser::Nonterminal::for_each,
     '!',
     '(',
     '-',
@@ -5031,8 +5038,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::END_CODE,
     '(',
     '!',
@@ -5048,7 +5055,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -5093,8 +5100,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::CODE_NEWLINE,
     '(',
     '!',
@@ -5110,7 +5117,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -5127,20 +5134,20 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CODE_NEWLINE,
     Parser::Terminal::CODE_NEWLINE,
     Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
+    Parser::Nonterminal::body,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::end_if,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
+    Parser::Nonterminal::executable,
+    Parser::Nonterminal::code,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::if_statement,
+    Parser::Nonterminal::end_if,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
+    Parser::Nonterminal::loop,
+    Parser::Nonterminal::for_each,
     '!',
     '(',
     '-',
@@ -5168,8 +5175,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -5197,23 +5204,23 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
+    Parser::Nonterminal::body,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::end_define,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
+    Parser::Nonterminal::executable,
+    Parser::Nonterminal::code,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::if_statement,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
+    Parser::Nonterminal::end_define,
+    Parser::Nonterminal::loop,
+    Parser::Nonterminal::for_each,
     '!',
     '(',
     '-',
@@ -5241,8 +5248,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::END_CODE,
     '!',
     '(',
@@ -5271,24 +5278,24 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::CODE_NEWLINE,
     Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
+    Parser::Nonterminal::body,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::end_loop,
-    Parser::Nonterminal_::for_each,
+    Parser::Nonterminal::executable,
+    Parser::Nonterminal::code,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::if_statement,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
+    Parser::Nonterminal::loop,
+    Parser::Nonterminal::end_loop,
+    Parser::Nonterminal::for_each,
     '!',
     '(',
     '-',
@@ -5316,8 +5323,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::END_CODE,
     '!',
     '(',
@@ -5346,24 +5353,24 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::CODE_NEWLINE,
     Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
+    Parser::Nonterminal::body,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
-    Parser::Nonterminal_::end_for_each,
+    Parser::Nonterminal::executable,
+    Parser::Nonterminal::code,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::if_statement,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
+    Parser::Nonterminal::loop,
+    Parser::Nonterminal::for_each,
+    Parser::Nonterminal::end_for_each,
     '!',
     '(',
     '-',
@@ -5391,8 +5398,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::END_CODE,
     '!',
     '(',
@@ -5421,42 +5428,42 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::CODE_NEWLINE,
     Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
+    Parser::Nonterminal::body,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::conditional_series_end,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::else_statement,
-    Parser::Nonterminal_::else_if_statement,
-    Parser::Nonterminal_::end_if,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
+    Parser::Nonterminal::executable,
+    Parser::Nonterminal::code,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::conditional_series_end,
+    Parser::Nonterminal::if_statement,
+    Parser::Nonterminal::else_statement,
+    Parser::Nonterminal::else_if_statement,
+    Parser::Nonterminal::end_if,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
+    Parser::Nonterminal::loop,
+    Parser::Nonterminal::for_each,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
+    Parser::Nonterminal::executable,
+    Parser::Nonterminal::code,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::if_statement,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
+    Parser::Nonterminal::loop,
+    Parser::Nonterminal::for_each,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::code,
+    Parser::Nonterminal::code,
     '!',
     '(',
     '-',
@@ -5479,8 +5486,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -5503,8 +5510,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     '!',
     '(',
     '-',
@@ -5527,20 +5534,20 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::code_body,
+    Parser::Nonterminal::expression,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
+    Parser::Nonterminal::conditional_series,
+    Parser::Nonterminal::if_statement,
     Parser::Terminal::IF,
     Parser::Terminal::IF,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::conditional_series_end,
-    Parser::Nonterminal_::else_statement,
-    Parser::Nonterminal_::else_if_statement,
-    Parser::Nonterminal_::end_if,
+    Parser::Nonterminal::conditional_series_end,
+    Parser::Nonterminal::else_statement,
+    Parser::Nonterminal::else_if_statement,
+    Parser::Nonterminal::end_if,
     Parser::Terminal::ELSE,
     Parser::Terminal::ELSE_IF,
     Parser::Terminal::END_IF,
@@ -5549,33 +5556,33 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::END_IF,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::if_statement,
+    Parser::Nonterminal::if_statement,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::else_statement,
+    Parser::Nonterminal::else_statement,
     Parser::Terminal::ELSE,
     Parser::Terminal::ELSE,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::else_if_statement,
+    Parser::Nonterminal::else_if_statement,
     Parser::Terminal::ELSE_IF,
     Parser::Terminal::ELSE_IF,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::end_if,
+    Parser::Nonterminal::end_if,
     Parser::Terminal::END_IF,
     Parser::Terminal::END_IF,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
+    Parser::Nonterminal::define,
+    Parser::Nonterminal::define_scalar,
+    Parser::Nonterminal::define_array_element,
+    Parser::Nonterminal::define_map_element,
     Parser::Terminal::DEFINE,
     Parser::Terminal::DEFINE,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::define_scalar,
+    Parser::Nonterminal::define_scalar,
     Parser::Terminal::DEFINE,
     '(',
     Parser::Terminal::ID,
@@ -5586,7 +5593,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     ')',
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::define_array_element,
+    Parser::Nonterminal::define_array_element,
     Parser::Terminal::DEFINE,
     '(',
     Parser::Terminal::ID,
@@ -5599,7 +5606,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     ']',
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::define_map_element,
+    Parser::Nonterminal::define_map_element,
     Parser::Terminal::DEFINE,
     '(',
     Parser::Terminal::ID,
@@ -5612,27 +5619,27 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LITERAL,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::end_define,
+    Parser::Nonterminal::end_define,
     Parser::Terminal::END_DEFINE,
     Parser::Terminal::END_DEFINE,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::loop,
+    Parser::Nonterminal::loop,
     Parser::Terminal::LOOP,
     Parser::Terminal::LOOP,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::end_loop,
+    Parser::Nonterminal::end_loop,
     Parser::Terminal::END_LOOP,
     Parser::Terminal::END_LOOP,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::for_each,
+    Parser::Nonterminal::for_each,
     Parser::Terminal::FOR_EACH,
     Parser::Terminal::FOR_EACH,
     Parser::Terminal::START_CODE,
     Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::end_for_each,
+    Parser::Nonterminal::end_for_each,
     Parser::Terminal::END_FOR_EACH,
     Parser::Terminal::END_FOR_EACH,
     '!',
@@ -5648,7 +5655,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::STRING_LENGTH,
     Parser::Terminal::TO_CHARACTER_LITERAL,
     Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
+    Parser::Nonterminal::expression,
     '!',
     '%',
     '&',
@@ -6033,4 +6040,4 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 6037 "barf_preprocessor_parser.cpp"
+#line 6044 "barf_preprocessor_parser.cpp"

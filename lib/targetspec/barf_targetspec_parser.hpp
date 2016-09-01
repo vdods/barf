@@ -100,34 +100,27 @@ public:
         }; // end of enum Parser::Terminal::Name
     }; // end of struct Parser::Terminal
 
-    /// "Namespace" for Parser::ParseNonterminal::Name, which enumerates
-    /// all valid nonterminals this parser can recognize.
-    struct ParseNonterminal
+    /// "Namespace" for Parser::Nonterminal::Name, which enumerates all nonterminals.
+    /// This is used internally by the parser, but is also used by the client to specify which
+    /// nonterminal should be parsed by the parser.
+    struct Nonterminal
     {
-        /** The Parse() method doesn't necessarily have to start with the
-          * value of the %default_parse_nonterminal directive; it can
-          * attempt to parse any of the nonterminals defined in the primary
-          * source file.  These enums are the way to specify which nonterminal
-          * to parse.
-          *
-          * @brief Acceptable nonterminals recognizable by this parser.
+        /** There is one special nonterminal: none_.  This should not be used by the client,
+          * as it is only used internally by the parser.
           */
         enum Name
         {
-            add_codespec = 32,
-            add_directive = 34,
-            at_least_one_newline = 42,
-            at_least_zero_newlines = 40,
-            default_value = 38,
-            directives = 30,
-            param_spec = 36,
-            root = 0,
-            /// Nonterminal which will be attempted to be parsed by the Parse()
-            /// method by default (specified by the %default_parse_nonterminal
-            /// directive).
-            default_ = root
-        }; // end of enum Parser::ParseNonterminal::Name
-    }; // end of struct Parser::ParseNonterminal
+            none_ = 0,
+            root = 273,
+            directives = 274,
+            add_codespec = 275,
+            add_directive = 276,
+            param_spec = 277,
+            default_value = 278,
+            at_least_zero_newlines = 279,
+            at_least_one_newline = 280
+        }; // end of enum Parser::Nonterminal::Name
+    }; // end of struct Parser::Nonterminal
 
     /** The client should package-up and return a Parser::Token from
       * the code specified by %target.cpp.scan_actions, which delivers the
@@ -231,7 +224,7 @@ public:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::root);
+    ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
 #line 39 "barf_targetspec_parser.trison"
@@ -250,7 +243,7 @@ private:
     AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 
-#line 254 "barf_targetspec_parser.hpp"
+#line 247 "barf_targetspec_parser.hpp"
 
 
 private:
@@ -259,21 +252,6 @@ private:
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    struct Nonterminal_
-    {
-        enum Name
-        {
-            none_ = 0,
-            root = 273,
-            directives = 274,
-            add_codespec = 275,
-            add_directive = 276,
-            param_spec = 277,
-            default_value = 278,
-            at_least_zero_newlines = 279,
-            at_least_one_newline = 280
-        }; // end of enum Parser::Nonterminal_::Name
-    }; // end of struct Parser::Nonterminal_
     struct Transition_;
 
     struct StackElement_
@@ -284,7 +262,7 @@ private:
         StackElement_ ()
             :
             m_state_index(std::uint32_t(-1)),
-            m_token(Nonterminal_::none_, NULL)
+            m_token(Nonterminal::none_, NULL)
         { }
         StackElement_ (std::uint32_t state_index, Token const &token)
             :
@@ -296,7 +274,8 @@ private:
     typedef std::deque<StackElement_> Stack_;
     typedef std::deque<Token> LookaheadQueue_;
 
-    ParserReturnCode Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse);
+    static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
+    ParserReturnCode Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token &token) throw();
     void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
     void ThrowAwayTokenData_ (Ast::Base * &token_data) throw();
@@ -367,4 +346,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 371 "barf_targetspec_parser.hpp"
+#line 350 "barf_targetspec_parser.hpp"

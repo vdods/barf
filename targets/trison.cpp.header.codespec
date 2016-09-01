@@ -81,29 +81,27 @@ public:
         }; // end of enum <{class_name}::Terminal::Name
     }; // end of struct <{class_name}::Terminal
 
-    /// "Namespace" for <{class_name}::ParseNonterminal::Name, which enumerates
-    /// all valid nonterminals this parser can recognize.
-    struct ParseNonterminal
+    /// "Namespace" for <{class_name}::Nonterminal::Name, which enumerates all nonterminals.
+    /// This is used internally by the parser, but is also used by the client to specify which
+    /// nonterminal should be parsed by the parser.
+    struct Nonterminal
     {
-        /** The Parse() method doesn't necessarily have to start with the
-          * value of the %default_parse_nonterminal directive; it can
-          * attempt to parse any of the nonterminals defined in the primary
-          * source file.  These enums are the way to specify which nonterminal
-          * to parse.
-          *
-          * @brief Acceptable nonterminals recognizable by this parser.
+        /** There is one special nonterminal: none_.  This should not be used by the client,
+          * as it is only used internally by the parser.
           */
         enum Name
         {
-<|for_each(key, _dpda_nonterminal_start_state_index)
-            <{key} = <{_dpda_nonterminal_start_state_index[key]},
-<|end_for_each
-            /// Nonterminal which will be attempted to be parsed by the Parse()
-            /// method by default (specified by the %default_parse_nonterminal
-            /// directive).
-            default_ = <{_default_parse_nonterminal}
-        }; // end of enum <{class_name}::ParseNonterminal::Name
-    }; // end of struct <{class_name}::ParseNonterminal
+<|if(sizeof(_nonterminal_name_list) < 1)
+<|error("the nonterminal list should always have at least one element")
+<|end_if
+<|if(sizeof(_nonterminal_name_list) != sizeof(_nonterminal_index_list))
+<|error("mismatch in size of _nonterminal_name_list and _nonterminal_index_list")
+<|end_if
+<|loop(i, sizeof(_nonterminal_name_list))
+            <{_nonterminal_name_list[i]} = <{_nonterminal_index_list[i]}<{if(i+1 < sizeof(_nonterminal_name_list))},<{end_if}
+<|end_loop
+        }; // end of enum <{class_name}::Nonterminal::Name
+    }; // end of struct <{class_name}::Nonterminal
 
     /** The client should package-up and return a <{class_name}::Token from
       * the code specified by %target.cpp.scan_actions, which delivers the
@@ -220,7 +218,7 @@ public:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::<{_default_parse_nonterminal});
+    ParserReturnCode Parse (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::<{_default_parse_nonterminal});
 <|end_define
 <|if(parse_method_access == "public")
 <|parse_method_declaration
@@ -246,21 +244,6 @@ private:
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    struct Nonterminal_
-    {
-        enum Name
-        {
-<|if(sizeof(_nonterminal_name_list) < 1)
-<|error("the nonterminal list should always have at least one element")
-<|end_if
-<|if(sizeof(_nonterminal_name_list) != sizeof(_nonterminal_index_list))
-<|error("mismatch in size of _nonterminal_name_list and _nonterminal_index_list")
-<|end_if
-<|loop(i, sizeof(_nonterminal_name_list))
-            <{_nonterminal_name_list[i]} = <{_nonterminal_index_list[i]}<{if(i+1 < sizeof(_nonterminal_name_list))},<{end_if}
-<|end_loop
-        }; // end of enum <{class_name}::Nonterminal_::Name
-    }; // end of struct <{class_name}::Nonterminal_
     struct Transition_;
 
     struct StackElement_
@@ -271,7 +254,7 @@ private:
         StackElement_ ()
             :
             m_state_index(std::uint32_t(-1)),
-            m_token(Nonterminal_::none_, <{token_data_default})
+            m_token(Nonterminal::none_, <{token_data_default})
         { }
         StackElement_ (std::uint32_t state_index, Token const &token)
             :
@@ -283,7 +266,8 @@ private:
     typedef std::deque<StackElement_> Stack_;
     typedef std::deque<Token> LookaheadQueue_;
 
-    ParserReturnCode Parse_ (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse);
+    static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
+    ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token &token) throw();
     void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
     void ThrowAwayTokenData_ (<{token_data_type} &token_data) throw();

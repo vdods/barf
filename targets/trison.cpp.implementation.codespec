@@ -68,7 +68,7 @@ void <{class_name}::ResetForNewInput ()
 <|end_if
 }
 
-<{class_name}::ParserReturnCode <{class_name}::Parse (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse)
+<{class_name}::ParserReturnCode <{class_name}::Parse (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse)
 {
 <|if(is_defined(top_of_parse_method_actions))
 <|top_of_parse_method_actions
@@ -89,7 +89,18 @@ void <{class_name}::ResetForNewInput ()
 // begin internal trison-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-<{class_name}::ParserReturnCode <{class_name}::Parse_ (<{token_data_type} *return_token, ParseNonterminal::Name nonterminal_to_parse)
+std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterminal::Name nonterminal)
+{
+    switch (nonterminal)
+    {
+<|for_each(key, _dpda_nonterminal_start_state_index)
+        case Nonterminal::<{key}: return <{_dpda_nonterminal_start_state_index[key]};
+<|end_for_each
+        default: assert(false && "invalid nonterminal"); return 0;
+    }
+}
+
+<{class_name}::ParserReturnCode <{class_name}::Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse)
 {
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
@@ -117,14 +128,8 @@ void <{class_name}::ResetForNewInput ()
     m_is_in_error_panic_ = false;
 
     // push the initial state of the DPDA.
-    assert((false
-<|for_each(key, _dpda_nonterminal_start_state_index)
-<|if(key != "none_")
-           || nonterminal_to_parse == ParseNonterminal::<{key}
-<|end_if
-<|end_for_each
-           ) && "invalid nonterminal_to_parse");
-    m_stack_.push_back(StackElement_(nonterminal_to_parse, Token(Nonterminal_::none_, <{token_data_default})));
+    std::uint32_t nonterminal_start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
+    m_stack_.push_back(StackElement_(nonterminal_start_state_index, Token(Nonterminal::none_, <{token_data_default})));
     // main parser loop
     while (true)
     {
@@ -309,7 +314,7 @@ void <{class_name}::ResetForNewInput ()
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
                     // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == std::uint32_t(nonterminal_to_parse));
+                    assert(m_stack_[0].m_state_index == nonterminal_start_state_index);
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
                     *return_token = m_stack_.back().m_token.m_data;
@@ -541,11 +546,11 @@ void <{class_name}::PrintParserStatus_ (std::ostream &stream) const
     stream << std::endl;
 
     assert(m_stack_.size() >= 1);
-    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal_::none_));
+    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal::none_));
     stream << <{debug_spew_prefix} << " parser stack tokens . lookahead queue: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
-        // the first token is always Nonterminal_::none_, which doesn't correspond to a real token, so skip it.
+        // the first token is always Nonterminal::none_, which doesn't correspond to a real token, so skip it.
         if (it == m_stack_.begin())
             continue;
         stream << it->m_token << ' ';
@@ -590,7 +595,7 @@ std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &tok
 <{class_name}::Rule_ const <{class_name}::ms_rule_table_[] =
 {
 <|loop(i, _rule_count)
-    { <{class_name}::Nonterminal_::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
+    { <{class_name}::Nonterminal::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
 <|end_loop
 };
 std::size_t const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(*<{class_name}::ms_rule_table_);
@@ -617,7 +622,7 @@ std::size_t const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms
     <|if(_dpda_lookahead_index[i] >= _terminal_index_list[0] && _dpda_lookahead_index[i] <= _terminal_index_list[sizeof(_terminal_index_list)-1])
 <{class_name}::Terminal::<|
 <|else_if(_dpda_lookahead_index[i] == 0 || _dpda_lookahead_index[i] >= 256 && _dpda_lookahead_index[i] <= _nonterminal_index_list[sizeof(_nonterminal_index_list)-1])
-<{class_name}::Nonterminal_::<|
+<{class_name}::Nonterminal::<|
 <|end_if
 <|_dpda_lookahead_name[i]
 <{if(i < _dpda_lookahead_count-1)},<{end_if}

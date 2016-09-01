@@ -112,7 +112,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(TrisonOptions().Predefine(i), "<predefine>");
 
-        if (parser.Parse(&parsed_tree_root, Trison::Parser::ParseNonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Trison::Parser::Nonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in predefine) -- " + TrisonOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -146,7 +146,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(TrisonOptions().Postdefine(i), "<postdefine>");
 
-        if (parser.Parse(&parsed_tree_root, Trison::Parser::ParseNonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Trison::Parser::Nonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in postdefine) -- " + TrisonOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {

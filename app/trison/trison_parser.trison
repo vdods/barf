@@ -599,7 +599,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         NonterminalMap *nonterminal_map = new NonterminalMap();
 
         // add the special "none_" nonterminal with token_index 0 and empty rule list
-        Nonterminal *nonterminal = new Nonterminal("none_", 0, FiLoc::ms_invalid);
+        Trison::Nonterminal *nonterminal = new Trison::Nonterminal("none_", 0, FiLoc::ms_invalid);
         nonterminal->SetRuleList(new RuleList());
         nonterminal_map->Add(nonterminal->GetText(), nonterminal);
         m_nonterminal_list->Append(nonterminal);
@@ -608,7 +608,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-%nonterminal nonterminal %type.cpp "Nonterminal *"
+%nonterminal nonterminal %type.cpp "Trison::Nonterminal *"
 :
     nonterminal_specification:nonterminal ':' rules:rule_list ';'
     %target.cpp {
@@ -626,7 +626,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-%nonterminal nonterminal_specification %type.cpp "Nonterminal *"
+%nonterminal nonterminal_specification %type.cpp "Trison::Nonterminal *"
 :
     DIRECTIVE_NONTERMINAL:throwaway ID:id type_spec:assigned_type_map
     %target.cpp {
@@ -636,8 +636,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(assigned_type_map != NULL);
         if (m_terminal_map->Element(id->GetText()) != NULL)
             EmitError("id collision with terminal " + id->GetText(), id->GetFiLoc());
-        Nonterminal *nonterminal =
-            new Nonterminal(
+        Trison::Nonterminal *nonterminal =
+            new Trison::Nonterminal(
                 id->GetText(),
                 m_token_index++,
                 id->GetFiLoc(),
