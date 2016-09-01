@@ -244,6 +244,15 @@ private:
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
+    struct Rule_
+    {
+        Token::Id m_reduction_nonterminal_token_id;
+        std::uint32_t m_token_count;
+<|if(is_defined(generate_debug_spew_code))
+        char const *m_description;
+<|end_if
+    }; // end of struct <{class_name}::Rule_
+
     struct Transition_;
 
     struct StackElement_
@@ -263,8 +272,37 @@ private:
         { }
     }; // end of struct <{class_name}::StackElement_
 
+    struct State_
+    {
+        std::size_t const m_transition_count; // TODO: smallest int
+        Transition_ const *m_transition_table;
+<|if(is_defined(generate_debug_spew_code))
+        char const *m_description;
+<|end_if
+    }; // end of struct <{class_name}::State_
+
+    struct Transition_
+    {
+        enum Type { ERROR_PANIC = 0, RETURN, REDUCE, SHIFT };
+        std::uint8_t m_type;
+        std::uint32_t m_data; // TODO: smallest int
+        std::uint32_t m_lookahead_count; // TODO smallest int
+        Token::Id const *m_lookahead_sequence;
+    }; // end of struct <{class_name}::Transition_
+
     typedef std::deque<StackElement_> Stack_;
     typedef std::deque<Token> LookaheadQueue_;
+
+<|if(is_defined(generate_debug_spew_code))
+    bool m_debug_spew_;
+
+<|end_if
+    static Rule_ const ms_rule_table_[];
+    static std::size_t const ms_rule_count_;
+<|if(is_defined(generate_debug_spew_code))
+    static char const *const ms_token_name_table_[];
+    static std::size_t const ms_token_name_count_;
+<|end_if
 
     static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
     ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
@@ -284,58 +322,22 @@ private:
     void PrintIndented_ (std::ostream &stream, char const *string) const;
 <|end_if
 
-    struct Rule_
-    {
-        Token::Id m_reduction_nonterminal_token_id;
-        std::uint32_t m_token_count;
-<|if(is_defined(generate_debug_spew_code))
-        char const *m_description;
-<|end_if
-    }; // end of struct <{class_name}::Rule_
-
-    struct State_
-    {
-        std::size_t const m_transition_count; // TODO: smallest int
-        Transition_ const *m_transition_table;
-<|if(is_defined(generate_debug_spew_code))
-        char const *m_description;
-<|end_if
-    }; // end of struct <{class_name}::State_
-
-    struct Transition_
-    {
-        enum Type { ERROR_PANIC = 0, RETURN, REDUCE, SHIFT };
-        std::uint8_t m_type;
-        std::uint32_t m_data; // TODO: smallest int
-        std::uint32_t m_lookahead_count; // TODO smallest int
-        Token::Id const *m_lookahead_sequence;
-    }; // end of struct <{class_name}::Transition_
-
     Stack_ m_stack_;
     LookaheadQueue_ m_lookahead_queue_;
     bool m_is_in_error_panic_;
-<|if(is_defined(generate_debug_spew_code))
-    bool m_debug_spew_;
-<|end_if
 
-    static Rule_ const ms_rule_table_[];
-    static std::size_t const ms_rule_count_;
     static State_ const ms_state_table_[];
     static std::size_t const ms_state_count_;
     static Transition_ const ms_transition_table_[];
     static std::size_t const ms_transition_count_;
     static Token::Id const ms_lookahead_table_[];
     static std::size_t const ms_lookahead_count_;
-<|if(is_defined(generate_debug_spew_code))
-    static char const *const ms_token_name_table_[];
-    static std::size_t const ms_token_name_count_;
-
-    friend std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
-<|end_if
 
     // ///////////////////////////////////////////////////////////////////////
     // end of internal trison-generated parser guts
     // ///////////////////////////////////////////////////////////////////////
+
+    friend std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
 }; // end of class <{class_name}
 
 <|if(is_defined(generate_debug_spew_code))

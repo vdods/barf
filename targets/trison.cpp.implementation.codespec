@@ -600,6 +600,23 @@ std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &tok
 };
 std::size_t const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(*<{class_name}::ms_rule_table_);
 
+<|if(is_defined(generate_debug_spew_code))
+char const *const <{class_name}::ms_token_name_table_[] =
+{
+<|loop(i, 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1)
+<|if(i < 256)
+    <|to_string_literal(to_character_literal(i))
+<|else_if(i < 256+sizeof(_terminal_name_list))
+    <|to_string_literal(_terminal_name_list[i-256])
+<|else
+    <|to_string_literal(_nonterminal_name_list[i-(256+sizeof(_terminal_name_list))+1])
+<|end_if
+<{if(i < 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1-1)},<{end_if}
+<|end_loop
+};
+std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
+
+<|end_if
 <{class_name}::State_ const <{class_name}::ms_state_table_[] =
 {
 <|loop(i, _dpda_state_count)
@@ -630,23 +647,6 @@ std::size_t const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms
 };
 std::size_t const <{class_name}::ms_lookahead_count_ = sizeof(<{class_name}::ms_lookahead_table_) / sizeof(*<{class_name}::ms_lookahead_table_);
 
-<|if(is_defined(generate_debug_spew_code))
-char const *const <{class_name}::ms_token_name_table_[] =
-{
-<|loop(i, 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1)
-<|if(i < 256)
-    <|to_string_literal(to_character_literal(i))
-<|else_if(i < 256+sizeof(_terminal_name_list))
-    <|to_string_literal(_terminal_name_list[i-256])
-<|else
-    <|to_string_literal(_nonterminal_name_list[i-(256+sizeof(_terminal_name_list))+1])
-<|end_if
-<{if(i < 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1-1)},<{end_if}
-<|end_loop
-};
-std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
-
-<|end_if
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
 // ///////////////////////////////////////////////////////////////////////
