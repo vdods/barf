@@ -41,6 +41,8 @@ public:
     }
     virtual ~Symbol () { }
 
+    string const &Id () const { return m_id; }
+
     virtual bool IsScalarSymbol () const { return false; }
     virtual bool IsArraySymbol () const { return false; }
     virtual bool IsMapSymbol () const { return false; }
