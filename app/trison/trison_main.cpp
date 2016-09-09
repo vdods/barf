@@ -314,7 +314,7 @@ void WriteTargets (Trison::PrimarySource const &primary_source, Graph const &npd
 
     Trison::GenerateGeneralAutomatonSymbols(primary_source, global_symbol_table);
     Trison::GenerateNpdaSymbols(primary_source, npda_graph, global_symbol_table);
-    Trison::GenerateDpdaSymbols(primary_source, dpda_graph, global_symbol_table);
+    // Trison::GenerateDpdaSymbols(primary_source, dpda_graph, global_symbol_table);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -343,13 +343,13 @@ int main (int argc, char **argv)
     try {
         Trison::PrimarySource const *primary_source = NULL;
         Graph npda_graph, dpda_graph;
-        Uint32 lalr_lookahead_count = static_cast<Uint32>(-1);
+        // Uint32 lalr_lookahead_count = static_cast<Uint32>(-1);
 
         ParseAndHandleOptions(argc, argv);
         primary_source = ParsePrimarySource();
         GenerateNpdaGraphAndPrintDotGraph(*primary_source, npda_graph);
-        GenerateDpdaGraphAndPrintDotGraph(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
-        GenerateDpdaStatesFile(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
+        // GenerateDpdaGraphAndPrintDotGraph(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
+        // GenerateDpdaStatesFile(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
         ParseTargetspecs(*primary_source);
         ParseCodespecs(*primary_source);
         WriteTargets(*primary_source, npda_graph, dpda_graph);

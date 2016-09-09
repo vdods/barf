@@ -1,19 +1,17 @@
-    static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
-    ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
-    void ThrowAwayToken_ (Token &token) throw();
-    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
-    void ThrowAwayTokenData_ (<{token_data_type} &token_data) throw();
-    void ResetForNewInput_ () throw();
-    Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
+    struct Transition_
+    {
+        enum Type { ERROR_PANIC = 0, RETURN, REDUCE, SHIFT };
+        std::uint8_t m_type;
+        std::uint32_t m_data; // TODO: smallest int
+        std::uint32_t m_lookahead_count; // TODO smallest int
+        Token::Id const *m_lookahead_sequence;
+    }; // end of struct <{class_name}::Transition_
+
     void ClearStack_ () throw();
     void ClearLookaheadQueue_ () throw();
     Token const &Lookahead_ (LookaheadQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
     bool ExerciseTransition_ (Transition_ const &transition);
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
-<|if(is_defined(generate_debug_spew_code))
-    // debug spew methods
-    void PrintParserStatus_ (std::ostream &stream) const;
-<|end_if
 
     Stack_ m_stack_;
     LookaheadQueue_ m_lookahead_queue_;

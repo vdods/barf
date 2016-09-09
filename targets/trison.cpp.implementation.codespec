@@ -14,6 +14,8 @@
 
 #include "<{header_filename}"
 
+<{define(use_npda)}true<|end_define
+
 <|if(is_defined(generate_debug_spew_code))
 
 #define TRISON_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
@@ -38,10 +40,12 @@
 
 <{class_name}::~<{class_name} ()
 {
+<|if(!is_defined(use_npda))
     // clean up dynamically allocated memory.
     ClearStack_();
     ClearLookaheadQueue_();
 
+<|end_if
 <|if(is_defined(destructor_actions))
 
 <|destructor_actions
@@ -50,7 +54,11 @@
 
 bool <{class_name}::IsAtEndOfInput ()
 {
+<|if(!is_defined(use_npda))
     return Lookahead_(0).m_id == Terminal::END_;
+<|else
+    return true; // TEMP
+<|end_if
 }
 
 void <{class_name}::ResetForNewInput ()
@@ -59,9 +67,11 @@ void <{class_name}::ResetForNewInput ()
     TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions" << std::endl)
 
 <|end_if
+<|if(!is_defined(use_npda))
     // clean up stuff that might be hanging around from the last parse's input.
     ClearStack_();
     ClearLookaheadQueue_();
+<|end_if
 <|if(is_defined(reset_for_new_input_actions))
 
 <|reset_for_new_input_actions
@@ -140,7 +150,44 @@ std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms
 
 <|end_if
 
-<|include("trison.cpp.dpda.implementation.codespec")
+void <{class_name}::ThrowAwayToken_ (Token &token_) throw()
+{
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions on token " << token_ << std::endl)
+
+<|end_if
+    ThrowAwayTokenData_(token_.m_data);
+}
+
+void <{class_name}::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
+{
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
+
+<|end_if
+    ThrowAwayTokenData_(stack_element_.m_token.m_data);
+}
+
+void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} &token_data) throw()
+{
+<|throw_away_token_actions?
+}
+
+<{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
+{
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing scan actions" << std::endl)
+
+<|end_if
+<|scan_actions
+}
+
+<|if(is_defined(use_npda))
+<|  include("trison.cpp.npda.implementation.codespec")
+<|else
+<|  include("trison.cpp.dpda.implementation.codespec")
+<|end_if
+
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
 // ///////////////////////////////////////////////////////////////////////

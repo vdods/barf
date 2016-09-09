@@ -75,7 +75,6 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
         Preprocessor::ArraySymbol *rule_token_table_count =
             symbol_table.DefineArraySymbol("_rule_token_table_count", FiLoc::ms_invalid);
 
-
         Uint32 rule_total_token_count_value = primary_source.RuleTokenCount();
         rule_total_token_count->SetScalarBody(
             new Preprocessor::Body(Sint32(rule_total_token_count_value)));
@@ -350,10 +349,12 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
     // _npda_transition_count -- gives the number of transitions in this NPDA.
     //
     // _npda_transition_type_index[_npda_transition_count] -- gives the integer value
-    // of the transition type.  valid values are RETURN=1, REDUCE=2, SHIFT=3, EPSILON=4.
+    // of the transition type.  valid values are RETURN=1, REDUCE=2, SHIFT=3, 
+    // INSERT_LOOKAHEAD_ERROR=4, DISCARD_LOOKAHEAD=5, POP_STACK=6, EPSILON=7.
     //
     // _npda_transition_type_name[_npda_transition_count] -- gives the text name
-    // of the transition type.  valid values are "RETURN", "REDUCE", "SHIFT", "EPSILON".
+    // of the transition type.  valid values are "RETURN", "REDUCE", "SHIFT",
+    // "INSERT_LOOKAHEAD_ERROR", "DISCARD_LOOKAHEAD", "POP_STACK", "EPSILON".
     //
     // _npda_transition_data_index[_npda_transition_count] gives the numeric value of the
     // token which this transition accepts if the transition type is TT_SHIFT,

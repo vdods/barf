@@ -592,10 +592,19 @@ Actions:
 SHIFT (then push state X)
 REDUCE (rule Y)
 INSERT_LOOKAHEAD_ERROR      -- must have low precedence, probably lowest of all
-DISCARD_LOOKAHEAD           -- maybe should have precedence lower than all shift, but equal to all reduce (though this defies a linear order)
+DISCARD_LOOKAHEAD           -- maybe should have precedence lower than all shift, but equal to all reduce (though this defies a linear order).
+                               on the other hand, having DISCARD_LOOKAHEAD be higher than all reduce would be simple, and implement the
+                               situation where the input "-;" produces a DISCARD_LOOKAHEAD/REDUCE conflict that doesn't result in the
+                               error panic in expression ending by the statement's ';' token.  this is probably simpler.  but because
+                               it's possible to have a SHIFT have lower precedence than REDUCE, this would violate the DISCARD_LOOKAHEAD
+                               having precedence lower than all SHIFT.
 POP_STATE_STACK (Z times)   -- this only happens when ERROR_ is the lookahead and there's no rule to accept ERROR_
 RETURN_TOP_OF_STACK         -- must have low precedence, but higher than INSERT_LOOKAHEAD_ERROR
 
+Idea: Each class doesn't need to have a uniform relative precedence (in fact, shift and reduce are a counterexample),
+but rather a conflict can be described as having a graph which doesn't have a maximal element.  For example, having a cycle
+    SHIFT <- DISCARD_LOOKAHEAD <-> REDUCE <- SHIFT
+Conflict resolution would then be deleting arrows in the graph such that there becomes a unique maximal element.
 
 -----------
 

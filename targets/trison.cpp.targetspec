@@ -11,6 +11,17 @@
 // This is a trison targetspec file for a LALR(k) (i.e. bounded lookahead)
 // parser C++ class using a deterministic pushdown automaton (DPDA).
 
+// Indicates if the generated code should be "NPDA" (general LR parser) or
+// "DPDA" (LALR(k) parser).  The identifier is case insensitive.  The default
+// is "DPDA", which requires more up-front processing by trison, but the
+// generated parser will be faster.  On the other hand, "NPDA" requires less
+// up-front processing, but the generated parser requires more memory and
+// processing time.  Note that the grammars parseable by "NPDA" are a strict
+// superset of those parseable by "DPDA".  In particular, "NPDA" does not
+// require a fixed bound on the number of lookaheads required to parse
+// unambiguously.
+%add_optional_directive parser_type                         %string             %default "DPDA"
+
 // The value of this directive specifies the filename to use when generating
 // the header file (it is used by the below add_codespec directive).
 %add_required_directive header_filename %string

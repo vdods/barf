@@ -267,38 +267,6 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
     return parser_return_code_;
 }
 
-void <{class_name}::ThrowAwayToken_ (Token &token_) throw()
-{
-<|if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions on token " << token_ << std::endl)
-
-<|end_if
-    ThrowAwayTokenData_(token_.m_data);
-}
-
-void <{class_name}::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
-{
-<|if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
-
-<|end_if
-    ThrowAwayTokenData_(stack_element_.m_token.m_data);
-}
-
-void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} &token_data) throw()
-{
-<|throw_away_token_actions?
-}
-
-<{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
-{
-<|if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing scan actions" << std::endl)
-
-<|end_if
-<|scan_actions
-}
-
 void <{class_name}::ClearStack_ () throw()
 {
     if (m_stack_.empty())

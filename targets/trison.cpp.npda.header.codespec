@@ -1,0 +1,52 @@
+    struct Transition_
+    {
+        enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
+        std::uint8_t m_type;
+        std::uint32_t m_data; // TODO: smallest int
+        std::uint32_t m_target_state_index; // TODO: smallest int
+    }; // end of struct <{class_name}::Transition_
+
+    struct ParseStackTreeNode_
+    {
+        enum Type { ROOT = 0, RETURN, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, BRANCH, COUNT_ };
+
+        static char const *AsString (Type type);
+
+        typedef std::set<ParseStackTreeNode_ *> ParseStackTreeNodeSet;
+        typedef std::map<Type,ParseStackTreeNodeSet> ChildMap;
+
+        Type m_type;
+        std::uint32_t m_data;
+        Stack_ m_stack;
+        LookaheadQueue_ m_lookahead_queue;
+        std::uint32_t m_lookahead_cursor; // this is an index into m_lookahead_queue
+        // std::set<std::uint32_t> m_top_states; // used for infinite loop detection
+        ParseStackTreeNode_ *m_parent_node;
+        ChildMap m_child_nodes;
+
+        ParseStackTreeNode_ (Type type, std::uint32_t data)
+            : m_type(type)
+            , m_data(data)
+            , m_lookahead_cursor(0)
+            , m_parent_node(NULL)
+        { }
+
+        bool HasChildrenOfType (Type type) const { return m_child_nodes.find(type) != m_child_nodes.end(); }
+        std::set<ParseStackTreeNode_ *> const &ChildrenOfType (Type type) const { return m_child_nodes.at(type); }
+        std::set<ParseStackTreeNode_ *> &ChildrenOfType (Type type) { return m_child_nodes.at(type); }
+
+        void AddChild (ParseStackTreeNode_ *child);
+        void RemoveChild (ParseStackTreeNode_ *child);
+        void RemoveFromParent ();
+
+        void Print (std::ostream &out, std::uint32_t indent_level = 0) const;
+    };
+
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
+
+    ParseStackTreeNode_ *m_root;
+
+    static State_ const ms_state_table_[];
+    static std::size_t const ms_state_count_;
+    static Transition_ const ms_transition_table_[];
+    static std::size_t const ms_transition_count_;
