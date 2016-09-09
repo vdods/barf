@@ -44,7 +44,7 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT ${calc_SOURCE_DIR}/Parser.cpp ${calc_SOURCE_DIR}/Parser.hpp
-    COMMAND ${TRISON_BINARY} -I ${BARF_TARGETS_DIR} ${calc_SOURCE_DIR}/Parser.trison -o ${calc_SOURCE_DIR} -S Parser.states
+    COMMAND ${TRISON_BINARY} -I ${BARF_TARGETS_DIR} ${calc_SOURCE_DIR}/Parser.trison -o ${calc_SOURCE_DIR} -S Parser.states --generate-npda-dot-graph Parser.npda.dot
     DEPENDS ${calc_SOURCE_DIR}/Parser.trison ${BARF_TARGETS_DIR}/trison.cpp.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.targetspec)
 
 set(calc_SOURCES

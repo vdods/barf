@@ -25,6 +25,7 @@
 <|if(is_defined(use_npda))
 #include <map>
 #include <set>
+#include <vector>
 <|end_if
 
 <|top_of_header_file?
@@ -321,6 +322,12 @@ private:
 <|else
 <|  include("trison.cpp.dpda.header.codespec")
 <|end_if
+
+    static State_ const ms_state_table_[];
+    static std::size_t const ms_state_count_;
+    static Transition_ const ms_transition_table_[];
+    static std::size_t const ms_transition_count_;
+
     // ///////////////////////////////////////////////////////////////////////
     // end of internal trison-generated parser guts
     // ///////////////////////////////////////////////////////////////////////

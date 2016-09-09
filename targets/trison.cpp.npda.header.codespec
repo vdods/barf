@@ -1,3 +1,5 @@
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
+
     struct Transition_
     {
         enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
@@ -6,12 +8,17 @@
         std::uint32_t m_target_state_index; // TODO: smallest int
     }; // end of struct <{class_name}::Transition_
 
+    typedef std::set<std::uint32_t> StateSet_;
+    typedef std::vector<std::uint32_t> StateVector_;
+
     struct ParseStackTreeNode_
     {
         enum Type { ROOT = 0, RETURN, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, BRANCH, COUNT_ };
 
+<|if(is_defined(generate_debug_spew_code))
         static char const *AsString (Type type);
 
+<|end_if
         typedef std::set<ParseStackTreeNode_ *> ParseStackTreeNodeSet;
         typedef std::map<Type,ParseStackTreeNodeSet> ChildMap;
 
@@ -20,7 +27,7 @@
         Stack_ m_stack;
         LookaheadQueue_ m_lookahead_queue;
         std::uint32_t m_lookahead_cursor; // this is an index into m_lookahead_queue
-        // std::set<std::uint32_t> m_top_states; // used for infinite loop detection
+        // StateSet_ m_top_states; // used for infinite loop detection
         ParseStackTreeNode_ *m_parent_node;
         ChildMap m_child_nodes;
 
@@ -32,21 +39,20 @@
         { }
 
         bool HasChildrenOfType (Type type) const { return m_child_nodes.find(type) != m_child_nodes.end(); }
-        std::set<ParseStackTreeNode_ *> const &ChildrenOfType (Type type) const { return m_child_nodes.at(type); }
-        std::set<ParseStackTreeNode_ *> &ChildrenOfType (Type type) { return m_child_nodes.at(type); }
+        ParseStackTreeNodeSet const &ChildrenOfType (Type type) const { return m_child_nodes.at(type); }
+        ParseStackTreeNodeSet &ChildrenOfType (Type type) { return m_child_nodes.at(type); }
 
         void AddChild (ParseStackTreeNode_ *child);
         void RemoveChild (ParseStackTreeNode_ *child);
         void RemoveFromParent ();
 
+        ParseStackTreeNode_ *CloneLeafNode () const;
+
         void Print (std::ostream &out, std::uint32_t indent_level = 0) const;
     };
 
-    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
+    ParseStackTreeNode_ *TakeActionOnBranch_ (ParseStackTreeNode_ const &branch, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
 
-    ParseStackTreeNode_ *m_root;
+    ParseStackTreeNode_ *m_root_;
 
-    static State_ const ms_state_table_[];
-    static std::size_t const ms_state_count_;
-    static Transition_ const ms_transition_table_[];
-    static std::size_t const ms_transition_count_;
+    static StateVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);

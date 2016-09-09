@@ -17,9 +17,5 @@
     LookaheadQueue_ m_lookahead_queue_;
     bool m_is_in_error_panic_;
 
-    static State_ const ms_state_table_[];
-    static std::size_t const ms_state_count_;
-    static Transition_ const ms_transition_table_[];
-    static std::size_t const ms_transition_count_;
     static Token::Id const ms_lookahead_table_[];
     static std::size_t const ms_lookahead_count_;
