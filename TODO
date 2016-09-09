@@ -77,6 +77,9 @@ $ do comprehensive deleting of stuff (this might be hard with all the throwing)
 - check standard on octal escape chars (up to 3 octal digits only?)
 - make EscapeChar (which does full char escaping) and use it in EscapeString?
   this would make the char scanning much easier
+- make repeated identical (or perhaps just very similar) warnings/errors
+  suppressed (e.g. in preprocessor, having an error in a loop will cause that
+  error to be emitted that many times)
 
 // ///////////////////////////////////////////////////////////////////////////
 // targetspec
@@ -100,6 +103,8 @@ $ do comprehensive deleting of stuff (this might be hard with all the throwing)
   so that you don't have to look through xxx_codespecsymbols.cpp for these)
 - allow targetspec-declared, primary-source-defined codespec symbols to use
   codespec symbols? (i.e. { printf(<{_rule_regex}); } ) ?
+- make better error message (i.e. anything informative at all) when there's
+  an error in an included codespec file.
 
 // ///////////////////////////////////////////////////////////////////////////
 // preprocessor
