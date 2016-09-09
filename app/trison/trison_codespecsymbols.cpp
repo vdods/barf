@@ -48,13 +48,16 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     //
     // _rule_token_assigned_id[_rule_total_token_count] -- a contiguous array of
     // all the token identifiers for the rule tokens in all rules.  i.e.
-    // elements 0 - m will correspond to the rule token ids in rule 0, elements
-    // m+1 - n will correspond to the rule token ids in rule 1, etc.  if
-    // no identifier was given for a particular token, it will be the empty string.
+    // elements [0, m) (endpoint excluded) will correspond to the rule token ids in
+    // rule 0 (where rule 0 has m tokens), elements [m, m+n) will correspond to the
+    // rule token ids in rule 1 (where rule 1 has n tokens), etc.  if no identifier
+    // was given for a particular token, it will be the empty string.
     //
-    // _rule_token_table_offset[_rule_count]
-    //
-    // _rule_token_table_count[_rule_count]
+    // _rule_token_table_offset[_rule_count] and
+    // _rule_token_table_count[_rule_count] -- elements
+    // [_rule_token_table_offset[i], _rule_token_table_offset[i]+_rule_token_table_count[i])
+    // (endpoint excluded) of _rule_token_assigned_id form the contiguous array of
+    // the token identifiers for rule i.
     {
         {
             Preprocessor::ScalarSymbol *rule_count =
@@ -113,7 +116,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     // contiguously)
     //
     // _terminal_name_list[terminal count] -- list of terminal token names
-    // (END_, _ERROR, and then all non-char terminals)
+    // (END_, ERROR_, and then all non-char terminals)
     //
     // _nonterminal_index_list[nonterminal count] -- list of nonterminal token values;
     // they start where _terminal_index_list left off.
