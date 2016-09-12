@@ -250,7 +250,8 @@ void GenerateNpda (
     // add the first state in the rule's state sequence
     Uint32 stage = 0;
     Uint32 end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
-    bool error_has_just_been_shifted = false;
+    bool previous_token_was_error = false;
+    bool current_token_is_error = false;
     graph_context.m_npda_graph.AddTransition(start_index, NpdaEpsilonTransition(end_index));
     start_index = end_index;
     ++stage;
@@ -265,21 +266,27 @@ void GenerateNpda (
         assert(rule_token != NULL);
         end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
 
-        if (error_has_just_been_shifted)
+        GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL, current_token_is_error);
+
+        if (previous_token_was_error)
         {
             graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element("END_")->m_token_index, "END_", 2));
             graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition());
         }
         else
+        {
+            if (!current_token_is_error)
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element("ERROR_")->m_token_index, "ERROR_", 1));
             graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition());
+        }
 
-        GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL, error_has_just_been_shifted);
         start_index = end_index;
         ++stage;
+        previous_token_was_error = current_token_is_error;
     }
 
     // add the reduce transition at the tail of the rule states
-    if (error_has_just_been_shifted)
+    if (current_token_is_error)
     {
         graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(rule.m_rule_index, graph_context.m_primary_source.m_terminal_map->Element("END_")->m_token_index, "END_"));
         graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition());
