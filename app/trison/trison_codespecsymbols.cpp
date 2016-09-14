@@ -348,6 +348,8 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
     //
     // _npda_transition_count -- gives the number of transitions in this NPDA.
     //
+    // _npda_transition_label[_npda_transition_count] gives a text description of this transition.
+    //
     // _npda_transition_type_index[_npda_transition_count] -- gives the integer value
     // of the transition type.  valid values are RETURN=1, REDUCE=2, SHIFT=3, 
     // INSERT_LOOKAHEAD_ERROR=4, DISCARD_LOOKAHEAD=5, POP_STACK=6, EPSILON=7.
@@ -356,17 +358,15 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
     // of the transition type.  valid values are "RETURN", "REDUCE", "SHIFT",
     // "INSERT_LOOKAHEAD_ERROR", "DISCARD_LOOKAHEAD", "POP_STACK", "EPSILON".
     //
-    // _npda_transition_data_index[_npda_transition_count] gives the numeric value of the
-    // token which this transition accepts if the transition type is TT_SHIFT,
-    // otherwise this value is undefined.
+    // _npda_transition_token_index[_npda_transition_count] gives the numeric value of the
+    // token which this transition may be exercised upon.  a value of 0 indicates that this
+    // is a default transition.  in particular, EPSILON transitions consume no input.
     //
-    // _npda_transition_data_name[_npda_transition_count] gives the name of the
-    // token which this transition accepts if the transition type is TT_SHIFT,
-    // otherwise this value is undefined.
-    //
-    // _npda_transition_target_node_index[_npda_transition_count] gives the index of
-    // the node which to transition to if this transition is exercised, or -1 if
-    // not applicable.
+    // _npda_transition_data_index[_npda_transition_count] gives the following:
+    // if the transition type is REDUCE, then this is the reduction rule;
+    // if the transition type is SHIFT, then this is the NPDA state to push on the stack;
+    // if the transition type is POP_STACK, then this is the number of times to pop;
+    // otherwise, this value is -1, indicating that it's unused.
     {
         Preprocessor::ScalarSymbol *npda_state_count =
             symbol_table.DefineScalarSymbol("_npda_state_count", FiLoc::ms_invalid);
@@ -387,16 +387,16 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
 
         Preprocessor::ScalarSymbol *npda_transition_count =
             symbol_table.DefineScalarSymbol("_npda_transition_count", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_transition_label =
+            symbol_table.DefineArraySymbol("_npda_transition_label", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_type_index =
             symbol_table.DefineArraySymbol("_npda_transition_type_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_type_name =
             symbol_table.DefineArraySymbol("_npda_transition_type_name", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *npda_transition_token_index =
+            symbol_table.DefineArraySymbol("_npda_transition_token_index", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *npda_transition_data_index =
             symbol_table.DefineArraySymbol("_npda_transition_data_index", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_transition_data_name =
-            symbol_table.DefineArraySymbol("_npda_transition_data_name", FiLoc::ms_invalid);
-        Preprocessor::ArraySymbol *npda_transition_target_node_index =
-            symbol_table.DefineArraySymbol("_npda_transition_target_node_index", FiLoc::ms_invalid);
 
         npda_state_count->SetScalarBody(
             new Preprocessor::Body(Sint32(npda_graph.NodeCount())));
@@ -417,16 +417,16 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
             {
                 Graph::Transition const &transition = *it;
 
+                npda_transition_label->AppendArrayElement(
+                    new Preprocessor::Body(transition.Label()));
                 npda_transition_type_index->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Type())));
                 npda_transition_type_name->AppendArrayElement(
                     new Preprocessor::Body(TransitionTypeString(transition.Type())));
-                npda_transition_data_index->AppendArrayElement(
+                npda_transition_token_index->AppendArrayElement(
                     new Preprocessor::Body(Sint32(transition.Data(0))));
-                npda_transition_data_name->AppendArrayElement(
-                    new Preprocessor::Body(transition.Label()));
-                npda_transition_target_node_index->AppendArrayElement(
-                    new Preprocessor::Body(Sint32(transition.TargetIndex())));
+                npda_transition_data_index->AppendArrayElement(
+                    new Preprocessor::Body(Sint32(transition.Data(1))));
 
                 assert(node_transition_count < SINT32_UPPER_BOUND);
                 ++node_transition_count;

@@ -31,6 +31,7 @@ public:
     {
         static Color const ms_black;
         static Color const ms_white;
+        static Color const ms_orange;
         static Color const ms_red;
         static Color const ms_green;
         static Color const ms_blue;

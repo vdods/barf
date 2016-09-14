@@ -338,7 +338,7 @@ std::size_t const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_stat
 <{class_name}::Transition_ const <{class_name}::ms_transition_table_[] =
 {
 <|loop(i, _npda_transition_count)
-    { <{class_name}::Transition_::<{_npda_transition_type_name[i]}, <{_npda_transition_data_index[i]}, <{_npda_transition_target_node_index[i]} }<{if(i < _npda_transition_count-1)},<{end_if}
+    { <{class_name}::Transition_::<{_npda_transition_type_name[i]}, <{_npda_transition_token_index[i]}, <{_npda_transition_data_index[i]} }<{if(i < _npda_transition_count-1)},<{end_if}
 <|end_loop
 };
 std::size_t const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);

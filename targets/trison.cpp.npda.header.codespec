@@ -6,8 +6,8 @@ private:
     {
         enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
         std::uint8_t m_type;
-        std::uint32_t m_data; // TODO: smallest int
-        std::uint32_t m_target_state_index; // TODO: smallest int
+        std::uint32_t m_token_index; // TODO: smallest int
+        std::uint32_t m_data_index; // TODO: smallest int
     }; // end of struct <{class_name}::Transition_
 
     typedef std::set<std::uint32_t> StateSet_;

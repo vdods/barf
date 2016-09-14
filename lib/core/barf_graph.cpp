@@ -24,6 +24,7 @@ namespace Barf {
 
 Graph::Color const Graph::Color::ms_black(0x000000);
 Graph::Color const Graph::Color::ms_white(0xFFFFFF);
+Graph::Color const Graph::Color::ms_orange(0xFF8C00);
 Graph::Color const Graph::Color::ms_red(0xEF280E);
 Graph::Color const Graph::Color::ms_green(0x008800);
 Graph::Color const Graph::Color::ms_blue(0x0000FF);

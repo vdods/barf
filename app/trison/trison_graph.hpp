@@ -43,13 +43,15 @@ string const &TransitionTypeString (TransitionType transition_type);
 // NPDA transitions
 // ///////////////////////////////////////////////////////////////////////////
 
-Graph::Transition NpdaReduceTransition (Uint32 reduction_rule_index);
-Graph::Transition NpdaReduceTransition (Uint32 reduction_rule_index, Uint32 transition_token_id, string const &token_label);
-Graph::Transition NpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index);
-Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &token_label, Uint32 target_index);
-Graph::Transition NpdaInsertLookaheadErrorTransition ();
-Graph::Transition NpdaDiscardLookaheadTransition ();
-Graph::Transition NpdaPopStackTransition (Uint32 transition_token_id, string const &token_label, Uint32 pop_count);
+// use a transition_token_id of 0 to indicate "default" transition (this
+// should be the same as the token id of the "none_" nonterminal).
+
+Graph::Transition NpdaReduceTransition (Uint32 transition_token_id, string const &transition_label, Uint32 reduction_rule_index);
+Graph::Transition NpdaReturnTransition (Uint32 transition_token_id, string const &transition_label);
+Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &transition_label, Uint32 target_index);
+Graph::Transition NpdaInsertLookaheadErrorTransition (Uint32 transition_token_id, string const &transition_label);
+Graph::Transition NpdaDiscardLookaheadTransition (Uint32 transition_token_id, string const &transition_label);
+Graph::Transition NpdaPopStackTransition (Uint32 transition_token_id, string const &transition_label, Uint32 pop_count);
 Graph::Transition NpdaEpsilonTransition (Uint32 target_index);
 
 // ///////////////////////////////////////////////////////////////////////////

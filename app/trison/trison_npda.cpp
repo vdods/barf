@@ -271,13 +271,13 @@ void GenerateNpda (
         if (previous_token_was_error)
         {
             graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element("END_")->m_token_index, "END_", 2));
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition());
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
         }
         else
         {
             if (!current_token_is_error)
                 graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element("ERROR_")->m_token_index, "ERROR_", 1));
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition());
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
         }
 
         start_index = end_index;
@@ -288,11 +288,11 @@ void GenerateNpda (
     // add the reduce transition at the tail of the rule states
     if (current_token_is_error)
     {
-        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(rule.m_rule_index, graph_context.m_primary_source.m_terminal_map->Element("END_")->m_token_index, "END_"));
-        graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition());
+        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element("END_")->m_token_index, "END_", rule.m_rule_index));
+        graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
     }
     else
-        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(rule.m_rule_index));
+        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default", rule.m_rule_index));
 }
 
 void EnsureGeneratedNpda (
@@ -311,7 +311,7 @@ void EnsureGeneratedNpda (
     graph_context.m_npda_graph.AddTransition(graph_start_state, NpdaEpsilonTransition(graph_head_state));
     graph_context.m_npda_graph.AddTransition(graph_start_state, NpdaShiftTransition(nonterminal.m_token_index, nonterminal.GetText(), graph_return_state));
     // create the return transition
-    graph_context.m_npda_graph.AddTransition(graph_return_state, NpdaReturnTransition(nonterminal.GetText(), nonterminal.m_token_index));
+    graph_context.m_npda_graph.AddTransition(graph_return_state, NpdaReturnTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
     // record the start, head and return states
     nonterminal.SetNpdaGraphStates(graph_start_state, graph_head_state, graph_return_state);
     // the rules are effectively or'ed together
