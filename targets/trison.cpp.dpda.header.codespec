@@ -1,3 +1,5 @@
+private:
+
     struct Transition_
     {
         enum Type { ERROR_PANIC = 0, RETURN, REDUCE, SHIFT };

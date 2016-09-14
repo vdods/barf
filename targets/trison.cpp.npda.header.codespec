@@ -1,3 +1,5 @@
+private:
+
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
 
     struct Transition_
