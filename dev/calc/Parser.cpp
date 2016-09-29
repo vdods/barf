@@ -26,20 +26,21 @@ Parser::Parser ()
 #line 39 "Parser.trison"
 
     m_scanner = new Scanner();
+    m_scanner->DebugSpew(true);
 
-#line 31 "Parser.cpp"
+#line 32 "Parser.cpp"
 }
 
 Parser::~Parser ()
 {
 
 
-#line 42 "Parser.trison"
+#line 43 "Parser.trison"
 
     delete m_scanner;
     m_scanner = NULL;
 
-#line 43 "Parser.cpp"
+#line 44 "Parser.cpp"
 }
 
 bool Parser::IsAtEndOfInput ()
@@ -50,18 +51,18 @@ bool Parser::IsAtEndOfInput ()
 void Parser::ResetForNewInput ()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 56 "Parser.cpp"
+#line 57 "Parser.cpp"
  << " executing reset-for-new-input actions" << std::endl)
 
 
 
-#line 135 "Parser.trison"
+#line 136 "Parser.trison"
 
     // m_recoverable_error_encountered = false;
 
-#line 65 "Parser.cpp"
+#line 66 "Parser.cpp"
 }
 
 Parser::ParserReturnCode Parser::Parse (double *return_token, Nonterminal::Name nonterminal_to_parse)
@@ -77,17 +78,17 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
 {
     assert(string != NULL);
     stream << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 83 "Parser.cpp"
+#line 84 "Parser.cpp"
  << "    ";
     while (*string != '\0')
     {
         if (*string == '\n')
             stream << '\n' << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 91 "Parser.cpp"
+#line 92 "Parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -392,9 +393,9 @@ std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_ta
 void Parser::ThrowAwayToken_ (Token &token_) throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 398 "Parser.cpp"
+#line 399 "Parser.cpp"
  << " executing throw-away-token actions on token " << token_ << std::endl)
 
     ThrowAwayTokenData_(token_.m_data);
@@ -403,9 +404,9 @@ void Parser::ThrowAwayToken_ (Token &token_) throw()
 void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 409 "Parser.cpp"
+#line 410 "Parser.cpp"
  << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
 
     ThrowAwayTokenData_(stack_element_.m_token.m_data);
@@ -414,26 +415,26 @@ void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
 void Parser::ThrowAwayTokenData_ (double &token_data) throw()
 {
 
-#line 130 "Parser.trison"
+#line 131 "Parser.trison"
  
-#line 420 "Parser.cpp"
+#line 421 "Parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
 {
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 428 "Parser.cpp"
+#line 429 "Parser.cpp"
  << " executing scan actions" << std::endl)
 
 
-#line 131 "Parser.trison"
+#line 132 "Parser.trison"
 
     assert(m_scanner != NULL);
     return m_scanner->Scan();
 
-#line 437 "Parser.cpp"
+#line 438 "Parser.cpp"
 }
 
 std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
@@ -452,20 +453,24 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, Nonterminal::Name
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 458 "Parser.cpp"
+#line 459 "Parser.cpp"
  << " starting parse" << std::endl)
 
     ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
     *return_token = 0.0;
 
 
-    m_root_ = new ParseStackTreeNode_(ParseStackTreeNode_::ROOT, 0);
+    m_npda_.m_root_ = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
 
-    ParseStackTreeNode_ *branch = new ParseStackTreeNode_(ParseStackTreeNode_::BRANCH, 0);
+    ParseStackTreeNode_ *branch = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::BRANCH));
     std::uint32_t initial_state = NonterminalStartStateIndex_(nonterminal_to_parse);
     branch->m_stack.push_back(StackElement_(initial_state, 0.0));
+
+    m_npda_.m_branch_queue_.push_back(branch);
+
+    m_npda_.m_global_stack_.push_back(StackElement_(initial_state, 0.0));
 
     StateVector_ const &epsilon_closure = EpsilonClosureOfState_(branch->m_stack.back().m_state_index);
     std::cerr << "epsilon closure of state " << initial_state << ";\n";
@@ -473,43 +478,197 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, Nonterminal::Name
         std::cerr << *it << ' ';
     std::cerr << '\n';
 
-    m_root_->AddChild(branch);
-    PrintParserStatus_(std::cerr);
+    m_npda_.m_root_->AddChild(branch);
 
+    bool should_return = false;
     // while (true)
-    // {
-    //     if (parse state stack tree has trunk)
-    //     {
-    //         do trunk actions
-    //         prune trunk
-    //     }
-    //     else
-    //     {
+    for (int i = 0; i < 20 && !should_return; ++i)
+    {
+        std::cerr << '\n' << '\n';
+        std::cerr << "---------- ITERATION " << i << " --------------\n";
+        PrintParserStatus_(std::cerr);
 
-    //     }
-    // }
+        if (m_npda_.m_root_->HasTrunkChild())
+            ExecuteAndRemoveTrunkActions_(should_return, parser_return_code_, return_token);
+        else
+            ContinueNPDAParse_();
+
+        std::cerr << '\n';
+    }
+
+    PrintParserStatus_(std::cerr);
+    std::cerr << '\n';
 
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 496 "Parser.cpp"
+#line 506 "Parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 501 "Parser.cpp"
+#line 511 "Parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
     return parser_return_code_;
+}
+
+void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code_, double *&return_token)
+{
+    std::cerr << "Parse stack tree has trunk; executing trunk actions.\n";
+    while (m_npda_.m_root_->HasTrunkChild())
+    {
+        ParseStackTreeNode_ *trunk_child = m_npda_.m_root_->PopTrunkChild();
+        switch (trunk_child->m_spec.m_type)
+        {
+            case ParseStackTreeNode_::RETURN: {
+                std::cerr << "    executing trunk action RETURN.\n";
+                assert(m_npda_.m_global_stack_.size() == 2);
+                parser_return_code_ = PRC_SUCCESS;
+                *return_token = m_npda_.m_global_stack_.back().m_token.m_data;
+                should_return = true;
+                break;
+            }
+            case ParseStackTreeNode_::REDUCE: {
+                // Execute the appropriate rule on the top tokens in the stack
+                std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
+                std::cerr << "    executing trunk action REDUCE rule " << rule_index << ".\n";
+                // NOTE: dont actually execute reduction rules here, that should be saved for executing the trunk
+                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_npda_.m_global_stack_);
+                Rule_ const &rule = ms_rule_table_[rule_index];
+                // Pop those stack tokens
+                std::cerr << "TakeActionOnBranch_ -- reducing rule " << rule_index << " \"" << rule.m_description << "\" which has " << rule.m_token_count << " tokens\n";
+                for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
+                    m_npda_.m_global_stack_.pop_back();
+                // Push the reduced nonterminal token data onto the front of the lookahead queue
+                m_npda_.PushFrontGlobalLookahead(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data));
+                break;
+            }
+            case ParseStackTreeNode_::SHIFT: {
+                // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
+                std::uint32_t const &state_index = trunk_child->m_spec.m_single_data;
+                std::cerr << "    executing trunk action SHIFT.\n";// then push state " << state_index << ".\n";
+                m_npda_.m_global_stack_.push_back(StackElement_(state_index, Lookahead_(0)));
+                m_npda_.PopFrontGlobalLookahead();
+                break;
+            }
+            case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+                std::cerr << "    executing trunk action INSERT_LOOKAHEAD_ERROR.\n";
+                m_npda_.PushFrontGlobalLookahead(Token(Terminal::ERROR_));
+                break;
+            }
+            case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
+                std::cerr << "    executing trunk action DISCARD_LOOKAHEAD.\n";
+                assert(!m_npda_.m_global_lookahead_queue_.empty());
+                m_npda_.PopFrontGlobalLookahead();
+                break;
+            }
+            case ParseStackTreeNode_::POP_STACK: {
+                std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
+                std::cerr << "    executing trunk action POP_STACK " << pop_count << ".\n";
+                if (m_npda_.m_global_stack_.size() > pop_count)
+                {
+                    for (std::uint32_t i = 0; i < pop_count; ++i)
+                    {
+                        ThrowAwayStackElement_(m_npda_.m_global_stack_.back());
+                        m_npda_.m_global_stack_.pop_back();
+                    }
+                }
+                // TODO: figure out if branches' lookahead queues or cursors need to be updated.
+                break;
+            }
+
+            default:
+                assert(false && "this should not happen");
+                break;
+        }
+        assert(trunk_child->m_parent_node == NULL);
+        assert(trunk_child->m_child_nodes.empty());
+        delete trunk_child;
+    }
+}
+
+void Parser::ContinueNPDAParse_ ()
+{
+    std::cerr << "Parse stack tree does not have trunk; continuing parse.\n";
+    // This is a clunky and inefficient way to process actions (from all branches) first by their SortedTypeIndex.
+    for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 2; ++current_sorted_type_index)
+    {
+        std::cerr << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << ".\n";
+
+        if (!m_npda_.m_new_branch_queue_.empty())
+        {
+            std::cerr << "        Early-out based on sorted type index.\n";
+            break;
+        }
+
+        for (BranchQueue_::iterator branch_it = m_npda_.m_branch_queue_.begin(), branch_it_end = m_npda_.m_branch_queue_.end(); branch_it != branch_it_end; ++branch_it)
+        {
+            assert(*branch_it != NULL);
+            ParseStackTreeNode_ &branch = **branch_it;
+            assert(branch.m_spec.m_type == ParseStackTreeNode_::BRANCH);
+            std::cerr << "        Processing branch: ";
+            branch.Print(std::cerr, *this, 0);
+            std::uint32_t branch_state_index = branch.m_stack.back().m_state_index;
+            TransitionVector_ const &non_epsilon_transitions = NonEpsilonTransitionsOfState_(branch_state_index);
+
+            // TODO: unique'ify non-epsilon transitions
+
+            // Exercise all valid transitions whose SortedTypeIndex is current_sorted_type_index
+            for (TransitionVector_::const_iterator transition_it = non_epsilon_transitions.begin(), transition_it_end = non_epsilon_transitions.end(); transition_it != transition_it_end; ++transition_it)
+            {                    
+                Transition_ const &transition = *transition_it;
+                assert(transition.m_type >= Transition_::RETURN);
+                assert(transition.m_type <= Transition_::POP_STACK);
+                std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type));
+
+                if (transition_sorted_type_index != current_sorted_type_index)
+                    break;
+
+                std::cerr << "            Processing transition " << ParseStackTreeNode_::AsString(ParseStackTreeNode_::Type(transition.m_type)) << " with transition token " << transition.m_token_index << " and data " << transition.m_data_index << " and sorted type index " << Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type)) << '\n';
+
+                ParseStackTreeNode_ *resulting_branch = NULL;
+                // If it's a default transition, there's no need to access the lookahead.
+                if (transition.m_token_index == Nonterminal::none_)
+                {
+                    std::cerr << "                Exercising transition.\n";
+                    resulting_branch = TakeHypotheticalActionOnBranch_(branch, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
+                }
+                // Otherwise, the lookahead must be accessed.
+                else
+                {
+                    Token const &lookahead = branch.Lookahead(*this);
+                    std::cerr << "                Lookahead is " << lookahead.m_id << '\n';
+                    if (transition.m_token_index == lookahead.m_id)
+                    {
+                        std::cerr << "                Exercising transition.\n";
+                        resulting_branch = TakeHypotheticalActionOnBranch_(branch, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
+                    }
+                }
+                if (resulting_branch != NULL)
+                    m_npda_.m_new_branch_queue_.push_back(resulting_branch);
+            }
+        }
+    }
+
+    // Take new branches and clear old ones.
+    for (BranchQueue_::iterator branch_it = m_npda_.m_branch_queue_.begin(), branch_it_end = m_npda_.m_branch_queue_.end(); branch_it != branch_it_end; ++branch_it)
+    {
+        ParseStackTreeNode_ *branch = *branch_it;
+        branch->RemoveFromParent();
+        delete branch;
+    }
+    std::swap(m_npda_.m_branch_queue_, m_npda_.m_new_branch_queue_);
+    m_npda_.m_new_branch_queue_.clear();
 }
 
 Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack) throw()
 {
     assert(rule_index_ < ms_rule_count_);
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 145 "Parser.trison"
+#line 146 "Parser.trison"
 "Parser"
-#line 513 "Parser.cpp"
+#line 672 "Parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
@@ -522,9 +681,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             double st(stack[stack.size()-2].m_token.m_data);
 
-#line 177 "Parser.trison"
+#line 178 "Parser.trison"
  return st; 
-#line 528 "Parser.cpp"
+#line 687 "Parser.cpp"
             break;
         }
 
@@ -533,9 +692,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             double ex(stack[stack.size()-2].m_token.m_data);
 
-#line 182 "Parser.trison"
+#line 183 "Parser.trison"
  return ex; 
-#line 539 "Parser.cpp"
+#line 698 "Parser.cpp"
             break;
         }
 
@@ -544,9 +703,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             double e(stack[stack.size()-2].m_token.m_data);
 
-#line 187 "Parser.trison"
+#line 188 "Parser.trison"
  return e; 
-#line 550 "Parser.cpp"
+#line 709 "Parser.cpp"
             break;
         }
 
@@ -554,9 +713,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
 
-#line 189 "Parser.trison"
+#line 190 "Parser.trison"
  return 0.0; 
-#line 560 "Parser.cpp"
+#line 719 "Parser.cpp"
             break;
         }
 
@@ -564,9 +723,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
 
-#line 191 "Parser.trison"
+#line 192 "Parser.trison"
  return 0.0; 
-#line 570 "Parser.cpp"
+#line 729 "Parser.cpp"
             break;
         }
 
@@ -575,9 +734,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             double num(stack[stack.size()-1].m_token.m_data);
 
-#line 193 "Parser.trison"
+#line 194 "Parser.trison"
  return num; 
-#line 581 "Parser.cpp"
+#line 740 "Parser.cpp"
             break;
         }
 
@@ -587,9 +746,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             double lhs(stack[stack.size()-3].m_token.m_data);
             double rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 195 "Parser.trison"
+#line 196 "Parser.trison"
  return lhs + rhs; 
-#line 593 "Parser.cpp"
+#line 752 "Parser.cpp"
             break;
         }
 
@@ -599,9 +758,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             double lhs(stack[stack.size()-3].m_token.m_data);
             double rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 197 "Parser.trison"
+#line 198 "Parser.trison"
  return lhs * rhs; 
-#line 605 "Parser.cpp"
+#line 764 "Parser.cpp"
             break;
         }
 
@@ -610,9 +769,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             double op(stack[stack.size()-1].m_token.m_data);
 
-#line 199 "Parser.trison"
+#line 200 "Parser.trison"
  return -op; 
-#line 616 "Parser.cpp"
+#line 775 "Parser.cpp"
             break;
         }
 
@@ -622,9 +781,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             double lhs(stack[stack.size()-3].m_token.m_data);
             double rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 201 "Parser.trison"
+#line 202 "Parser.trison"
  return std::pow(lhs, rhs); 
-#line 628 "Parser.cpp"
+#line 787 "Parser.cpp"
             break;
         }
 
@@ -632,9 +791,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
 
-#line 203 "Parser.trison"
+#line 204 "Parser.trison"
  return 0.0; 
-#line 638 "Parser.cpp"
+#line 797 "Parser.cpp"
             break;
         }
 
@@ -644,10 +803,26 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
     return 0.0;
 }
 
-void Parser::PrintParserStatus_ (std::ostream &stream) const
+void Parser::PrintParserStatus_ (std::ostream &out) const
 {
-    assert(m_root_ != NULL);
-    m_root_->Print(stream);
+    assert(m_npda_.m_root_ != NULL);
+
+    out << "global state stack is (";
+    for (std::size_t i = 0; i < m_npda_.m_global_stack_.size(); ++i)
+    {
+        out << m_npda_.m_global_stack_[i].m_state_index;
+        if (i+1 < m_npda_.m_global_stack_.size())
+            out << ' ';
+    }
+    out << "), stack tokens then lookahead queue is ";
+    for (std::size_t i = 1; i < m_npda_.m_global_stack_.size(); ++i)
+        out << ms_token_name_table_[m_npda_.m_global_stack_[i].m_token.m_id] << ' ';
+    out << ". ";
+    for (std::size_t i = 0; i < m_npda_.m_global_lookahead_queue_.size(); ++i)
+        out << ms_token_name_table_[m_npda_.m_global_lookahead_queue_[i].m_id] << ' ';
+    out << '\n';
+
+    m_npda_.m_root_->Print(out, *this);
 }
 
 char const *Parser::ParseStackTreeNode_::AsString (Type type)
@@ -667,11 +842,58 @@ char const *Parser::ParseStackTreeNode_::AsString (Type type)
     return LOOKUP_TABLE[std::uint32_t(type)];
 }
 
+
+bool Parser::ParseStackTreeNode_::HasTrunkChild () const
+{
+    if (m_spec.m_type != ROOT || m_child_nodes.size() != 1)
+        return false;
+    ParseStackTreeNodeSet const &single_type_child_node_set = m_child_nodes.begin()->second;
+    if (single_type_child_node_set.size() != 1)
+        return false;
+    ParseStackTreeNode_ *single_child = *single_type_child_node_set.begin();
+    assert(single_child != NULL);
+    assert(single_child->m_spec.m_type != ROOT);
+    return single_child->m_spec.m_type != BRANCH;
+}
+
+Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::PopTrunkChild ()
+{
+    assert(HasTrunkChild());
+    ParseStackTreeNode_ *trunk_child = *m_child_nodes.begin()->second.begin();
+    assert(trunk_child != NULL);
+    assert(trunk_child->m_parent_node == this);
+    // Reassign the children of the trunk child to this node (root).
+    m_child_nodes = trunk_child->m_child_nodes;
+    trunk_child->m_child_nodes.clear();
+    // Set the reassigned child nodes' parent to be this node (root).
+    for (ChildMap::iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
+    {
+        ParseStackTreeNodeSet &child_set = child_map_it->second;
+        for (ParseStackTreeNodeSet::iterator child_it = child_set.begin(), child_it_end = child_set.end(); child_it != child_it_end; ++child_it)
+        {
+            ParseStackTreeNode_ *child = *child_it;
+            assert(child != NULL);
+            child->m_parent_node = this;
+        }
+    }
+    trunk_child->m_parent_node = NULL;
+    return trunk_child;
+}
+
+Parser::Token const &Parser::ParseStackTreeNode_::Lookahead (Parser &parser) const
+{
+    if (m_local_lookahead_queue.empty())
+        return parser.Lookahead_(m_global_lookahead_cursor);
+    else
+        return m_local_lookahead_queue.front();
+}
+
 void Parser::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
 {
     assert(child != NULL);
     assert(child->m_parent_node == NULL);
-    m_child_nodes[child->m_type].insert(child);
+    assert(child->m_spec.m_type != ROOT);
+    m_child_nodes[child->m_spec].insert(child);
     child->m_parent_node = this;
 }
 
@@ -679,10 +901,10 @@ void Parser::ParseStackTreeNode_::RemoveChild (ParseStackTreeNode_ *child)
 {
     assert(child != NULL);
     assert(child->m_parent_node == this);
-    assert(HasChildrenOfType(child->m_type));
-    m_child_nodes[child->m_type].erase(child);
-    if (m_child_nodes[child->m_type].empty())
-        m_child_nodes.erase(child->m_type);
+    assert(HasChildrenHavingSpec(child->m_spec));
+    m_child_nodes[child->m_spec].erase(child);
+    if (m_child_nodes[child->m_spec].empty())
+        m_child_nodes.erase(child->m_spec);
     child->m_parent_node = NULL;
 }
 
@@ -695,46 +917,78 @@ void Parser::ParseStackTreeNode_::RemoveFromParent ()
 Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::CloneLeafNode () const
 {
     assert(m_child_nodes.empty());
-    ParseStackTreeNode_ *retval = new ParseStackTreeNode_(m_type, m_data);
+    ParseStackTreeNode_ *retval = new ParseStackTreeNode_(m_spec);
     retval->m_stack = m_stack;
-    retval->m_lookahead_queue = m_lookahead_queue;
-    retval->m_lookahead_cursor = m_lookahead_cursor;
+    retval->m_local_lookahead_queue = m_local_lookahead_queue;
+    retval->m_global_lookahead_cursor = m_global_lookahead_cursor;
     return retval;
 }
 
-void Parser::ParseStackTreeNode_::Print (std::ostream &out, std::uint32_t indent_level) const
+void Parser::ParseStackTreeNode_::Print (std::ostream &out, Parser const &parser, std::uint32_t indent_level) const
 {
     for (std::uint32_t i = 0; i < indent_level; ++i)
         out << "    ";
-    out << AsString(m_type) << " (";
-    for (std::size_t i = 0; i < m_stack.size(); ++i)
+    out << AsString(m_spec.m_type);
+    switch (m_spec.m_type)
     {
-        out << m_stack[i].m_state_index;
-        if (i+1 < m_stack.size())
-            out << ' ';
+        case REDUCE:    out << " rule " << m_spec.m_single_data << "; " << ms_rule_table_[m_spec.m_single_data].m_description;  break;
+        case POP_STACK: out << ' ' << m_spec.m_single_data << " times";                                                         break;
+        default:                                                                                                                break;
     }
-    out << ") ";
-    for (std::size_t i = 0; i < m_lookahead_queue.size(); ++i)
+    if (m_spec.m_type == BRANCH)
     {
-        out << ms_token_name_table_[m_lookahead_queue[i].m_id];
-        if (i == m_lookahead_cursor)
-            out << " . ";
-        else
-            out << ' ';
+        out << "; state stack is (";
+        for (std::size_t i = 0; i < m_stack.size(); ++i)
+        {
+            out << m_stack[i].m_state_index;
+            if (i+1 < m_stack.size())
+                out << ' ';
+        }
+        out << "), stack tokens then lookahead queue is ";
+        for (std::size_t i = 1; i < m_stack.size(); ++i)
+            out << ms_token_name_table_[m_stack[i].m_token.m_id] << ' ';
+        out << ". ";
+        for (std::size_t i = 0; i < m_local_lookahead_queue.size(); ++i)
+            out << ms_token_name_table_[m_local_lookahead_queue[i].m_id] << ' ';
+        for (std::size_t i = m_global_lookahead_cursor; i < parser.m_npda_.m_global_lookahead_queue_.size(); ++i)
+            out << ms_token_name_table_[parser.m_npda_.m_global_lookahead_queue_[i].m_id] << ' ';
     }
     out << '\n';
+
+    // Print children recursively with higher indent level
     for (ChildMap::const_iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
     {
         ParseStackTreeNodeSet const &child_node_set = it->second;
         for (ParseStackTreeNodeSet::const_iterator set_it = child_node_set.begin(), set_it_end = child_node_set.end(); set_it != set_it_end; ++set_it)
-            (*set_it)->Print(out, indent_level+1);
+            (*set_it)->Print(out, parser, indent_level+1);
     }
 }
 
-Parser::ParseStackTreeNode_ *Parser::TakeActionOnBranch_ (ParseStackTreeNode_ const &branch, ParseStackTreeNode_::Type action_type, std::uint32_t action_data)
+Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw()
 {
-    assert(branch.m_type == ParseStackTreeNode_::BRANCH && "Only a BRANCH type node can take an action");
+    while (index >= m_npda_.m_global_lookahead_queue_.size())
+    {
+        // This does not require updating the branches' m_global_lookahead_cursor.
+        m_npda_.m_global_lookahead_queue_.push_back(Scan_());
+
+        TRISON_CPP_DEBUG_CODE_(std::cerr << 
+#line 146 "Parser.trison"
+"Parser"
+#line 978 "Parser.cpp"
+ << " pushed " << m_npda_.m_global_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
+    }
+    return m_npda_.m_global_lookahead_queue_[index];
+}
+
+Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnBranch_ (ParseStackTreeNode_ const &branch, ParseStackTreeNode_::Type action_type, std::uint32_t action_data)
+{
+    assert(branch.m_spec.m_type == ParseStackTreeNode_::BRANCH && "Only a BRANCH type node can take an action");
     assert(branch.m_parent_node != NULL);
+
+    // Early check for if the stack would be popped empty, in which case, don't create the new branch.
+    if (action_type == ParseStackTreeNode_::POP_STACK)
+        return NULL;
+
     ParseStackTreeNode_ *new_branch = branch.CloneLeafNode();
     switch (action_type)
     {
@@ -748,37 +1002,44 @@ Parser::ParseStackTreeNode_ *Parser::TakeActionOnBranch_ (ParseStackTreeNode_ co
         }
         case ParseStackTreeNode_::REDUCE: {
             // Execute the appropriate rule on the top tokens in the stack
-            std::uint32_t const &rule_index = branch.m_data;
-            // NOTE: dont actually execute reduction rules here, that should be saved for executing the trunk
-            // Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, new_branch->m_stack);
+            std::uint32_t const &rule_index = action_data;
             Rule_ const &rule = ms_rule_table_[rule_index];
             // Pop those stack tokens
+            std::cerr << "TakeHypotheticalActionOnBranch_ -- reducing rule " << rule_index << " \"" << rule.m_description << "\" which has " << rule.m_token_count << " tokens\n";
             for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
                 new_branch->m_stack.pop_back();
             // Push the reduced nonterminal token data onto the front of the lookahead queue
-            // new_branch->m_lookahead_queue.push_front(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data));
-            new_branch->m_lookahead_queue.push_front(Token(rule.m_reduction_nonterminal_token_id));
+            // new_branch->m_local_lookahead_queue.push_front(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data));
+            new_branch->m_local_lookahead_queue.push_front(Token(rule.m_reduction_nonterminal_token_id));
             break;
         }
         case ParseStackTreeNode_::SHIFT: {
             // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
             std::uint32_t const &state_index = action_data;
-            new_branch->m_stack.push_back(StackElement_(state_index, new_branch->m_lookahead_queue.front()));
-            new_branch->m_lookahead_queue.pop_front();
+            // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel Lookahead.
+            new_branch->m_stack.push_back(StackElement_(state_index, new_branch->Lookahead(*this)));
+            action_data = ParseStackTreeNode_::UNUSED_DATA; // SHIFT action doesn't store the state, the BRANCH children do.
+            if (new_branch->m_local_lookahead_queue.empty())
+                ++new_branch->m_global_lookahead_cursor;
+            else
+                new_branch->m_local_lookahead_queue.pop_front();
             break;
         }
         case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
-            new_branch->m_lookahead_queue.push_front(Token(Terminal::ERROR_));
+            new_branch->m_local_lookahead_queue.push_front(Token(Terminal::ERROR_));
             break;
         }
         case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
-            assert(!new_branch->m_lookahead_queue.empty());
-            new_branch->m_lookahead_queue.pop_front();
+            if (new_branch->m_local_lookahead_queue.empty())
+                ++new_branch->m_global_lookahead_cursor;
+            else
+                new_branch->m_local_lookahead_queue.pop_front();
             break;
         }
         case ParseStackTreeNode_::POP_STACK: {
             // TODO: make separate action nodes for each pop, instead of using action data.
             std::uint32_t const &pop_count = action_data;
+            assert(new_branch->m_stack.size() > pop_count);
             for (std::uint32_t i = 0; i < pop_count; ++i)
                 new_branch->m_stack.pop_back();
             break;
@@ -793,23 +1054,51 @@ Parser::ParseStackTreeNode_ *Parser::TakeActionOnBranch_ (ParseStackTreeNode_ co
         }
     }
 
-    // Ensure the action node exists, creating it if necessary.
     ParseStackTreeNode_ *action_node = NULL;
-    if (!branch.m_parent_node->HasChildrenOfType(action_type))
+
+    // Ensure the action node exists, creating it if necessary.
+    ParseStackTreeNode_::Spec action_spec(action_type, action_data);
+    if (branch.m_parent_node->HasChildrenHavingSpec(action_spec))
     {
-        action_node = new ParseStackTreeNode_(action_type, action_data);
-        branch.m_parent_node->AddChild(action_node);
-    }
-    else
-    {
-        ParseStackTreeNode_::ParseStackTreeNodeSet &children_of_action_type = branch.m_parent_node->ChildrenOfType(action_type);
+        ParseStackTreeNode_::ParseStackTreeNodeSet &children_of_action_type = branch.m_parent_node->ChildrenHavingSpec(action_spec);
         assert(children_of_action_type.size() == 1);
         action_node = *children_of_action_type.begin();
     }
+    else
+    {
+        action_node = new ParseStackTreeNode_(action_spec);
+        branch.m_parent_node->AddChild(action_node);
+    }
+
     assert(action_node != NULL);
     action_node->AddChild(new_branch);
 
     return new_branch;
+}
+
+void Parser::Npda_::PopFrontGlobalLookahead ()
+{
+    assert(!m_global_lookahead_queue_.empty());
+    // Because the contents of m_npda_.m_global_lookahead_queue_ are changing, and each branch's
+    // m_global_lookahead_cursor is an index into that queue, each must be updated.
+    for (BranchQueue_::iterator branch_it = m_branch_queue_.begin(), branch_it_end = m_branch_queue_.end(); branch_it != branch_it_end; ++branch_it)
+    {
+        ParseStackTreeNode_ &branch = **branch_it;
+        --branch.m_global_lookahead_cursor;
+    }
+    m_global_lookahead_queue_.pop_front();
+}
+
+void Parser::Npda_::PushFrontGlobalLookahead (Parser::Token const &lookahead)
+{
+    // Because the contents of m_npda_.m_global_lookahead_queue_ are changing, and each branch's
+    // m_global_lookahead_cursor is an index into that queue, each must be updated.
+    for (BranchQueue_::iterator branch_it = m_branch_queue_.begin(), branch_it_end = m_branch_queue_.end(); branch_it != branch_it_end; ++branch_it)
+    {
+        ParseStackTreeNode_ &branch = **branch_it;
+        ++branch.m_global_lookahead_cursor;
+    }
+    m_global_lookahead_queue_.push_front(lookahead);
 }
 
 Parser::StateVector_ const &Parser::EpsilonClosureOfState_ (std::uint32_t state_index)
@@ -833,7 +1122,7 @@ Parser::StateVector_ const &Parser::EpsilonClosureOfState_ (std::uint32_t state_
     {
         if (transition->m_type == Transition_::EPSILON)
         {
-            StateVector_ const &sub_epsilon_closure = EpsilonClosureOfState_(transition->m_target_state_index);
+            StateVector_ const &sub_epsilon_closure = EpsilonClosureOfState_(transition->m_data_index);
             for (StateVector_::const_iterator it = sub_epsilon_closure.begin(), it_end = sub_epsilon_closure.end(); it != it_end; ++it)
                 epsilon_closure_set.insert(*it);
         }
@@ -852,53 +1141,80 @@ Parser::StateVector_ const &Parser::EpsilonClosureOfState_ (std::uint32_t state_
     return epsilon_closure;
 }
 
+Parser::TransitionVector_ const &Parser::NonEpsilonTransitionsOfState_ (std::uint32_t state_index)
+{
+    // Memoize this function, because it will be called so many times and is somewhat intensive.
+    typedef std::map<std::uint32_t,TransitionVector_> LookupTable;
+    static LookupTable s_lookup_table;
+    LookupTable::iterator it = s_lookup_table.find(state_index);
+    if (it != s_lookup_table.end())
+        return it->second;
+
+    // TODO: probably don't need to memoize epsilon closures because non-epsilon transitions is memoized.
+    TransitionSet_ non_epsilon_transition_set;
+    StateVector_ const &epsilon_closure = EpsilonClosureOfState_(state_index);
+    for (StateVector_::const_iterator it = epsilon_closure.begin(), it_end = epsilon_closure.end(); it != it_end; ++it)
+    {
+        State_ const &state = ms_state_table_[*it];
+        for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count; transition != transition_end; ++transition)
+            if (transition->m_type != Transition_::EPSILON)
+                non_epsilon_transition_set.insert(*transition);
+    }
+
+    TransitionVector_ &non_epsilon_transitions = s_lookup_table[state_index];
+    non_epsilon_transitions.reserve(non_epsilon_transition_set.size());
+    for (TransitionSet_::const_iterator it = non_epsilon_transition_set.begin(), it_end = non_epsilon_transition_set.end(); it != it_end; ++it)
+        non_epsilon_transitions.push_back(*it);
+    return non_epsilon_transitions;
+}
+
 Parser::State_ const Parser::ms_state_table_[] =
 {
     { 2, ms_transition_table_+0, "START statement_then_end" },
     { 1, ms_transition_table_+2, "RETURN statement_then_end" },
     { 1, ms_transition_table_+3, "head of: statement_then_end" },
-    { 3, ms_transition_table_+4, "rule 0: statement_then_end <- . statement END_" },
-    { 2, ms_transition_table_+7, "rule 0: statement_then_end <- statement . END_" },
-    { 2, ms_transition_table_+9, "START statement" },
-    { 1, ms_transition_table_+11, "RETURN statement" },
-    { 1, ms_transition_table_+12, "head of: statement" },
-    { 3, ms_transition_table_+13, "rule 1: statement <- . expression ';'" },
-    { 2, ms_transition_table_+16, "rule 1: statement <- expression . ';'" },
-    { 2, ms_transition_table_+18, "START expression" },
-    { 1, ms_transition_table_+20, "RETURN expression" },
-    { 9, ms_transition_table_+21, "head of: expression" },
-    { 2, ms_transition_table_+30, "rule 2: expression <- . '(' expression ')'" },
-    { 3, ms_transition_table_+32, "rule 2: expression <- '(' . expression ')'" },
-    { 2, ms_transition_table_+35, "rule 2: expression <- '(' expression . ')'" },
-    { 1, ms_transition_table_+37, "rule 2: expression <- '(' expression ')' ." },
-    { 2, ms_transition_table_+38, "rule 3: expression <- . '(' ERROR_ ')'" },
-    { 2, ms_transition_table_+40, "rule 3: expression <- '(' . ERROR_ ')'" },
-    { 3, ms_transition_table_+42, "rule 3: expression <- '(' ERROR_ . ')'" },
-    { 1, ms_transition_table_+45, "rule 3: expression <- '(' ERROR_ ')' ." },
-    { 2, ms_transition_table_+46, "rule 4: expression <- . '(' ERROR_" },
-    { 2, ms_transition_table_+48, "rule 4: expression <- '(' . ERROR_" },
-    { 2, ms_transition_table_+50, "rule 4: expression <- '(' ERROR_ ." },
-    { 2, ms_transition_table_+52, "rule 5: expression <- . NUM" },
-    { 1, ms_transition_table_+54, "rule 5: expression <- NUM ." },
-    { 2, ms_transition_table_+55, "rule 6: expression <- . expression '+' expression" },
-    { 2, ms_transition_table_+57, "rule 6: expression <- expression . '+' expression" },
-    { 3, ms_transition_table_+59, "rule 6: expression <- expression '+' . expression" },
-    { 1, ms_transition_table_+62, "rule 6: expression <- expression '+' expression ." },
-    { 2, ms_transition_table_+63, "rule 7: expression <- . expression '*' expression" },
-    { 2, ms_transition_table_+65, "rule 7: expression <- expression . '*' expression" },
-    { 3, ms_transition_table_+67, "rule 7: expression <- expression '*' . expression" },
-    { 1, ms_transition_table_+70, "rule 7: expression <- expression '*' expression ." },
-    { 2, ms_transition_table_+71, "rule 8: expression <- . '-' expression" },
-    { 3, ms_transition_table_+73, "rule 8: expression <- '-' . expression" },
-    { 1, ms_transition_table_+76, "rule 8: expression <- '-' expression ." },
-    { 2, ms_transition_table_+77, "rule 9: expression <- . expression '^' expression" },
-    { 2, ms_transition_table_+79, "rule 9: expression <- expression . '^' expression" },
-    { 3, ms_transition_table_+81, "rule 9: expression <- expression '^' . expression" },
-    { 1, ms_transition_table_+84, "rule 9: expression <- expression '^' expression ." },
-    { 2, ms_transition_table_+85, "rule 10: expression <- . ERROR_" },
-    { 2, ms_transition_table_+87, "rule 10: expression <- ERROR_ ." },
-    { 1, ms_transition_table_+89, "rule 1: statement <- expression ';' ." },
-    { 1, ms_transition_table_+90, "rule 0: statement_then_end <- statement END_ ." }
+    { 4, ms_transition_table_+4, "rule 0: statement_then_end <- . statement END_" },
+    { 3, ms_transition_table_+8, "rule 0: statement_then_end <- statement . END_" },
+    { 2, ms_transition_table_+11, "START statement" },
+    { 1, ms_transition_table_+13, "RETURN statement" },
+    { 1, ms_transition_table_+14, "head of: statement" },
+    { 4, ms_transition_table_+15, "rule 1: statement <- . expression ';'" },
+    { 3, ms_transition_table_+19, "rule 1: statement <- expression . ';'" },
+    { 2, ms_transition_table_+22, "START expression" },
+    { 1, ms_transition_table_+24, "RETURN expression" },
+    { 9, ms_transition_table_+25, "head of: expression" },
+    { 3, ms_transition_table_+34, "rule 2: expression <- . '(' expression ')'" },
+    { 4, ms_transition_table_+37, "rule 2: expression <- '(' . expression ')'" },
+    { 3, ms_transition_table_+41, "rule 2: expression <- '(' expression . ')'" },
+    { 1, ms_transition_table_+44, "rule 2: expression <- '(' expression ')' ." },
+    { 3, ms_transition_table_+45, "rule 3: expression <- . '(' ERROR_ ')'" },
+    { 2, ms_transition_table_+48, "rule 3: expression <- '(' . ERROR_ ')'" },
+    { 3, ms_transition_table_+50, "rule 3: expression <- '(' ERROR_ . ')'" },
+    { 1, ms_transition_table_+53, "rule 3: expression <- '(' ERROR_ ')' ." },
+    { 3, ms_transition_table_+54, "rule 4: expression <- . '(' ERROR_" },
+    { 2, ms_transition_table_+57, "rule 4: expression <- '(' . ERROR_" },
+    { 2, ms_transition_table_+59, "rule 4: expression <- '(' ERROR_ ." },
+    { 3, ms_transition_table_+61, "rule 5: expression <- . NUM" },
+    { 1, ms_transition_table_+64, "rule 5: expression <- NUM ." },
+    { 3, ms_transition_table_+65, "rule 6: expression <- . expression '+' expression" },
+    { 3, ms_transition_table_+68, "rule 6: expression <- expression . '+' expression" },
+    { 4, ms_transition_table_+71, "rule 6: expression <- expression '+' . expression" },
+    { 1, ms_transition_table_+75, "rule 6: expression <- expression '+' expression ." },
+    { 3, ms_transition_table_+76, "rule 7: expression <- . expression '*' expression" },
+    { 3, ms_transition_table_+79, "rule 7: expression <- expression . '*' expression" },
+    { 4, ms_transition_table_+82, "rule 7: expression <- expression '*' . expression" },
+    { 1, ms_transition_table_+86, "rule 7: expression <- expression '*' expression ." },
+    { 3, ms_transition_table_+87, "rule 8: expression <- . '-' expression" },
+    { 4, ms_transition_table_+90, "rule 8: expression <- '-' . expression" },
+    { 1, ms_transition_table_+94, "rule 8: expression <- '-' expression ." },
+    { 3, ms_transition_table_+95, "rule 9: expression <- . expression '^' expression" },
+    { 3, ms_transition_table_+98, "rule 9: expression <- expression . '^' expression" },
+    { 4, ms_transition_table_+101, "rule 9: expression <- expression '^' . expression" },
+    { 1, ms_transition_table_+105, "rule 9: expression <- expression '^' expression ." },
+    { 2, ms_transition_table_+106, "rule 10: expression <- . ERROR_" },
+    { 2, ms_transition_table_+108, "rule 10: expression <- ERROR_ ." },
+    { 1, ms_transition_table_+110, "rule 1: statement <- expression ';' ." },
+    { 1, ms_transition_table_+111, "rule 0: statement_then_end <- statement END_ ." }
 };
 std::size_t const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
 
@@ -906,25 +1222,29 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
 {
     { Parser::Transition_::SHIFT, 260, 1 },
     { Parser::Transition_::EPSILON, 0, 2 },
-    { Parser::Transition_::RETURN, 260, -1 },
+    { Parser::Transition_::RETURN, 0, -1 },
     { Parser::Transition_::EPSILON, 0, 3 },
     { Parser::Transition_::SHIFT, 261, 4 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::EPSILON, 0, 7 },
     { Parser::Transition_::SHIFT, 256, 44 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 261, 6 },
     { Parser::Transition_::EPSILON, 0, 7 },
-    { Parser::Transition_::RETURN, 261, -1 },
+    { Parser::Transition_::RETURN, 0, -1 },
     { Parser::Transition_::EPSILON, 0, 8 },
     { Parser::Transition_::SHIFT, 262, 9 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::EPSILON, 0, 12 },
     { Parser::Transition_::SHIFT, 59, 43 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 262, 11 },
     { Parser::Transition_::EPSILON, 0, 12 },
-    { Parser::Transition_::RETURN, 262, -1 },
+    { Parser::Transition_::RETURN, 0, -1 },
     { Parser::Transition_::EPSILON, 0, 13 },
     { Parser::Transition_::EPSILON, 0, 17 },
     { Parser::Transition_::EPSILON, 0, 21 },
@@ -936,65 +1256,82 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::EPSILON, 0, 41 },
     { Parser::Transition_::SHIFT, 40, 14 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 262, 15 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::EPSILON, 0, 12 },
     { Parser::Transition_::SHIFT, 41, 16 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
-    { Parser::Transition_::REDUCE, 2, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
+    { Parser::Transition_::REDUCE, 0, 2 },
     { Parser::Transition_::SHIFT, 40, 18 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 257, 19 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
     { Parser::Transition_::SHIFT, 41, 20 },
     { Parser::Transition_::DISCARD_LOOKAHEAD, 0, -1 },
-    { Parser::Transition_::POP_STACK, 2, -1 },
-    { Parser::Transition_::REDUCE, 3, -1 },
+    { Parser::Transition_::POP_STACK, 256, 2 },
+    { Parser::Transition_::REDUCE, 0, 3 },
     { Parser::Transition_::SHIFT, 40, 22 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 257, 23 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
-    { Parser::Transition_::REDUCE, 4, -1 },
+    { Parser::Transition_::REDUCE, 256, 4 },
     { Parser::Transition_::DISCARD_LOOKAHEAD, 0, -1 },
     { Parser::Transition_::SHIFT, 258, 25 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
-    { Parser::Transition_::REDUCE, 5, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
+    { Parser::Transition_::REDUCE, 0, 5 },
     { Parser::Transition_::SHIFT, 262, 27 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 43, 28 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 262, 29 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::EPSILON, 0, 12 },
-    { Parser::Transition_::REDUCE, 6, -1 },
+    { Parser::Transition_::REDUCE, 0, 6 },
     { Parser::Transition_::SHIFT, 262, 31 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 42, 32 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 262, 33 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::EPSILON, 0, 12 },
-    { Parser::Transition_::REDUCE, 7, -1 },
+    { Parser::Transition_::REDUCE, 0, 7 },
     { Parser::Transition_::SHIFT, 45, 35 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 262, 36 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::EPSILON, 0, 12 },
-    { Parser::Transition_::REDUCE, 8, -1 },
+    { Parser::Transition_::REDUCE, 0, 8 },
     { Parser::Transition_::SHIFT, 262, 38 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 94, 39 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::SHIFT, 262, 40 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
+    { Parser::Transition_::POP_STACK, 257, 1 },
     { Parser::Transition_::EPSILON, 0, 12 },
-    { Parser::Transition_::REDUCE, 9, -1 },
+    { Parser::Transition_::REDUCE, 0, 9 },
     { Parser::Transition_::SHIFT, 257, 42 },
     { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, -1 },
-    { Parser::Transition_::REDUCE, 10, -1 },
+    { Parser::Transition_::REDUCE, 256, 10 },
     { Parser::Transition_::DISCARD_LOOKAHEAD, 0, -1 },
-    { Parser::Transition_::REDUCE, 1, -1 },
-    { Parser::Transition_::REDUCE, 0, -1 }
+    { Parser::Transition_::REDUCE, 0, 1 },
+    { Parser::Transition_::REDUCE, 0, 0 }
 };
 std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
 
@@ -1003,12 +1340,12 @@ std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_ta
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 53 "Parser.trison"
+#line 54 "Parser.trison"
 
-void Parser::open (std::istream &in)
+void Parser::attach_istream (std::istream &in)
 {
     assert(m_scanner != NULL);
-    m_scanner->open(in);
+    m_scanner->attach_istream(in);
 }
 // FiLoc const &Parser::GetFiLoc () const
 // {
@@ -1057,7 +1394,7 @@ double parse (std::string const &s)
 {
     std::istringstream in(s);
     Parser parser;
-    parser.open(in);
+    parser.attach_istream(in);
     double parsed_value = 0.0;
     parser.Parse(&parsed_value);
     return parsed_value;
@@ -1073,4 +1410,4 @@ int main (int argc, char **argv)
     return 0;
 }
 
-#line 1077 "Parser.cpp"
+#line 1414 "Parser.cpp"

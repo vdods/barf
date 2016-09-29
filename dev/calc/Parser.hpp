@@ -200,7 +200,7 @@ public:
 
 #line 19 "Parser.trison"
 
-    void open (std::istream &in);
+    void attach_istream (std::istream &in);
 
 private:
 
@@ -269,49 +269,140 @@ private:
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
     // debug spew methods
-    void PrintParserStatus_ (std::ostream &stream) const;
+    void PrintParserStatus_ (std::ostream &out) const;
 
+private:
+
+    void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, double *&return_token);
+    void ContinueNPDAParse_ ();
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack) throw();
 
     struct Transition_
     {
         enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
         std::uint8_t m_type;
-        std::uint32_t m_data; // TODO: smallest int
-        std::uint32_t m_target_state_index; // TODO: smallest int
+        std::uint32_t m_token_index; // TODO: smallest int
+        std::uint32_t m_data_index; // TODO: smallest int
+
+        // Lexicographic ordering on the tuple (m_type, m_token_index, m_data_index).
+        struct Order
+        {
+            static std::uint32_t SortedTypeIndex (Type type)
+            {
+                switch (type)
+                {
+                    case REDUCE:
+                    case SHIFT:
+                    case DISCARD_LOOKAHEAD:
+                    case POP_STACK:
+                        return 0;
+
+                    case RETURN:
+                        return 1;
+
+                    case INSERT_LOOKAHEAD_ERROR:
+                    case EPSILON:
+                        return 2;
+                }
+            }
+
+            bool operator () (Transition_ const &lhs, Transition_ const &rhs) const
+            {
+                std::uint32_t sorted_type_index_lhs = SortedTypeIndex(Type(lhs.m_type));
+                std::uint32_t sorted_type_index_rhs = SortedTypeIndex(Type(rhs.m_type));
+                if (sorted_type_index_lhs != sorted_type_index_rhs)
+                    return sorted_type_index_lhs < sorted_type_index_rhs;
+                else if (lhs.m_type != rhs.m_type)
+                    return lhs.m_type < rhs.m_type;
+                else if (lhs.m_token_index != rhs.m_token_index)
+                    return lhs.m_token_index < rhs.m_token_index;
+                else
+                    return lhs.m_data_index < rhs.m_data_index;
+            }
+        };
     }; // end of struct Parser::Transition_
 
     typedef std::set<std::uint32_t> StateSet_;
     typedef std::vector<std::uint32_t> StateVector_;
+    typedef std::set<Transition_,Transition_::Order> TransitionSet_;
+    typedef std::vector<Transition_> TransitionVector_;
+
+    struct Npda_;
 
     struct ParseStackTreeNode_
     {
+        // The values of RETURN through POP_STACK coincide with the same in Transition_::Type.
+        // TODO: probably order this so that the Spec::Order gives an obvious way to do error handling action last
         enum Type { ROOT = 0, RETURN, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, BRANCH, COUNT_ };
+        static std::uint32_t const UNUSED_DATA = std::uint32_t(-1);
+
+        struct Spec
+        {
+            Type m_type;
+            // Only used by REDUCE, POP_STACK.
+            std::uint32_t m_single_data;
+
+            Spec (Type type, std::uint32_t single_data = UNUSED_DATA)
+                : m_type(type)
+                , m_single_data(single_data)
+            {
+                if (m_type != REDUCE && m_type != POP_STACK)
+                {
+                    assert(m_single_data == UNUSED_DATA);
+                }
+            }
+
+            // Lexicographic ordering on the tuple (m_type, m_single_data).
+            struct Order
+            {
+                bool operator () (Spec const &lhs, Spec const &rhs) const
+                {
+                    if (lhs.m_type != rhs.m_type)
+                        return lhs.m_type < rhs.m_type;
+
+                    switch (lhs.m_type) // Note that lhs.m_type == rhs.m_type at this point.
+                    {
+                        case REDUCE:
+                        case POP_STACK:
+                            return lhs.m_single_data < rhs.m_single_data;
+
+                        default:
+                            assert(lhs.m_single_data == UNUSED_DATA);
+                            assert(rhs.m_single_data == UNUSED_DATA);
+                            return false;
+                    }
+                }
+            };
+        };
 
         static char const *AsString (Type type);
 
         typedef std::set<ParseStackTreeNode_ *> ParseStackTreeNodeSet;
-        typedef std::map<Type,ParseStackTreeNodeSet> ChildMap;
+        typedef std::map<Spec,ParseStackTreeNodeSet,Spec::Order> ChildMap;
 
-        Type m_type;
-        std::uint32_t m_data;
+        Spec m_spec;
         Stack_ m_stack;
-        LookaheadQueue_ m_lookahead_queue;
-        std::uint32_t m_lookahead_cursor; // this is an index into m_lookahead_queue
+        // m_local_lookahead_queue comes before the "global" lookahead queue, and m_global_lookahead_cursor
+        // is the index into the "global" lookahead queue for where the end of m_local_lookahead_queue
+        // lands.  In other words, this node's "total" lookahead
+        LookaheadQueue_ m_local_lookahead_queue;
+        std::uint32_t m_global_lookahead_cursor; // this is an index into the "global" lookahead queue.
         // StateSet_ m_top_states; // used for infinite loop detection
         ParseStackTreeNode_ *m_parent_node;
         ChildMap m_child_nodes;
 
-        ParseStackTreeNode_ (Type type, std::uint32_t data)
-            : m_type(type)
-            , m_data(data)
-            , m_lookahead_cursor(0)
+        ParseStackTreeNode_ (Spec const &spec)
+            : m_spec(spec)
+            , m_global_lookahead_cursor(0)
             , m_parent_node(NULL)
         { }
 
-        bool HasChildrenOfType (Type type) const { return m_child_nodes.find(type) != m_child_nodes.end(); }
-        ParseStackTreeNodeSet const &ChildrenOfType (Type type) const { return m_child_nodes.at(type); }
-        ParseStackTreeNodeSet &ChildrenOfType (Type type) { return m_child_nodes.at(type); }
+        bool HasTrunkChild () const;
+        ParseStackTreeNode_ *PopTrunkChild ();
+        bool HasChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.find(spec) != m_child_nodes.end(); }
+        ParseStackTreeNodeSet const &ChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.at(spec); }
+        ParseStackTreeNodeSet &ChildrenHavingSpec (Spec const &spec) { return m_child_nodes.at(spec); }
+        Token const &Lookahead (Parser &parser) const;
 
         void AddChild (ParseStackTreeNode_ *child);
         void RemoveChild (ParseStackTreeNode_ *child);
@@ -319,15 +410,35 @@ private:
 
         ParseStackTreeNode_ *CloneLeafNode () const;
 
-        void Print (std::ostream &out, std::uint32_t indent_level = 0) const;
+        void Print (std::ostream &out, Parser const &parser, std::uint32_t indent_level = 0) const;
     };
 
-    ParseStackTreeNode_ *TakeActionOnBranch_ (ParseStackTreeNode_ const &branch, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
+    typedef std::deque<ParseStackTreeNode_ *> BranchQueue_;
 
-    ParseStackTreeNode_ *m_root_;
+    Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
+
+    ParseStackTreeNode_ *TakeHypotheticalActionOnBranch_ (ParseStackTreeNode_ const &branch, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
+
+    struct Npda_
+    {
+        ParseStackTreeNode_ *m_root_;
+        Stack_ m_global_stack_;
+        LookaheadQueue_ m_global_lookahead_queue_;
+        BranchQueue_ m_branch_queue_;
+        BranchQueue_ m_new_branch_queue_; // This is stored so new memory isn't allocated for each parse iteration.
+
+        Npda_ () : m_root_(NULL) { }
+
+        void PopFrontGlobalLookahead ();
+        void PushFrontGlobalLookahead (Token const &lookahead);
+    };
+
+    Npda_ m_npda_;
 
     static StateVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);
+    static TransitionVector_ const &NonEpsilonTransitionsOfState_ (std::uint32_t state_index);
 
+    friend struct ParseStackTreeNode_;
     static State_ const ms_state_table_[];
     static std::size_t const ms_state_count_;
     static Transition_ const ms_transition_table_[];

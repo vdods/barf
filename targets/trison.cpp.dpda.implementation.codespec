@@ -408,41 +408,41 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
 }
 
 <|if(is_defined(generate_debug_spew_code))
-void <{class_name}::PrintParserStatus_ (std::ostream &stream) const
+void <{class_name}::PrintParserStatus_ (std::ostream &out) const
 {
     assert(!m_stack_.empty());
 
-    stream << <{debug_spew_prefix} << " parser state stack: ";
+    out << <{debug_spew_prefix} << " parser state stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
-        stream << it->m_state_index;
+        out << it->m_state_index;
         Stack_::const_iterator next_it = it;
         if (++next_it != it_end)
-            stream << ' ';
+            out << ' ';
     }
-    stream << std::endl;
+    out << std::endl;
 
     assert(m_stack_.size() >= 1);
     assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal::none_));
-    stream << <{debug_spew_prefix} << " parser stack tokens . lookahead queue: ";
+    out << <{debug_spew_prefix} << " parser stack tokens . lookahead queue: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
         // the first token is always Nonterminal::none_, which doesn't correspond to a real token, so skip it.
         if (it == m_stack_.begin())
             continue;
-        stream << it->m_token << ' ';
+        out << it->m_token << ' ';
     }
-    stream << '.';
+    out << '.';
     for (LookaheadQueue_::const_iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
     {
         Token const &lookahead_token = *it;
         assert(lookahead_token.m_id < ms_token_name_count_ && "Token id out of range");
-        stream << ' ' << lookahead_token;
+        out << ' ' << lookahead_token;
     }
-    stream << std::endl;
+    out << std::endl;
 
-    PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
-    stream << std::endl;
+    PrintIndented_(out, ms_state_table_[m_stack_.back().m_state_index].m_description);
+    out << std::endl;
 }
 
 <|end_if

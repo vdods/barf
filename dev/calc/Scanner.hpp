@@ -579,19 +579,9 @@ public:
 
 #line 20 "Scanner.reflex"
 
-    void open (std::istream &in);
+    void attach_istream (std::istream &in);
 
-private:
-
-    inline std::istream &In ()
-    {
-        assert(m_in != NULL && "no input stream attached");
-        return *m_in;
-    }
-
-    std::istream *m_in;
-
-#line 595 "Scanner.hpp"
+#line 585 "Scanner.hpp"
 
 
 private:

@@ -17,7 +17,7 @@ class Scanner;
 %target.cpp.class_name Parser
 %target.cpp.parse_method_access "public"
 %target.cpp.bottom_of_class {
-    void open (std::istream &in);
+    void attach_istream (std::istream &in);
 
 private:
 
@@ -38,6 +38,7 @@ private:
 %}
 %target.cpp.constructor_actions {
     m_scanner = new Scanner();
+    m_scanner->DebugSpew(true);
 }
 %target.cpp.destructor_actions {
     delete m_scanner;
@@ -51,10 +52,10 @@ private:
 //         EmitExecutionMessage("parse was successful");
 // %}
 %target.cpp.bottom_of_implementation_file %{
-void Parser::open (std::istream &in)
+void Parser::attach_istream (std::istream &in)
 {
     assert(m_scanner != NULL);
-    m_scanner->open(in);
+    m_scanner->attach_istream(in);
 }
 // FiLoc const &Parser::GetFiLoc () const
 // {
@@ -103,7 +104,7 @@ double parse (std::string const &s)
 {
     std::istringstream in(s);
     Parser parser;
-    parser.open(in);
+    parser.attach_istream(in);
     double parsed_value = 0.0;
     parser.Parse(&parsed_value);
     return parsed_value;

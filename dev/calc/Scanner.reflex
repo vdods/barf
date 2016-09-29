@@ -18,17 +18,7 @@
 // %target.cpp.top_of_class {
 // }
 %target.cpp.bottom_of_class {
-    void open (std::istream &in);
-
-private:
-
-    inline std::istream &In ()
-    {
-        assert(m_in != NULL && "no input stream attached");
-        return *m_in;
-    }
-
-    std::istream *m_in;
+    void attach_istream (std::istream &in);
 }
 // %target.cpp.bottom_of_header_file %{
 // %}
@@ -38,14 +28,13 @@ private:
 /* **************************************************************************/
 
 %target.cpp.top_of_implementation_file %{
-void Scanner::open (std::istream &in)
+void Scanner::attach_istream (std::istream &in)
 {
-    m_in = &in;
+    IstreamIterator(std::istream_iterator<char>(in));
 }
 %}
-%target.cpp.constructor_actions {
-    m_in = NULL;
-}
+// %target.cpp.constructor_actions {
+// }
 // %target.cpp.destructor_actions {
 // }
 %target.cpp.bottom_of_scan_method_actions %{

@@ -42,6 +42,12 @@ design notes for trison error handling via state machine:
     INTEGER_LITERAL(4) '+' INTEGER_LITERAL(5) END_ END_ END_ END_ END_ ...
   then disallow %error from being the last token in a rule; one would have to explicitly use %end after %error.
   there would still need to be some restriction where ERROR_ can't absorb END_.
+- NOTE: In the NPDA, it's not necessary to store the [DPDA] state [set] in the global stack, since the branches
+  already store this information.
+- IDEA: Memoize the DPDA while running the NPDA, and even cache the memoization to disk so that it can be
+  loaded up again.  this would effectively turn the NPDA into a DPDA as it ran.  this should also be an option,
+  because the cache could potentially be quite large (certain operations are exponential in the worst case, but
+  those are likely for unrealistic grammars).
 
 
 example grammar
@@ -591,7 +597,6 @@ Actions:
 
 SHIFT (then push state X)
 REDUCE (rule Y)
-INSERT_LOOKAHEAD_ERROR      -- must have low precedence, probably lowest of all
 DISCARD_LOOKAHEAD           -- maybe should have precedence lower than all shift, but equal to all reduce (though this defies a linear order).
                                on the other hand, having DISCARD_LOOKAHEAD be higher than all reduce would be simple, and implement the
                                situation where the input "-;" produces a DISCARD_LOOKAHEAD/REDUCE conflict that doesn't result in the
@@ -600,6 +605,7 @@ DISCARD_LOOKAHEAD           -- maybe should have precedence lower than all shift
                                having precedence lower than all SHIFT.
 POP_STATE_STACK (Z times)   -- this only happens when ERROR_ is the lookahead and there's no rule to accept ERROR_
 RETURN_TOP_OF_STACK         -- must have low precedence, but higher than INSERT_LOOKAHEAD_ERROR
+INSERT_LOOKAHEAD_ERROR      -- must have low precedence, probably lowest of all
 
 Idea: Each class doesn't need to have a uniform relative precedence (in fact, shift and reduce are a counterexample),
 but rather a conflict can be described as having a graph which doesn't have a maximal element.  For example, having a cycle

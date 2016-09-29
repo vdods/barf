@@ -10,11 +10,11 @@
 #define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
 
 
-#line 40 "Scanner.reflex"
+#line 30 "Scanner.reflex"
 
-void Scanner::open (std::istream &in)
+void Scanner::attach_istream (std::istream &in)
 {
-    m_in = &in;
+    IstreamIterator(std::istream_iterator<char>(in));
 }
 
 #line 21 "Scanner.cpp"
@@ -30,12 +30,6 @@ Scanner::Scanner ()
 {
     DebugSpew(false);
 
-
-#line 46 "Scanner.reflex"
-
-    m_in = NULL;
-
-#line 39 "Scanner.cpp"
 
     ResetForNewInput();
 }
@@ -63,9 +57,9 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
         (false && "invalid StateMachine::Name"));
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
-#line 74 "Scanner.reflex"
+#line 63 "Scanner.reflex"
 "Scanner:"
-#line 69 "Scanner.cpp"
+#line 63 "Scanner.cpp"
  << " switching to state machine "
                   << ms_state_machine_name_[state_machine];
         if (ms_state_machine_mode_flags_[state_machine] != 0)
@@ -85,9 +79,9 @@ void Scanner::ResetForNewInput ()
 {
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
-#line 74 "Scanner.reflex"
+#line 63 "Scanner.reflex"
 "Scanner:"
-#line 91 "Scanner.cpp"
+#line 85 "Scanner.cpp"
  << " executing reset-for-new-input actions and switching to state machine "
                   << ms_state_machine_name_[StateMachine::START_];
         if (ms_state_machine_mode_flags_[StateMachine::START_] != 0)
@@ -135,9 +129,9 @@ Parser::Token Scanner::Scan () throw()
 
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
-#line 74 "Scanner.reflex"
+#line 63 "Scanner.reflex"
 "Scanner:"
-#line 141 "Scanner.cpp"
+#line 135 "Scanner.cpp"
  << " rejecting string ";
                 PrintString_(rejected_string);
                 std::cerr << " (rejected_atom is \'";
@@ -150,11 +144,11 @@ Parser::Token Scanner::Scan () throw()
             do
             {
 
-#line 63 "Scanner.reflex"
+#line 52 "Scanner.reflex"
 
     std::cerr << "unrecognized character " << std::uint32_t(rejected_atom) << '\n';;
 
-#line 158 "Scanner.cpp"
+#line 152 "Scanner.cpp"
 
             }
             while (false);
@@ -166,9 +160,9 @@ Parser::Token Scanner::Scan () throw()
 
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
-#line 74 "Scanner.reflex"
+#line 63 "Scanner.reflex"
 "Scanner:"
-#line 172 "Scanner.cpp"
+#line 166 "Scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
                 std::cerr << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
@@ -181,9 +175,9 @@ Parser::Token Scanner::Scan () throw()
                 case 0:
                 {
 
-#line 106 "Scanner.reflex"
+#line 95 "Scanner.reflex"
  return Parser::Token(Parser::Terminal::Name(accepted_string[0])); 
-#line 187 "Scanner.cpp"
+#line 181 "Scanner.cpp"
 
                 }
                 break;
@@ -191,9 +185,9 @@ Parser::Token Scanner::Scan () throw()
                 case 1:
                 {
 
-#line 107 "Scanner.reflex"
+#line 96 "Scanner.reflex"
  return Parser::Token(Parser::Terminal::NUM, std::stod(accepted_string)); 
-#line 197 "Scanner.cpp"
+#line 191 "Scanner.cpp"
 
                 }
                 break;
@@ -201,9 +195,9 @@ Parser::Token Scanner::Scan () throw()
                 case 2:
                 {
 
-#line 108 "Scanner.reflex"
+#line 97 "Scanner.reflex"
  
-#line 207 "Scanner.cpp"
+#line 201 "Scanner.cpp"
 
                 }
                 break;
@@ -211,9 +205,9 @@ Parser::Token Scanner::Scan () throw()
                 case 3:
                 {
 
-#line 109 "Scanner.reflex"
+#line 98 "Scanner.reflex"
  return Parser::Token(Parser::Terminal::END_); 
-#line 217 "Scanner.cpp"
+#line 211 "Scanner.cpp"
 
                 }
                 break;
@@ -221,9 +215,9 @@ Parser::Token Scanner::Scan () throw()
                 case 4:
                 {
 
-#line 110 "Scanner.reflex"
+#line 99 "Scanner.reflex"
  return Parser::Token(Parser::Terminal::BAD_TOKEN); 
-#line 227 "Scanner.cpp"
+#line 221 "Scanner.cpp"
 
                 }
                 break;
@@ -234,20 +228,20 @@ Parser::Token Scanner::Scan () throw()
     }
 
 
-#line 51 "Scanner.reflex"
+#line 40 "Scanner.reflex"
 
     assert(false && "you didn't handle EOF properly");
     return Parser::Token(Parser::Terminal::END_);
 
-#line 243 "Scanner.cpp"
+#line 237 "Scanner.cpp"
 }
 
 void Scanner::KeepString ()
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
-#line 74 "Scanner.reflex"
+#line 63 "Scanner.reflex"
 "Scanner:"
-#line 251 "Scanner.cpp"
+#line 245 "Scanner.cpp"
  << " keeping string" << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::KeepString();
 }
@@ -255,9 +249,9 @@ void Scanner::KeepString ()
 void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
-#line 74 "Scanner.reflex"
+#line 63 "Scanner.reflex"
 "Scanner:"
-#line 261 "Scanner.cpp"
+#line 255 "Scanner.cpp"
  << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::Unaccept(unaccept_char_count);
 }
@@ -265,9 +259,9 @@ void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 void Scanner::Unreject (std::uint32_t unreject_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
-#line 74 "Scanner.reflex"
+#line 63 "Scanner.reflex"
 "Scanner:"
-#line 271 "Scanner.cpp"
+#line 265 "Scanner.cpp"
  << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::Unreject(unreject_char_count);
 }

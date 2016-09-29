@@ -314,7 +314,7 @@ private:
     Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
 <|if(is_defined(generate_debug_spew_code))
     // debug spew methods
-    void PrintParserStatus_ (std::ostream &stream) const;
+    void PrintParserStatus_ (std::ostream &out) const;
 <|end_if
 
 <|if(is_defined(use_npda))
