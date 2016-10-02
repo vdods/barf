@@ -4,50 +4,56 @@ design notes for trison error handling via state machine:
 // design notes for trison error handling via state machine:
 // ///////////////////////////////////////////////////////////////////////////
 
-- trison should disallow a reduction rule from having two %error terminals in a row
-- if return, reduce, or shift can't be done (including shifting a lookahead of ERROR_ pursuant
-  to some parser rules), then this is a parse error.
-  * if
-      ERROR_ has just been shifted (can be inferred from the current state, i.e. the top of the state stack)
-      and
-      the first lookahead token is not END_ (END_ can never be absorbed by ERROR_),
-  * then the first lookahead token should be thrown away; this can be thought of as the ERROR_ absorbing the lookahead.
-  * otherwise if
-      the first lookahead token is ERROR_
-    then pop the stack (throwing away the top stack token); this can be thought of as the pre-existing error
-    panic pop sequence where the ERROR_ absorbs the stack tokens until it reaches a state which accepts ERROR_.
-  * otherwise ERROR_ should be inserted into the front of the lookahead queue.
-- this requires adding new parser actions, in addition to RETURN, REDUCE, SHIFT:
-  * DISCARD_LOOKAHEAD  - discard the first lookahead (and throw away token) (but don't alter the parser state stack).
-  * INSERT_LOOKAHEAD X - insert token X before the lookahead queue (maybe should be INSERT_ERROR_LOOKAHEAD, 
-                         since that's all that it'll ever be used for)
-  * POP_STATE_STACK    - pop the top of the state stack (and throw away token)
-- the above requires that:
-  * if ERROR_ has just been shifted, then END_ should have a transition of
-    ~ POP_STATE_STACK
-  * if ERROR_ has just been shifted, and there isn't a valid reduce rule, then the default action should be
-    ~ DISCARD_LOOKAHEAD
-    but does this screw up rules like `exp <- '(' %error`, where the %error should be able to suck up as many
-    tokens as it needs?  One clear way `exp <- '(' %error` would reduce is if it encountered END_, because
-    the error token couldn't absorb END_.  Having this rule read the rest of the file would make sense, because
-    it could be used to mean there's no matching ')'.  %error should mostly be used to look for a stop-gap
-    delimiter, such as ')', or '}', or ';', etc. in a rule like `exp <- '(' %error ')'`.  Perhaps the default
-    action of DISCARD_LOOKAHEAD could supercede any reduce rules, and a rule like `exp <- '(' %error` could
-    only be reduced by an explicit lookahead of END_.  Then a rule like `exp <- '(' %error` would be used
-    as a last resort, and should have the lowest priority.
-- here's an idea: require that once END_ has been returned by the scanner, it's always returned by the scanner.
-  e.g. the input
-    "4+5"
-  would return the token sequence
-    INTEGER_LITERAL(4) '+' INTEGER_LITERAL(5) END_ END_ END_ END_ END_ ...
-  then disallow %error from being the last token in a rule; one would have to explicitly use %end after %error.
-  there would still need to be some restriction where ERROR_ can't absorb END_.
-- NOTE: In the NPDA, it's not necessary to store the [DPDA] state [set] in the global stack, since the branches
-  already store this information.
-- IDEA: Memoize the DPDA while running the NPDA, and even cache the memoization to disk so that it can be
-  loaded up again.  this would effectively turn the NPDA into a DPDA as it ran.  this should also be an option,
-  because the cache could potentially be quite large (certain operations are exponential in the worst case, but
-  those are likely for unrealistic grammars).
+-   trison should disallow a reduction rule from having two %error terminals in a row
+-   if return, reduce, or shift can't be done (including shifting a lookahead of ERROR_ pursuant
+    to some parser rules), then this is a parse error.
+    *   if
+        ERROR_ has just been shifted (can be inferred from the current state, i.e. the top of the state stack)
+        and
+        the first lookahead token is not END_ (END_ can never be absorbed by ERROR_),
+    *   then the first lookahead token should be thrown away; this can be thought of as the ERROR_ absorbing the lookahead.
+    *   otherwise if
+        the first lookahead token is ERROR_
+        then pop the stack (throwing away the top stack token); this can be thought of as the pre-existing error
+        panic pop sequence where the ERROR_ absorbs the stack tokens until it reaches a state which accepts ERROR_.
+    *   otherwise ERROR_ should be inserted into the front of the lookahead queue.
+-   this requires adding new parser actions, in addition to RETURN, REDUCE, SHIFT:
+    *   DISCARD_LOOKAHEAD  - discard the first lookahead (and throw away token) (but don't alter the parser state stack).
+    *   INSERT_LOOKAHEAD X - insert token X before the lookahead queue (maybe should be INSERT_ERROR_LOOKAHEAD, 
+                             since that's all that it'll ever be used for)
+    *   POP_STATE_STACK    - pop the top of the state stack (and throw away token)
+-   the above requires that:
+    *   if ERROR_ has just been shifted, then END_ should have a transition of
+        ~   POP_STATE_STACK
+    *   if ERROR_ has just been shifted, and there isn't a valid reduce rule, then the default action should be
+        ~   DISCARD_LOOKAHEAD
+        but does this screw up rules like `exp <- '(' %error`, where the %error should be able to suck up as many
+        tokens as it needs?  One clear way `exp <- '(' %error` would reduce is if it encountered END_, because
+        the error token couldn't absorb END_.  Having this rule read the rest of the file would make sense, because
+        it could be used to mean there's no matching ')'.  %error should mostly be used to look for a stop-gap
+        delimiter, such as ')', or '}', or ';', etc. in a rule like `exp <- '(' %error ')'`.  Perhaps the default
+        action of DISCARD_LOOKAHEAD could supercede any reduce rules, and a rule like `exp <- '(' %error` could
+        only be reduced by an explicit lookahead of END_.  Then a rule like `exp <- '(' %error` would be used
+        as a last resort, and should have the lowest priority.
+-   here's an idea: require that once END_ has been returned by the scanner, it's always returned by the scanner.
+    e.g. the input
+        "4+5"
+    would return the token sequence
+        INTEGER_LITERAL(4) '+' INTEGER_LITERAL(5) END_ END_ END_ END_ END_ ...
+    then disallow %error from being the last token in a rule; one would have to explicitly use %end after %error.
+    there would still need to be some restriction where ERROR_ can't absorb END_.
+-   NOTE: In the NPDA, it's not necessary to store the [DPDA] state [set] in the global stack, since the branches
+    already store this information.
+-   IDEA: Memoize the DPDA while running the NPDA, and even cache the memoization to disk so that it can be
+    loaded up again.  this would effectively turn the NPDA into a DPDA as it ran.  this should also be an option,
+    because the cache could potentially be quite large (certain operations are exponential in the worst case, but
+    those are likely for unrealistic grammars).
+
+TODO
+-   Prove theorem: it's only possible to have a REDUCE/DISCARD_LOOKAHEAD conflict in NPDA if ERROR_ was just shifted
+    and END_ is the lookahead token.
+    In this case, for simplicity, 
+
 
 
 example grammar

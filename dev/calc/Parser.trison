@@ -100,22 +100,31 @@ void Parser::attach_istream (std::istream &in)
 
 // } // end of namespace Text
 
-double parse (std::string const &s)
+Parser::ParserReturnCode parse (std::string const &s, double &parsed_value)
 {
     std::istringstream in(s);
     Parser parser;
     parser.attach_istream(in);
-    double parsed_value = 0.0;
-    parser.Parse(&parsed_value);
-    return parsed_value;
+    Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
+    return return_code;
 }
 
 int main (int argc, char **argv)
 {
     if (argc >= 2)
     {
-        double parsed_value = parse(argv[1]);
-        std::cout << "parsed string \"" << argv[1] << "\" which evaluated to " << parsed_value << '\n';
+        double parsed_value;
+        Parser::ParserReturnCode return_code = parse(argv[1], parsed_value);
+        std::cout << "parsed string was \"" << argv[1] << "\"\n";
+        std::cout << "return code was ";
+        switch (return_code)
+        {
+            case Parser::PRC_SUCCESS: std::cout << "PRC_SUCCESS"; break;
+            case Parser::PRC_UNHANDLED_PARSE_ERROR: std::cout << "PRC_UNHANDLED_PARSE_ERROR"; break;
+            case Parser::PRC_INTERNAL_ERROR: std::cout << "PRC_INTERNAL_ERROR"; break;
+        }
+        std::cout << '\n';
+        std::cout << "parsed value was " << parsed_value << '\n';
     }
     return 0;
 }
@@ -181,6 +190,8 @@ int main (int argc, char **argv)
 %nonterminal statement
 :
     expression:ex ';'                                           %target.cpp { return ex; }
+|
+    %error                                                      %target.cpp { return 0.0; }
 ;
 
 %nonterminal expression

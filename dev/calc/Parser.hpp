@@ -46,7 +46,9 @@ public:
         PRC_SUCCESS = 0,
         /// Indicates an unhandled parse error occurred (i.e. no %error-accepting
         /// rules were encountered).
-        PRC_UNHANDLED_PARSE_ERROR = 1
+        PRC_UNHANDLED_PARSE_ERROR = 1,
+        /// Indicates that the parse didn't complete because of some internal error.
+        PRC_INTERNAL_ERROR = 2
     }; // end of enum Parser::ParserReturnCode
 
     /// "Namespace" for Parser::Terminal::Name, which enumerates all valid
@@ -206,7 +208,7 @@ private:
 
     Scanner *m_scanner;
 
-#line 210 "Parser.hpp"
+#line 212 "Parser.hpp"
 
 
 private:
@@ -239,6 +241,8 @@ private:
             m_state_index(state_index),
             m_token(token)
         { }
+
+        bool operator == (StackElement_ const &other) const { return m_state_index == other.m_state_index; }
     }; // end of struct Parser::StackElement_
 
     struct State_
@@ -293,16 +297,18 @@ private:
                 {
                     case REDUCE:
                     case SHIFT:
-                    case DISCARD_LOOKAHEAD:
-                    case POP_STACK:
                         return 0;
 
-                    case RETURN:
+                    case DISCARD_LOOKAHEAD:
+                    case POP_STACK:
                         return 1;
+
+                    case RETURN:
+                        return 2;
 
                     case INSERT_LOOKAHEAD_ERROR:
                     case EPSILON:
-                        return 2;
+                        return 3;
                 }
             }
 
@@ -377,7 +383,13 @@ private:
 
         static char const *AsString (Type type);
 
-        typedef std::set<ParseStackTreeNode_ *> ParseStackTreeNodeSet;
+
+        struct ParseStackTreeNodeOrder
+        {
+            bool operator () (ParseStackTreeNode_ const *lhs, ParseStackTreeNode_ const *rhs) const;
+        };
+
+        typedef std::set<ParseStackTreeNode_ *,ParseStackTreeNodeOrder> ParseStackTreeNodeSet;
         typedef std::map<Spec,ParseStackTreeNodeSet,Spec::Order> ChildMap;
 
         Spec m_spec;
@@ -396,6 +408,7 @@ private:
             , m_global_lookahead_cursor(0)
             , m_parent_node(NULL)
         { }
+        ~ParseStackTreeNode_ ();
 
         bool HasTrunkChild () const;
         ParseStackTreeNode_ *PopTrunkChild ();
@@ -428,12 +441,16 @@ private:
         BranchQueue_ m_new_branch_queue_; // This is stored so new memory isn't allocated for each parse iteration.
 
         Npda_ () : m_root_(NULL) { }
+        ~Npda_ ();
 
         void PopFrontGlobalLookahead ();
         void PushFrontGlobalLookahead (Token const &lookahead);
     };
 
     Npda_ m_npda_;
+
+    static bool CompareToken (Token const &lhs, Token const &rhs) { return lhs.m_id < rhs.m_id; }
+    static bool CompareStackElement (StackElement_ const &lhs, StackElement_ const &rhs) { return lhs.m_state_index < rhs.m_state_index; }
 
     static StateVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);
     static TransitionVector_ const &NonEpsilonTransitionsOfState_ (std::uint32_t state_index);

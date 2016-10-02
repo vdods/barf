@@ -53,7 +53,9 @@ public:
         PRC_SUCCESS = 0,
         /// Indicates an unhandled parse error occurred (i.e. no %error-accepting
         /// rules were encountered).
-        PRC_UNHANDLED_PARSE_ERROR = 1
+        PRC_UNHANDLED_PARSE_ERROR = 1,
+        /// Indicates that the parse didn't complete because of some internal error.
+        PRC_INTERNAL_ERROR = 2
     }; // end of enum <{class_name}::ParserReturnCode
 
     /// "Namespace" for <{class_name}::Terminal::Name, which enumerates all valid
@@ -277,6 +279,8 @@ private:
             m_state_index(state_index),
             m_token(token)
         { }
+
+        bool operator == (StackElement_ const &other) const { return m_state_index == other.m_state_index; }
     }; // end of struct <{class_name}::StackElement_
 
     struct State_
