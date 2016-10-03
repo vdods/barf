@@ -110,9 +110,13 @@ private:
 
                     switch (lhs.m_type) // Note that lhs.m_type == rhs.m_type at this point.
                     {
-                        case REDUCE:
                         case POP_STACK:
                             return lhs.m_single_data < rhs.m_single_data;
+
+                        case REDUCE:
+                            assert(lhs.m_single_data != UNUSED_DATA);
+                            assert(rhs.m_single_data != UNUSED_DATA);
+                            return false;
 
                         default:
                             assert(lhs.m_single_data == UNUSED_DATA);
@@ -160,12 +164,17 @@ private:
         ParseStackTreeNodeSet const &ChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.at(spec); }
         ParseStackTreeNodeSet &ChildrenHavingSpec (Spec const &spec) { return m_child_nodes.at(spec); }
         Token const &Lookahead (<{class_name} &parser) const;
+        // Any branch whose parent action pops the stack at all is blocked (because its future depends on the
+        // values of the stack below the top).  Also, RETURN is considered to block, since nothing can happen after.
+        bool IsBlockedBranch () const;
 
         void AddChild (ParseStackTreeNode_ *child);
         void RemoveChild (ParseStackTreeNode_ *child);
         void RemoveFromParent ();
 
         ParseStackTreeNode_ *CloneLeafNode () const;
+        // orphan_target must not have a parent (because its m_spec may change and affect its relationship with its parent).
+        void CloneLeafNodeInto (ParseStackTreeNode_ &orphan_target) const;
 
         void Print (std::ostream &out, <{class_name} const &parser, std::uint32_t indent_level = 0) const;
     };
@@ -179,6 +188,9 @@ private:
     struct Npda_
     {
         ParseStackTreeNode_ *m_root_;
+        // TODO/NOTE: The branches should really have "npda stack" and "npda lookahead queue",
+        // which don't have any token data, whereas Npda_ should have "real stack" and "real lookahead queue",
+        // which do have (and own) the token data.
         Stack_ m_global_stack_;
         LookaheadQueue_ m_global_lookahead_queue_;
         BranchQueue_ m_branch_queue_;
@@ -193,6 +205,8 @@ private:
 
     Npda_ m_npda_;
 
+    // Returns true iff lhs_rule_index denotes a rule with a higher precedence than that denoted by rhs_rule_index.
+    static bool CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
     static bool CompareToken (Token const &lhs, Token const &rhs) { return lhs.m_id < rhs.m_id; }
     static bool CompareStackElement (StackElement_ const &lhs, StackElement_ const &rhs) { return lhs.m_state_index < rhs.m_state_index; }
 

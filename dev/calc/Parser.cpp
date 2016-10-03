@@ -105,23 +105,6 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
     return stream;
 }
 
-Parser::Rule_ const Parser::ms_rule_table_[] =
-{
-    { Parser::Nonterminal::statement_then_end, 2, "statement_then_end <- statement END_" },
-    { Parser::Nonterminal::statement, 2, "statement <- expression ';'" },
-    { Parser::Nonterminal::statement, 1, "statement <- ERROR_" },
-    { Parser::Nonterminal::expression, 3, "expression <- '(' expression ')'" },
-    { Parser::Nonterminal::expression, 3, "expression <- '(' ERROR_ ')'" },
-    { Parser::Nonterminal::expression, 2, "expression <- '(' ERROR_" },
-    { Parser::Nonterminal::expression, 1, "expression <- NUM" },
-    { Parser::Nonterminal::expression, 3, "expression <- expression '+' expression" },
-    { Parser::Nonterminal::expression, 3, "expression <- expression '*' expression" },
-    { Parser::Nonterminal::expression, 2, "expression <- '-' expression" },
-    { Parser::Nonterminal::expression, 3, "expression <- expression '^' expression" },
-    { Parser::Nonterminal::expression, 1, "expression <- ERROR_" }
-};
-std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
-
 char const *const Parser::ms_token_name_table_[] =
 {
     "'\\0'",
@@ -396,7 +379,7 @@ void Parser::ThrowAwayToken_ (Token &token_) throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 155 "Parser.trison"
 "Parser"
-#line 400 "Parser.cpp"
+#line 383 "Parser.cpp"
  << " executing throw-away-token actions on token " << token_ << std::endl)
 
     ThrowAwayTokenData_(token_.m_data);
@@ -407,7 +390,7 @@ void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 155 "Parser.trison"
 "Parser"
-#line 411 "Parser.cpp"
+#line 394 "Parser.cpp"
  << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
 
     ThrowAwayTokenData_(stack_element_.m_token.m_data);
@@ -418,7 +401,7 @@ void Parser::ThrowAwayTokenData_ (double &token_data) throw()
 
 #line 140 "Parser.trison"
  
-#line 422 "Parser.cpp"
+#line 405 "Parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
@@ -426,7 +409,7 @@ Parser::Token Parser::Scan_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 155 "Parser.trison"
 "Parser"
-#line 430 "Parser.cpp"
+#line 413 "Parser.cpp"
  << " executing scan actions" << std::endl)
 
 
@@ -435,7 +418,7 @@ Parser::Token Parser::Scan_ () throw()
     assert(m_scanner != NULL);
     return m_scanner->Scan();
 
-#line 439 "Parser.cpp"
+#line 422 "Parser.cpp"
 }
 
 #include <algorithm>
@@ -458,7 +441,7 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, Nonterminal::Name
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 155 "Parser.trison"
 "Parser"
-#line 462 "Parser.cpp"
+#line 445 "Parser.cpp"
  << " starting parse" << std::endl)
 
     ParserReturnCode parser_return_code_ = PRC_INTERNAL_ERROR;
@@ -485,10 +468,9 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, Nonterminal::Name
 
     bool should_return = false;
     // while (true)
-    for (int i = 0; i < 25 && !should_return; ++i)
+    for (int i = 0; i < 200 && !should_return; ++i)
     {
-        std::cerr << '\n' << '\n';
-        std::cerr << "---------- ITERATION " << i << " --------------\n";
+        std::cerr << "\n---------- ITERATION " << i << " --------------\n";
         PrintParserStatus_(std::cerr);
         std::cerr << '\n';
 
@@ -497,22 +479,21 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, Nonterminal::Name
         else
             ContinueNPDAParse_();
         std::cerr << '\n';
-        // PrintParserStatus_(std::cerr);
-        // std::cerr << '\n';
     }
 
+    std::cerr << "\n---------- RETURNING --------------\n";
     PrintParserStatus_(std::cerr);
     std::cerr << '\n';
 
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
 #line 155 "Parser.trison"
 "Parser"
-#line 511 "Parser.cpp"
+#line 492 "Parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
 #line 155 "Parser.trison"
 "Parser"
-#line 516 "Parser.cpp"
+#line 497 "Parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
     return parser_return_code_;
@@ -607,10 +588,15 @@ void Parser::ContinueNPDAParse_ ()
             break;
         }
 
+        // Process non-blocked branches.
         for (BranchQueue_::iterator branch_it = m_npda_.m_branch_queue_.begin(), branch_it_end = m_npda_.m_branch_queue_.end(); branch_it != branch_it_end; ++branch_it)
         {
             assert(*branch_it != NULL);
             ParseStackTreeNode_ &branch = **branch_it;
+
+            if (branch.IsBlockedBranch())
+                continue;
+
             assert(branch.m_spec.m_type == ParseStackTreeNode_::BRANCH);
             std::cerr << "        Processing branch: ";
             branch.Print(std::cerr, *this, 0);
@@ -686,7 +672,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 155 "Parser.trison"
 "Parser"
-#line 690 "Parser.cpp"
+#line 676 "Parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
@@ -701,7 +687,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 187 "Parser.trison"
  return st; 
-#line 705 "Parser.cpp"
+#line 691 "Parser.cpp"
             break;
         }
 
@@ -712,7 +698,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 192 "Parser.trison"
  return ex; 
-#line 716 "Parser.cpp"
+#line 702 "Parser.cpp"
             break;
         }
 
@@ -722,7 +708,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 194 "Parser.trison"
  return 0.0; 
-#line 726 "Parser.cpp"
+#line 712 "Parser.cpp"
             break;
         }
 
@@ -733,7 +719,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 199 "Parser.trison"
  return e; 
-#line 737 "Parser.cpp"
+#line 723 "Parser.cpp"
             break;
         }
 
@@ -743,7 +729,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 201 "Parser.trison"
  return 0.0; 
-#line 747 "Parser.cpp"
+#line 733 "Parser.cpp"
             break;
         }
 
@@ -753,7 +739,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 203 "Parser.trison"
  return 0.0; 
-#line 757 "Parser.cpp"
+#line 743 "Parser.cpp"
             break;
         }
 
@@ -764,7 +750,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 205 "Parser.trison"
  return num; 
-#line 768 "Parser.cpp"
+#line 754 "Parser.cpp"
             break;
         }
 
@@ -776,7 +762,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 207 "Parser.trison"
  return lhs + rhs; 
-#line 780 "Parser.cpp"
+#line 766 "Parser.cpp"
             break;
         }
 
@@ -788,7 +774,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 209 "Parser.trison"
  return lhs * rhs; 
-#line 792 "Parser.cpp"
+#line 778 "Parser.cpp"
             break;
         }
 
@@ -799,7 +785,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 211 "Parser.trison"
  return -op; 
-#line 803 "Parser.cpp"
+#line 789 "Parser.cpp"
             break;
         }
 
@@ -811,7 +797,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 213 "Parser.trison"
  return std::pow(lhs, rhs); 
-#line 815 "Parser.cpp"
+#line 801 "Parser.cpp"
             break;
         }
 
@@ -821,7 +807,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 215 "Parser.trison"
  return 0.0; 
-#line 825 "Parser.cpp"
+#line 811 "Parser.cpp"
             break;
         }
 
@@ -884,8 +870,9 @@ bool Parser::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (Parser::
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
+    assert(lhs->m_spec.m_type == rhs->m_spec.m_type); // ParseStackTreeNodeSet should contain only nodes of the same type.
     // for BRANCH, their contents must be compared.
-    if (lhs->m_spec.m_type == BRANCH && rhs->m_spec.m_type == BRANCH)
+    if (lhs->m_spec.m_type == BRANCH)
     {
         assert(lhs->m_child_nodes.empty());
         assert(rhs->m_child_nodes.empty());
@@ -905,6 +892,18 @@ bool Parser::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (Parser::
                 CompareToken
             );
     }
+    // For REDUCE, their contents must be compared.
+    else if (lhs->m_spec.m_type == REDUCE)
+    {
+        // m_single_data contains the reduction rule index.
+        Rule_ const &lhs_rule = ms_rule_table_[lhs->m_spec.m_single_data];
+        Rule_ const &rhs_rule = ms_rule_table_[rhs->m_spec.m_single_data];
+        // Sort first by rule precedence, then by rule index (lower has higher priority).
+        if (ms_precedence_table_[lhs_rule.m_precedence_index].m_level != ms_precedence_table_[rhs_rule.m_precedence_index].m_level)
+            return ms_precedence_table_[lhs_rule.m_precedence_index].m_level > ms_precedence_table_[rhs_rule.m_precedence_index].m_level;
+        else // Sort based on rule index.
+            return lhs->m_spec.m_single_data < rhs->m_spec.m_single_data;
+    }
     // Otherwise just use pointer value.
     else
         return lhs < rhs;
@@ -912,19 +911,9 @@ bool Parser::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (Parser::
 
 Parser::ParseStackTreeNode_::~ParseStackTreeNode_ ()
 {
-        // Spec m_spec;
-        // Stack_ m_stack;
-        // // m_local_lookahead_queue comes before the "global" lookahead queue, and m_global_lookahead_cursor
-        // // is the index into the "global" lookahead queue for where the end of m_local_lookahead_queue
-        // // lands.  In other words, this node's "total" lookahead
-        // LookaheadQueue_ m_local_lookahead_queue;
-        // std::uint32_t m_global_lookahead_cursor; // this is an index into the "global" lookahead queue.
-        // // StateSet_ m_top_states; // used for infinite loop detection
-        // ParseStackTreeNode_ *m_parent_node;
-        // ChildMap m_child_nodes;
-
     // TODO: figure out if stack element tokens should be thrown away
     // TODO: figure out if local lookahead queue tokens should be thrown away
+    // TODO: are they actually uninitialized (default value)?
     for (ChildMap::iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
     {
         ParseStackTreeNodeSet &child_node_set = it->second;
@@ -985,6 +974,21 @@ Parser::Token const &Parser::ParseStackTreeNode_::Lookahead (Parser &parser) con
         return m_local_lookahead_queue.front();
 }
 
+bool Parser::ParseStackTreeNode_::IsBlockedBranch () const
+{
+    assert(m_spec.m_type == BRANCH);
+    if (m_parent_node == NULL)
+        return false;
+    switch (m_parent_node->m_spec.m_type)
+    {
+        case RETURN:
+        case REDUCE:
+        case POP_STACK: return true;
+
+        default:        return false;
+    }
+}
+
 void Parser::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
 {
     assert(child != NULL);
@@ -1013,12 +1017,19 @@ void Parser::ParseStackTreeNode_::RemoveFromParent ()
 
 Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::CloneLeafNode () const
 {
-    assert(m_child_nodes.empty());
     ParseStackTreeNode_ *retval = new ParseStackTreeNode_(m_spec);
-    retval->m_stack = m_stack;
-    retval->m_local_lookahead_queue = m_local_lookahead_queue;
-    retval->m_global_lookahead_cursor = m_global_lookahead_cursor;
+    CloneLeafNodeInto(*retval);
     return retval;
+}
+
+void Parser::ParseStackTreeNode_::CloneLeafNodeInto (Parser::ParseStackTreeNode_ &orphan_target) const
+{
+    assert(orphan_target.m_parent_node == NULL);
+    assert(m_child_nodes.empty());
+    orphan_target.m_spec = m_spec;
+    orphan_target.m_stack = m_stack;
+    orphan_target.m_local_lookahead_queue = m_local_lookahead_queue;
+    orphan_target.m_global_lookahead_cursor = m_global_lookahead_cursor;
 }
 
 void Parser::ParseStackTreeNode_::Print (std::ostream &out, Parser const &parser, std::uint32_t indent_level) const
@@ -1072,7 +1083,7 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 155 "Parser.trison"
 "Parser"
-#line 1076 "Parser.cpp"
+#line 1087 "Parser.cpp"
  << " pushed " << m_npda_.m_global_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
     }
     return m_npda_.m_global_lookahead_queue_[index];
@@ -1080,6 +1091,7 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw
 
 Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnBranch_ (ParseStackTreeNode_ const &branch, ParseStackTreeNode_::Type action_type, std::uint32_t action_data)
 {
+    // TODO: replace individual arguments action_type, action_data with ParseStackTreeNode_::Spec and just modify that struct below where it needs it.
     assert(branch.m_spec.m_type == ParseStackTreeNode_::BRANCH && "Only a BRANCH type node can take an action");
     assert(branch.m_parent_node != NULL);
 
@@ -1087,7 +1099,8 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnBranch_ (ParseStack
     if (action_type == ParseStackTreeNode_::POP_STACK && branch.m_stack.size() <= 1)
         return NULL;
 
-    ParseStackTreeNode_ *new_branch = branch.CloneLeafNode();
+    ParseStackTreeNode_ *new_branch = NULL;
+
     switch (action_type)
     {
         case ParseStackTreeNode_::ROOT: {
@@ -1095,26 +1108,81 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnBranch_ (ParseStack
             break;
         }
         case ParseStackTreeNode_::RETURN: {
-            // Nothing to do.
+            new_branch = branch.CloneLeafNode();
             break;
         }
         case ParseStackTreeNode_::REDUCE: {
             // Execute the appropriate rule on the top tokens in the stack
             std::uint32_t const &rule_index = action_data;
             Rule_ const &rule = ms_rule_table_[rule_index];
-            // Pop those stack tokens
-            // std::cerr << "TakeHypotheticalActionOnBranch_ -- reducing rule " << rule_index << " \"" << rule.m_description << "\" which has " << rule.m_token_count << " tokens\n";
-            for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
-                new_branch->m_stack.pop_back();
-            // Push the reduced nonterminal token data onto the front of the lookahead queue
-            // new_branch->m_local_lookahead_queue.push_front(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data));
-            new_branch->m_local_lookahead_queue.push_front(Token(rule.m_reduction_nonterminal_token_id));
+
+            // Avoid creating the new branch altogether if it won't be added due to a REDUCE/REDUCE conflict.
+            ParseStackTreeNode_ *existing_reduce_action_node = NULL;
+            ParseStackTreeNode_ *reduce_branch = NULL;
+            ParseStackTreeNode_::Spec action_spec(action_type, action_data);
+            if (branch.m_parent_node->HasChildrenHavingSpec(action_spec)) // Check for an existing REDUCE action
+            {
+                // This is a REDUCE/REDUCE conflict
+                std::cerr << "TakeHypotheticalActionOnBranch_ - REDUCE/REDUCE conflict encountered ... ";
+
+                ParseStackTreeNode_::ParseStackTreeNodeSet &reduce_node_set = branch.m_parent_node->ChildrenHavingSpec(action_spec);
+                assert(reduce_node_set.size() == 1);
+                existing_reduce_action_node = *reduce_node_set.begin();
+                assert(existing_reduce_action_node != NULL);
+                // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
+                // (replacement instead of creating a new one and deleting the old is an optimization which also
+                // avoids an annoying traversal through m_npda_.m_branch_queue_).
+                // NOTE: This depends on the fact that a [hypothetical] REDUCE node has exactly one BRANCH child,
+                // which is what these three asserts check.  TODO: maybe make abstractions for these sorts of checks.
+                assert(existing_reduce_action_node->m_child_nodes.size() == 1);
+                assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
+                assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseStackTreeNode_::BRANCH);
+                if (CompareRuleByPrecedence(action_data, existing_reduce_action_node->m_spec.m_single_data))
+                {
+                    std::cerr << "resolving in favor of new branch.\n";
+
+                    reduce_branch = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
+                    assert(reduce_branch != NULL);
+
+                    // Remove the nodes from the ParseStackTreeNode_ tree.
+                    assert(existing_reduce_action_node != NULL);
+                    existing_reduce_action_node->RemoveFromParent();
+                    reduce_branch->RemoveFromParent();
+                    // Modify the nodes.
+                    existing_reduce_action_node->m_spec = action_spec; // Replace with the winning reduction rule Spec.
+                    branch.CloneLeafNodeInto(*reduce_branch); // NOTE: This modifies the existing branch, so no update of m_npda_.m_branch_queue_ is necessary.
+                    // Re-add them to the ParseStackTreeNode_ tree.
+                    existing_reduce_action_node->AddChild(reduce_branch);
+                    branch.m_parent_node->AddChild(existing_reduce_action_node);
+                }
+                else
+                {
+                    std::cerr << "resolving in favor of existing branch.\n";
+                }
+            }
+            else
+            {
+                new_branch = branch.CloneLeafNode();
+                reduce_branch = new_branch;
+            }
+
+            if (reduce_branch != NULL)
+            {
+                // Pop those stack tokens
+                // std::cerr << "TakeHypotheticalActionOnBranch_ -- reducing rule " << rule_index << " \"" << rule.m_description << "\" which has " << rule.m_token_count << " tokens\n";
+                for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
+                    reduce_branch->m_stack.pop_back();
+                // Push the reduced nonterminal token data onto the front of the lookahead queue
+                reduce_branch->m_local_lookahead_queue.push_front(Token(rule.m_reduction_nonterminal_token_id));
+            }
+
             break;
         }
         case ParseStackTreeNode_::SHIFT: {
             // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
             std::uint32_t const &state_index = action_data;
             // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel Lookahead.
+            new_branch = branch.CloneLeafNode();
             new_branch->m_stack.push_back(StackElement_(state_index, new_branch->Lookahead(*this)));
             action_data = ParseStackTreeNode_::UNUSED_DATA; // SHIFT action doesn't store the state, the BRANCH children do.
             if (new_branch->m_local_lookahead_queue.empty())
@@ -1124,10 +1192,12 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnBranch_ (ParseStack
             break;
         }
         case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+            new_branch = branch.CloneLeafNode();
             new_branch->m_local_lookahead_queue.push_front(Token(Terminal::ERROR_));
             break;
         }
         case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
+            new_branch = branch.CloneLeafNode();
             if (new_branch->m_local_lookahead_queue.empty())
                 ++new_branch->m_global_lookahead_cursor;
             else
@@ -1137,6 +1207,7 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnBranch_ (ParseStack
         case ParseStackTreeNode_::POP_STACK: {
             // TODO: make separate action nodes for each pop, instead of using action data.
             std::uint32_t const &pop_count = action_data;
+            new_branch = branch.CloneLeafNode();
             assert(new_branch->m_stack.size() > pop_count);
             for (std::uint32_t i = 0; i < pop_count; ++i)
                 new_branch->m_stack.pop_back();
@@ -1152,45 +1223,46 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnBranch_ (ParseStack
         }
     }
 
-    assert(new_branch != NULL);
-    assert(new_branch->m_parent_node == NULL);
-
-    ParseStackTreeNode_ *action_node = NULL;
-
-    // Ensure the action node exists, creating it if necessary.
-    ParseStackTreeNode_::Spec action_spec(action_type, action_data);
-    // std::cerr << "branch.m_parent_node = " << branch.m_parent_node << '\n';
-    if (branch.m_parent_node->HasChildrenHavingSpec(action_spec))
-    {
-        ParseStackTreeNode_::ParseStackTreeNodeSet &children_of_action_type = branch.m_parent_node->ChildrenHavingSpec(action_spec);
-        assert(children_of_action_type.size() == 1);
-        action_node = *children_of_action_type.begin();
-
-        // If the new branch already exists (can only happen as a child of POP_STACK), then don't add it.
-        if (action_type == ParseStackTreeNode_::POP_STACK && action_node->HasChildrenHavingSpec(new_branch->m_spec))
-        {
-            ParseStackTreeNode_::ParseStackTreeNodeSet const &child_branch_set = action_node->ChildrenHavingSpec(new_branch->m_spec);
-            if (child_branch_set.find(new_branch) != child_branch_set.end())
-            {
-                delete new_branch;
-                new_branch = NULL;
-            }
-        }
-    }
-    else
-    {
-        action_node = new ParseStackTreeNode_(action_spec);
-        branch.m_parent_node->AddChild(action_node);
-    }
-
-    assert(action_node != NULL);
     if (new_branch != NULL)
     {
-        // std::cerr << "    adding new branch: ";
-        // new_branch->Print(std::cerr, *this, 2);
-        // std::cerr << "    to action node: ";
-        // action_node->Print(std::cerr, *this, 2);
-        action_node->AddChild(new_branch);
+        assert(new_branch->m_parent_node == NULL);
+
+        ParseStackTreeNode_ *action_node = NULL;
+
+        // Ensure the action node exists, creating it if necessary.
+        ParseStackTreeNode_::Spec action_spec(action_type, action_data);
+        // std::cerr << "branch.m_parent_node = " << branch.m_parent_node << '\n';
+        if (branch.m_parent_node->HasChildrenHavingSpec(action_spec))
+        {
+            ParseStackTreeNode_::ParseStackTreeNodeSet &children_of_action_type = branch.m_parent_node->ChildrenHavingSpec(action_spec);
+            assert(children_of_action_type.size() == 1);
+            action_node = *children_of_action_type.begin();
+
+            // If the new branch already exists (can only happen as a child of POP_STACK), then don't add it.
+            if (action_type == ParseStackTreeNode_::POP_STACK && action_node->HasChildrenHavingSpec(new_branch->m_spec))
+            {
+                ParseStackTreeNode_::ParseStackTreeNodeSet const &child_branch_set = action_node->ChildrenHavingSpec(new_branch->m_spec);
+                if (child_branch_set.find(new_branch) != child_branch_set.end())
+                {
+                    delete new_branch;
+                    new_branch = NULL;
+                }
+            }
+        }
+        else
+        {
+            action_node = new ParseStackTreeNode_(action_spec);
+            branch.m_parent_node->AddChild(action_node);
+        }
+
+        if (new_branch != NULL)
+        {
+            // std::cerr << "    adding new branch: ";
+            // new_branch->Print(std::cerr, *this, 2);
+            // std::cerr << "    to action node: ";
+            // action_node->Print(std::cerr, *this, 2);
+            action_node->AddChild(new_branch);
+        }
     }
 
     return new_branch;
@@ -1228,6 +1300,14 @@ void Parser::Npda_::PushFrontGlobalLookahead (Parser::Token const &lookahead)
         ++branch.m_global_lookahead_cursor;
     }
     m_global_lookahead_queue_.push_front(lookahead);
+}
+
+bool Parser::CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index)
+{
+    if (ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level != ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level)
+        return ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level > ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level;
+    else
+        return lhs_rule_index < rhs_rule_index;
 }
 
 Parser::StateVector_ const &Parser::EpsilonClosureOfState_ (std::uint32_t state_index)
@@ -1296,6 +1376,34 @@ Parser::TransitionVector_ const &Parser::NonEpsilonTransitionsOfState_ (std::uin
         non_epsilon_transitions.push_back(*it);
     return non_epsilon_transitions;
 }
+
+Parser::Precedence_ const Parser::ms_precedence_table_[] =
+{
+    { 0, 0, "DEFAULT_" },
+    { 1, 0, "ADDITIVE" },
+    { 2, 0, "MULTIPLICATIVE" },
+    { 3, 2, "UNARY" },
+    { 4, 2, "EXPONENTIATION" }
+};
+
+std::size_t const Parser::ms_precedence_count_ = sizeof(Parser::ms_precedence_table_) / sizeof(*Parser::ms_precedence_table_);
+
+Parser::Rule_ const Parser::ms_rule_table_[] =
+{
+    { Parser::Nonterminal::statement_then_end, 2, 0, "statement_then_end <- statement END_" },
+    { Parser::Nonterminal::statement, 2, 0, "statement <- expression ';'" },
+    { Parser::Nonterminal::statement, 1, 0, "statement <- ERROR_" },
+    { Parser::Nonterminal::expression, 3, 0, "expression <- '(' expression ')'" },
+    { Parser::Nonterminal::expression, 3, 0, "expression <- '(' ERROR_ ')'" },
+    { Parser::Nonterminal::expression, 2, 0, "expression <- '(' ERROR_" },
+    { Parser::Nonterminal::expression, 1, 0, "expression <- NUM" },
+    { Parser::Nonterminal::expression, 3, 1, "expression <- expression '+' expression" },
+    { Parser::Nonterminal::expression, 3, 2, "expression <- expression '*' expression" },
+    { Parser::Nonterminal::expression, 2, 3, "expression <- '-' expression" },
+    { Parser::Nonterminal::expression, 3, 4, "expression <- expression '^' expression" },
+    { Parser::Nonterminal::expression, 1, 0, "expression <- ERROR_" }
+};
+std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
@@ -1555,4 +1663,4 @@ int main (int argc, char **argv)
     return 0;
 }
 
-#line 1559 "Parser.cpp"
+#line 1667 "Parser.cpp"

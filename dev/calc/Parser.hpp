@@ -217,13 +217,7 @@ private:
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    struct Rule_
-    {
-        Token::Id m_reduction_nonterminal_token_id;
-        std::uint32_t m_token_count;
-        char const *m_description;
-    }; // end of struct Parser::Rule_
-
+    struct Rule_;
     struct Transition_;
 
     struct StackElement_
@@ -260,8 +254,6 @@ private:
 
     bool m_debug_spew_;
 
-    static Rule_ const ms_rule_table_[];
-    static std::size_t const ms_rule_count_;
     static char const *const ms_token_name_table_[];
     static std::size_t const ms_token_name_count_;
 
@@ -280,6 +272,21 @@ private:
     void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, double *&return_token);
     void ContinueNPDAParse_ ();
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack) throw();
+
+    struct Precedence_
+    {
+        std::int32_t m_level; // default precedence is 0, higher values have higher precedence.
+        std::uint32_t m_associativity_index; // 0 for %left, 1 for %nonassoc, and 2 for %right.
+        char const *m_name;
+    };
+
+    struct Rule_
+    {
+        Token::Id m_reduction_nonterminal_token_id;
+        std::uint32_t m_token_count;
+        std::uint32_t m_precedence_index;
+        char const *m_description;
+    }; // end of struct Parser::Rule_
 
     struct Transition_
     {
@@ -368,9 +375,13 @@ private:
 
                     switch (lhs.m_type) // Note that lhs.m_type == rhs.m_type at this point.
                     {
-                        case REDUCE:
                         case POP_STACK:
                             return lhs.m_single_data < rhs.m_single_data;
+
+                        case REDUCE:
+                            assert(lhs.m_single_data != UNUSED_DATA);
+                            assert(rhs.m_single_data != UNUSED_DATA);
+                            return false;
 
                         default:
                             assert(lhs.m_single_data == UNUSED_DATA);
@@ -416,12 +427,17 @@ private:
         ParseStackTreeNodeSet const &ChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.at(spec); }
         ParseStackTreeNodeSet &ChildrenHavingSpec (Spec const &spec) { return m_child_nodes.at(spec); }
         Token const &Lookahead (Parser &parser) const;
+        // Any branch whose parent action pops the stack at all is blocked (because its future depends on the
+        // values of the stack below the top).  Also, RETURN is considered to block, since nothing can happen after.
+        bool IsBlockedBranch () const;
 
         void AddChild (ParseStackTreeNode_ *child);
         void RemoveChild (ParseStackTreeNode_ *child);
         void RemoveFromParent ();
 
         ParseStackTreeNode_ *CloneLeafNode () const;
+        // orphan_target must not have a parent (because its m_spec may change and affect its relationship with its parent).
+        void CloneLeafNodeInto (ParseStackTreeNode_ &orphan_target) const;
 
         void Print (std::ostream &out, Parser const &parser, std::uint32_t indent_level = 0) const;
     };
@@ -435,6 +451,9 @@ private:
     struct Npda_
     {
         ParseStackTreeNode_ *m_root_;
+        // TODO/NOTE: The branches should really have "npda stack" and "npda lookahead queue",
+        // which don't have any token data, whereas Npda_ should have "real stack" and "real lookahead queue",
+        // which do have (and own) the token data.
         Stack_ m_global_stack_;
         LookaheadQueue_ m_global_lookahead_queue_;
         BranchQueue_ m_branch_queue_;
@@ -449,6 +468,8 @@ private:
 
     Npda_ m_npda_;
 
+    // Returns true iff lhs_rule_index denotes a rule with a higher precedence than that denoted by rhs_rule_index.
+    static bool CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
     static bool CompareToken (Token const &lhs, Token const &rhs) { return lhs.m_id < rhs.m_id; }
     static bool CompareStackElement (StackElement_ const &lhs, StackElement_ const &rhs) { return lhs.m_state_index < rhs.m_state_index; }
 
@@ -456,6 +477,11 @@ private:
     static TransitionVector_ const &NonEpsilonTransitionsOfState_ (std::uint32_t state_index);
 
     friend struct ParseStackTreeNode_;
+
+    static Precedence_ const ms_precedence_table_[];
+    static std::size_t const ms_precedence_count_;
+    static Rule_ const ms_rule_table_[];
+    static std::size_t const ms_rule_count_;
     static State_ const ms_state_table_[];
     static std::size_t const ms_state_count_;
     static Transition_ const ms_transition_table_[];
