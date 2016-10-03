@@ -875,7 +875,7 @@ std::size_t const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_
 <{class_name}::State_ const <{class_name}::ms_state_table_[] =
 {
 <|loop(i, _npda_state_count)
-    { <{_npda_state_transition_count[i]}, ms_transition_table_+<{_npda_state_transition_offset[i]}<{if(is_defined(generate_debug_spew_code))}, <{_npda_state_description[i]}<{end_if} }<{if(i < _npda_state_count-1)},<{end_if}
+    { <{_npda_state_transition_count[i]}, ms_transition_table_+<{_npda_state_transition_offset[i]}, <{_npda_state_rule_index[i]}<{if(is_defined(generate_debug_spew_code))}, <{_npda_state_description[i]}<{end_if} }<{if(i < _npda_state_count-1)},<{end_if}
 <|end_loop
 };
 std::size_t const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_state_table_) / sizeof(*<{class_name}::ms_state_table_);

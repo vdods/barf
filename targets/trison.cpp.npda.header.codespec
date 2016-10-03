@@ -23,6 +23,16 @@ private:
 <|end_if
     }; // end of struct <{class_name}::Rule_
 
+    struct State_
+    {
+        std::size_t m_transition_count; // TODO: smallest int
+        Transition_ const *m_transition_table;
+        std::uint32_t m_associated_rule_index;
+<|if(is_defined(generate_debug_spew_code))
+        char const *m_description;
+<|end_if
+    }; // end of struct <{class_name}::State_
+
     struct Transition_
     {
         enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };

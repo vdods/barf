@@ -254,6 +254,7 @@ private:
     // ///////////////////////////////////////////////////////////////////////
 
     struct Rule_;
+    struct State_;
     struct Transition_;
 
     struct StackElement_
@@ -274,15 +275,6 @@ private:
 
         bool operator == (StackElement_ const &other) const { return m_state_index == other.m_state_index; }
     }; // end of struct <{class_name}::StackElement_
-
-    struct State_
-    {
-        std::size_t const m_transition_count; // TODO: smallest int
-        Transition_ const *m_transition_table;
-<|if(is_defined(generate_debug_spew_code))
-        char const *m_description;
-<|end_if
-    }; // end of struct <{class_name}::State_
 
     typedef std::deque<StackElement_> Stack_;
     typedef std::deque<Token> LookaheadQueue_;
