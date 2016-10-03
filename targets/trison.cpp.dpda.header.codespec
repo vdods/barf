@@ -1,5 +1,14 @@
 private:
 
+    struct Rule_
+    {
+        Token::Id m_reduction_nonterminal_token_id;
+        std::uint32_t m_token_count;
+<|if(is_defined(generate_debug_spew_code))
+        char const *m_description;
+<|end_if
+    }; // end of struct <{class_name}::Rule_
+
     struct Transition_
     {
         enum Type { ERROR_PANIC = 0, RETURN, REDUCE, SHIFT };

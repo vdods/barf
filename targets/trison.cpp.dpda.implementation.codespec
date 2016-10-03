@@ -446,6 +446,14 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
 }
 
 <|end_if
+<{class_name}::Rule_ const <{class_name}::ms_rule_table_[] =
+{
+<|loop(i, _rule_count)
+    { <{class_name}::Nonterminal::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
+<|end_loop
+};
+std::size_t const <{class_name}::ms_rule_count_ = sizeof(<{class_name}::ms_rule_table_) / sizeof(*<{class_name}::ms_rule_table_);
+
 <{class_name}::State_ const <{class_name}::ms_state_table_[] =
 {
 <|loop(i, _dpda_state_count)

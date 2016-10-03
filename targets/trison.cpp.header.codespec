@@ -253,15 +253,7 @@ private:
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    struct Rule_
-    {
-        Token::Id m_reduction_nonterminal_token_id;
-        std::uint32_t m_token_count;
-<|if(is_defined(generate_debug_spew_code))
-        char const *m_description;
-<|end_if
-    }; // end of struct <{class_name}::Rule_
-
+    struct Rule_;
     struct Transition_;
 
     struct StackElement_
@@ -302,8 +294,6 @@ private:
     bool m_debug_spew_;
 
 <|end_if
-    static Rule_ const ms_rule_table_[];
-    static std::size_t const ms_rule_count_;
 <|if(is_defined(generate_debug_spew_code))
     static char const *const ms_token_name_table_[];
     static std::size_t const ms_token_name_count_;
@@ -327,6 +317,8 @@ private:
 <|  include("trison.cpp.dpda.header.codespec")
 <|end_if
 
+    static Rule_ const ms_rule_table_[];
+    static std::size_t const ms_rule_count_;
     static State_ const ms_state_table_[];
     static std::size_t const ms_state_count_;
     static Transition_ const ms_transition_table_[];

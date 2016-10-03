@@ -4,6 +4,25 @@ private:
     void ContinueNPDAParse_ ();
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
 
+    struct Precedence_
+    {
+        std::int32_t m_level; // default precedence is 0, higher values have higher precedence.
+        std::uint32_t m_associativity_index; // 0 for %left, 1 for %nonassoc, and 2 for %right.
+<|if(is_defined(generate_debug_spew_code))
+        char const *m_name;
+<|end_if
+    };
+
+    struct Rule_
+    {
+        Token::Id m_reduction_nonterminal_token_id;
+        std::uint32_t m_token_count;
+        std::uint32_t m_precedence_index;
+<|if(is_defined(generate_debug_spew_code))
+        char const *m_description;
+<|end_if
+    }; // end of struct <{class_name}::Rule_
+
     struct Transition_
     {
         enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
@@ -181,3 +200,6 @@ private:
     static TransitionVector_ const &NonEpsilonTransitionsOfState_ (std::uint32_t state_index);
 
     friend struct ParseStackTreeNode_;
+
+    static Precedence_ const ms_precedence_table_[];
+    static std::size_t const ms_precedence_count_;
