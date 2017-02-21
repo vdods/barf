@@ -1,7 +1,7 @@
 private:
 
     void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, <{token_data_type} *&return_token);
-    void ContinueNPDAParse_ ();
+    void ContinueNPDAParse_ (bool &should_return);
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
 
     struct Precedence_

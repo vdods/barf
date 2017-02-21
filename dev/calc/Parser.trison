@@ -169,10 +169,12 @@ int main (int argc, char **argv)
 
 // Lowest precedence is first, highest is last.
 
+%prec.left  LOW
 %prec.left  ADDITIVE
 %prec.left  MULTIPLICATIVE
 %prec.right UNARY
 %prec.right EXPONENTIATION
+%prec.left  HIGH
 
 /* ***************************************************************************
 /* cpp parser grammar specification
@@ -205,6 +207,10 @@ int main (int argc, char **argv)
     NUM:num                                                     %target.cpp { return num; }
 |
     expression:lhs '+' expression:rhs   %prec ADDITIVE          %target.cpp { return lhs + rhs; }
+|
+    expression:lhs '+' '+' '+' expression:rhs   %prec LOW          %target.cpp { return lhs + rhs; }
+|
+    expression:lhs '+' '+' expression:rhs   %prec HIGH          %target.cpp { return lhs + rhs; }
 |
     expression:lhs '*' expression:rhs   %prec MULTIPLICATIVE    %target.cpp { return lhs * rhs; }
 |
