@@ -223,7 +223,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 if (transition_sorted_type_index != current_sorted_type_index)
                     continue;
 
-                std::cerr << "            Processing transition " << ParseStackTreeNode_::AsString(ParseStackTreeNode_::Type(transition.m_type)) << " with transition token " << transition.m_token_index << " and data " << transition.m_data_index << " and sorted type index " << Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type)) << '\n';
+                std::cerr << "            Processing transition " << ParseStackTreeNode_::AsString(ParseStackTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data " << transition.m_data_index << " and sorted type index " << Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type)) << '\n';
 
                 ParseStackTreeNode_ *resulting_branch = NULL;
                 // If it's a default transition, there's no need to access the lookahead.
@@ -240,8 +240,8 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 // Otherwise, the lookahead must be accessed.
                 else
                 {
-                    Token const &lookahead = branch.Lookahead(*this);
-                    std::cerr << "                Lookahead is " << lookahead.m_id << '\n';
+                    Token const &lookahead = hps.Lookahead(*this);
+                    std::cerr << "                Lookahead is " << lookahead << '\n';
                     if (transition.m_token_index == lookahead.m_id)
                     {
                         std::cerr << "                Exercising transition.\n";
@@ -324,12 +324,12 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
         if (i+1 < m_npda_.m_global_stack_.size())
             out << ' ';
     }
-    out << "), stack tokens then lookahead queue is ";
+    out << "), stack tokens then lookahead queue is:\n    ";
     for (std::size_t i = 1; i < m_npda_.m_global_stack_.size(); ++i)
-        out << ms_token_name_table_[m_npda_.m_global_stack_[i].m_token.m_id] << ' ';
+        out << m_npda_.m_global_stack_[i].m_token << ' ';
     out << ". ";
     for (std::size_t i = 0; i < m_npda_.m_global_lookahead_queue_.size(); ++i)
-        out << ms_token_name_table_[m_npda_.m_global_lookahead_queue_[i].m_id] << ' ';
+        out << m_npda_.m_global_lookahead_queue_[i] << ' ';
     out << '\n';
 
     m_npda_.m_root_->Print(out, *this);
