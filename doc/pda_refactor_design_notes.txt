@@ -54,6 +54,40 @@ TODO
     and END_ is the lookahead token.
     In this case, for simplicity, 
 
+IMPORTANT NOTE
+-   The conversion of NPDA to DPDA depends on the definition of a DPDA state.  In particular, a DPDA state could be
+    one of the following:
+    *   The set of the tops of the current branches' NPDA state stacks.  NOTE that this doesn't depend on any
+        "hidden" NPDA states, only the tops of the state stacks.
+    *   The set of the top portions of the current branches' NPDA state stacks, where the depth to take is specified.
+        NOTE that this DOES depend on "hidden" NPDA states, and is therefore a strictly more powerful definition.
+    Likely the depth-specified top portions of NPDA state stacks would allow a strictly larger class of grammars
+    be parsed by a DPDA.  For example, if a SHIFT/REDUCE conflict depends on later REDUCE/POP_STACK actions to
+    be resolved, as opposed to only depending on SHIFT actions.
+-   If it's decided to have DPDA states be defined in the more powerful way, then the number of REDUCE/POP_STACK
+    actions must be counted to determine what depth from the top of the current branch state stacks must be recorded.
+    Note that the depth can be different for different DPDA state definitions (e.g. if it's not necessary to
+    REDUCE multiple times to resolve a conflict).
+-   EVEN BETTER: A more refined observation is that there can be REDUCE/POP_STACK actions needed to resolve a conflict
+    as long as they don't depend on anything but the lookaheads and the top NPDA state(s).  For example,
+
+        ROOT (corresponding to DPDA state {a, b})
+            BRANCH with state stack (x, a)
+            BRANCH with state stack (b)
+
+
+        ROOT (corresponding to DPDA state {x, y})
+            REDUCE (x)
+                BRANCH with state stack (x) (blocked because further actions depend on states "deeper" than a)
+            SHIFT (b p)
+                REDUCE (b) (say consuming one token)
+                    SHIFT (b q)
+-   Other observation: In realistic settings, probably SHIFT/REDUCE conflicts only need to be handled at the
+    root of the parse tree.  A case in which SHIFT/REDUCE conflicts would need to be handled recursively is
+    if e.g. the "binary operator" in conflicting rules itself required a SHIFT/REDUCE conflict resolution.
+-   Note that some of these previous considerations mostly concern NPDA -> DPDA conversion.  A grammar may have
+    unbounded lookahead, in which case only NPDA can parse it, and probably I should implement "full"
+    SHIFT/REDUCE conflict resolution, not just one-level resolution.
 
 
 example grammar

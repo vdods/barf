@@ -169,6 +169,7 @@ int main (int argc, char **argv)
 
 // Lowest precedence is first, highest is last.
 
+%prec.left  LOWER
 %prec.left  LOW
 %prec.left  ADDITIVE
 %prec.left  MULTIPLICATIVE
@@ -207,6 +208,8 @@ int main (int argc, char **argv)
     NUM:num                                                     %target.cpp { return num; }
 |
     expression:lhs '+' expression:rhs   %prec ADDITIVE          %target.cpp { return lhs + rhs; }
+|
+    expression:lhs '+' '+' '+' '+' expression:rhs   %prec LOWER          %target.cpp { return lhs + rhs; }
 |
     expression:lhs '+' '+' '+' expression:rhs   %prec LOW          %target.cpp { return lhs + rhs; }
 |

@@ -90,8 +90,10 @@ private:
     struct ParseStackTreeNode_
     {
         // The values of RETURN through POP_STACK coincide with the same in Transition_::Type.
+        // Note: HPS stands for "Hypothetical Parser State", which represents one of possibly many
+        // ways the non-deterministic parser can parse the input.
         // TODO: probably order this so that the Spec::Order gives an obvious way to do error handling action last
-        enum Type { ROOT = 0, RETURN, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, BRANCH, COUNT_ };
+        enum Type { ROOT = 0, RETURN, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, HPS, COUNT_ };
         static std::uint32_t const UNUSED_DATA = std::uint32_t(-1);
 
         struct Spec
@@ -124,8 +126,8 @@ private:
                             return lhs.m_single_data < rhs.m_single_data;
 
                         case REDUCE:
-                            assert(lhs.m_single_data != UNUSED_DATA);
-                            assert(rhs.m_single_data != UNUSED_DATA);
+                            // assert(lhs.m_single_data != UNUSED_DATA);
+                            // assert(rhs.m_single_data != UNUSED_DATA);
                             return false;
 
                         default:
@@ -149,6 +151,7 @@ private:
 
         typedef std::set<ParseStackTreeNode_ *,ParseStackTreeNodeOrder> ParseStackTreeNodeSet;
         typedef std::map<Spec,ParseStackTreeNodeSet,Spec::Order> ChildMap;
+        typedef std::pair<std::int32_t,std::int32_t> PrecedenceLevelRange;
 
         Spec m_spec;
         Stack_ m_stack;
@@ -174,9 +177,12 @@ private:
         ParseStackTreeNodeSet const &ChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.at(spec); }
         ParseStackTreeNodeSet &ChildrenHavingSpec (Spec const &spec) { return m_child_nodes.at(spec); }
         Token const &Lookahead (<{class_name} &parser) const;
-        // Any branch whose parent action pops the stack at all is blocked (because its future depends on the
+        // Any HPS whose parent action pops the stack at all is blocked (because its future depends on the
         // values of the stack below the top).  Also, RETURN is considered to block, since nothing can happen after.
-        bool IsBlockedBranch () const;
+        bool IsBlockedHPS () const;
+        PrecedenceLevelRange ComputePrecedenceLevelRange () const;
+        // Returns true if and only if there is exactly one SHIFT child and one REDUCE child.
+        bool HasShiftReduceConflict (ParseStackTreeNode_ *&shift, ParseStackTreeNode_ *&reduce);
 
         void AddChild (ParseStackTreeNode_ *child);
         void RemoveChild (ParseStackTreeNode_ *child);
@@ -189,28 +195,31 @@ private:
         void Print (std::ostream &out, <{class_name} const &parser, std::uint32_t indent_level = 0) const;
     };
 
-    typedef std::deque<ParseStackTreeNode_ *> BranchQueue_;
+    typedef std::deque<ParseStackTreeNode_ *> HPSQueue_;
 
     Token const &Lookahead_ (LookaheadQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
 
-    ParseStackTreeNode_ *TakeHypotheticalActionOnBranch_ (ParseStackTreeNode_ const &branch, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
+    ParseStackTreeNode_ *TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
 
     struct Npda_
     {
         ParseStackTreeNode_ *m_root_;
-        // TODO/NOTE: The branches should really have "npda stack" and "npda lookahead queue",
+        // TODO/NOTE: The hps-es should really have "npda stack" and "npda lookahead queue",
         // which don't have any token data, whereas Npda_ should have "real stack" and "real lookahead queue",
         // which do have (and own) the token data.
         Stack_ m_global_stack_;
         LookaheadQueue_ m_global_lookahead_queue_;
-        BranchQueue_ m_branch_queue_;
-        BranchQueue_ m_new_branch_queue_; // This is stored so new memory isn't allocated for each parse iteration.
+        HPSQueue_ m_hps_queue_;
+        HPSQueue_ m_new_hps_queue_; // This is stored so new memory isn't allocated for each parse iteration.
 
         Npda_ () : m_root_(NULL) { }
         ~Npda_ ();
 
         void PopFrontGlobalLookahead ();
         void PushFrontGlobalLookahead (Token const &lookahead);
+        // Deletes the branch that the given node is a part of.  A branch of a node N is defined as the set of
+        // nodes that are descendants of N, and all ancestors of N having exactly one child.
+        void DeleteBranch (ParseStackTreeNode_ *branch_node);
     };
 
     Npda_ m_npda_;
