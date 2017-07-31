@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language SYSTEM "language.dtd">
 <!-- This is a syntax highlighting file for the katepart component of KDE; the editor widget used by kwrite, kate, and kdevelop. -->
-<language name="BARF (reflex, trison, targetspec)" version="1.0" section="Sources" extensions="*.reflex;*.trison;*.targetspec" author="Victor Dods" license="GPL">
+<language
+    name="BARF (reflex, trison, targetspec)"
+    version="1.0"
+    section="Sources"
+    extensions="*.reflex;*.trison;*.targetspec"
+    author="Victor Dods"
+    license="GPL"
+    kateversion="5.0"
+>
 
     <highlighting>
         <list name="keywords">
