@@ -61,6 +61,10 @@ private:
                     case INSERT_LOOKAHEAD_ERROR:
                     case EPSILON:
                         return 3;
+
+                    default:
+                        assert(false && "this should never happen");
+                        return 3; // Arbitrary
                 }
             }
 
@@ -86,6 +90,9 @@ private:
     typedef std::vector<Transition_> TransitionVector_;
 
     struct Npda_;
+    struct ParseStackTreeNode_;
+
+    typedef std::deque<ParseStackTreeNode_ *> HPSQueue_;
 
     struct ParseStackTreeNode_
     {
@@ -176,17 +183,27 @@ private:
         bool HasChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.find(spec) != m_child_nodes.end(); }
         ParseStackTreeNodeSet const &ChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.at(spec); }
         ParseStackTreeNodeSet &ChildrenHavingSpec (Spec const &spec) { return m_child_nodes.at(spec); }
+        bool HasExactlyOneChild () const;
+        // This returns the most root-ward ancestor such that the entire ancestor line only has one child each.
+        // This may return the root of the tree itself, or it may return this node (if this node's parent has
+        // multiple children).
+        ParseStackTreeNode_ *BranchRoot ();
         Token const &Lookahead (<{class_name} &parser) const;
         // Any HPS whose parent action pops the stack at all is blocked (because its future depends on the
         // values of the stack below the top).  Also, RETURN is considered to block, since nothing can happen after.
         bool IsBlockedHPS () const;
-        PrecedenceLevelRange ComputePrecedenceLevelRange () const;
+        PrecedenceLevelRange ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const;
         // Returns true if and only if there is exactly one SHIFT child and one REDUCE child.
         bool HasShiftReduceConflict (ParseStackTreeNode_ *&shift, ParseStackTreeNode_ *&reduce);
 
         void AddChild (ParseStackTreeNode_ *child);
         void RemoveChild (ParseStackTreeNode_ *child);
         void RemoveFromParent ();
+        // Traverses this node's descendants, and for each HPS node descendant, if that HPS node is present
+        // in the given HPSQueue_, that HPSQueue_ entry is replaced with NULL.  This is so that a costly
+        // deletion is not done, and is handled in a single "clean-up" phase by copying non-null entries
+        // into m_new_hps_queue_.
+        void NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_ &hps_queue) const;
 
         ParseStackTreeNode_ *CloneLeafNode () const;
         // orphan_target must not have a parent (because its m_spec may change and affect its relationship with its parent).
@@ -194,8 +211,6 @@ private:
 
         void Print (std::ostream &out, <{class_name} const &parser, std::uint32_t indent_level = 0) const;
     };
-
-    typedef std::deque<ParseStackTreeNode_ *> HPSQueue_;
 
     Token const &Lookahead_ (LookaheadQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
 
@@ -217,9 +232,9 @@ private:
 
         void PopFrontGlobalLookahead ();
         void PushFrontGlobalLookahead (Token const &lookahead);
-        // Deletes the branch that the given node is a part of.  A branch of a node N is defined as the set of
+        // Removes the branch that the given node is a part of.  A branch of a node N is defined as the set of
         // nodes that are descendants of N, and all ancestors of N having exactly one child.
-        void DeleteBranch (ParseStackTreeNode_ *branch_node);
+        void RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
     };
 
     Npda_ m_npda_;

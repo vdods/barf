@@ -179,19 +179,24 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
     {
-        ParseStackTreeNode_ *shift = NULL;
+        ParseStackTreeNode_ *shift  = NULL;
         ParseStackTreeNode_ *reduce = NULL;
         if (m_npda_.m_root_->HasShiftReduceConflict(shift, reduce))
         {
             assert(shift != NULL);
             assert(reduce != NULL);
-            ParseStackTreeNode_::PrecedenceLevelRange shift_precedence_rule_range = shift->ComputePrecedenceLevelRange();
-            ParseStackTreeNode_::PrecedenceLevelRange reduce_precedence_rule_range = reduce->ComputePrecedenceLevelRange();
-            assert(reduce_precedence_rule_range.first == reduce_precedence_rule_range.second);
+            ParseStackTreeNode_::PrecedenceLevelRange shift_precedence_level_range = shift->ComputePrecedenceLevelRange(1);
+            ParseStackTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
+            assert(reduce_precedence_level_range.first == reduce_precedence_level_range.second);
+
+            std::cerr << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n";
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
             // indicates equality).  there is always exactly one reduce hps, and at least
             // one shift hps.
+            //
+            // note that if a shift and a reduce have the same precedence level, then they also
+            // have the same associativity.
             //
             // 1.     shift        2.     shift        3.
             //        shift               shift
@@ -206,49 +211,137 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             // cases 1 and 5 can be trivially resolved -- by pruning the reduce
             // and by pruning the shift respectively.
             //
+            // case 2 can only be resolved if the associativity of the reduction rule
+            // is RIGHT, in which case the reduce is pruned.  otherwise no resolution
+            // can be reached at this point.
+            //
             // case 3 may be trivially resolved via rule associativity (LEFT causes the
             // shift to be pruned, RIGHT causes the reduce to be pruned, and NONASSOC
             // should cause an error).
             //
             // case 4 can only be resolved if the associativity of the reduction rule
-            // is LEFT, otherwise no resolution can be reached at this point.
-            //
-            // case 2 can only be resolved if the associativity of the reduction rule
-            // is RIGHT, otherwise no resolution can be reached at this point.
+            // is LEFT, in which case the shift is pruned.  otherwise no resolution
+            // can be reached at this point.
             //
             // case 6 can not be resolved at this point.
 
+            bool conflict_resolved = false;
+
             // Case 1
-            if (reduce_precedence_rule_range.second < shift_precedence_rule_range.first)
+            if (reduce_precedence_level_range.second < shift_precedence_level_range.first)
             {
-                std::cerr << "Case 1\n";
+                std::cerr << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n";
+                m_npda_.RemoveBranchIfNotTrunk(reduce);
+                delete reduce;
+                reduce = NULL;
+                conflict_resolved = true;
             }
             // Case 2
-            else if (reduce_precedence_rule_range.second == shift_precedence_rule_range.first)
+            else if (reduce_precedence_level_range.first == shift_precedence_level_range.first &&
+                     shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
-                std::cerr << "Case 2\n";
+                std::cerr << "        Case 2; REDUCE <= SHIFT; ";
+                Rule_ const &reduction_rule = ms_rule_table_[reduce->m_spec.m_single_data];
+                Precedence_ const &reduction_rule_precedence = ms_precedence_table_[reduction_rule.m_precedence_index];
+                if (reduction_rule_precedence.m_associativity_index == 2) // 2 is right-associative
+                {
+                    std::cerr << "pruning right-associative REDUCE and continuing.\n";
+                    m_npda_.RemoveBranchIfNotTrunk(reduce);
+                    delete reduce;
+                    reduce = NULL;
+                    conflict_resolved = true;
+                }
+                else
+                    std::cerr << "can't resolve conflict at this time.\n";
             }
             // Case 3
-            else if (reduce_precedence_rule_range.first == shift_precedence_rule_range.first &&
-                     reduce_precedence_rule_range.second == shift_precedence_rule_range.second)
+            else if (reduce_precedence_level_range.second == shift_precedence_level_range.first &&
+                     shift_precedence_level_range.first == shift_precedence_level_range.second)
             {
-                std::cerr << "Case 3\n";
+                std::cerr << "        Case 3; REDUCE == SHIFT; ";
+                Rule_ const &reduction_rule = ms_rule_table_[reduce->m_spec.m_single_data];
+                Precedence_ const &reduction_rule_precedence = ms_precedence_table_[reduction_rule.m_precedence_index];
+                std::cerr << "rule " << reduce->m_spec.m_single_data << " associativity index: " << reduction_rule_precedence.m_associativity_index << '\n';
+                switch (reduction_rule_precedence.m_associativity_index)
+                {
+                    case 0: // 0 is left-associative
+                        std::cerr << "pruning left-associative SHIFT and continuing.\n";
+                        m_npda_.RemoveBranchIfNotTrunk(shift);
+                        delete shift;
+                        shift = NULL;
+                        conflict_resolved = true;
+                        break;
+
+                    case 1: // 1 is non-associative
+                        std::cerr << "composition of non-associative rules is an error (nonassoc error handling not yet implemented).\n";
+                        assert(false && "TODO: implement nonassoc error handling");
+                        break;
+
+                    case 2: // 2 is right-associative
+                        std::cerr << "pruning right-associative REDUCE and continuing.\n";
+                        m_npda_.RemoveBranchIfNotTrunk(reduce);
+                        delete reduce;
+                        reduce = NULL;
+                        conflict_resolved = true;
+                        break;
+
+                    default:
+                        assert(false && "this should never happen");
+                        break;
+                }
             }
             // Case 4
-            else if (reduce_precedence_rule_range.first == shift_precedence_rule_range.second)
+            else if (reduce_precedence_level_range.second == shift_precedence_level_range.second &&
+                     shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
-                std::cerr << "Case 4\n";
+                std::cerr << "        Case 4; REDUCE >= SHIFT; ";
+                Rule_ const &reduction_rule = ms_rule_table_[reduce->m_spec.m_single_data];
+                Precedence_ const &reduction_rule_precedence = ms_precedence_table_[reduction_rule.m_precedence_index];
+                if (reduction_rule_precedence.m_associativity_index == 0) // 0 is left-associative
+                {
+                    std::cerr << "pruning left-associative SHIFT and continuing.\n";
+                    m_npda_.RemoveBranchIfNotTrunk(shift);
+                    delete shift;
+                    shift = NULL;
+                    conflict_resolved = true;
+                }
+                else
+                    std::cerr << "can't resolve conflict at this time.\n";
             }
             // Case 5
-            else if (reduce_precedence_rule_range.first > shift_precedence_rule_range.second)
+            else if (reduce_precedence_level_range.first > shift_precedence_level_range.second)
             {
-                std::cerr << "Case 5\n";
+                std::cerr << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n";
+                m_npda_.RemoveBranchIfNotTrunk(shift);
+                delete shift;
+                shift = NULL;
+                conflict_resolved = true;
             }
             // Case 6
             else {
-                std::cerr << "Case 6\n";
-                assert(reduce_precedence_rule_range.first > shift_precedence_rule_range.first);
-                assert(reduce_precedence_rule_range.second < shift_precedence_rule_range.second);
+                std::cerr << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n";
+                assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
+                assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
+            }
+
+            if (conflict_resolved)
+            {
+                should_return = false;
+
+                assert(m_npda_.m_new_hps_queue_.empty());
+                // std::cerr << "m_npda_.m_new_hps_queue_.size() = " << m_npda_.m_new_hps_queue_.size() << '\n';
+                // Take new hps-es and clear old ones.
+                for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
+                {
+                    ParseStackTreeNode_ *hps = *hps_it;
+                    if (hps != NULL)
+                        m_npda_.m_new_hps_queue_.push_back(hps);
+                }
+                m_npda_.m_hps_queue_.clear();
+                std::swap(m_npda_.m_hps_queue_, m_npda_.m_new_hps_queue_);
+                assert(m_npda_.m_new_hps_queue_.empty());
+                // TODO: Break this large function up into smaller logical units
+                return;
             }
         }
     }
@@ -267,7 +360,10 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
         // Process non-blocked hps-es.
         for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
         {
-            assert(*hps_it != NULL);
+            // Skip nullified HPS nodes.
+            if (*hps_it == NULL)
+                continue;
+
             ParseStackTreeNode_ &hps = **hps_it;
 
             assert(hps.m_spec.m_type == ParseStackTreeNode_::HPS);
@@ -291,7 +387,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
             // Exercise all valid transitions whose SortedTypeIndex is current_sorted_type_index
             for (TransitionVector_::const_iterator transition_it = non_epsilon_transitions.begin(), transition_it_end = non_epsilon_transitions.end(); transition_it != transition_it_end; ++transition_it)
-            {                    
+            {
                 Transition_ const &transition = *transition_it;
                 assert(transition.m_type >= Transition_::RETURN);
                 assert(transition.m_type <= Transition_::POP_STACK);
@@ -540,6 +636,22 @@ bool <{class_name}::ParseStackTreeNode_::HasTrunkChild () const
     return trunk_child;
 }
 
+bool <{class_name}::ParseStackTreeNode_::HasExactlyOneChild () const
+{
+    return m_child_nodes.size() == 1 && m_child_nodes.begin()->second.size() == 1;
+}
+
+<{class_name}::ParseStackTreeNode_ *<{class_name}::ParseStackTreeNode_::BranchRoot ()
+{
+    ParseStackTreeNode_ *node = this;
+    while (node->m_parent_node != NULL && node->m_parent_node->HasExactlyOneChild())
+    {
+        node = node->m_parent_node;
+        assert(node->m_spec.m_type != HPS);
+    }
+    return node;
+}
+
 <{class_name}::Token const &<{class_name}::ParseStackTreeNode_::Lookahead (<{class_name} &parser) const
 {
     if (m_local_lookahead_queue.empty())
@@ -563,15 +675,20 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
     }
 }
 
-<{class_name}::ParseStackTreeNode_::PrecedenceLevelRange <{class_name}::ParseStackTreeNode_::ComputePrecedenceLevelRange () const
+<{class_name}::ParseStackTreeNode_::PrecedenceLevelRange <{class_name}::ParseStackTreeNode_::ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const
 {
     if (m_spec.m_type == HPS)
     {
+        // Need to look back at the rule of the (current_child_depth-1)th ancestor of this node in order
+        // to get the correct rule precedence, because that's where the conflict occurred.
         assert(!m_stack.empty());
-        assert(m_stack.back().m_state_index < ms_state_count_);
-        State_ const &hps_state = ms_state_table_[m_stack.back().m_state_index];
-        assert(hps_state.m_associated_rule_index < ms_rule_count_);
-        Rule_ const &associated_rule = ms_rule_table_[hps_state.m_associated_rule_index];
+        assert(m_stack.size() >= current_child_depth);
+//         std::uint32_t state_index = m_stack.back().m_state_index;
+        std::uint32_t state_index = m_stack[m_stack.size()-(current_child_depth-1)].m_state_index;
+        assert(state_index < ms_state_count_);
+        State_ const &state = ms_state_table_[state_index];
+        assert(state.m_associated_rule_index < ms_rule_count_);
+        Rule_ const &associated_rule = ms_rule_table_[state.m_associated_rule_index];
         assert(associated_rule.m_precedence_index < ms_precedence_count_);
         Precedence_ const &rule_precedence = ms_precedence_table_[associated_rule.m_precedence_index];
         return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
@@ -595,7 +712,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
             {
                 assert(*child_it != NULL);
                 ParseStackTreeNode_ const &child = **child_it;
-                PrecedenceLevelRange child_precedence_level_range(child.ComputePrecedenceLevelRange());
+                PrecedenceLevelRange child_precedence_level_range(child.ComputePrecedenceLevelRange(current_child_depth+1));
                 retval.first = std::min(retval.first, child_precedence_level_range.first);
                 retval.second = std::max(retval.second, child_precedence_level_range.second);
             }
@@ -652,6 +769,27 @@ void <{class_name}::ParseStackTreeNode_::RemoveFromParent ()
 {
     assert(m_parent_node != NULL);
     m_parent_node->RemoveChild(this);
+}
+
+void <{class_name}::ParseStackTreeNode_::NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_ &hps_queue) const
+{
+    if (m_spec.m_type == HPS)
+    {
+        // NOTE: This is a linear search, which is not as efficient as a different way of handling this.
+        HPSQueue_::iterator it = std::find(hps_queue.begin(), hps_queue.end(), this);
+        if (it != hps_queue.end())
+            *it = NULL;
+    }
+    for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
+    {
+        ParseStackTreeNodeSet const &child_node_set = child_map_it->second;
+        for (ParseStackTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        {
+            assert(*child_it != NULL);
+            ParseStackTreeNode_ const &child = **child_it;
+            child.NullifyHPSNodeDescendantsInHPSQueue(hps_queue);
+        }
+    }
 }
 
 <{class_name}::ParseStackTreeNode_ *<{class_name}::ParseStackTreeNode_::CloneLeafNode () const
@@ -944,6 +1082,19 @@ void <{class_name}::Npda_::PushFrontGlobalLookahead (<{class_name}::Token const 
     m_global_lookahead_queue_.push_front(lookahead);
 }
 
+void <{class_name}::Npda_::RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node)
+{
+    // Find the most root-ward ancestor that is an only child.
+    ParseStackTreeNode_ *branch_root = branch_node->BranchRoot();
+    assert(branch_root != NULL);
+    // Only do stuff if the branch isn't the trunk (i.e. only if its root isn't the tree root).
+    if (branch_root->m_parent_node != NULL)
+    {
+        branch_root->RemoveFromParent();
+        branch_node->NullifyHPSNodeDescendantsInHPSQueue(m_hps_queue_);
+    }
+}
+
 bool <{class_name}::CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index)
 {
     if (ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level != ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level)
@@ -1047,7 +1198,7 @@ std::size_t const <{class_name}::ms_state_count_ = sizeof(<{class_name}::ms_stat
 <{class_name}::Transition_ const <{class_name}::ms_transition_table_[] =
 {
 <|loop(i, _npda_transition_count)
-    { <{class_name}::Transition_::<{_npda_transition_type_name[i]}, <{_npda_transition_token_index[i]}, <{_npda_transition_data_index[i]} }<{if(i < _npda_transition_count-1)},<{end_if}
+    { <{class_name}::Transition_::<{_npda_transition_type_name[i]}, <{_npda_transition_token_index[i]}, std::uint32_t(<{_npda_transition_data_index[i]}) }<{if(i < _npda_transition_count-1)},<{end_if}
 <|end_loop
 };
 std::size_t const <{class_name}::ms_transition_count_ = sizeof(<{class_name}::ms_transition_table_) / sizeof(*<{class_name}::ms_transition_table_);

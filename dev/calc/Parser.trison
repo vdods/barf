@@ -115,7 +115,7 @@ int main (int argc, char **argv)
     {
         double parsed_value;
         Parser::ParserReturnCode return_code = parse(argv[1], parsed_value);
-        std::cout << "parsed string was \"" << argv[1] << "\"\n";
+        std::cout << "string to parse was \"" << argv[1] << "\"\n";
         std::cout << "return code was ";
         switch (return_code)
         {
@@ -125,6 +125,10 @@ int main (int argc, char **argv)
         }
         std::cout << '\n';
         std::cout << "parsed value was " << parsed_value << '\n';
+    }
+    else
+    {
+        std::cout << "Usage: " << argv[0] << " <expr>\n";
     }
     return 0;
 }
@@ -169,13 +173,13 @@ int main (int argc, char **argv)
 
 // Lowest precedence is first, highest is last.
 
-%prec.left  LOWER
+%prec.left  LOWEST
 %prec.left  LOW
 %prec.left  ADDITIVE
 %prec.left  MULTIPLICATIVE
 %prec.right UNARY
 %prec.right EXPONENTIATION
-%prec.left  HIGH
+%prec.left  HIGHEST
 
 /* ***************************************************************************
 /* cpp parser grammar specification
@@ -187,39 +191,39 @@ int main (int argc, char **argv)
 
 %nonterminal statement_then_end
 :
-    statement:st %end                                           %target.cpp { return st; }
+    statement:st %end                                                       %target.cpp { return st; }
 ;
 
 %nonterminal statement
 :
-    expression:ex ';'                                           %target.cpp { return ex; }
+    expression:ex ';'                                                       %target.cpp { return ex; }
 |
-    %error                                                      %target.cpp { return 0.0; }
+    %error                                                                  %target.cpp { return 0.0; }
 ;
 
 %nonterminal expression
 :
-    '(' expression:e ')'                                        %target.cpp { return e; }
+    '(' expression:e ')'                                                    %target.cpp { return e; }
 |
-    '(' %error ')'                                              %target.cpp { return 0.0; }
+    '(' %error ')'                                                          %target.cpp { return 0.0; }
 |
-    '(' %error                                                  %target.cpp { return 0.0; }
+    '(' %error                                                              %target.cpp { return 0.0; }
 |
-    NUM:num                                                     %target.cpp { return num; }
+    NUM:num                                                                 %target.cpp { return num; }
 |
-    expression:lhs '+' expression:rhs   %prec ADDITIVE          %target.cpp { return lhs + rhs; }
+    expression:lhs '+' expression:rhs               %prec ADDITIVE          %target.cpp { return lhs + rhs; }
 |
-    expression:lhs '+' '+' '+' '+' expression:rhs   %prec LOWER          %target.cpp { return lhs + rhs; }
+    expression:lhs '+' '+' '+' '+' expression:rhs   %prec LOWEST            %target.cpp { return lhs / rhs; }
 |
-    expression:lhs '+' '+' '+' expression:rhs   %prec LOW          %target.cpp { return lhs + rhs; }
+    expression:lhs '+' '+' '+' expression:rhs       %prec LOW               %target.cpp { return std::pow(lhs, rhs); }
 |
-    expression:lhs '+' '+' expression:rhs   %prec HIGH          %target.cpp { return lhs + rhs; }
+    expression:lhs '+' '+' expression:rhs           %prec HIGHEST           %target.cpp { return lhs * rhs; }
 |
-    expression:lhs '*' expression:rhs   %prec MULTIPLICATIVE    %target.cpp { return lhs * rhs; }
+    expression:lhs '*' expression:rhs               %prec MULTIPLICATIVE    %target.cpp { return lhs * rhs; }
 |
-    '-' expression:op                   %prec UNARY             %target.cpp { return -op; }
+    '-' expression:op                               %prec UNARY             %target.cpp { return -op; }
 |
-    expression:lhs '^' expression:rhs   %prec EXPONENTIATION    %target.cpp { return std::pow(lhs, rhs); }
+    expression:lhs '^' expression:rhs               %prec EXPONENTIATION    %target.cpp { return std::pow(lhs, rhs); }
 |
-    %error                                                      %target.cpp { return 0.0; }
+    %error                                                                  %target.cpp { return 0.0; }
 ;
