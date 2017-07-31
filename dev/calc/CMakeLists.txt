@@ -56,4 +56,4 @@ set(calc_SOURCES
     Scanner.reflex
 )
 add_executable(calc ${calc_SOURCES})
-target_link_libraries(calc PUBLIC Strict)
+target_link_libraries(calc PUBLIC C++11 Strict)
