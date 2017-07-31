@@ -14,6 +14,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # This is the correct way to detect Ma
     endif()
 endif()
 
+# Setup proper compiler flags for Debug and Release builds
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g2")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g2")
+endif()
+
 # Helper target(s)
 
 add_library(C++11 INTERFACE)

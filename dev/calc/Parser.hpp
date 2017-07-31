@@ -480,14 +480,17 @@ private:
         // which do have (and own) the token data.
         Stack_ m_global_stack_;
         LookaheadQueue_ m_global_lookahead_queue_;
+        std::size_t m_max_global_lookahead_queue_size_;
         HPSQueue_ m_hps_queue_;
         HPSQueue_ m_new_hps_queue_; // This is stored so new memory isn't allocated for each parse iteration.
 
-        Npda_ () : m_root_(NULL) { }
+        Npda_ () : m_root_(NULL), m_max_global_lookahead_queue_size_(0) { }
         ~Npda_ ();
 
         void PopFrontGlobalLookahead ();
         void PushFrontGlobalLookahead (Token const &lookahead);
+        void PushBackGlobalLookahead (Token const &lookahead);
+        void UpdateMaxGlobalLookaheadQueueSize ();
         // Removes the branch that the given node is a part of.  A branch of a node N is defined as the set of
         // nodes that are descendants of N, and all ancestors of N having exactly one child.
         void RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);

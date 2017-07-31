@@ -490,14 +490,16 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
 {
     assert(m_npda_.m_root_ != NULL);
 
-    out << "global state stack is (";
+    out << "global state stack is:\n    ";
     for (std::size_t i = 0; i < m_npda_.m_global_stack_.size(); ++i)
     {
         out << m_npda_.m_global_stack_[i].m_state_index;
         if (i+1 < m_npda_.m_global_stack_.size())
             out << ' ';
     }
-    out << "), stack tokens then lookahead queue is:\n    ";
+    out << '\n';
+    out << "max lookahead count (so far) is:\n    " << m_npda_.m_max_global_lookahead_queue_size_ << '\n';
+    out << "stack tokens then lookahead queue is:\n    ";
     for (std::size_t i = 1; i < m_npda_.m_global_stack_.size(); ++i)
         out << m_npda_.m_global_stack_[i].m_token << ' ';
     out << ". ";
@@ -860,7 +862,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     while (index >= m_npda_.m_global_lookahead_queue_.size())
     {
         // This does not require updating the hps-es' m_global_lookahead_cursor.
-        m_npda_.m_global_lookahead_queue_.push_back(Scan_());
+        m_npda_.PushBackGlobalLookahead(Scan_());
 <|if(is_defined(generate_debug_spew_code))
 
         TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " pushed " << m_npda_.m_global_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
@@ -1072,6 +1074,7 @@ void <{class_name}::Npda_::PopFrontGlobalLookahead ()
 
 void <{class_name}::Npda_::PushFrontGlobalLookahead (<{class_name}::Token const &lookahead)
 {
+    m_global_lookahead_queue_.push_front(lookahead);
     // Because the contents of m_npda_.m_global_lookahead_queue_ are changing, and each hps's
     // m_global_lookahead_cursor is an index into that queue, each must be updated.
     for (HPSQueue_::iterator hps_it = m_hps_queue_.begin(), hps_it_end = m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
@@ -1079,7 +1082,33 @@ void <{class_name}::Npda_::PushFrontGlobalLookahead (<{class_name}::Token const 
         ParseStackTreeNode_ &hps = **hps_it;
         ++hps.m_global_lookahead_cursor;
     }
-    m_global_lookahead_queue_.push_front(lookahead);
+    UpdateMaxGlobalLookaheadQueueSize();
+}
+
+void <{class_name}::Npda_::PushBackGlobalLookahead (<{class_name}::Token const &lookahead)
+{
+    m_global_lookahead_queue_.push_back(lookahead);
+    UpdateMaxGlobalLookaheadQueueSize();
+}
+
+void <{class_name}::Npda_::UpdateMaxGlobalLookaheadQueueSize ()
+{
+    // m_global_lookahead_cursor is an index into m_global_lookahead_queue_ for each branch, so the number
+    // of lookaheads depends on the cursor for each branch.
+    for (HPSQueue_::iterator hps_it = m_hps_queue_.begin(), hps_it_end = m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        // Skip nullified elements because they have been deleted.
+        if (*hps_it == NULL)
+            continue;
+
+        ParseStackTreeNode_ &hps = **hps_it;
+        // The actual lookaheads are offset by the global lookahead cursor, because the tokens before
+        // the global lookahead cursor are ones we've seen already, and therefore don't contribute to
+        // the actual lookahead count.
+        assert(m_global_lookahead_queue_.size() >= hps.m_global_lookahead_cursor);
+        std::size_t hps_actual_lookahead_count = m_global_lookahead_queue_.size() - hps.m_global_lookahead_cursor;
+        m_max_global_lookahead_queue_size_ = std::max(m_max_global_lookahead_queue_size_, hps_actual_lookahead_count);
+    }
 }
 
 void <{class_name}::Npda_::RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node)

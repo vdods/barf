@@ -241,3 +241,12 @@ template <Uint32 high> struct SmallestUint {
         >::T >::T Type;
 };
 
+- implement nonassoc error handling in NPDA
+- make sure error handling is working correctly in NPDA (via unit tests)
+- unit tests for NPDA
+- add some nice metrics to the NPDA parser:
+  - max lookahead count
+  - max memory used
+- make a text version of NPDA states output (i.e. text version of Parser.npda.dot)
+- maybe add some online DPDA generation in NPDA during runtime
+- port NPDA code to offline DPDA generation
