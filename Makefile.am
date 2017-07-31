@@ -195,7 +195,7 @@ noinst_LTLIBRARIES = \
 	lib/libbarf-core.la \
 	lib/libbarf-targetspec.la \
 	lib/libbarf-preprocessor.la \
-    lib/libbarf-regex.la
+	lib/libbarf-regex.la
 
 # installed into $(bindir)
 bin_PROGRAMS = \
@@ -235,42 +235,42 @@ nobase_pkgdata_DATA = \
 
 # non-source files which are added to the distribution
 EXTRA_DIST = \
-    bootstrap.sh \
+	bootstrap.sh \
 	configure.ac \
 	Doxyfile.in \
 	INSTALL \
-    LICENSE \
-    README \
-    TODO \
-    app/example/calculator/bootstrap.sh \
-    app/example/calculator/calculator.hpp \
-    app/example/calculator/calculator_main.cpp \
-    app/example/calculator/calculator_parser.cpp \
-    app/example/calculator/calculator_parser.hpp \
-    app/example/calculator/calculator_parser.trison \
-    app/example/calculator/calculator_scanner.cpp \
-    app/example/calculator/calculator_scanner.hpp \
-    app/example/calculator/calculator_scanner.reflex \
-    app/example/calculator/configure.ac \
-    app/example/calculator/Makefile.am \
-    doc/doxygen_pages/acknowledgements.dox \
-    doc/doxygen_pages/footer.html \
-    doc/doxygen_pages/generic_regexes.dox \
-    doc/doxygen_pages/language_theory.dox \
-    doc/doxygen_pages/main.dox \
-    doc/doxygen_pages/references.dox \
-    doc/doxygen_pages/reflex.dox \
-    doc/doxygen_pages/reflex_guts.dox \
-    doc/doxygen_pages/regexes_in_barf.dox \
-    doc/doxygen_pages/targetspec_and_codespec.dox \
-    doc/doxygen_pages/trison_guts.dox \
-    extra/barf.xml \
-    targets/reflex.cpp.header.codespec \
-    targets/reflex.cpp.implementation.codespec \
-    targets/reflex.cpp.targetspec \
-    targets/trison.cpp.header.codespec \
-    targets/trison.cpp.implementation.codespec \
-    targets/trison.cpp.targetspec
+	LICENSE \
+	README \
+	TODO \
+	app/example/calculator/bootstrap.sh \
+	app/example/calculator/calculator.hpp \
+	app/example/calculator/calculator_main.cpp \
+	app/example/calculator/calculator_parser.cpp \
+	app/example/calculator/calculator_parser.hpp \
+	app/example/calculator/calculator_parser.trison \
+	app/example/calculator/calculator_scanner.cpp \
+	app/example/calculator/calculator_scanner.hpp \
+	app/example/calculator/calculator_scanner.reflex \
+	app/example/calculator/configure.ac \
+	app/example/calculator/Makefile.am \
+	doc/doxygen_pages/acknowledgements.dox \
+	doc/doxygen_pages/footer.html \
+	doc/doxygen_pages/generic_regexes.dox \
+	doc/doxygen_pages/language_theory.dox \
+	doc/doxygen_pages/main.dox \
+	doc/doxygen_pages/references.dox \
+	doc/doxygen_pages/reflex.dox \
+	doc/doxygen_pages/reflex_guts.dox \
+	doc/doxygen_pages/regexes_in_barf.dox \
+	doc/doxygen_pages/targetspec_and_codespec.dox \
+	doc/doxygen_pages/trison_guts.dox \
+	extra/barf.xml \
+	targets/reflex.cpp.header.codespec \
+	targets/reflex.cpp.implementation.codespec \
+	targets/reflex.cpp.targetspec \
+	targets/trison.cpp.header.codespec \
+	targets/trison.cpp.implementation.codespec \
+	targets/trison.cpp.targetspec
 
 TARGETS_PATH = $(top_srcdir)/targets
 
@@ -300,70 +300,70 @@ LDADD = $(LIBOBJS)
 ##############################################################################
 
 lib_libbarf_commonlang_la_CPPFLAGS = \
-    $(AM_CPPFLAGS) \
-    -I$(top_srcdir)/lib/commonlang \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/targetspec \
-    -I$(top_srcdir)/lib/preprocessor
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/lib/commonlang \
+	-I$(top_srcdir)/lib/core \
+	-I$(top_srcdir)/lib/targetspec \
+	-I$(top_srcdir)/lib/preprocessor
 lib_libbarf_commonlang_la_SOURCES = \
-    lib/commonlang/barf_commonlang_ast.cpp \
-    lib/commonlang/barf_commonlang_scanner.cpp \
-    lib/commonlang/barf_commonlang_scanner.reflex
+	lib/commonlang/barf_commonlang_ast.cpp \
+	lib/commonlang/barf_commonlang_scanner.cpp \
+	lib/commonlang/barf_commonlang_scanner.reflex
 
 lib_libbarf_core_la_CPPFLAGS = \
-    $(AM_CPPFLAGS) \
-    -I$(top_srcdir)/lib/core
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/lib/core
 lib_libbarf_core_la_SOURCES = \
-    lib/core/barf.cpp \
-    lib/core/barf_ast.cpp \
-    lib/core/barf_commandlineparser.cpp \
-    lib/core/barf_compiletimeasserts.cpp \
-    lib/core/barf_enums.cpp \
-    lib/core/barf_filoc.cpp \
-    lib/core/barf_graph.cpp \
-    lib/core/barf_inputbase.cpp \
-    lib/core/barf_message.cpp \
-    lib/core/barf_optionsbase.cpp \
-    lib/core/barf_searchpath.cpp \
-    lib/core/barf_util.cpp
+	lib/core/barf.cpp \
+	lib/core/barf_ast.cpp \
+	lib/core/barf_commandlineparser.cpp \
+	lib/core/barf_compiletimeasserts.cpp \
+	lib/core/barf_enums.cpp \
+	lib/core/barf_filoc.cpp \
+	lib/core/barf_graph.cpp \
+	lib/core/barf_inputbase.cpp \
+	lib/core/barf_message.cpp \
+	lib/core/barf_optionsbase.cpp \
+	lib/core/barf_searchpath.cpp \
+	lib/core/barf_util.cpp
 
 lib_libbarf_preprocessor_la_CPPFLAGS = \
-    $(AM_CPPFLAGS) \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/preprocessor
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/lib/core \
+	-I$(top_srcdir)/lib/preprocessor
 lib_libbarf_preprocessor_la_SOURCES = \
-    lib/preprocessor/barf_preprocessor_ast.cpp \
-    lib/preprocessor/barf_preprocessor_ast_execute.cpp \
-    lib/preprocessor/barf_preprocessor_ast_print.cpp \
-    lib/preprocessor/barf_preprocessor_parser.cpp \
-    lib/preprocessor/barf_preprocessor_parser.trison \
-    lib/preprocessor/barf_preprocessor_scanner.cpp \
-    lib/preprocessor/barf_preprocessor_scanner.reflex \
-    lib/preprocessor/barf_preprocessor_symboltable.cpp \
-    lib/preprocessor/barf_preprocessor_textifier.cpp
+	lib/preprocessor/barf_preprocessor_ast.cpp \
+	lib/preprocessor/barf_preprocessor_ast_execute.cpp \
+	lib/preprocessor/barf_preprocessor_ast_print.cpp \
+	lib/preprocessor/barf_preprocessor_parser.cpp \
+	lib/preprocessor/barf_preprocessor_parser.trison \
+	lib/preprocessor/barf_preprocessor_scanner.cpp \
+	lib/preprocessor/barf_preprocessor_scanner.reflex \
+	lib/preprocessor/barf_preprocessor_symboltable.cpp \
+	lib/preprocessor/barf_preprocessor_textifier.cpp
 
 lib_libbarf_regex_la_CPPFLAGS = \
-    $(AM_CPPFLAGS) \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/regex
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/lib/core \
+	-I$(top_srcdir)/lib/regex
 lib_libbarf_regex_la_SOURCES = \
-    lib/regex/barf_regex.cpp \
-    lib/regex/barf_regex_ast.cpp \
-    lib/regex/barf_regex_dfa.cpp \
-    lib/regex/barf_regex_graph.cpp \
-    lib/regex/barf_regex_nfa.cpp \
-    lib/regex/barf_regex_parser.cpp \
-    lib/regex/barf_regex_parser.trison
+	lib/regex/barf_regex.cpp \
+	lib/regex/barf_regex_ast.cpp \
+	lib/regex/barf_regex_dfa.cpp \
+	lib/regex/barf_regex_graph.cpp \
+	lib/regex/barf_regex_nfa.cpp \
+	lib/regex/barf_regex_parser.cpp \
+	lib/regex/barf_regex_parser.trison
 
 lib_libbarf_targetspec_la_CPPFLAGS = \
-    $(AM_CPPFLAGS) \
-    -I$(top_srcdir)/lib/commonlang \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/targetspec
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/lib/commonlang \
+	-I$(top_srcdir)/lib/core \
+	-I$(top_srcdir)/lib/targetspec
 lib_libbarf_targetspec_la_SOURCES = \
-    lib/targetspec/barf_targetspec_ast.cpp \
-    lib/targetspec/barf_targetspec_parser.cpp \
-    lib/targetspec/barf_targetspec_parser.trison
+	lib/targetspec/barf_targetspec_ast.cpp \
+	lib/targetspec/barf_targetspec_parser.cpp \
+	lib/targetspec/barf_targetspec_parser.trison
 
 if STABLE_REFLEX_EXISTS
 barf-commonlang-scanner: $(top_srcdir)/lib/commonlang/barf_commonlang_scanner.hpp
@@ -525,13 +525,13 @@ diff-test-barf-targetspec-parser:
 bpp_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-I$(top_srcdir)/app/bpp \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/preprocessor
+	-I$(top_srcdir)/lib/core \
+	-I$(top_srcdir)/lib/preprocessor
 
 bpp_LDADD = \
-    $(LDADD) \
-    $(top_builddir)/lib/libbarf-preprocessor.la \
-    $(top_builddir)/lib/libbarf-core.la
+	$(LDADD) \
+	$(top_builddir)/lib/libbarf-preprocessor.la \
+	$(top_builddir)/lib/libbarf-core.la
 
 bpp_SOURCES = \
 	app/bpp/bpp_main.cpp \
@@ -543,19 +543,19 @@ bpp_SOURCES = \
 
 playground_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
-    -I$(top_srcdir)/lib/commonlang \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/preprocessor \
-    -I$(top_srcdir)/lib/regex \
-    -I$(top_srcdir)/lib/targetspec
+	-I$(top_srcdir)/lib/commonlang \
+	-I$(top_srcdir)/lib/core \
+	-I$(top_srcdir)/lib/preprocessor \
+	-I$(top_srcdir)/lib/regex \
+	-I$(top_srcdir)/lib/targetspec
 
 playground_LDADD = \
-    $(LDADD) \
-    $(top_builddir)/lib/libbarf-regex.la \
-    $(top_builddir)/lib/libbarf-commonlang.la \
-    $(top_builddir)/lib/libbarf-core.la \
-    $(top_builddir)/lib/libbarf-preprocessor.la \
-    $(top_builddir)/lib/libbarf-targetspec.la
+	$(LDADD) \
+	$(top_builddir)/lib/libbarf-regex.la \
+	$(top_builddir)/lib/libbarf-commonlang.la \
+	$(top_builddir)/lib/libbarf-core.la \
+	$(top_builddir)/lib/libbarf-preprocessor.la \
+	$(top_builddir)/lib/libbarf-targetspec.la
 
 playground_SOURCES = \
 	app/playground.cpp
@@ -567,19 +567,19 @@ playground_SOURCES = \
 reflex_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-I$(top_srcdir)/app/reflex \
-    -I$(top_srcdir)/lib/commonlang \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/targetspec \
-    -I$(top_srcdir)/lib/preprocessor \
-    -I$(top_srcdir)/lib/regex
+	-I$(top_srcdir)/lib/commonlang \
+	-I$(top_srcdir)/lib/core \
+	-I$(top_srcdir)/lib/targetspec \
+	-I$(top_srcdir)/lib/preprocessor \
+	-I$(top_srcdir)/lib/regex
 
 reflex_LDADD = \
-    $(LDADD) \
-    $(top_builddir)/lib/libbarf-targetspec.la \
-    $(top_builddir)/lib/libbarf-commonlang.la \
-    $(top_builddir)/lib/libbarf-preprocessor.la \
-    $(top_builddir)/lib/libbarf-regex.la \
-    $(top_builddir)/lib/libbarf-core.la
+	$(LDADD) \
+	$(top_builddir)/lib/libbarf-targetspec.la \
+	$(top_builddir)/lib/libbarf-commonlang.la \
+	$(top_builddir)/lib/libbarf-preprocessor.la \
+	$(top_builddir)/lib/libbarf-regex.la \
+	$(top_builddir)/lib/libbarf-core.la
 
 reflex_SOURCES = \
 	app/reflex/reflex_ast.cpp \
@@ -631,17 +631,17 @@ diff-test-reflex-parser:
 trison_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-I$(top_srcdir)/app/trison \
-    -I$(top_srcdir)/lib/commonlang \
-    -I$(top_srcdir)/lib/core \
-    -I$(top_srcdir)/lib/targetspec \
-    -I$(top_srcdir)/lib/preprocessor
+	-I$(top_srcdir)/lib/commonlang \
+	-I$(top_srcdir)/lib/core \
+	-I$(top_srcdir)/lib/targetspec \
+	-I$(top_srcdir)/lib/preprocessor
 
 trison_LDADD = \
-    $(LDADD) \
-    $(top_builddir)/lib/libbarf-commonlang.la \
-    $(top_builddir)/lib/libbarf-targetspec.la \
-    $(top_builddir)/lib/libbarf-preprocessor.la \
-    $(top_builddir)/lib/libbarf-core.la
+	$(LDADD) \
+	$(top_builddir)/lib/libbarf-commonlang.la \
+	$(top_builddir)/lib/libbarf-targetspec.la \
+	$(top_builddir)/lib/libbarf-preprocessor.la \
+	$(top_builddir)/lib/libbarf-core.la
 
 trison_SOURCES = \
 	app/trison/trison_ast.cpp \
