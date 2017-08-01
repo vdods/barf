@@ -257,6 +257,19 @@ template <Uint32 high> struct SmallestUint {
       the end of rules to avoid throwing away tokens that belong to the rules
       further down the stack -- it would only pop the stack.
     - %error_no_pop_stack (or something to that effect) analogous.
+    - OR: a generalization of the existing %error directive:  The existing %error
+      directive can accept any token except %end -- perhaps make the %error directive
+      specify which tokens it can't accept, like
+
+        %error_until(%end)
+
+      or
+
+        %error_until(%end, ';')
+
+      and once it hits a token it can't accept, and %error_until(...) is the last token
+      in the rule, the rule can reduce (normally %error eats tokens until the token after
+      it in the same rule matches).
 - different idea for better error handling -- disallow %error occurring as the last
   token in a reduction rule.  Then the special END_-token-induced REDUCE action
   for error-handling rules can go away.
@@ -268,4 +281,22 @@ template <Uint32 high> struct SmallestUint {
         - look on wikipedia and other websites for grammars
     - for each grammar, make sure each rule is exercised
     - for each grammar, make sure each combination of rules (i.e. binary operators) is exercised
+- NPDA should track if it's ever been in an error-handling state.
+- TEST CASE in dev/calc: "(3;" versus "(;"
+
+  "(3;" accepts the rules:
+
+    expression <- NUM(3)
+    statement <- %error ';'
+    statement_then_end <- statement %end
+
+  while "(;" accepts the rules:
+
+    expression <- '(' %error
+    statement_then_end <- %error %end
+
+  Except for the "expression <- NUM(3)" reduction, the reductions should be the same in both cases.
+  This bug is maybe happening because %error should accept zero or more tokens, but current (I believe)
+  accepts one or more tokens.
+- Print out epsilon closure of root node each time (this will become the DPDA state)
 

@@ -234,10 +234,13 @@ private:
         void PopFrontGlobalLookahead ();
         void PushFrontGlobalLookahead (Token const &lookahead);
         void PushBackGlobalLookahead (Token const &lookahead);
-        void UpdateMaxGlobalLookaheadQueueSize ();
         // Removes the branch that the given node is a part of.  A branch of a node N is defined as the set of
         // nodes that are descendants of N, and all ancestors of N having exactly one child.
         void RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
+
+    private:
+
+        void UpdateMaxGlobalLookaheadQueueSize ();
     };
 
     Npda_ m_npda_;
@@ -247,8 +250,10 @@ private:
     static bool CompareToken (Token const &lhs, Token const &rhs) { return lhs.m_id < rhs.m_id; }
     static bool CompareStackElement (StackElement_ const &lhs, StackElement_ const &rhs) { return lhs.m_state_index < rhs.m_state_index; }
 
+    // Returns the epsilon closure of the given NPDA state.  Return value is memoized.
     static StateVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);
-    static TransitionVector_ const &NonEpsilonTransitionsOfState_ (std::uint32_t state_index);
+    // Returns the transitions, matching given sorted_type_index, for the epsilon closure of the given NPDA state.  Return value is memoized.
+    static TransitionVector_ const &NonEpsilonTransitionsOfState_ (std::uint32_t state_index, std::uint32_t sorted_type_index);
 
     friend struct ParseStackTreeNode_;
 

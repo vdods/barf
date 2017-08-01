@@ -209,8 +209,12 @@ int main (int argc, char **argv)
     '(' expression:e ')'                                                    %target.cpp { std::cout << "expression <- '(' expression ')'\n"; return e; }
 |
     '(' %error ')'                                                          %target.cpp { std::cout << "expression <- '(' %error ')'\n"; return 0.0; }
-// |
-//     '(' %error                                                              %target.cpp { std::cout << "error due to unmatched ')'\n"; return 0.0; }
+|
+    // NOTE: This will match everything until %end.
+    // This rule prevents ';' from being the error-stopper in statements, since
+    // the %error token matches everything including ';'.
+    // If %error_until(%end, ';') were added, this situation could be handled better.
+    '(' %error                                                              %target.cpp { std::cout << "expression <- '(' %error\n"; return 0.0; }
 |
     NUM:num                                                                 %target.cpp { std::cout << "expression <- NUM(" << num << ")\n"; return num; }
 |
@@ -230,5 +234,7 @@ int main (int argc, char **argv)
 |
     expression:lhs '^' expression:rhs               %prec EXPONENTIATION    %target.cpp { std::cout << "expression <- expression(" << lhs << ") '^' expression(" << rhs << ")\n"; return std::pow(lhs, rhs); }
 // |
-//     %error                                                                  %target.cpp { std::cout << "error in expression\n"; return 0.0; }
+//     // This just screws everything up.  It seems like there should just never be
+//     // a lone %error in a rule.  Though %error_until(%end, ';') could solve this.
+//     %error                                                                  %target.cpp { std::cout << "expression <- %error\n"; return 0.0; }
 ;
