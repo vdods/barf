@@ -19,6 +19,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux"
 #     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g2")
     set(CMAKE_CXX_FLAGS_RELEASE "-O2")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g2")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # TODO
 endif()
 
 # Helper target(s)
@@ -26,11 +28,15 @@ endif()
 add_library(C++11 INTERFACE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_compile_options(C++11 INTERFACE -std=c++11)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # TODO
 endif()
 
 add_library(Strict INTERFACE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_compile_options(Strict INTERFACE -Wall -Werror)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # TODO
 endif()
 
 add_library(SaveTemps INTERFACE)

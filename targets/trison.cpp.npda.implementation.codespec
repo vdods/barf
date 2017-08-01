@@ -396,7 +396,12 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 if (transition_sorted_type_index != current_sorted_type_index)
                     continue;
 
-                std::cerr << "            Processing transition " << ParseStackTreeNode_::AsString(ParseStackTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data " << transition.m_data_index << " and sorted type index " << Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type)) << '\n';
+                std::cerr << "            Processing transition " << ParseStackTreeNode_::AsString(ParseStackTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
+                if (transition.m_data_index == std::uint32_t(-1))
+                    std::cerr << "<N/A>";
+                else
+                    std::cerr << transition.m_data_index;
+                std::cerr << " and sorted type index " << Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type)) << '\n';
 
                 ParseStackTreeNode_ *resulting_hps = NULL;
                 // If it's a default transition, there's no need to access the lookahead.
@@ -493,7 +498,10 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     out << "global state stack is:\n    ";
     for (std::size_t i = 0; i < m_npda_.m_global_stack_.size(); ++i)
     {
-        out << m_npda_.m_global_stack_[i].m_state_index;
+        if (m_npda_.m_global_stack_[i].m_state_index != std::uint32_t(-1))
+            out << m_npda_.m_global_stack_[i].m_state_index;
+        else
+            out << "<N/A>";
         if (i+1 < m_npda_.m_global_stack_.size())
             out << ' ';
     }
@@ -830,7 +838,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
         out << ' ' << ms_state_table_[m_stack.back().m_state_index].m_description << ' ';
     if (m_spec.m_type == HPS)
     {
-        out << "; (";
+        out << "    (";
         for (std::size_t i = 0; i < m_stack.size(); ++i)
         {
             out << m_stack[i].m_state_index;

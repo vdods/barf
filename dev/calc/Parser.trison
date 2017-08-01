@@ -191,39 +191,41 @@ int main (int argc, char **argv)
 
 %nonterminal statement_then_end
 :
-    statement:st %end                                                       %target.cpp { return st; }
+    statement:st %end                                                       %target.cpp { std::cout << "statement_then_end <- statement %end\n"; return st; }
+|
+    %error %end                                                             %target.cpp { std::cout << "statement_then_end <- %error %end\n"; return 0.0; }
 ;
 
 %nonterminal statement
 :
-    expression:ex ';'                                                       %target.cpp { return ex; }
+    expression:ex ';'                                                       %target.cpp { std::cout << "statement <- expression ';'\n"; return ex; }
 |
-    %error                                                                  %target.cpp { return 0.0; }
+    %error ';'                                                              %target.cpp { std::cout << "statement <- %error ';'\n"; return 0.0; }
 ;
 
 %nonterminal expression
 :
-    '(' expression:e ')'                                                    %target.cpp { return e; }
+    '(' expression:e ')'                                                    %target.cpp { std::cout << "expression <- '(' expression ')'\n"; return e; }
 |
-    '(' %error ')'                                                          %target.cpp { return 0.0; }
+    '(' %error ')'                                                          %target.cpp { std::cout << "expression <- '(' %error ')'\n"; return 0.0; }
+// |
+//     '(' %error                                                              %target.cpp { std::cout << "error due to unmatched ')'\n"; return 0.0; }
 |
-    '(' %error                                                              %target.cpp { return 0.0; }
+    NUM:num                                                                 %target.cpp { std::cout << "expression <- NUM(" << num << ")\n"; return num; }
 |
-    NUM:num                                                                 %target.cpp { return num; }
+    expression:lhs '+' expression:rhs               %prec ADDITIVE          %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' expression(" << rhs << ")\n"; return lhs + rhs; }
 |
-    expression:lhs '+' expression:rhs               %prec ADDITIVE          %target.cpp { return lhs + rhs; }
+    expression:lhs '+' '+' '+' '+' expression:rhs   %prec LOWEST            %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' '+' '+' '+' expression(" << rhs << ")\n"; return lhs / rhs; }
 |
-    expression:lhs '+' '+' '+' '+' expression:rhs   %prec LOWEST            %target.cpp { return lhs / rhs; }
+    expression:lhs '+' '+' '+' expression:rhs       %prec LOW               %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' '+' '+' expression(" << rhs << ")\n"; return std::pow(lhs, rhs); }
 |
-    expression:lhs '+' '+' '+' expression:rhs       %prec LOW               %target.cpp { return std::pow(lhs, rhs); }
+    expression:lhs '+' '+' expression:rhs           %prec HIGHEST           %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' '+' expression(" << rhs << ")\n"; return lhs * rhs; }
 |
-    expression:lhs '+' '+' expression:rhs           %prec HIGHEST           %target.cpp { return lhs * rhs; }
+    expression:lhs '*' expression:rhs               %prec MULTIPLICATIVE    %target.cpp { std::cout << "expression <- expression(" << lhs << ") '*' expression(" << rhs << ")\n"; return lhs * rhs; }
 |
-    expression:lhs '*' expression:rhs               %prec MULTIPLICATIVE    %target.cpp { return lhs * rhs; }
+    '-' expression:op                               %prec UNARY             %target.cpp { std::cout << "expression <- '-' expression(" << op << ")\n"; return -op; }
 |
-    '-' expression:op                               %prec UNARY             %target.cpp { return -op; }
-|
-    expression:lhs '^' expression:rhs               %prec EXPONENTIATION    %target.cpp { return std::pow(lhs, rhs); }
-|
-    %error                                                                  %target.cpp { return 0.0; }
+    expression:lhs '^' expression:rhs               %prec EXPONENTIATION    %target.cpp { std::cout << "expression <- expression(" << lhs << ") '^' expression(" << rhs << ")\n"; return std::pow(lhs, rhs); }
+// |
+//     %error                                                                  %target.cpp { std::cout << "error in expression\n"; return 0.0; }
 ;
