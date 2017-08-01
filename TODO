@@ -242,61 +242,60 @@ template <Uint32 high> struct SmallestUint {
 };
 
 - get NPDA target building without C++11 enabled (it was working without before)
+  this really only depends on cstdint, and therefore the int types.
 - implement nonassoc error handling in NPDA
 - make sure error handling is working correctly in NPDA (via unit tests)
 - unit tests for NPDA
-- add some nice metrics to the NPDA parser:
+- add some nice metrics to the NPDA parser -- make this part of the parser API
   - max lookahead count
   - max memory used
-- make a text version of NPDA states output (i.e. text version of Parser.npda.dot)
-- maybe add some online DPDA generation in NPDA during runtime
+  - some measurement of the "leanness" of the grammar, like how much branching
+    was encountered, etc
+- make a text version of NPDA states output (i.e. text version of Parser.npda.dot,
+  anologous to Parser.dpda.states)
+- maybe add some online DPDA generation in NPDA during runtime, optionally saving
+  the tables to a file.  The file should be able to be specified as "read-only".
+  This would allow a balance between DPDA-generation for commonly used grammar pathways
+  and the flexibility of NPDA parsers.
 - port NPDA code to offline DPDA generation (after NPDA has been fully unit tested)
-- idea for better error handling -- have different types of %error directives:
-  not 100% sure if these would work.
-    - %error_no_discard_lookahead (or something to that effect) could be used at
-      the end of rules to avoid throwing away tokens that belong to the rules
-      further down the stack -- it would only pop the stack.
-    - %error_no_pop_stack (or something to that effect) analogous.
-    - OR: a generalization of the existing %error directive:  The existing %error
-      directive can accept any token except %end -- perhaps make the %error directive
-      specify which tokens it can't accept, like
+- idea for better error handling: a generalization of the existing %error directive:
+  The existing %error directive can accept any token except %end -- perhaps make the
+  %error directive specify which tokens it can't accept, like
 
-        %error_until(%end)
+    %error_until(%end)
 
-      or
+  or
 
-        %error_until(%end, ';')
+    %error_until(%end, ';')
 
-      and once it hits a token it can't accept, and %error_until(...) is the last token
-      in the rule, the rule can reduce (normally %error eats tokens until the token after
-      it in the same rule matches).
+  and once it hits a token it can't accept, and %error_until(...) is the last token
+  in the rule, the rule can reduce (normally %error eats tokens until the token after
+  it in the same rule matches).
 - different idea for better error handling -- disallow %error occurring as the last
   token in a reduction rule.  Then the special END_-token-induced REDUCE action
-  for error-handling rules can go away.
+  for error-handling rules can go away.  OR -- maybe just make this a warning.
 - NPDA parser test design notes
     - need to test a bunch of different grammars
         - grammars with bounded lookahead
         - grammars with unbounded lookahead
         - try to come up with a worst case grammar
         - look on wikipedia and other websites for grammars
+        - use actual grammars like from barf, steel, etc.
     - for each grammar, make sure each rule is exercised
     - for each grammar, make sure each combination of rules (i.e. binary operators) is exercised
 - NPDA should track if it's ever been in an error-handling state.
 - TEST CASE in dev/calc: "(3;" versus "(;"
 
-  "(3;" accepts the rules:
+  the input "(3;" makes the reductions:
 
     expression <- NUM(3)
     statement <- %error ';'
     statement_then_end <- statement %end
 
-  while "(;" accepts the rules:
+  while the input "(;" makes the reductions:
 
     expression <- '(' %error
     statement_then_end <- %error %end
 
   Except for the "expression <- NUM(3)" reduction, the reductions should be the same in both cases.
-  This bug is maybe happening because %error should accept zero or more tokens, but current (I believe)
-  accepts one or more tokens.
 - Print out epsilon closure of root node each time (this will become the DPDA state)
-
