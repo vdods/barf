@@ -273,7 +273,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                         break;
 
                     case 1: // 1 is non-associative
-                        std::cerr << "composition of non-associative rules is an error (nonassoc error handling not yet implemented).\n";
+                        std::cerr << "composition of non-associative rules is an error.\n";
                         assert(false && "TODO: implement nonassoc error handling");
                         break;
 

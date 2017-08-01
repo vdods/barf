@@ -68,7 +68,7 @@ void Scanner::attach_istream (std::istream &in)
 /* **************************************************************************/
 
 // all operators that should be returned by ascii value
-%macro OPERATOR             ([()+*\-;\^])
+%macro OPERATOR             ([()+*\-;\^?])
 // integer literal
 %macro INTEGER_LITERAL      (0|[1-9][0-9]*)
 // decimal literal has an optional decimal point and possibly also fractional part

@@ -164,7 +164,7 @@ int main (int argc, char **argv)
 /* **************************************************************************/
 
 %terminal '+' '-' '*' '^'
-%terminal '(' ')' ';'
+%terminal '(' ')' ';' '?'
 %terminal NUM BAD_TOKEN
 
 /* ***************************************************************************
@@ -173,13 +173,14 @@ int main (int argc, char **argv)
 
 // Lowest precedence is first, highest is last.
 
-%prec.left  LOWEST
-%prec.left  LOW
-%prec.left  ADDITIVE
-%prec.left  MULTIPLICATIVE
-%prec.right UNARY
-%prec.right EXPONENTIATION
-%prec.left  HIGHEST
+%prec.left      LOWEST
+%prec.left      LOW
+%prec.left      ADDITIVE
+%prec.left      MULTIPLICATIVE
+%prec.nonassoc  QUESTION
+%prec.right     UNARY
+%prec.right     EXPONENTIATION
+%prec.left      HIGHEST
 
 /* ***************************************************************************
 /* cpp parser grammar specification
@@ -222,6 +223,8 @@ int main (int argc, char **argv)
     expression:lhs '+' '+' expression:rhs           %prec HIGHEST           %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' '+' expression(" << rhs << ")\n"; return lhs * rhs; }
 |
     expression:lhs '*' expression:rhs               %prec MULTIPLICATIVE    %target.cpp { std::cout << "expression <- expression(" << lhs << ") '*' expression(" << rhs << ")\n"; return lhs * rhs; }
+|
+    expression:lhs '?' expression:rhs               %prec QUESTION          %target.cpp { std::cout << "expression <- expression(" << lhs << ") '?' expression(" << rhs << ")\n"; return lhs - rhs; }
 |
     '-' expression:op                               %prec UNARY             %target.cpp { std::cout << "expression <- '-' expression(" << op << ")\n"; return -op; }
 |
