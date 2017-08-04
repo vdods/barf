@@ -2,228 +2,232 @@
 // BARF bugs
 // ///////////////////////////////////////////////////////////////////////////
 
-- think about what to do when a reflex state is empty
-- reflex: an unterminated regex causes a hang;
-  %state_machine BLAH
-  :
-    (
-  ;
-- bug (in trison) -- lack of a parse error handler for:
-    %terminal XXX %type "Blah"
-  which should be
-    %terminal XXX %type.cpp "Blah"
-- looks like trison doesn't catch EOF before ; in a nonterminal declaration
+-   think about what to do when a reflex state is empty
+-   reflex: an unterminated regex causes a hang;
+    %state_machine BLAH
+    :
+        (
+    ;
+-   bug (in trison) -- lack of a parse error handler for:
+
+        %terminal XXX %type "Blah"
+
+    which should be
+
+        %terminal XXX %type.cpp "Blah"
+
+-   looks like trison doesn't catch EOF before ; in a nonterminal declaration
 
 // ///////////////////////////////////////////////////////////////////////////
 // BARF general
 // ///////////////////////////////////////////////////////////////////////////
 
-- write man pages for reflex, trison, bpp (hopefully somehow get doxygen to
-  do this)
-- figure out how to generate/install docs
-- guarantee that errors will be reported such that the line numbers never
-  decrease.
-- bug: getting "file not found" error when a file exists but the permissions
-  are such that the user can't read it.
-* add lots of error rules to all parser grammars
-- descriptions should use terms "finite-automaton-based scanners" and
-  "pushdown-automaton-based parsers"
-- error when any output file is the same as an input file, or when any two
-  output files are the same.
-- change comments to %/ and %* *% in primary sources?
-- move trison/reflex stuff into lib/trison and lib/reflex? and only keep
-  main, options and main header file in app dir (so test apps can link the
-  libs and run tests)?  put stuff in Barf::Xxx namespace
-$ do comprehensive deleting of stuff (this might be hard with all the throwing)
-  THEN
-  do memory leak checking (valgrind)
-- get rid of AST hierarchy overviews once doxygen docs are to some decent state
-- use Ast::Directive::DirectiveString in error messages instead of
-  creating the error messages by hand -- make all directives derive from
-  Ast::Directive
-- file locations should be "2d range" -- a starting line/column and an ending
-  line/column (or starting line/column and a number of bytes following).
-  nonterminal expressions can then be the union of the file locations of their
-  component parts.  this technique will be useful later in compiler design for
-  debugging info.
-- add filename-sanitizing function -- i.e. to check for newlines and other stuff
-- save off FiLoc where each error panic starts, so that if it's a general parse
-  error, at least some info can be printed.
+-   write man pages for reflex, trison, bpp (hopefully somehow get doxygen to
+    do this)
+-   figure out how to generate/install docs
+-   guarantee that errors will be reported such that the line numbers never
+    decrease.
+-   bug: getting "file not found" error when a file exists but the permissions
+    are such that the user can't read it.
+*   add lots of error rules to all parser grammars
+-   descriptions should use terms "finite-automaton-based scanners" and
+    "pushdown-automaton-based parsers"
+-   error when any output file is the same as an input file, or when any two
+    output files are the same.
+-   change comments to %/ and %* *% in primary sources?
+-   move trison/reflex stuff into lib/trison and lib/reflex? and only keep
+    main, options and main header file in app dir (so test apps can link the
+    libs and run tests)?  put stuff in Barf::Xxx namespace
+$   do comprehensive deleting of stuff (this might be hard with all the throwing)
+    THEN
+    do memory leak checking (valgrind)
+-   get rid of AST hierarchy overviews once doxygen docs are to some decent state
+-   use Ast::Directive::DirectiveString in error messages instead of
+    creating the error messages by hand -- make all directives derive from
+    Ast::Directive
+-   file locations should be "2d range" -- a starting line/column and an ending
+    line/column (or starting line/column and a number of bytes following).
+    nonterminal expressions can then be the union of the file locations of their
+    component parts.  this technique will be useful later in compiler design for
+    debugging info.
+-   add filename-sanitizing function -- i.e. to check for newlines and other stuff
+-   save off FiLoc where each error panic starts, so that if it's a general parse
+    error, at least some info can be printed.
 
 // ///////////////////////////////////////////////////////////////////////////
 // documentation
 // ///////////////////////////////////////////////////////////////////////////
 
-- table of contents inside each doxygen_pages page
-- pyramidal documentation
-- simplify documentation (maybe leave out basic regex stuff, keep to essentials)
+-   table of contents inside each doxygen_pages page
+-   pyramidal documentation
+-   simplify documentation (maybe leave out basic regex stuff, keep to essentials)
 
 // ///////////////////////////////////////////////////////////////////////////
 // commonlang
 // ///////////////////////////////////////////////////////////////////////////
 
-- target directives (including rule handlers) should accept multiple targets ?
-  like
-  %target.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
+-   target directives (including rule handlers) should accept multiple targets ? like
+
+        %target.cpp_nostl,cpp_withstl,cpp_noexceptions %{ blah %}
 
 // ///////////////////////////////////////////////////////////////////////////
 // core
 // ///////////////////////////////////////////////////////////////////////////
 
-- make a Graph::Node::Index type (a struct or an enum with a value
-  UINT32_UPPER_BOUND (to force it to be unsigned)) and Graph::Node::IndexArray
-  vector type in barf_graph.h (replacing the ad-hoc vector<Uint32> used all
-  over the place)
-- check standard on octal escape chars (up to 3 octal digits only?)
-- make EscapeChar (which does full char escaping) and use it in EscapeString?
-  this would make the char scanning much easier
-- make repeated identical (or perhaps just very similar) warnings/errors
-  suppressed (e.g. in preprocessor, having an error in a loop will cause that
-  error to be emitted that many times)
+-   make a Graph::Node::Index type (a struct or an enum with a value
+    UINT32_UPPER_BOUND (to force it to be unsigned)) and Graph::Node::IndexArray
+    vector type in barf_graph.h (replacing the ad-hoc vector<Uint32> used all
+    over the place)
+-   check standard on octal escape chars (up to 3 octal digits only?)
+-   make EscapeChar (which does full char escaping) and use it in EscapeString?
+    this would make the char scanning much easier
+-   make repeated identical (or perhaps just very similar) warnings/errors
+    suppressed (e.g. in preprocessor, having an error in a loop will cause that
+    error to be emitted that many times)
 
 // ///////////////////////////////////////////////////////////////////////////
 // targetspec
 // ///////////////////////////////////////////////////////////////////////////
 
-- allow using the value of previously declared directives as default values
-  (this would be had for free if targetspec-declared, primary-source-defined
-  codespec symbols are allowed to use codespec symbols -- see codespec section)
-- add targetspec versions (target-specific) -- so you can compile/link
-  multiple coexisting versions of the same target but at different versions.
-  do this by sticking a version number in the namespace of the generated
-  baseclasses
+-   allow using the value of previously declared directives as default values
+    (this would be had for free if targetspec-declared, primary-source-defined
+    codespec symbols are allowed to use codespec symbols -- see codespec section)
+-   add targetspec versions (target-specific) -- so you can compile/link
+    multiple coexisting versions of the same target but at different versions.
+    do this by sticking a version number in the namespace of the generated
+    baseclasses
 
 // ///////////////////////////////////////////////////////////////////////////
 // codespec
 // ///////////////////////////////////////////////////////////////////////////
 
-- add comment/description element to each codespec symbol, so that you can
-  print out a list of all available codespec symbols and their descriptions
-  from the commandline for easier development (i.e. to the state machine ones
-  so that you don't have to look through xxx_codespecsymbols.cpp for these)
-- allow targetspec-declared, primary-source-defined codespec symbols to use
-  codespec symbols? (i.e. { printf(<{_rule_regex}); } ) ?
-- make better error message (i.e. anything informative at all) when there's
-  an error in an included codespec file.
+-   add comment/description element to each codespec symbol, so that you can
+    print out a list of all available codespec symbols and their descriptions
+    from the commandline for easier development (i.e. to the state machine ones
+    so that you don't have to look through xxx_codespecsymbols.cpp for these)
+-   allow targetspec-declared, primary-source-defined codespec symbols to use
+    codespec symbols? (i.e. { printf(<{_rule_regex}); } ) ?
+-   make better error message (i.e. anything informative at all) when there's
+    an error in an included codespec file.
 
 // ///////////////////////////////////////////////////////////////////////////
 // preprocessor
 // ///////////////////////////////////////////////////////////////////////////
 
-- add parser error handler for when argument to is_defined is not an identifier
-- just make the preprocessor language better in general -- it's sort of crappy
-- add a printf function
-- add some way to use a different file location for errors/warnings
-- add comments (C++ and C style)
-- make _blah ids not be able to be defined in-file, they're reserved
-- add assignment operator; e.g. <{x=x+3}
-- add eval directive so you can parse and execute a block of text as a
-  preprocessor body.
-- add 64 bit ints (better) and add whatever the negative-most 64-bit int is
-  to the scanner (because the way negative ints are constructed in the parser
-  screws this up)
-- maybe make the Textifier detect if a newline was just printed, so that
-  it doesn't print unnecessary newlines when generating line directives
-- add boolean property for wether or not a particular symbol was referenced
-  during preprocessing, so that warnings can be emitted if a symbol isn't used
+-   add parser error handler for when argument to is_defined is not an identifier
+-   just make the preprocessor language better in general -- it's sort of crappy
+-   add a printf function
+-   add some way to use a different file location for errors/warnings
+-   add comments (C++ and C style)
+-   make _blah ids not be able to be defined in-file, they're reserved
+-   add assignment operator; e.g. <{x=x+3}
+-   add eval directive so you can parse and execute a block of text as a
+    preprocessor body.
+-   add 64 bit ints (better) and add whatever the negative-most 64-bit int is
+    to the scanner (because the way negative ints are constructed in the parser
+    screws this up)
+-   maybe make the Textifier detect if a newline was just printed, so that
+    it doesn't print unnecessary newlines when generating line directives
+-   add boolean property for wether or not a particular symbol was referenced
+    during preprocessing, so that warnings can be emitted if a symbol isn't used
 
 // ///////////////////////////////////////////////////////////////////////////
 // regex
 // ///////////////////////////////////////////////////////////////////////////
 
-* document all of this regex stuff in detail, since it's pretty complicated,
-  and not completely standard
-* in graph printing, TT_INPUT_ATOM_RANGEs which include [ or ] as the ending
-  char need to escape them
-* generally fix up the escaping of characters in display strings and graphs
-  to escape in the context of the regex.
-- make a parse-string method which returns a Regex::RegularExpression and
-  possibly throws to indicate errors.
-- move NodeData into separate file
-- improve the DFA generation so that when throwing an exception when there is
-  a conditional conflict, it includes the file location that caused it.
-- add a pass to NFA generation where it optimizes unnecessary epsilon
-  transitions out.
-- bracket expression transitions should use single-atom transitions when possible
+*   document all of this regex stuff in detail, since it's pretty complicated,
+    and not completely standard
+*   in graph printing, TT_INPUT_ATOM_RANGEs which include [ or ] as the ending
+    char need to escape them
+*   generally fix up the escaping of characters in display strings and graphs
+    to escape in the context of the regex.
+-   make a parse-string method which returns a Regex::RegularExpression and
+    possibly throws to indicate errors.
+-   move NodeData into separate file
+-   improve the DFA generation so that when throwing an exception when there is
+    a conditional conflict, it includes the file location that caused it.
+-   add a pass to NFA generation where it optimizes unnecessary epsilon
+    transitions out.
+-   bracket expression transitions should use single-atom transitions when possible
 
 // ///////////////////////////////////////////////////////////////////////////
 // bpp
 // ///////////////////////////////////////////////////////////////////////////
 
-- add predefine (-D) option
+-   add predefine (-D) option
 
 // ///////////////////////////////////////////////////////////////////////////
-// grope
+// grope/grop/grap (grep-like tool)
 // ///////////////////////////////////////////////////////////////////////////
 
-- write it (or not. probably not.  but it might be nice to have a
-  grep-like tool which can match across newlines, and also to directly
-  test the regex system)
+-   write it (or not. probably not.  but it might be nice to have a
+    grep-like tool which can match across newlines, and also to directly
+    test the regex system)
 
 // ///////////////////////////////////////////////////////////////////////////
 // reflex
 // ///////////////////////////////////////////////////////////////////////////
 
-- instead of always extracting the accepted string and passing it in,
-  make it available through an accessor, so it can be constructed lazily.
-  OR
-  somehow just return pointers into the buffer for the accepted string, so
-  that there is as little overhead as possible when running the scanner.
-- maybe consistencize the codespec symbol names
+-   instead of always extracting the accepted string and passing it in,
+    make it available through an accessor, so it can be constructed lazily.
+    OR
+    somehow just return pointers into the buffer for the accepted string, so
+    that there is as little overhead as possible when running the scanner.
+-   maybe consistencize the codespec symbol names
 
 // ///////////////////////////////////////////////////////////////////////////
 // reflex/trison common
 // ///////////////////////////////////////////////////////////////////////////
 
-- use smallest integer type to store state and transition indices, etc.
-  (in C++, this can be done easily with templates)
-* c++ target -- ability to set the debug spew ostream
-- move the --with-line-directives option to be an optional targetspec directive
-- add commandline option to describe the return codes (?)
-$ add targetspec directive for line directives referencing codespecs (the
-  default should be to not refer to codespecs), making development easier
-$ add option which prints the reflex/trison targets available in the current
-  search path and which directory each resides in.
-* the rule handler code block type should be specifiable by the targetspec
-* specifying any %target.xxx directive seems to add the target; stop this
-* allow "%targets xxxx" in pre/postdefine
-$ also add post-undefine option
-* warn about targetspec directive values that weren't referenced in the
-  code generation (preprocessor) stage -- ones that don't appear at all in
-  any codespec, not necessarily to indicate they weren't used in one particular
-  case.
+-   use smallest integer type to store state and transition indices, etc.
+    (in C++, this can be done easily with templates)
+*   c++ target -- ability to set the debug spew ostream
+-   move the --with-line-directives option to be an optional targetspec directive
+-   add commandline option to describe the return codes (?)
+$   add targetspec directive for line directives referencing codespecs (the
+    default should be to not refer to codespecs), making development easier
+$   add option which prints the reflex/trison targets available in the current
+    search path and which directory each resides in.
+*   the rule handler code block type should be specifiable by the targetspec
+*   specifying any %target.xxx directive seems to add the target; stop this
+*   allow "%targets xxxx" in pre/postdefine
+$   also add post-undefine option
+*   warn about targetspec directive values that weren't referenced in the
+    code generation (preprocessor) stage -- ones that don't appear at all in
+    any codespec, not necessarily to indicate they weren't used in one particular
+    case.
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
 // ///////////////////////////////////////////////////////////////////////////
 
-- pass reference instead of double pointer to Parse
-! refactor the DPDA generation to be simpler and faster (difficult)
-- make NPDA states file (?)
-- correctly determine LALR(0) (which is when all shift transitions have
-  exactly one lookahead, and no lookahead is ever required for a reduce
-  transition.
-* put some cap on the lookahead count while generating the DPDA, and emit
-  errors when it exceeds this, and allow this cap to be specified by targetspec
-  directive (and maybe also commandline param)
-- figure out why minimal graphing isn't working (the right lookaheads
-  aren't being generated).
-- if possible, make the dpda.states file put the states' rules in order.
-$ add a max token stack depth in each parser implementation
-- clean up the parsing so that it's less about passing crap around and more
-  about using member variables of the parser (assign rule indices on the fly,
-  etc)
-- figure out how to guarantee branch uniqueness per Action_ branch list in npda.
-- you shouldn't have to specify %terminal 'X' for ascii chars.  you should
-  just be able to use them (or maybe add as a directive)
-- check for reduction rule variable name collisions
-- decouple npda states from trison ASTs -- they should only exist in the
-  graph itself.
-- add an unbounded grammar app/dev test case, and deal with unbounded grammars
-  (since DPDAs can't be generated for them)
-- compactify lookaheads in dpda
-- make sure lookahead sequences are alphabetized, allowing for a binary search
-  instead of a linear search (in the dpda target)
+-   pass reference instead of double pointer to Parse
+!   refactor the DPDA generation to be simpler and faster (difficult)
+-   make NPDA states file (?)
+-   correctly determine LALR(0) (which is when all shift transitions have
+    exactly one lookahead, and no lookahead is ever required for a reduce
+    transition.
+*   put some cap on the lookahead count while generating the DPDA, and emit
+    errors when it exceeds this, and allow this cap to be specified by targetspec
+    directive (and maybe also commandline param)
+-   figure out why minimal graphing isn't working (the right lookaheads
+    aren't being generated).
+-   if possible, make the dpda.states file put the states' rules in order.
+$   add a max token stack depth in each parser implementation
+-   clean up the parsing so that it's less about passing crap around and more
+    about using member variables of the parser (assign rule indices on the fly,
+    etc)
+-   figure out how to guarantee branch uniqueness per Action_ branch list in npda.
+-   you shouldn't have to specify %terminal 'X' for ascii chars.  you should
+    just be able to use them (or maybe add as a directive)
+-   check for reduction rule variable name collisions
+-   decouple npda states from trison ASTs -- they should only exist in the
+    graph itself.
+-   add an unbounded grammar app/dev test case, and deal with unbounded grammars
+    (since DPDAs can't be generated for them)
+-   compactify lookaheads in dpda
+-   make sure lookahead sequences are alphabetized, allowing for a binary search
+    instead of a linear search (in the dpda target)
 
 template <Sint32 low, Sint32 high> struct SmallestSint {
     typedef
@@ -241,61 +245,61 @@ template <Uint32 high> struct SmallestUint {
         >::T >::T Type;
 };
 
-- get NPDA target building without C++11 enabled (it was working without before)
-  this really only depends on cstdint, and therefore the int types.
-- implement nonassoc error handling in NPDA
-- make sure error handling is working correctly in NPDA (via unit tests)
-- unit tests for NPDA
-- add some nice metrics to the NPDA parser -- make this part of the parser API
-  - max lookahead count
-  - max memory used
-  - some measurement of the "leanness" of the grammar, like how much branching
-    was encountered, etc
-- make a text version of NPDA states output (i.e. text version of Parser.npda.dot,
-  anologous to Parser.dpda.states)
-- maybe add some online DPDA generation in NPDA during runtime, optionally saving
-  the tables to a file.  The file should be able to be specified as "read-only".
-  This would allow a balance between DPDA-generation for commonly used grammar pathways
-  and the flexibility of NPDA parsers.
-- port NPDA code to offline DPDA generation (after NPDA has been fully unit tested)
-- idea for better error handling: a generalization of the existing %error directive:
-  The existing %error directive can accept any token except %end -- perhaps make the
-  %error directive specify which tokens it can't accept, like
+-   get NPDA target building without C++11 enabled (it was working without before)
+    this really only depends on cstdint, and therefore the int types.
+-   implement nonassoc error handling in NPDA
+-   make sure error handling is working correctly in NPDA (via unit tests)
+-   unit tests for NPDA
+-   add some nice metrics to the NPDA parser -- make this part of the parser API
+    -   max lookahead count
+    -   max memory used
+    -   some measurement of the "leanness" of the grammar, like how much branching
+        was encountered, etc
+-   make a text version of NPDA states output (i.e. text version of Parser.npda.dot,
+    anologous to Parser.dpda.states)
+-   maybe add some online DPDA generation in NPDA during runtime, optionally saving
+    the tables to a file.  The file should be able to be specified as "read-only".
+    This would allow a balance between DPDA-generation for commonly used grammar pathways
+    and the flexibility of NPDA parsers.
+-   port NPDA code to offline DPDA generation (after NPDA has been fully unit tested)
+-   idea for better error handling: a generalization of the existing %error directive:
+    The existing %error directive can accept any token except %end -- perhaps make the
+    %error directive specify which tokens it can't accept, like
 
-    %error_until(%end)
+        %error_until(%end)
 
-  or
+    or
 
-    %error_until(%end, ';')
+        %error_until(%end, ';')
 
-  and once it hits a token it can't accept, and %error_until(...) is the last token
-  in the rule, the rule can reduce (normally %error eats tokens until the token after
-  it in the same rule matches).
-- different idea for better error handling -- disallow %error occurring as the last
-  token in a reduction rule.  Then the special END_-token-induced REDUCE action
-  for error-handling rules can go away.  OR -- maybe just make this a warning.
-- NPDA parser test design notes
-    - need to test a bunch of different grammars
-        - grammars with bounded lookahead
-        - grammars with unbounded lookahead
-        - try to come up with a worst case grammar
-        - look on wikipedia and other websites for grammars
-        - use actual grammars like from barf, steel, etc.
-    - for each grammar, make sure each rule is exercised
-    - for each grammar, make sure each combination of rules (i.e. binary operators) is exercised
-- NPDA should track if it's ever been in an error-handling state.
-- TEST CASE in dev/calc: "(3;" versus "(;"
+    and once it hits a token it can't accept, and %error_until(...) is the last token
+    in the rule, the rule can reduce (normally %error eats tokens until the token after
+    it in the same rule matches).
+-   different idea for better error handling -- disallow %error occurring as the last
+    token in a reduction rule.  Then the special END_-token-induced REDUCE action
+    for error-handling rules can go away.  OR -- maybe just make this a warning.
+-   NPDA parser test design notes
+    -   need to test a bunch of different grammars
+        -   grammars with bounded lookahead
+        -   grammars with unbounded lookahead
+        -   try to come up with a worst case grammar
+        -   look on wikipedia and other websites for grammars
+        -   use actual grammars like from barf, steel, etc.
+    -   for each grammar, make sure each rule is exercised
+    -   for each grammar, make sure each combination of rules (i.e. binary operators) is exercised
+-   NPDA should track if it's ever been in an error-handling state.
+-   TEST CASE in dev/calc: "(3;" versus "(;"
 
-  the input "(3;" makes the reductions:
+    the input "(3;" makes the reductions:
 
-    expression <- NUM(3)
-    statement <- %error ';'
-    statement_then_end <- statement %end
+        expression <- NUM(3)
+        statement <- %error ';'
+        statement_then_end <- statement %end
 
-  while the input "(;" makes the reductions:
+    while the input "(;" makes the reductions:
 
-    expression <- '(' %error
-    statement_then_end <- %error %end
+        expression <- '(' %error
+        statement_then_end <- %error %end
 
-  Except for the "expression <- NUM(3)" reduction, the reductions should be the same in both cases.
-- Print out epsilon closure of root node each time (this will become the DPDA state)
+    Except for the "expression <- NUM(3)" reduction, the reductions should be the same in both cases.
+-   Print out epsilon closure of root node each time (this will become the DPDA state)
