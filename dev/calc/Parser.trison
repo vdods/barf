@@ -192,49 +192,49 @@ int main (int argc, char **argv)
 
 %nonterminal statement_then_end
 :
-    statement:st %end                                                       %target.cpp { std::cout << "statement_then_end <- statement %end\n"; return st; }
+    statement:st %end                                       %target.cpp { std::cout << "statement_then_end <- statement %end\n"; return st; }
 |
-    %error %end                                                             %target.cpp { std::cout << "statement_then_end <- %error %end\n"; return 0.0; }
+    %error[%end] %end                                       %target.cpp { std::cout << "statement_then_end <- %error[%end] %end\n"; return 0.0; }
 ;
 
 %nonterminal statement
 :
-    expression:ex ';'                                                       %target.cpp { std::cout << "statement <- expression ';'\n"; return ex; }
+    x:ex ';'                                                %target.cpp { std::cout << "statement <- x ';'\n"; return ex; }
 |
-    %error ';'                                                              %target.cpp { std::cout << "statement <- %error ';'\n"; return 0.0; }
+    %error[%end] ';'                                        %target.cpp { std::cout << "statement <- %error ';'\n"; return 0.0; }
 ;
 
-%nonterminal expression
+%nonterminal x
 :
-    '(' expression:e ')'                                                    %target.cpp { std::cout << "expression <- '(' expression ')'\n"; return e; }
+    '(' x:e ')'                                             %target.cpp { std::cout << "x <- '(' x ')'\n"; return e; }
 |
-    '(' %error ')'                                                          %target.cpp { std::cout << "expression <- '(' %error ')'\n"; return 0.0; }
+    '(' %error[%end] ')'                                    %target.cpp { std::cout << "x <- '(' %error[')'] ')'\n"; return 0.0; }
 |
     // NOTE: This will match everything until %end.
     // This rule prevents ';' from being the error-stopper in statements, since
     // the %error token matches everything including ';'.
     // If %error_until(%end, ';') were added, this situation could be handled better.
-    '(' %error                                                              %target.cpp { std::cout << "expression <- '(' %error\n"; return 0.0; }
+    '(' %error[%end | ';']                                  %target.cpp { std::cout << "x <- '(' %error[%end | ';']\n"; return 0.0; }
 |
-    NUM:num                                                                 %target.cpp { std::cout << "expression <- NUM(" << num << ")\n"; return num; }
+    NUM:num                                                 %target.cpp { std::cout << "x <- NUM(" << num << ")\n"; return num; }
 |
-    expression:lhs '+' expression:rhs               %prec ADDITIVE          %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' expression(" << rhs << ")\n"; return lhs + rhs; }
+    x:lhs '+' x:rhs               %prec ADDITIVE            %target.cpp { std::cout << "x <- x(" << lhs << ") '+' x(" << rhs << ")\n"; return lhs + rhs; }
 |
-    expression:lhs '+' '+' '+' '+' expression:rhs   %prec LOWEST            %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' '+' '+' '+' expression(" << rhs << ")\n"; return lhs / rhs; }
+    x:lhs '+' '+' '+' '+' x:rhs   %prec LOWEST              %target.cpp { std::cout << "x <- x(" << lhs << ") '+' '+' '+' '+' x(" << rhs << ")\n"; return lhs / rhs; }
 |
-    expression:lhs '+' '+' '+' expression:rhs       %prec LOW               %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' '+' '+' expression(" << rhs << ")\n"; return std::pow(lhs, rhs); }
+    x:lhs '+' '+' '+' x:rhs       %prec LOW                 %target.cpp { std::cout << "x <- x(" << lhs << ") '+' '+' '+' x(" << rhs << ")\n"; return std::pow(lhs, rhs); }
 |
-    expression:lhs '+' '+' expression:rhs           %prec HIGHEST           %target.cpp { std::cout << "expression <- expression(" << lhs << ") '+' '+' expression(" << rhs << ")\n"; return lhs * rhs; }
+    x:lhs '+' '+' x:rhs           %prec HIGHEST             %target.cpp { std::cout << "x <- x(" << lhs << ") '+' '+' x(" << rhs << ")\n"; return lhs * rhs; }
 |
-    expression:lhs '*' expression:rhs               %prec MULTIPLICATIVE    %target.cpp { std::cout << "expression <- expression(" << lhs << ") '*' expression(" << rhs << ")\n"; return lhs * rhs; }
+    x:lhs '*' x:rhs               %prec MULTIPLICATIVE      %target.cpp { std::cout << "x <- x(" << lhs << ") '*' x(" << rhs << ")\n"; return lhs * rhs; }
 |
-    expression:lhs '?' expression:rhs               %prec QUESTION          %target.cpp { std::cout << "expression <- expression(" << lhs << ") '?' expression(" << rhs << ")\n"; return lhs - rhs; }
+    x:lhs '?' x:rhs               %prec QUESTION            %target.cpp { std::cout << "x <- x(" << lhs << ") '?' x(" << rhs << ")\n"; return lhs - rhs; }
 |
-    '-' expression:op                               %prec UNARY             %target.cpp { std::cout << "expression <- '-' expression(" << op << ")\n"; return -op; }
+    '-' x:op                      %prec UNARY               %target.cpp { std::cout << "x <- '-' x(" << op << ")\n"; return -op; }
 |
-    expression:lhs '^' expression:rhs               %prec EXPONENTIATION    %target.cpp { std::cout << "expression <- expression(" << lhs << ") '^' expression(" << rhs << ")\n"; return std::pow(lhs, rhs); }
+    x:lhs '^' x:rhs               %prec EXPONENTIATION      %target.cpp { std::cout << "x <- x(" << lhs << ") '^' x(" << rhs << ")\n"; return std::pow(lhs, rhs); }
 // |
 //     // This just screws everything up.  It seems like there should just never be
-//     // a lone %error in a rule.  Though %error_until(%end, ';') could solve this.
-//     %error                                                                  %target.cpp { std::cout << "expression <- %error\n"; return 0.0; }
+//     // a lone %error in a rule.  Though %error[%end | ';'] could solve this.
+//     %error[%end | ';']                                      %target.cpp { std::cout << "x <- %error[%end | ';']\n"; return 0.0; }
 ;

@@ -94,7 +94,7 @@ void Parser::ResetForNewInput ()
 #line 95 "barf_regex_parser.cpp"
 }
 
-Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
+Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
 {
     return Parse_(return_token, nonterminal_to_parse);
 }
@@ -103,440 +103,14 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::
 // begin internal trison-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
-{
-    assert(string != NULL);
-    stream << 
-#line 290 "barf_regex_parser.trison"
-"Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 113 "barf_regex_parser.cpp"
- << "    ";
-    while (*string != '\0')
-    {
-        if (*string == '\n')
-            stream << '\n' << 
-#line 290 "barf_regex_parser.trison"
-"Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 121 "barf_regex_parser.cpp"
- << "    ";
-        else
-            stream << *string;
-        ++string;
-    }
-}
-
-std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
-{
-    if (token.m_id < Parser::ms_token_name_count_)
-        stream << Parser::ms_token_name_table_[token.m_id];
-    else
-        stream << "!INVALID TOKEN!";
-    return stream;
-}
-
-Parser::Rule_ const Parser::ms_rule_table_[] =
-{
-    { Parser::Nonterminal::regex, 3, "regex <- regex '|' branch" },
-    { Parser::Nonterminal::regex, 1, "regex <- branch" },
-    { Parser::Nonterminal::branch, 1, "branch <- branch_which_didnt_just_accept_an_atom" },
-    { Parser::Nonterminal::branch, 1, "branch <- branch_which_just_accepted_an_atom" },
-    { Parser::Nonterminal::branch, 0, "branch <-" },
-    { Parser::Nonterminal::branch_which_didnt_just_accept_an_atom, 2, "branch_which_didnt_just_accept_an_atom <- branch_which_just_accepted_an_atom bound" },
-    { Parser::Nonterminal::branch_which_just_accepted_an_atom, 2, "branch_which_just_accepted_an_atom <- branch_which_just_accepted_an_atom atom" },
-    { Parser::Nonterminal::branch_which_just_accepted_an_atom, 2, "branch_which_just_accepted_an_atom <- branch_which_didnt_just_accept_an_atom atom" },
-    { Parser::Nonterminal::branch_which_just_accepted_an_atom, 1, "branch_which_just_accepted_an_atom <- atom" },
-    { Parser::Nonterminal::atom, 3, "atom <- '{' id '}'" },
-    { Parser::Nonterminal::atom, 3, "atom <- '(' regex ')'" },
-    { Parser::Nonterminal::atom, 2, "atom <- '(' ')'" },
-    { Parser::Nonterminal::atom, 1, "atom <- '^'" },
-    { Parser::Nonterminal::atom, 1, "atom <- '$'" },
-    { Parser::Nonterminal::atom, 1, "atom <- '.'" },
-    { Parser::Nonterminal::atom, 1, "atom <- atom_normal_char" },
-    { Parser::Nonterminal::atom, 2, "atom <- '\\\\' atom_normal_char" },
-    { Parser::Nonterminal::atom, 2, "atom <- '\\\\' atom_control_char" },
-    { Parser::Nonterminal::atom, 1, "atom <- HEX_CHAR" },
-    { Parser::Nonterminal::atom, 1, "atom <- bracket_expression" },
-    { Parser::Nonterminal::bound, 1, "bound <- '*'" },
-    { Parser::Nonterminal::bound, 1, "bound <- '+'" },
-    { Parser::Nonterminal::bound, 1, "bound <- '?'" },
-    { Parser::Nonterminal::bound, 3, "bound <- '{' integer '}'" },
-    { Parser::Nonterminal::bound, 4, "bound <- '{' integer ',' '}'" },
-    { Parser::Nonterminal::bound, 5, "bound <- '{' integer ',' integer '}'" },
-    { Parser::Nonterminal::bracket_expression, 3, "bracket_expression <- '[' bracket_char_set ']'" },
-    { Parser::Nonterminal::bracket_expression, 4, "bracket_expression <- '[' '^' bracket_char_set ']'" },
-    { Parser::Nonterminal::bracket_char_set, 2, "bracket_char_set <- bracket_char_set bracket_expression_char" },
-    { Parser::Nonterminal::bracket_char_set, 4, "bracket_char_set <- bracket_char_set bracket_expression_char '-' bracket_expression_char" },
-    { Parser::Nonterminal::bracket_char_set, 6, "bracket_char_set <- bracket_char_set '[' ':' id ':' ']'" },
-    { Parser::Nonterminal::bracket_char_set, 0, "bracket_char_set <-" },
-    { Parser::Nonterminal::bracket_expression_char, 1, "bracket_expression_char <- bracket_expression_normal_char" },
-    { Parser::Nonterminal::bracket_expression_char, 2, "bracket_expression_char <- '\\\\' bracket_expression_normal_char" },
-    { Parser::Nonterminal::bracket_expression_char, 2, "bracket_expression_char <- '\\\\' bracket_expression_control_char" },
-    { Parser::Nonterminal::bracket_expression_char, 1, "bracket_expression_char <- HEX_CHAR" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '|'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '('" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- ')'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '{'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '}'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '['" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- ']'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '?'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '*'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '+'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '.'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '^'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '$'" },
-    { Parser::Nonterminal::atom_control_char, 1, "atom_control_char <- '\\\\'" },
-    { Parser::Nonterminal::atom_normal_char, 1, "atom_normal_char <- ALPHA" },
-    { Parser::Nonterminal::atom_normal_char, 1, "atom_normal_char <- DIGIT" },
-    { Parser::Nonterminal::atom_normal_char, 1, "atom_normal_char <- CHAR" },
-    { Parser::Nonterminal::atom_normal_char, 1, "atom_normal_char <- ','" },
-    { Parser::Nonterminal::atom_normal_char, 1, "atom_normal_char <- '-'" },
-    { Parser::Nonterminal::atom_normal_char, 1, "atom_normal_char <- ':'" },
-    { Parser::Nonterminal::bracket_expression_control_char, 1, "bracket_expression_control_char <- '-'" },
-    { Parser::Nonterminal::bracket_expression_control_char, 1, "bracket_expression_control_char <- '^'" },
-    { Parser::Nonterminal::bracket_expression_control_char, 1, "bracket_expression_control_char <- '['" },
-    { Parser::Nonterminal::bracket_expression_control_char, 1, "bracket_expression_control_char <- ']'" },
-    { Parser::Nonterminal::bracket_expression_control_char, 1, "bracket_expression_control_char <- '\\\\'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- ALPHA" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- DIGIT" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- CHAR" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '|'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- ':'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '?'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '*'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '+'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '.'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '$'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- ','" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '('" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- ')'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '{'" },
-    { Parser::Nonterminal::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '}'" },
-    { Parser::Nonterminal::id, 2, "id <- id ALPHA" },
-    { Parser::Nonterminal::id, 2, "id <- id CHAR" },
-    { Parser::Nonterminal::id, 2, "id <- id DIGIT" },
-    { Parser::Nonterminal::id, 1, "id <- ALPHA" },
-    { Parser::Nonterminal::id, 1, "id <- CHAR" },
-    { Parser::Nonterminal::integer, 2, "integer <- integer DIGIT" },
-    { Parser::Nonterminal::integer, 1, "integer <- DIGIT" }
-};
-std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
-
-char const *const Parser::ms_token_name_table_[] =
-{
-    "'\\0'",
-    "'\\x01'",
-    "'\\x02'",
-    "'\\x03'",
-    "'\\x04'",
-    "'\\x05'",
-    "'\\x06'",
-    "'\\a'",
-    "'\\b'",
-    "'\\t'",
-    "'\\n'",
-    "'\\v'",
-    "'\\f'",
-    "'\\r'",
-    "'\\x0E'",
-    "'\\x0F'",
-    "'\\x10'",
-    "'\\x11'",
-    "'\\x12'",
-    "'\\x13'",
-    "'\\x14'",
-    "'\\x15'",
-    "'\\x16'",
-    "'\\x17'",
-    "'\\x18'",
-    "'\\x19'",
-    "'\\x1A'",
-    "'\\x1B'",
-    "'\\x1C'",
-    "'\\x1D'",
-    "'\\x1E'",
-    "'\\x1F'",
-    "' '",
-    "'!'",
-    "'\"'",
-    "'#'",
-    "'$'",
-    "'%'",
-    "'&'",
-    "'\\''",
-    "'('",
-    "')'",
-    "'*'",
-    "'+'",
-    "','",
-    "'-'",
-    "'.'",
-    "'/'",
-    "'0'",
-    "'1'",
-    "'2'",
-    "'3'",
-    "'4'",
-    "'5'",
-    "'6'",
-    "'7'",
-    "'8'",
-    "'9'",
-    "':'",
-    "';'",
-    "'<'",
-    "'='",
-    "'>'",
-    "'?'",
-    "'@'",
-    "'A'",
-    "'B'",
-    "'C'",
-    "'D'",
-    "'E'",
-    "'F'",
-    "'G'",
-    "'H'",
-    "'I'",
-    "'J'",
-    "'K'",
-    "'L'",
-    "'M'",
-    "'N'",
-    "'O'",
-    "'P'",
-    "'Q'",
-    "'R'",
-    "'S'",
-    "'T'",
-    "'U'",
-    "'V'",
-    "'W'",
-    "'X'",
-    "'Y'",
-    "'Z'",
-    "'['",
-    "'\\\\'",
-    "']'",
-    "'^'",
-    "'_'",
-    "'`'",
-    "'a'",
-    "'b'",
-    "'c'",
-    "'d'",
-    "'e'",
-    "'f'",
-    "'g'",
-    "'h'",
-    "'i'",
-    "'j'",
-    "'k'",
-    "'l'",
-    "'m'",
-    "'n'",
-    "'o'",
-    "'p'",
-    "'q'",
-    "'r'",
-    "'s'",
-    "'t'",
-    "'u'",
-    "'v'",
-    "'w'",
-    "'x'",
-    "'y'",
-    "'z'",
-    "'{'",
-    "'|'",
-    "'}'",
-    "'~'",
-    "'\\x7F'",
-    "'\\x80'",
-    "'\\x81'",
-    "'\\x82'",
-    "'\\x83'",
-    "'\\x84'",
-    "'\\x85'",
-    "'\\x86'",
-    "'\\x87'",
-    "'\\x88'",
-    "'\\x89'",
-    "'\\x8A'",
-    "'\\x8B'",
-    "'\\x8C'",
-    "'\\x8D'",
-    "'\\x8E'",
-    "'\\x8F'",
-    "'\\x90'",
-    "'\\x91'",
-    "'\\x92'",
-    "'\\x93'",
-    "'\\x94'",
-    "'\\x95'",
-    "'\\x96'",
-    "'\\x97'",
-    "'\\x98'",
-    "'\\x99'",
-    "'\\x9A'",
-    "'\\x9B'",
-    "'\\x9C'",
-    "'\\x9D'",
-    "'\\x9E'",
-    "'\\x9F'",
-    "'\\xA0'",
-    "'\\xA1'",
-    "'\\xA2'",
-    "'\\xA3'",
-    "'\\xA4'",
-    "'\\xA5'",
-    "'\\xA6'",
-    "'\\xA7'",
-    "'\\xA8'",
-    "'\\xA9'",
-    "'\\xAA'",
-    "'\\xAB'",
-    "'\\xAC'",
-    "'\\xAD'",
-    "'\\xAE'",
-    "'\\xAF'",
-    "'\\xB0'",
-    "'\\xB1'",
-    "'\\xB2'",
-    "'\\xB3'",
-    "'\\xB4'",
-    "'\\xB5'",
-    "'\\xB6'",
-    "'\\xB7'",
-    "'\\xB8'",
-    "'\\xB9'",
-    "'\\xBA'",
-    "'\\xBB'",
-    "'\\xBC'",
-    "'\\xBD'",
-    "'\\xBE'",
-    "'\\xBF'",
-    "'\\xC0'",
-    "'\\xC1'",
-    "'\\xC2'",
-    "'\\xC3'",
-    "'\\xC4'",
-    "'\\xC5'",
-    "'\\xC6'",
-    "'\\xC7'",
-    "'\\xC8'",
-    "'\\xC9'",
-    "'\\xCA'",
-    "'\\xCB'",
-    "'\\xCC'",
-    "'\\xCD'",
-    "'\\xCE'",
-    "'\\xCF'",
-    "'\\xD0'",
-    "'\\xD1'",
-    "'\\xD2'",
-    "'\\xD3'",
-    "'\\xD4'",
-    "'\\xD5'",
-    "'\\xD6'",
-    "'\\xD7'",
-    "'\\xD8'",
-    "'\\xD9'",
-    "'\\xDA'",
-    "'\\xDB'",
-    "'\\xDC'",
-    "'\\xDD'",
-    "'\\xDE'",
-    "'\\xDF'",
-    "'\\xE0'",
-    "'\\xE1'",
-    "'\\xE2'",
-    "'\\xE3'",
-    "'\\xE4'",
-    "'\\xE5'",
-    "'\\xE6'",
-    "'\\xE7'",
-    "'\\xE8'",
-    "'\\xE9'",
-    "'\\xEA'",
-    "'\\xEB'",
-    "'\\xEC'",
-    "'\\xED'",
-    "'\\xEE'",
-    "'\\xEF'",
-    "'\\xF0'",
-    "'\\xF1'",
-    "'\\xF2'",
-    "'\\xF3'",
-    "'\\xF4'",
-    "'\\xF5'",
-    "'\\xF6'",
-    "'\\xF7'",
-    "'\\xF8'",
-    "'\\xF9'",
-    "'\\xFA'",
-    "'\\xFB'",
-    "'\\xFC'",
-    "'\\xFD'",
-    "'\\xFE'",
-    "'\\xFF'",
-    "END_",
-    "ERROR_",
-    "BAD_TOKEN",
-    "ALPHA",
-    "CHAR",
-    "DIGIT",
-    "HEX_CHAR",
-    "regex",
-    "branch",
-    "branch_which_didnt_just_accept_an_atom",
-    "branch_which_just_accepted_an_atom",
-    "atom",
-    "bound",
-    "bracket_expression",
-    "bracket_char_set",
-    "bracket_expression_char",
-    "atom_control_char",
-    "atom_normal_char",
-    "bracket_expression_control_char",
-    "bracket_expression_normal_char",
-    "id",
-    "integer"
-};
-std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
-
-
-std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
-{
-    switch (nonterminal)
-    {
-        case Nonterminal::atom: return 111;
-        case Nonterminal::atom_control_char: return 122;
-        case Nonterminal::atom_normal_char: return 124;
-        case Nonterminal::bound: return 113;
-        case Nonterminal::bracket_char_set: return 118;
-        case Nonterminal::bracket_expression: return 116;
-        case Nonterminal::bracket_expression_char: return 120;
-        case Nonterminal::bracket_expression_control_char: return 126;
-        case Nonterminal::bracket_expression_normal_char: return 128;
-        case Nonterminal::branch: return 103;
-        case Nonterminal::branch_which_didnt_just_accept_an_atom: return 105;
-        case Nonterminal::branch_which_just_accepted_an_atom: return 108;
-        case Nonterminal::id: return 130;
-        case Nonterminal::integer: return 132;
-        case Nonterminal::regex: return 0;
-        default: assert(false && "invalid nonterminal"); return 0;
-    }
-}
-
-Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
+Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
 {
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 540 "barf_regex_parser.cpp"
+#line 114 "barf_regex_parser.cpp"
  << " starting parse" << std::endl)
 
     ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
@@ -557,8 +131,24 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
     m_is_in_error_panic_ = false;
 
     // push the initial state of the DPDA.
-    std::uint32_t nonterminal_start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
-    m_stack_.push_back(StackElement_(nonterminal_start_state_index, Token(Nonterminal::none_, NULL)));
+    assert((false
+           || nonterminal_to_parse == ParseNonterminal::atom
+           || nonterminal_to_parse == ParseNonterminal::atom_control_char
+           || nonterminal_to_parse == ParseNonterminal::atom_normal_char
+           || nonterminal_to_parse == ParseNonterminal::bound
+           || nonterminal_to_parse == ParseNonterminal::bracket_char_set
+           || nonterminal_to_parse == ParseNonterminal::bracket_expression
+           || nonterminal_to_parse == ParseNonterminal::bracket_expression_char
+           || nonterminal_to_parse == ParseNonterminal::bracket_expression_control_char
+           || nonterminal_to_parse == ParseNonterminal::bracket_expression_normal_char
+           || nonterminal_to_parse == ParseNonterminal::branch
+           || nonterminal_to_parse == ParseNonterminal::branch_which_didnt_just_accept_an_atom
+           || nonterminal_to_parse == ParseNonterminal::branch_which_just_accepted_an_atom
+           || nonterminal_to_parse == ParseNonterminal::id
+           || nonterminal_to_parse == ParseNonterminal::integer
+           || nonterminal_to_parse == ParseNonterminal::regex
+           ) && "invalid nonterminal_to_parse");
+    m_stack_.push_back(StackElement_(nonterminal_to_parse, Token(Nonterminal_::none_, NULL)));
     // main parser loop
     while (true)
     {
@@ -567,7 +157,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 571 "barf_regex_parser.cpp"
+#line 161 "barf_regex_parser.cpp"
  << " begin error panic" << std::endl)
 
             while (true)
@@ -599,7 +189,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 603 "barf_regex_parser.cpp"
+#line 193 "barf_regex_parser.cpp"
  << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
                     // if the current state accepts error, then we check if the lookahead token
                     // is Terminal::END_.  if it is, then we add a dummy Terminal::ERROR_ token
@@ -612,7 +202,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 616 "barf_regex_parser.cpp"
+#line 206 "barf_regex_parser.cpp"
  << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
                         m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
                     }
@@ -630,7 +220,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 634 "barf_regex_parser.cpp"
+#line 224 "barf_regex_parser.cpp"
  << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
                     }
                     else
@@ -638,7 +228,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 642 "barf_regex_parser.cpp"
+#line 232 "barf_regex_parser.cpp"
  << " end error panic; abort (stack is empty)" << std::endl)
                     }
                     // otherwise throw away the data at the top of the stack, and pop the stack.
@@ -677,7 +267,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 681 "barf_regex_parser.cpp"
+#line 271 "barf_regex_parser.cpp"
  << " current transitions:" << std::endl)
             for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
                                    *transition_end = current_state.m_transition_table+current_state.m_transition_count;
@@ -698,7 +288,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 702 "barf_regex_parser.cpp"
+#line 292 "barf_regex_parser.cpp"
  << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
                 for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
                 {
@@ -723,7 +313,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 727 "barf_regex_parser.cpp"
+#line 317 "barf_regex_parser.cpp"
  << " currently usable lookahead(s):")
                     for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
                     {
@@ -743,7 +333,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 747 "barf_regex_parser.cpp"
+#line 337 "barf_regex_parser.cpp"
  << " currently usable lookahead(s):")
                 for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
                 {
@@ -754,7 +344,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                 TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 758 "barf_regex_parser.cpp"
+#line 348 "barf_regex_parser.cpp"
  << " exercising default transition" << std::endl)
                 // exercise the default transition.  a return value of true indicates
                 // that the parser should return.
@@ -763,7 +353,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
                     // the token (data) on the top of the stack is the return token.
                     // set parser_return_code_ and assign the top stack token data to
                     // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == nonterminal_start_state_index);
+                    assert(m_stack_[0].m_state_index == std::uint32_t(nonterminal_to_parse));
                     assert(m_stack_.size() == 2);
                     parser_return_code_ = PRC_SUCCESS;
                     *return_token = m_stack_.back().m_token.m_data;
@@ -800,12 +390,12 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 804 "barf_regex_parser.cpp"
+#line 394 "barf_regex_parser.cpp"
  << " Parse() is returning PRC_SUCCESS" << std::endl)
     TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 809 "barf_regex_parser.cpp"
+#line 399 "barf_regex_parser.cpp"
  << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
 
     return parser_return_code_;
@@ -816,7 +406,7 @@ void Parser::ThrowAwayToken_ (Token &token_) throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 820 "barf_regex_parser.cpp"
+#line 410 "barf_regex_parser.cpp"
  << " executing throw-away-token actions on token " << token_ << std::endl)
 
     ThrowAwayTokenData_(token_.m_data);
@@ -827,7 +417,7 @@ void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 831 "barf_regex_parser.cpp"
+#line 421 "barf_regex_parser.cpp"
  << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
 
     ThrowAwayTokenData_(stack_element_.m_token.m_data);
@@ -840,7 +430,7 @@ void Parser::ThrowAwayTokenData_ (Ast::Base * &token_data) throw()
 
     delete token_data;
 
-#line 844 "barf_regex_parser.cpp"
+#line 434 "barf_regex_parser.cpp"
 }
 
 Parser::Token Parser::Scan_ ()
@@ -848,7 +438,7 @@ Parser::Token Parser::Scan_ ()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 852 "barf_regex_parser.cpp"
+#line 442 "barf_regex_parser.cpp"
  << " executing scan actions" << std::endl)
 
 
@@ -981,7 +571,7 @@ Parser::Token Parser::Scan_ ()
         }
     }
 
-#line 985 "barf_regex_parser.cpp"
+#line 575 "barf_regex_parser.cpp"
 }
 
 void Parser::ClearStack_ () throw()
@@ -992,7 +582,7 @@ void Parser::ClearStack_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 996 "barf_regex_parser.cpp"
+#line 586 "barf_regex_parser.cpp"
  << " clearing the stack" << std::endl)
 
     Stack_::iterator it = m_stack_.begin();
@@ -1010,7 +600,7 @@ void Parser::ClearLookaheadQueue_ () throw()
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1014 "barf_regex_parser.cpp"
+#line 604 "barf_regex_parser.cpp"
  << " clearing the lookahead queue" << std::endl)
 
     for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
@@ -1027,7 +617,7 @@ Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index)
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1031 "barf_regex_parser.cpp"
+#line 621 "barf_regex_parser.cpp"
  << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
     }
     return m_lookahead_queue_[index];
@@ -1047,7 +637,7 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1051 "barf_regex_parser.cpp"
+#line 641 "barf_regex_parser.cpp"
  << " REDUCE " << rule.m_description << std::endl)
             assert(m_stack_.size() > rule.m_token_count);
             m_lookahead_queue_.push_front(
@@ -1059,12 +649,12 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1063 "barf_regex_parser.cpp"
+#line 653 "barf_regex_parser.cpp"
  << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1068 "barf_regex_parser.cpp"
+#line 658 "barf_regex_parser.cpp"
  << std::endl)
             return false; // indicating the parser isn't returning
         }
@@ -1073,12 +663,12 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1077 "barf_regex_parser.cpp"
+#line 667 "barf_regex_parser.cpp"
  << " RETURN" << std::endl)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1082 "barf_regex_parser.cpp"
+#line 672 "barf_regex_parser.cpp"
  << std::endl)
             return true; // indicating the parser is returning
 
@@ -1091,12 +681,12 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1095 "barf_regex_parser.cpp"
+#line 685 "barf_regex_parser.cpp"
  << " SHIFT " << Lookahead_(0) << std::endl)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1100 "barf_regex_parser.cpp"
+#line 690 "barf_regex_parser.cpp"
  << std::endl)
             m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
             m_lookahead_queue_.pop_front();
@@ -1106,12 +696,12 @@ bool Parser::ExerciseTransition_ (Transition_ const &transition)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1110 "barf_regex_parser.cpp"
+#line 700 "barf_regex_parser.cpp"
  << " ERROR_PANIC" << std::endl)
             TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1115 "barf_regex_parser.cpp"
+#line 705 "barf_regex_parser.cpp"
  << std::endl)
             m_is_in_error_panic_ = true;
             return false; // indicating the parser isn't returning
@@ -1128,7 +718,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
     TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1132 "barf_regex_parser.cpp"
+#line 722 "barf_regex_parser.cpp"
  << " executing reduction rule " << rule_index_ << std::endl)
     switch (rule_index_)
     {
@@ -1151,7 +741,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1155 "barf_regex_parser.cpp"
+#line 745 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1166,7 +756,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1170 "barf_regex_parser.cpp"
+#line 760 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1177,7 +767,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 355 "barf_regex_parser.trison"
  return branch; 
-#line 1181 "barf_regex_parser.cpp"
+#line 771 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1188,7 +778,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 356 "barf_regex_parser.trison"
  return branch; 
-#line 1192 "barf_regex_parser.cpp"
+#line 782 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1198,7 +788,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 357 "barf_regex_parser.trison"
  return new Branch(); 
-#line 1202 "barf_regex_parser.cpp"
+#line 792 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1213,7 +803,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddBound(bound);
         return branch;
     
-#line 1217 "barf_regex_parser.cpp"
+#line 807 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1228,7 +818,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddAtom(atom);
         return branch;
     
-#line 1232 "barf_regex_parser.cpp"
+#line 822 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1243,7 +833,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddAtom(atom);
         return branch;
     
-#line 1247 "barf_regex_parser.cpp"
+#line 837 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1258,7 +848,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddAtom(atom);
         return branch;
     
-#line 1262 "barf_regex_parser.cpp"
+#line 852 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1277,7 +867,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             THROW_STRING("undefined macro \"" + macro_name->GetText() + "\"");
         return macro_regex;
     
-#line 1281 "barf_regex_parser.cpp"
+#line 871 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1288,7 +878,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 407 "barf_regex_parser.trison"
  return regex; 
-#line 1292 "barf_regex_parser.cpp"
+#line 882 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1298,7 +888,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 408 "barf_regex_parser.trison"
  return new RegularExpression(); 
-#line 1302 "barf_regex_parser.cpp"
+#line 892 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1308,7 +898,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 409 "barf_regex_parser.trison"
  return new ConditionalChar(CT_BEGINNING_OF_LINE); 
-#line 1312 "barf_regex_parser.cpp"
+#line 902 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1318,7 +908,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 410 "barf_regex_parser.trison"
  return new ConditionalChar(CT_END_OF_LINE); 
-#line 1322 "barf_regex_parser.cpp"
+#line 912 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1328,7 +918,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 411 "barf_regex_parser.trison"
  return new BracketCharSet('\n', true); 
-#line 1332 "barf_regex_parser.cpp"
+#line 922 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1339,7 +929,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 412 "barf_regex_parser.trison"
  return ch; 
-#line 1343 "barf_regex_parser.cpp"
+#line 933 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1358,7 +948,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             delete ch;
         return escaped;
     
-#line 1362 "barf_regex_parser.cpp"
+#line 952 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1369,7 +959,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 423 "barf_regex_parser.trison"
  return ch; 
-#line 1373 "barf_regex_parser.cpp"
+#line 963 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1380,7 +970,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 424 "barf_regex_parser.trison"
  return ch; 
-#line 1384 "barf_regex_parser.cpp"
+#line 974 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1391,7 +981,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 425 "barf_regex_parser.trison"
  return exp; 
-#line 1395 "barf_regex_parser.cpp"
+#line 985 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1401,7 +991,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 430 "barf_regex_parser.trison"
  return new Bound(0, Bound::NO_UPPER_BOUND); 
-#line 1405 "barf_regex_parser.cpp"
+#line 995 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1411,7 +1001,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 432 "barf_regex_parser.trison"
  return new Bound(1, Bound::NO_UPPER_BOUND); 
-#line 1415 "barf_regex_parser.cpp"
+#line 1005 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1421,7 +1011,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 434 "barf_regex_parser.trison"
  return new Bound(0, 1); 
-#line 1425 "barf_regex_parser.cpp"
+#line 1015 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1437,7 +1027,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete exact_bound;
         return bound;
     
-#line 1441 "barf_regex_parser.cpp"
+#line 1031 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1451,7 +1041,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         assert(lower_bound->Value() >= 0);
         return new Bound(lower_bound->Value(), Bound::NO_UPPER_BOUND);
     
-#line 1455 "barf_regex_parser.cpp"
+#line 1045 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1489,7 +1079,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete upper_bound;
         return bound;
     
-#line 1493 "barf_regex_parser.cpp"
+#line 1083 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1504,7 +1094,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             THROW_STRING("invalid empty bracket expression");
         return bracket_char_set;
     
-#line 1508 "barf_regex_parser.cpp"
+#line 1098 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1520,7 +1110,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         bracket_char_set->Negate();
         return bracket_char_set;
     
-#line 1524 "barf_regex_parser.cpp"
+#line 1114 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1536,7 +1126,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return bracket_char_set;
     
-#line 1540 "barf_regex_parser.cpp"
+#line 1130 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1558,7 +1148,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete end_range;
         return bracket_char_set;
     
-#line 1562 "barf_regex_parser.cpp"
+#line 1152 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1574,7 +1164,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete id;
         return bracket_char_set;
     
-#line 1578 "barf_regex_parser.cpp"
+#line 1168 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1587,7 +1177,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         BracketCharSet *bracket_char_set = new BracketCharSet();
         return bracket_char_set;
     
-#line 1591 "barf_regex_parser.cpp"
+#line 1181 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1598,7 +1188,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 539 "barf_regex_parser.trison"
  return normal_char; 
-#line 1602 "barf_regex_parser.cpp"
+#line 1192 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1609,7 +1199,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 541 "barf_regex_parser.trison"
  normal_char->EscapeInsideBracketExpression(); return normal_char; 
-#line 1613 "barf_regex_parser.cpp"
+#line 1203 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1620,7 +1210,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 543 "barf_regex_parser.trison"
  return control_char; 
-#line 1624 "barf_regex_parser.cpp"
+#line 1214 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1631,7 +1221,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 545 "barf_regex_parser.trison"
  return hex_char; 
-#line 1635 "barf_regex_parser.cpp"
+#line 1225 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1641,7 +1231,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 562 "barf_regex_parser.trison"
  return new Char('|'); 
-#line 1645 "barf_regex_parser.cpp"
+#line 1235 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1651,7 +1241,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 564 "barf_regex_parser.trison"
  return new Char('('); 
-#line 1655 "barf_regex_parser.cpp"
+#line 1245 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1661,7 +1251,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 566 "barf_regex_parser.trison"
  return new Char(')'); 
-#line 1665 "barf_regex_parser.cpp"
+#line 1255 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1671,7 +1261,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 568 "barf_regex_parser.trison"
  return new Char('{'); 
-#line 1675 "barf_regex_parser.cpp"
+#line 1265 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1681,7 +1271,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 570 "barf_regex_parser.trison"
  return new Char('}'); 
-#line 1685 "barf_regex_parser.cpp"
+#line 1275 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1691,7 +1281,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 572 "barf_regex_parser.trison"
  return new Char('['); 
-#line 1695 "barf_regex_parser.cpp"
+#line 1285 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1701,7 +1291,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 574 "barf_regex_parser.trison"
  return new Char(']'); 
-#line 1705 "barf_regex_parser.cpp"
+#line 1295 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1711,7 +1301,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 576 "barf_regex_parser.trison"
  return new Char('?'); 
-#line 1715 "barf_regex_parser.cpp"
+#line 1305 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1721,7 +1311,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 578 "barf_regex_parser.trison"
  return new Char('*'); 
-#line 1725 "barf_regex_parser.cpp"
+#line 1315 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1731,7 +1321,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 580 "barf_regex_parser.trison"
  return new Char('+'); 
-#line 1735 "barf_regex_parser.cpp"
+#line 1325 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1741,7 +1331,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 582 "barf_regex_parser.trison"
  return new Char('.'); 
-#line 1745 "barf_regex_parser.cpp"
+#line 1335 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1751,7 +1341,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 584 "barf_regex_parser.trison"
  return new Char('^'); 
-#line 1755 "barf_regex_parser.cpp"
+#line 1345 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1761,7 +1351,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 586 "barf_regex_parser.trison"
  return new Char('$'); 
-#line 1765 "barf_regex_parser.cpp"
+#line 1355 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1771,7 +1361,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 588 "barf_regex_parser.trison"
  return new Char('\\'); 
-#line 1775 "barf_regex_parser.cpp"
+#line 1365 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1782,7 +1372,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 600 "barf_regex_parser.trison"
  return alpha; 
-#line 1786 "barf_regex_parser.cpp"
+#line 1376 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1793,7 +1383,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 601 "barf_regex_parser.trison"
  return digit; 
-#line 1797 "barf_regex_parser.cpp"
+#line 1387 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1804,7 +1394,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 602 "barf_regex_parser.trison"
  return ch; 
-#line 1808 "barf_regex_parser.cpp"
+#line 1398 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1814,7 +1404,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 603 "barf_regex_parser.trison"
  return new Char(','); 
-#line 1818 "barf_regex_parser.cpp"
+#line 1408 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1824,7 +1414,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 604 "barf_regex_parser.trison"
  return new Char('-'); 
-#line 1828 "barf_regex_parser.cpp"
+#line 1418 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1834,7 +1424,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 605 "barf_regex_parser.trison"
  return new Char(':'); 
-#line 1838 "barf_regex_parser.cpp"
+#line 1428 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1844,7 +1434,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 618 "barf_regex_parser.trison"
  return new Char('-'); 
-#line 1848 "barf_regex_parser.cpp"
+#line 1438 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1854,7 +1444,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 620 "barf_regex_parser.trison"
  return new Char('^'); 
-#line 1858 "barf_regex_parser.cpp"
+#line 1448 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1864,7 +1454,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 622 "barf_regex_parser.trison"
  return new Char('['); 
-#line 1868 "barf_regex_parser.cpp"
+#line 1458 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1874,7 +1464,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 624 "barf_regex_parser.trison"
  return new Char(']'); 
-#line 1878 "barf_regex_parser.cpp"
+#line 1468 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1884,7 +1474,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 626 "barf_regex_parser.trison"
  return new Char('\\'); 
-#line 1888 "barf_regex_parser.cpp"
+#line 1478 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1895,7 +1485,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 638 "barf_regex_parser.trison"
  return alpha; 
-#line 1899 "barf_regex_parser.cpp"
+#line 1489 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1906,7 +1496,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 639 "barf_regex_parser.trison"
  return digit; 
-#line 1910 "barf_regex_parser.cpp"
+#line 1500 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1917,7 +1507,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 640 "barf_regex_parser.trison"
  return ch; 
-#line 1921 "barf_regex_parser.cpp"
+#line 1511 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1927,7 +1517,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 641 "barf_regex_parser.trison"
  return new Char('|'); 
-#line 1931 "barf_regex_parser.cpp"
+#line 1521 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1937,7 +1527,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 642 "barf_regex_parser.trison"
  return new Char(':'); 
-#line 1941 "barf_regex_parser.cpp"
+#line 1531 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1947,7 +1537,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 643 "barf_regex_parser.trison"
  return new Char('?'); 
-#line 1951 "barf_regex_parser.cpp"
+#line 1541 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1957,7 +1547,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 644 "barf_regex_parser.trison"
  return new Char('*'); 
-#line 1961 "barf_regex_parser.cpp"
+#line 1551 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1967,7 +1557,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 645 "barf_regex_parser.trison"
  return new Char('+'); 
-#line 1971 "barf_regex_parser.cpp"
+#line 1561 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1977,7 +1567,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 646 "barf_regex_parser.trison"
  return new Char('.'); 
-#line 1981 "barf_regex_parser.cpp"
+#line 1571 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1987,7 +1577,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 647 "barf_regex_parser.trison"
  return new Char('$'); 
-#line 1991 "barf_regex_parser.cpp"
+#line 1581 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1997,7 +1587,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 648 "barf_regex_parser.trison"
  return new Char(','); 
-#line 2001 "barf_regex_parser.cpp"
+#line 1591 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2007,7 +1597,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 649 "barf_regex_parser.trison"
  return new Char('('); 
-#line 2011 "barf_regex_parser.cpp"
+#line 1601 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2017,7 +1607,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 650 "barf_regex_parser.trison"
  return new Char(')'); 
-#line 2021 "barf_regex_parser.cpp"
+#line 1611 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2027,7 +1617,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 651 "barf_regex_parser.trison"
  return new Char('{'); 
-#line 2031 "barf_regex_parser.cpp"
+#line 1621 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2037,7 +1627,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 652 "barf_regex_parser.trison"
  return new Char('}'); 
-#line 2041 "barf_regex_parser.cpp"
+#line 1631 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2054,7 +1644,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete alpha;
         return id;
     
-#line 2058 "barf_regex_parser.cpp"
+#line 1648 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2071,7 +1661,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return id;
     
-#line 2075 "barf_regex_parser.cpp"
+#line 1665 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2088,7 +1678,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return id;
     
-#line 2092 "barf_regex_parser.cpp"
+#line 1682 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2105,7 +1695,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete alpha;
         return id;
     
-#line 2109 "barf_regex_parser.cpp"
+#line 1699 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2122,7 +1712,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return id;
     
-#line 2126 "barf_regex_parser.cpp"
+#line 1716 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2140,7 +1730,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return integer;
     
-#line 2144 "barf_regex_parser.cpp"
+#line 1734 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2155,7 +1745,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return integer;
     
-#line 2159 "barf_regex_parser.cpp"
+#line 1749 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2172,7 +1762,7 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2176 "barf_regex_parser.cpp"
+#line 1766 "barf_regex_parser.cpp"
  << " parser state stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -2184,15 +1774,15 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << std::endl;
 
     assert(m_stack_.size() >= 1);
-    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal::none_));
+    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal_::none_));
     stream << 
 #line 290 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2192 "barf_regex_parser.cpp"
+#line 1782 "barf_regex_parser.cpp"
  << " parser stack tokens . lookahead queue: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
-        // the first token is always Nonterminal::none_, which doesn't correspond to a real token, so skip it.
+        // the first token is always Nonterminal_::none_, which doesn't correspond to a real token, so skip it.
         if (it == m_stack_.begin())
             continue;
         stream << it->m_token << ' ';
@@ -2209,6 +1799,125 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
     stream << std::endl;
 }
+
+void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
+{
+    assert(string != NULL);
+    stream << 
+#line 290 "barf_regex_parser.trison"
+"Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1810 "barf_regex_parser.cpp"
+ << "    ";
+    while (*string != '\0')
+    {
+        if (*string == '\n')
+            stream << '\n' << 
+#line 290 "barf_regex_parser.trison"
+"Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1818 "barf_regex_parser.cpp"
+ << "    ";
+        else
+            stream << *string;
+        ++string;
+    }
+}
+
+std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
+{
+    if (token.m_id < Parser::ms_token_name_count_)
+        stream << Parser::ms_token_name_table_[token.m_id];
+    else
+        stream << "!INVALID TOKEN!";
+    return stream;
+}
+
+Parser::Rule_ const Parser::ms_rule_table_[] =
+{
+    { Parser::Nonterminal_::regex, 3, "regex <- regex '|' branch" },
+    { Parser::Nonterminal_::regex, 1, "regex <- branch" },
+    { Parser::Nonterminal_::branch, 1, "branch <- branch_which_didnt_just_accept_an_atom" },
+    { Parser::Nonterminal_::branch, 1, "branch <- branch_which_just_accepted_an_atom" },
+    { Parser::Nonterminal_::branch, 0, "branch <-" },
+    { Parser::Nonterminal_::branch_which_didnt_just_accept_an_atom, 2, "branch_which_didnt_just_accept_an_atom <- branch_which_just_accepted_an_atom bound" },
+    { Parser::Nonterminal_::branch_which_just_accepted_an_atom, 2, "branch_which_just_accepted_an_atom <- branch_which_just_accepted_an_atom atom" },
+    { Parser::Nonterminal_::branch_which_just_accepted_an_atom, 2, "branch_which_just_accepted_an_atom <- branch_which_didnt_just_accept_an_atom atom" },
+    { Parser::Nonterminal_::branch_which_just_accepted_an_atom, 1, "branch_which_just_accepted_an_atom <- atom" },
+    { Parser::Nonterminal_::atom, 3, "atom <- '{' id '}'" },
+    { Parser::Nonterminal_::atom, 3, "atom <- '(' regex ')'" },
+    { Parser::Nonterminal_::atom, 2, "atom <- '(' ')'" },
+    { Parser::Nonterminal_::atom, 1, "atom <- '^'" },
+    { Parser::Nonterminal_::atom, 1, "atom <- '$'" },
+    { Parser::Nonterminal_::atom, 1, "atom <- '.'" },
+    { Parser::Nonterminal_::atom, 1, "atom <- atom_normal_char" },
+    { Parser::Nonterminal_::atom, 2, "atom <- '\\\\' atom_normal_char" },
+    { Parser::Nonterminal_::atom, 2, "atom <- '\\\\' atom_control_char" },
+    { Parser::Nonterminal_::atom, 1, "atom <- HEX_CHAR" },
+    { Parser::Nonterminal_::atom, 1, "atom <- bracket_expression" },
+    { Parser::Nonterminal_::bound, 1, "bound <- '*'" },
+    { Parser::Nonterminal_::bound, 1, "bound <- '+'" },
+    { Parser::Nonterminal_::bound, 1, "bound <- '?'" },
+    { Parser::Nonterminal_::bound, 3, "bound <- '{' integer '}'" },
+    { Parser::Nonterminal_::bound, 4, "bound <- '{' integer ',' '}'" },
+    { Parser::Nonterminal_::bound, 5, "bound <- '{' integer ',' integer '}'" },
+    { Parser::Nonterminal_::bracket_expression, 3, "bracket_expression <- '[' bracket_char_set ']'" },
+    { Parser::Nonterminal_::bracket_expression, 4, "bracket_expression <- '[' '^' bracket_char_set ']'" },
+    { Parser::Nonterminal_::bracket_char_set, 2, "bracket_char_set <- bracket_char_set bracket_expression_char" },
+    { Parser::Nonterminal_::bracket_char_set, 4, "bracket_char_set <- bracket_char_set bracket_expression_char '-' bracket_expression_char" },
+    { Parser::Nonterminal_::bracket_char_set, 6, "bracket_char_set <- bracket_char_set '[' ':' id ':' ']'" },
+    { Parser::Nonterminal_::bracket_char_set, 0, "bracket_char_set <-" },
+    { Parser::Nonterminal_::bracket_expression_char, 1, "bracket_expression_char <- bracket_expression_normal_char" },
+    { Parser::Nonterminal_::bracket_expression_char, 2, "bracket_expression_char <- '\\\\' bracket_expression_normal_char" },
+    { Parser::Nonterminal_::bracket_expression_char, 2, "bracket_expression_char <- '\\\\' bracket_expression_control_char" },
+    { Parser::Nonterminal_::bracket_expression_char, 1, "bracket_expression_char <- HEX_CHAR" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '|'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '('" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- ')'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '{'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '}'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '['" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- ']'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '?'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '*'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '+'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '.'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '^'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '$'" },
+    { Parser::Nonterminal_::atom_control_char, 1, "atom_control_char <- '\\\\'" },
+    { Parser::Nonterminal_::atom_normal_char, 1, "atom_normal_char <- ALPHA" },
+    { Parser::Nonterminal_::atom_normal_char, 1, "atom_normal_char <- DIGIT" },
+    { Parser::Nonterminal_::atom_normal_char, 1, "atom_normal_char <- CHAR" },
+    { Parser::Nonterminal_::atom_normal_char, 1, "atom_normal_char <- ','" },
+    { Parser::Nonterminal_::atom_normal_char, 1, "atom_normal_char <- '-'" },
+    { Parser::Nonterminal_::atom_normal_char, 1, "atom_normal_char <- ':'" },
+    { Parser::Nonterminal_::bracket_expression_control_char, 1, "bracket_expression_control_char <- '-'" },
+    { Parser::Nonterminal_::bracket_expression_control_char, 1, "bracket_expression_control_char <- '^'" },
+    { Parser::Nonterminal_::bracket_expression_control_char, 1, "bracket_expression_control_char <- '['" },
+    { Parser::Nonterminal_::bracket_expression_control_char, 1, "bracket_expression_control_char <- ']'" },
+    { Parser::Nonterminal_::bracket_expression_control_char, 1, "bracket_expression_control_char <- '\\\\'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- ALPHA" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- DIGIT" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- CHAR" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '|'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- ':'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '?'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '*'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '+'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '.'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '$'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- ','" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '('" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- ')'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '{'" },
+    { Parser::Nonterminal_::bracket_expression_normal_char, 1, "bracket_expression_normal_char <- '}'" },
+    { Parser::Nonterminal_::id, 2, "id <- id ALPHA" },
+    { Parser::Nonterminal_::id, 2, "id <- id CHAR" },
+    { Parser::Nonterminal_::id, 2, "id <- id DIGIT" },
+    { Parser::Nonterminal_::id, 1, "id <- ALPHA" },
+    { Parser::Nonterminal_::id, 1, "id <- CHAR" },
+    { Parser::Nonterminal_::integer, 2, "integer <- integer DIGIT" },
+    { Parser::Nonterminal_::integer, 1, "integer <- DIGIT" }
+};
+std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
@@ -3018,13 +2727,13 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::regex,
-    Parser::Nonterminal::branch,
-    Parser::Nonterminal::branch_which_didnt_just_accept_an_atom,
-    Parser::Nonterminal::branch_which_just_accepted_an_atom,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::regex,
+    Parser::Nonterminal_::branch,
+    Parser::Nonterminal_::branch_which_didnt_just_accept_an_atom,
+    Parser::Nonterminal_::branch_which_just_accepted_an_atom,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '$',
     '(',
     ',',
@@ -3039,13 +2748,13 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::regex,
-    Parser::Nonterminal::branch,
-    Parser::Nonterminal::branch_which_didnt_just_accept_an_atom,
-    Parser::Nonterminal::branch_which_just_accepted_an_atom,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::regex,
+    Parser::Nonterminal_::branch,
+    Parser::Nonterminal_::branch_which_didnt_just_accept_an_atom,
+    Parser::Nonterminal_::branch_which_just_accepted_an_atom,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '$',
     '(',
     ',',
@@ -3060,15 +2769,15 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::branch,
-    Parser::Nonterminal::branch_which_didnt_just_accept_an_atom,
-    Parser::Nonterminal::branch_which_just_accepted_an_atom,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::branch,
+    Parser::Nonterminal_::branch_which_didnt_just_accept_an_atom,
+    Parser::Nonterminal_::branch_which_just_accepted_an_atom,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '^',
-    Parser::Nonterminal::bracket_char_set,
-    Parser::Nonterminal::bracket_char_set,
+    Parser::Nonterminal_::bracket_char_set,
+    Parser::Nonterminal_::bracket_char_set,
     '$',
     '(',
     ')',
@@ -3088,80 +2797,17 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::bracket_expression_char,
-    Parser::Nonterminal::bracket_expression_normal_char,
+    Parser::Nonterminal_::bracket_expression_char,
+    Parser::Nonterminal_::bracket_expression_normal_char,
     ':',
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
-    Parser::Nonterminal::id,
+    Parser::Nonterminal_::id,
     ':',
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     ']',
-    '$',
-    '(',
-    ')',
-    '*',
-    '+',
-    ',',
-    '-',
-    '.',
-    ':',
-    '?',
-    '[',
-    '\\',
-    ']',
-    '^',
-    '{',
-    '|',
-    '}',
-    Parser::Terminal::ALPHA,
-    Parser::Terminal::CHAR,
-    Parser::Terminal::DIGIT,
-    Parser::Nonterminal::bracket_expression_control_char,
-    Parser::Nonterminal::bracket_expression_normal_char,
-    '-',
-    '$',
-    '(',
-    ')',
-    '*',
-    '+',
-    ',',
-    '.',
-    ':',
-    '?',
-    '\\',
-    '{',
-    '|',
-    '}',
-    Parser::Terminal::ALPHA,
-    Parser::Terminal::CHAR,
-    Parser::Terminal::DIGIT,
-    Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::bracket_expression_char,
-    Parser::Nonterminal::bracket_expression_normal_char,
-    '$',
-    '(',
-    ')',
-    '*',
-    '+',
-    ',',
-    '.',
-    ':',
-    '?',
-    '[',
-    '\\',
-    ']',
-    '{',
-    '|',
-    '}',
-    Parser::Terminal::ALPHA,
-    Parser::Terminal::CHAR,
-    Parser::Terminal::DIGIT,
-    Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::bracket_expression_char,
-    Parser::Nonterminal::bracket_expression_normal_char,
     '$',
     '(',
     ')',
@@ -3182,11 +2828,74 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
-    Parser::Nonterminal::atom_control_char,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::bracket_expression_control_char,
+    Parser::Nonterminal_::bracket_expression_normal_char,
+    '-',
+    '$',
+    '(',
+    ')',
+    '*',
+    '+',
+    ',',
+    '.',
+    ':',
+    '?',
+    '\\',
+    '{',
+    '|',
+    '}',
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
-    Parser::Nonterminal::id,
+    Parser::Terminal::DIGIT,
+    Parser::Terminal::HEX_CHAR,
+    Parser::Nonterminal_::bracket_expression_char,
+    Parser::Nonterminal_::bracket_expression_normal_char,
+    '$',
+    '(',
+    ')',
+    '*',
+    '+',
+    ',',
+    '.',
+    ':',
+    '?',
+    '[',
+    '\\',
+    ']',
+    '{',
+    '|',
+    '}',
+    Parser::Terminal::ALPHA,
+    Parser::Terminal::CHAR,
+    Parser::Terminal::DIGIT,
+    Parser::Terminal::HEX_CHAR,
+    Parser::Nonterminal_::bracket_expression_char,
+    Parser::Nonterminal_::bracket_expression_normal_char,
+    '$',
+    '(',
+    ')',
+    '*',
+    '+',
+    ',',
+    '-',
+    '.',
+    ':',
+    '?',
+    '[',
+    '\\',
+    ']',
+    '^',
+    '{',
+    '|',
+    '}',
+    Parser::Terminal::ALPHA,
+    Parser::Terminal::CHAR,
+    Parser::Terminal::DIGIT,
+    Parser::Nonterminal_::atom_control_char,
+    Parser::Nonterminal_::atom_normal_char,
+    Parser::Terminal::ALPHA,
+    Parser::Terminal::CHAR,
+    Parser::Nonterminal_::id,
     '}',
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
@@ -3205,9 +2914,9 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '$',
     '(',
     '*',
@@ -3225,21 +2934,21 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bound,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bound,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
-    Parser::Nonterminal::id,
-    Parser::Nonterminal::integer,
+    Parser::Nonterminal_::id,
+    Parser::Nonterminal_::integer,
     ',',
     '}',
     Parser::Terminal::DIGIT,
     '}',
     Parser::Terminal::DIGIT,
-    Parser::Nonterminal::integer,
+    Parser::Nonterminal_::integer,
     '}',
     Parser::Terminal::DIGIT,
     ')',
@@ -3258,12 +2967,12 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::branch,
-    Parser::Nonterminal::branch_which_didnt_just_accept_an_atom,
-    Parser::Nonterminal::branch_which_just_accepted_an_atom,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::branch,
+    Parser::Nonterminal_::branch_which_didnt_just_accept_an_atom,
+    Parser::Nonterminal_::branch_which_just_accepted_an_atom,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '|',
     '$',
     '(',
@@ -3279,12 +2988,12 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::branch,
-    Parser::Nonterminal::branch_which_didnt_just_accept_an_atom,
-    Parser::Nonterminal::branch_which_just_accepted_an_atom,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::branch,
+    Parser::Nonterminal_::branch_which_didnt_just_accept_an_atom,
+    Parser::Nonterminal_::branch_which_just_accepted_an_atom,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '$',
     '(',
     ',',
@@ -3299,11 +3008,11 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::branch_which_didnt_just_accept_an_atom,
-    Parser::Nonterminal::branch_which_just_accepted_an_atom,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::branch_which_didnt_just_accept_an_atom,
+    Parser::Nonterminal_::branch_which_just_accepted_an_atom,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '$',
     '(',
     ',',
@@ -3318,66 +3027,9 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
-    '$',
-    '(',
-    '*',
-    '+',
-    ',',
-    '-',
-    '.',
-    ':',
-    '?',
-    '[',
-    '\\',
-    '^',
-    '{',
-    Parser::Terminal::ALPHA,
-    Parser::Terminal::CHAR,
-    Parser::Terminal::DIGIT,
-    Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bound,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
-    '$',
-    '(',
-    ',',
-    '-',
-    '.',
-    ':',
-    '[',
-    '\\',
-    '^',
-    '{',
-    Parser::Terminal::ALPHA,
-    Parser::Terminal::CHAR,
-    Parser::Terminal::DIGIT,
-    Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::branch_which_didnt_just_accept_an_atom,
-    Parser::Nonterminal::branch_which_just_accepted_an_atom,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
-    '$',
-    '(',
-    ',',
-    '-',
-    '.',
-    ':',
-    '[',
-    '\\',
-    '^',
-    '{',
-    Parser::Terminal::ALPHA,
-    Parser::Terminal::CHAR,
-    Parser::Terminal::DIGIT,
-    Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '$',
     '(',
     '*',
@@ -3395,10 +3047,10 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bound,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bound,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '$',
     '(',
     ',',
@@ -3413,19 +3065,76 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::atom,
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::branch_which_didnt_just_accept_an_atom,
+    Parser::Nonterminal_::branch_which_just_accepted_an_atom,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
+    '$',
+    '(',
+    ',',
+    '-',
+    '.',
+    ':',
+    '[',
+    '\\',
+    '^',
+    '{',
+    Parser::Terminal::ALPHA,
+    Parser::Terminal::CHAR,
+    Parser::Terminal::DIGIT,
+    Parser::Terminal::HEX_CHAR,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
+    '$',
+    '(',
+    '*',
+    '+',
+    ',',
+    '-',
+    '.',
+    ':',
+    '?',
+    '[',
+    '\\',
+    '^',
+    '{',
+    Parser::Terminal::ALPHA,
+    Parser::Terminal::CHAR,
+    Parser::Terminal::DIGIT,
+    Parser::Terminal::HEX_CHAR,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bound,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
+    '$',
+    '(',
+    ',',
+    '-',
+    '.',
+    ':',
+    '[',
+    '\\',
+    '^',
+    '{',
+    Parser::Terminal::ALPHA,
+    Parser::Terminal::CHAR,
+    Parser::Terminal::DIGIT,
+    Parser::Terminal::HEX_CHAR,
+    Parser::Nonterminal_::atom,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::atom_normal_char,
     '*',
     '+',
     '?',
     '{',
-    Parser::Nonterminal::bound,
+    Parser::Nonterminal_::bound,
     Parser::Terminal::DIGIT,
-    Parser::Nonterminal::integer,
+    Parser::Nonterminal_::integer,
     '[',
-    Parser::Nonterminal::bracket_expression,
-    Parser::Nonterminal::bracket_char_set,
+    Parser::Nonterminal_::bracket_expression,
+    Parser::Nonterminal_::bracket_char_set,
     '$',
     '(',
     ')',
@@ -3444,8 +3153,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::bracket_expression_char,
-    Parser::Nonterminal::bracket_expression_normal_char,
+    Parser::Nonterminal_::bracket_expression_char,
+    Parser::Nonterminal_::bracket_expression_normal_char,
     '$',
     '(',
     ')',
@@ -3463,8 +3172,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::HEX_CHAR,
-    Parser::Nonterminal::bracket_expression_char,
-    Parser::Nonterminal::bracket_expression_normal_char,
+    Parser::Nonterminal_::bracket_expression_char,
+    Parser::Nonterminal_::bracket_expression_normal_char,
     '$',
     '(',
     ')',
@@ -3479,20 +3188,20 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     '{',
     '|',
     '}',
-    Parser::Nonterminal::atom_control_char,
+    Parser::Nonterminal_::atom_control_char,
     ',',
     '-',
     ':',
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
-    Parser::Nonterminal::atom_normal_char,
+    Parser::Nonterminal_::atom_normal_char,
     '-',
     '[',
     '\\',
     ']',
     '^',
-    Parser::Nonterminal::bracket_expression_control_char,
+    Parser::Nonterminal_::bracket_expression_control_char,
     '$',
     '(',
     ')',
@@ -3508,18 +3217,302 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
-    Parser::Nonterminal::bracket_expression_normal_char,
+    Parser::Nonterminal_::bracket_expression_normal_char,
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
-    Parser::Nonterminal::id,
+    Parser::Nonterminal_::id,
     Parser::Terminal::ALPHA,
     Parser::Terminal::CHAR,
     Parser::Terminal::DIGIT,
     Parser::Terminal::DIGIT,
-    Parser::Nonterminal::integer,
+    Parser::Nonterminal_::integer,
     Parser::Terminal::DIGIT
 };
 std::size_t const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
+
+char const *const Parser::ms_token_name_table_[] =
+{
+    "'\\0'",
+    "'\\x01'",
+    "'\\x02'",
+    "'\\x03'",
+    "'\\x04'",
+    "'\\x05'",
+    "'\\x06'",
+    "'\\a'",
+    "'\\b'",
+    "'\\t'",
+    "'\\n'",
+    "'\\v'",
+    "'\\f'",
+    "'\\r'",
+    "'\\x0E'",
+    "'\\x0F'",
+    "'\\x10'",
+    "'\\x11'",
+    "'\\x12'",
+    "'\\x13'",
+    "'\\x14'",
+    "'\\x15'",
+    "'\\x16'",
+    "'\\x17'",
+    "'\\x18'",
+    "'\\x19'",
+    "'\\x1A'",
+    "'\\x1B'",
+    "'\\x1C'",
+    "'\\x1D'",
+    "'\\x1E'",
+    "'\\x1F'",
+    "' '",
+    "'!'",
+    "'\"'",
+    "'#'",
+    "'$'",
+    "'%'",
+    "'&'",
+    "'\\''",
+    "'('",
+    "')'",
+    "'*'",
+    "'+'",
+    "','",
+    "'-'",
+    "'.'",
+    "'/'",
+    "'0'",
+    "'1'",
+    "'2'",
+    "'3'",
+    "'4'",
+    "'5'",
+    "'6'",
+    "'7'",
+    "'8'",
+    "'9'",
+    "':'",
+    "';'",
+    "'<'",
+    "'='",
+    "'>'",
+    "'?'",
+    "'@'",
+    "'A'",
+    "'B'",
+    "'C'",
+    "'D'",
+    "'E'",
+    "'F'",
+    "'G'",
+    "'H'",
+    "'I'",
+    "'J'",
+    "'K'",
+    "'L'",
+    "'M'",
+    "'N'",
+    "'O'",
+    "'P'",
+    "'Q'",
+    "'R'",
+    "'S'",
+    "'T'",
+    "'U'",
+    "'V'",
+    "'W'",
+    "'X'",
+    "'Y'",
+    "'Z'",
+    "'['",
+    "'\\\\'",
+    "']'",
+    "'^'",
+    "'_'",
+    "'`'",
+    "'a'",
+    "'b'",
+    "'c'",
+    "'d'",
+    "'e'",
+    "'f'",
+    "'g'",
+    "'h'",
+    "'i'",
+    "'j'",
+    "'k'",
+    "'l'",
+    "'m'",
+    "'n'",
+    "'o'",
+    "'p'",
+    "'q'",
+    "'r'",
+    "'s'",
+    "'t'",
+    "'u'",
+    "'v'",
+    "'w'",
+    "'x'",
+    "'y'",
+    "'z'",
+    "'{'",
+    "'|'",
+    "'}'",
+    "'~'",
+    "'\\x7F'",
+    "'\\x80'",
+    "'\\x81'",
+    "'\\x82'",
+    "'\\x83'",
+    "'\\x84'",
+    "'\\x85'",
+    "'\\x86'",
+    "'\\x87'",
+    "'\\x88'",
+    "'\\x89'",
+    "'\\x8A'",
+    "'\\x8B'",
+    "'\\x8C'",
+    "'\\x8D'",
+    "'\\x8E'",
+    "'\\x8F'",
+    "'\\x90'",
+    "'\\x91'",
+    "'\\x92'",
+    "'\\x93'",
+    "'\\x94'",
+    "'\\x95'",
+    "'\\x96'",
+    "'\\x97'",
+    "'\\x98'",
+    "'\\x99'",
+    "'\\x9A'",
+    "'\\x9B'",
+    "'\\x9C'",
+    "'\\x9D'",
+    "'\\x9E'",
+    "'\\x9F'",
+    "'\\xA0'",
+    "'\\xA1'",
+    "'\\xA2'",
+    "'\\xA3'",
+    "'\\xA4'",
+    "'\\xA5'",
+    "'\\xA6'",
+    "'\\xA7'",
+    "'\\xA8'",
+    "'\\xA9'",
+    "'\\xAA'",
+    "'\\xAB'",
+    "'\\xAC'",
+    "'\\xAD'",
+    "'\\xAE'",
+    "'\\xAF'",
+    "'\\xB0'",
+    "'\\xB1'",
+    "'\\xB2'",
+    "'\\xB3'",
+    "'\\xB4'",
+    "'\\xB5'",
+    "'\\xB6'",
+    "'\\xB7'",
+    "'\\xB8'",
+    "'\\xB9'",
+    "'\\xBA'",
+    "'\\xBB'",
+    "'\\xBC'",
+    "'\\xBD'",
+    "'\\xBE'",
+    "'\\xBF'",
+    "'\\xC0'",
+    "'\\xC1'",
+    "'\\xC2'",
+    "'\\xC3'",
+    "'\\xC4'",
+    "'\\xC5'",
+    "'\\xC6'",
+    "'\\xC7'",
+    "'\\xC8'",
+    "'\\xC9'",
+    "'\\xCA'",
+    "'\\xCB'",
+    "'\\xCC'",
+    "'\\xCD'",
+    "'\\xCE'",
+    "'\\xCF'",
+    "'\\xD0'",
+    "'\\xD1'",
+    "'\\xD2'",
+    "'\\xD3'",
+    "'\\xD4'",
+    "'\\xD5'",
+    "'\\xD6'",
+    "'\\xD7'",
+    "'\\xD8'",
+    "'\\xD9'",
+    "'\\xDA'",
+    "'\\xDB'",
+    "'\\xDC'",
+    "'\\xDD'",
+    "'\\xDE'",
+    "'\\xDF'",
+    "'\\xE0'",
+    "'\\xE1'",
+    "'\\xE2'",
+    "'\\xE3'",
+    "'\\xE4'",
+    "'\\xE5'",
+    "'\\xE6'",
+    "'\\xE7'",
+    "'\\xE8'",
+    "'\\xE9'",
+    "'\\xEA'",
+    "'\\xEB'",
+    "'\\xEC'",
+    "'\\xED'",
+    "'\\xEE'",
+    "'\\xEF'",
+    "'\\xF0'",
+    "'\\xF1'",
+    "'\\xF2'",
+    "'\\xF3'",
+    "'\\xF4'",
+    "'\\xF5'",
+    "'\\xF6'",
+    "'\\xF7'",
+    "'\\xF8'",
+    "'\\xF9'",
+    "'\\xFA'",
+    "'\\xFB'",
+    "'\\xFC'",
+    "'\\xFD'",
+    "'\\xFE'",
+    "'\\xFF'",
+    "END_",
+    "ERROR_",
+    "BAD_TOKEN",
+    "ALPHA",
+    "CHAR",
+    "DIGIT",
+    "HEX_CHAR",
+    "regex",
+    "branch",
+    "branch_which_didnt_just_accept_an_atom",
+    "branch_which_just_accepted_an_atom",
+    "atom",
+    "bound",
+    "bracket_expression",
+    "bracket_char_set",
+    "bracket_expression_char",
+    "atom_control_char",
+    "atom_normal_char",
+    "bracket_expression_control_char",
+    "bracket_expression_normal_char",
+    "id",
+    "integer"
+};
+std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
+
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
 // ///////////////////////////////////////////////////////////////////////
@@ -3566,4 +3559,4 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 } // end of namespace Regex
 } // end of namespace Barf
 
-#line 3570 "barf_regex_parser.cpp"
+#line 3563 "barf_regex_parser.cpp"

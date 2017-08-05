@@ -92,7 +92,7 @@ public:
             none_ = 0,
             statement_then_end = 260,
             statement = 261,
-            expression = 262
+            x = 262
         }; // end of enum Parser::Nonterminal::Name
     }; // end of struct Parser::Nonterminal
 

@@ -232,7 +232,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 %terminal NEWLINE
 %terminal STRICT_CODE_BLOCK %type.cpp "Ast::StrictCodeBlock *"
 %terminal STRING_LITERAL %type.cpp "Ast::String *"
-%terminal '.' ':' ';' '|'
+%terminal '.' ':' ';' '|' '[' ']'
 
 %default_parse_nonterminal root
 
@@ -783,6 +783,25 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal rule_token %type.cpp "RuleToken *"
 :
+    // TODO: make "maybe_assigned_id", which is empty reduction rule or is `':' ID`
+
+//     token_id:token_id maybe_assigned_id:assigned_id
+//     %target.cpp {
+//         assert(token_id != NULL);
+//         string assigned_id_text;
+//         if (assigned_id != NULL)
+//             assigned_id_text = assigned_id->GetText());
+//         RuleToken *rule_token = new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id_text);
+// //         RuleToken *rule_token =
+// //             token_id != NULL ?
+// //             new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id->GetText()) :
+// //             NULL;
+//         delete token_id;
+//         delete assigned_id;
+//         return rule_token;
+//     }
+// |
+
     token_id:token_id ':' ID:assigned_id
     %target.cpp {
         RuleToken *rule_token =
@@ -804,6 +823,17 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_token;
     }
 |
+//     DIRECTIVE_END:throwaway maybe_assigned_id:assigned_id
+//     %target.cpp {
+//         string assigned_id_text;
+//         if (assigned_id != NULL)
+//             assigned_id_text = assigned_id->GetText());
+//         RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc(), assigned_id_text);
+//         delete throwaway;
+//         delete assigned_id;
+//         return rule_token;
+//     }
+// |
     DIRECTIVE_END:throwaway ':' ID:assigned_id
     %target.cpp {
         RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc(), assigned_id->GetText());
@@ -819,18 +849,166 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_token;
     }
 |
-    DIRECTIVE_ERROR:throwaway ':' ID:assigned_id
+//     DIRECTIVE_ERROR:throwaway ':' ID:assigned_id
+//     %target.cpp {
+//         EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
+//         delete throwaway;
+//         delete assigned_id;
+//         return NULL;
+//     }
+// |
+//     DIRECTIVE_ERROR:throwaway
+//     %target.cpp {
+//         RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
+//         delete throwaway;
+//         return rule_token;
+//     }
+
+
+
+// |
+//     DIRECTIVE_ERROR:throwaway
+//     %target.cpp {
+//         EmitError("%error terminal must be followed by [a|b|...], where a, b, ... are terminals", throwaway->GetFiLoc());
+//         RuleTokenList *lookaheads = new RuleTokenList();
+//         lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
+//         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+//         delete throwaway;
+//         return rule_token_error_until_lookahead;
+//     }
+// |
+
+// //     DIRECTIVE_ERROR:throwaway maybe_bracketed_lookahead_terminal_list:lookaheads maybe_assigned_id:assigned_id
+//     DIRECTIVE_ERROR:throwaway '[' lookahead_terminal_list:lookaheads ']' maybe_assigned_id:assigned_id
+//     %target.cpp {
+// //         if (lookaheads == NULL)
+// //         {
+// //             EmitError("%error terminal must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+// //             lookaheads = new RuleTokenList();
+// //             // This is the minimal necessary token, although the EmitError call should prevent trison
+// //             // from proceeding to parser generation.
+// //             lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
+// //         }
+//         // TODO: check for presence of %end in lookaheads
+//         if (assigned_id != NULL)
+//         {
+//             EmitError("%error terminal may not have an assigned id", throwaway->GetFiLoc());
+//             delete assigned_id;
+//         }
+//         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+//         delete throwaway;
+//         return rule_token_error_until_lookahead;
+//     }
+// |
+
+
+    DIRECTIVE_ERROR:throwaway ID:assigned_id
     %target.cpp {
+        EmitError("%error terminal must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+        // This is the minimal necessary token, although the EmitError call should prevent trison
+        // from proceeding to parser generation.
+        RuleTokenList *lookaheads = new RuleTokenList();
+        lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
+
         EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
-        delete throwaway;
         delete assigned_id;
-        return NULL;
+
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        delete throwaway;
+        return rule_token_error_until_lookahead;
     }
 |
     DIRECTIVE_ERROR:throwaway
     %target.cpp {
-        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
+        // This is the minimal necessary token, although the EmitError call should prevent trison
+        // from proceeding to parser generation.
+        RuleTokenList *lookaheads = new RuleTokenList();
+        lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
+
+        EmitError("%error terminal must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
+        return rule_token_error_until_lookahead;
+    }
+|
+
+    DIRECTIVE_ERROR:throwaway '[' lookahead_terminal_list:lookaheads ']' ID:assigned_id
+    %target.cpp {
+        EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
+        delete assigned_id;
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        delete throwaway;
+        return rule_token_error_until_lookahead;
+    }
+|
+    DIRECTIVE_ERROR:throwaway '[' lookahead_terminal_list:lookaheads ']'
+    %target.cpp {
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        delete throwaway;
+        return rule_token_error_until_lookahead;
+    }
+;
+
+// %nonterminal maybe_bracketed_lookahead_terminal_list
+// :
+//     '[' lookahead_terminal_list:lookaheads ']'
+//     %target.cpp {
+//         return lookaheads;
+//     }
+// |
+//     // empty reduction rule
+//     %target.cpp {
+//         return NULL;
+//     }
+// ;
+
+%nonterminal maybe_assigned_id %type.cpp "Ast::Id *"
+:
+    ':' ID:assigned_id
+    %target.cpp {
+        return assigned_id;
+    }
+|
+    // empty reduction rule
+    %target.cpp {
+        return NULL;
+    }
+;
+
+%nonterminal lookahead_terminal_list %type.cpp "RuleTokenList *"
+:
+    lookahead_terminal_list:lookaheads '|' lookahead_terminal:lookahead_terminal
+    %target.cpp {
+        lookaheads->Append(lookahead_terminal);
+        return lookaheads;
+    }
+|
+    lookahead_terminal:lookahead_terminal
+    %target.cpp {
+        RuleTokenList *lookaheads = new RuleTokenList();
+        lookaheads->Append(lookahead_terminal);
+        return lookaheads;
+    }
+;
+
+%nonterminal lookahead_terminal %type.cpp "RuleToken *"
+:
+    DIRECTIVE_END:throwaway
+    %target.cpp {
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
+        delete throwaway;
+        return rule_token;
+    }
+|
+    token_id:token_id
+    %target.cpp {
+        assert(token_id != NULL && "If this fails, it's ok, I just wasn't sure that the condition was necessary");
+        RuleToken *rule_token =
+            token_id != NULL ?
+            new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
+            NULL;
+        delete token_id;
         return rule_token;
     }
 ;

@@ -114,48 +114,58 @@ public:
         }; // end of enum Parser::Terminal::Name
     }; // end of struct Parser::Terminal
 
-    /// "Namespace" for Parser::Nonterminal::Name, which enumerates all nonterminals.
-    /// This is used internally by the parser, but is also used by the client to specify which
-    /// nonterminal should be parsed by the parser.
-    struct Nonterminal
+    /// "Namespace" for Parser::ParseNonterminal::Name, which enumerates
+    /// all valid nonterminals this parser can recognize.
+    struct ParseNonterminal
     {
-        /** There is one special nonterminal: none_.  This should not be used by the client,
-          * as it is only used internally by the parser.
+        /** The Parse() method doesn't necessarily have to start with the
+          * value of the %default_parse_nonterminal directive; it can
+          * attempt to parse any of the nonterminals defined in the primary
+          * source file.  These enums are the way to specify which nonterminal
+          * to parse.
+          *
+          * @brief Acceptable nonterminals recognizable by this parser.
           */
         enum Name
         {
-            none_ = 0,
-            root = 275,
-            targets_directive = 276,
-            target_ids = 277,
-            target_directives = 278,
-            target_directive = 279,
-            target_directive_param = 280,
-            terminal_directives = 281,
-            terminal_directive = 282,
-            terminals = 283,
-            precedence_directives = 284,
-            precedence_directive = 285,
-            start_directive = 286,
-            nonterminals = 287,
-            nonterminal = 288,
-            nonterminal_specification = 289,
-            rules = 290,
-            rule = 291,
-            rule_specification = 292,
-            rule_handlers = 293,
-            rule_handler = 294,
-            rule_token_list = 295,
-            rule_token = 296,
-            rule_precedence_directive = 297,
-            at_least_zero_newlines = 298,
-            at_least_one_newline = 299,
-            token_id = 300,
-            terminal = 301,
-            any_type_of_code_block = 302,
-            type_spec = 303
-        }; // end of enum Parser::Nonterminal::Name
-    }; // end of struct Parser::Nonterminal
+            any_type_of_code_block = 169,
+            at_least_one_newline = 163,
+            at_least_zero_newlines = 161,
+            lookahead_terminal = 157,
+            lookahead_terminal_list = 155,
+            maybe_assigned_id = 151,
+            nonterminal = 133,
+            nonterminal_specification = 135,
+            nonterminals = 131,
+            precedence_directive = 127,
+            precedence_directives = 125,
+            root = 0,
+            rule = 139,
+            rule_handler = 145,
+            rule_handlers = 143,
+            rule_precedence_directive = 159,
+            rule_specification = 141,
+            rule_token = 149,
+            rule_token_list = 147,
+            rules = 137,
+            start_directive = 129,
+            target_directive = 115,
+            target_directive_param = 117,
+            target_directives = 113,
+            target_ids = 111,
+            targets_directive = 109,
+            terminal = 167,
+            terminal_directive = 121,
+            terminal_directives = 119,
+            terminals = 123,
+            token_id = 165,
+            type_spec = 171,
+            /// Nonterminal which will be attempted to be parsed by the Parse()
+            /// method by default (specified by the %default_parse_nonterminal
+            /// directive).
+            default_ = root
+        }; // end of enum Parser::ParseNonterminal::Name
+    }; // end of struct Parser::ParseNonterminal
 
     /** The client should package-up and return a Parser::Token from
       * the code specified by %target.cpp.scan_actions, which delivers the
@@ -259,7 +269,7 @@ public:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
+    ParserReturnCode Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse = ParseNonterminal::root);
 
 
 #line 51 "trison_parser.trison"
@@ -287,7 +297,7 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 291 "trison_parser.hpp"
+#line 301 "trison_parser.hpp"
 
 
 private:
@@ -296,13 +306,45 @@ private:
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    struct Rule_
+    struct Nonterminal_
     {
-        Token::Id m_reduction_nonterminal_token_id;
-        std::uint32_t m_token_count;
-        char const *m_description;
-    }; // end of struct Parser::Rule_
-
+        enum Name
+        {
+            none_ = 0,
+            root = 275,
+            targets_directive = 276,
+            target_ids = 277,
+            target_directives = 278,
+            target_directive = 279,
+            target_directive_param = 280,
+            terminal_directives = 281,
+            terminal_directive = 282,
+            terminals = 283,
+            precedence_directives = 284,
+            precedence_directive = 285,
+            start_directive = 286,
+            nonterminals = 287,
+            nonterminal = 288,
+            nonterminal_specification = 289,
+            rules = 290,
+            rule = 291,
+            rule_specification = 292,
+            rule_handlers = 293,
+            rule_handler = 294,
+            rule_token_list = 295,
+            rule_token = 296,
+            maybe_assigned_id = 297,
+            lookahead_terminal_list = 298,
+            lookahead_terminal = 299,
+            rule_precedence_directive = 300,
+            at_least_zero_newlines = 301,
+            at_least_one_newline = 302,
+            token_id = 303,
+            terminal = 304,
+            any_type_of_code_block = 305,
+            type_spec = 306
+        }; // end of enum Parser::Nonterminal_::Name
+    }; // end of struct Parser::Nonterminal_
     struct Transition_;
 
     struct StackElement_
@@ -313,7 +355,7 @@ private:
         StackElement_ ()
             :
             m_state_index(std::uint32_t(-1)),
-            m_token(Nonterminal::none_, NULL)
+            m_token(Nonterminal_::none_, NULL)
         { }
         StackElement_ (std::uint32_t state_index, Token const &token)
             :
@@ -321,6 +363,31 @@ private:
             m_token(token)
         { }
     }; // end of struct Parser::StackElement_
+
+    typedef std::deque<StackElement_> Stack_;
+    typedef std::deque<Token> LookaheadQueue_;
+
+    ParserReturnCode Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse);
+    void ThrowAwayToken_ (Token &token) throw();
+    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
+    void ThrowAwayTokenData_ (Ast::Base * &token_data) throw();
+    void ResetForNewInput_ () throw();
+    Token Scan_ () throw();
+    void ClearStack_ () throw();
+    void ClearLookaheadQueue_ () throw();
+    Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
+    bool ExerciseTransition_ (Transition_ const &transition);
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_) throw();
+    // debug spew methods
+    void PrintParserStatus_ (std::ostream &stream) const;
+    void PrintIndented_ (std::ostream &stream, char const *string) const;
+
+    struct Rule_
+    {
+        Token::Id m_reduction_nonterminal_token_id;
+        std::uint32_t m_token_count;
+        char const *m_description;
+    }; // end of struct Parser::Rule_
 
     struct State_
     {
@@ -338,49 +405,27 @@ private:
         Token::Id const *m_lookahead_sequence;
     }; // end of struct Parser::Transition_
 
-    typedef std::deque<StackElement_> Stack_;
-    typedef std::deque<Token> LookaheadQueue_;
-
-    // debug spew methods
-    void PrintIndented_ (std::ostream &stream, char const *string) const;
-
+    Stack_ m_stack_;
+    LookaheadQueue_ m_lookahead_queue_;
+    bool m_is_in_error_panic_;
     bool m_debug_spew_;
 
     static Rule_ const ms_rule_table_[];
     static std::size_t const ms_rule_count_;
-    static char const *const ms_token_name_table_[];
-    static std::size_t const ms_token_name_count_;
-
-    static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
-    ParserReturnCode Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse);
-    void ThrowAwayToken_ (Token &token) throw();
-    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
-    void ThrowAwayTokenData_ (Ast::Base * &token_data) throw();
-    void ResetForNewInput_ () throw();
-    Token Scan_ () throw();
-    void ClearStack_ () throw();
-    void ClearLookaheadQueue_ () throw();
-    Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
-    bool ExerciseTransition_ (Transition_ const &transition);
-    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_) throw();
-    // debug spew methods
-    void PrintParserStatus_ (std::ostream &stream) const;
-
-    Stack_ m_stack_;
-    LookaheadQueue_ m_lookahead_queue_;
-    bool m_is_in_error_panic_;
-
     static State_ const ms_state_table_[];
     static std::size_t const ms_state_count_;
     static Transition_ const ms_transition_table_[];
     static std::size_t const ms_transition_count_;
     static Token::Id const ms_lookahead_table_[];
     static std::size_t const ms_lookahead_count_;
+    static char const *const ms_token_name_table_[];
+    static std::size_t const ms_token_name_count_;
+
+    friend std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
+
     // ///////////////////////////////////////////////////////////////////////
     // end of internal trison-generated parser guts
     // ///////////////////////////////////////////////////////////////////////
-
-    friend std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 }; // end of class Parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
@@ -392,4 +437,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 396 "trison_parser.hpp"
+#line 441 "trison_parser.hpp"

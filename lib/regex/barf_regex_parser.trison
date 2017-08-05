@@ -32,7 +32,7 @@ namespace Regex {
 %}
 %target.cpp.class_name Parser
 %target.cpp.class_inheritance { protected InputBase }
-%target.cpp.parse_method_access "private"
+%target.cpp.parse_method_access "private:"
 %target.cpp.bottom_of_class {
     using InputBase::IsOpen;
     using InputBase::GetFiLoc;

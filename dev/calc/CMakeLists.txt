@@ -5,6 +5,7 @@ project(calc)
 
 find_path(REFLEX_BINARY "path to reflex binary" PATHS $ENV{REFLEX_BINARY} NO_DEFAULT_PATH)
 find_path(TRISON_BINARY "path to trison binary" PATHS $ENV{TRISON_BINARY} NO_DEFAULT_PATH)
+find_path(BARF_TARGETS_PATH "path to barf targets" PATHS $ENV{BARF_TARGETS_PATH} NO_DEFAULT_PATH)
 
 # Options to correctly link the standard C++ lib on Mac.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # This is the correct way to detect Mac OS X operating system -- see http://www.openguru.com/2009/04/cmake-detecting-platformoperating.html
@@ -48,7 +49,7 @@ endif()
 
 # Executables
 
-set(BARF_TARGETS_DIR ${calc_SOURCE_DIR}/../../targets)
+set(BARF_TARGETS_DIR ${PROJECT_BINARY_DIR}/${BARF_TARGETS_PATH})
 
 add_custom_command(
     OUTPUT ${calc_SOURCE_DIR}/Scanner.cpp ${calc_SOURCE_DIR}/Scanner.hpp

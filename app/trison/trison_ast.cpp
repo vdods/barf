@@ -29,6 +29,7 @@ string const &AstTypeString (AstType ast_type)
         "AST_RULE_LIST",
         "AST_RULE_TOKEN",
         "AST_RULE_TOKEN_LIST",
+        "AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD",
         "AST_TERMINAL",
         "AST_TERMINAL_LIST",
         "AST_TERMINAL_MAP",
@@ -66,6 +67,12 @@ void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
         stream << Tabs(indent_level+1) << "assigned id: " << m_assigned_id << endl;
 }
 
+void RuleTokenErrorUntilLookahead::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    RuleToken::Print(stream, Stringify, indent_level);
+    // TODO: print m_lookaheads
+}
+
 string Rule::AsText (Uint32 stage) const
 {
     assert(m_owner_nonterminal != NULL);
@@ -77,6 +84,7 @@ string Rule::AsText (Uint32 stage) const
     if (stage <= m_rule_token_list->size())
     {
         out << " .";
+        // TODO: Need to generalize this to account for RuleTokenErrorUntilLookahead
         for (Uint32 s = stage; s < m_rule_token_list->size(); ++s)
             out << ' ' << m_rule_token_list->Element(s)->m_token_id;
     }

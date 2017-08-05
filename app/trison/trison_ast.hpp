@@ -37,6 +37,7 @@ enum
     AST_RULE_LIST,
     AST_RULE_TOKEN,
     AST_RULE_TOKEN_LIST,
+    AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD,
     AST_TERMINAL,
     AST_TERMINAL_LIST,
     AST_TERMINAL_MAP,
@@ -116,9 +117,9 @@ struct RuleToken : public Ast::Base
     string const m_token_id;
     string const m_assigned_id;
 
-    RuleToken (string const &token_id, FiLoc const &filoc, string const &assigned_id = g_empty_string)
+    RuleToken (string const &token_id, FiLoc const &filoc, string const &assigned_id = g_empty_string, AstType ast_type = AST_RULE_TOKEN)
         :
-        Ast::Base(filoc, AST_RULE_TOKEN),
+        Ast::Base(filoc, ast_type),
         m_token_id(token_id),
         m_assigned_id(assigned_id)
     {
@@ -128,10 +129,27 @@ struct RuleToken : public Ast::Base
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct RuleToken
 
+// TODO: START HERE -- make a subclass of RuleToken called RuleErrorToken which also accepts a list of terminals
+// which will be what the error directive stops at.  %end is required to be in that list.
 struct RuleTokenList : public Ast::AstList<RuleToken>
 {
     RuleTokenList () : Ast::AstList<RuleToken>(AST_RULE_TOKEN_LIST) { }
 }; // end of struct RuleTokenList
+
+struct RuleTokenErrorUntilLookahead : public RuleToken
+{
+    RuleTokenList const *m_lookaheads;
+
+    RuleTokenErrorUntilLookahead (FiLoc const &filoc, RuleTokenList const *lookaheads)
+        :
+        RuleToken("ERROR_", filoc, g_empty_string, AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD),
+        m_lookaheads(lookaheads)
+    {
+        assert(m_lookaheads != NULL);
+    }
+
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+};
 
 struct Rule : public Ast::Base
 {
@@ -305,18 +323,22 @@ struct PrimarySource : public Ast::Base
         assert(m_nonterminal_list != NULL);
         assert(m_nonterminal_map != NULL);
 
+//         std::cerr << "Assigning terminals within constructor of PrimarySource\n";
         for (Uint32 i = 0; i < m_terminal_list->size(); ++i)
         {
             Terminal const *terminal = m_terminal_list->Element(i);
             assert(terminal != NULL);
             assert(m_token_id_map.find(terminal->m_token_index) == m_token_id_map.end());
+//             std::cerr << "    " << terminal->m_token_index << " |-> " << terminal->GetText() << '\n';
             m_token_id_map[terminal->m_token_index] = terminal->GetText();
         }
+//         std::cerr << "Assigning nonterminals within constructor of PrimarySource\n";
         for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
         {
             Nonterminal const *nonterminal = m_nonterminal_list->Element(i);
             assert(nonterminal != NULL);
             assert(m_token_id_map.find(nonterminal->m_token_index) == m_token_id_map.end());
+//             std::cerr << "    " << nonterminal->m_token_index << " |-> " << nonterminal->GetText() << '\n';
             m_token_id_map[nonterminal->m_token_index] = nonterminal->GetText();
         }
     }

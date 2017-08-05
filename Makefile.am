@@ -272,7 +272,7 @@ EXTRA_DIST = \
 	targets/trison.cpp.implementation.codespec \
 	targets/trison.cpp.targetspec
 
-TARGETS_PATH = $(top_srcdir)/targets
+TARGETS_PATH = $(top_builddir)/$(STABLE_TARGETS_DIR)
 
 ##############################################################################
 # general flags

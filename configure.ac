@@ -53,7 +53,7 @@ AC_ARG_WITH(
     [stable-reflex],
     AC_HELP_STRING(
         [--with-stable-reflex=full/path/to/reflex.stable],
-        [specify a stable, external reflex binary to compile BARF's own reflex-based scanners -- make sure not to specify the reflex build target of this package.  This option is really only useful if you're developing BARF itself.]),
+        [specify a stable, external reflex binary to compile BARF's own reflex-based scanners, and should be relative to the build dir (i.e. the directory that configure is run within) -- make sure not to specify the reflex build target of this package.  This option is really only useful if you're developing BARF itself.]),
     [STABLE_REFLEX=$withval],
     [STABLE_REFLEX=])
 
@@ -61,9 +61,17 @@ AC_ARG_WITH(
     [stable-trison],
     AC_HELP_STRING(
         [--with-stable-trison=full/path/to/trison.stable],
-        [specify a stable, external trison.unstable binary to compile BARF's own trison-based parsers -- make sure not to specify the trison build target of this package.  This option is really only useful if you're developing BARF itself.]),
+        [specify a stable, external trison.unstable binary to compile BARF's own trison-based parsers, and should be relative to the build dir (i.e. the directory that configure is run within) -- make sure not to specify the trison build target of this package.  This option is really only useful if you're developing BARF itself.]),
     [STABLE_TRISON=$withval],
     [STABLE_TRISON=])
+
+AC_ARG_WITH(
+    [stable-targets-dir],
+    AC_HELP_STRING(
+        [--with-stable-targets-dir=full/path/to/targets.stable],
+        [specify a stable, external targets directory to supply to the stable trison and/or reflex binaries, and should be relative to the build dir (i.e. the directory that configure is run within).  This option is really only useful if you're developing BARF itself.]),
+    [STABLE_TARGETS_DIR=$withval],
+    [STABLE_TARGETS_DIR=])
 
 ##############################################################################
 # processing for above commandline options and AC_CHECK_TOOL applications
@@ -96,6 +104,9 @@ AC_SUBST(STABLE_REFLEX)
 
 AM_CONDITIONAL(STABLE_TRISON_EXISTS, [test "${STABLE_TRISON}" != ""])
 AC_SUBST(STABLE_TRISON)
+
+AM_CONDITIONAL(STABLE_TARGETS_DIR_EXISTS, [test "${STABLE_TARGETS_DIR_EXISTS}" != ""])
+AC_SUBST(STABLE_TARGETS_DIR)
 
 ##############################################################################
 # add BARFDATADIR (the absolute path to where the targets/ dir and other stuff

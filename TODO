@@ -266,13 +266,13 @@ template <Uint32 high> struct SmallestUint {
     The existing %error directive can accept any token except %end -- perhaps make the
     %error directive specify which tokens it can't accept, like
 
-        %error_until(%end)
+        %error_until_lookahead(%end)
 
     or
 
-        %error_until(%end, ';')
+        %error_until_lookahead(%end, ';')
 
-    and once it hits a token it can't accept, and %error_until(...) is the last token
+    and once it hits a token it can't accept, and %error_until_lookahead(...) is the last token
     in the rule, the rule can reduce (normally %error eats tokens until the token after
     it in the same rule matches).
 -   different idea for better error handling -- disallow %error occurring as the last
@@ -303,3 +303,11 @@ template <Uint32 high> struct SmallestUint {
 
     Except for the "expression <- NUM(3)" reduction, the reductions should be the same in both cases.
 -   Print out epsilon closure of root node each time (this will become the DPDA state)
+-   Add an error handling rule for trison:
+
+        %nonterminal maybe_assigned_id %type "Ast::Id *"
+
+    caused the generic error `syntax error in %nonterminal directive` because of missing `.cpp`
+-   Making `maybe_bracketed_lookahead_terminal_list` and `maybe_assigned_id` caused (old) trison
+    binary to take too long.  Maybe try just `maybe_assigned_id`.  This may be a problem more
+    generally with two possibly-empty rule tokens in a row.

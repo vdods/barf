@@ -106,7 +106,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(ReflexOptions().Predefine(i), "<predefine>");
 
-        if (parser.Parse(&parsed_tree_root, Reflex::Parser::Nonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in predefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -121,10 +121,10 @@ Reflex::PrimarySource const *ParsePrimarySource ()
 
     if (!parser.OpenFile(ReflexOptions().InputFilename()))
         EmitError("file not found: \"" + ReflexOptions().InputFilename() + "\"");
-        
+
     if (g_errors_encountered)
         exit(RS_INPUT_FILE_ERROR);
-        
+
     if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
         EmitError("general reflex parse error -- " + ReflexOptions().HowtoReportError(), FiLoc(ReflexOptions().InputFilename()));
     else if (g_errors_encountered)
@@ -140,7 +140,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(ReflexOptions().Postdefine(i), "<postdefine>");
 
-        if (parser.Parse(&parsed_tree_root, Reflex::Parser::Nonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in postdefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -156,7 +156,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     primary_source->SetTargetMap(parser.StealTargetMap());
     if (ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
         primary_source->Print(cerr);
-        
+
     return primary_source;
 }
 

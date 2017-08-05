@@ -301,7 +301,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 %macro ID                   ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
 
 // all operators that should be returned by ascii value
-%macro OPERATOR             ([.:;|])
+%macro OPERATOR             ([.:;|\[\]])
 // non-newline whitespace
 %macro WHITESPACE           ([ \t])
 // newline
