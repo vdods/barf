@@ -2,12 +2,14 @@ Makefile.in
 aclocal.m4
 autom4te.cache/
 build/
+build2/
 compile
 config.guess
 config.h.in
 config.sub
 configure
 debug/
+debug2/
 depcomp
 install-sh
 ltmain.sh
@@ -19,6 +21,9 @@ app/reflex/reflex_parser.npda.dot
 app/trison/trison_parser.dpda.dot
 app/trison/trison_parser.dpda.states
 app/trison/trison_parser.npda.dot
+dev/calc/Parser.npda.dot
+lib/commonlang/barf_commonlang_scanner.dfa.dot
+lib/commonlang/barf_commonlang_scanner.nfa.dot
 lib/preprocessor/barf_preprocessor_parser.dpda.dot
 lib/preprocessor/barf_preprocessor_parser.dpda.states
 lib/preprocessor/barf_preprocessor_parser.npda.dot
