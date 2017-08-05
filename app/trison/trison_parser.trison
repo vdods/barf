@@ -933,7 +933,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 |
 
-    DIRECTIVE_ERROR:throwaway '[' lookahead_terminal_list:lookaheads ']' ID:assigned_id
+    DIRECTIVE_ERROR:throwaway bracketed_lookahead_terminal_list:lookaheads ':' ID:assigned_id
     %target.cpp {
         EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
         delete assigned_id;
@@ -942,7 +942,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_token_error_until_lookahead;
     }
 |
-    DIRECTIVE_ERROR:throwaway '[' lookahead_terminal_list:lookaheads ']'
+    DIRECTIVE_ERROR:throwaway bracketed_lookahead_terminal_list:lookaheads
     %target.cpp {
         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
@@ -950,11 +950,11 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-// %nonterminal maybe_bracketed_lookahead_terminal_list
+// %nonterminal maybe_assigned_id %type.cpp "Ast::Id *"
 // :
-//     '[' lookahead_terminal_list:lookaheads ']'
+//     ':' ID:assigned_id
 //     %target.cpp {
-//         return lookaheads;
+//         return assigned_id;
 //     }
 // |
 //     // empty reduction rule
@@ -963,16 +963,28 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 //     }
 // ;
 
-%nonterminal maybe_assigned_id %type.cpp "Ast::Id *"
+%nonterminal bracketed_lookahead_terminal_list %type.cpp "RuleTokenList *"
 :
-    ':' ID:assigned_id
+    '[' lookahead_terminal_list:lookaheads ']'
     %target.cpp {
-        return assigned_id;
-    }
-|
-    // empty reduction rule
-    %target.cpp {
-        return NULL;
+        assert(lookaheads != NULL);
+        assert(lookaheads->size() > 0);
+        FiLoc filoc(lookaheads->Element(0)->GetFiLoc());
+
+        // Verify that the lookaheads include %end
+        bool has_end_terminal = false;
+        for (RuleTokenList::const_iterator it = lookaheads->begin(), it_end = lookaheads->end(); it != it_end; ++it)
+        {
+            assert(*it != NULL);
+            RuleToken const &rule_token = **it;
+            if (rule_token.m_token_id == "END_")
+                has_end_terminal = true;
+        }
+
+        if (!has_end_terminal)
+            EmitError("%error terminal lookaheads must include %end (e.g. %error[%end|';'])", filoc);
+
+        return lookaheads;
     }
 ;
 

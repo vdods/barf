@@ -290,18 +290,20 @@ template <Uint32 high> struct SmallestUint {
 -   NPDA should track if it's ever been in an error-handling state.
 -   TEST CASE in dev/calc: "(3;" versus "(;"
 
-    the input "(3;" makes the reductions:
+    the input "(3;" incorrectly makes the reductions:
 
         expression <- NUM(3)
         statement <- %error ';'
         statement_then_end <- statement %end
 
-    while the input "(;" makes the reductions:
+    while the input "(;" correctly makes the reductions:
 
         expression <- '(' %error
         statement_then_end <- %error %end
 
     Except for the "expression <- NUM(3)" reduction, the reductions should be the same in both cases.
+    It's quite important that "(3;" reduce `expression <- '(' %error`, so that `unmatched parenthesis`
+    is correctly identified.
 -   Print out epsilon closure of root node each time (this will become the DPDA state)
 -   Add an error handling rule for trison:
 

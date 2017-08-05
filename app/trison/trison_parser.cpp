@@ -132,9 +132,9 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterm
            || nonterminal_to_parse == ParseNonterminal::any_type_of_code_block
            || nonterminal_to_parse == ParseNonterminal::at_least_one_newline
            || nonterminal_to_parse == ParseNonterminal::at_least_zero_newlines
+           || nonterminal_to_parse == ParseNonterminal::bracketed_lookahead_terminal_list
            || nonterminal_to_parse == ParseNonterminal::lookahead_terminal
            || nonterminal_to_parse == ParseNonterminal::lookahead_terminal_list
-           || nonterminal_to_parse == ParseNonterminal::maybe_assigned_id
            || nonterminal_to_parse == ParseNonterminal::nonterminal
            || nonterminal_to_parse == ParseNonterminal::nonterminal_specification
            || nonterminal_to_parse == ParseNonterminal::nonterminals
@@ -1608,7 +1608,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         case 52:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-5].m_token.m_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
             RuleTokenList * lookaheads(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-3].m_token.m_data));
             Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
@@ -1627,8 +1627,8 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         case 53:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            RuleTokenList * lookaheads(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            RuleTokenList * lookaheads(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
 #line 946 "trison_parser.trison"
 
@@ -1643,79 +1643,84 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         case 54:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * assigned_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+            RuleTokenList * lookaheads(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-2].m_token.m_data));
 
 #line 969 "trison_parser.trison"
 
-        return assigned_id;
+        assert(lookaheads != NULL);
+        assert(lookaheads->size() > 0);
+        FiLoc filoc(lookaheads->Element(0)->GetFiLoc());
+
+        // Verify that the lookaheads include %end
+        bool has_end_terminal = false;
+        for (RuleTokenList::const_iterator it = lookaheads->begin(), it_end = lookaheads->end(); it != it_end; ++it)
+        {
+            assert(*it != NULL);
+            RuleToken const &rule_token = **it;
+            if (rule_token.m_token_id == "END_")
+                has_end_terminal = true;
+        }
+
+        if (!has_end_terminal)
+            EmitError("%error terminal lookaheads must include %end (e.g. %error[%end|';'])", filoc);
+
+        return lookaheads;
     
-#line 1653 "trison_parser.cpp"
+#line 1670 "trison_parser.cpp"
             break;
         }
 
         case 55:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            RuleTokenList * lookaheads(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-3].m_token.m_data));
+            RuleToken * lookahead_terminal(Dsc<RuleToken *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 974 "trison_parser.trison"
+#line 994 "trison_parser.trison"
 
-        return NULL;
+        lookaheads->Append(lookahead_terminal);
+        return lookaheads;
     
-#line 1665 "trison_parser.cpp"
+#line 1685 "trison_parser.cpp"
             break;
         }
 
         case 56:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            RuleTokenList * lookaheads(Dsc<RuleTokenList *>(m_stack_[m_stack_.size()-3].m_token.m_data));
             RuleToken * lookahead_terminal(Dsc<RuleToken *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 982 "trison_parser.trison"
+#line 1000 "trison_parser.trison"
 
+        RuleTokenList *lookaheads = new RuleTokenList();
         lookaheads->Append(lookahead_terminal);
         return lookaheads;
     
-#line 1680 "trison_parser.cpp"
+#line 1700 "trison_parser.cpp"
             break;
         }
 
         case 57:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            RuleToken * lookahead_terminal(Dsc<RuleToken *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 988 "trison_parser.trison"
+#line 1010 "trison_parser.trison"
 
-        RuleTokenList *lookaheads = new RuleTokenList();
-        lookaheads->Append(lookahead_terminal);
-        return lookaheads;
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
+        delete throwaway;
+        return rule_token;
     
-#line 1695 "trison_parser.cpp"
+#line 1715 "trison_parser.cpp"
             break;
         }
 
         case 58:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 998 "trison_parser.trison"
-
-        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
-        delete throwaway;
-        return rule_token;
-    
-#line 1710 "trison_parser.cpp"
-            break;
-        }
-
-        case 59:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             TokenId * token_id(Dsc<TokenId *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 1005 "trison_parser.trison"
+#line 1017 "trison_parser.trison"
 
         assert(token_id != NULL && "If this fails, it's ok, I just wasn't sure that the condition was necessary");
         RuleToken *rule_token =
@@ -1725,22 +1730,34 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete token_id;
         return rule_token;
     
-#line 1729 "trison_parser.cpp"
+#line 1734 "trison_parser.cpp"
+            break;
+        }
+
+        case 59:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 1031 "trison_parser.trison"
+
+        delete throwaway;
+        return id;
+    
+#line 1749 "trison_parser.cpp"
             break;
         }
 
         case 60:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 1019 "trison_parser.trison"
+#line 1037 "trison_parser.trison"
 
-        delete throwaway;
-        return id;
+        return NULL;
     
-#line 1744 "trison_parser.cpp"
+#line 1761 "trison_parser.cpp"
             break;
         }
 
@@ -1748,11 +1765,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 1025 "trison_parser.trison"
-
-        return NULL;
-    
-#line 1756 "trison_parser.cpp"
+#line 1048 "trison_parser.trison"
+ return NULL; 
+#line 1771 "trison_parser.cpp"
             break;
         }
 
@@ -1760,9 +1775,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 1036 "trison_parser.trison"
+#line 1050 "trison_parser.trison"
  return NULL; 
-#line 1766 "trison_parser.cpp"
+#line 1781 "trison_parser.cpp"
             break;
         }
 
@@ -1770,9 +1785,9 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 1038 "trison_parser.trison"
+#line 1055 "trison_parser.trison"
  return NULL; 
-#line 1776 "trison_parser.cpp"
+#line 1791 "trison_parser.cpp"
             break;
         }
 
@@ -1780,28 +1795,18 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 1043 "trison_parser.trison"
+#line 1057 "trison_parser.trison"
  return NULL; 
-#line 1786 "trison_parser.cpp"
+#line 1801 "trison_parser.cpp"
             break;
         }
 
         case 65:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 1045 "trison_parser.trison"
- return NULL; 
-#line 1796 "trison_parser.cpp"
-            break;
-        }
-
-        case 66:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 1051 "trison_parser.trison"
+#line 1063 "trison_parser.trison"
 
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
@@ -1809,16 +1814,16 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete id;
         return token_id;
     
-#line 1813 "trison_parser.cpp"
+#line 1818 "trison_parser.cpp"
             break;
         }
 
-        case 67:
+        case 66:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 1060 "trison_parser.trison"
+#line 1072 "trison_parser.trison"
 
         // here, the token_index doesn't matter, since this rule isn't used
         // in the terminal declarations.
@@ -1826,55 +1831,55 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return token_id;
     
-#line 1830 "trison_parser.cpp"
+#line 1835 "trison_parser.cpp"
+            break;
+        }
+
+        case 67:
+        {
+            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
+            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+
+#line 1083 "trison_parser.trison"
+ return new Trison::Terminal(id, m_token_index++); 
+#line 1846 "trison_parser.cpp"
             break;
         }
 
         case 68:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+            Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 1071 "trison_parser.trison"
- return new Trison::Terminal(id, m_token_index++); 
-#line 1841 "trison_parser.cpp"
+#line 1085 "trison_parser.trison"
+ return new Trison::Terminal(ch); 
+#line 1857 "trison_parser.cpp"
             break;
         }
 
         case 69:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Char * ch(Dsc<Ast::Char *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+            Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 1073 "trison_parser.trison"
- return new Trison::Terminal(ch); 
-#line 1852 "trison_parser.cpp"
+#line 1090 "trison_parser.trison"
+ return dumb_code_block; 
+#line 1868 "trison_parser.cpp"
             break;
         }
 
         case 70:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
+            Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 1078 "trison_parser.trison"
- return dumb_code_block; 
-#line 1863 "trison_parser.cpp"
+#line 1092 "trison_parser.trison"
+ return strict_code_block; 
+#line 1879 "trison_parser.cpp"
             break;
         }
 
         case 71:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 1080 "trison_parser.trison"
- return strict_code_block; 
-#line 1874 "trison_parser.cpp"
-            break;
-        }
-
-        case 72:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
             TypeMap * type_map(Dsc<TypeMap *>(m_stack_[m_stack_.size()-5].m_token.m_data));
@@ -1882,7 +1887,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * target_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
             Ast::String * assigned_type(Dsc<Ast::String *>(m_stack_[m_stack_.size()-1].m_token.m_data));
 
-#line 1086 "trison_parser.trison"
+#line 1098 "trison_parser.trison"
 
         assert(type_map != NULL);
         assert(target_id != NULL);
@@ -1892,19 +1897,19 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete target_id;
         return type_map;
     
-#line 1896 "trison_parser.cpp"
+#line 1901 "trison_parser.cpp"
             break;
         }
 
-        case 73:
+        case 72:
         {
             assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
 
-#line 1097 "trison_parser.trison"
+#line 1109 "trison_parser.trison"
 
         return new TypeMap();
     
-#line 1908 "trison_parser.cpp"
+#line 1913 "trison_parser.cpp"
             break;
         }
 
@@ -1921,7 +1926,7 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << 
 #line 214 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1925 "trison_parser.cpp"
+#line 1930 "trison_parser.cpp"
  << " parser state stack: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -1937,7 +1942,7 @@ void Parser::PrintParserStatus_ (std::ostream &stream) const
     stream << 
 #line 214 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1941 "trison_parser.cpp"
+#line 1946 "trison_parser.cpp"
  << " parser stack tokens . lookahead queue: ";
     for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
     {
@@ -1965,7 +1970,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     stream << 
 #line 214 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1969 "trison_parser.cpp"
+#line 1974 "trison_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -1973,7 +1978,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 214 "trison_parser.trison"
 "Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1977 "trison_parser.cpp"
+#line 1982 "trison_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -2044,10 +2049,9 @@ Parser::Rule_ const Parser::ms_rule_table_[] =
     { Parser::Nonterminal_::rule_token, 1, "rule_token <- DIRECTIVE_END" },
     { Parser::Nonterminal_::rule_token, 2, "rule_token <- DIRECTIVE_ERROR ID" },
     { Parser::Nonterminal_::rule_token, 1, "rule_token <- DIRECTIVE_ERROR" },
-    { Parser::Nonterminal_::rule_token, 5, "rule_token <- DIRECTIVE_ERROR '[' lookahead_terminal_list ']' ID" },
-    { Parser::Nonterminal_::rule_token, 4, "rule_token <- DIRECTIVE_ERROR '[' lookahead_terminal_list ']'" },
-    { Parser::Nonterminal_::maybe_assigned_id, 2, "maybe_assigned_id <- ':' ID" },
-    { Parser::Nonterminal_::maybe_assigned_id, 0, "maybe_assigned_id <-" },
+    { Parser::Nonterminal_::rule_token, 4, "rule_token <- DIRECTIVE_ERROR bracketed_lookahead_terminal_list ':' ID" },
+    { Parser::Nonterminal_::rule_token, 2, "rule_token <- DIRECTIVE_ERROR bracketed_lookahead_terminal_list" },
+    { Parser::Nonterminal_::bracketed_lookahead_terminal_list, 3, "bracketed_lookahead_terminal_list <- '[' lookahead_terminal_list ']'" },
     { Parser::Nonterminal_::lookahead_terminal_list, 3, "lookahead_terminal_list <- lookahead_terminal_list '|' lookahead_terminal" },
     { Parser::Nonterminal_::lookahead_terminal_list, 1, "lookahead_terminal_list <- lookahead_terminal" },
     { Parser::Nonterminal_::lookahead_terminal, 1, "lookahead_terminal <- DIRECTIVE_END" },
@@ -2071,18 +2075,18 @@ std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / size
 
 Parser::State_ const Parser::ms_state_table_[] =
 {
-    { 3, ms_transition_table_+0, "START root                                                                                                                                                      \nrule 0: root <- . at_least_zero_newlines targets_directive target_directives terminal_directives precedence_directives start_directive END_PREAMBLE nonterminals\nrule 62: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE                                                                                             \nrule 63: at_least_zero_newlines <- .                                                                                                                            " },
+    { 3, ms_transition_table_+0, "START root                                                                                                                                                      \nrule 0: root <- . at_least_zero_newlines targets_directive target_directives terminal_directives precedence_directives start_directive END_PREAMBLE nonterminals\nrule 61: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE                                                                                             \nrule 62: at_least_zero_newlines <- .                                                                                                                            " },
     { 1, ms_transition_table_+3, "RETURN root" },
-    { 4, ms_transition_table_+4, "rule 0: root <- at_least_zero_newlines . targets_directive target_directives terminal_directives precedence_directives start_directive END_PREAMBLE nonterminals\nrule 62: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE                                                                                             \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline                                                                                \nrule 2: targets_directive <- .                                                                                                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline                                                                                    " },
+    { 4, ms_transition_table_+4, "rule 0: root <- at_least_zero_newlines . targets_directive target_directives terminal_directives precedence_directives start_directive END_PREAMBLE nonterminals\nrule 61: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE                                                                                             \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline                                                                                \nrule 2: targets_directive <- .                                                                                                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline                                                                                    " },
     { 3, ms_transition_table_+8, "rule 1: targets_directive <- DIRECTIVE_TARGETS . target_ids at_least_one_newline\nrule 4: target_ids <- . target_ids ID                                           \nrule 5: target_ids <- .                                                         \nrule 3: targets_directive <- DIRECTIVE_TARGETS . ERROR_ at_least_one_newline    " },
-    { 3, ms_transition_table_+11, "rule 64: at_least_one_newline <- . at_least_one_newline NEWLINE             \nrule 65: at_least_one_newline <- . NEWLINE                                  \nrule 3: targets_directive <- DIRECTIVE_TARGETS ERROR_ . at_least_one_newline" },
-    { 1, ms_transition_table_+14, "rule 65: at_least_one_newline <- NEWLINE ." },
-    { 2, ms_transition_table_+15, "rule 64: at_least_one_newline <- at_least_one_newline . NEWLINE             \nrule 3: targets_directive <- DIRECTIVE_TARGETS ERROR_ at_least_one_newline ." },
-    { 1, ms_transition_table_+17, "rule 64: at_least_one_newline <- at_least_one_newline NEWLINE ." },
-    { 4, ms_transition_table_+18, "rule 1: targets_directive <- DIRECTIVE_TARGETS target_ids . at_least_one_newline\nrule 4: target_ids <- target_ids . ID                                           \nrule 64: at_least_one_newline <- . at_least_one_newline NEWLINE                 \nrule 65: at_least_one_newline <- . NEWLINE                                      " },
+    { 3, ms_transition_table_+11, "rule 63: at_least_one_newline <- . at_least_one_newline NEWLINE             \nrule 64: at_least_one_newline <- . NEWLINE                                  \nrule 3: targets_directive <- DIRECTIVE_TARGETS ERROR_ . at_least_one_newline" },
+    { 1, ms_transition_table_+14, "rule 64: at_least_one_newline <- NEWLINE ." },
+    { 2, ms_transition_table_+15, "rule 63: at_least_one_newline <- at_least_one_newline . NEWLINE             \nrule 3: targets_directive <- DIRECTIVE_TARGETS ERROR_ at_least_one_newline ." },
+    { 1, ms_transition_table_+17, "rule 63: at_least_one_newline <- at_least_one_newline NEWLINE ." },
+    { 4, ms_transition_table_+18, "rule 1: targets_directive <- DIRECTIVE_TARGETS target_ids . at_least_one_newline\nrule 4: target_ids <- target_ids . ID                                           \nrule 63: at_least_one_newline <- . at_least_one_newline NEWLINE                 \nrule 64: at_least_one_newline <- . NEWLINE                                      " },
     { 1, ms_transition_table_+22, "rule 4: target_ids <- target_ids ID ." },
-    { 2, ms_transition_table_+23, "rule 1: targets_directive <- DIRECTIVE_TARGETS target_ids at_least_one_newline .\nrule 64: at_least_one_newline <- at_least_one_newline . NEWLINE                 " },
-    { 1, ms_transition_table_+25, "rule 62: at_least_zero_newlines <- at_least_zero_newlines NEWLINE ." },
+    { 2, ms_transition_table_+23, "rule 1: targets_directive <- DIRECTIVE_TARGETS target_ids at_least_one_newline .\nrule 63: at_least_one_newline <- at_least_one_newline . NEWLINE                 " },
+    { 1, ms_transition_table_+25, "rule 61: at_least_zero_newlines <- at_least_zero_newlines NEWLINE ." },
     { 2, ms_transition_table_+26, "rule 0: root <- at_least_zero_newlines targets_directive . target_directives terminal_directives precedence_directives start_directive END_PREAMBLE nonterminals\nrule 6: target_directives <- . target_directives target_directive at_least_one_newline                                                                          \nrule 7: target_directives <- .                                                                                                                                  " },
     { 4, ms_transition_table_+28, "rule 0: root <- at_least_zero_newlines targets_directive target_directives . terminal_directives precedence_directives start_directive END_PREAMBLE nonterminals\nrule 6: target_directives <- target_directives . target_directive at_least_one_newline                                                                          \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param                                                                             \nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                                                                                             \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                                                                                                   \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                                                                                                          \nrule 17: terminal_directives <- . terminal_directives terminal_directive                                                                                        \nrule 18: terminal_directives <- .                                                                                                                               " },
     { 3, ms_transition_table_+32, "rule 8: target_directive <- DIRECTIVE_TARGET . '.' ID '.' ID target_directive_param\nrule 9: target_directive <- DIRECTIVE_TARGET . '.' ID '.' ID ERROR_                \nrule 10: target_directive <- DIRECTIVE_TARGET . '.' ID ERROR_                      \nrule 11: target_directive <- DIRECTIVE_TARGET . ERROR_                             " },
@@ -2098,33 +2102,33 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 1, ms_transition_table_+54, "rule 8: target_directive <- DIRECTIVE_TARGET '.' ID '.' ID target_directive_param ." },
     { 1, ms_transition_table_+55, "rule 10: target_directive <- DIRECTIVE_TARGET '.' ID ERROR_ ." },
     { 1, ms_transition_table_+56, "rule 11: target_directive <- DIRECTIVE_TARGET ERROR_ ." },
-    { 3, ms_transition_table_+57, "rule 64: at_least_one_newline <- . at_least_one_newline NEWLINE                       \nrule 65: at_least_one_newline <- . NEWLINE                                            \nrule 6: target_directives <- target_directives target_directive . at_least_one_newline" },
-    { 2, ms_transition_table_+60, "rule 64: at_least_one_newline <- at_least_one_newline . NEWLINE                       \nrule 6: target_directives <- target_directives target_directive at_least_one_newline ." },
+    { 3, ms_transition_table_+57, "rule 63: at_least_one_newline <- . at_least_one_newline NEWLINE                       \nrule 64: at_least_one_newline <- . NEWLINE                                            \nrule 6: target_directives <- target_directives target_directive . at_least_one_newline" },
+    { 2, ms_transition_table_+60, "rule 63: at_least_one_newline <- at_least_one_newline . NEWLINE                       \nrule 6: target_directives <- target_directives target_directive at_least_one_newline ." },
     { 4, ms_transition_table_+62, "rule 0: root <- at_least_zero_newlines targets_directive target_directives terminal_directives . precedence_directives start_directive END_PREAMBLE nonterminals\nrule 17: terminal_directives <- terminal_directives . terminal_directive                                                                                        \nrule 19: terminal_directive <- . DIRECTIVE_TERMINAL terminals type_spec at_least_one_newline                                                                    \nrule 22: precedence_directives <- . precedence_directives precedence_directive                                                                                  \nrule 23: precedence_directives <- .                                                                                                                             " },
-    { 5, ms_transition_table_+66, "rule 19: terminal_directive <- DIRECTIVE_TERMINAL . terminals type_spec at_least_one_newline\nrule 20: terminals <- . terminals terminal                                                  \nrule 68: terminal <- . ID                                                                   \nrule 69: terminal <- . CHAR_LITERAL                                                         \nrule 21: terminals <- . terminal                                                            " },
-    { 1, ms_transition_table_+71, "rule 69: terminal <- CHAR_LITERAL ." },
-    { 1, ms_transition_table_+72, "rule 68: terminal <- ID ." },
-    { 5, ms_transition_table_+73, "rule 19: terminal_directive <- DIRECTIVE_TERMINAL terminals . type_spec at_least_one_newline\nrule 20: terminals <- terminals . terminal                                                  \nrule 68: terminal <- . ID                                                                   \nrule 69: terminal <- . CHAR_LITERAL                                                         \nrule 72: type_spec <- . type_spec DIRECTIVE_TYPE '.' ID STRING_LITERAL                      \nrule 73: type_spec <- .                                                                     " },
+    { 5, ms_transition_table_+66, "rule 19: terminal_directive <- DIRECTIVE_TERMINAL . terminals type_spec at_least_one_newline\nrule 20: terminals <- . terminals terminal                                                  \nrule 67: terminal <- . ID                                                                   \nrule 68: terminal <- . CHAR_LITERAL                                                         \nrule 21: terminals <- . terminal                                                            " },
+    { 1, ms_transition_table_+71, "rule 68: terminal <- CHAR_LITERAL ." },
+    { 1, ms_transition_table_+72, "rule 67: terminal <- ID ." },
+    { 5, ms_transition_table_+73, "rule 19: terminal_directive <- DIRECTIVE_TERMINAL terminals . type_spec at_least_one_newline\nrule 20: terminals <- terminals . terminal                                                  \nrule 67: terminal <- . ID                                                                   \nrule 68: terminal <- . CHAR_LITERAL                                                         \nrule 71: type_spec <- . type_spec DIRECTIVE_TYPE '.' ID STRING_LITERAL                      \nrule 72: type_spec <- .                                                                     " },
     { 1, ms_transition_table_+78, "rule 20: terminals <- terminals terminal ." },
-    { 4, ms_transition_table_+79, "rule 64: at_least_one_newline <- . at_least_one_newline NEWLINE                             \nrule 65: at_least_one_newline <- . NEWLINE                                                  \nrule 19: terminal_directive <- DIRECTIVE_TERMINAL terminals type_spec . at_least_one_newline\nrule 72: type_spec <- type_spec . DIRECTIVE_TYPE '.' ID STRING_LITERAL                      " },
-    { 2, ms_transition_table_+83, "rule 72: type_spec <- type_spec DIRECTIVE_TYPE . '.' ID STRING_LITERAL" },
-    { 2, ms_transition_table_+85, "rule 72: type_spec <- type_spec DIRECTIVE_TYPE '.' . ID STRING_LITERAL" },
-    { 2, ms_transition_table_+87, "rule 72: type_spec <- type_spec DIRECTIVE_TYPE '.' ID . STRING_LITERAL" },
-    { 1, ms_transition_table_+89, "rule 72: type_spec <- type_spec DIRECTIVE_TYPE '.' ID STRING_LITERAL ." },
-    { 2, ms_transition_table_+90, "rule 64: at_least_one_newline <- at_least_one_newline . NEWLINE                             \nrule 19: terminal_directive <- DIRECTIVE_TERMINAL terminals type_spec at_least_one_newline ." },
+    { 4, ms_transition_table_+79, "rule 63: at_least_one_newline <- . at_least_one_newline NEWLINE                             \nrule 64: at_least_one_newline <- . NEWLINE                                                  \nrule 19: terminal_directive <- DIRECTIVE_TERMINAL terminals type_spec . at_least_one_newline\nrule 71: type_spec <- type_spec . DIRECTIVE_TYPE '.' ID STRING_LITERAL                      " },
+    { 2, ms_transition_table_+83, "rule 71: type_spec <- type_spec DIRECTIVE_TYPE . '.' ID STRING_LITERAL" },
+    { 2, ms_transition_table_+85, "rule 71: type_spec <- type_spec DIRECTIVE_TYPE '.' . ID STRING_LITERAL" },
+    { 2, ms_transition_table_+87, "rule 71: type_spec <- type_spec DIRECTIVE_TYPE '.' ID . STRING_LITERAL" },
+    { 1, ms_transition_table_+89, "rule 71: type_spec <- type_spec DIRECTIVE_TYPE '.' ID STRING_LITERAL ." },
+    { 2, ms_transition_table_+90, "rule 63: at_least_one_newline <- at_least_one_newline . NEWLINE                             \nrule 19: terminal_directive <- DIRECTIVE_TERMINAL terminals type_spec at_least_one_newline ." },
     { 1, ms_transition_table_+92, "rule 21: terminals <- terminal ." },
     { 1, ms_transition_table_+93, "rule 17: terminal_directives <- terminal_directives terminal_directive ." },
     { 5, ms_transition_table_+94, "rule 0: root <- at_least_zero_newlines targets_directive target_directives terminal_directives precedence_directives . start_directive END_PREAMBLE nonterminals\nrule 22: precedence_directives <- precedence_directives . precedence_directive                                                                                  \nrule 24: precedence_directive <- . DIRECTIVE_PREC ID at_least_one_newline                                                                                       \nrule 25: precedence_directive <- . DIRECTIVE_PREC '.' ID ID at_least_one_newline                                                                                \nrule 26: start_directive <- . DIRECTIVE_DEFAULT_PARSE_NONTERMINAL ID at_least_one_newline                                                                       " },
     { 2, ms_transition_table_+99, "rule 26: start_directive <- DIRECTIVE_DEFAULT_PARSE_NONTERMINAL . ID at_least_one_newline" },
-    { 3, ms_transition_table_+101, "rule 64: at_least_one_newline <- . at_least_one_newline NEWLINE                          \nrule 65: at_least_one_newline <- . NEWLINE                                               \nrule 26: start_directive <- DIRECTIVE_DEFAULT_PARSE_NONTERMINAL ID . at_least_one_newline" },
-    { 2, ms_transition_table_+104, "rule 64: at_least_one_newline <- at_least_one_newline . NEWLINE                          \nrule 26: start_directive <- DIRECTIVE_DEFAULT_PARSE_NONTERMINAL ID at_least_one_newline ." },
+    { 3, ms_transition_table_+101, "rule 63: at_least_one_newline <- . at_least_one_newline NEWLINE                          \nrule 64: at_least_one_newline <- . NEWLINE                                               \nrule 26: start_directive <- DIRECTIVE_DEFAULT_PARSE_NONTERMINAL ID . at_least_one_newline" },
+    { 2, ms_transition_table_+104, "rule 63: at_least_one_newline <- at_least_one_newline . NEWLINE                          \nrule 26: start_directive <- DIRECTIVE_DEFAULT_PARSE_NONTERMINAL ID at_least_one_newline ." },
     { 3, ms_transition_table_+106, "rule 24: precedence_directive <- DIRECTIVE_PREC . ID at_least_one_newline       \nrule 25: precedence_directive <- DIRECTIVE_PREC . '.' ID ID at_least_one_newline" },
     { 2, ms_transition_table_+109, "rule 25: precedence_directive <- DIRECTIVE_PREC '.' . ID ID at_least_one_newline" },
     { 2, ms_transition_table_+111, "rule 25: precedence_directive <- DIRECTIVE_PREC '.' ID . ID at_least_one_newline" },
-    { 3, ms_transition_table_+113, "rule 64: at_least_one_newline <- . at_least_one_newline NEWLINE                 \nrule 65: at_least_one_newline <- . NEWLINE                                      \nrule 25: precedence_directive <- DIRECTIVE_PREC '.' ID ID . at_least_one_newline" },
-    { 2, ms_transition_table_+116, "rule 64: at_least_one_newline <- at_least_one_newline . NEWLINE                 \nrule 25: precedence_directive <- DIRECTIVE_PREC '.' ID ID at_least_one_newline ." },
-    { 3, ms_transition_table_+118, "rule 64: at_least_one_newline <- . at_least_one_newline NEWLINE          \nrule 65: at_least_one_newline <- . NEWLINE                               \nrule 24: precedence_directive <- DIRECTIVE_PREC ID . at_least_one_newline" },
-    { 2, ms_transition_table_+121, "rule 64: at_least_one_newline <- at_least_one_newline . NEWLINE          \nrule 24: precedence_directive <- DIRECTIVE_PREC ID at_least_one_newline ." },
+    { 3, ms_transition_table_+113, "rule 63: at_least_one_newline <- . at_least_one_newline NEWLINE                 \nrule 64: at_least_one_newline <- . NEWLINE                                      \nrule 25: precedence_directive <- DIRECTIVE_PREC '.' ID ID . at_least_one_newline" },
+    { 2, ms_transition_table_+116, "rule 63: at_least_one_newline <- at_least_one_newline . NEWLINE                 \nrule 25: precedence_directive <- DIRECTIVE_PREC '.' ID ID at_least_one_newline ." },
+    { 3, ms_transition_table_+118, "rule 63: at_least_one_newline <- . at_least_one_newline NEWLINE          \nrule 64: at_least_one_newline <- . NEWLINE                               \nrule 24: precedence_directive <- DIRECTIVE_PREC ID . at_least_one_newline" },
+    { 2, ms_transition_table_+121, "rule 63: at_least_one_newline <- at_least_one_newline . NEWLINE          \nrule 24: precedence_directive <- DIRECTIVE_PREC ID at_least_one_newline ." },
     { 1, ms_transition_table_+123, "rule 22: precedence_directives <- precedence_directives precedence_directive ." },
     { 2, ms_transition_table_+124, "rule 0: root <- at_least_zero_newlines targets_directive target_directives terminal_directives precedence_directives start_directive . END_PREAMBLE nonterminals" },
     { 2, ms_transition_table_+126, "rule 0: root <- at_least_zero_newlines targets_directive target_directives terminal_directives precedence_directives start_directive END_PREAMBLE . nonterminals\nrule 27: nonterminals <- . nonterminals nonterminal                                                                                                             \nrule 28: nonterminals <- .                                                                                                                                      " },
@@ -2133,9 +2137,9 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 1, ms_transition_table_+135, "rule 30: nonterminal <- ERROR_ ';' ." },
     { 3, ms_transition_table_+136, "rule 31: nonterminal_specification <- DIRECTIVE_NONTERMINAL . ID type_spec\nrule 32: nonterminal_specification <- DIRECTIVE_NONTERMINAL . ERROR_      \nrule 33: nonterminal_specification <- DIRECTIVE_NONTERMINAL . ID ERROR_   " },
     { 1, ms_transition_table_+139, "rule 32: nonterminal_specification <- DIRECTIVE_NONTERMINAL ERROR_ ." },
-    { 3, ms_transition_table_+140, "rule 72: type_spec <- . type_spec DIRECTIVE_TYPE '.' ID STRING_LITERAL    \nrule 73: type_spec <- .                                                   \nrule 31: nonterminal_specification <- DIRECTIVE_NONTERMINAL ID . type_spec\nrule 33: nonterminal_specification <- DIRECTIVE_NONTERMINAL ID . ERROR_   " },
+    { 3, ms_transition_table_+140, "rule 71: type_spec <- . type_spec DIRECTIVE_TYPE '.' ID STRING_LITERAL    \nrule 72: type_spec <- .                                                   \nrule 31: nonterminal_specification <- DIRECTIVE_NONTERMINAL ID . type_spec\nrule 33: nonterminal_specification <- DIRECTIVE_NONTERMINAL ID . ERROR_   " },
     { 1, ms_transition_table_+143, "rule 33: nonterminal_specification <- DIRECTIVE_NONTERMINAL ID ERROR_ ." },
-    { 2, ms_transition_table_+144, "rule 72: type_spec <- type_spec . DIRECTIVE_TYPE '.' ID STRING_LITERAL    \nrule 31: nonterminal_specification <- DIRECTIVE_NONTERMINAL ID type_spec ." },
+    { 2, ms_transition_table_+144, "rule 71: type_spec <- type_spec . DIRECTIVE_TYPE '.' ID STRING_LITERAL    \nrule 31: nonterminal_specification <- DIRECTIVE_NONTERMINAL ID type_spec ." },
     { 1, ms_transition_table_+146, "rule 27: nonterminals <- nonterminals nonterminal ." },
     { 2, ms_transition_table_+147, "rule 29: nonterminal <- nonterminal_specification . ':' rules ';'" },
     { 5, ms_transition_table_+149, "rule 29: nonterminal <- nonterminal_specification ':' . rules ';'         \nrule 34: rules <- . rules '|' rule                                        \nrule 36: rule <- . rule_specification rule_handlers                       \nrule 37: rule_specification <- . rule_token_list rule_precedence_directive\nrule 44: rule_token_list <- . rule_token_list rule_token                  \nrule 45: rule_token_list <- .                                             \nrule 35: rules <- . rule                                                  " },
@@ -2145,111 +2149,112 @@ Parser::State_ const Parser::ms_state_table_[] =
     { 1, ms_transition_table_+162, "rule 34: rules <- rules '|' rule ." },
     { 2, ms_transition_table_+163, "rule 36: rule <- rule_specification . rule_handlers   \nrule 38: rule_handlers <- . rule_handlers rule_handler\nrule 39: rule_handlers <- .                           " },
     { 4, ms_transition_table_+165, "rule 36: rule <- rule_specification rule_handlers .                      \nrule 38: rule_handlers <- rule_handlers . rule_handler                   \nrule 40: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 41: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 42: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 43: rule_handler <- . ERROR_ any_type_of_code_block                 " },
-    { 4, ms_transition_table_+169, "rule 70: any_type_of_code_block <- . DUMB_CODE_BLOCK    \nrule 71: any_type_of_code_block <- . STRICT_CODE_BLOCK  \nrule 43: rule_handler <- ERROR_ . any_type_of_code_block" },
-    { 1, ms_transition_table_+173, "rule 70: any_type_of_code_block <- DUMB_CODE_BLOCK ." },
-    { 1, ms_transition_table_+174, "rule 71: any_type_of_code_block <- STRICT_CODE_BLOCK ." },
+    { 4, ms_transition_table_+169, "rule 69: any_type_of_code_block <- . DUMB_CODE_BLOCK    \nrule 70: any_type_of_code_block <- . STRICT_CODE_BLOCK  \nrule 43: rule_handler <- ERROR_ . any_type_of_code_block" },
+    { 1, ms_transition_table_+173, "rule 69: any_type_of_code_block <- DUMB_CODE_BLOCK ." },
+    { 1, ms_transition_table_+174, "rule 70: any_type_of_code_block <- STRICT_CODE_BLOCK ." },
     { 1, ms_transition_table_+175, "rule 43: rule_handler <- ERROR_ any_type_of_code_block ." },
     { 3, ms_transition_table_+176, "rule 40: rule_handler <- DIRECTIVE_TARGET . '.' ID any_type_of_code_block\nrule 41: rule_handler <- DIRECTIVE_TARGET . ERROR_ any_type_of_code_block\nrule 42: rule_handler <- DIRECTIVE_TARGET . ERROR_                       " },
     { 2, ms_transition_table_+179, "rule 40: rule_handler <- DIRECTIVE_TARGET '.' . ID any_type_of_code_block" },
-    { 4, ms_transition_table_+181, "rule 40: rule_handler <- DIRECTIVE_TARGET '.' ID . any_type_of_code_block\nrule 70: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 71: any_type_of_code_block <- . STRICT_CODE_BLOCK                   " },
+    { 4, ms_transition_table_+181, "rule 40: rule_handler <- DIRECTIVE_TARGET '.' ID . any_type_of_code_block\nrule 69: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 70: any_type_of_code_block <- . STRICT_CODE_BLOCK                   " },
     { 1, ms_transition_table_+185, "rule 40: rule_handler <- DIRECTIVE_TARGET '.' ID any_type_of_code_block ." },
-    { 4, ms_transition_table_+186, "rule 70: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 71: any_type_of_code_block <- . STRICT_CODE_BLOCK                   \nrule 41: rule_handler <- DIRECTIVE_TARGET ERROR_ . any_type_of_code_block\nrule 42: rule_handler <- DIRECTIVE_TARGET ERROR_ .                       " },
+    { 4, ms_transition_table_+186, "rule 69: any_type_of_code_block <- . DUMB_CODE_BLOCK                     \nrule 70: any_type_of_code_block <- . STRICT_CODE_BLOCK                   \nrule 41: rule_handler <- DIRECTIVE_TARGET ERROR_ . any_type_of_code_block\nrule 42: rule_handler <- DIRECTIVE_TARGET ERROR_ .                       " },
     { 1, ms_transition_table_+190, "rule 41: rule_handler <- DIRECTIVE_TARGET ERROR_ any_type_of_code_block ." },
     { 1, ms_transition_table_+191, "rule 38: rule_handlers <- rule_handlers rule_handler ." },
-    { 9, ms_transition_table_+192, "rule 37: rule_specification <- rule_token_list . rule_precedence_directive \nrule 44: rule_token_list <- rule_token_list . rule_token                   \nrule 46: rule_token <- . token_id ':' ID                                   \nrule 66: token_id <- . ID                                                  \nrule 67: token_id <- . CHAR_LITERAL                                        \nrule 47: rule_token <- . token_id                                          \nrule 48: rule_token <- . DIRECTIVE_END ':' ID                              \nrule 49: rule_token <- . DIRECTIVE_END                                     \nrule 50: rule_token <- . DIRECTIVE_ERROR ID                                \nrule 51: rule_token <- . DIRECTIVE_ERROR                                   \nrule 52: rule_token <- . DIRECTIVE_ERROR '[' lookahead_terminal_list ']' ID\nrule 53: rule_token <- . DIRECTIVE_ERROR '[' lookahead_terminal_list ']'   \nrule 60: rule_precedence_directive <- . DIRECTIVE_PREC ID                  \nrule 61: rule_precedence_directive <- .                                    " },
-    { 1, ms_transition_table_+201, "rule 67: token_id <- CHAR_LITERAL ." },
+    { 9, ms_transition_table_+192, "rule 37: rule_specification <- rule_token_list . rule_precedence_directive       \nrule 44: rule_token_list <- rule_token_list . rule_token                         \nrule 46: rule_token <- . token_id ':' ID                                         \nrule 65: token_id <- . ID                                                        \nrule 66: token_id <- . CHAR_LITERAL                                              \nrule 47: rule_token <- . token_id                                                \nrule 48: rule_token <- . DIRECTIVE_END ':' ID                                    \nrule 49: rule_token <- . DIRECTIVE_END                                           \nrule 50: rule_token <- . DIRECTIVE_ERROR ID                                      \nrule 51: rule_token <- . DIRECTIVE_ERROR                                         \nrule 52: rule_token <- . DIRECTIVE_ERROR bracketed_lookahead_terminal_list ':' ID\nrule 53: rule_token <- . DIRECTIVE_ERROR bracketed_lookahead_terminal_list       \nrule 59: rule_precedence_directive <- . DIRECTIVE_PREC ID                        \nrule 60: rule_precedence_directive <- .                                          " },
+    { 1, ms_transition_table_+201, "rule 66: token_id <- CHAR_LITERAL ." },
     { 2, ms_transition_table_+202, "rule 48: rule_token <- DIRECTIVE_END . ':' ID\nrule 49: rule_token <- DIRECTIVE_END .       " },
     { 2, ms_transition_table_+204, "rule 48: rule_token <- DIRECTIVE_END ':' . ID" },
     { 1, ms_transition_table_+206, "rule 48: rule_token <- DIRECTIVE_END ':' ID ." },
-    { 2, ms_transition_table_+207, "rule 50: rule_token <- DIRECTIVE_ERROR . ID                                \nrule 51: rule_token <- DIRECTIVE_ERROR .                                   \nrule 52: rule_token <- DIRECTIVE_ERROR . '[' lookahead_terminal_list ']' ID\nrule 53: rule_token <- DIRECTIVE_ERROR . '[' lookahead_terminal_list ']'   " },
-    { 7, ms_transition_table_+209, "rule 66: token_id <- . ID                                                           \nrule 67: token_id <- . CHAR_LITERAL                                                 \nrule 52: rule_token <- DIRECTIVE_ERROR '[' . lookahead_terminal_list ']' ID         \nrule 56: lookahead_terminal_list <- . lookahead_terminal_list '|' lookahead_terminal\nrule 58: lookahead_terminal <- . DIRECTIVE_END                                      \nrule 59: lookahead_terminal <- . token_id                                           \nrule 57: lookahead_terminal_list <- . lookahead_terminal                            \nrule 53: rule_token <- DIRECTIVE_ERROR '[' . lookahead_terminal_list ']'            " },
-    { 1, ms_transition_table_+216, "rule 58: lookahead_terminal <- DIRECTIVE_END ." },
-    { 1, ms_transition_table_+217, "rule 66: token_id <- ID ." },
-    { 3, ms_transition_table_+218, "rule 52: rule_token <- DIRECTIVE_ERROR '[' lookahead_terminal_list . ']' ID         \nrule 56: lookahead_terminal_list <- lookahead_terminal_list . '|' lookahead_terminal\nrule 53: rule_token <- DIRECTIVE_ERROR '[' lookahead_terminal_list . ']'            " },
-    { 1, ms_transition_table_+221, "rule 52: rule_token <- DIRECTIVE_ERROR '[' lookahead_terminal_list ']' . ID\nrule 53: rule_token <- DIRECTIVE_ERROR '[' lookahead_terminal_list ']' .   " },
-    { 7, ms_transition_table_+222, "rule 44: rule_token_list <- rule_token_list . rule_token                   \nrule 46: rule_token <- . token_id ':' ID                                   \nrule 66: token_id <- . ID                                                  \nrule 67: token_id <- . CHAR_LITERAL                                        \nrule 47: rule_token <- . token_id                                          \nrule 48: rule_token <- . DIRECTIVE_END ':' ID                              \nrule 49: rule_token <- . DIRECTIVE_END                                     \nrule 50: rule_token <- . DIRECTIVE_ERROR ID                                \nrule 51: rule_token <- . DIRECTIVE_ERROR                                   \nrule 52: rule_token <- . DIRECTIVE_ERROR '[' lookahead_terminal_list ']' ID\nrule 53: rule_token <- . DIRECTIVE_ERROR '[' lookahead_terminal_list ']'   " },
-    { 1, ms_transition_table_+229, "rule 44: rule_token_list <- rule_token_list rule_token ." },
-    { 2, ms_transition_table_+230, "rule 46: rule_token <- token_id . ':' ID\nrule 47: rule_token <- token_id .       " },
-    { 2, ms_transition_table_+232, "rule 46: rule_token <- token_id ':' . ID" },
-    { 1, ms_transition_table_+234, "rule 46: rule_token <- token_id ':' ID ." },
-    { 6, ms_transition_table_+235, "rule 66: token_id <- . ID                                                           \nrule 67: token_id <- . CHAR_LITERAL                                                 \nrule 56: lookahead_terminal_list <- lookahead_terminal_list '|' . lookahead_terminal\nrule 58: lookahead_terminal <- . DIRECTIVE_END                                      \nrule 59: lookahead_terminal <- . token_id                                           " },
-    { 1, ms_transition_table_+241, "rule 56: lookahead_terminal_list <- lookahead_terminal_list '|' lookahead_terminal ." },
-    { 1, ms_transition_table_+242, "rule 59: lookahead_terminal <- token_id ." },
-    { 1, ms_transition_table_+243, "rule 57: lookahead_terminal_list <- lookahead_terminal ." },
-    { 2, ms_transition_table_+244, "rule 60: rule_precedence_directive <- DIRECTIVE_PREC . ID" },
-    { 1, ms_transition_table_+246, "rule 60: rule_precedence_directive <- DIRECTIVE_PREC ID ." },
-    { 1, ms_transition_table_+247, "rule 37: rule_specification <- rule_token_list rule_precedence_directive ." },
-    { 1, ms_transition_table_+248, "rule 35: rules <- rule ." },
-    { 3, ms_transition_table_+249, "START targets_directive                                                         \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline\nrule 2: targets_directive <- .                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline    " },
-    { 1, ms_transition_table_+252, "RETURN targets_directive" },
-    { 2, ms_transition_table_+253, "START target_ids                     \nrule 4: target_ids <- . target_ids ID\nrule 5: target_ids <- .              " },
-    { 2, ms_transition_table_+255, "RETURN target_ids                    \nrule 4: target_ids <- target_ids . ID" },
-    { 2, ms_transition_table_+257, "START target_directives                                                               \nrule 6: target_directives <- . target_directives target_directive at_least_one_newline\nrule 7: target_directives <- .                                                        " },
-    { 3, ms_transition_table_+259, "RETURN target_directives                                                              \nrule 6: target_directives <- target_directives . target_directive at_least_one_newline\nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param   \nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                   \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                         \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                                " },
-    { 3, ms_transition_table_+262, "START target_directive                                                             \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                             " },
-    { 1, ms_transition_table_+265, "RETURN target_directive" },
-    { 6, ms_transition_table_+266, "START target_directive_param                          \nrule 12: target_directive_param <- . ID               \nrule 13: target_directive_param <- . STRING_LITERAL   \nrule 14: target_directive_param <- . STRICT_CODE_BLOCK\nrule 15: target_directive_param <- . DUMB_CODE_BLOCK  \nrule 16: target_directive_param <- .                  " },
-    { 1, ms_transition_table_+272, "RETURN target_directive_param" },
-    { 2, ms_transition_table_+273, "START terminal_directives                                               \nrule 17: terminal_directives <- . terminal_directives terminal_directive\nrule 18: terminal_directives <- .                                       " },
-    { 3, ms_transition_table_+275, "RETURN terminal_directives                                                                  \nrule 17: terminal_directives <- terminal_directives . terminal_directive                    \nrule 19: terminal_directive <- . DIRECTIVE_TERMINAL terminals type_spec at_least_one_newline" },
-    { 3, ms_transition_table_+278, "START terminal_directive                                                                    \nrule 19: terminal_directive <- . DIRECTIVE_TERMINAL terminals type_spec at_least_one_newline" },
-    { 1, ms_transition_table_+281, "RETURN terminal_directive" },
-    { 5, ms_transition_table_+282, "START terminals                           \nrule 20: terminals <- . terminals terminal\nrule 68: terminal <- . ID                 \nrule 69: terminal <- . CHAR_LITERAL       \nrule 21: terminals <- . terminal          " },
-    { 4, ms_transition_table_+287, "RETURN terminals                          \nrule 20: terminals <- terminals . terminal\nrule 68: terminal <- . ID                 \nrule 69: terminal <- . CHAR_LITERAL       " },
-    { 2, ms_transition_table_+291, "START precedence_directives                                                   \nrule 22: precedence_directives <- . precedence_directives precedence_directive\nrule 23: precedence_directives <- .                                           " },
-    { 3, ms_transition_table_+293, "RETURN precedence_directives                                                    \nrule 22: precedence_directives <- precedence_directives . precedence_directive  \nrule 24: precedence_directive <- . DIRECTIVE_PREC ID at_least_one_newline       \nrule 25: precedence_directive <- . DIRECTIVE_PREC '.' ID ID at_least_one_newline" },
-    { 3, ms_transition_table_+296, "START precedence_directive                                                      \nrule 24: precedence_directive <- . DIRECTIVE_PREC ID at_least_one_newline       \nrule 25: precedence_directive <- . DIRECTIVE_PREC '.' ID ID at_least_one_newline" },
-    { 1, ms_transition_table_+299, "RETURN precedence_directive" },
-    { 3, ms_transition_table_+300, "START start_directive                                                                    \nrule 26: start_directive <- . DIRECTIVE_DEFAULT_PARSE_NONTERMINAL ID at_least_one_newline" },
-    { 1, ms_transition_table_+303, "RETURN start_directive" },
-    { 2, ms_transition_table_+304, "START nonterminals                                 \nrule 27: nonterminals <- . nonterminals nonterminal\nrule 28: nonterminals <- .                         " },
-    { 5, ms_transition_table_+306, "RETURN nonterminals                                                       \nrule 27: nonterminals <- nonterminals . nonterminal                       \nrule 29: nonterminal <- . nonterminal_specification ':' rules ';'         \nrule 31: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID type_spec\nrule 32: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ERROR_      \nrule 33: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID ERROR_   \nrule 30: nonterminal <- . ERROR_ ';'                                      " },
-    { 5, ms_transition_table_+311, "START nonterminal                                                         \nrule 29: nonterminal <- . nonterminal_specification ':' rules ';'         \nrule 31: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID type_spec\nrule 32: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ERROR_      \nrule 33: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID ERROR_   \nrule 30: nonterminal <- . ERROR_ ';'                                      " },
-    { 1, ms_transition_table_+316, "RETURN nonterminal" },
-    { 3, ms_transition_table_+317, "START nonterminal_specification                                           \nrule 31: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID type_spec\nrule 32: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ERROR_      \nrule 33: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID ERROR_   " },
-    { 1, ms_transition_table_+320, "RETURN nonterminal_specification" },
-    { 5, ms_transition_table_+321, "START rules                                                               \nrule 34: rules <- . rules '|' rule                                        \nrule 36: rule <- . rule_specification rule_handlers                       \nrule 37: rule_specification <- . rule_token_list rule_precedence_directive\nrule 44: rule_token_list <- . rule_token_list rule_token                  \nrule 45: rule_token_list <- .                                             \nrule 35: rules <- . rule                                                  " },
-    { 2, ms_transition_table_+326, "RETURN rules                      \nrule 34: rules <- rules . '|' rule" },
-    { 4, ms_transition_table_+328, "START rule                                                                \nrule 36: rule <- . rule_specification rule_handlers                       \nrule 37: rule_specification <- . rule_token_list rule_precedence_directive\nrule 44: rule_token_list <- . rule_token_list rule_token                  \nrule 45: rule_token_list <- .                                             " },
-    { 1, ms_transition_table_+332, "RETURN rule" },
-    { 3, ms_transition_table_+333, "START rule_specification                                                  \nrule 37: rule_specification <- . rule_token_list rule_precedence_directive\nrule 44: rule_token_list <- . rule_token_list rule_token                  \nrule 45: rule_token_list <- .                                             " },
-    { 1, ms_transition_table_+336, "RETURN rule_specification" },
-    { 2, ms_transition_table_+337, "START rule_handlers                                   \nrule 38: rule_handlers <- . rule_handlers rule_handler\nrule 39: rule_handlers <- .                           " },
-    { 4, ms_transition_table_+339, "RETURN rule_handlers                                                     \nrule 38: rule_handlers <- rule_handlers . rule_handler                   \nrule 40: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 41: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 42: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 43: rule_handler <- . ERROR_ any_type_of_code_block                 " },
-    { 4, ms_transition_table_+343, "START rule_handler                                                       \nrule 40: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 41: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 42: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 43: rule_handler <- . ERROR_ any_type_of_code_block                 " },
-    { 1, ms_transition_table_+347, "RETURN rule_handler" },
-    { 2, ms_transition_table_+348, "START rule_token_list                                   \nrule 44: rule_token_list <- . rule_token_list rule_token\nrule 45: rule_token_list <- .                           " },
-    { 7, ms_transition_table_+350, "RETURN rule_token_list                                                     \nrule 44: rule_token_list <- rule_token_list . rule_token                   \nrule 46: rule_token <- . token_id ':' ID                                   \nrule 66: token_id <- . ID                                                  \nrule 67: token_id <- . CHAR_LITERAL                                        \nrule 47: rule_token <- . token_id                                          \nrule 48: rule_token <- . DIRECTIVE_END ':' ID                              \nrule 49: rule_token <- . DIRECTIVE_END                                     \nrule 50: rule_token <- . DIRECTIVE_ERROR ID                                \nrule 51: rule_token <- . DIRECTIVE_ERROR                                   \nrule 52: rule_token <- . DIRECTIVE_ERROR '[' lookahead_terminal_list ']' ID\nrule 53: rule_token <- . DIRECTIVE_ERROR '[' lookahead_terminal_list ']'   " },
-    { 7, ms_transition_table_+357, "START rule_token                                                           \nrule 46: rule_token <- . token_id ':' ID                                   \nrule 66: token_id <- . ID                                                  \nrule 67: token_id <- . CHAR_LITERAL                                        \nrule 47: rule_token <- . token_id                                          \nrule 48: rule_token <- . DIRECTIVE_END ':' ID                              \nrule 49: rule_token <- . DIRECTIVE_END                                     \nrule 50: rule_token <- . DIRECTIVE_ERROR ID                                \nrule 51: rule_token <- . DIRECTIVE_ERROR                                   \nrule 52: rule_token <- . DIRECTIVE_ERROR '[' lookahead_terminal_list ']' ID\nrule 53: rule_token <- . DIRECTIVE_ERROR '[' lookahead_terminal_list ']'   " },
-    { 1, ms_transition_table_+364, "RETURN rule_token" },
-    { 3, ms_transition_table_+365, "START maybe_assigned_id               \nrule 54: maybe_assigned_id <- . ':' ID\nrule 55: maybe_assigned_id <- .       " },
-    { 2, ms_transition_table_+368, "rule 54: maybe_assigned_id <- ':' . ID" },
-    { 1, ms_transition_table_+370, "rule 54: maybe_assigned_id <- ':' ID ." },
-    { 1, ms_transition_table_+371, "RETURN maybe_assigned_id" },
-    { 7, ms_transition_table_+372, "rule 66: token_id <- . ID                                                           \nrule 67: token_id <- . CHAR_LITERAL                                                 \nSTART lookahead_terminal_list                                                       \nrule 56: lookahead_terminal_list <- . lookahead_terminal_list '|' lookahead_terminal\nrule 58: lookahead_terminal <- . DIRECTIVE_END                                      \nrule 59: lookahead_terminal <- . token_id                                           \nrule 57: lookahead_terminal_list <- . lookahead_terminal                            " },
-    { 2, ms_transition_table_+379, "RETURN lookahead_terminal_list                                                      \nrule 56: lookahead_terminal_list <- lookahead_terminal_list . '|' lookahead_terminal" },
-    { 6, ms_transition_table_+381, "rule 66: token_id <- . ID                     \nrule 67: token_id <- . CHAR_LITERAL           \nSTART lookahead_terminal                      \nrule 58: lookahead_terminal <- . DIRECTIVE_END\nrule 59: lookahead_terminal <- . token_id     " },
-    { 1, ms_transition_table_+387, "RETURN lookahead_terminal" },
-    { 3, ms_transition_table_+388, "START rule_precedence_directive                          \nrule 60: rule_precedence_directive <- . DIRECTIVE_PREC ID\nrule 61: rule_precedence_directive <- .                  " },
-    { 1, ms_transition_table_+391, "RETURN rule_precedence_directive" },
-    { 2, ms_transition_table_+392, "START at_least_zero_newlines                                       \nrule 62: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 63: at_least_zero_newlines <- .                               " },
-    { 2, ms_transition_table_+394, "RETURN at_least_zero_newlines                                      \nrule 62: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE" },
-    { 3, ms_transition_table_+396, "START at_least_one_newline                                     \nrule 64: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 65: at_least_one_newline <- . NEWLINE                     " },
-    { 2, ms_transition_table_+399, "RETURN at_least_one_newline                                    \nrule 64: at_least_one_newline <- at_least_one_newline . NEWLINE" },
-    { 4, ms_transition_table_+401, "START token_id                     \nrule 66: token_id <- . ID          \nrule 67: token_id <- . CHAR_LITERAL" },
-    { 1, ms_transition_table_+405, "RETURN token_id" },
-    { 4, ms_transition_table_+406, "START terminal                     \nrule 68: terminal <- . ID          \nrule 69: terminal <- . CHAR_LITERAL" },
-    { 1, ms_transition_table_+410, "RETURN terminal" },
-    { 4, ms_transition_table_+411, "START any_type_of_code_block                          \nrule 70: any_type_of_code_block <- . DUMB_CODE_BLOCK  \nrule 71: any_type_of_code_block <- . STRICT_CODE_BLOCK" },
-    { 1, ms_transition_table_+415, "RETURN any_type_of_code_block" },
-    { 2, ms_transition_table_+416, "START type_spec                                                       \nrule 72: type_spec <- . type_spec DIRECTIVE_TYPE '.' ID STRING_LITERAL\nrule 73: type_spec <- .                                               " },
-    { 2, ms_transition_table_+418, "RETURN type_spec                                                      \nrule 72: type_spec <- type_spec . DIRECTIVE_TYPE '.' ID STRING_LITERAL" }
+    { 3, ms_transition_table_+207, "rule 50: rule_token <- DIRECTIVE_ERROR . ID                                      \nrule 51: rule_token <- DIRECTIVE_ERROR .                                         \nrule 52: rule_token <- DIRECTIVE_ERROR . bracketed_lookahead_terminal_list ':' ID\nrule 54: bracketed_lookahead_terminal_list <- . '[' lookahead_terminal_list ']'  \nrule 53: rule_token <- DIRECTIVE_ERROR . bracketed_lookahead_terminal_list       " },
+    { 7, ms_transition_table_+210, "rule 65: token_id <- . ID                                                           \nrule 66: token_id <- . CHAR_LITERAL                                                 \nrule 54: bracketed_lookahead_terminal_list <- '[' . lookahead_terminal_list ']'     \nrule 55: lookahead_terminal_list <- . lookahead_terminal_list '|' lookahead_terminal\nrule 57: lookahead_terminal <- . DIRECTIVE_END                                      \nrule 58: lookahead_terminal <- . token_id                                           \nrule 56: lookahead_terminal_list <- . lookahead_terminal                            " },
+    { 1, ms_transition_table_+217, "rule 57: lookahead_terminal <- DIRECTIVE_END ." },
+    { 1, ms_transition_table_+218, "rule 65: token_id <- ID ." },
+    { 3, ms_transition_table_+219, "rule 54: bracketed_lookahead_terminal_list <- '[' lookahead_terminal_list . ']'     \nrule 55: lookahead_terminal_list <- lookahead_terminal_list . '|' lookahead_terminal" },
+    { 1, ms_transition_table_+222, "rule 54: bracketed_lookahead_terminal_list <- '[' lookahead_terminal_list ']' ." },
+    { 6, ms_transition_table_+223, "rule 65: token_id <- . ID                                                           \nrule 66: token_id <- . CHAR_LITERAL                                                 \nrule 55: lookahead_terminal_list <- lookahead_terminal_list '|' . lookahead_terminal\nrule 57: lookahead_terminal <- . DIRECTIVE_END                                      \nrule 58: lookahead_terminal <- . token_id                                           " },
+    { 1, ms_transition_table_+229, "rule 55: lookahead_terminal_list <- lookahead_terminal_list '|' lookahead_terminal ." },
+    { 1, ms_transition_table_+230, "rule 58: lookahead_terminal <- token_id ." },
+    { 1, ms_transition_table_+231, "rule 56: lookahead_terminal_list <- lookahead_terminal ." },
+    { 7, ms_transition_table_+232, "rule 44: rule_token_list <- rule_token_list . rule_token                         \nrule 46: rule_token <- . token_id ':' ID                                         \nrule 65: token_id <- . ID                                                        \nrule 66: token_id <- . CHAR_LITERAL                                              \nrule 47: rule_token <- . token_id                                                \nrule 48: rule_token <- . DIRECTIVE_END ':' ID                                    \nrule 49: rule_token <- . DIRECTIVE_END                                           \nrule 50: rule_token <- . DIRECTIVE_ERROR ID                                      \nrule 51: rule_token <- . DIRECTIVE_ERROR                                         \nrule 52: rule_token <- . DIRECTIVE_ERROR bracketed_lookahead_terminal_list ':' ID\nrule 53: rule_token <- . DIRECTIVE_ERROR bracketed_lookahead_terminal_list       " },
+    { 1, ms_transition_table_+239, "rule 44: rule_token_list <- rule_token_list rule_token ." },
+    { 2, ms_transition_table_+240, "rule 46: rule_token <- token_id . ':' ID\nrule 47: rule_token <- token_id .       " },
+    { 2, ms_transition_table_+242, "rule 46: rule_token <- token_id ':' . ID" },
+    { 1, ms_transition_table_+244, "rule 46: rule_token <- token_id ':' ID ." },
+    { 2, ms_transition_table_+245, "rule 52: rule_token <- DIRECTIVE_ERROR bracketed_lookahead_terminal_list . ':' ID\nrule 53: rule_token <- DIRECTIVE_ERROR bracketed_lookahead_terminal_list .       " },
+    { 2, ms_transition_table_+247, "rule 52: rule_token <- DIRECTIVE_ERROR bracketed_lookahead_terminal_list ':' . ID" },
+    { 1, ms_transition_table_+249, "rule 52: rule_token <- DIRECTIVE_ERROR bracketed_lookahead_terminal_list ':' ID ." },
+    { 2, ms_transition_table_+250, "rule 59: rule_precedence_directive <- DIRECTIVE_PREC . ID" },
+    { 1, ms_transition_table_+252, "rule 59: rule_precedence_directive <- DIRECTIVE_PREC ID ." },
+    { 1, ms_transition_table_+253, "rule 37: rule_specification <- rule_token_list rule_precedence_directive ." },
+    { 1, ms_transition_table_+254, "rule 35: rules <- rule ." },
+    { 3, ms_transition_table_+255, "START targets_directive                                                         \nrule 1: targets_directive <- . DIRECTIVE_TARGETS target_ids at_least_one_newline\nrule 2: targets_directive <- .                                                  \nrule 3: targets_directive <- . DIRECTIVE_TARGETS ERROR_ at_least_one_newline    " },
+    { 1, ms_transition_table_+258, "RETURN targets_directive" },
+    { 2, ms_transition_table_+259, "START target_ids                     \nrule 4: target_ids <- . target_ids ID\nrule 5: target_ids <- .              " },
+    { 2, ms_transition_table_+261, "RETURN target_ids                    \nrule 4: target_ids <- target_ids . ID" },
+    { 2, ms_transition_table_+263, "START target_directives                                                               \nrule 6: target_directives <- . target_directives target_directive at_least_one_newline\nrule 7: target_directives <- .                                                        " },
+    { 3, ms_transition_table_+265, "RETURN target_directives                                                              \nrule 6: target_directives <- target_directives . target_directive at_least_one_newline\nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param   \nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                   \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                         \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                                " },
+    { 3, ms_transition_table_+268, "START target_directive                                                             \nrule 8: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID target_directive_param\nrule 9: target_directive <- . DIRECTIVE_TARGET '.' ID '.' ID ERROR_                \nrule 10: target_directive <- . DIRECTIVE_TARGET '.' ID ERROR_                      \nrule 11: target_directive <- . DIRECTIVE_TARGET ERROR_                             " },
+    { 1, ms_transition_table_+271, "RETURN target_directive" },
+    { 6, ms_transition_table_+272, "START target_directive_param                          \nrule 12: target_directive_param <- . ID               \nrule 13: target_directive_param <- . STRING_LITERAL   \nrule 14: target_directive_param <- . STRICT_CODE_BLOCK\nrule 15: target_directive_param <- . DUMB_CODE_BLOCK  \nrule 16: target_directive_param <- .                  " },
+    { 1, ms_transition_table_+278, "RETURN target_directive_param" },
+    { 2, ms_transition_table_+279, "START terminal_directives                                               \nrule 17: terminal_directives <- . terminal_directives terminal_directive\nrule 18: terminal_directives <- .                                       " },
+    { 3, ms_transition_table_+281, "RETURN terminal_directives                                                                  \nrule 17: terminal_directives <- terminal_directives . terminal_directive                    \nrule 19: terminal_directive <- . DIRECTIVE_TERMINAL terminals type_spec at_least_one_newline" },
+    { 3, ms_transition_table_+284, "START terminal_directive                                                                    \nrule 19: terminal_directive <- . DIRECTIVE_TERMINAL terminals type_spec at_least_one_newline" },
+    { 1, ms_transition_table_+287, "RETURN terminal_directive" },
+    { 5, ms_transition_table_+288, "START terminals                           \nrule 20: terminals <- . terminals terminal\nrule 67: terminal <- . ID                 \nrule 68: terminal <- . CHAR_LITERAL       \nrule 21: terminals <- . terminal          " },
+    { 4, ms_transition_table_+293, "RETURN terminals                          \nrule 20: terminals <- terminals . terminal\nrule 67: terminal <- . ID                 \nrule 68: terminal <- . CHAR_LITERAL       " },
+    { 2, ms_transition_table_+297, "START precedence_directives                                                   \nrule 22: precedence_directives <- . precedence_directives precedence_directive\nrule 23: precedence_directives <- .                                           " },
+    { 3, ms_transition_table_+299, "RETURN precedence_directives                                                    \nrule 22: precedence_directives <- precedence_directives . precedence_directive  \nrule 24: precedence_directive <- . DIRECTIVE_PREC ID at_least_one_newline       \nrule 25: precedence_directive <- . DIRECTIVE_PREC '.' ID ID at_least_one_newline" },
+    { 3, ms_transition_table_+302, "START precedence_directive                                                      \nrule 24: precedence_directive <- . DIRECTIVE_PREC ID at_least_one_newline       \nrule 25: precedence_directive <- . DIRECTIVE_PREC '.' ID ID at_least_one_newline" },
+    { 1, ms_transition_table_+305, "RETURN precedence_directive" },
+    { 3, ms_transition_table_+306, "START start_directive                                                                    \nrule 26: start_directive <- . DIRECTIVE_DEFAULT_PARSE_NONTERMINAL ID at_least_one_newline" },
+    { 1, ms_transition_table_+309, "RETURN start_directive" },
+    { 2, ms_transition_table_+310, "START nonterminals                                 \nrule 27: nonterminals <- . nonterminals nonterminal\nrule 28: nonterminals <- .                         " },
+    { 5, ms_transition_table_+312, "RETURN nonterminals                                                       \nrule 27: nonterminals <- nonterminals . nonterminal                       \nrule 29: nonterminal <- . nonterminal_specification ':' rules ';'         \nrule 31: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID type_spec\nrule 32: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ERROR_      \nrule 33: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID ERROR_   \nrule 30: nonterminal <- . ERROR_ ';'                                      " },
+    { 5, ms_transition_table_+317, "START nonterminal                                                         \nrule 29: nonterminal <- . nonterminal_specification ':' rules ';'         \nrule 31: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID type_spec\nrule 32: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ERROR_      \nrule 33: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID ERROR_   \nrule 30: nonterminal <- . ERROR_ ';'                                      " },
+    { 1, ms_transition_table_+322, "RETURN nonterminal" },
+    { 3, ms_transition_table_+323, "START nonterminal_specification                                           \nrule 31: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID type_spec\nrule 32: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ERROR_      \nrule 33: nonterminal_specification <- . DIRECTIVE_NONTERMINAL ID ERROR_   " },
+    { 1, ms_transition_table_+326, "RETURN nonterminal_specification" },
+    { 5, ms_transition_table_+327, "START rules                                                               \nrule 34: rules <- . rules '|' rule                                        \nrule 36: rule <- . rule_specification rule_handlers                       \nrule 37: rule_specification <- . rule_token_list rule_precedence_directive\nrule 44: rule_token_list <- . rule_token_list rule_token                  \nrule 45: rule_token_list <- .                                             \nrule 35: rules <- . rule                                                  " },
+    { 2, ms_transition_table_+332, "RETURN rules                      \nrule 34: rules <- rules . '|' rule" },
+    { 4, ms_transition_table_+334, "START rule                                                                \nrule 36: rule <- . rule_specification rule_handlers                       \nrule 37: rule_specification <- . rule_token_list rule_precedence_directive\nrule 44: rule_token_list <- . rule_token_list rule_token                  \nrule 45: rule_token_list <- .                                             " },
+    { 1, ms_transition_table_+338, "RETURN rule" },
+    { 3, ms_transition_table_+339, "START rule_specification                                                  \nrule 37: rule_specification <- . rule_token_list rule_precedence_directive\nrule 44: rule_token_list <- . rule_token_list rule_token                  \nrule 45: rule_token_list <- .                                             " },
+    { 1, ms_transition_table_+342, "RETURN rule_specification" },
+    { 2, ms_transition_table_+343, "START rule_handlers                                   \nrule 38: rule_handlers <- . rule_handlers rule_handler\nrule 39: rule_handlers <- .                           " },
+    { 4, ms_transition_table_+345, "RETURN rule_handlers                                                     \nrule 38: rule_handlers <- rule_handlers . rule_handler                   \nrule 40: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 41: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 42: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 43: rule_handler <- . ERROR_ any_type_of_code_block                 " },
+    { 4, ms_transition_table_+349, "START rule_handler                                                       \nrule 40: rule_handler <- . DIRECTIVE_TARGET '.' ID any_type_of_code_block\nrule 41: rule_handler <- . DIRECTIVE_TARGET ERROR_ any_type_of_code_block\nrule 42: rule_handler <- . DIRECTIVE_TARGET ERROR_                       \nrule 43: rule_handler <- . ERROR_ any_type_of_code_block                 " },
+    { 1, ms_transition_table_+353, "RETURN rule_handler" },
+    { 2, ms_transition_table_+354, "START rule_token_list                                   \nrule 44: rule_token_list <- . rule_token_list rule_token\nrule 45: rule_token_list <- .                           " },
+    { 7, ms_transition_table_+356, "RETURN rule_token_list                                                           \nrule 44: rule_token_list <- rule_token_list . rule_token                         \nrule 46: rule_token <- . token_id ':' ID                                         \nrule 65: token_id <- . ID                                                        \nrule 66: token_id <- . CHAR_LITERAL                                              \nrule 47: rule_token <- . token_id                                                \nrule 48: rule_token <- . DIRECTIVE_END ':' ID                                    \nrule 49: rule_token <- . DIRECTIVE_END                                           \nrule 50: rule_token <- . DIRECTIVE_ERROR ID                                      \nrule 51: rule_token <- . DIRECTIVE_ERROR                                         \nrule 52: rule_token <- . DIRECTIVE_ERROR bracketed_lookahead_terminal_list ':' ID\nrule 53: rule_token <- . DIRECTIVE_ERROR bracketed_lookahead_terminal_list       " },
+    { 7, ms_transition_table_+363, "START rule_token                                                                 \nrule 46: rule_token <- . token_id ':' ID                                         \nrule 65: token_id <- . ID                                                        \nrule 66: token_id <- . CHAR_LITERAL                                              \nrule 47: rule_token <- . token_id                                                \nrule 48: rule_token <- . DIRECTIVE_END ':' ID                                    \nrule 49: rule_token <- . DIRECTIVE_END                                           \nrule 50: rule_token <- . DIRECTIVE_ERROR ID                                      \nrule 51: rule_token <- . DIRECTIVE_ERROR                                         \nrule 52: rule_token <- . DIRECTIVE_ERROR bracketed_lookahead_terminal_list ':' ID\nrule 53: rule_token <- . DIRECTIVE_ERROR bracketed_lookahead_terminal_list       " },
+    { 1, ms_transition_table_+370, "RETURN rule_token" },
+    { 3, ms_transition_table_+371, "START bracketed_lookahead_terminal_list                                        \nrule 54: bracketed_lookahead_terminal_list <- . '[' lookahead_terminal_list ']'" },
+    { 1, ms_transition_table_+374, "RETURN bracketed_lookahead_terminal_list" },
+    { 7, ms_transition_table_+375, "rule 65: token_id <- . ID                                                           \nrule 66: token_id <- . CHAR_LITERAL                                                 \nSTART lookahead_terminal_list                                                       \nrule 55: lookahead_terminal_list <- . lookahead_terminal_list '|' lookahead_terminal\nrule 57: lookahead_terminal <- . DIRECTIVE_END                                      \nrule 58: lookahead_terminal <- . token_id                                           \nrule 56: lookahead_terminal_list <- . lookahead_terminal                            " },
+    { 2, ms_transition_table_+382, "RETURN lookahead_terminal_list                                                      \nrule 55: lookahead_terminal_list <- lookahead_terminal_list . '|' lookahead_terminal" },
+    { 6, ms_transition_table_+384, "rule 65: token_id <- . ID                     \nrule 66: token_id <- . CHAR_LITERAL           \nSTART lookahead_terminal                      \nrule 57: lookahead_terminal <- . DIRECTIVE_END\nrule 58: lookahead_terminal <- . token_id     " },
+    { 1, ms_transition_table_+390, "RETURN lookahead_terminal" },
+    { 3, ms_transition_table_+391, "START rule_precedence_directive                          \nrule 59: rule_precedence_directive <- . DIRECTIVE_PREC ID\nrule 60: rule_precedence_directive <- .                  " },
+    { 1, ms_transition_table_+394, "RETURN rule_precedence_directive" },
+    { 2, ms_transition_table_+395, "START at_least_zero_newlines                                       \nrule 61: at_least_zero_newlines <- . at_least_zero_newlines NEWLINE\nrule 62: at_least_zero_newlines <- .                               " },
+    { 2, ms_transition_table_+397, "RETURN at_least_zero_newlines                                      \nrule 61: at_least_zero_newlines <- at_least_zero_newlines . NEWLINE" },
+    { 3, ms_transition_table_+399, "START at_least_one_newline                                     \nrule 63: at_least_one_newline <- . at_least_one_newline NEWLINE\nrule 64: at_least_one_newline <- . NEWLINE                     " },
+    { 2, ms_transition_table_+402, "RETURN at_least_one_newline                                    \nrule 63: at_least_one_newline <- at_least_one_newline . NEWLINE" },
+    { 4, ms_transition_table_+404, "START token_id                     \nrule 65: token_id <- . ID          \nrule 66: token_id <- . CHAR_LITERAL" },
+    { 1, ms_transition_table_+408, "RETURN token_id" },
+    { 4, ms_transition_table_+409, "START terminal                     \nrule 67: terminal <- . ID          \nrule 68: terminal <- . CHAR_LITERAL" },
+    { 1, ms_transition_table_+413, "RETURN terminal" },
+    { 4, ms_transition_table_+414, "START any_type_of_code_block                          \nrule 69: any_type_of_code_block <- . DUMB_CODE_BLOCK  \nrule 70: any_type_of_code_block <- . STRICT_CODE_BLOCK" },
+    { 1, ms_transition_table_+418, "RETURN any_type_of_code_block" },
+    { 2, ms_transition_table_+419, "START type_spec                                                       \nrule 71: type_spec <- . type_spec DIRECTIVE_TYPE '.' ID STRING_LITERAL\nrule 72: type_spec <- .                                               " },
+    { 2, ms_transition_table_+421, "RETURN type_spec                                                      \nrule 71: type_spec <- type_spec . DIRECTIVE_TYPE '.' ID STRING_LITERAL" }
 };
 std::size_t const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
 
 Parser::Transition_ const Parser::ms_transition_table_[] =
 {
-    { Parser::Transition_::REDUCE, 63, 0, ms_lookahead_table_+0 },
+    { Parser::Transition_::REDUCE, 62, 0, ms_lookahead_table_+0 },
     { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+0 },
     { Parser::Transition_::SHIFT, 2, 1, ms_lookahead_table_+1 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+2 },
@@ -2263,10 +2268,10 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+7 },
     { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+7 },
     { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+8 },
-    { Parser::Transition_::REDUCE, 65, 0, ms_lookahead_table_+9 },
+    { Parser::Transition_::REDUCE, 64, 0, ms_lookahead_table_+9 },
     { Parser::Transition_::REDUCE, 3, 0, ms_lookahead_table_+9 },
     { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+9 },
-    { Parser::Transition_::REDUCE, 64, 0, ms_lookahead_table_+10 },
+    { Parser::Transition_::REDUCE, 63, 0, ms_lookahead_table_+10 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+10 },
     { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+10 },
     { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+11 },
@@ -2274,7 +2279,7 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::REDUCE, 4, 0, ms_lookahead_table_+13 },
     { Parser::Transition_::REDUCE, 1, 0, ms_lookahead_table_+13 },
     { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+13 },
-    { Parser::Transition_::REDUCE, 62, 0, ms_lookahead_table_+14 },
+    { Parser::Transition_::REDUCE, 61, 0, ms_lookahead_table_+14 },
     { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+14 },
     { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+14 },
     { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+15 },
@@ -2320,9 +2325,9 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+37 },
     { Parser::Transition_::SHIFT, 33, 1, ms_lookahead_table_+38 },
     { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+39 },
-    { Parser::Transition_::REDUCE, 69, 0, ms_lookahead_table_+40 },
     { Parser::Transition_::REDUCE, 68, 0, ms_lookahead_table_+40 },
-    { Parser::Transition_::REDUCE, 73, 0, ms_lookahead_table_+40 },
+    { Parser::Transition_::REDUCE, 67, 0, ms_lookahead_table_+40 },
+    { Parser::Transition_::REDUCE, 72, 0, ms_lookahead_table_+40 },
     { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+40 },
     { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+41 },
     { Parser::Transition_::SHIFT, 34, 1, ms_lookahead_table_+42 },
@@ -2338,7 +2343,7 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 38, 1, ms_lookahead_table_+48 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+49 },
     { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+49 },
-    { Parser::Transition_::REDUCE, 72, 0, ms_lookahead_table_+50 },
+    { Parser::Transition_::REDUCE, 71, 0, ms_lookahead_table_+50 },
     { Parser::Transition_::REDUCE, 19, 0, ms_lookahead_table_+50 },
     { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+50 },
     { Parser::Transition_::REDUCE, 21, 0, ms_lookahead_table_+51 },
@@ -2389,7 +2394,7 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 61, 1, ms_lookahead_table_+76 },
     { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+77 },
     { Parser::Transition_::REDUCE, 32, 0, ms_lookahead_table_+78 },
-    { Parser::Transition_::REDUCE, 73, 0, ms_lookahead_table_+78 },
+    { Parser::Transition_::REDUCE, 72, 0, ms_lookahead_table_+78 },
     { Parser::Transition_::SHIFT, 63, 1, ms_lookahead_table_+78 },
     { Parser::Transition_::SHIFT, 64, 1, ms_lookahead_table_+79 },
     { Parser::Transition_::REDUCE, 33, 0, ms_lookahead_table_+80 },
@@ -2400,7 +2405,7 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+81 },
     { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+82 },
     { Parser::Transition_::SHIFT, 68, 1, ms_lookahead_table_+82 },
-    { Parser::Transition_::SHIFT, 108, 1, ms_lookahead_table_+83 },
+    { Parser::Transition_::SHIFT, 111, 1, ms_lookahead_table_+83 },
     { Parser::Transition_::SHIFT, 72, 1, ms_lookahead_table_+84 },
     { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+85 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+86 },
@@ -2422,8 +2427,8 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 75, 1, ms_lookahead_table_+95 },
     { Parser::Transition_::SHIFT, 76, 1, ms_lookahead_table_+96 },
     { Parser::Transition_::SHIFT, 77, 1, ms_lookahead_table_+97 },
+    { Parser::Transition_::REDUCE, 69, 0, ms_lookahead_table_+98 },
     { Parser::Transition_::REDUCE, 70, 0, ms_lookahead_table_+98 },
-    { Parser::Transition_::REDUCE, 71, 0, ms_lookahead_table_+98 },
     { Parser::Transition_::REDUCE, 43, 0, ms_lookahead_table_+98 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+98 },
     { Parser::Transition_::SHIFT, 79, 1, ms_lookahead_table_+98 },
@@ -2441,16 +2446,16 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::SHIFT, 83, 1, ms_lookahead_table_+106 },
     { Parser::Transition_::REDUCE, 41, 0, ms_lookahead_table_+107 },
     { Parser::Transition_::REDUCE, 38, 0, ms_lookahead_table_+107 },
-    { Parser::Transition_::REDUCE, 61, 0, ms_lookahead_table_+107 },
+    { Parser::Transition_::REDUCE, 60, 0, ms_lookahead_table_+107 },
     { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+107 },
     { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+108 },
     { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+109 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+110 },
+    { Parser::Transition_::SHIFT, 108, 1, ms_lookahead_table_+110 },
     { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+111 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+112 },
-    { Parser::Transition_::SHIFT, 107, 1, ms_lookahead_table_+113 },
-    { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+114 },
-    { Parser::Transition_::REDUCE, 67, 0, ms_lookahead_table_+115 },
+    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+112 },
+    { Parser::Transition_::SHIFT, 110, 1, ms_lookahead_table_+113 },
+    { Parser::Transition_::SHIFT, 102, 1, ms_lookahead_table_+114 },
+    { Parser::Transition_::REDUCE, 66, 0, ms_lookahead_table_+115 },
     { Parser::Transition_::REDUCE, 49, 0, ms_lookahead_table_+115 },
     { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+115 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+116 },
@@ -2458,217 +2463,220 @@ Parser::Transition_ const Parser::ms_transition_table_[] =
     { Parser::Transition_::REDUCE, 48, 0, ms_lookahead_table_+117 },
     { Parser::Transition_::REDUCE, 51, 0, ms_lookahead_table_+117 },
     { Parser::Transition_::SHIFT, 91, 1, ms_lookahead_table_+117 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+118 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+118 },
-    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+119 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+120 },
-    { Parser::Transition_::SHIFT, 94, 1, ms_lookahead_table_+121 },
-    { Parser::Transition_::SHIFT, 104, 1, ms_lookahead_table_+122 },
-    { Parser::Transition_::SHIFT, 103, 1, ms_lookahead_table_+123 },
-    { Parser::Transition_::REDUCE, 58, 0, ms_lookahead_table_+124 },
-    { Parser::Transition_::REDUCE, 66, 0, ms_lookahead_table_+124 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+124 },
-    { Parser::Transition_::SHIFT, 95, 1, ms_lookahead_table_+124 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+125 },
-    { Parser::Transition_::REDUCE, 53, 0, ms_lookahead_table_+126 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+126 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+126 },
-    { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+127 },
-    { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+128 },
+    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+118 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+119 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+119 },
+    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+120 },
+    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+121 },
+    { Parser::Transition_::SHIFT, 94, 1, ms_lookahead_table_+122 },
+    { Parser::Transition_::SHIFT, 99, 1, ms_lookahead_table_+123 },
+    { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+124 },
+    { Parser::Transition_::REDUCE, 57, 0, ms_lookahead_table_+125 },
+    { Parser::Transition_::REDUCE, 65, 0, ms_lookahead_table_+125 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+125 },
+    { Parser::Transition_::SHIFT, 95, 1, ms_lookahead_table_+125 },
+    { Parser::Transition_::SHIFT, 96, 1, ms_lookahead_table_+126 },
+    { Parser::Transition_::REDUCE, 54, 0, ms_lookahead_table_+127 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+127 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+127 },
+    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+128 },
     { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+129 },
     { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+130 },
     { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+131 },
-    { Parser::Transition_::REDUCE, 44, 0, ms_lookahead_table_+132 },
-    { Parser::Transition_::REDUCE, 47, 0, ms_lookahead_table_+132 },
-    { Parser::Transition_::SHIFT, 99, 1, ms_lookahead_table_+132 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+133 },
-    { Parser::Transition_::SHIFT, 100, 1, ms_lookahead_table_+133 },
-    { Parser::Transition_::REDUCE, 46, 0, ms_lookahead_table_+134 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+134 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+134 },
-    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+135 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+136 },
+    { Parser::Transition_::REDUCE, 55, 0, ms_lookahead_table_+132 },
+    { Parser::Transition_::REDUCE, 58, 0, ms_lookahead_table_+132 },
+    { Parser::Transition_::REDUCE, 56, 0, ms_lookahead_table_+132 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+132 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+132 },
+    { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+133 },
+    { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+134 },
+    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+135 },
+    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+136 },
     { Parser::Transition_::SHIFT, 102, 1, ms_lookahead_table_+137 },
+    { Parser::Transition_::REDUCE, 44, 0, ms_lookahead_table_+138 },
+    { Parser::Transition_::REDUCE, 47, 0, ms_lookahead_table_+138 },
     { Parser::Transition_::SHIFT, 103, 1, ms_lookahead_table_+138 },
-    { Parser::Transition_::REDUCE, 56, 0, ms_lookahead_table_+139 },
-    { Parser::Transition_::REDUCE, 59, 0, ms_lookahead_table_+139 },
-    { Parser::Transition_::REDUCE, 57, 0, ms_lookahead_table_+139 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+139 },
-    { Parser::Transition_::SHIFT, 106, 1, ms_lookahead_table_+139 },
-    { Parser::Transition_::REDUCE, 60, 0, ms_lookahead_table_+140 },
-    { Parser::Transition_::REDUCE, 37, 0, ms_lookahead_table_+140 },
-    { Parser::Transition_::REDUCE, 35, 0, ms_lookahead_table_+140 },
-    { Parser::Transition_::REDUCE, 2, 0, ms_lookahead_table_+140 },
-    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+140 },
-    { Parser::Transition_::SHIFT, 110, 1, ms_lookahead_table_+141 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+142 },
-    { Parser::Transition_::REDUCE, 5, 0, ms_lookahead_table_+142 },
-    { Parser::Transition_::SHIFT, 112, 1, ms_lookahead_table_+142 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+143 },
-    { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+143 },
-    { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+144 },
-    { Parser::Transition_::SHIFT, 114, 1, ms_lookahead_table_+144 },
+    { Parser::Transition_::SHIFT, 104, 1, ms_lookahead_table_+139 },
+    { Parser::Transition_::REDUCE, 46, 0, ms_lookahead_table_+140 },
+    { Parser::Transition_::REDUCE, 53, 0, ms_lookahead_table_+140 },
+    { Parser::Transition_::SHIFT, 106, 1, ms_lookahead_table_+140 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+141 },
+    { Parser::Transition_::SHIFT, 107, 1, ms_lookahead_table_+141 },
+    { Parser::Transition_::REDUCE, 52, 0, ms_lookahead_table_+142 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+142 },
+    { Parser::Transition_::SHIFT, 109, 1, ms_lookahead_table_+142 },
+    { Parser::Transition_::REDUCE, 59, 0, ms_lookahead_table_+143 },
+    { Parser::Transition_::REDUCE, 37, 0, ms_lookahead_table_+143 },
+    { Parser::Transition_::REDUCE, 35, 0, ms_lookahead_table_+143 },
+    { Parser::Transition_::REDUCE, 2, 0, ms_lookahead_table_+143 },
+    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+143 },
+    { Parser::Transition_::SHIFT, 113, 1, ms_lookahead_table_+144 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+145 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+145 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+146 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+147 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+147 },
-    { Parser::Transition_::SHIFT, 116, 1, ms_lookahead_table_+148 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+149 },
-    { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+149 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+149 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+150 },
-    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+151 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+152 },
-    { Parser::Transition_::SHIFT, 118, 1, ms_lookahead_table_+153 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+154 },
-    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+154 },
-    { Parser::Transition_::SHIFT, 120, 1, ms_lookahead_table_+154 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+155 },
-    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+155 },
-    { Parser::Transition_::SHIFT, 42, 1, ms_lookahead_table_+156 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+157 },
-    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+157 },
-    { Parser::Transition_::SHIFT, 122, 1, ms_lookahead_table_+158 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+159 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+159 },
-    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+159 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+160 },
-    { Parser::Transition_::SHIFT, 124, 1, ms_lookahead_table_+161 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+162 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+163 },
-    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+163 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+164 },
-    { Parser::Transition_::SHIFT, 34, 1, ms_lookahead_table_+165 },
-    { Parser::Transition_::REDUCE, 23, 0, ms_lookahead_table_+166 },
-    { Parser::Transition_::SHIFT, 126, 1, ms_lookahead_table_+166 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+167 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+167 },
-    { Parser::Transition_::SHIFT, 54, 1, ms_lookahead_table_+168 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+169 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+169 },
-    { Parser::Transition_::SHIFT, 128, 1, ms_lookahead_table_+170 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+171 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+171 },
-    { Parser::Transition_::SHIFT, 44, 1, ms_lookahead_table_+171 },
-    { Parser::Transition_::SHIFT, 130, 1, ms_lookahead_table_+172 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+173 },
-    { Parser::Transition_::REDUCE, 28, 0, ms_lookahead_table_+173 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+173 },
+    { Parser::Transition_::REDUCE, 5, 0, ms_lookahead_table_+145 },
+    { Parser::Transition_::SHIFT, 115, 1, ms_lookahead_table_+145 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+146 },
+    { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+146 },
+    { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+147 },
+    { Parser::Transition_::SHIFT, 117, 1, ms_lookahead_table_+147 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+148 },
+    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+148 },
+    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+149 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+150 },
+    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+150 },
+    { Parser::Transition_::SHIFT, 119, 1, ms_lookahead_table_+151 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+152 },
+    { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+152 },
+    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+152 },
+    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+153 },
+    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+154 },
+    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+155 },
+    { Parser::Transition_::SHIFT, 121, 1, ms_lookahead_table_+156 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+157 },
+    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+157 },
+    { Parser::Transition_::SHIFT, 123, 1, ms_lookahead_table_+157 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+158 },
+    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+158 },
+    { Parser::Transition_::SHIFT, 42, 1, ms_lookahead_table_+159 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+160 },
+    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+160 },
+    { Parser::Transition_::SHIFT, 125, 1, ms_lookahead_table_+161 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+162 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+162 },
+    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+162 },
+    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+163 },
+    { Parser::Transition_::SHIFT, 127, 1, ms_lookahead_table_+164 },
+    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+165 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+166 },
+    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+166 },
+    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+167 },
+    { Parser::Transition_::SHIFT, 34, 1, ms_lookahead_table_+168 },
+    { Parser::Transition_::REDUCE, 23, 0, ms_lookahead_table_+169 },
+    { Parser::Transition_::SHIFT, 129, 1, ms_lookahead_table_+169 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+170 },
+    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+170 },
+    { Parser::Transition_::SHIFT, 54, 1, ms_lookahead_table_+171 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+172 },
+    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+172 },
+    { Parser::Transition_::SHIFT, 131, 1, ms_lookahead_table_+173 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+174 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+174 },
-    { Parser::Transition_::SHIFT, 60, 1, ms_lookahead_table_+175 },
-    { Parser::Transition_::SHIFT, 65, 1, ms_lookahead_table_+176 },
-    { Parser::Transition_::SHIFT, 66, 1, ms_lookahead_table_+177 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+178 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+178 },
-    { Parser::Transition_::SHIFT, 60, 1, ms_lookahead_table_+179 },
-    { Parser::Transition_::SHIFT, 134, 1, ms_lookahead_table_+180 },
-    { Parser::Transition_::SHIFT, 66, 1, ms_lookahead_table_+181 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+182 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+182 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+174 },
+    { Parser::Transition_::SHIFT, 44, 1, ms_lookahead_table_+174 },
+    { Parser::Transition_::SHIFT, 133, 1, ms_lookahead_table_+175 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+176 },
+    { Parser::Transition_::REDUCE, 28, 0, ms_lookahead_table_+176 },
+    { Parser::Transition_::SHIFT, 135, 1, ms_lookahead_table_+176 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+177 },
+    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+177 },
+    { Parser::Transition_::SHIFT, 60, 1, ms_lookahead_table_+178 },
+    { Parser::Transition_::SHIFT, 65, 1, ms_lookahead_table_+179 },
+    { Parser::Transition_::SHIFT, 66, 1, ms_lookahead_table_+180 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+181 },
+    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+181 },
     { Parser::Transition_::SHIFT, 60, 1, ms_lookahead_table_+182 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+183 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+184 },
-    { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+184 },
-    { Parser::Transition_::SHIFT, 138, 1, ms_lookahead_table_+184 },
-    { Parser::Transition_::SHIFT, 108, 1, ms_lookahead_table_+185 },
-    { Parser::Transition_::SHIFT, 72, 1, ms_lookahead_table_+186 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+187 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+188 },
-    { Parser::Transition_::SHIFT, 70, 1, ms_lookahead_table_+188 },
-    { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+189 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+189 },
-    { Parser::Transition_::SHIFT, 72, 1, ms_lookahead_table_+190 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+191 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+192 },
+    { Parser::Transition_::SHIFT, 137, 1, ms_lookahead_table_+183 },
+    { Parser::Transition_::SHIFT, 66, 1, ms_lookahead_table_+184 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+185 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+185 },
+    { Parser::Transition_::SHIFT, 60, 1, ms_lookahead_table_+185 },
+    { Parser::Transition_::SHIFT, 139, 1, ms_lookahead_table_+186 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+187 },
+    { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+187 },
+    { Parser::Transition_::SHIFT, 141, 1, ms_lookahead_table_+187 },
+    { Parser::Transition_::SHIFT, 111, 1, ms_lookahead_table_+188 },
+    { Parser::Transition_::SHIFT, 72, 1, ms_lookahead_table_+189 },
+    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+190 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+191 },
+    { Parser::Transition_::SHIFT, 70, 1, ms_lookahead_table_+191 },
     { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+192 },
-    { Parser::Transition_::SHIFT, 142, 1, ms_lookahead_table_+192 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+193 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+194 },
-    { Parser::Transition_::REDUCE, 39, 0, ms_lookahead_table_+194 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+194 },
+    { Parser::Transition_::SHIFT, 143, 1, ms_lookahead_table_+192 },
+    { Parser::Transition_::SHIFT, 72, 1, ms_lookahead_table_+193 },
+    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+194 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+195 },
-    { Parser::Transition_::SHIFT, 74, 1, ms_lookahead_table_+195 },
-    { Parser::Transition_::SHIFT, 78, 1, ms_lookahead_table_+196 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+197 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+198 },
+    { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+195 },
+    { Parser::Transition_::SHIFT, 145, 1, ms_lookahead_table_+195 },
+    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+196 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+197 },
+    { Parser::Transition_::REDUCE, 39, 0, ms_lookahead_table_+197 },
+    { Parser::Transition_::SHIFT, 147, 1, ms_lookahead_table_+197 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+198 },
     { Parser::Transition_::SHIFT, 74, 1, ms_lookahead_table_+198 },
     { Parser::Transition_::SHIFT, 78, 1, ms_lookahead_table_+199 },
-    { Parser::Transition_::SHIFT, 146, 1, ms_lookahead_table_+200 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+201 },
-    { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+201 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+201 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+202 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+202 },
-    { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+203 },
-    { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+204 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+205 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+206 },
-    { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+207 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+208 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+208 },
-    { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+209 },
-    { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+210 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+211 },
-    { Parser::Transition_::SHIFT, 150, 1, ms_lookahead_table_+212 },
-    { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+213 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+214 },
-    { Parser::Transition_::REDUCE, 55, 0, ms_lookahead_table_+214 },
-    { Parser::Transition_::SHIFT, 152, 1, ms_lookahead_table_+214 },
-    { Parser::Transition_::SHIFT, 154, 1, ms_lookahead_table_+215 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+216 },
-    { Parser::Transition_::SHIFT, 153, 1, ms_lookahead_table_+216 },
-    { Parser::Transition_::REDUCE, 54, 0, ms_lookahead_table_+217 },
+    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+200 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+201 },
+    { Parser::Transition_::SHIFT, 74, 1, ms_lookahead_table_+201 },
+    { Parser::Transition_::SHIFT, 78, 1, ms_lookahead_table_+202 },
+    { Parser::Transition_::SHIFT, 149, 1, ms_lookahead_table_+203 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+204 },
+    { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+204 },
+    { Parser::Transition_::SHIFT, 151, 1, ms_lookahead_table_+204 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+205 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+205 },
+    { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+206 },
+    { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+207 },
+    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+208 },
+    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+209 },
+    { Parser::Transition_::SHIFT, 102, 1, ms_lookahead_table_+210 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+211 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+211 },
+    { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+212 },
+    { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+213 },
+    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+214 },
+    { Parser::Transition_::SHIFT, 153, 1, ms_lookahead_table_+215 },
+    { Parser::Transition_::SHIFT, 102, 1, ms_lookahead_table_+216 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+217 },
     { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+217 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+217 },
-    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+218 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+219 },
-    { Parser::Transition_::SHIFT, 156, 1, ms_lookahead_table_+220 },
-    { Parser::Transition_::SHIFT, 104, 1, ms_lookahead_table_+221 },
-    { Parser::Transition_::SHIFT, 103, 1, ms_lookahead_table_+222 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+223 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+223 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+224 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+224 },
-    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+225 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+226 },
-    { Parser::Transition_::SHIFT, 158, 1, ms_lookahead_table_+227 },
-    { Parser::Transition_::SHIFT, 103, 1, ms_lookahead_table_+228 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+229 },
-    { Parser::Transition_::REDUCE, 61, 0, ms_lookahead_table_+229 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+229 },
-    { Parser::Transition_::SHIFT, 160, 1, ms_lookahead_table_+230 },
+    { Parser::Transition_::SHIFT, 91, 1, ms_lookahead_table_+217 },
+    { Parser::Transition_::SHIFT, 155, 1, ms_lookahead_table_+218 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+219 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+219 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+219 },
+    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+220 },
+    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+221 },
+    { Parser::Transition_::SHIFT, 157, 1, ms_lookahead_table_+222 },
+    { Parser::Transition_::SHIFT, 99, 1, ms_lookahead_table_+223 },
+    { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+224 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+225 },
+    { Parser::Transition_::SHIFT, 96, 1, ms_lookahead_table_+225 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+226 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+226 },
+    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+227 },
+    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+228 },
+    { Parser::Transition_::SHIFT, 159, 1, ms_lookahead_table_+229 },
+    { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+230 },
     { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+231 },
-    { Parser::Transition_::REDUCE, 63, 0, ms_lookahead_table_+231 },
-    { Parser::Transition_::SHIFT, 162, 1, ms_lookahead_table_+231 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+232 },
-    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+232 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+233 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+233 },
-    { Parser::Transition_::SHIFT, 164, 1, ms_lookahead_table_+234 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+235 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+235 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+236 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+236 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+237 },
-    { Parser::Transition_::SHIFT, 166, 1, ms_lookahead_table_+238 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+239 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+239 },
-    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+239 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+240 },
-    { Parser::Transition_::SHIFT, 168, 1, ms_lookahead_table_+241 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+242 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+242 },
-    { Parser::Transition_::SHIFT, 75, 1, ms_lookahead_table_+242 },
-    { Parser::Transition_::SHIFT, 76, 1, ms_lookahead_table_+243 },
-    { Parser::Transition_::SHIFT, 170, 1, ms_lookahead_table_+244 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+245 },
-    { Parser::Transition_::REDUCE, 73, 0, ms_lookahead_table_+245 },
-    { Parser::Transition_::SHIFT, 172, 1, ms_lookahead_table_+245 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+246 },
-    { Parser::Transition_::SHIFT, 36, 1, ms_lookahead_table_+246 }
+    { Parser::Transition_::REDUCE, 60, 0, ms_lookahead_table_+231 },
+    { Parser::Transition_::SHIFT, 108, 1, ms_lookahead_table_+231 },
+    { Parser::Transition_::SHIFT, 161, 1, ms_lookahead_table_+232 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+233 },
+    { Parser::Transition_::REDUCE, 62, 0, ms_lookahead_table_+233 },
+    { Parser::Transition_::SHIFT, 163, 1, ms_lookahead_table_+233 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+234 },
+    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+234 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+235 },
+    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+235 },
+    { Parser::Transition_::SHIFT, 165, 1, ms_lookahead_table_+236 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+237 },
+    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+237 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+238 },
+    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+238 },
+    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+239 },
+    { Parser::Transition_::SHIFT, 167, 1, ms_lookahead_table_+240 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+241 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+241 },
+    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+241 },
+    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+242 },
+    { Parser::Transition_::SHIFT, 169, 1, ms_lookahead_table_+243 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+244 },
+    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+244 },
+    { Parser::Transition_::SHIFT, 75, 1, ms_lookahead_table_+244 },
+    { Parser::Transition_::SHIFT, 76, 1, ms_lookahead_table_+245 },
+    { Parser::Transition_::SHIFT, 171, 1, ms_lookahead_table_+246 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+247 },
+    { Parser::Transition_::REDUCE, 72, 0, ms_lookahead_table_+247 },
+    { Parser::Transition_::SHIFT, 173, 1, ms_lookahead_table_+247 },
+    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+248 },
+    { Parser::Transition_::SHIFT, 36, 1, ms_lookahead_table_+248 }
 };
 std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
 
@@ -2792,6 +2800,7 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     ':',
     Parser::Terminal::ID,
     '[',
+    Parser::Nonterminal_::bracketed_lookahead_terminal_list,
     Parser::Terminal::CHAR_LITERAL,
     Parser::Terminal::DIRECTIVE_END,
     Parser::Terminal::ID,
@@ -2802,17 +2811,19 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     '|',
     Parser::Terminal::CHAR_LITERAL,
     Parser::Terminal::DIRECTIVE_END,
+    Parser::Terminal::ID,
+    Parser::Nonterminal_::lookahead_terminal,
+    Parser::Nonterminal_::token_id,
+    Parser::Terminal::CHAR_LITERAL,
+    Parser::Terminal::DIRECTIVE_END,
     Parser::Terminal::DIRECTIVE_ERROR,
     Parser::Terminal::ID,
     Parser::Nonterminal_::rule_token,
     Parser::Nonterminal_::token_id,
     ':',
     Parser::Terminal::ID,
-    Parser::Terminal::CHAR_LITERAL,
-    Parser::Terminal::DIRECTIVE_END,
+    ':',
     Parser::Terminal::ID,
-    Parser::Nonterminal_::lookahead_terminal,
-    Parser::Nonterminal_::token_id,
     Parser::Terminal::ID,
     Parser::Terminal::DIRECTIVE_TARGETS,
     Parser::Nonterminal_::targets_directive,
@@ -2888,9 +2899,8 @@ Parser::Token::Id const Parser::ms_lookahead_table_[] =
     Parser::Terminal::ID,
     Parser::Nonterminal_::rule_token,
     Parser::Nonterminal_::token_id,
-    ':',
-    Parser::Nonterminal_::maybe_assigned_id,
-    Parser::Terminal::ID,
+    '[',
+    Parser::Nonterminal_::bracketed_lookahead_terminal_list,
     Parser::Terminal::CHAR_LITERAL,
     Parser::Terminal::DIRECTIVE_END,
     Parser::Terminal::ID,
@@ -3223,7 +3233,7 @@ char const *const Parser::ms_token_name_table_[] =
     "rule_handler",
     "rule_token_list",
     "rule_token",
-    "maybe_assigned_id",
+    "bracketed_lookahead_terminal_list",
     "lookahead_terminal_list",
     "lookahead_terminal",
     "rule_precedence_directive",
@@ -3277,4 +3287,4 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 } // end of namespace Trison
 
-#line 3281 "trison_parser.cpp"
+#line 3291 "trison_parser.cpp"
