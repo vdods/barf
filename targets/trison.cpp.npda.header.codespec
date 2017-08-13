@@ -274,12 +274,13 @@ private:
         // DPDA states.
         RealizedBranchStack_ m_realized_stack_;
         TokenQueue_ m_realized_lookahead_queue_;
-        std::size_t m_max_realized_lookahead_queue_size_; // TODO: Make this private and create an accessor for it
         HPSQueue_ m_hps_queue_;
         HPSQueue_ m_new_hps_queue_; // This is stored so new memory isn't necessarily allocated for each parse iteration.
 
         Npda_ () : m_root_(NULL), m_max_realized_lookahead_queue_size_(0) { }
         ~Npda_ ();
+
+        std::size_t MaxRealizedLookaheadQueueSize () const { return m_max_realized_lookahead_queue_size_; }
 
         void PopFrontRealizedLookahead ();
         void PushFrontRealizedLookahead (Token const &lookahead);
@@ -291,6 +292,8 @@ private:
     private:
 
         void UpdateMaxRealizedLookaheadQueueSize ();
+
+        std::size_t m_max_realized_lookahead_queue_size_;
     };
 
     Npda_ m_npda_;
