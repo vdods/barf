@@ -446,7 +446,7 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, Nonterminal::Name
 
     m_npda_.m_hps_queue_.push_back(hps);
 
-    m_npda_.m_global_stack_.push_back(RealizedBranchStackElement_(initial_state, Token(Nonterminal::none_)));
+    m_npda_.m_realized_stack_.push_back(RealizedBranchStackElement_(initial_state, Token(Nonterminal::none_)));
 
     StateVector_ const &epsilon_closure = EpsilonClosureOfState_(hps->m_stack.back().m_state_index);
     std::cerr << "epsilon closure of state " << initial_state << ";\n";
@@ -499,9 +499,9 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
         {
             case ParseStackTreeNode_::RETURN: {
                 std::cerr << "    executing trunk action RETURN.\n";
-                assert(m_npda_.m_global_stack_.size() == 2);
+                assert(m_npda_.m_realized_stack_.size() == 2);
                 parser_return_code_ = PRC_SUCCESS;
-                *return_token = m_npda_.m_global_stack_.back().m_token.m_data;
+                *return_token = m_npda_.m_realized_stack_.back().m_token.m_data;
                 should_return = true;
                 break;
             }
@@ -510,43 +510,43 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
                 std::cerr << "    executing trunk action REDUCE rule " << rule_index << ".\n";
                 // NOTE: dont actually execute reduction rules here, that should be saved for executing the trunk
-                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_npda_.m_global_stack_);
+                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_npda_.m_realized_stack_);
                 Rule_ const &rule = ms_rule_table_[rule_index];
                 // Pop those stack tokens
                 for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
-                    m_npda_.m_global_stack_.pop_back();
+                    m_npda_.m_realized_stack_.pop_back();
                 // Push the reduced nonterminal token data onto the front of the lookahead queue
-                m_npda_.PushFrontGlobalLookahead(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data));
+                m_npda_.PushFrontRealizedLookahead(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data));
                 break;
             }
             case ParseStackTreeNode_::SHIFT: {
                 // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
                 std::uint32_t const &state_index = trunk_child->m_spec.m_single_data;
                 std::cerr << "    executing trunk action SHIFT.\n";// then push state " << state_index << ".\n";
-                m_npda_.m_global_stack_.push_back(RealizedBranchStackElement_(state_index, Lookahead_(0)));
-                m_npda_.PopFrontGlobalLookahead();
+                m_npda_.m_realized_stack_.push_back(RealizedBranchStackElement_(state_index, Lookahead_(0)));
+                m_npda_.PopFrontRealizedLookahead();
                 break;
             }
             case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
                 std::cerr << "    executing trunk action INSERT_LOOKAHEAD_ERROR.\n";
-                m_npda_.PushFrontGlobalLookahead(Token(Terminal::ERROR_));
+                m_npda_.PushFrontRealizedLookahead(Token(Terminal::ERROR_));
                 break;
             }
             case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
                 std::cerr << "    executing trunk action DISCARD_LOOKAHEAD.\n";
-                assert(!m_npda_.m_global_lookahead_queue_.empty());
-                m_npda_.PopFrontGlobalLookahead();
+                assert(!m_npda_.m_realized_lookahead_queue_.empty());
+                m_npda_.PopFrontRealizedLookahead();
                 break;
             }
             case ParseStackTreeNode_::POP_STACK: {
                 std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
                 std::cerr << "    executing trunk action POP_STACK " << pop_count << ".\n";
-                if (m_npda_.m_global_stack_.size() > pop_count)
+                if (m_npda_.m_realized_stack_.size() > pop_count)
                 {
                     for (std::uint32_t i = 0; i < pop_count; ++i)
                     {
-                        ThrowAwayRealizedBranchStackElement_(m_npda_.m_global_stack_.back());
-                        m_npda_.m_global_stack_.pop_back();
+                        ThrowAwayRealizedBranchStackElement_(m_npda_.m_realized_stack_.back());
+                        m_npda_.m_realized_stack_.pop_back();
                     }
                 }
                 // TODO: figure out if hps-es' lookahead queues or cursors need to be updated.
@@ -810,9 +810,9 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 // Otherwise, the lookahead must be accessed.
                 else
                 {
-                    Token const &lookahead = hps.Lookahead(*this);
-                    std::cerr << "                Lookahead is " << lookahead << '\n';
-                    if (transition.m_token_index == lookahead.m_id)
+                    Token::Id lookahead_token_id = hps.LookaheadTokenId(*this);
+                    std::cerr << "                Lookahead is " << Token(lookahead_token_id) << '\n';
+                    if (transition.m_token_index == lookahead_token_id)
                     {
                         std::cerr << "                Exercising transition.\n";
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
@@ -1062,24 +1062,24 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
 {
     assert(m_npda_.m_root_ != NULL);
 
-    out << "global state stack is:\n    ";
-    for (std::size_t i = 0; i < m_npda_.m_global_stack_.size(); ++i)
+    out << "realized state stack is:\n    ";
+    for (std::size_t i = 0; i < m_npda_.m_realized_stack_.size(); ++i)
     {
-        if (m_npda_.m_global_stack_[i].m_state_index != std::uint32_t(-1))
-            out << m_npda_.m_global_stack_[i].m_state_index;
+        if (m_npda_.m_realized_stack_[i].m_state_index != std::uint32_t(-1))
+            out << m_npda_.m_realized_stack_[i].m_state_index;
         else
             out << "<N/A>";
-        if (i+1 < m_npda_.m_global_stack_.size())
+        if (i+1 < m_npda_.m_realized_stack_.size())
             out << ' ';
     }
     out << '\n';
-    out << "max lookahead count (so far) is:\n    " << m_npda_.m_max_global_lookahead_queue_size_ << '\n';
+    out << "max lookahead count (so far) is:\n    " << m_npda_.m_max_realized_lookahead_queue_size_ << '\n';
     out << "stack tokens then lookahead queue is:\n    ";
-    for (std::size_t i = 1; i < m_npda_.m_global_stack_.size(); ++i)
-        out << m_npda_.m_global_stack_[i].m_token << ' ';
+    for (std::size_t i = 1; i < m_npda_.m_realized_stack_.size(); ++i)
+        out << m_npda_.m_realized_stack_[i].m_token << ' ';
     out << ". ";
-    for (std::size_t i = 0; i < m_npda_.m_global_lookahead_queue_.size(); ++i)
-        out << m_npda_.m_global_lookahead_queue_[i] << ' ';
+    for (std::size_t i = 0; i < m_npda_.m_realized_lookahead_queue_.size(); ++i)
+        out << m_npda_.m_realized_lookahead_queue_[i] << ' ';
     out << '\n';
 
     m_npda_.m_root_->Print(out, *this);
@@ -1122,9 +1122,9 @@ bool Parser::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (Parser::
     {
         assert(lhs->m_child_nodes.empty());
         assert(rhs->m_child_nodes.empty());
-        // hps-es are equal if their m_global_lookahead_cursor and m_local_lookahead_queue members are.
-        if (lhs->m_global_lookahead_cursor != rhs->m_global_lookahead_cursor)
-            return lhs->m_global_lookahead_cursor < rhs->m_global_lookahead_cursor;
+        // hps-es are equal if their m_realized_lookahead_cursor and m_hypothetical_lookahead_token_id_queue members are.
+        if (lhs->m_realized_lookahead_cursor != rhs->m_realized_lookahead_cursor)
+            return lhs->m_realized_lookahead_cursor < rhs->m_realized_lookahead_cursor;
         else if (lhs->m_stack != rhs->m_stack)
             return std::lexicographical_compare(
                 lhs->m_stack.begin(), lhs->m_stack.end(),
@@ -1133,9 +1133,9 @@ bool Parser::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (Parser::
             );
         else
             return std::lexicographical_compare(
-                lhs->m_local_lookahead_queue.begin(), lhs->m_local_lookahead_queue.end(),
-                rhs->m_local_lookahead_queue.begin(), rhs->m_local_lookahead_queue.end(),
-                CompareToken
+                lhs->m_hypothetical_lookahead_token_id_queue.begin(), lhs->m_hypothetical_lookahead_token_id_queue.end(),
+                rhs->m_hypothetical_lookahead_token_id_queue.begin(), rhs->m_hypothetical_lookahead_token_id_queue.end(),
+                CompareTokenId
             );
     }
     // For REDUCE, their contents must be compared.
@@ -1228,12 +1228,12 @@ Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::BranchRoot ()
     return node;
 }
 
-Parser::Token const &Parser::ParseStackTreeNode_::Lookahead (Parser &parser) const
+Parser::Token::Id Parser::ParseStackTreeNode_::LookaheadTokenId (Parser &parser) const
 {
-    if (m_local_lookahead_queue.empty())
-        return parser.Lookahead_(m_global_lookahead_cursor);
+    if (m_hypothetical_lookahead_token_id_queue.empty())
+        return parser.Lookahead_(m_realized_lookahead_cursor).m_id;
     else
-        return m_local_lookahead_queue.front();
+        return m_hypothetical_lookahead_token_id_queue.front();
 }
 
 bool Parser::ParseStackTreeNode_::IsBlockedHPS () const
@@ -1381,8 +1381,8 @@ void Parser::ParseStackTreeNode_::CloneLeafNodeInto (Parser::ParseStackTreeNode_
     assert(m_child_nodes.empty());
     orphan_target.m_spec = m_spec;
     orphan_target.m_stack = m_stack;
-    orphan_target.m_local_lookahead_queue = m_local_lookahead_queue;
-    orphan_target.m_global_lookahead_cursor = m_global_lookahead_cursor;
+    orphan_target.m_hypothetical_lookahead_token_id_queue = m_hypothetical_lookahead_token_id_queue;
+    orphan_target.m_realized_lookahead_cursor = m_realized_lookahead_cursor;
 }
 
 void Parser::ParseStackTreeNode_::Print (std::ostream &out, Parser const &parser, std::uint32_t indent_level) const
@@ -1415,10 +1415,10 @@ void Parser::ParseStackTreeNode_::Print (std::ostream &out, Parser const &parser
         for (std::size_t i = 1; i < m_stack.size(); ++i)
             out << ms_token_name_table_[m_stack[i].m_token_id] << ' ';
         out << ". ";
-        for (std::size_t i = 0; i < m_local_lookahead_queue.size(); ++i)
-            out << ms_token_name_table_[m_local_lookahead_queue[i].m_id] << ' ';
-        for (std::size_t i = m_global_lookahead_cursor; i < parser.m_npda_.m_global_lookahead_queue_.size(); ++i)
-            out << ms_token_name_table_[parser.m_npda_.m_global_lookahead_queue_[i].m_id] << ' ';
+        for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
+            out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
+        for (std::size_t i = m_realized_lookahead_cursor; i < parser.m_npda_.m_realized_lookahead_queue_.size(); ++i)
+            out << ms_token_name_table_[parser.m_npda_.m_realized_lookahead_queue_[i].m_id] << ' ';
     }
     out << '\n';
 
@@ -1431,20 +1431,20 @@ void Parser::ParseStackTreeNode_::Print (std::ostream &out, Parser const &parser
     }
 }
 
-Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw()
+Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index) throw()
 {
-    while (index >= m_npda_.m_global_lookahead_queue_.size())
+    while (index >= m_npda_.m_realized_lookahead_queue_.size())
     {
-        // This does not require updating the hps-es' m_global_lookahead_cursor.
-        m_npda_.PushBackGlobalLookahead(Scan_());
+        // This does not require updating the hps-es' m_realized_lookahead_cursor.
+        m_npda_.PushBackRealizedLookahead(Scan_());
 
         TRISON_CPP_DEBUG_CODE_(std::cerr << 
 #line 159 "Parser.trison"
 "Parser"
 #line 1445 "Parser.cpp"
- << " pushed " << m_npda_.m_global_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
+ << " pushed " << m_npda_.m_realized_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
     }
-    return m_npda_.m_global_lookahead_queue_[index];
+    return m_npda_.m_realized_lookahead_queue_[index];
 }
 
 Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data)
@@ -1531,7 +1531,7 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTre
                 for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
                     reduce_hps->m_stack.pop_back();
                 // Push the reduced nonterminal token data onto the front of the lookahead queue
-                reduce_hps->m_local_lookahead_queue.push_front(Token(rule.m_reduction_nonterminal_token_id));
+                reduce_hps->m_hypothetical_lookahead_token_id_queue.push_front(rule.m_reduction_nonterminal_token_id);
             }
 
             break;
@@ -1539,27 +1539,27 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTre
         case ParseStackTreeNode_::SHIFT: {
             // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
             std::uint32_t const &state_index = action_data;
-            // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel Lookahead.
+            // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel LookaheadTokenId tracking.
             new_hps = hps.CloneLeafNode();
-            new_hps->m_stack.push_back(HypotheticalBranchStackElement_(state_index, new_hps->Lookahead(*this).m_id));
+            new_hps->m_stack.push_back(HypotheticalBranchStackElement_(state_index, new_hps->LookaheadTokenId(*this)));
             action_data = ParseStackTreeNode_::UNUSED_DATA; // SHIFT action doesn't store the state, the HPS children do.
-            if (new_hps->m_local_lookahead_queue.empty())
-                ++new_hps->m_global_lookahead_cursor;
+            if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
+                ++new_hps->m_realized_lookahead_cursor;
             else
-                new_hps->m_local_lookahead_queue.pop_front();
+                new_hps->m_hypothetical_lookahead_token_id_queue.pop_front();
             break;
         }
         case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
             new_hps = hps.CloneLeafNode();
-            new_hps->m_local_lookahead_queue.push_front(Token(Terminal::ERROR_));
+            new_hps->m_hypothetical_lookahead_token_id_queue.push_front(Terminal::ERROR_);
             break;
         }
         case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
             new_hps = hps.CloneLeafNode();
-            if (new_hps->m_local_lookahead_queue.empty())
-                ++new_hps->m_global_lookahead_cursor;
+            if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
+                ++new_hps->m_realized_lookahead_cursor;
             else
-                new_hps->m_local_lookahead_queue.pop_front();
+                new_hps->m_hypothetical_lookahead_token_id_queue.pop_front();
             break;
         }
         case ParseStackTreeNode_::POP_STACK: {
@@ -1628,43 +1628,43 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTre
 
 Parser::Npda_::~Npda_ ()
 {
-    // TODO: figure out if global stack and lookahead queue should have their tokens thrown away
+    // TODO: figure out if realized stack and lookahead queue should have their tokens thrown away
     delete m_root_;
     m_root_ = NULL;
     m_hps_queue_.clear();
     m_new_hps_queue_.clear();
 }
 
-void Parser::Npda_::PopFrontGlobalLookahead ()
+void Parser::Npda_::PopFrontRealizedLookahead ()
 {
-    assert(!m_global_lookahead_queue_.empty());
-    // Because the contents of m_npda_.m_global_lookahead_queue_ are changing, and each hps's
-    // m_global_lookahead_cursor is an index into that queue, each must be updated.
+    assert(!m_realized_lookahead_queue_.empty());
+    // Because the contents of m_npda_.m_realized_lookahead_queue_ are changing, and each hps's
+    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
     for (HPSQueue_::iterator hps_it = m_hps_queue_.begin(), hps_it_end = m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
     {
         ParseStackTreeNode_ &hps = **hps_it;
-        --hps.m_global_lookahead_cursor;
+        --hps.m_realized_lookahead_cursor;
     }
-    m_global_lookahead_queue_.pop_front();
+    m_realized_lookahead_queue_.pop_front();
 }
 
-void Parser::Npda_::PushFrontGlobalLookahead (Parser::Token const &lookahead)
+void Parser::Npda_::PushFrontRealizedLookahead (Parser::Token const &lookahead)
 {
-    m_global_lookahead_queue_.push_front(lookahead);
-    // Because the contents of m_npda_.m_global_lookahead_queue_ are changing, and each hps's
-    // m_global_lookahead_cursor is an index into that queue, each must be updated.
+    m_realized_lookahead_queue_.push_front(lookahead);
+    // Because the contents of m_npda_.m_realized_lookahead_queue_ are changing, and each hps's
+    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
     for (HPSQueue_::iterator hps_it = m_hps_queue_.begin(), hps_it_end = m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
     {
         ParseStackTreeNode_ &hps = **hps_it;
-        ++hps.m_global_lookahead_cursor;
+        ++hps.m_realized_lookahead_cursor;
     }
-    UpdateMaxGlobalLookaheadQueueSize();
+    UpdateMaxRealizedLookaheadQueueSize();
 }
 
-void Parser::Npda_::PushBackGlobalLookahead (Parser::Token const &lookahead)
+void Parser::Npda_::PushBackRealizedLookahead (Parser::Token const &lookahead)
 {
-    m_global_lookahead_queue_.push_back(lookahead);
-    UpdateMaxGlobalLookaheadQueueSize();
+    m_realized_lookahead_queue_.push_back(lookahead);
+    UpdateMaxRealizedLookaheadQueueSize();
 }
 
 void Parser::Npda_::RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node)
@@ -1680,9 +1680,9 @@ void Parser::Npda_::RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node)
     }
 }
 
-void Parser::Npda_::UpdateMaxGlobalLookaheadQueueSize ()
+void Parser::Npda_::UpdateMaxRealizedLookaheadQueueSize ()
 {
-    // m_global_lookahead_cursor is an index into m_global_lookahead_queue_ for each branch, so the number
+    // m_realized_lookahead_cursor is an index into m_realized_lookahead_queue_ for each branch, so the number
     // of lookaheads depends on the cursor for each branch.
     for (HPSQueue_::iterator hps_it = m_hps_queue_.begin(), hps_it_end = m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
     {
@@ -1691,12 +1691,12 @@ void Parser::Npda_::UpdateMaxGlobalLookaheadQueueSize ()
             continue;
 
         ParseStackTreeNode_ &hps = **hps_it;
-        // The actual lookaheads are offset by the global lookahead cursor, because the tokens before
-        // the global lookahead cursor are ones we've seen already, and therefore don't contribute to
+        // The actual lookaheads are offset by the realized lookahead cursor, because the tokens before
+        // the realized lookahead cursor are ones we've seen already, and therefore don't contribute to
         // the actual lookahead count.
-        assert(m_global_lookahead_queue_.size() >= hps.m_global_lookahead_cursor);
-        std::size_t hps_actual_lookahead_count = m_global_lookahead_queue_.size() - hps.m_global_lookahead_cursor;
-        m_max_global_lookahead_queue_size_ = std::max(m_max_global_lookahead_queue_size_, hps_actual_lookahead_count);
+        assert(m_realized_lookahead_queue_.size() >= hps.m_realized_lookahead_cursor);
+        std::size_t hps_actual_lookahead_count = m_realized_lookahead_queue_.size() - hps.m_realized_lookahead_cursor;
+        m_max_realized_lookahead_queue_size_ = std::max(m_max_realized_lookahead_queue_size_, hps_actual_lookahead_count);
     }
 }
 

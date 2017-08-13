@@ -222,28 +222,6 @@ private:
     struct State_;
     struct Transition_;
 
-//     struct StackElement_
-//     {
-//         std::uint32_t m_state_index;
-//         Token m_token;
-//
-//         StackElement_ ()
-//             :
-//             m_state_index(std::uint32_t(-1)),
-//             m_token(Nonterminal::none_, 0.0)
-//         { }
-//         StackElement_ (std::uint32_t state_index, Token const &token)
-//             :
-//             m_state_index(state_index),
-//             m_token(token)
-//         { }
-//
-//         bool operator == (StackElement_ const &other) const { return m_state_index == other.m_state_index; }
-//     }; // end of struct Parser::StackElement_
-//
-//     typedef std::deque<StackElement_> Stack_;
-    typedef std::deque<Token> LookaheadQueue_;
-
     // debug spew methods
     void PrintIndented_ (std::ostream &stream, char const *string) const;
 
@@ -263,6 +241,7 @@ private:
 
 private:
 
+    // TODO: This should be RealizedBranchStateStackElement_
     struct RealizedBranchStackElement_
     {
         std::uint32_t m_state_index;
@@ -282,6 +261,7 @@ private:
         bool operator == (RealizedBranchStackElement_ const &other) const { return m_state_index == other.m_state_index; }
     }; // end of struct Parser::RealizedBranchStackElement_
 
+    // TODO: This should be HypotheticalBranchStateStackElement_
     struct HypotheticalBranchStackElement_
     {
         std::uint32_t m_state_index;
@@ -303,6 +283,8 @@ private:
 
     typedef std::deque<RealizedBranchStackElement_> RealizedBranchStack_;
     typedef std::deque<HypotheticalBranchStackElement_> HypotheticalBranchStack_;
+    typedef std::deque<Token> TokenQueue_;
+    typedef std::deque<Token::Id> TokenIdQueue_;
 
     void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, double *&return_token);
     void ContinueNPDAParse_ (bool &should_return);
@@ -459,18 +441,18 @@ private:
 
         Spec m_spec;
         HypotheticalBranchStack_ m_stack;
-        // m_local_lookahead_queue comes before the "global" lookahead queue, and m_global_lookahead_cursor
-        // is the index into the "global" lookahead queue for where the end of m_local_lookahead_queue
+        // m_hypothetical_lookahead_token_id_queue comes before the realized lookahead queue, and m_realized_lookahead_cursor
+        // is the index into the realized lookahead queue for where the end of m_hypothetical_lookahead_token_id_queue
         // lands.  In other words, this node's "total" lookahead
-        LookaheadQueue_ m_local_lookahead_queue;
-        std::uint32_t m_global_lookahead_cursor; // this is an index into the "global" lookahead queue.
+        TokenIdQueue_ m_hypothetical_lookahead_token_id_queue;
+        std::uint32_t m_realized_lookahead_cursor; // this is an index into the realized lookahead queue.
         // StateSet_ m_top_states; // used for infinite loop detection
         ParseStackTreeNode_ *m_parent_node;
         ChildMap m_child_nodes;
 
         ParseStackTreeNode_ (Spec const &spec)
             : m_spec(spec)
-            , m_global_lookahead_cursor(0)
+            , m_realized_lookahead_cursor(0)
             , m_parent_node(NULL)
         { }
         ~ParseStackTreeNode_ ();
@@ -485,7 +467,7 @@ private:
         // This may return the root of the tree itself, or it may return this node (if this node's parent has
         // multiple children).
         ParseStackTreeNode_ *BranchRoot ();
-        Token const &Lookahead (Parser &parser) const;
+        Token::Id LookaheadTokenId (Parser &parser) const;
         // Any HPS whose parent action pops the stack at all is blocked (because its future depends on the
         // values of the stack below the top).  Also, RETURN is considered to block, since nothing can happen after.
         bool IsBlockedHPS () const;
@@ -509,7 +491,7 @@ private:
         void Print (std::ostream &out, Parser const &parser, std::uint32_t indent_level = 0) const;
     };
 
-    Token const &Lookahead_ (LookaheadQueue_::size_type index) throw();
+    Token const &Lookahead_ (TokenQueue_::size_type index) throw();
 
     ParseStackTreeNode_ *TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
 
@@ -519,29 +501,29 @@ private:
         // TODO/NOTE: The hps-es should really have "npda stack" and "npda lookahead queue",
         // which don't have any token data, whereas Npda_ should have "realized stack" and "realized lookahead queue",
         // which do have (and own) the token data.
-        // The "realized" states in m_global_stack_ are actually each a subset of the set of NPDA states.  These can
-        // be memoized and indexed, or not (use config flag to determine that).  The reason you may not want to
-        // memoize all of them is if a grammar is somehow exponential in the number of NPDA states -> number of
+        // The "realized" states in m_realized_stack_ should actually each be a subset of the set of NPDA states.
+        // These can be memoized and indexed, or not (use config flag to determine that).  The reason you may not
+        // want to memoize all of them is if a grammar is somehow exponential in the number of NPDA states -> number of
         // DPDA states.
-        RealizedBranchStack_ m_global_stack_;
-        LookaheadQueue_ m_global_lookahead_queue_;
-        std::size_t m_max_global_lookahead_queue_size_; // TODO: Make this private and create an accessor for it
+        RealizedBranchStack_ m_realized_stack_;
+        TokenQueue_ m_realized_lookahead_queue_;
+        std::size_t m_max_realized_lookahead_queue_size_; // TODO: Make this private and create an accessor for it
         HPSQueue_ m_hps_queue_;
         HPSQueue_ m_new_hps_queue_; // This is stored so new memory isn't necessarily allocated for each parse iteration.
 
-        Npda_ () : m_root_(NULL), m_max_global_lookahead_queue_size_(0) { }
+        Npda_ () : m_root_(NULL), m_max_realized_lookahead_queue_size_(0) { }
         ~Npda_ ();
 
-        void PopFrontGlobalLookahead ();
-        void PushFrontGlobalLookahead (Token const &lookahead);
-        void PushBackGlobalLookahead (Token const &lookahead);
+        void PopFrontRealizedLookahead ();
+        void PushFrontRealizedLookahead (Token const &lookahead);
+        void PushBackRealizedLookahead (Token const &lookahead);
         // Removes the branch that the given node is a part of.  A branch of a node N is defined as the set of
         // nodes that are descendants of N, and all ancestors of N having exactly one child.
         void RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
 
     private:
 
-        void UpdateMaxGlobalLookaheadQueueSize ();
+        void UpdateMaxRealizedLookaheadQueueSize ();
     };
 
     Npda_ m_npda_;
@@ -549,7 +531,7 @@ private:
     // TODO: Append _ to all implementation detail methods and members
     // Returns true iff lhs_rule_index denotes a rule with a higher precedence than that denoted by rhs_rule_index.
     static bool CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
-    static bool CompareToken (Token const &lhs, Token const &rhs) { return lhs.m_id < rhs.m_id; }
+    static bool CompareTokenId (Token::Id lhs, Token::Id rhs) { return lhs < rhs; }
     static bool CompareHypotheticalBranchStackElement (HypotheticalBranchStackElement_ const &lhs, HypotheticalBranchStackElement_ const &rhs) { return lhs.m_state_index < rhs.m_state_index; }
 
     // Returns the epsilon closure of the given NPDA state.  Return value is memoized.

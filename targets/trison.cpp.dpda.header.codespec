@@ -47,6 +47,7 @@ private:
     }; // end of struct <{class_name}::StackElement_
 
     typedef std::deque<StackElement_> Stack_;
+    typedef std::deque<Token> LookaheadQueue_;
 
     void ClearStack_ () throw();
     void ClearLookaheadQueue_ () throw();
