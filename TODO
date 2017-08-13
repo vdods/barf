@@ -313,3 +313,5 @@ template <Uint32 high> struct SmallestUint {
 -   Making `maybe_bracketed_lookahead_terminal_list` and `maybe_assigned_id` caused (old) trison
     binary to take too long.  Maybe try just `maybe_assigned_id`.  This may be a problem more
     generally with two possibly-empty rule tokens in a row.
+-   Maybe the root state of the NPDA should be a DPDA state (a subset of NPDA states).  This idea
+    is supported by the criteria that the NPDA and DPDA parsers should have the same behavior.

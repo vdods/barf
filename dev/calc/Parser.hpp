@@ -90,9 +90,9 @@ public:
         enum Name
         {
             none_ = 0,
-            statement_then_end = 260,
-            statement = 261,
-            x = 262
+            stmt_then_end = 260,
+            stmt = 261,
+            expr = 262
         }; // end of enum Parser::Nonterminal::Name
     }; // end of struct Parser::Nonterminal
 
@@ -198,7 +198,7 @@ public:
       * @brief This is the main method of the parser; it will attempt to parse
       *        the nonterminal specified.
       */
-    ParserReturnCode Parse (double *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::statement_then_end);
+    ParserReturnCode Parse (double *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::stmt_then_end);
 
 
 #line 19 "Parser.trison"
@@ -222,26 +222,26 @@ private:
     struct State_;
     struct Transition_;
 
-    struct StackElement_
-    {
-        std::uint32_t m_state_index;
-        Token m_token;
-
-        StackElement_ ()
-            :
-            m_state_index(std::uint32_t(-1)),
-            m_token(Nonterminal::none_, 0.0)
-        { }
-        StackElement_ (std::uint32_t state_index, Token const &token)
-            :
-            m_state_index(state_index),
-            m_token(token)
-        { }
-
-        bool operator == (StackElement_ const &other) const { return m_state_index == other.m_state_index; }
-    }; // end of struct Parser::StackElement_
-
-    typedef std::deque<StackElement_> Stack_;
+//     struct StackElement_
+//     {
+//         std::uint32_t m_state_index;
+//         Token m_token;
+//
+//         StackElement_ ()
+//             :
+//             m_state_index(std::uint32_t(-1)),
+//             m_token(Nonterminal::none_, 0.0)
+//         { }
+//         StackElement_ (std::uint32_t state_index, Token const &token)
+//             :
+//             m_state_index(state_index),
+//             m_token(token)
+//         { }
+//
+//         bool operator == (StackElement_ const &other) const { return m_state_index == other.m_state_index; }
+//     }; // end of struct Parser::StackElement_
+//
+//     typedef std::deque<StackElement_> Stack_;
     typedef std::deque<Token> LookaheadQueue_;
 
     // debug spew methods
@@ -255,7 +255,6 @@ private:
     static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
     ParserReturnCode Parse_ (double *return_token, Nonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token &token) throw();
-    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
     void ThrowAwayTokenData_ (double &token_data) throw();
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
@@ -264,9 +263,51 @@ private:
 
 private:
 
+    struct RealizedBranchStackElement_
+    {
+        std::uint32_t m_state_index;
+        Token m_token;
+
+        RealizedBranchStackElement_ ()
+            :
+            m_state_index(std::uint32_t(-1)),
+            m_token(Nonterminal::none_, 0.0)
+        { }
+        RealizedBranchStackElement_ (std::uint32_t state_index, Token const &token)
+            :
+            m_state_index(state_index),
+            m_token(token)
+        { }
+
+        bool operator == (RealizedBranchStackElement_ const &other) const { return m_state_index == other.m_state_index; }
+    }; // end of struct Parser::RealizedBranchStackElement_
+
+    struct HypotheticalBranchStackElement_
+    {
+        std::uint32_t m_state_index;
+        Token::Id m_token_id;
+
+        HypotheticalBranchStackElement_ ()
+            :
+            m_state_index(std::uint32_t(-1)),
+            m_token_id(Nonterminal::none_)
+        { }
+        HypotheticalBranchStackElement_ (std::uint32_t state_index, Token::Id token_id)
+            :
+            m_state_index(state_index),
+            m_token_id(token_id)
+        { }
+
+        bool operator == (HypotheticalBranchStackElement_ const &other) const { return m_state_index == other.m_state_index; }
+    }; // end of struct Parser::HypotheticalBranchStackElement_
+
+    typedef std::deque<RealizedBranchStackElement_> RealizedBranchStack_;
+    typedef std::deque<HypotheticalBranchStackElement_> HypotheticalBranchStack_;
+
     void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, double *&return_token);
     void ContinueNPDAParse_ (bool &should_return);
-    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack) throw();
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, RealizedBranchStack_ &stack) throw();
+    void ThrowAwayRealizedBranchStackElement_ (RealizedBranchStackElement_ &stack_element) throw();
 
     struct Precedence_
     {
@@ -417,7 +458,7 @@ private:
         typedef std::pair<std::int32_t,std::int32_t> PrecedenceLevelRange;
 
         Spec m_spec;
-        Stack_ m_stack;
+        HypotheticalBranchStack_ m_stack;
         // m_local_lookahead_queue comes before the "global" lookahead queue, and m_global_lookahead_cursor
         // is the index into the "global" lookahead queue for where the end of m_local_lookahead_queue
         // lands.  In other words, this node's "total" lookahead
@@ -476,13 +517,17 @@ private:
     {
         ParseStackTreeNode_ *m_root_;
         // TODO/NOTE: The hps-es should really have "npda stack" and "npda lookahead queue",
-        // which don't have any token data, whereas Npda_ should have "real stack" and "real lookahead queue",
+        // which don't have any token data, whereas Npda_ should have "realized stack" and "realized lookahead queue",
         // which do have (and own) the token data.
-        Stack_ m_global_stack_;
+        // The "realized" states in m_global_stack_ are actually each a subset of the set of NPDA states.  These can
+        // be memoized and indexed, or not (use config flag to determine that).  The reason you may not want to
+        // memoize all of them is if a grammar is somehow exponential in the number of NPDA states -> number of
+        // DPDA states.
+        RealizedBranchStack_ m_global_stack_;
         LookaheadQueue_ m_global_lookahead_queue_;
-        std::size_t m_max_global_lookahead_queue_size_;
+        std::size_t m_max_global_lookahead_queue_size_; // TODO: Make this private and create an accessor for it
         HPSQueue_ m_hps_queue_;
-        HPSQueue_ m_new_hps_queue_; // This is stored so new memory isn't allocated for each parse iteration.
+        HPSQueue_ m_new_hps_queue_; // This is stored so new memory isn't necessarily allocated for each parse iteration.
 
         Npda_ () : m_root_(NULL), m_max_global_lookahead_queue_size_(0) { }
         ~Npda_ ();
@@ -501,10 +546,11 @@ private:
 
     Npda_ m_npda_;
 
+    // TODO: Append _ to all implementation detail methods and members
     // Returns true iff lhs_rule_index denotes a rule with a higher precedence than that denoted by rhs_rule_index.
     static bool CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
     static bool CompareToken (Token const &lhs, Token const &rhs) { return lhs.m_id < rhs.m_id; }
-    static bool CompareStackElement (StackElement_ const &lhs, StackElement_ const &rhs) { return lhs.m_state_index < rhs.m_state_index; }
+    static bool CompareHypotheticalBranchStackElement (HypotheticalBranchStackElement_ const &lhs, HypotheticalBranchStackElement_ const &rhs) { return lhs.m_state_index < rhs.m_state_index; }
 
     // Returns the epsilon closure of the given NPDA state.  Return value is memoized.
     static StateVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);

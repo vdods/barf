@@ -37,11 +37,11 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
 
     ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
     std::uint32_t initial_state = NonterminalStartStateIndex_(nonterminal_to_parse);
-    hps->m_stack.push_back(StackElement_(initial_state, <{token_data_default}));
+    hps->m_stack.push_back(HypotheticalBranchStackElement_(initial_state, Nonterminal::none_));
 
     m_npda_.m_hps_queue_.push_back(hps);
 
-    m_npda_.m_global_stack_.push_back(StackElement_(initial_state, <{token_data_default}));
+    m_npda_.m_global_stack_.push_back(RealizedBranchStackElement_(initial_state, Token(Nonterminal::none_)));
 
     StateVector_ const &epsilon_closure = EpsilonClosureOfState_(hps->m_stack.back().m_state_index);
     std::cerr << "epsilon closure of state " << initial_state << ";\n";
@@ -129,7 +129,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
                 std::uint32_t const &state_index = trunk_child->m_spec.m_single_data;
                 std::cerr << "    executing trunk action SHIFT.\n";// then push state " << state_index << ".\n";
-                m_npda_.m_global_stack_.push_back(StackElement_(state_index, Lookahead_(0)));
+                m_npda_.m_global_stack_.push_back(RealizedBranchStackElement_(state_index, Lookahead_(0)));
                 m_npda_.PopFrontGlobalLookahead();
                 break;
             }
@@ -151,7 +151,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 {
                     for (std::uint32_t i = 0; i < pop_count; ++i)
                     {
-                        ThrowAwayStackElement_(m_npda_.m_global_stack_.back());
+                        ThrowAwayRealizedBranchStackElement_(m_npda_.m_global_stack_.back());
                         m_npda_.m_global_stack_.pop_back();
                     }
                 }
@@ -454,7 +454,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     assert(m_npda_.m_new_hps_queue_.empty());
 }
 
-<{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (std::uint32_t const rule_index_, Stack_ &stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if}
+<{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (std::uint32_t const rule_index_, RealizedBranchStack_ &stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if}
 {
     assert(rule_index_ < ms_rule_count_);
 <|if(is_defined(generate_debug_spew_code))
@@ -486,6 +486,15 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     assert(false && "no value returned from reduction rule code block");
 <|end_if
     return <{token_data_default};
+}
+
+void <{class_name}::ThrowAwayRealizedBranchStackElement_ (RealizedBranchStackElement_ &stack_element_) throw()
+{
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
+
+<|end_if
+    ThrowAwayTokenData_(stack_element_.m_token.m_data);
 }
 
 <|if(is_defined(generate_debug_spew_code))
@@ -561,7 +570,7 @@ bool <{class_name}::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (<
             return std::lexicographical_compare(
                 lhs->m_stack.begin(), lhs->m_stack.end(),
                 rhs->m_stack.begin(), rhs->m_stack.end(),
-                CompareStackElement
+                CompareHypotheticalBranchStackElement
             );
         else
             return std::lexicographical_compare(
@@ -827,7 +836,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     switch (m_spec.m_type)
     {
         case REDUCE:    out << " rule " << m_spec.m_single_data << "; " << ms_rule_table_[m_spec.m_single_data].m_description;  break;
-        case POP_STACK: out << ' ' << m_spec.m_single_data << " times";                                                         break;
+        case POP_STACK: out << ' ' << m_spec.m_single_data << " time(s)";                                                       break;
         default:                                                                                                                break;
     }
     // assert(!m_stack.empty());
@@ -845,7 +854,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
         }
         out << "); ";
         for (std::size_t i = 1; i < m_stack.size(); ++i)
-            out << ms_token_name_table_[m_stack[i].m_token.m_id] << ' ';
+            out << ms_token_name_table_[m_stack[i].m_token_id] << ' ';
         out << ". ";
         for (std::size_t i = 0; i < m_local_lookahead_queue.size(); ++i)
             out << ms_token_name_table_[m_local_lookahead_queue[i].m_id] << ' ';
@@ -971,7 +980,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             std::uint32_t const &state_index = action_data;
             // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel Lookahead.
             new_hps = hps.CloneLeafNode();
-            new_hps->m_stack.push_back(StackElement_(state_index, new_hps->Lookahead(*this)));
+            new_hps->m_stack.push_back(HypotheticalBranchStackElement_(state_index, new_hps->Lookahead(*this).m_id));
             action_data = ParseStackTreeNode_::UNUSED_DATA; // SHIFT action doesn't store the state, the HPS children do.
             if (new_hps->m_local_lookahead_queue.empty())
                 ++new_hps->m_global_lookahead_cursor;

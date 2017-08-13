@@ -186,55 +186,55 @@ int main (int argc, char **argv)
 /* cpp parser grammar specification
 /* **************************************************************************/
 
-%default_parse_nonterminal statement_then_end
+%default_parse_nonterminal stmt_then_end
 
 %%
 
-%nonterminal statement_then_end
+%nonterminal stmt_then_end
 :
-    statement:st %end                                       %target.cpp { std::cout << "statement_then_end <- statement %end\n"; return st; }
+    stmt:st %end                                                %target.cpp { std::cout << "stmt_then_end <- stmt %end\n"; return st; }
 |
-    %error[%end] %end                                       %target.cpp { std::cout << "statement_then_end <- %error[%end] %end\n"; return 0.0; }
+    %error[%end] %end                                           %target.cpp { std::cout << "stmt_then_end <- %error[%end] %end\n"; return 0.0; }
 ;
 
-%nonterminal statement
+%nonterminal stmt
 :
-    x:ex ';'                                                %target.cpp { std::cout << "statement <- x ';'\n"; return ex; }
+    expr:ex ';'                                                 %target.cpp { std::cout << "stmt <- expr ';'\n"; return ex; }
 |
-    %error[%end] ';'                                        %target.cpp { std::cout << "statement <- %error ';'\n"; return 0.0; }
+    %error[%end] ';'                                            %target.cpp { std::cout << "stmt <- %error ';'\n"; return 0.0; }
 ;
 
-%nonterminal x
+%nonterminal expr
 :
-    '(' x:e ')'                                             %target.cpp { std::cout << "x <- '(' x ')'\n"; return e; }
+    '(' expr:e ')'                                              %target.cpp { std::cout << "expr <- '(' expr ')'\n"; return e; }
 |
-    '(' %error[%end] ')'                                    %target.cpp { std::cout << "x <- '(' %error[')'] ')'\n"; return 0.0; }
+    '(' %error[%end] ')'                                        %target.cpp { std::cout << "expr <- '(' %error[')'] ')'\n"; return 0.0; }
 |
     // NOTE: This will match everything until %end.
     // This rule prevents ';' from being the error-stopper in statements, since
     // the %error token matches everything including ';'.
     // If %error_until(%end, ';') were added, this situation could be handled better.
-    '(' %error[%end | ';']                                  %target.cpp { std::cout << "x <- '(' %error[%end | ';']\n"; return 0.0; }
+    '(' %error[%end | ';']                                      %target.cpp { std::cout << "expr <- '(' %error[%end | ';']\n"; return 0.0; }
 |
-    NUM:num                                                 %target.cpp { std::cout << "x <- NUM(" << num << ")\n"; return num; }
+    NUM:num                                                     %target.cpp { std::cout << "expr <- NUM(" << num << ")\n"; return num; }
 |
-    x:lhs '+' x:rhs               %prec ADDITIVE            %target.cpp { std::cout << "x <- x(" << lhs << ") '+' x(" << rhs << ")\n"; return lhs + rhs; }
+    expr:lhs '+' expr:rhs               %prec ADDITIVE          %target.cpp { std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n"; return lhs + rhs; }
 |
-    x:lhs '+' '+' '+' '+' x:rhs   %prec LOWEST              %target.cpp { std::cout << "x <- x(" << lhs << ") '+' '+' '+' '+' x(" << rhs << ")\n"; return lhs / rhs; }
+    expr:lhs '+' '+' '+' '+' expr:rhs   %prec LOWEST            %target.cpp { std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n"; return lhs / rhs; }
 |
-    x:lhs '+' '+' '+' x:rhs       %prec LOW                 %target.cpp { std::cout << "x <- x(" << lhs << ") '+' '+' '+' x(" << rhs << ")\n"; return std::pow(lhs, rhs); }
+    expr:lhs '+' '+' '+' expr:rhs       %prec LOW               %target.cpp { std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n"; return std::pow(lhs, rhs); }
 |
-    x:lhs '+' '+' x:rhs           %prec HIGHEST             %target.cpp { std::cout << "x <- x(" << lhs << ") '+' '+' x(" << rhs << ")\n"; return lhs * rhs; }
+    expr:lhs '+' '+' expr:rhs           %prec HIGHEST           %target.cpp { std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n"; return lhs * rhs; }
 |
-    x:lhs '*' x:rhs               %prec MULTIPLICATIVE      %target.cpp { std::cout << "x <- x(" << lhs << ") '*' x(" << rhs << ")\n"; return lhs * rhs; }
+    expr:lhs '*' expr:rhs               %prec MULTIPLICATIVE    %target.cpp { std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n"; return lhs * rhs; }
 |
-    x:lhs '?' x:rhs               %prec QUESTION            %target.cpp { std::cout << "x <- x(" << lhs << ") '?' x(" << rhs << ")\n"; return lhs - rhs; }
+    expr:lhs '?' expr:rhs               %prec QUESTION          %target.cpp { std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n"; return lhs - rhs; }
 |
-    '-' x:op                      %prec UNARY               %target.cpp { std::cout << "x <- '-' x(" << op << ")\n"; return -op; }
+    '-' expr:op                         %prec UNARY             %target.cpp { std::cout << "expr <- '-' expr(" << op << ")\n"; return -op; }
 |
-    x:lhs '^' x:rhs               %prec EXPONENTIATION      %target.cpp { std::cout << "x <- x(" << lhs << ") '^' x(" << rhs << ")\n"; return std::pow(lhs, rhs); }
+    expr:lhs '^' expr:rhs               %prec EXPONENTIATION    %target.cpp { std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n"; return std::pow(lhs, rhs); }
 // |
 //     // This just screws everything up.  It seems like there should just never be
 //     // a lone %error in a rule.  Though %error[%end | ';'] could solve this.
-//     %error[%end | ';']                                      %target.cpp { std::cout << "x <- %error[%end | ';']\n"; return 0.0; }
+//     %error[%end | ';']                                          %target.cpp { std::cout << "expr <- %error[%end | ';']\n"; return 0.0; }
 ;

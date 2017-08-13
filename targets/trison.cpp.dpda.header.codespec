@@ -27,11 +27,33 @@ private:
         Token::Id const *m_lookahead_sequence;
     }; // end of struct <{class_name}::Transition_
 
+    struct StackElement_
+    {
+        std::uint32_t m_state_index;
+        Token m_token;
+
+        StackElement_ ()
+            :
+            m_state_index(std::uint32_t(-1)),
+            m_token(Nonterminal::none_, <{token_data_default})
+        { }
+        StackElement_ (std::uint32_t state_index, Token const &token)
+            :
+            m_state_index(state_index),
+            m_token(token)
+        { }
+
+        bool operator == (StackElement_ const &other) const { return m_state_index == other.m_state_index; }
+    }; // end of struct <{class_name}::StackElement_
+
+    typedef std::deque<StackElement_> Stack_;
+
     void ClearStack_ () throw();
     void ClearLookaheadQueue_ () throw();
     Token const &Lookahead_ (LookaheadQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
     bool ExerciseTransition_ (Transition_ const &transition);
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
+    void ThrowAwayStackElement_ (StackElement_ &stack_element) throw();
 
     Stack_ m_stack_;
     LookaheadQueue_ m_lookahead_queue_;

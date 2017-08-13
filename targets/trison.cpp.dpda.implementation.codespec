@@ -407,6 +407,15 @@ bool <{class_name}::ExerciseTransition_ (Transition_ const &transition)
     return <{token_data_default};
 }
 
+void <{class_name}::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
+{
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
+
+<|end_if
+    ThrowAwayTokenData_(stack_element_.m_token.m_data);
+}
+
 <|if(is_defined(generate_debug_spew_code))
 void <{class_name}::PrintParserStatus_ (std::ostream &out) const
 {
