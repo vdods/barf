@@ -241,24 +241,43 @@ private:
 
 private:
 
+    typedef std::set<std::uint32_t> StateSet_; // TODO: Should be NpdaStateSet_
+    typedef std::vector<std::uint32_t> StateVector_; // TODO: Should be NpdaStateVector_
+
     // TODO: This should be RealizedBranchStateStackElement_
     struct RealizedBranchStackElement_
     {
-        std::uint32_t m_state_index;
+//         std::uint32_t m_state_index;
+        StateVector_ m_npda_state_vector;
         Token m_token;
 
         RealizedBranchStackElement_ ()
             :
-            m_state_index(std::uint32_t(-1)),
+//             m_state_index(std::uint32_t(-1)), // TODO: Should probably be ParseStackTreeNode_::UNUSED_DATA (or similar)
             m_token(Nonterminal::none_, 0.0)
         { }
-        RealizedBranchStackElement_ (std::uint32_t state_index, Token const &token)
+//         RealizedBranchStackElement_ (std::uint32_t state_index, Token const &token)
+        RealizedBranchStackElement_ (StateVector_ const &npda_state_vector, Token const &token)
             :
-            m_state_index(state_index),
+//             m_state_index(state_index),
+            m_npda_state_vector(npda_state_vector),
             m_token(token)
         { }
+        RealizedBranchStackElement_ (StateSet_ const &npda_state_set, Token const &token)
+            :
+//             m_state_index(state_index),
+            m_token(token)
+        {
+            for (StateSet_::const_iterator it = npda_state_set.begin(), it_end = npda_state_set.end(); it != it_end; ++it)
+                m_npda_state_vector.push_back(*it);
+        }
 
-        bool operator == (RealizedBranchStackElement_ const &other) const { return m_state_index == other.m_state_index; }
+        bool operator == (RealizedBranchStackElement_ const &other) const
+        {
+            assert(false && "Is this even called?");
+//             return m_state_index == other.m_state_index;
+            return m_npda_state_vector == other.m_npda_state_vector;
+        }
     }; // end of struct Parser::RealizedBranchStackElement_
 
     // TODO: This should be HypotheticalBranchStateStackElement_
@@ -269,7 +288,7 @@ private:
 
         HypotheticalBranchStackElement_ ()
             :
-            m_state_index(std::uint32_t(-1)),
+            m_state_index(std::uint32_t(-1)), // TODO: Should probably be ParseStackTreeNode_::UNUSED_DATA (or similar)
             m_token_id(Nonterminal::none_)
         { }
         HypotheticalBranchStackElement_ (std::uint32_t state_index, Token::Id token_id)
@@ -318,6 +337,7 @@ private:
     {
         enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
         std::uint8_t m_type;
+        // TODO: Should this be m_token_id ?
         std::uint32_t m_token_index; // TODO: smallest int
         std::uint32_t m_data_index; // TODO: smallest int
 
@@ -365,8 +385,6 @@ private:
         };
     }; // end of struct Parser::Transition_
 
-    typedef std::set<std::uint32_t> StateSet_;
-    typedef std::vector<std::uint32_t> StateVector_;
     typedef std::set<Transition_,Transition_::Order> TransitionSet_;
     typedef std::vector<Transition_> TransitionVector_;
 
@@ -440,6 +458,7 @@ private:
         typedef std::pair<std::int32_t,std::int32_t> PrecedenceLevelRange;
 
         Spec m_spec;
+        StateSet_ m_npda_state_set;
         HypotheticalBranchStack_ m_stack;
         // m_hypothetical_lookahead_token_id_queue comes before the realized lookahead queue, and m_realized_lookahead_cursor
         // is the index into the realized lookahead queue for where the end of m_hypothetical_lookahead_token_id_queue
@@ -539,6 +558,8 @@ private:
 
     // Returns the epsilon closure of the given NPDA state.  Return value is memoized.
     static StateVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);
+    // Returns the epsilon closure of the given NPDA state set.  Return value is memoized.
+    static StateVector_ const &EpsilonClosureOfStateSet_ (StateSet_ const &state_set);
     // Returns the transitions, matching given sorted_type_index, for the epsilon closure of the given NPDA state.  Return value is memoized.
     static TransitionVector_ const &NonEpsilonTransitionsOfState_ (std::uint32_t state_index, std::uint32_t sorted_type_index);
 
