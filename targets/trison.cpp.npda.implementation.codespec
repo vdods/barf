@@ -135,8 +135,9 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 break;
             }
             case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
-                std::cerr << "    executing trunk action INSERT_LOOKAHEAD_ERROR.\n";
+                std::cerr << "    executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n";
                 m_npda_.PushFrontRealizedLookahead(Token(Terminal::ERROR_));
+                m_npda_.SetHasEncounteredErrorState();
                 break;
             }
             case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
@@ -560,6 +561,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
         out << ")\n";
     }
     out << "max realized lookahead count (so far) is:\n    " << m_npda_.MaxRealizedLookaheadQueueSize() << '\n';
+    out << "has-encountered-error-state (so far) is :\n    " << (m_npda_.HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << "realized stack tokens then realized lookahead queue is:\n    ";
     for (std::size_t i = 1; i < m_npda_.m_realized_stack_.size(); ++i)
         out << m_npda_.m_realized_stack_[i].m_token << ' ';
