@@ -196,6 +196,22 @@ $   also add post-undefine option
     code generation (preprocessor) stage -- ones that don't appear at all in
     any codespec, not necessarily to indicate they weren't used in one particular
     case.
+-   Ensure that commandline-specified values for parser directives override in-source values,
+    so that parser generation can be controlled from the build system if needed, e.g. for unit testing.
+-   Run preprocessor on code blocks in reflex and trison, so that e.g. stuff like this can work
+    in a reflex/trison code block.
+
+        Parser::ParserReturnCode parse (std::string const &s, double &parsed_value)
+        {
+            std::istringstream in(s);
+            Parser parser;
+            parser.attach_istream(in);
+        <|if(is_defined(generate_debug_spew_code))
+            parser.DebugSpew(true);
+        <|end_if
+            Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
+            return return_code;
+        }
 
 // ///////////////////////////////////////////////////////////////////////////
 // trison
@@ -214,10 +230,6 @@ $   also add post-undefine option
     aren't being generated).
 -   if possible, make the dpda.states file put the states' rules in order.
 $   add a max token stack depth in each parser implementation
--   clean up the parsing so that it's less about passing crap around and more
-    about using member variables of the parser (assign rule indices on the fly,
-    etc)
--   figure out how to guarantee branch uniqueness per Action_ branch list in npda.
 -   you shouldn't have to specify %terminal 'X' for ascii chars.  you should
     just be able to use them (or maybe add as a directive)
 -   check for reduction rule variable name collisions
@@ -251,33 +263,23 @@ template <Uint32 high> struct SmallestUint {
 -   make sure error handling is working correctly in NPDA (via unit tests)
 -   unit tests for NPDA
 -   add some nice metrics to the NPDA parser -- make this part of the parser API
-    -   max lookahead count
+    x   max lookahead count
     -   max memory used
     -   some measurement of the "leanness" of the grammar, like how much branching
         was encountered, etc
 -   make a text version of NPDA states output (i.e. text version of Parser.npda.dot,
     anologous to Parser.dpda.states)
+-   in the NPDA dot graph, maybe move the self-transitions to just text lines in the
+    state box itself, to avoid the mess that dot creates with self transitions.
 -   maybe add some online DPDA generation in NPDA during runtime, optionally saving
     the tables to a file.  The file should be able to be specified as "read-only".
     This would allow a balance between DPDA-generation for commonly used grammar pathways
     and the flexibility of NPDA parsers.
 -   port NPDA code to offline DPDA generation (after NPDA has been fully unit tested)
--   idea for better error handling: a generalization of the existing %error directive:
-    The existing %error directive can accept any token except %end -- perhaps make the
-    %error directive specify which tokens it can't accept, like
-
-        %error_until_lookahead(%end)
-
-    or
-
-        %error_until_lookahead(%end, ';')
-
-    and once it hits a token it can't accept, and %error_until_lookahead(...) is the last token
-    in the rule, the rule can reduce (normally %error eats tokens until the token after
-    it in the same rule matches).
--   different idea for better error handling -- disallow %error occurring as the last
-    token in a reduction rule.  Then the special END_-token-induced REDUCE action
-    for error-handling rules can go away.  OR -- maybe just make this a warning.
+-   For %error directives that aren't the last token, probably require that there are no
+    lookahead terminals specified (i.e. so that it's only %error, not %error[a|b|c])
+-   For %error directives that are the last token, require that there are lookahead
+    terminals specified, and that %end is one of them.
 -   NPDA parser test design notes
     -   need to test a bunch of different grammars
         -   grammars with bounded lookahead
@@ -287,24 +289,6 @@ template <Uint32 high> struct SmallestUint {
         -   use actual grammars like from barf, steel, etc.
     -   for each grammar, make sure each rule is exercised
     -   for each grammar, make sure each combination of rules (i.e. binary operators) is exercised
--   NPDA should track if it's ever been in an error-handling state.
--   TEST CASE in dev/calc: "(3;" versus "(;"
-
-    the input "(3;" incorrectly makes the reductions:
-
-        expression <- NUM(3)
-        statement <- %error ';'
-        statement_then_end <- statement %end
-
-    while the input "(;" correctly makes the reductions:
-
-        expression <- '(' %error
-        statement_then_end <- %error %end
-
-    Except for the "expression <- NUM(3)" reduction, the reductions should be the same in both cases.
-    It's quite important that "(3;" reduce `expression <- '(' %error`, so that `unmatched parenthesis`
-    is correctly identified.
--   Print out epsilon closure of root node each time (this will become the DPDA state)
 -   Add an error handling rule for trison:
 
         %nonterminal maybe_assigned_id %type "Ast::Id *"
@@ -313,9 +297,24 @@ template <Uint32 high> struct SmallestUint {
 -   Making `maybe_bracketed_lookahead_terminal_list` and `maybe_assigned_id` caused (old) trison
     binary to take too long.  Maybe try just `maybe_assigned_id`.  This may be a problem more
     generally with two possibly-empty rule tokens in a row.
--   Maybe the root state of the NPDA should be a DPDA state (a subset of NPDA states).  This idea
-    is supported by the criteria that the NPDA and DPDA parsers should have the same behavior.
 -   Make a %default precedence level so that the grammar can have rule precedences below default.
 -   Because HPS branches are blocked right after a REDUCE or POP_STACK, maybe don't bother adding
     any children below REDUCE or POP_STACK nodes.  This would be experimental.
--   Add flag in parser to indicate if an error state was ever entered.
+-   Move NPDA debug spew into formal debug spew commands, because the output is very useful for
+    debugging the grammar/parser.
+-   Ensure that commandline-specified values for parser directives override in-source values,
+    so that parser generation can be controlled from the build system if needed, e.g. for unit testing.
+-   Run preprocessor on code blocks in reflex and trison, so that e.g. stuff like this can work
+    in a reflex/trison code block.
+
+        Parser::ParserReturnCode parse (std::string const &s, double &parsed_value)
+        {
+            std::istringstream in(s);
+            Parser parser;
+            parser.attach_istream(in);
+        <|if(is_defined(generate_debug_spew_code))
+            parser.DebugSpew(true);
+        <|end_if
+            Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
+            return return_code;
+        }

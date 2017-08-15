@@ -273,8 +273,10 @@ private:
         ParseStackTreeNode_ *CloneLeafNode () const;
         // orphan_target must not have a parent (because its m_spec may change and affect its relationship with its parent).
         void CloneLeafNodeInto (ParseStackTreeNode_ &orphan_target) const;
+<|if(is_defined(generate_debug_spew_code))
 
-        void Print (std::ostream &out, <{class_name} const &parser, std::uint32_t indent_level = 0) const;
+        void Print (std::ostream &out, <{class_name} const &parser, std::string const &prefix, std::uint32_t indent_level = 0) const;
+<|end_if
     };
 
     Token const &Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};

@@ -194,7 +194,7 @@
 // "void DebugSpew (bool)" will be generated.
 %add_optional_directive generate_debug_spew_code
 // Specifies the C++ ostream "<<" style expression prefix to prepend to each
-// line of debug spew.  The default value is "class_name:" (where, of course,
+// line of debug spew.  The default value is "class_name: " (where, of course,
 // class_name is replaced with the value for class_name).
 %add_optional_directive debug_spew_prefix                   %strict_code_block
 // When present, will prevent the timestamp from being added to the top of

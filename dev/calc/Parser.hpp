@@ -507,7 +507,7 @@ private:
         // orphan_target must not have a parent (because its m_spec may change and affect its relationship with its parent).
         void CloneLeafNodeInto (ParseStackTreeNode_ &orphan_target) const;
 
-        void Print (std::ostream &out, Parser const &parser, std::uint32_t indent_level = 0) const;
+        void Print (std::ostream &out, Parser const &parser, std::string const &prefix, std::uint32_t indent_level = 0) const;
     };
 
     Token const &Lookahead_ (TokenQueue_::size_type index) throw();
@@ -529,10 +529,11 @@ private:
         HPSQueue_ m_hps_queue_;
         HPSQueue_ m_new_hps_queue_; // This is stored so new memory isn't necessarily allocated for each parse iteration.
 
-        Npda_ () : m_root_(NULL), m_max_realized_lookahead_queue_size_(0) { }
+        Npda_ () : m_root_(NULL), m_max_realized_lookahead_queue_size_(0), m_has_encountered_error_state_(false) { }
         ~Npda_ ();
 
         std::size_t MaxRealizedLookaheadQueueSize () const { return m_max_realized_lookahead_queue_size_; }
+        bool HasEncounteredErrorState () const { return m_has_encountered_error_state_; }
 
         void PopFrontRealizedLookahead ();
         void PushFrontRealizedLookahead (Token const &lookahead);
@@ -541,11 +542,14 @@ private:
         // nodes that are descendants of N, and all ancestors of N having exactly one child.
         void RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
 
+        void SetHasEncounteredErrorState () { m_has_encountered_error_state_ = true; }
+
     private:
 
         void UpdateMaxRealizedLookaheadQueueSize ();
 
         std::size_t m_max_realized_lookahead_queue_size_;
+        bool m_has_encountered_error_state_;
     };
 
     Npda_ m_npda_;
