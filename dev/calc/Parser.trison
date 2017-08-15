@@ -105,7 +105,7 @@ Parser::ParserReturnCode parse (std::string const &s, double &parsed_value)
     std::istringstream in(s);
     Parser parser;
     parser.attach_istream(in);
-    parser.DebugSpew(true);
+    parser.SetDebugSpewStream(&std::cerr);
     Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
     return return_code;
 }
@@ -156,7 +156,6 @@ int main (int argc, char **argv)
 
 // this adds a lot of string content to parser source
 %target.cpp.generate_debug_spew_code
-%target.cpp.debug_spew_prefix {"Parser: "}
 %target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************

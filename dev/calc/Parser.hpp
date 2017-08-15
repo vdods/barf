@@ -148,15 +148,20 @@ public:
       */
     bool IsAtEndOfInput ();
 
-    /// Returns true if and only if "debug spew" is enabled (which prints, to
-    /// std::cerr, exactly what the parser is doing at each step).  This method,
+    /// Returns true if and only if "debug spew" is enabled (which prints, to the
+    /// debug spew stream, exactly what the parser is doing at each step).  This
+    /// method, along with all other debug spew code can be removed by removing the
+    /// %target.cpp.generate_debug_spew_code directive from the primary source.
+    bool DebugSpewIsEnabled () const { return m_debug_spew_stream != NULL; }
+    /// Returns the debug spew stream (see DebugSpewIsEnabled()).  This method,
     /// along with all other debug spew code can be removed by removing the
     /// %target.cpp.generate_debug_spew_code directive from the primary source.
-    bool DebugSpew () const { return m_debug_spew_; }
-    /// Sets the debug spew flag (see DebugSpew()).  This method,
-    /// along with all other debug spew code can be removed by removing the
-    /// %target.cpp.generate_debug_spew_code directive from the primary source.
-    void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
+    std::ostream *DebugSpewStream () { return m_debug_spew_stream; }
+    /// Sets the debug spew stream (see DebugSpewIsEnabled()).  If NULL is passed
+    /// in, then debug spew printing will be disabled.  The default value is NULL.
+    /// This method, along with all other debug spew code can be removed by removing
+    /// the %target.cpp.generate_debug_spew_code directive from the primary source.
+    void SetDebugSpewStream (std::ostream *debug_spew_stream) { m_debug_spew_stream = debug_spew_stream; }
 
     /** This parser is capable of attempting multiple contiguous parses from the
       * same input source.  The lookahead queue is preserved between calls to
@@ -209,7 +214,7 @@ private:
 
     Scanner *m_scanner;
 
-#line 213 "Parser.hpp"
+#line 218 "Parser.hpp"
 
 
 private:
@@ -225,7 +230,7 @@ private:
     // debug spew methods
     void PrintIndented_ (std::ostream &stream, char const *string) const;
 
-    bool m_debug_spew_;
+    std::ostream *m_debug_spew_stream;
 
     static char const *const ms_token_name_table_[];
     static std::size_t const ms_token_name_count_;

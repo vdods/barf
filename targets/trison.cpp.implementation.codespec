@@ -18,7 +18,7 @@
 
 <|if(is_defined(generate_debug_spew_code))
 
-#define TRISON_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
+#define TRISON_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
 <|end_if
 
 <|top_of_implementation_file?
@@ -30,7 +30,7 @@
 <|end_if
 {
 <|if(is_defined(generate_debug_spew_code))
-    DebugSpew(false);
+    SetDebugSpewStream(NULL);
 <|end_if
 <|if(is_defined(constructor_actions))
 
@@ -64,7 +64,7 @@ bool <{class_name}::IsAtEndOfInput ()
 void <{class_name}::ResetForNewInput ()
 {
 <|if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << "Executing reset-for-new-input actions" << std::endl)
+    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing reset-for-new-input actions\n")
 
 <|end_if
 <|if(!is_defined(use_npda))
@@ -143,7 +143,7 @@ std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms
 void <{class_name}::ThrowAwayToken_ (Token &token_) throw()
 {
 <|if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << "Executing throw-away-token actions on token " << token_ << std::endl)
+    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing throw-away-token actions on token " << token_ << '\n')
 
 <|end_if
     ThrowAwayTokenData_(token_.m_data);
@@ -157,7 +157,7 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} &token_data) throw()
 <{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
 {
 <|if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << "Executing scan actions" << std::endl)
+    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing scan actions\n")
 
 <|end_if
 <|scan_actions

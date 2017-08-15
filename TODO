@@ -318,3 +318,4 @@ template <Uint32 high> struct SmallestUint {
             Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
             return return_code;
         }
+-   Change doxygen comments to all /// style
