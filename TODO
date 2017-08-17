@@ -289,6 +289,9 @@ template <Uint32 high> struct SmallestUint {
         -   use actual grammars like from barf, steel, etc.
     -   for each grammar, make sure each rule is exercised
     -   for each grammar, make sure each combination of rules (i.e. binary operators) is exercised
+    Unit test should be compiled into a single binary.  Each Parser should have a distinct
+    name, and the various inputs to the parsers should be stored in files.  The outputs should
+    be ASTs, and compared against "expected" ASTs which can be defined in code.
 -   Add an error handling rule for trison:
 
         %nonterminal maybe_assigned_id %type "Ast::Id *"
@@ -319,3 +322,4 @@ template <Uint32 high> struct SmallestUint {
             return return_code;
         }
 -   Change doxygen comments to all /// style
+-   Ensure all the different types of cleanup are performed, verify with valgrind.

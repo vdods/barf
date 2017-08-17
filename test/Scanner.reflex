@@ -1,0 +1,396 @@
+// ///////////////////////////////////////////////////////////////////////////
+// Scanner.reflex by Victor Dods, created 2017/08/15
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%targets cpp
+
+/* ***************************************************************************
+/* cpp scanner header-file-related directives
+/* **************************************************************************/
+
+%target.cpp.header_filename "Scanner.hpp"
+%target.cpp.implementation_filename "Scanner.cpp"
+%target.cpp.top_of_header_file %{
+#pragma once
+
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include <vector>
+
+namespace Ast {
+
+struct Base;
+
+} // end of namespace Ast
+
+enum TokenId : std::uint32_t
+{
+    BAD_TOKEN = 256, // start after std::uint8_t range
+    CHAR_LITERAL,
+    END_OF_FILE,
+    IDENTIFIER,
+    INTEGER_LITERAL,
+    NUMERIC_LITERAL,
+    STRING_LITERAL,
+
+    LOW_ = BAD_TOKEN,
+    HIGH_ = STRING_LITERAL,
+    COUNT_ = HIGH_+1-LOW_
+};
+
+std::string AsString (TokenId token_id);
+%}
+%target.cpp.class_name Scanner
+// %target.cpp.top_of_class {
+// }
+%target.cpp.scan_method_parameters { std::shared_ptr<Ast::Base> &token }
+%target.cpp.bottom_of_class {
+    std::vector<StateMachine::Name> m_state_machine_stack;
+}
+
+/* ***************************************************************************
+/* cpp scanner implementation-file-related directives
+/* **************************************************************************/
+
+%target.cpp.top_of_implementation_file %{
+#include "ast.hpp"
+#include <cassert>
+#include "log.hpp"
+#include "util.hpp"
+
+std::string AsString (TokenId token_id)
+{
+    static std::string const s_lookup_table[TokenId::COUNT_] = {
+        "BAD_TOKEN",
+        "CHAR_LITERAL",
+        "END_OF_FILE",
+        "IDENTIFIER",
+        "INTEGER_LITERAL",
+        "NUMERIC_LITERAL",
+        "STRING_LITERAL",
+    };
+    if (std::uint32_t(token_id) < 256)
+        return CharLiteral(std::uint8_t(token_id));
+    else
+        return s_lookup_table[std::uint32_t(token_id) - std::uint32_t(TokenId::LOW_)];
+}
+%}
+%target.cpp.top_of_scan_method_actions %{
+    token.reset();
+    assert(token == nullptr);
+%}
+%target.cpp.bottom_of_scan_method_actions %{
+    assert(false && "you didn't handle END_OF_FILE properly");
+    return TokenId::END_OF_FILE;
+%}
+
+/* ***************************************************************************
+/* cpp scanner I/O parameters
+/* **************************************************************************/
+
+%target.cpp.return_type "TokenId"
+%target.cpp.rejection_actions {
+    g_log << "unrecognized character " << CharLiteral(rejected_atom) << '\n';
+}
+%target.cpp.reset_for_new_input_actions {
+    m_state_machine_stack.clear();
+}
+
+/* ***************************************************************************
+/* cpp scanner misc directives
+/* **************************************************************************/
+
+%target.cpp.generate_debug_spew_code
+%target.cpp.debug_spew_prefix {"Scanner:"}
+%target.cpp.dont_generate_timestamps
+
+/* ***************************************************************************
+/* target-independent scanner directives
+/* **************************************************************************/
+
+// integer literal
+%macro INTEGER_LITERAL      (0|[1-9][0-9]*)
+// decimal literal has an optional decimal point and possibly also fractional part
+%macro DECIMAL_LITERAL      ({INTEGER_LITERAL}(\.[0-9]*)?)
+// numeric literal includes possible scientific notation
+%macro NUMERIC_LITERAL      ({DECIMAL_LITERAL}([eE][+\-]?[0-9]+)?)
+
+// a single octal (base 8) digit
+%macro OCT_DIGIT            ([0-7])
+// an octal escape char (e.g. \42)
+%macro OCT_ESCAPE_CHAR      (\\{OCT_DIGIT}+)
+
+// a single hexadecimal (base 16) digit
+%macro HEX_DIGIT            ([0-9A-Fa-f])
+// a hexadecimal escape char (e.g. \xF9)
+%macro HEX_ESCAPE_CHAR      (\\x{HEX_DIGIT}+)
+
+// an escaped char literal (e.g. '\t', '\0' or even '\j')
+%macro CHAR_ESC_CHAR        (\\[[:print:]])
+// everything that doesn't need to be escaped in a char literal (e.g. 'p')
+%macro CHAR_NORMAL_CHAR     ([^[:cntrl:]"'\\])
+
+// single-char escape codes for a string literal (e.g. \n is newline)
+%macro STRING_ESC_CHAR      (\\[[:print:]])
+// malformed single-char escape codes for a string literal (e.g. a backslash followed by a tab)
+%macro STRING_BAD_ESC_CHAR  (\\[^[:print:]])
+// everything that doesn't need to be escaped in a string literal
+%macro STRING_NORMAL_CHAR   ([^[:cntrl:]"\\]|\t|\n)
+
+// C-style identifier
+%macro IDENTIFIER           ([_A-Za-z][_A-Za-z0-9]*)
+
+// all operators that should be returned by ascii value
+%macro OPERATOR             ([.:;|\[\]+\-*/\^])
+// non-newline whitespace
+%macro WHITESPACE           ([ \t])
+// newline
+%macro NEWLINE              (\n)
+// any char
+%macro ANY                  (\n|.)
+// end-of-file condition
+%macro END_OF_FILE          (\z)
+
+%start_with_state_machine   MAIN
+
+%%
+
+/* ***************************************************************************
+/* state machines and constituent regex rules
+/* **************************************************************************/
+
+%state_machine MAIN
+:
+    (/[*]) // opening delimiter for a block comment
+    %target.cpp {
+        m_state_machine_stack.push_back(CurrentStateMachine());
+        SwitchToStateMachine(StateMachine::BLOCK_COMMENT);
+    }
+|
+    (//.*) // line comment (not including the newline)
+    %target.cpp {
+        // Do nothing, don't even return a token.
+    }
+|
+    (') // opening quote for a char literal
+    %target.cpp {
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_GUTS);
+    }
+|
+    (") // opening quote for a string literal
+    %target.cpp {
+        token = std::make_shared<Ast::StringLiteral>(accepted_string);
+        SwitchToStateMachine(StateMachine::STRING_LITERAL_GUTS);
+    }
+|
+    ({INTEGER_LITERAL})
+    %target.cpp {
+        token = std::make_shared<Ast::IntegerLiteral>(atoll(accepted_string.c_str()));
+        return TokenId::INTEGER_LITERAL;
+    }
+|
+    ({NUMERIC_LITERAL})
+    %target.cpp {
+        token = std::make_shared<Ast::NumericLiteral>(atof(accepted_string.c_str()));
+        return TokenId::NUMERIC_LITERAL;
+    }
+|
+    ({IDENTIFIER})
+    %target.cpp {
+        token = std::make_shared<Ast::Identifier>(accepted_string);
+        return TokenId::IDENTIFIER;
+    }
+|
+    ({OPERATOR})
+    %target.cpp {
+        return TokenId(accepted_string[0]);
+    }
+|
+    ({WHITESPACE})
+    %target.cpp {
+        // Ignore all whitespace.
+    }
+|
+    ({NEWLINE})
+    %target.cpp {
+        // Ignore newlines.
+    }
+|
+    ({END_OF_FILE})
+    %target.cpp {
+        return TokenId::END_OF_FILE;
+    }
+|
+    (.)
+    %target.cpp {
+        g_log << "unexpected character " << CharLiteral(accepted_string[0]) << '\n';
+        return TokenId::BAD_TOKEN;
+    }
+;
+
+%state_machine BLOCK_COMMENT %ungreedy
+:
+    (/[*]) // opening delimiter for a block comment
+    %target.cpp {
+        m_state_machine_stack.push_back(CurrentStateMachine());
+        // We're already in StateMachine::BLOCK_COMMENT; no need to change to it.
+    }
+|
+    ({ANY}*[*]/) // everything up through the closing delimiter of a block comment
+    %target.cpp {
+        assert(!m_state_machine_stack.empty());
+        SwitchToStateMachine(m_state_machine_stack.back());
+        m_state_machine_stack.pop_back();
+    }
+|
+    ({ANY}*{END_OF_FILE}) // everything up through END_OF_FILE
+    %target.cpp {
+        g_log << "unterminated block comment\n";
+        return TokenId::END_OF_FILE;
+    }
+;
+
+%state_machine CHAR_LITERAL_GUTS
+:
+    ({OCT_ESCAPE_CHAR})
+    %target.cpp {
+        assert(accepted_string.length() >= 2);
+        assert(accepted_string[0] == '\\');
+        std::uint32_t value = strtol(accepted_string.c_str()+1, NULL, 8);
+        if (value >= 0x100)
+        {
+            g_log << "octal character literal value out of range (" << accepted_string << ")\n";
+            token = std::make_shared<Ast::BadToken>();
+        }
+        else
+            token = std::make_shared<Ast::CharLiteral>(char(value));
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+|
+    ({HEX_ESCAPE_CHAR})
+    %target.cpp {
+        assert(accepted_string.length() >= 3);
+        assert(accepted_string[0] == '\\');
+        assert(accepted_string[1] == 'x');
+        std::uint32_t value = strtol(accepted_string.c_str()+2, NULL, 16);
+        if (value >= 0x100)
+        {
+            g_log << "hexadecimal character literal value out of range (" << accepted_string << ")\n";
+            token = std::make_shared<Ast::BadToken>();
+        }
+        else
+            token = std::make_shared<Ast::CharLiteral>(char(value));
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+|
+    ({CHAR_ESC_CHAR})
+    %target.cpp {
+        assert(accepted_string.length() == 2);
+        assert(accepted_string[0] == '\\');
+        token = std::make_shared<Ast::CharLiteral>(EscapedChar(accepted_string[1]));
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+|
+    ({CHAR_NORMAL_CHAR})
+    %target.cpp {
+        assert(accepted_string.length() == 1);
+        token = std::make_shared<Ast::CharLiteral>(accepted_string[0]);
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+|
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
+    %target.cpp {
+        g_log << "unterminated character literal\n";
+        return TokenId::END_OF_FILE;
+    }
+|
+    ({ANY}) // anything else just means it's malformed
+    %target.cpp {
+        g_log << "unexpected character " << CharLiteral(accepted_string[0]) << " in character literal\n";
+        token = std::make_shared<Ast::BadToken>();
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+;
+
+%state_machine CHAR_LITERAL_END
+:
+    (') // closing single-quote
+    %target.cpp {
+        assert(token != nullptr);
+        SwitchToStateMachine(StateMachine::MAIN);
+        if (token->type() == Ast::Type::BAD_TOKEN)
+            return TokenId::BAD_TOKEN;
+        else
+            return TokenId::CHAR_LITERAL;
+    }
+|
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
+    %target.cpp {
+        g_log << "unterminated character literal\n";
+        assert(token != nullptr);
+        token.reset();
+        SwitchToStateMachine(StateMachine::MAIN);
+        return TokenId::END_OF_FILE;
+    }
+|
+    ({ANY}) // anything else just means it's malformed
+    %target.cpp {
+        g_log << "malformed character literal\n";
+        assert(token != nullptr);
+        token.reset();
+        SwitchToStateMachine(StateMachine::MAIN);
+        return TokenId::BAD_TOKEN;
+    }
+;
+
+%state_machine STRING_LITERAL_GUTS %ungreedy
+:
+    (([^\\]|\\{ANY})*") // everything up through the first unescaped double quote
+    %target.cpp {
+        assert(token != nullptr);
+        // get rid of the trailing endquote
+        assert(accepted_string.length() >= 1);
+        accepted_string.resize(accepted_string.length()-1);
+        // escape the string in-place and handle the return code
+        EscapeStringStatus status = EscapeString(accepted_string);
+        switch (status.m_return_code)
+        {
+            case EscapeStringReturnCode::SUCCESS:
+                // awesome
+                break;
+
+            case EscapeStringReturnCode::UNEXPECTED_EOI:
+                assert(false && "the formulation of the regex should prevent this");
+                break;
+
+            case EscapeStringReturnCode::MALFORMED_HEX_CHAR:
+                g_log << "\\x with no trailing hex digits\n";
+                token = std::make_shared<Ast::BadToken>();
+                break;
+
+            case EscapeStringReturnCode::HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
+            case EscapeStringReturnCode::OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
+                g_log << "hex/octal escape sequence out of range\n";
+                token = std::make_shared<Ast::BadToken>();
+                break;
+        }
+        token->as<Ast::StringLiteral>().m_value += accepted_string;
+        SwitchToStateMachine(StateMachine::MAIN);
+        return TokenId::STRING_LITERAL;
+    }
+|
+    (([^\\]|\\{ANY})*\\?{END_OF_FILE}) // everything up through END_OF_FILE (which may be preceded by a hanging backslash)
+    %target.cpp {
+        g_log << "unterminated string literal\n";
+        assert(token != nullptr);
+        token.reset();
+        return TokenId::END_OF_FILE;
+    }
+;
