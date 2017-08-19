@@ -1,4 +1,12 @@
-// 2016.08.31 - Victor Dods
+// ///////////////////////////////////////////////////////////////////////////
+// CalcParser.trison by Victor Dods, created 2017/08/17
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
 
 %targets cpp
 
@@ -6,8 +14,8 @@
 /* cpp parser header-file-related directives
 /* **************************************************************************/
 
-%target.cpp.header_filename "Parser.hpp"
-%target.cpp.implementation_filename "Parser.cpp"
+%target.cpp.header_filename "CalcParser.hpp"
+%target.cpp.implementation_filename "CalcParser.cpp"
 
 %target.cpp.top_of_header_file %{
 #include <iostream>
@@ -17,15 +25,14 @@ class Scanner;
 %target.cpp.class_name Parser
 %target.cpp.parse_method_access "public"
 %target.cpp.bottom_of_class {
-    void attach_istream (std::istream &in);
+    bool Parser::ScannerDebugSpew () const;
+    void Parser::ScannerDebugSpew (bool debug_spew);
+    void AttachIstream (std::istream &in);
 
 private:
 
     Scanner *m_scanner;
 }
-// %target.cpp.bottom_of_header_file %{
-// } // end of namespace Text
-// %}
 
 /* ***************************************************************************
 /* cpp parser implementation-file-related directives
@@ -52,10 +59,10 @@ private:
 //         EmitExecutionMessage("parse was successful");
 // %}
 %target.cpp.bottom_of_implementation_file %{
-void Parser::attach_istream (std::istream &in)
+void Parser::AttachIstream (std::istream &in)
 {
     assert(m_scanner != NULL);
-    m_scanner->attach_istream(in);
+    m_scanner->AttachIstream(in);
 }
 // FiLoc const &Parser::GetFiLoc () const
 // {
@@ -63,48 +70,21 @@ void Parser::attach_istream (std::istream &in)
 //     return m_scanner->GetFiLoc();
 // }
 
-// bool Parser::ScannerDebugSpew () const
-// {
-//     return m_scanner->DebugSpew();
-// }
+bool Parser::ScannerDebugSpew () const
+{
+    return m_scanner->DebugSpew();
+}
 
-// void Parser::ScannerDebugSpew (bool debug_spew)
-// {
-//     m_scanner->DebugSpew(debug_spew);
-// }
-
-// bool Parser::OpenFile (std::string const &input_filename)
-// {
-//     assert(m_scanner != nullptr);
-//     ResetForNewInput();
-//     EmitExecutionMessage("opening file \"" + input_filename + "\" for input");
-//     bool scanner_open_file_succeeded = m_scanner->OpenFile(input_filename);
-//     if (scanner_open_file_succeeded)
-//         EmitExecutionMessage("opened file \"" + input_filename + "\" successfully");
-//     return scanner_open_file_succeeded;
-// }
-
-// void Parser::OpenString (std::string const &input_string, std::string const &input_name, bool use_line_numbers)
-// {
-//     assert(m_scanner != nullptr);
-//     ResetForNewInput();
-//     return m_scanner->OpenString(input_string, input_name, use_line_numbers);
-// }
-
-// void Parser::OpenUsingStream (std::istream *input_stream, std::string const &input_name, bool use_line_numbers)
-// {
-//     assert(m_scanner != nullptr);
-//     ResetForNewInput();
-//     return m_scanner->OpenUsingStream(input_stream, input_name, use_line_numbers);
-// }
-
-// } // end of namespace Text
+void Parser::ScannerDebugSpew (bool debug_spew)
+{
+    m_scanner->DebugSpew(debug_spew);
+}
 
 Parser::ParserReturnCode parse (std::string const &s, double &parsed_value)
 {
     std::istringstream in(s);
     Parser parser;
-    parser.attach_istream(in);
+    parser.AttachIstream(in);
     parser.SetDebugSpewStream(&std::cerr);
     Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
     return return_code;
@@ -139,12 +119,35 @@ int main (int argc, char **argv)
 /* cpp parser token-specific directives
 /* **************************************************************************/
 
-%target.cpp.token_data_type "double"
-%target.cpp.token_data_default "0.0"
-%target.cpp.throw_away_token_actions { } // none are necessary because token_data_type is a POD
+%target.cpp.token_data_type "std::shared_ptr<Ast::Base>"
+%target.cpp.token_data_default "std::shared_ptr<Ast::Base>()"
+// none are necessary because std::shared_ptr is reference counted
+%target.cpp.throw_away_token_actions { }
 %target.cpp.scan_actions {
     assert(m_scanner != NULL);
-    return m_scanner->Scan();
+    std::shared_ptr<Ast::Base> token;
+    TokenId scanner_token_id = m_scanner->Scan(token);
+    switch (scanner_token_id)
+    {
+        case BAD_TOKEN:
+        case CHAR_LITERAL:
+        case IDENTIFIER:
+        case STRING_LITERAL:
+            return Token(Terminal::BAD_TOKEN, token);
+
+        case END_OF_FILE:
+            return Token(Terminal::END_, token);
+
+        case INTEGER_LITERAL:
+            return Token(Terminal::NUM, std::make_shared<Ast::NumericLiteral>(double(token->as<IntegerLiteral>().m_value)));
+
+        case NUMERIC_LITERAL
+            return Token(Terminal::NUM, token);
+
+        default:
+            assert(std::uint32_t(scanner_token_id) < 256 && "You probably forgot a TokenId");
+            return Token(Terminal::Name(scanner_token_id), nullptr);
+    }
 }
 %target.cpp.reset_for_new_input_actions {
     // m_recoverable_error_encountered = false;
@@ -162,8 +165,8 @@ int main (int argc, char **argv)
 /* cpp parser terminal directives
 /* **************************************************************************/
 
-%terminal '+' '-' '*' '^'
-%terminal '(' ')' ';' '?'
+%terminal '+' '-' '*' '/' '^'
+%terminal '(' ')' ';'
 %terminal NUM BAD_TOKEN
 
 /* ***************************************************************************
@@ -171,6 +174,8 @@ int main (int argc, char **argv)
 /* **************************************************************************/
 
 // Lowest precedence is first, highest is last.
+
+TODO START HERE
 
 %prec.left      LOWEST
 %prec.left      LOW
