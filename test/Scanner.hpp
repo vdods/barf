@@ -614,7 +614,7 @@ public:
 
 #line 55 "Scanner.reflex"
 
-    void attach_istream (std::istream &in);
+    void AttachIstream (std::istream &in);
 
     std::vector<StateMachine::Name> m_state_machine_stack;
 

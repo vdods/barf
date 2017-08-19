@@ -34,7 +34,7 @@ std::string AsString (TokenId token_id)
         return s_lookup_table[std::uint32_t(token_id) - std::uint32_t(TokenId::LOW_)];
 }
 
-void Scanner::attach_istream (std::istream &in)
+void Scanner::AttachIstream (std::istream &in)
 {
     IstreamIterator(std::istream_iterator<char>(in));
 }

@@ -107,8 +107,8 @@ struct Value : public Base
     virtual ~Value () { }
 
     virtual Type type () const override { return TYPE_; }
-    virtual int compare (Base const &other) const { return Ast::compare(m_value, dynamic_cast<Value const &>(other).m_value); }
-    virtual void print (std::ostream &out, std::uint32_t indent_level = 0) const
+    virtual int compare (Base const &other) const override { return Ast::compare(m_value, dynamic_cast<Value const &>(other).m_value); }
+    virtual void print (std::ostream &out, std::uint32_t indent_level = 0) const override
     {
         out << std::string(4*indent_level, ' ');
         out << "Value<T_," << AsString(TYPE_) << "> = " << m_value;
