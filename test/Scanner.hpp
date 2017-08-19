@@ -541,6 +541,7 @@ private:
 
 #include <cstdint>
 #include <cstdlib>
+#include <istream>
 #include <memory>
 #include <vector>
 
@@ -567,7 +568,7 @@ enum TokenId : std::uint32_t
 
 std::string AsString (TokenId token_id);
 
-#line 571 "Scanner.hpp"
+#line 572 "Scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_
 {
@@ -603,19 +604,21 @@ public:
     void ResetForNewInput ();
 
     TokenId Scan (
-#line 53 "Scanner.reflex"
+#line 54 "Scanner.reflex"
  std::shared_ptr<Ast::Base> &token 
-#line 609 "Scanner.hpp"
+#line 610 "Scanner.hpp"
 ) throw();
 
 public:
 
 
-#line 54 "Scanner.reflex"
+#line 55 "Scanner.reflex"
+
+    void attach_istream (std::istream &in);
 
     std::vector<StateMachine::Name> m_state_machine_stack;
 
-#line 619 "Scanner.hpp"
+#line 622 "Scanner.hpp"
 
 
 private:

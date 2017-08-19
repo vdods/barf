@@ -10,7 +10,7 @@
 #define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
 
 
-#line 62 "Scanner.reflex"
+#line 65 "Scanner.reflex"
 
 #include "ast.hpp"
 #include <cassert>
@@ -34,7 +34,12 @@ std::string AsString (TokenId token_id)
         return s_lookup_table[std::uint32_t(token_id) - std::uint32_t(TokenId::LOW_)];
 }
 
-#line 38 "Scanner.cpp"
+void Scanner::attach_istream (std::istream &in)
+{
+    IstreamIterator(std::istream_iterator<char>(in));
+}
+
+#line 43 "Scanner.cpp"
 
 Scanner::Scanner ()
     :
@@ -82,9 +87,9 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
         (false && "invalid StateMachine::Name"));
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
-#line 111 "Scanner.reflex"
+#line 119 "Scanner.reflex"
 "Scanner:"
-#line 88 "Scanner.cpp"
+#line 93 "Scanner.cpp"
  << " switching to state machine "
                   << ms_state_machine_name_[state_machine];
         if (ms_state_machine_mode_flags_[state_machine] != 0)
@@ -104,9 +109,9 @@ void Scanner::ResetForNewInput ()
 {
     REFLEX_CPP_DEBUG_CODE_(
         std::cerr << 
-#line 111 "Scanner.reflex"
+#line 119 "Scanner.reflex"
 "Scanner:"
-#line 110 "Scanner.cpp"
+#line 115 "Scanner.cpp"
  << " executing reset-for-new-input actions and switching to state machine "
                   << ms_state_machine_name_[StateMachine::START_];
         if (ms_state_machine_mode_flags_[StateMachine::START_] != 0)
@@ -121,26 +126,26 @@ void Scanner::ResetForNewInput ()
     assert(CurrentStateMachine() == StateMachine::START_);
 
 
-#line 102 "Scanner.reflex"
+#line 110 "Scanner.reflex"
 
     m_state_machine_stack.clear();
 
-#line 129 "Scanner.cpp"
+#line 134 "Scanner.cpp"
 }
 
 TokenId Scanner::Scan (
-#line 53 "Scanner.reflex"
+#line 54 "Scanner.reflex"
  std::shared_ptr<Ast::Base> &token 
-#line 135 "Scanner.cpp"
+#line 140 "Scanner.cpp"
 ) throw()
 {
 
-#line 85 "Scanner.reflex"
+#line 93 "Scanner.reflex"
 
     token.reset();
     assert(token == nullptr);
 
-#line 144 "Scanner.cpp"
+#line 149 "Scanner.cpp"
 
     std::string work_string;
     // this is the main scanner loop.  it only breaks when an accept handler
@@ -171,9 +176,9 @@ TokenId Scanner::Scan (
 
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
-#line 111 "Scanner.reflex"
+#line 119 "Scanner.reflex"
 "Scanner:"
-#line 177 "Scanner.cpp"
+#line 182 "Scanner.cpp"
  << " rejecting string ";
                 PrintString_(rejected_string);
                 std::cerr << " (rejected_atom is \'";
@@ -186,11 +191,11 @@ TokenId Scanner::Scan (
             do
             {
 
-#line 99 "Scanner.reflex"
+#line 107 "Scanner.reflex"
 
     g_log << "unrecognized character " << CharLiteral(rejected_atom) << '\n';
 
-#line 194 "Scanner.cpp"
+#line 199 "Scanner.cpp"
 
             }
             while (false);
@@ -202,9 +207,9 @@ TokenId Scanner::Scan (
 
             REFLEX_CPP_DEBUG_CODE_(
                 std::cerr << 
-#line 111 "Scanner.reflex"
+#line 119 "Scanner.reflex"
 "Scanner:"
-#line 208 "Scanner.cpp"
+#line 213 "Scanner.cpp"
  << " accepting string ";
                 PrintString_(accepted_string);
                 std::cerr << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
@@ -217,12 +222,12 @@ TokenId Scanner::Scan (
                 case 0:
                 {
 
-#line 241 "Scanner.reflex"
+#line 249 "Scanner.reflex"
 
         m_state_machine_stack.push_back(CurrentStateMachine());
         // We're already in StateMachine::BLOCK_COMMENT; no need to change to it.
     
-#line 226 "Scanner.cpp"
+#line 231 "Scanner.cpp"
 
                 }
                 break;
@@ -230,13 +235,13 @@ TokenId Scanner::Scan (
                 case 1:
                 {
 
-#line 247 "Scanner.reflex"
+#line 255 "Scanner.reflex"
 
         assert(!m_state_machine_stack.empty());
         SwitchToStateMachine(m_state_machine_stack.back());
         m_state_machine_stack.pop_back();
     
-#line 240 "Scanner.cpp"
+#line 245 "Scanner.cpp"
 
                 }
                 break;
@@ -244,12 +249,12 @@ TokenId Scanner::Scan (
                 case 2:
                 {
 
-#line 254 "Scanner.reflex"
+#line 262 "Scanner.reflex"
 
         g_log << "unterminated block comment\n";
         return TokenId::END_OF_FILE;
     
-#line 253 "Scanner.cpp"
+#line 258 "Scanner.cpp"
 
                 }
                 break;
@@ -257,7 +262,7 @@ TokenId Scanner::Scan (
                 case 3:
                 {
 
-#line 325 "Scanner.reflex"
+#line 333 "Scanner.reflex"
 
         assert(token != nullptr);
         SwitchToStateMachine(StateMachine::MAIN);
@@ -266,7 +271,7 @@ TokenId Scanner::Scan (
         else
             return TokenId::CHAR_LITERAL;
     
-#line 270 "Scanner.cpp"
+#line 275 "Scanner.cpp"
 
                 }
                 break;
@@ -274,7 +279,7 @@ TokenId Scanner::Scan (
                 case 4:
                 {
 
-#line 335 "Scanner.reflex"
+#line 343 "Scanner.reflex"
 
         g_log << "unterminated character literal\n";
         assert(token != nullptr);
@@ -282,7 +287,7 @@ TokenId Scanner::Scan (
         SwitchToStateMachine(StateMachine::MAIN);
         return TokenId::END_OF_FILE;
     
-#line 286 "Scanner.cpp"
+#line 291 "Scanner.cpp"
 
                 }
                 break;
@@ -290,7 +295,7 @@ TokenId Scanner::Scan (
                 case 5:
                 {
 
-#line 344 "Scanner.reflex"
+#line 352 "Scanner.reflex"
 
         g_log << "malformed character literal\n";
         assert(token != nullptr);
@@ -298,7 +303,7 @@ TokenId Scanner::Scan (
         SwitchToStateMachine(StateMachine::MAIN);
         return TokenId::BAD_TOKEN;
     
-#line 302 "Scanner.cpp"
+#line 307 "Scanner.cpp"
 
                 }
                 break;
@@ -306,7 +311,7 @@ TokenId Scanner::Scan (
                 case 6:
                 {
 
-#line 263 "Scanner.reflex"
+#line 271 "Scanner.reflex"
 
         assert(accepted_string.length() >= 2);
         assert(accepted_string[0] == '\\');
@@ -320,7 +325,7 @@ TokenId Scanner::Scan (
             token = std::make_shared<Ast::CharLiteral>(char(value));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
-#line 324 "Scanner.cpp"
+#line 329 "Scanner.cpp"
 
                 }
                 break;
@@ -328,7 +333,7 @@ TokenId Scanner::Scan (
                 case 7:
                 {
 
-#line 278 "Scanner.reflex"
+#line 286 "Scanner.reflex"
 
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
@@ -343,7 +348,7 @@ TokenId Scanner::Scan (
             token = std::make_shared<Ast::CharLiteral>(char(value));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
-#line 347 "Scanner.cpp"
+#line 352 "Scanner.cpp"
 
                 }
                 break;
@@ -351,14 +356,14 @@ TokenId Scanner::Scan (
                 case 8:
                 {
 
-#line 294 "Scanner.reflex"
+#line 302 "Scanner.reflex"
 
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
         token = std::make_shared<Ast::CharLiteral>(EscapedChar(accepted_string[1]));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
-#line 362 "Scanner.cpp"
+#line 367 "Scanner.cpp"
 
                 }
                 break;
@@ -366,13 +371,13 @@ TokenId Scanner::Scan (
                 case 9:
                 {
 
-#line 302 "Scanner.reflex"
+#line 310 "Scanner.reflex"
 
         assert(accepted_string.length() == 1);
         token = std::make_shared<Ast::CharLiteral>(accepted_string[0]);
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
-#line 376 "Scanner.cpp"
+#line 381 "Scanner.cpp"
 
                 }
                 break;
@@ -380,12 +385,12 @@ TokenId Scanner::Scan (
                 case 10:
                 {
 
-#line 309 "Scanner.reflex"
+#line 317 "Scanner.reflex"
 
         g_log << "unterminated character literal\n";
         return TokenId::END_OF_FILE;
     
-#line 389 "Scanner.cpp"
+#line 394 "Scanner.cpp"
 
                 }
                 break;
@@ -393,13 +398,13 @@ TokenId Scanner::Scan (
                 case 11:
                 {
 
-#line 315 "Scanner.reflex"
+#line 323 "Scanner.reflex"
 
         g_log << "unexpected character " << CharLiteral(accepted_string[0]) << " in character literal\n";
         token = std::make_shared<Ast::BadToken>();
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
-#line 403 "Scanner.cpp"
+#line 408 "Scanner.cpp"
 
                 }
                 break;
@@ -407,12 +412,12 @@ TokenId Scanner::Scan (
                 case 12:
                 {
 
-#line 172 "Scanner.reflex"
+#line 180 "Scanner.reflex"
 
         m_state_machine_stack.push_back(CurrentStateMachine());
         SwitchToStateMachine(StateMachine::BLOCK_COMMENT);
     
-#line 416 "Scanner.cpp"
+#line 421 "Scanner.cpp"
 
                 }
                 break;
@@ -420,11 +425,11 @@ TokenId Scanner::Scan (
                 case 13:
                 {
 
-#line 178 "Scanner.reflex"
+#line 186 "Scanner.reflex"
 
         // Do nothing, don't even return a token.
     
-#line 428 "Scanner.cpp"
+#line 433 "Scanner.cpp"
 
                 }
                 break;
@@ -432,11 +437,11 @@ TokenId Scanner::Scan (
                 case 14:
                 {
 
-#line 183 "Scanner.reflex"
+#line 191 "Scanner.reflex"
 
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_GUTS);
     
-#line 440 "Scanner.cpp"
+#line 445 "Scanner.cpp"
 
                 }
                 break;
@@ -444,12 +449,12 @@ TokenId Scanner::Scan (
                 case 15:
                 {
 
-#line 188 "Scanner.reflex"
+#line 196 "Scanner.reflex"
 
         token = std::make_shared<Ast::StringLiteral>(accepted_string);
         SwitchToStateMachine(StateMachine::STRING_LITERAL_GUTS);
     
-#line 453 "Scanner.cpp"
+#line 458 "Scanner.cpp"
 
                 }
                 break;
@@ -457,12 +462,12 @@ TokenId Scanner::Scan (
                 case 16:
                 {
 
-#line 194 "Scanner.reflex"
+#line 202 "Scanner.reflex"
 
         token = std::make_shared<Ast::IntegerLiteral>(atoll(accepted_string.c_str()));
         return TokenId::INTEGER_LITERAL;
     
-#line 466 "Scanner.cpp"
+#line 471 "Scanner.cpp"
 
                 }
                 break;
@@ -470,12 +475,12 @@ TokenId Scanner::Scan (
                 case 17:
                 {
 
-#line 200 "Scanner.reflex"
+#line 208 "Scanner.reflex"
 
         token = std::make_shared<Ast::NumericLiteral>(atof(accepted_string.c_str()));
         return TokenId::NUMERIC_LITERAL;
     
-#line 479 "Scanner.cpp"
+#line 484 "Scanner.cpp"
 
                 }
                 break;
@@ -483,12 +488,12 @@ TokenId Scanner::Scan (
                 case 18:
                 {
 
-#line 206 "Scanner.reflex"
+#line 214 "Scanner.reflex"
 
         token = std::make_shared<Ast::Identifier>(accepted_string);
         return TokenId::IDENTIFIER;
     
-#line 492 "Scanner.cpp"
+#line 497 "Scanner.cpp"
 
                 }
                 break;
@@ -496,11 +501,11 @@ TokenId Scanner::Scan (
                 case 19:
                 {
 
-#line 212 "Scanner.reflex"
+#line 220 "Scanner.reflex"
 
         return TokenId(accepted_string[0]);
     
-#line 504 "Scanner.cpp"
+#line 509 "Scanner.cpp"
 
                 }
                 break;
@@ -508,11 +513,11 @@ TokenId Scanner::Scan (
                 case 20:
                 {
 
-#line 217 "Scanner.reflex"
+#line 225 "Scanner.reflex"
 
         // Ignore all whitespace.
     
-#line 516 "Scanner.cpp"
+#line 521 "Scanner.cpp"
 
                 }
                 break;
@@ -520,11 +525,11 @@ TokenId Scanner::Scan (
                 case 21:
                 {
 
-#line 222 "Scanner.reflex"
+#line 230 "Scanner.reflex"
 
         // Ignore newlines.
     
-#line 528 "Scanner.cpp"
+#line 533 "Scanner.cpp"
 
                 }
                 break;
@@ -532,11 +537,11 @@ TokenId Scanner::Scan (
                 case 22:
                 {
 
-#line 227 "Scanner.reflex"
+#line 235 "Scanner.reflex"
 
         return TokenId::END_OF_FILE;
     
-#line 540 "Scanner.cpp"
+#line 545 "Scanner.cpp"
 
                 }
                 break;
@@ -544,12 +549,12 @@ TokenId Scanner::Scan (
                 case 23:
                 {
 
-#line 232 "Scanner.reflex"
+#line 240 "Scanner.reflex"
 
         g_log << "unexpected character " << CharLiteral(accepted_string[0]) << '\n';
         return TokenId::BAD_TOKEN;
     
-#line 553 "Scanner.cpp"
+#line 558 "Scanner.cpp"
 
                 }
                 break;
@@ -557,7 +562,7 @@ TokenId Scanner::Scan (
                 case 24:
                 {
 
-#line 356 "Scanner.reflex"
+#line 364 "Scanner.reflex"
 
         assert(token != nullptr);
         // get rid of the trailing endquote
@@ -590,7 +595,7 @@ TokenId Scanner::Scan (
         SwitchToStateMachine(StateMachine::MAIN);
         return TokenId::STRING_LITERAL;
     
-#line 594 "Scanner.cpp"
+#line 599 "Scanner.cpp"
 
                 }
                 break;
@@ -598,14 +603,14 @@ TokenId Scanner::Scan (
                 case 25:
                 {
 
-#line 390 "Scanner.reflex"
+#line 398 "Scanner.reflex"
 
         g_log << "unterminated string literal\n";
         assert(token != nullptr);
         token.reset();
         return TokenId::END_OF_FILE;
     
-#line 609 "Scanner.cpp"
+#line 614 "Scanner.cpp"
 
                 }
                 break;
@@ -616,20 +621,20 @@ TokenId Scanner::Scan (
     }
 
 
-#line 89 "Scanner.reflex"
+#line 97 "Scanner.reflex"
 
     assert(false && "you didn't handle END_OF_FILE properly");
     return TokenId::END_OF_FILE;
 
-#line 625 "Scanner.cpp"
+#line 630 "Scanner.cpp"
 }
 
 void Scanner::KeepString ()
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
-#line 111 "Scanner.reflex"
+#line 119 "Scanner.reflex"
 "Scanner:"
-#line 633 "Scanner.cpp"
+#line 638 "Scanner.cpp"
  << " keeping string" << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::KeepString();
 }
@@ -637,9 +642,9 @@ void Scanner::KeepString ()
 void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
-#line 111 "Scanner.reflex"
+#line 119 "Scanner.reflex"
 "Scanner:"
-#line 643 "Scanner.cpp"
+#line 648 "Scanner.cpp"
  << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::Unaccept(unaccept_char_count);
 }
@@ -647,9 +652,9 @@ void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 void Scanner::Unreject (std::uint32_t unreject_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(std::cerr << 
-#line 111 "Scanner.reflex"
+#line 119 "Scanner.reflex"
 "Scanner:"
-#line 653 "Scanner.cpp"
+#line 658 "Scanner.cpp"
  << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::Unreject(unreject_char_count);
 }

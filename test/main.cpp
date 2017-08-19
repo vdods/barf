@@ -19,7 +19,7 @@ void scan_stuff (std::string const &input_string)
     Scanner scanner;
 
     std::istringstream in(input_string);
-    scanner.IstreamIterator(std::istream_iterator<char>(in));
+    scanner.AttachIstream(in);
 
     TokenId token_id;;
     std::shared_ptr<Ast::Base> token;

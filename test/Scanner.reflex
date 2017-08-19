@@ -21,6 +21,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <istream>
 #include <memory>
 #include <vector>
 
@@ -52,6 +53,8 @@ std::string AsString (TokenId token_id);
 // }
 %target.cpp.scan_method_parameters { std::shared_ptr<Ast::Base> &token }
 %target.cpp.bottom_of_class {
+    void AttachIstream (std::istream &in);
+
     std::vector<StateMachine::Name> m_state_machine_stack;
 }
 
@@ -80,6 +83,11 @@ std::string AsString (TokenId token_id)
         return CharLiteral(std::uint8_t(token_id));
     else
         return s_lookup_table[std::uint32_t(token_id) - std::uint32_t(TokenId::LOW_)];
+}
+
+void Scanner::AttachIstream (std::istream &in)
+{
+    IstreamIterator(std::istream_iterator<char>(in));
 }
 %}
 %target.cpp.top_of_scan_method_actions %{
