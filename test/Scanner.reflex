@@ -194,25 +194,25 @@ void Scanner::AttachIstream (std::istream &in)
 |
     (") // opening quote for a string literal
     %target.cpp {
-        token = std::make_shared<Ast::StringLiteral>(accepted_string);
+        token = Ast::string_literal(accepted_string);
         SwitchToStateMachine(StateMachine::STRING_LITERAL_GUTS);
     }
 |
     ({INTEGER_LITERAL})
     %target.cpp {
-        token = std::make_shared<Ast::IntegerLiteral>(atoll(accepted_string.c_str()));
+        token = Ast::integer_literal(atoll(accepted_string.c_str()));
         return TokenId::INTEGER_LITERAL;
     }
 |
     ({NUMERIC_LITERAL})
     %target.cpp {
-        token = std::make_shared<Ast::NumericLiteral>(atof(accepted_string.c_str()));
+        token = Ast::numeric_literal(atof(accepted_string.c_str()));
         return TokenId::NUMERIC_LITERAL;
     }
 |
     ({IDENTIFIER})
     %target.cpp {
-        token = std::make_shared<Ast::Identifier>(accepted_string);
+        token = Ast::identifier(accepted_string);
         return TokenId::IDENTIFIER;
     }
 |
@@ -275,10 +275,10 @@ void Scanner::AttachIstream (std::istream &in)
         if (value >= 0x100)
         {
             g_log << "octal character literal value out of range (" << accepted_string << ")\n";
-            token = std::make_shared<Ast::BadToken>();
+            token = Ast::bad_token();
         }
         else
-            token = std::make_shared<Ast::CharLiteral>(char(value));
+            token = Ast::char_literal(char(value));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 |
@@ -291,10 +291,10 @@ void Scanner::AttachIstream (std::istream &in)
         if (value >= 0x100)
         {
             g_log << "hexadecimal character literal value out of range (" << accepted_string << ")\n";
-            token = std::make_shared<Ast::BadToken>();
+            token = Ast::bad_token();
         }
         else
-            token = std::make_shared<Ast::CharLiteral>(char(value));
+            token = Ast::char_literal(char(value));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 |
@@ -302,14 +302,14 @@ void Scanner::AttachIstream (std::istream &in)
     %target.cpp {
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        token = std::make_shared<Ast::CharLiteral>(EscapedChar(accepted_string[1]));
+        token = Ast::char_literal(EscapedChar(accepted_string[1]));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 |
     ({CHAR_NORMAL_CHAR})
     %target.cpp {
         assert(accepted_string.length() == 1);
-        token = std::make_shared<Ast::CharLiteral>(accepted_string[0]);
+        token = Ast::char_literal(accepted_string[0]);
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 |
@@ -322,7 +322,7 @@ void Scanner::AttachIstream (std::istream &in)
     ({ANY}) // anything else just means it's malformed
     %target.cpp {
         g_log << "unexpected character " << CharLiteral(accepted_string[0]) << " in character literal\n";
-        token = std::make_shared<Ast::BadToken>();
+        token = Ast::bad_token();
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     }
 ;
@@ -380,13 +380,13 @@ void Scanner::AttachIstream (std::istream &in)
 
             case EscapeStringReturnCode::MALFORMED_HEX_CHAR:
                 g_log << "\\x with no trailing hex digits\n";
-                token = std::make_shared<Ast::BadToken>();
+                token = Ast::bad_token();
                 break;
 
             case EscapeStringReturnCode::HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case EscapeStringReturnCode::OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 g_log << "hex/octal escape sequence out of range\n";
-                token = std::make_shared<Ast::BadToken>();
+                token = Ast::bad_token();
                 break;
         }
         token->as<Ast::StringLiteral>().m_value += accepted_string;

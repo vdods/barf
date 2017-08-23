@@ -319,10 +319,10 @@ TokenId Scanner::Scan (
         if (value >= 0x100)
         {
             g_log << "octal character literal value out of range (" << accepted_string << ")\n";
-            token = std::make_shared<Ast::BadToken>();
+            token = Ast::bad_token();
         }
         else
-            token = std::make_shared<Ast::CharLiteral>(char(value));
+            token = Ast::char_literal(char(value));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 329 "Scanner.cpp"
@@ -342,10 +342,10 @@ TokenId Scanner::Scan (
         if (value >= 0x100)
         {
             g_log << "hexadecimal character literal value out of range (" << accepted_string << ")\n";
-            token = std::make_shared<Ast::BadToken>();
+            token = Ast::bad_token();
         }
         else
-            token = std::make_shared<Ast::CharLiteral>(char(value));
+            token = Ast::char_literal(char(value));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 352 "Scanner.cpp"
@@ -360,7 +360,7 @@ TokenId Scanner::Scan (
 
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
-        token = std::make_shared<Ast::CharLiteral>(EscapedChar(accepted_string[1]));
+        token = Ast::char_literal(EscapedChar(accepted_string[1]));
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 367 "Scanner.cpp"
@@ -374,7 +374,7 @@ TokenId Scanner::Scan (
 #line 310 "Scanner.reflex"
 
         assert(accepted_string.length() == 1);
-        token = std::make_shared<Ast::CharLiteral>(accepted_string[0]);
+        token = Ast::char_literal(accepted_string[0]);
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 381 "Scanner.cpp"
@@ -401,7 +401,7 @@ TokenId Scanner::Scan (
 #line 323 "Scanner.reflex"
 
         g_log << "unexpected character " << CharLiteral(accepted_string[0]) << " in character literal\n";
-        token = std::make_shared<Ast::BadToken>();
+        token = Ast::bad_token();
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
     
 #line 408 "Scanner.cpp"
@@ -451,7 +451,7 @@ TokenId Scanner::Scan (
 
 #line 196 "Scanner.reflex"
 
-        token = std::make_shared<Ast::StringLiteral>(accepted_string);
+        token = Ast::string_literal(accepted_string);
         SwitchToStateMachine(StateMachine::STRING_LITERAL_GUTS);
     
 #line 458 "Scanner.cpp"
@@ -464,7 +464,7 @@ TokenId Scanner::Scan (
 
 #line 202 "Scanner.reflex"
 
-        token = std::make_shared<Ast::IntegerLiteral>(atoll(accepted_string.c_str()));
+        token = Ast::integer_literal(atoll(accepted_string.c_str()));
         return TokenId::INTEGER_LITERAL;
     
 #line 471 "Scanner.cpp"
@@ -477,7 +477,7 @@ TokenId Scanner::Scan (
 
 #line 208 "Scanner.reflex"
 
-        token = std::make_shared<Ast::NumericLiteral>(atof(accepted_string.c_str()));
+        token = Ast::numeric_literal(atof(accepted_string.c_str()));
         return TokenId::NUMERIC_LITERAL;
     
 #line 484 "Scanner.cpp"
@@ -490,7 +490,7 @@ TokenId Scanner::Scan (
 
 #line 214 "Scanner.reflex"
 
-        token = std::make_shared<Ast::Identifier>(accepted_string);
+        token = Ast::identifier(accepted_string);
         return TokenId::IDENTIFIER;
     
 #line 497 "Scanner.cpp"
@@ -582,13 +582,13 @@ TokenId Scanner::Scan (
 
             case EscapeStringReturnCode::MALFORMED_HEX_CHAR:
                 g_log << "\\x with no trailing hex digits\n";
-                token = std::make_shared<Ast::BadToken>();
+                token = Ast::bad_token();
                 break;
 
             case EscapeStringReturnCode::HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
             case EscapeStringReturnCode::OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
                 g_log << "hex/octal escape sequence out of range\n";
-                token = std::make_shared<Ast::BadToken>();
+                token = Ast::bad_token();
                 break;
         }
         token->as<Ast::StringLiteral>().m_value += accepted_string;

@@ -51,6 +51,12 @@ private:
 #include "Scanner.hpp"
 
 typedef Ast::Operator<Ast::Base> BaseOperator;
+
+template <typename... Args_>
+std::shared_ptr<BaseOperator> base_operator (Args_&&... args)
+{
+    return std::make_shared<BaseOperator>(std::forward<Args_>(args)...);
+}
 %}
 %target.cpp.constructor_actions {
     m_scanner = new Scanner();
@@ -114,7 +120,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
             return Token(Terminal::END_, token);
 
         case INTEGER_LITERAL:
-            return Token(Terminal::NUM, std::make_shared<Ast::NumericLiteral>(double(token->as<Ast::IntegerLiteral>().m_value)));
+            return Token(Terminal::NUM, Ast::numeric_literal(double(token->as<Ast::IntegerLiteral>().m_value)));
 
         case NUMERIC_LITERAL:
             return Token(Terminal::NUM, token);
@@ -178,7 +184,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     %error[%end] %end
     %target.cpp {
         std::cout << "stmt_then_end <- %error[%end] %end\n";
-        return std::make_shared<Ast::ErrorDummy>();
+        return Ast::error_dummy();
     }
 ;
 
@@ -193,7 +199,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     %error[%end] ';'
     %target.cpp {
         std::cout << "stmt <- %error ';'\n";
-        return std::make_shared<Ast::ErrorDummy>();
+        return Ast::error_dummy();
     }
 ;
 
@@ -208,7 +214,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     '(' %error[%end] ')'
     %target.cpp {
         std::cout << "expr <- '(' %error[')'] ')'\n";
-        return std::make_shared<Ast::ErrorDummy>();
+        return Ast::error_dummy();
     }
 |
     // NOTE: This will match everything until %end.
@@ -218,7 +224,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     '(' %error[%end | ';']
     %target.cpp {
         std::cout << "expr <- '(' %error[%end | ';']\n";
-        return std::make_shared<Ast::ErrorDummy>();
+        return Ast::error_dummy();
     }
 |
     NUM:num
@@ -230,49 +236,49 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     expr:lhs '+' expr:rhs               %prec ADDITIVE
     %target.cpp {
         std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("+", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("+", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '+' '+' '+' '+' expr:rhs   %prec LOWEST
     %target.cpp {
         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("++++", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("++++", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '+' '+' '+' expr:rhs       %prec LOW
     %target.cpp {
         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("+++", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("+++", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '+' '+' expr:rhs           %prec HIGHEST
     %target.cpp {
         std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("++", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("++", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '*' expr:rhs               %prec MULTIPLICATIVE
     %target.cpp {
         std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("*", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("*", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '?' expr:rhs               %prec QUESTION
     %target.cpp {
         std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("?", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("?", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     '-' expr:op                         %prec UNARY
     %target.cpp {
         std::cout << "expr <- '-' expr(" << op << ")\n";
-        return std::make_shared<BaseOperator>("-", BaseOperator::ChildNodes{op});
+        return base_operator("-", BaseOperator::ChildNodes{op});
     }
 |
     expr:lhs '^' expr:rhs               %prec EXPONENTIATION
     %target.cpp {
         std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("^", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("^", BaseOperator::ChildNodes{lhs, rhs});
     }
 // |
 //     // This just screws everything up.  It seems like there should just never be

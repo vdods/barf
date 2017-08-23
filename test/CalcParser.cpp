@@ -19,31 +19,37 @@
 
 typedef Ast::Operator<Ast::Base> BaseOperator;
 
-#line 23 "CalcParser.cpp"
+template <typename... Args_>
+std::shared_ptr<BaseOperator> base_operator (Args_&&... args)
+{
+    return std::make_shared<BaseOperator>(std::forward<Args_>(args)...);
+}
+
+#line 29 "CalcParser.cpp"
 
 CalcParser::CalcParser ()
 {
     SetDebugSpewStream(NULL);
 
 
-#line 55 "CalcParser.trison"
+#line 61 "CalcParser.trison"
 
     m_scanner = new Scanner();
     m_scanner->DebugSpew(true);
 
-#line 35 "CalcParser.cpp"
+#line 41 "CalcParser.cpp"
 }
 
 CalcParser::~CalcParser ()
 {
 
 
-#line 59 "CalcParser.trison"
+#line 65 "CalcParser.trison"
 
     delete m_scanner;
     m_scanner = NULL;
 
-#line 47 "CalcParser.cpp"
+#line 53 "CalcParser.cpp"
 }
 
 bool CalcParser::IsAtEndOfInput ()
@@ -57,11 +63,11 @@ void CalcParser::ResetForNewInput ()
 
 
 
-#line 127 "CalcParser.trison"
+#line 133 "CalcParser.trison"
 
     // m_recoverable_error_encountered = false;
 
-#line 65 "CalcParser.cpp"
+#line 71 "CalcParser.cpp"
 }
 
 CalcParser::ParserReturnCode CalcParser::Parse (std::shared_ptr<Ast::Base> *return_token, Nonterminal::Name nonterminal_to_parse)
@@ -375,9 +381,9 @@ void CalcParser::ThrowAwayToken_ (Token &token_) throw()
 void CalcParser::ThrowAwayTokenData_ (std::shared_ptr<Ast::Base> &token_data) throw()
 {
 
-#line 100 "CalcParser.trison"
+#line 106 "CalcParser.trison"
  
-#line 381 "CalcParser.cpp"
+#line 387 "CalcParser.cpp"
 }
 
 CalcParser::Token CalcParser::Scan_ () throw()
@@ -385,7 +391,7 @@ CalcParser::Token CalcParser::Scan_ () throw()
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "CalcParser: " << "Executing scan actions\n")
 
 
-#line 101 "CalcParser.trison"
+#line 107 "CalcParser.trison"
 
     assert(m_scanner != NULL);
     std::shared_ptr<Ast::Base> token;
@@ -402,7 +408,7 @@ CalcParser::Token CalcParser::Scan_ () throw()
             return Token(Terminal::END_, token);
 
         case INTEGER_LITERAL:
-            return Token(Terminal::NUM, std::make_shared<Ast::NumericLiteral>(double(token->as<Ast::IntegerLiteral>().m_value)));
+            return Token(Terminal::NUM, Ast::numeric_literal(double(token->as<Ast::IntegerLiteral>().m_value)));
 
         case NUMERIC_LITERAL:
             return Token(Terminal::NUM, token);
@@ -412,7 +418,7 @@ CalcParser::Token CalcParser::Scan_ () throw()
             return Token(Terminal::Name(scanner_token_id), nullptr);
     }
 
-#line 416 "CalcParser.cpp"
+#line 422 "CalcParser.cpp"
 }
 
 #include <algorithm>
@@ -909,12 +915,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             std::shared_ptr<Ast::Base> st(stack[stack.size()-2].m_token.m_data);
 
-#line 173 "CalcParser.trison"
+#line 179 "CalcParser.trison"
 
         std::cout << "stmt_then_end <- stmt %end\n";
         return st;
     
-#line 918 "CalcParser.cpp"
+#line 924 "CalcParser.cpp"
             break;
         }
 
@@ -922,12 +928,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         {
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
 
-#line 179 "CalcParser.trison"
+#line 185 "CalcParser.trison"
 
         std::cout << "stmt_then_end <- %error[%end] %end\n";
-        return std::make_shared<Ast::ErrorDummy>();
+        return Ast::error_dummy();
     
-#line 931 "CalcParser.cpp"
+#line 937 "CalcParser.cpp"
             break;
         }
 
@@ -936,12 +942,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             std::shared_ptr<Ast::Base> ex(stack[stack.size()-2].m_token.m_data);
 
-#line 188 "CalcParser.trison"
+#line 194 "CalcParser.trison"
 
         std::cout << "stmt <- expr ';'\n";
         return ex;
     
-#line 945 "CalcParser.cpp"
+#line 951 "CalcParser.cpp"
             break;
         }
 
@@ -949,12 +955,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         {
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
 
-#line 194 "CalcParser.trison"
+#line 200 "CalcParser.trison"
 
         std::cout << "stmt <- %error ';'\n";
-        return std::make_shared<Ast::ErrorDummy>();
+        return Ast::error_dummy();
     
-#line 958 "CalcParser.cpp"
+#line 964 "CalcParser.cpp"
             break;
         }
 
@@ -963,12 +969,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             std::shared_ptr<Ast::Base> e(stack[stack.size()-2].m_token.m_data);
 
-#line 203 "CalcParser.trison"
+#line 209 "CalcParser.trison"
 
         std::cout << "expr <- '(' expr ')'\n";
         return e;
     
-#line 972 "CalcParser.cpp"
+#line 978 "CalcParser.cpp"
             break;
         }
 
@@ -976,12 +982,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         {
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
 
-#line 209 "CalcParser.trison"
+#line 215 "CalcParser.trison"
 
         std::cout << "expr <- '(' %error[')'] ')'\n";
-        return std::make_shared<Ast::ErrorDummy>();
+        return Ast::error_dummy();
     
-#line 985 "CalcParser.cpp"
+#line 991 "CalcParser.cpp"
             break;
         }
 
@@ -989,12 +995,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         {
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
 
-#line 219 "CalcParser.trison"
+#line 225 "CalcParser.trison"
 
         std::cout << "expr <- '(' %error[%end | ';']\n";
-        return std::make_shared<Ast::ErrorDummy>();
+        return Ast::error_dummy();
     
-#line 998 "CalcParser.cpp"
+#line 1004 "CalcParser.cpp"
             break;
         }
 
@@ -1003,12 +1009,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             std::shared_ptr<Ast::Base> num(stack[stack.size()-1].m_token.m_data);
 
-#line 225 "CalcParser.trison"
+#line 231 "CalcParser.trison"
 
         std::cout << "expr <- NUM(" << num << ")\n";
         return num;
     
-#line 1012 "CalcParser.cpp"
+#line 1018 "CalcParser.cpp"
             break;
         }
 
@@ -1018,12 +1024,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             std::shared_ptr<Ast::Base> lhs(stack[stack.size()-3].m_token.m_data);
             std::shared_ptr<Ast::Base> rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 231 "CalcParser.trison"
+#line 237 "CalcParser.trison"
 
         std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("+", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("+", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1027 "CalcParser.cpp"
+#line 1033 "CalcParser.cpp"
             break;
         }
 
@@ -1033,12 +1039,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             std::shared_ptr<Ast::Base> lhs(stack[stack.size()-6].m_token.m_data);
             std::shared_ptr<Ast::Base> rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 237 "CalcParser.trison"
+#line 243 "CalcParser.trison"
 
         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("++++", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("++++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1042 "CalcParser.cpp"
+#line 1048 "CalcParser.cpp"
             break;
         }
 
@@ -1048,12 +1054,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             std::shared_ptr<Ast::Base> lhs(stack[stack.size()-5].m_token.m_data);
             std::shared_ptr<Ast::Base> rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 243 "CalcParser.trison"
+#line 249 "CalcParser.trison"
 
         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("+++", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("+++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1057 "CalcParser.cpp"
+#line 1063 "CalcParser.cpp"
             break;
         }
 
@@ -1063,12 +1069,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             std::shared_ptr<Ast::Base> lhs(stack[stack.size()-4].m_token.m_data);
             std::shared_ptr<Ast::Base> rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 249 "CalcParser.trison"
+#line 255 "CalcParser.trison"
 
         std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("++", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1072 "CalcParser.cpp"
+#line 1078 "CalcParser.cpp"
             break;
         }
 
@@ -1078,12 +1084,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             std::shared_ptr<Ast::Base> lhs(stack[stack.size()-3].m_token.m_data);
             std::shared_ptr<Ast::Base> rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 255 "CalcParser.trison"
+#line 261 "CalcParser.trison"
 
         std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("*", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("*", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1087 "CalcParser.cpp"
+#line 1093 "CalcParser.cpp"
             break;
         }
 
@@ -1093,12 +1099,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             std::shared_ptr<Ast::Base> lhs(stack[stack.size()-3].m_token.m_data);
             std::shared_ptr<Ast::Base> rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 261 "CalcParser.trison"
+#line 267 "CalcParser.trison"
 
         std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("?", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("?", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1102 "CalcParser.cpp"
+#line 1108 "CalcParser.cpp"
             break;
         }
 
@@ -1107,12 +1113,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
             std::shared_ptr<Ast::Base> op(stack[stack.size()-1].m_token.m_data);
 
-#line 267 "CalcParser.trison"
+#line 273 "CalcParser.trison"
 
         std::cout << "expr <- '-' expr(" << op << ")\n";
-        return std::make_shared<BaseOperator>("-", BaseOperator::ChildNodes{op});
+        return base_operator("-", BaseOperator::ChildNodes{op});
     
-#line 1116 "CalcParser.cpp"
+#line 1122 "CalcParser.cpp"
             break;
         }
 
@@ -1122,12 +1128,12 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
             std::shared_ptr<Ast::Base> lhs(stack[stack.size()-3].m_token.m_data);
             std::shared_ptr<Ast::Base> rhs(stack[stack.size()-1].m_token.m_data);
 
-#line 273 "CalcParser.trison"
+#line 279 "CalcParser.trison"
 
         std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
-        return std::make_shared<BaseOperator>("^", BaseOperator::ChildNodes{lhs, rhs});
+        return base_operator("^", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1131 "CalcParser.cpp"
+#line 1137 "CalcParser.cpp"
             break;
         }
 
@@ -2261,7 +2267,7 @@ std::size_t const CalcParser::ms_transition_count_ = sizeof(CalcParser::ms_trans
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 70 "CalcParser.trison"
+#line 76 "CalcParser.trison"
 
 void CalcParser::AttachIstream (std::istream &in)
 {
@@ -2284,4 +2290,4 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     m_scanner->DebugSpew(debug_spew);
 }
 
-#line 2288 "CalcParser.cpp"
+#line 2294 "CalcParser.cpp"

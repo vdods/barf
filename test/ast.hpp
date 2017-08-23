@@ -107,6 +107,11 @@ struct ErrorDummy : public Base
     virtual void print (std::ostream &out, std::uint32_t indent_level = 0) const override;
 };
 
+inline std::shared_ptr<ErrorDummy> error_dummy ()
+{
+    return std::make_shared<ErrorDummy>();
+}
+
 template <typename T_, Type TYPE_>
 struct Value : public Base
 {
@@ -126,12 +131,54 @@ struct Value : public Base
     }
 };
 
+template <typename T_, Type TYPE_, typename... Args_>
+std::shared_ptr<Value<T_,TYPE_>> value (Args_&&... args)
+{
+    return std::make_shared<Value<T_,TYPE_>>(std::forward<Args_>(args)...);
+}
+
 typedef Value<std::string,  Type::BAD_TOKEN>        BadToken;
 typedef Value<std::uint8_t, Type::CHAR_LITERAL>     CharLiteral;
 typedef Value<std::string,  Type::IDENTIFIER>       Identifier;
 typedef Value<std::int64_t, Type::INTEGER_LITERAL>  IntegerLiteral;
 typedef Value<double,       Type::NUMERIC_LITERAL>  NumericLiteral;
 typedef Value<std::string,  Type::STRING_LITERAL>   StringLiteral;
+
+template <typename... Args_>
+inline std::shared_ptr<BadToken> bad_token (Args_&&... args)
+{
+    return std::make_shared<BadToken>(std::forward<Args_>(args)...);
+}
+
+template <typename... Args_>
+inline std::shared_ptr<CharLiteral> char_literal (Args_&&... args)
+{
+    return std::make_shared<CharLiteral>(std::forward<Args_>(args)...);
+}
+
+template <typename... Args_>
+inline std::shared_ptr<Identifier> identifier (Args_&&... args)
+{
+    return std::make_shared<Identifier>(std::forward<Args_>(args)...);
+}
+
+template <typename... Args_>
+inline std::shared_ptr<IntegerLiteral> integer_literal (Args_&&... args)
+{
+    return std::make_shared<IntegerLiteral>(std::forward<Args_>(args)...);
+}
+
+template <typename... Args_>
+inline std::shared_ptr<NumericLiteral> numeric_literal (Args_&&... args)
+{
+    return std::make_shared<NumericLiteral>(std::forward<Args_>(args)...);
+}
+
+template <typename... Args_>
+inline std::shared_ptr<StringLiteral> string_literal (Args_&&... args)
+{
+    return std::make_shared<StringLiteral>(std::forward<Args_>(args)...);
+}
 
 template <typename ChildType_>
 struct Operator : public Base
@@ -184,5 +231,11 @@ struct Operator : public Base
             child->print(out, indent_level+1);
     }
 };
+
+template <typename ChildType_, typename... Args_>
+std::shared_ptr<Operator<ChildType_>> operator_ (Args_&&... args)
+{
+    return std::make_shared<Operator<ChildType_>>(std::forward<Args_>(args)...);
+}
 
 } // end of namespace Ast
