@@ -56,14 +56,17 @@ add_custom_command(
     COMMAND ${REFLEX_BINARY} -I ${BARF_TARGETS_DIR} ${barftest_SOURCE_DIR}/Scanner.reflex -o ${barftest_SOURCE_DIR}
     DEPENDS ${barftest_SOURCE_DIR}/Scanner.reflex ${BARF_TARGETS_DIR}/reflex.cpp.header.codespec ${BARF_TARGETS_DIR}/reflex.cpp.implementation.codespec ${BARF_TARGETS_DIR}/reflex.cpp.targetspec)
 
-# add_custom_command(
-#     OUTPUT ${barftest_SOURCE_DIR}/Parser.cpp ${barftest_SOURCE_DIR}/Parser.hpp
-#     COMMAND ${TRISON_BINARY} -I ${BARF_TARGETS_DIR} ${barftest_SOURCE_DIR}/Parser.trison -o ${barftest_SOURCE_DIR} -S Parser.states --generate-npda-dot-graph Parser.npda.dot
-#     DEPENDS ${barftest_SOURCE_DIR}/Parser.trison ${BARF_TARGETS_DIR}/trison.cpp.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.targetspec)
+add_custom_command(
+    OUTPUT ${barftest_SOURCE_DIR}/CalcParser.cpp ${barftest_SOURCE_DIR}/CalcParser.hpp
+    COMMAND ${TRISON_BINARY} -I ${BARF_TARGETS_DIR} ${barftest_SOURCE_DIR}/CalcParser.trison -o ${barftest_SOURCE_DIR} -S Parser.states --generate-npda-dot-graph CalcParser.npda.dot
+    DEPENDS ${barftest_SOURCE_DIR}/CalcParser.trison ${BARF_TARGETS_DIR}/trison.cpp.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.targetspec)
 
 set(barftest_SOURCES
     ast.cpp
     ast.hpp
+    CalcParser.cpp
+    CalcParser.hpp
+    CalcParser.trison
     log.cpp
     log.hpp
     main.cpp

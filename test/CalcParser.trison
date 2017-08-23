@@ -21,12 +21,18 @@
 #include <iostream>
 
 class Scanner;
+
+namespace Ast {
+
+struct Base;
+
+} // end of namespace Ast
 %}
-%target.cpp.class_name Parser
+%target.cpp.class_name CalcParser
 %target.cpp.parse_method_access "public"
 %target.cpp.bottom_of_class {
-    bool Parser::ScannerDebugSpew () const;
-    void Parser::ScannerDebugSpew (bool debug_spew);
+    bool ScannerDebugSpew () const;
+    void ScannerDebugSpew (bool debug_spew);
     void AttachIstream (std::istream &in);
 
 private:
@@ -39,9 +45,12 @@ private:
 /* **************************************************************************/
 
 %target.cpp.top_of_implementation_file %{
+#include "ast.hpp"
 #include <cmath>
 #include <sstream>
 #include "Scanner.hpp"
+
+typedef Ast::Operator<Ast::Base> BaseOperator;
 %}
 %target.cpp.constructor_actions {
     m_scanner = new Scanner();
@@ -59,59 +68,25 @@ private:
 //         EmitExecutionMessage("parse was successful");
 // %}
 %target.cpp.bottom_of_implementation_file %{
-void Parser::AttachIstream (std::istream &in)
+void CalcParser::AttachIstream (std::istream &in)
 {
     assert(m_scanner != NULL);
     m_scanner->AttachIstream(in);
 }
-// FiLoc const &Parser::GetFiLoc () const
+// FiLoc const &CalcParser::GetFiLoc () const
 // {
 //     assert(m_scanner != nullptr);
 //     return m_scanner->GetFiLoc();
 // }
 
-bool Parser::ScannerDebugSpew () const
+bool CalcParser::ScannerDebugSpew () const
 {
     return m_scanner->DebugSpew();
 }
 
-void Parser::ScannerDebugSpew (bool debug_spew)
+void CalcParser::ScannerDebugSpew (bool debug_spew)
 {
     m_scanner->DebugSpew(debug_spew);
-}
-
-Parser::ParserReturnCode parse (std::string const &s, double &parsed_value)
-{
-    std::istringstream in(s);
-    Parser parser;
-    parser.AttachIstream(in);
-    parser.SetDebugSpewStream(&std::cerr);
-    Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
-    return return_code;
-}
-
-int main (int argc, char **argv)
-{
-    if (argc >= 2)
-    {
-        double parsed_value;
-        Parser::ParserReturnCode return_code = parse(argv[1], parsed_value);
-        std::cout << "string to parse was \"" << argv[1] << "\"\n";
-        std::cout << "return code was ";
-        switch (return_code)
-        {
-            case Parser::PRC_SUCCESS: std::cout << "PRC_SUCCESS"; break;
-            case Parser::PRC_UNHANDLED_PARSE_ERROR: std::cout << "PRC_UNHANDLED_PARSE_ERROR"; break;
-            case Parser::PRC_INTERNAL_ERROR: std::cout << "PRC_INTERNAL_ERROR"; break;
-        }
-        std::cout << '\n';
-        std::cout << "parsed value was " << parsed_value << '\n';
-    }
-    else
-    {
-        std::cout << "Usage: " << argv[0] << " <expr>\n";
-    }
-    return 0;
 }
 %}
 
@@ -139,9 +114,9 @@ int main (int argc, char **argv)
             return Token(Terminal::END_, token);
 
         case INTEGER_LITERAL:
-            return Token(Terminal::NUM, std::make_shared<Ast::NumericLiteral>(double(token->as<IntegerLiteral>().m_value)));
+            return Token(Terminal::NUM, std::make_shared<Ast::NumericLiteral>(double(token->as<Ast::IntegerLiteral>().m_value)));
 
-        case NUMERIC_LITERAL
+        case NUMERIC_LITERAL:
             return Token(Terminal::NUM, token);
 
         default:
@@ -165,7 +140,7 @@ int main (int argc, char **argv)
 /* cpp parser terminal directives
 /* **************************************************************************/
 
-%terminal '+' '-' '*' '/' '^'
+%terminal '+' '-' '*' '/' '^' '?'
 %terminal '(' ')' ';'
 %terminal NUM BAD_TOKEN
 
@@ -174,8 +149,6 @@ int main (int argc, char **argv)
 /* **************************************************************************/
 
 // Lowest precedence is first, highest is last.
-
-TODO START HERE
 
 %prec.left      LOWEST
 %prec.left      LOW
@@ -196,47 +169,111 @@ TODO START HERE
 
 %nonterminal stmt_then_end
 :
-    stmt:st %end                                                %target.cpp { std::cout << "stmt_then_end <- stmt %end\n"; return st; }
+    stmt:st %end
+    %target.cpp {
+        std::cout << "stmt_then_end <- stmt %end\n";
+        return st;
+    }
 |
-    %error[%end] %end                                           %target.cpp { std::cout << "stmt_then_end <- %error[%end] %end\n"; return 0.0; }
+    %error[%end] %end
+    %target.cpp {
+        std::cout << "stmt_then_end <- %error[%end] %end\n";
+        return std::make_shared<Ast::ErrorDummy>();
+    }
 ;
 
 %nonterminal stmt
 :
-    expr:ex ';'                                                 %target.cpp { std::cout << "stmt <- expr ';'\n"; return ex; }
+    expr:ex ';'
+    %target.cpp {
+        std::cout << "stmt <- expr ';'\n";
+        return ex;
+    }
 |
-    %error[%end] ';'                                            %target.cpp { std::cout << "stmt <- %error ';'\n"; return 0.0; }
+    %error[%end] ';'
+    %target.cpp {
+        std::cout << "stmt <- %error ';'\n";
+        return std::make_shared<Ast::ErrorDummy>();
+    }
 ;
 
 %nonterminal expr
 :
-    '(' expr:e ')'                                              %target.cpp { std::cout << "expr <- '(' expr ')'\n"; return e; }
+    '(' expr:e ')'
+    %target.cpp {
+        std::cout << "expr <- '(' expr ')'\n";
+        return e;
+    }
 |
-    '(' %error[%end] ')'                                        %target.cpp { std::cout << "expr <- '(' %error[')'] ')'\n"; return 0.0; }
+    '(' %error[%end] ')'
+    %target.cpp {
+        std::cout << "expr <- '(' %error[')'] ')'\n";
+        return std::make_shared<Ast::ErrorDummy>();
+    }
 |
     // NOTE: This will match everything until %end.
     // This rule prevents ';' from being the error-stopper in statements, since
     // the %error token matches everything including ';'.
     // If %error_until(%end, ';') were added, this situation could be handled better.
-    '(' %error[%end | ';']                                      %target.cpp { std::cout << "expr <- '(' %error[%end | ';']\n"; return 0.0; }
+    '(' %error[%end | ';']
+    %target.cpp {
+        std::cout << "expr <- '(' %error[%end | ';']\n";
+        return std::make_shared<Ast::ErrorDummy>();
+    }
 |
-    NUM:num                                                     %target.cpp { std::cout << "expr <- NUM(" << num << ")\n"; return num; }
+    NUM:num
+    %target.cpp {
+        std::cout << "expr <- NUM(" << num << ")\n";
+        return num;
+    }
 |
-    expr:lhs '+' expr:rhs               %prec ADDITIVE          %target.cpp { std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n"; return lhs + rhs; }
+    expr:lhs '+' expr:rhs               %prec ADDITIVE
+    %target.cpp {
+        std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
+        return std::make_shared<BaseOperator>("+", BaseOperator::ChildNodes{lhs, rhs});
+    }
 |
-    expr:lhs '+' '+' '+' '+' expr:rhs   %prec LOWEST            %target.cpp { std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n"; return lhs / rhs; }
+    expr:lhs '+' '+' '+' '+' expr:rhs   %prec LOWEST
+    %target.cpp {
+        std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
+        return std::make_shared<BaseOperator>("++++", BaseOperator::ChildNodes{lhs, rhs});
+    }
 |
-    expr:lhs '+' '+' '+' expr:rhs       %prec LOW               %target.cpp { std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n"; return std::pow(lhs, rhs); }
+    expr:lhs '+' '+' '+' expr:rhs       %prec LOW
+    %target.cpp {
+        std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
+        return std::make_shared<BaseOperator>("+++", BaseOperator::ChildNodes{lhs, rhs});
+    }
 |
-    expr:lhs '+' '+' expr:rhs           %prec HIGHEST           %target.cpp { std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n"; return lhs * rhs; }
+    expr:lhs '+' '+' expr:rhs           %prec HIGHEST
+    %target.cpp {
+        std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
+        return std::make_shared<BaseOperator>("++", BaseOperator::ChildNodes{lhs, rhs});
+    }
 |
-    expr:lhs '*' expr:rhs               %prec MULTIPLICATIVE    %target.cpp { std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n"; return lhs * rhs; }
+    expr:lhs '*' expr:rhs               %prec MULTIPLICATIVE
+    %target.cpp {
+        std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
+        return std::make_shared<BaseOperator>("*", BaseOperator::ChildNodes{lhs, rhs});
+    }
 |
-    expr:lhs '?' expr:rhs               %prec QUESTION          %target.cpp { std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n"; return lhs - rhs; }
+    expr:lhs '?' expr:rhs               %prec QUESTION
+    %target.cpp {
+        std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
+        return std::make_shared<BaseOperator>("?", BaseOperator::ChildNodes{lhs, rhs});
+    }
 |
-    '-' expr:op                         %prec UNARY             %target.cpp { std::cout << "expr <- '-' expr(" << op << ")\n"; return -op; }
+    '-' expr:op                         %prec UNARY
+    %target.cpp {
+        std::cout << "expr <- '-' expr(" << op << ")\n";
+        return std::make_shared<BaseOperator>("-", BaseOperator::ChildNodes{op});
+    }
 |
-    expr:lhs '^' expr:rhs               %prec EXPONENTIATION    %target.cpp { std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n"; return std::pow(lhs, rhs); }
+    expr:lhs '^' expr:rhs               %prec EXPONENTIATION
+    %target.cpp {
+        std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
+        return std::make_shared<BaseOperator>("^", BaseOperator::ChildNodes{lhs, rhs});
+    }
 // |
 //     // This just screws everything up.  It seems like there should just never be
 //     // a lone %error in a rule.  Though %error[%end | ';'] could solve this.

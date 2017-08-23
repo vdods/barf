@@ -23,9 +23,11 @@ enum Type : std::uint32_t
 {
     BAD_TOKEN,
     CHAR_LITERAL,
+    ERROR_DUMMY,
     IDENTIFIER,
     INTEGER_LITERAL,
     NUMERIC_LITERAL,
+    OPERATOR,
     STRING_LITERAL,
 
     LOW_ = BAD_TOKEN,
@@ -96,6 +98,15 @@ inline bool operator < (Base const &lhs, Base const &rhs)
     return compare(lhs, rhs) < 0;
 }
 
+struct ErrorDummy : public Base
+{
+    virtual ~ErrorDummy () { }
+
+    virtual Type type () const override { return Type::ERROR_DUMMY; }
+    virtual int compare (Base const &other) const override { return false; } // There is only one distinct ErrorDummy
+    virtual void print (std::ostream &out, std::uint32_t indent_level = 0) const override;
+};
+
 template <typename T_, Type TYPE_>
 struct Value : public Base
 {
@@ -111,7 +122,7 @@ struct Value : public Base
     virtual void print (std::ostream &out, std::uint32_t indent_level = 0) const override
     {
         out << std::string(4*indent_level, ' ');
-        out << "Value<T_," << AsString(TYPE_) << "> = " << m_value;
+        out << "Value<T_," << AsString(TYPE_) << "> = " << m_value << '\n';
     }
 };
 
@@ -122,64 +133,56 @@ typedef Value<std::int64_t, Type::INTEGER_LITERAL>  IntegerLiteral;
 typedef Value<double,       Type::NUMERIC_LITERAL>  NumericLiteral;
 typedef Value<std::string,  Type::STRING_LITERAL>   StringLiteral;
 
-// struct Ast : public Base
-// {
-//     std::string m_text;
-//     std::vector<std::shared_ptr<Ast>> m_child_nodes;
-//
-//     Ast (std::string const &text)
-//         :   m_text(text)
-//     { }
-//     // TODO: Maybe use perfect template parameter forwarding instead of child_nodes param.
-//     Ast (std::string const &text, std::vector<std::shared_ptr<Ast>> &&child_nodes)
-//         :   m_text(text)
-//         ,   m_child_nodes(std::move(child_nodes))
-//     { }
-//     Ast (Ast &&ast)
-//         :   m_text(std::move(ast.m_text))
-//         ,   m_child_nodes(std::move(ast.m_child_nodes))
-//     { }
-// };
-//
-// inline int Compare (Ast const &lhs, Ast const &rhs)
-// {
-//     int c;
-//
-//     c = lhs.m_text.compare(rhs.m_text);
-//     if (c != 0)
-//         return c;
-//
-//     if (lhs.m_child_nodes.size() != rhs.m_child_nodes.size())
-//     {
-//         if (lhs.m_child_nodes.size() < rhs.m_child_nodes.size())
-//             return -1;
-//         else
-//             return 1;
-//     }
-//
-//     for (std::size_t i = 0; i < lhs.m_child_nodes.size(); ++i)
-//     {
-//         c = Compare(*lhs.m_child_nodes[i], *rhs.m_child_nodes[i]);
-//         if (c != 0)
-//             return c;
-//     }
-//
-//     return 0;
-// }
-//
-// inline bool operator == (Ast const &lhs, Ast const &rhs)
-// {
-//     return Compare(lhs, rhs) == 0;
-// }
-//
-// inline bool operator != (Ast const &lhs, Ast const &rhs)
-// {
-//     return Compare(lhs, rhs) != 0;
-// }
-//
-// inline bool operator < (Ast const &lhs, Ast const &rhs)
-// {
-//     return Compare(lhs, rhs) < 0;
-// }
+template <typename ChildType_>
+struct Operator : public Base
+{
+    typedef std::vector<std::shared_ptr<ChildType_>> ChildNodes;
+
+    std::string m_operator_string;
+    ChildNodes m_child_nodes;
+
+    template <typename... Args_>
+    Operator (std::string const &operator_string, Args_&&... args)
+        :   m_operator_string(operator_string)
+        ,   m_child_nodes(std::forward<Args_>(args)...)
+    { }
+    virtual ~Operator () { }
+
+    virtual Type type () const override { return Type::OPERATOR; }
+    virtual int compare (Base const &other_) const override
+    {
+        Operator const &other = dynamic_cast<Operator const &>(other_);
+
+        int c;
+
+        c = m_operator_string.compare(other.m_operator_string);
+        if (c != 0)
+            return c;
+
+        if (m_child_nodes.size() != other.m_child_nodes.size())
+        {
+            if (m_child_nodes.size() < other.m_child_nodes.size())
+                return -1;
+            else
+                return 1;
+        }
+
+        for (std::size_t i = 0; i < m_child_nodes.size(); ++i)
+        {
+            c = Ast::compare(*m_child_nodes[i], *other.m_child_nodes[i]);
+            if (c != 0)
+                return c;
+        }
+
+        return 0;
+    }
+    virtual void print (std::ostream &out, std::uint32_t indent_level = 0) const override
+    {
+        out << std::string(4*indent_level, ' ');
+        out << "Operator<...> = " << m_operator_string << " with child nodes:\n";
+        for (auto const &child : m_child_nodes)
+            child->print(out, indent_level+1);
+    }
+};
 
 } // end of namespace Ast

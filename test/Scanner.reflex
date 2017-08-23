@@ -156,7 +156,7 @@ void Scanner::AttachIstream (std::istream &in)
 %macro IDENTIFIER           ([_A-Za-z][_A-Za-z0-9]*)
 
 // all operators that should be returned by ascii value
-%macro OPERATOR             ([.:;|\[\]+\-*/\^])
+%macro OPERATOR             ([.:;|\[\]()+\-*/\^])
 // non-newline whitespace
 %macro WHITESPACE           ([ \t])
 // newline

@@ -9,8 +9,10 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 #include "ast.hpp"
+#include "CalcParser.hpp"
 #include <iostream>
 #include "log.hpp"
+#include <memory>
 #include "Scanner.hpp"
 #include <sstream>
 
@@ -41,6 +43,16 @@ void scan_stuff (std::string const &input_string)
     std::cout << g_log.str() << '\n';
 }
 
+CalcParser::ParserReturnCode parse_stuff (std::string const &input_string, std::shared_ptr<Ast::Base> &parsed_value)
+{
+    std::istringstream in(input_string);
+    CalcParser parser;
+    parser.AttachIstream(in);
+    parser.SetDebugSpewStream(&std::cerr);
+    CalcParser::ParserReturnCode return_code = parser.Parse(&parsed_value);
+    return return_code;
+}
+
 int main (int argc, char **argv)
 {
     std::string input_string;
@@ -49,6 +61,22 @@ int main (int argc, char **argv)
         std::cout << "Usage: " << argv[0] << " <input-string>\n";
         return -1;
     }
-    scan_stuff(argv[1]);
+    // scan_stuff(argv[1]);
+    std::shared_ptr<Ast::Base> parsed_value;
+    CalcParser::ParserReturnCode return_code = parse_stuff(argv[1], parsed_value);
+
+    switch (return_code)
+    {
+        case CalcParser::PRC_SUCCESS:               std::cout << "parser returned PRC_SUCCESS\n"; break;
+        case CalcParser::PRC_UNHANDLED_PARSE_ERROR: std::cout << "parser returned PRC_UNHANDLED_PARSE_ERROR\n"; break;
+        case CalcParser::PRC_INTERNAL_ERROR:        std::cout << "parser returned PRC_INTERNAL_ERROR\n"; break;
+    }
+
+    std::cout << "parsed value is:\n";
+    if (parsed_value != nullptr)
+        parsed_value->print(std::cout, 1);
+    else
+        std::cout << "    " << parsed_value.get() << '\n';
+
     return 0;
 }
