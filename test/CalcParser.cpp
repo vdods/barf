@@ -779,10 +779,7 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                 assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
             }
 
-            if (conflict_resolved)
             {
-                should_return = false;
-
                 assert(m_npda_.m_new_hps_queue_.empty());
                 // Take new hps-es and clear old ones.
                 for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
@@ -795,12 +792,20 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                 std::swap(m_npda_.m_hps_queue_, m_npda_.m_new_hps_queue_);
                 assert(m_npda_.m_new_hps_queue_.empty());
                 // TODO: Break this large function up into smaller logical units
+            }
+
+            // TODO/NOTE: This was part of the above code block previously -- this is
+            // part of intermediate work, so maybe it must be put back.
+            if (conflict_resolved)
+            {
+                should_return = false;
                 return;
             }
         }
     }
 
     // Process transitions in order of their SortedTypeIndex.
+    assert(m_npda_.m_new_hps_queue_.empty()); // This is the starting condition
     for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
     {
         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "CalcParser: " << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << ".\n")
@@ -920,7 +925,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "stmt_then_end <- stmt %end\n";
         return st;
     
-#line 924 "CalcParser.cpp"
+#line 929 "CalcParser.cpp"
             break;
         }
 
@@ -931,9 +936,9 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 #line 185 "CalcParser.trison"
 
         std::cout << "stmt_then_end <- %error[%end] %end\n";
-        return Ast::error_dummy();
+        return Ast::error_dummy("stmt_then_end <- %error[%end] %end");
     
-#line 937 "CalcParser.cpp"
+#line 942 "CalcParser.cpp"
             break;
         }
 
@@ -947,7 +952,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "stmt <- expr ';'\n";
         return ex;
     
-#line 951 "CalcParser.cpp"
+#line 956 "CalcParser.cpp"
             break;
         }
 
@@ -958,9 +963,9 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 #line 200 "CalcParser.trison"
 
         std::cout << "stmt <- %error ';'\n";
-        return Ast::error_dummy();
+        return Ast::error_dummy("stmt <- %error ';'");
     
-#line 964 "CalcParser.cpp"
+#line 969 "CalcParser.cpp"
             break;
         }
 
@@ -974,7 +979,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- '(' expr ')'\n";
         return e;
     
-#line 978 "CalcParser.cpp"
+#line 983 "CalcParser.cpp"
             break;
         }
 
@@ -985,9 +990,9 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 #line 215 "CalcParser.trison"
 
         std::cout << "expr <- '(' %error[')'] ')'\n";
-        return Ast::error_dummy();
+        return Ast::error_dummy("expr <- '(' %error[')'] ')'");
     
-#line 991 "CalcParser.cpp"
+#line 996 "CalcParser.cpp"
             break;
         }
 
@@ -998,9 +1003,9 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 #line 225 "CalcParser.trison"
 
         std::cout << "expr <- '(' %error[%end | ';']\n";
-        return Ast::error_dummy();
+        return Ast::error_dummy("expr <- '(' %error[%end | ';']");
     
-#line 1004 "CalcParser.cpp"
+#line 1009 "CalcParser.cpp"
             break;
         }
 
@@ -1014,7 +1019,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- NUM(" << num << ")\n";
         return num;
     
-#line 1018 "CalcParser.cpp"
+#line 1023 "CalcParser.cpp"
             break;
         }
 
@@ -1029,7 +1034,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
         return base_operator("+", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1033 "CalcParser.cpp"
+#line 1038 "CalcParser.cpp"
             break;
         }
 
@@ -1044,7 +1049,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("++++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1048 "CalcParser.cpp"
+#line 1053 "CalcParser.cpp"
             break;
         }
 
@@ -1059,7 +1064,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("+++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1063 "CalcParser.cpp"
+#line 1068 "CalcParser.cpp"
             break;
         }
 
@@ -1074,7 +1079,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
         return base_operator("++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1078 "CalcParser.cpp"
+#line 1083 "CalcParser.cpp"
             break;
         }
 
@@ -1089,7 +1094,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
         return base_operator("*", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1093 "CalcParser.cpp"
+#line 1098 "CalcParser.cpp"
             break;
         }
 
@@ -1104,7 +1109,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
         return base_operator("?", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1108 "CalcParser.cpp"
+#line 1113 "CalcParser.cpp"
             break;
         }
 
@@ -1118,7 +1123,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- '-' expr(" << op << ")\n";
         return base_operator("-", BaseOperator::ChildNodes{op});
     
-#line 1122 "CalcParser.cpp"
+#line 1127 "CalcParser.cpp"
             break;
         }
 
@@ -1133,7 +1138,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
         return base_operator("^", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1137 "CalcParser.cpp"
+#line 1142 "CalcParser.cpp"
             break;
         }
 
@@ -1390,6 +1395,7 @@ CalcParser::ParseStackTreeNode_::PrecedenceLevelRange CalcParser::ParseStackTree
     else if (m_spec.m_type == SHIFT)
     {
         PrecedenceLevelRange retval(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::min());
+        assert(!m_child_nodes.empty());
         // The range is the smallest range encompassing the range of each child node.
         for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
         {
@@ -1403,6 +1409,7 @@ CalcParser::ParseStackTreeNode_::PrecedenceLevelRange CalcParser::ParseStackTree
                 retval.second = std::max(retval.second, child_precedence_level_range.second);
             }
         }
+        std::cerr << "HIPPO: retval = " << retval.first << ", " << retval.second << '\n';
         assert(retval.first <= retval.second);
         return retval;
     }
@@ -2290,4 +2297,4 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     m_scanner->DebugSpew(debug_spew);
 }
 
-#line 2294 "CalcParser.cpp"
+#line 2301 "CalcParser.cpp"

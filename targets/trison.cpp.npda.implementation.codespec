@@ -446,10 +446,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
             }
 
-            if (conflict_resolved)
             {
-                should_return = false;
-
                 assert(m_npda_.m_new_hps_queue_.empty());
                 // Take new hps-es and clear old ones.
                 for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
@@ -462,12 +459,20 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 std::swap(m_npda_.m_hps_queue_, m_npda_.m_new_hps_queue_);
                 assert(m_npda_.m_new_hps_queue_.empty());
                 // TODO: Break this large function up into smaller logical units
+            }
+
+            // TODO/NOTE: This was part of the above code block previously -- this is
+            // part of intermediate work, so maybe it must be put back.
+            if (conflict_resolved)
+            {
+                should_return = false;
                 return;
             }
         }
     }
 
     // Process transitions in order of their SortedTypeIndex.
+    assert(m_npda_.m_new_hps_queue_.empty()); // This is the starting condition
     for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
     {
 <|if(is_defined(generate_debug_spew_code))
@@ -872,6 +877,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
     else if (m_spec.m_type == SHIFT)
     {
         PrecedenceLevelRange retval(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::min());
+        assert(!m_child_nodes.empty());
         // The range is the smallest range encompassing the range of each child node.
         for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
         {
@@ -885,6 +891,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
                 retval.second = std::max(retval.second, child_precedence_level_range.second);
             }
         }
+        std::cerr << "HIPPO: retval = " << retval.first << ", " << retval.second << '\n';
         assert(retval.first <= retval.second);
         return retval;
     }
