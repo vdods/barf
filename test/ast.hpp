@@ -100,6 +100,12 @@ inline bool operator < (Base const &lhs, Base const &rhs)
 
 struct ErrorDummy : public Base
 {
+    std::string m_description;
+
+    template <typename... Args_>
+    ErrorDummy (Args_&&... args)
+        :   m_description(std::forward<Args_>(args)...)
+    { }
     virtual ~ErrorDummy () { }
 
     virtual Type type () const override { return Type::ERROR_DUMMY; }
@@ -107,9 +113,10 @@ struct ErrorDummy : public Base
     virtual void print (std::ostream &out, std::uint32_t indent_level = 0) const override;
 };
 
-inline std::shared_ptr<ErrorDummy> error_dummy ()
+template <typename... Args_>
+std::shared_ptr<ErrorDummy> error_dummy (Args_&&... args)
 {
-    return std::make_shared<ErrorDummy>();
+    return std::make_shared<ErrorDummy>(std::forward<Args_>(args)...);
 }
 
 template <typename T_, Type TYPE_>

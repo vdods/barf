@@ -184,7 +184,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     %error[%end] %end
     %target.cpp {
         std::cout << "stmt_then_end <- %error[%end] %end\n";
-        return Ast::error_dummy();
+        return Ast::error_dummy("stmt_then_end <- %error[%end] %end");
     }
 ;
 
@@ -199,7 +199,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     %error[%end] ';'
     %target.cpp {
         std::cout << "stmt <- %error ';'\n";
-        return Ast::error_dummy();
+        return Ast::error_dummy("stmt <- %error ';'");
     }
 ;
 
@@ -214,7 +214,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     '(' %error[%end] ')'
     %target.cpp {
         std::cout << "expr <- '(' %error[')'] ')'\n";
-        return Ast::error_dummy();
+        return Ast::error_dummy("expr <- '(' %error[')'] ')'");
     }
 |
     // NOTE: This will match everything until %end.
@@ -224,7 +224,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     '(' %error[%end | ';']
     %target.cpp {
         std::cout << "expr <- '(' %error[%end | ';']\n";
-        return Ast::error_dummy();
+        return Ast::error_dummy("expr <- '(' %error[%end | ';']");
     }
 |
     NUM:num

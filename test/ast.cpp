@@ -31,7 +31,7 @@ std::string const &AsString (Type type)
 void ErrorDummy::print (std::ostream &out, std::uint32_t indent_level) const
 {
     out << std::string(4*indent_level, ' ');
-    out << "ErrorDummy\n";
+    out << "ErrorDummy = " << ::StringLiteral(m_description) << '\n';
 }
 
 template <>
