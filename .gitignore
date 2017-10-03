@@ -21,7 +21,10 @@ app/reflex/reflex_parser.npda.dot
 app/trison/trison_parser.dpda.dot
 app/trison/trison_parser.dpda.states
 app/trison/trison_parser.npda.dot
+
 dev/calc/Parser.npda.dot
+dev/calc/Parser.npda.dot.png
+
 lib/commonlang/barf_commonlang_scanner.dfa.dot
 lib/commonlang/barf_commonlang_scanner.nfa.dot
 lib/preprocessor/barf_preprocessor_parser.dpda.dot
@@ -35,3 +38,5 @@ lib/regex/barf_regex_parser.npda.dot
 lib/targetspec/barf_targetspec_parser.dpda.dot
 lib/targetspec/barf_targetspec_parser.dpda.states
 lib/targetspec/barf_targetspec_parser.npda.dot
+
+test/CalcParser.npda.dot
