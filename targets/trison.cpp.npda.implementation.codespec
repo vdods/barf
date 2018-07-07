@@ -1,6 +1,3 @@
-#include <algorithm>
-#include <limits>
-
 std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterminal::Name nonterminal)
 {
     switch (nonterminal)

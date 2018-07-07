@@ -21,6 +21,12 @@
 #define TRISON_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
 <|end_if
 
+<|if(is_defined(use_npda))
+#include <algorithm>
+#include <limits>
+#include <utility>
+
+<|end_if
 <|top_of_implementation_file?
 
 <{class_name}::<{class_name} (<{if(is_defined(constructor_definition_parameters))}<{constructor_definition_parameters}<{else}<{constructor_parameters?}<{end_if})
