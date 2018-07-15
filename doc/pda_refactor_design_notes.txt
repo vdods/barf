@@ -701,16 +701,168 @@ Prune the trunk -- the action is SHIFT -- start again
 ROOT -> (2,3)                                                               e + e * e . ^
     REDUCE rule 2 -> (x)                                                    e + . e ^
 
+2018.07.06 --------------------------------------------------------------------
 
+There are certain cases where considering a REDUCE branch to be "blocked" is preventing
+the parser from finding the correct parse.  An example:
 
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): ---------- ITERATION 39 --------------
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Realized state stack (bottom to top) is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 163 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 167 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 26 30 33 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 37 54 60 64 68 72 76 80 84 88 92 96 100 104 108 112 122 131 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Max realized lookahead count (so far) is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     1
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Has-encountered-error-state (so far) is :
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     false
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Realized stack tokens then realized lookahead queue is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     function_definition_type_expression '{' expression . '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): ROOT
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     REDUCE rule 46; statement <- expression
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (    blocked) rule 57: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     SHIFT
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (non-blocked) rule 27: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (non-blocked) rule 28: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (non-blocked) rule 29: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): HPS queue:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (    blocked) rule 57: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (non-blocked) rule 27: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (non-blocked) rule 28: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (non-blocked) rule 29: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Parse stack tree does not have trunk; continuing parse.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [DEFAULT_, DEFAULT_], SHIFT precedence level range: [DEFAULT_, DEFAULT_]
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         Case 3; REDUCE == SHIFT; rule 46 associativity index: 0
+pruning left-associative SHIFT and continuing.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): ---------- ITERATION 40 --------------
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Realized state stack (bottom to top) is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 163 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 167 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 26 30 33 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 37 54 60 64 68 72 76 80 84 88 92 96 100 104 108 112 122 131 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Max realized lookahead count (so far) is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     1
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Has-encountered-error-state (so far) is :
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     false
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Realized stack tokens then realized lookahead queue is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     function_definition_type_expression '{' expression . '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): ROOT
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     REDUCE rule 46; statement <- expression
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (    blocked) rule 57: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): HPS queue:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (    blocked) rule 57: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Parse stack tree has trunk; executing trunk actions.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     Executing trunk action REDUCE rule 46.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Executing reduction rule 46
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     Destroying and recreating parse tree based on top element of realized stack.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
 
+In this case, it prefers to REDUCE the expression to a statement within the statement list, instead of following the REDUCE branch,
+consuming the available lookaheads (and no more) and finding that there is no correct parse.  So probably the concept of "blocked"
+branch should be changed into one where it's only blocked if it has run out of known lookaheads to parse.  All branches perhaps
+should walk in lockstep regarding the number of lookaheads they've processed.  In this case, it would look something like
 
+Iteration N ---------------
 
+ROOT
+    REDUCE: statement <- expression
+        HPS: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+    SHIFT: '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
 
+Iteration N+1 -------------
 
+ROOT
+    REDUCE: statement <- expression
+        SHIFT: statement
+            HPS: statement_list <- statement .     (26); statement . '('
+    SHIFT '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
 
+Iteration N+2 -------------
 
+ROOT
+    REDUCE: statement <- expression
+        SHIFT: statement
+            REDUCE: statement_list <- statement
+                HPS: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement_list '('
+    SHIFT '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
 
+Iteration N+3 -------------
+
+ROOT
+    REDUCE: statement <- expression
+        SHIFT: statement
+            REDUCE: statement_list <- statement
+                SHIFT: statement_list
+                    HPS: bracketed_statement_list <- '{' statement_list . '}'     (26); statement_list . '('   <-- no matching lookahead; branch gets killed
+    SHIFT '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
+
+Iteration N+3 -------------
+
+ROOT
+    SHIFT '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
+
+execute SHIFT '('
+
+However, this violates the principle that the real parse action taken should only depend on the top of the NPDA state stack(s).
+For example, in a POP_STACK or REDUCE, the NPDA state stack for that branch is popped, and then the action depends on "hidden"
+states -- states below the top of the NPDA state stack(s).  The set of the NPDA states on top of each stack is what defines
+a DPDA state.  Though this is not the only possible definition, it could be defined to include some substack of each stack
+which includes the top element.
+
+2018.07.12 ----------------------------
+
+-   It probably makes sense to add a %lookahead[...] directive for use especially (or only?)
+    as the last thing in a reduction rule.  This would probably make it easier to design parsers
+    that avoid shift/reduce conflicts, and would allow more grammars to be viable (e.g. grammars
+    that have empty reduction rules in various things).  In the above example, the problem could
+    probably be resolved if there was a %lookahead['}'|STATEMENT_DELIMITER|%end] or something
+    like that.
+-   Perhaps other avenues to explore are the following.
+    1.  Given a branched parse (say with the SHIFT/REDUCE conflict described above), all branches
+        should continue at least until they exhaust all of the number of lookaheads that the
+        "furthest ahead" branch (in the sense that it has looked at the most lookaheads) has looked
+        at.  In the above example, the SHIFT branch(es) have looked at 1 lookahead, so the REDUCE
+        branch should be allowed to continue until it has exhausted the use of 1 lookahead.
+
+        Otherwise, the parser can't truly claim to have used the lookahead token(s) fully.  It
+        should derive the maximal information out of each new token.
+
+        NOTE: If this is done, then because REDUCE actions are no longer blocked, it follows that
+        the DPDA states will actually be sets of sub-stacks of the NPDA states.  Here, "sub-stack"
+        means a contiguous subsequence of stack elements which includes the top element.  While
+        this is not inherently problematic, it does complicate the model for what a DPDA state is
+        (it currently/used to be the set of NPDA states comprising the top of all the branches'
+        NPDA state stacks).
+
+    2.  Pre-specify the number of lookaheads allowed before a conflict is resolved or an error
+        is produced.  This idea would need to be fleshed out more to be fully well-defined.
+
+2018.07.14 ----------------------------
+
+-   Performed an experiment to explore the feasibility of option 1 from above, and it did in fact
+    solve the problem.  Now need to implement the step-in-time of all parallel HPS branches, so
+    that SHIFT-going branches don't get ahead of REDUCE-going branches in terms of consumed lookaheads.
 
 
 

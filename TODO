@@ -323,3 +323,11 @@ template <Uint32 high> struct SmallestUint {
         }
 -   Change doxygen comments to all /// style
 -   Ensure all the different types of cleanup are performed, verify with valgrind.
+-   Probably compute epsilon closure of states during trison execution, so that the NPDA implementation
+    doesn't have to implement it.
+-   Set optional upper bound on lookaheads so that NPDA can trigger an error if it exceeds the limit
+    (this will help debug certain trison bugs -- or even grammar bugs -- which result in infinitely
+    looping through a sequence of states where lookaheads are pushed onto the front of the lookahead queue.
+-   Implement creation of NPDA states output file.
+
+

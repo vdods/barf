@@ -190,6 +190,9 @@ public:
     /// This method, along with all other debug spew code can be removed by removing
     /// the %target.cpp.generate_debug_spew_code directive from the primary source.
     void SetDebugSpewStream (std::ostream *debug_spew_stream) { m_debug_spew_stream = debug_spew_stream; }
+    /// Returns the debug spew prefix string, which may depend on values like the
+    /// current filename, line number, etc.
+    std::string DebugSpewPrefix () const;
 
 <|end_if
     /** This parser is capable of attempting multiple contiguous parses from the

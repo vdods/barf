@@ -24,6 +24,7 @@
 <|if(is_defined(use_npda))
 #include <algorithm>
 #include <limits>
+#include <sstream>
 #include <utility>
 
 <|end_if
@@ -65,6 +66,13 @@ bool <{class_name}::IsAtEndOfInput ()
 <|else
     return true; // TEMP
 <|end_if
+}
+
+std::string <{class_name}::DebugSpewPrefix () const
+{
+    std::ostringstream out;
+    out << <{debug_spew_prefix};
+    return out.str();
 }
 
 void <{class_name}::ResetForNewInput ()
