@@ -10,6 +10,7 @@ config.sub
 configure
 debug/
 debug2/
+debug-refactor-pda-concrete-states/
 depcomp
 install-sh
 ltmain.sh
