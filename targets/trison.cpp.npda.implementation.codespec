@@ -1346,44 +1346,56 @@ bool <{class_name}::CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::
 
 <{class_name}::StateVector_ const &<{class_name}::EpsilonClosureOfState_ (std::uint32_t state_index)
 {
-    // This function implementation depends on there not being an epsilon transition cycle.
-
     // Memoize this function, because it will be called so many times and is somewhat intensive.
     typedef std::map<std::uint32_t,StateVector_> LookupTable;
     static LookupTable s_lookup_table;
+
+    LookupTable::iterator find_it = s_lookup_table.find(state_index);
+    if (find_it != s_lookup_table.end())
+        return find_it->second;
+
+    // Compute the epsilon closure as a set
+    StateSet_ epsilon_closure_set;
+    ComputeEpsilonClosureOfState_(state_index, epsilon_closure_set);
+
+    // Copy the states in the set into the memoized vector.
+//    std::cerr << "EpsilonClosureOfState_(" << state_index << "):"; // HIPPO
+    StateVector_ &epsilon_closure = s_lookup_table[state_index];
+    epsilon_closure.reserve(epsilon_closure_set.size());
+    for (StateSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
     {
-        LookupTable::iterator find_it = s_lookup_table.find(state_index);
-        if (find_it != s_lookup_table.end())
-            return find_it->second;
+//        std::cerr << ' ' << *it; // HIPPO
+        epsilon_closure.push_back(*it);
     }
+//    std::cerr << ";\n"; // HIPPO
+    // Return the memoized value.
+    return epsilon_closure;
+}
+
+void <{class_name}::ComputeEpsilonClosureOfState_ (std::uint32_t state_index, StateSet_ &epsilon_closure)
+{
+    // NOTE: The working definition of epsilon closure in this implementation used to only include
+    // states that had non-epsilon transitions, but has been changed to include all epsilon-reachable
+    // states, including those having no non-epsilon transitions.
+
+    // This implementation allows epsilon cycles.
+
+    // If this state has already been visited, there's no reason to continue.
+    if (epsilon_closure.find(state_index) != epsilon_closure.end())
+        return;
+    // Otherwise, mark it as visited.  This also prevents infinite recursion.
+    else
+        epsilon_closure.insert(state_index);
 
     // This set collects the epsilon closure with no duplicates
-    StateSet_ epsilon_closure_set;
     State_ const &state = ms_state_table_[state_index];
-    bool state_has_non_epsilon_transitions = false;
     for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count;
          transition != transition_end;
          ++transition)
     {
         if (transition->m_type == Transition_::EPSILON)
-        {
-            StateVector_ const &sub_epsilon_closure = EpsilonClosureOfState_(transition->m_data_index);
-            for (StateVector_::const_iterator it = sub_epsilon_closure.begin(), it_end = sub_epsilon_closure.end(); it != it_end; ++it)
-                epsilon_closure_set.insert(*it);
-        }
-        else
-            state_has_non_epsilon_transitions = true;
+            ComputeEpsilonClosureOfState_(transition->m_data_index, epsilon_closure);
     }
-    // The epsilon closure of a state includes itself if it has non-epsilon transitions
-    if (state_has_non_epsilon_transitions)
-        epsilon_closure_set.insert(state_index);
-
-    // Add all the elements of epsilon_closure_set to the memoized entry.
-    StateVector_ &epsilon_closure = s_lookup_table[state_index];
-    epsilon_closure.reserve(epsilon_closure_set.size());
-    for (StateSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
-        epsilon_closure.push_back(*it);
-    return epsilon_closure;
 }
 
 <{class_name}::StateVector_ const &<{class_name}::EpsilonClosureOfStateSet_ (StateSet_ const &state_set)

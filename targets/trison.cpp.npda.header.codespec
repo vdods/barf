@@ -331,6 +331,8 @@ private:
 
     // Returns the epsilon closure of the given NPDA state.  Return value is memoized.
     static StateVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);
+    // Computes the epsilon closure of the given NPDA state.
+    static void ComputeEpsilonClosureOfState_ (std::uint32_t state_index, StateSet_ &epsilon_closure);
     // Returns the epsilon closure of the given NPDA state set.  Return value is memoized.
     static StateVector_ const &EpsilonClosureOfStateSet_ (StateSet_ const &state_set);
     // Returns the transitions, matching given sorted_type_index, for the epsilon closure of the given NPDA state.  Return value is memoized.
