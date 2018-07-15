@@ -55,8 +55,11 @@ public:
         /// Indicates an unhandled parse error occurred (i.e. no %error-accepting
         /// rules were encountered).
         PRC_UNHANDLED_PARSE_ERROR = 1,
+        /// Indicates that the parse was halted because the number of realized
+        /// lookaheads exceeded the max allowable lookahead count (NPDA target only).
+        PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEADS = 2,
         /// Indicates that the parse didn't complete because of some internal error.
-        PRC_INTERNAL_ERROR = 2
+        PRC_INTERNAL_ERROR = 3
     }; // end of enum <{class_name}::ParserReturnCode
 
     /// "Namespace" for <{class_name}::Terminal::Name, which enumerates all valid

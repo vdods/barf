@@ -58,6 +58,15 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
         )
 
 <|end_if
+        if (<{max_allowable_lookahead_count} >= 0 && m_npda_.MaxRealizedLookaheadQueueSize() > <{max_allowable_lookahead_count})
+        {
+<|if(is_defined(generate_debug_spew_code))
+            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Exceeded max allowable lookahead token count (<{max_allowable_lookahead_count}); aborting with error.\n")
+<|end_if
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEADS;
+            break;
+        }
+
         if (m_npda_.m_root_->HasTrunkChild())
             ExecuteAndRemoveTrunkActions_(should_return, parser_return_code_, return_token);
         else
