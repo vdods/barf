@@ -177,7 +177,8 @@ private:
                 : m_type(type)
                 , m_single_data(single_data)
             {
-                if (m_type != REDUCE && m_type != POP_STACK)
+                //if (m_type != REDUCE && m_type != POP_STACK)
+                if (m_type != REDUCE && m_type != SHIFT && m_type != POP_STACK) // HIPPO
                 {
                     assert(m_single_data == UNUSED_DATA);
                 }
@@ -197,8 +198,9 @@ private:
                             return lhs.m_single_data < rhs.m_single_data;
 
                         case REDUCE:
-                            // assert(lhs.m_single_data != UNUSED_DATA);
-                            // assert(rhs.m_single_data != UNUSED_DATA);
+                            return false;
+
+                        case SHIFT: // HIPPO
                             return false;
 
                         default:

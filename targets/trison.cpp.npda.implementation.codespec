@@ -49,6 +49,8 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
 <|end_if
     while (!should_return)
     {
+        if (iteration_index == 3000) // HIPPO
+            break;                 // HIPPO
 <|if(is_defined(generate_debug_spew_code))
         TRISON_CPP_DEBUG_CODE_(
             *DebugSpewStream() << <{debug_spew_prefix} << "\n";
@@ -146,9 +148,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 // Execute the appropriate rule on the top tokens in the stack
                 std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
 <|if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action REDUCE rule " << rule_index << ".\n")
+                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action REDUCE rule " << rule_index << "; " << ms_rule_table_[rule_index].m_description << '\n')
 <|end_if
-                // NOTE: dont actually execute reduction rules here, that should be saved for executing the trunk
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_npda_.m_realized_stack_);
                 Rule_ const &rule = ms_rule_table_[rule_index];
                 // Pop those stack tokens
@@ -160,13 +161,14 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 // recreated.  This is draconian and non-optimal, but simple and effective.  TODO: Because HPS branches
                 // are blocked right after a REDUCE or POP_STACK, maybe don't bother adding any children below REDUCE
                 // or POP_STACK nodes.
-                destroy_and_recreate_parse_tree = true;
+                // destroy_and_recreate_parse_tree = true; // HIPPO
                 break;
             }
             case ParseStackTreeNode_::SHIFT: {
-                assert(trunk_child->m_spec.m_single_data == ParseStackTreeNode_::UNUSED_DATA); // m_single_data is not used for SHIFT.
+                //TEMP HIPPO assert(trunk_child->m_spec.m_single_data == ParseStackTreeNode_::UNUSED_DATA); // m_single_data is not used for SHIFT.
 <|if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action SHIFT.\n") // TODO: Print the lookahead that was shifted?
+                std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
+                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
 <|end_if
                 // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
                 m_npda_.m_realized_stack_.push_back(RealizedBranchStackElement_(trunk_child->m_npda_state_set, Lookahead_(0)));
@@ -362,6 +364,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             else if (reduce_precedence_level_range.second == shift_precedence_level_range.first &&
                      shift_precedence_level_range.first == shift_precedence_level_range.second)
             {
+            /* HIPPO temp disabled
                 Rule_ const &reduction_rule = ms_rule_table_[reduce->m_spec.m_single_data];
                 Precedence_ const &reduction_rule_precedence = ms_precedence_table_[reduction_rule.m_precedence_index];
 <|if(is_defined(generate_debug_spew_code))
@@ -401,6 +404,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                         assert(false && "this should never happen");
                         break;
                 }
+                */
             }
             // Case 4
             else if (reduce_precedence_level_range.second == shift_precedence_level_range.second &&
@@ -537,6 +541,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 assert(transition_sorted_type_index == current_sorted_type_index);
 
 <|if(is_defined(generate_debug_spew_code))
+/*
                 TRISON_CPP_DEBUG_CODE_(
                     *DebugSpewStream() << <{debug_spew_prefix} << "            Processing transition " << ParseStackTreeNode_::AsString(ParseStackTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
                     if (transition.m_data_index == ParseStackTreeNode_::UNUSED_DATA)
@@ -545,6 +550,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                         *DebugSpewStream() << transition.m_data_index;
                     *DebugSpewStream() << " and sorted type index " << Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type)) << '\n';
                 )
+*/
 <|end_if
 
                 ParseStackTreeNode_ *resulting_hps = NULL;
@@ -552,7 +558,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 if (transition.m_token_index == Nonterminal::none_)
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "                Exercising transition without accessing lookahead... ")
+                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition without accessing lookahead... ")
 <|end_if
                     resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
 <|if(is_defined(generate_debug_spew_code))
@@ -564,12 +570,14 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 {
                     Token::Id lookahead_token_id = hps.LookaheadTokenId(*this);
 <|if(is_defined(generate_debug_spew_code))
+/*
                     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "                Lookahead is " << Token(lookahead_token_id) << '\n')
+*/
 <|end_if
                     if (transition.m_token_index == lookahead_token_id)
                     {
 <|if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(                        *DebugSpewStream() << <{debug_spew_prefix} << "                Exercising transition with access to lookahead... ")
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
 <|end_if
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
 <|if(is_defined(generate_debug_spew_code))
@@ -584,11 +592,19 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     }
 
     // Take new hps-es and clear old ones.
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Removing defunct HPSes...\n")
+<|end_if
     for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
     {
         ParseStackTreeNode_ *hps = *hps_it;
         if (hps != NULL)
         {
+<|if(is_defined(generate_debug_spew_code))
+            TRISON_CPP_DEBUG_CODE_(
+                hps->Print(*DebugSpewStream(), *this, DebugSpewPrefix(), 2);
+            )
+<|end_if
             hps->RemoveFromParent();
             delete hps;
         }
@@ -847,7 +863,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
     switch (m_parent_node->m_spec.m_type)
     {
         case RETURN:
-        case REDUCE:
+        //case REDUCE: // HIPPO
         case POP_STACK: return true;
 
         default:        return false;
@@ -947,18 +963,28 @@ void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
 
 void <{class_name}::ParseStackTreeNode_::RemoveChild (ParseStackTreeNode_ *child)
 {
+    //std::cerr << "ParseStackTreeNode_::RemoveChild; this = " << this << ", child = " << child << '\n'; // HIPPO
     assert(child != NULL);
     assert(child->m_parent_node == this);
     assert(HasChildrenHavingSpec(child->m_spec));
+    assert(m_child_nodes[child->m_spec].find(child) != m_child_nodes[child->m_spec].end());
     m_child_nodes[child->m_spec].erase(child);
     if (m_child_nodes[child->m_spec].empty())
+    {
+        //std::cerr << "    all child nodes of spec " << AsString(child->m_spec.m_type) << " are gone; removing that subset\n"; // HIPPO
         m_child_nodes.erase(child->m_spec);
+    }
     child->m_parent_node = NULL;
+
+    // If there are no children and this isn't the root node, remove it from its parent.
+    if (m_child_nodes.empty() && m_parent_node != NULL)
+        RemoveFromParent();
 }
 
 void <{class_name}::ParseStackTreeNode_::RemoveFromParent ()
 {
     assert(m_parent_node != NULL);
+    //std::cerr << "ParseStackTreeNode_::RemoveFromParent; this = " << this << '\n'; // HIPPO
     m_parent_node->RemoveChild(this);
 }
 
@@ -1007,12 +1033,14 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     out << prefix;
     for (std::uint32_t i = 0; i < indent_level; ++i)
         out << "    ";
-    out << AsString(m_spec.m_type);
+    out << AsString(m_spec.m_type) << ' ' << this;
     if (m_spec.m_type == HPS)
         out << (IsBlockedHPS() ? " (    blocked)" : " (non-blocked)");
     switch (m_spec.m_type)
     {
         case REDUCE:    out << " rule " << m_spec.m_single_data << "; " << ms_rule_table_[m_spec.m_single_data].m_description;  break;
+        //case SHIFT:     out << " to (?) state " << m_spec.m_single_data << "; " << ms_state_table_[m_spec.m_single_data].m_description; break;
+        case SHIFT:     out << ' ' << Token(m_spec.m_single_data); break;
         case POP_STACK: out << ' ' << m_spec.m_single_data << " time(s)";                                                       break;
         default:                                                                                                                break;
     }
@@ -1181,8 +1209,11 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             std::uint32_t const &state_index = action_data;
             // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel LookaheadTokenId tracking.
             new_hps = hps.CloneLeafNode();
-            new_hps->m_stack.push_back(HypotheticalBranchStackElement_(state_index, new_hps->LookaheadTokenId(*this)));
-            action_data = ParseStackTreeNode_::UNUSED_DATA; // SHIFT action doesn't store the state, the HPS children do.
+            Token::Id lookahead_token_id = new_hps->LookaheadTokenId(*this);
+            new_hps->m_stack.push_back(HypotheticalBranchStackElement_(state_index, lookahead_token_id));
+            // TEMP HIPPO action_data = ParseStackTreeNode_::UNUSED_DATA; // SHIFT action doesn't store the state, the HPS children do.
+            // Store the lookahead token id in action_data so it can printed.
+            action_data = std::uint32_t(lookahead_token_id);
             if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
                 ++new_hps->m_realized_lookahead_cursor;
             else
