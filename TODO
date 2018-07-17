@@ -257,8 +257,6 @@ template <Uint32 high> struct SmallestUint {
         >::T >::T Type;
 };
 
--   get NPDA target building without C++11 enabled (it was working without before)
-    this really only depends on cstdint, and therefore the int types.
 -   implement nonassoc error handling in NPDA
 -   make sure error handling is working correctly in NPDA (via unit tests)
 -   unit tests for NPDA
@@ -267,8 +265,6 @@ template <Uint32 high> struct SmallestUint {
     -   max memory used
     -   some measurement of the "leanness" of the grammar, like how much branching
         was encountered, etc
--   make a text version of NPDA states output (i.e. text version of Parser.npda.dot,
-    anologous to Parser.dpda.states)
 -   in the NPDA dot graph, maybe move the self-transitions to just text lines in the
     state box itself, to avoid the mess that dot creates with self transitions.
 -   maybe add some online DPDA generation in NPDA during runtime, optionally saving
@@ -282,7 +278,7 @@ template <Uint32 high> struct SmallestUint {
     terminals specified, and that %end is one of them.
 -   NPDA parser test design notes
     -   need to test a bunch of different grammars
-        -   grammars with bounded lookahead
+        -   grammars with bounded lookahead (1, 2, 3, and 0 if that's possible)
         -   grammars with unbounded lookahead
         -   try to come up with a worst case grammar
         -   look on wikipedia and other websites for grammars
@@ -303,8 +299,6 @@ template <Uint32 high> struct SmallestUint {
 -   Make a %default precedence level so that the grammar can have rule precedences below default.
 -   Because HPS branches are blocked right after a REDUCE or POP_STACK, maybe don't bother adding
     any children below REDUCE or POP_STACK nodes.  This would be experimental.
--   Move NPDA debug spew into formal debug spew commands, because the output is very useful for
-    debugging the grammar/parser.
 -   Ensure that commandline-specified values for parser directives override in-source values,
     so that parser generation can be controlled from the build system if needed, e.g. for unit testing.
 -   Run preprocessor on code blocks in reflex and trison, so that e.g. stuff like this can work
@@ -326,9 +320,10 @@ template <Uint32 high> struct SmallestUint {
 -   Probably compute epsilon closure of states during trison execution, so that the NPDA implementation
     doesn't have to implement it.  This could also be used for the NPDA states file, so that it requires
     the reader to do less work.
--   Set optional upper bound on lookaheads so that NPDA can trigger an error if it exceeds the limit
-    (this will help debug certain trison bugs -- or even grammar bugs -- which result in infinitely
-    looping through a sequence of states where lookaheads are pushed onto the front of the lookahead queue.
+-   Perhaps in NPDA states file, show epsilon closure and transitions from all states in that epsilon
+    closure, so that the human reader doesn't have to do as much mental work.
+-   Make NPDA max_allowable_lookahead_count value modifiable at runtime, and probably rename the directive
+    to default_max_allowable_lookahead_count, and only use that during construction of the parser.
 -   Implement creation of NPDA states output file.
     -   Implement "Print" method for Graph::Transition, so that the implementation details (e.g. for
         handling SHIFT) don't have to be handled in the function that uses it.
