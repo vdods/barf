@@ -373,4 +373,58 @@ void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph)
     }
 }
 
+void PrintNpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, ostream &stream)
+{
+    assert(primary_source.RuleCount() > 0);
+    Uint32 max_rule_index_width = FORMAT(primary_source.RuleCount()-1).length();
+
+    stream << "//////////////////////////////////////////////////////////////////////////////" << endl
+           << "// GRAMMAR" << endl
+           << "//////////////////////////////////////////////////////////////////////////////" << endl
+           << endl;
+    for (Uint32 i = 0; i < primary_source.RuleCount(); ++i)
+    {
+        stream << "    rule ";
+        stream.width(max_rule_index_width);
+        stream.setf(ios_base::right);
+        stream << i << ": " << primary_source.GetRule(i)->AsText() << endl;
+    }
+    stream << endl;
+
+    assert(npda_graph.NodeCount() > 0);
+
+    stream << "//////////////////////////////////////////////////////////////////////////////" << endl
+           << "// NPDA STATE MACHINE - " << npda_graph.NodeCount() << " STATES" << endl
+           << "//////////////////////////////////////////////////////////////////////////////" << endl
+           << endl;
+    for (Uint32 i = 0; i < npda_graph.NodeCount(); ++i)
+    {
+        // print the state index and corresponding NPDA state indices
+        Graph::Node const &npda_node = npda_graph.GetNode(i);
+        NpdaNodeData const &npda_node_data = npda_node.DataAs<NpdaNodeData>();
+        stream << "State " << i << endl;//" - Corresponding NPDA states: " << dpda_node_data.GetDpdaState() << endl;
+
+        std::string npda_node_full_description(npda_node_data.FullDescription());
+        // Indent the description string in order to have nicer formatting.
+        Barf::ReplaceAllInString(&npda_node_full_description, "\n", "\n    ");
+        stream << "    " << npda_node_full_description << endl;
+        stream << endl;
+
+        // TODO -- figure out the justification width of the SHIFT transition
+        // lookaheads so the transition printout can be all nice and justified
+
+        // print the transitions
+        for (Graph::TransitionSet::const_iterator it = npda_node.TransitionSetBegin(),
+                                                  it_end = npda_node.TransitionSetEnd();
+             it != it_end;
+             ++it)
+        {
+            Graph::Transition const &transition = *it;
+            // print transition label (which includes the type and action)
+            stream << "    " << transition.Label() << endl;
+        }
+        stream << endl;
+    }
+}
+
 } // end of namespace Trison

@@ -53,7 +53,7 @@ Graph::Transition NpdaReturnTransition (Uint32 transition_token_id, string const
 
 Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &transition_label, Uint32 target_index)
 {
-    Graph::Transition transition(TT_SHIFT, 2, target_index, transition_label + ":SHIFT");
+    Graph::Transition transition(TT_SHIFT, 2, target_index, FORMAT(transition_label << ":SHIFT then push state " << target_index));
     transition.SetData(0, transition_token_id);
     transition.SetData(1, target_index);
     return transition;
@@ -85,7 +85,7 @@ Graph::Transition NpdaPopStackTransition (Uint32 transition_token_id, string con
 
 Graph::Transition NpdaEpsilonTransition (Uint32 target_index)
 {
-    Graph::Transition transition(TT_EPSILON, 2, target_index, "(e)", Graph::Color::ms_green);
+    Graph::Transition transition(TT_EPSILON, 2, target_index, FORMAT("(e):go to state " << target_index), Graph::Color::ms_green);
     transition.SetData(0, 0); // default
     transition.SetData(1, target_index);
     return transition;

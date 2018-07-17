@@ -130,19 +130,31 @@ CommandLineOption const Options::ms_option[] =
         "    Do not create a `dot` graph file for the DPDA.  This is the default\n"
         "    behavior.  See also option --generate-dpda-dot-graph."),
     CommandLineOption(
-        'S',
+        "generate-npda-states-file",
+        &Options::GenerateNpdaStatesFile,
+        "    Output a human-readable specification of the NPDA state machine to the file\n"
+        "    specified.  Useful in debugging the grammar.  Specifying - (hyphen) as the\n"
+        "    filename indicates that the output should be to stdout.  See also option\n"
+        "    --dont-generate-npda-states-file."),
+    CommandLineOption(
+        "dont-generate-npda-states-file",
+        &Options::DontGenerateNpdaStatesFile,
+        "    Do not output a human-readable specification of the NPDA state machine text\n"
+        "    file.  This is the default behavior.  See also option\n"
+        "    --generate-npda-states-file."),
+    CommandLineOption(
         "generate-dpda-states-file",
         &Options::GenerateDpdaStatesFile,
         "    Output a human-readable specification of the DPDA state machine to the file\n"
         "    specified.  Useful in debugging and resolving conflicts in the grammar.\n"
         "    Specifying - (hyphen) as the filename indicates that the output should be\n"
-        "    to stdout.  See also option -s."),
+        "    to stdout.  See also option --dont-generate-dpda-states-file."),
     CommandLineOption(
-        's',
         "dont-generate-dpda-states-file",
         &Options::DontGenerateDpdaStatesFile,
         "    Do not output a human-readable specification of the DPDA state machine text\n"
-        "    file.  This is the default behavior.  See also option -S."),
+        "    file.  This is the default behavior.  See also option\n"
+        "    --generate-dpda-states-file."),
 
 
     CommandLineOption("Target-related options"),
@@ -216,6 +228,16 @@ Options::Options (string const &executable_filename)
         "Part of the BARF compiler tool suite - written by Victor Dods",
         "[options] <input_filename>")
 { }
+
+void Options::GenerateNpdaStatesFile (string const &npda_states_filename)
+{
+    m_npda_states_filename = npda_states_filename;
+}
+
+void Options::DontGenerateNpdaStatesFile ()
+{
+    m_npda_states_filename.clear();
+}
 
 void Options::GenerateDpdaStatesFile (string const &dpda_states_filename)
 {

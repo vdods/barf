@@ -39,6 +39,7 @@ struct NpdaNodeData : public Graph::Node::Data
 }; // end of struct NpdaNodeData
 
 void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph);
+void PrintNpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, ostream &stream);
 
 } // end of namespace Trison
 

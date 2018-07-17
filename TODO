@@ -324,10 +324,17 @@ template <Uint32 high> struct SmallestUint {
 -   Change doxygen comments to all /// style
 -   Ensure all the different types of cleanup are performed, verify with valgrind.
 -   Probably compute epsilon closure of states during trison execution, so that the NPDA implementation
-    doesn't have to implement it.
+    doesn't have to implement it.  This could also be used for the NPDA states file, so that it requires
+    the reader to do less work.
 -   Set optional upper bound on lookaheads so that NPDA can trigger an error if it exceeds the limit
     (this will help debug certain trison bugs -- or even grammar bugs -- which result in infinitely
     looping through a sequence of states where lookaheads are pushed onto the front of the lookahead queue.
 -   Implement creation of NPDA states output file.
+    -   Implement "Print" method for Graph::Transition, so that the implementation details (e.g. for
+        handling SHIFT) don't have to be handled in the function that uses it.
+    -   In NPDA, apparently first transition isn't necessarily the default transition (there is an explicit
+        label for default, so investigate this and then fix the printout).
+    -   Put the epsilon closure of each NPDA state in the states file to make it easier for the reader.
+-   Collapse some options together using arguments (e.g. the pairs of "do" and "don't" options).
 
 
