@@ -1,3 +1,25 @@
+<|if(is_defined(generate_debug_spew_code))
+template <typename T>
+std::ostream &operator << (std::ostream &out, std::set<T> const &s)
+{
+    out << "{ ";
+    for (typename std::set<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
+        out << *it << ", ";
+    out << '}';
+    return out;
+}
+
+template <typename T>
+std::ostream &operator << (std::ostream &out, std::vector<T> const &s)
+{
+    out << "[ ";
+    for (typename std::vector<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
+        out << *it << ", ";
+    out << ']';
+    return out;
+}
+
+<|end_if
 std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterminal::Name nonterminal)
 {
     switch (nonterminal)
@@ -128,7 +150,9 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Parse stack tree has trunk; executing trunk actions.\n")
 <|end_if
-    while (m_npda_.m_root_->HasTrunkChild())
+    //while (m_npda_.m_root_->HasTrunkChild())
+    // HIPPO TEMP -- just do one at a time so that the parser state has a chance to be printed after each.
+    if (m_npda_.m_root_->HasTrunkChild())
     {
         ParseStackTreeNode_ *trunk_child = m_npda_.m_root_->PopTrunkChild();
         bool destroy_and_recreate_parse_tree = false;
@@ -244,6 +268,9 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
             // Then add HPS nodes for each npda state in the top element of m_realized_stack_.
             assert(!m_npda_.m_realized_stack_.empty());
             StateVector_ const &reconstruct_state_vector = m_npda_.m_realized_stack_.back().m_npda_state_vector;
+<|if(is_defined(generate_debug_spew_code))
+            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        reconstructing state vector " << reconstruct_state_vector << '\n')
+<|end_if
             for (StateVector_::const_iterator it = reconstruct_state_vector.begin(),
                                               it_end = reconstruct_state_vector.end();
                  it != it_end;
@@ -917,7 +944,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
                 retval.second = std::max(retval.second, child_precedence_level_range.second);
             }
         }
-        std::cerr << "HIPPO: retval = " << retval.first << ", " << retval.second << '\n';
+        //std::cerr << "HIPPO: retval = " << retval.first << ", " << retval.second << '\n';
         assert(retval.first <= retval.second);
         return retval;
     }
@@ -946,18 +973,6 @@ bool <{class_name}::ParseStackTreeNode_::HasShiftReduceConflict (ParseStackTreeN
     return true;
 }
 
-<|if(is_defined(generate_debug_spew_code))
-template <typename T>
-std::ostream &operator << (std::ostream &out, std::set<T> const &s)
-{
-    out << "{ ";
-    for (typename std::set<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
-        out << *it << ", ";
-    out << '}';
-    return out;
-}
-
-<|end_if
 void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
 {
     assert(child != NULL);

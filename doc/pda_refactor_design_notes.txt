@@ -904,7 +904,41 @@ which includes the top element.
     "REDUCE rule N" action for the same rule N, then that shouldn't cause a REDUCE/REDUCE
     conflict, but rather the resulting HPSes should both appear under the "REDUCE rule N"
     branch action.
+-   It looks like the current formulation of the realized state stack (a stack of sets of
+    NPDA states) can only be valid if it's assumed that the HPSes never drop any information
+    e.g. through destroy_and_recreate_parse_tree, because there's not enough information
+    present in the current formulation of the realized state stack to correctly recreate
+    the parse tree.
+-   The realized state stack should really be a stack of sets of NPDA-state-stacks, thereby
+    capturing each full possible path encountered in the past.  For example:
 
+    For input "(foo+)", where "expression <- '(' %error ')'" is a rule,
+
+    Iteration 0:
+        {(38)}                                  <-- Bottom of stack, which remembers the overall starting state
+
+    SHIFT '('
+
+    Iteration 1:
+        {(38)}                                  <-- Bottom of stack, which remembers the overall starting state
+        {(38 42) (38 46) (38 172) (38 211)}     <-- Remembers the overall state after one action
+
+    SHIFT IDENTIFIER
+
+    Iteration 2:
+        {(38)}                                  <-- Bottom of stack
+        {(38 42) (38 46) (38 172) (38 211)}
+        {(38 42 50) (38 172 178)}               <-- Remembers the overall state after two actions
+
+    REDUCE expression <- IDENTIFIER
+
+    Iteration 3:
+        {(38)}                                  <-- Bottom of stack
+        {(38 42) (38 46) (38 172) (38 211)}     <-- This is the following rules:
+            state 42 : rule 2: expression <- '(' . expression ')'
+            state 46 : rule 3: expression <- '(' . ERROR_ ')'
+            state 172: rule 34: function_definition_type_expression <- '(' . declaration_expression ')' MAPS_TO type_expression
+            state 211: rule 35: function_definition_type_expression <- '(' . ERROR_ ')' MAPS_TO type_expression
 
 
 

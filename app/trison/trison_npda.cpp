@@ -402,7 +402,7 @@ void PrintNpdaStatesFile (PrimarySource const &primary_source, Graph const &npda
         // print the state index and corresponding NPDA state indices
         Graph::Node const &npda_node = npda_graph.GetNode(i);
         NpdaNodeData const &npda_node_data = npda_node.DataAs<NpdaNodeData>();
-        stream << "State " << i << endl;//" - Corresponding NPDA states: " << dpda_node_data.GetDpdaState() << endl;
+        stream << "state " << i << ':' << endl;
 
         std::string npda_node_full_description(npda_node_data.FullDescription());
         // Indent the description string in order to have nicer formatting.
