@@ -462,7 +462,10 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
             }
 
+            if (conflict_resolved)
             {
+                should_return = false;
+
                 assert(m_npda_.m_new_hps_queue_.empty());
                 // Take new hps-es and clear old ones.
                 for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
@@ -475,13 +478,6 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 std::swap(m_npda_.m_hps_queue_, m_npda_.m_new_hps_queue_);
                 assert(m_npda_.m_new_hps_queue_.empty());
                 // TODO: Break this large function up into smaller logical units
-            }
-
-            // TODO/NOTE: This was part of the above code block previously -- this is
-            // part of intermediate work, so maybe it must be put back.
-            if (conflict_resolved)
-            {
-                should_return = false;
                 return;
             }
         }
