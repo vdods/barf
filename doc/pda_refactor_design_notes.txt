@@ -864,7 +864,46 @@ which includes the top element.
     solve the problem.  Now need to implement the step-in-time of all parallel HPS branches, so
     that SHIFT-going branches don't get ahead of REDUCE-going branches in terms of consumed lookaheads.
 
+2018.07.17 ----------------------------
 
+-   Need to figure out if it's sufficient to store only the top-of-stack elements from each HPS in
+    m_npda_state_set, or if more of the stack is necessary.  Probably it is sufficient, because the
+    deeper stack elements are stored in the m_npda_state_set of m_npda_.m_realized_stack_.
+-   Probably should do as much processing as possible with 0 lookaheads right after adding a REDUCE
+    branch.  Or maybe any branch type.  This falls under the principle of having the parser use
+    each piece of information maximally before requesting more information.
+-   Idea for a different implementation of NPDA:
+    -   Define a general framework for nondeterministic algorithm which must eventually choose
+        one of possibly many options at each step.  The algorithm should be completely recursive,
+        instead of how the current NPDA implementation is with a "realized" portion and a
+        "hypothetical" portion.  Each recursion is hypothetical with respect to its source.
+        Thus all the conflict resolution can happen within each recursion without any additional
+        or special logic.
+    -   For each choice, define a precedence ordering in order to resolve branches.
+    -   Also define how long branches should be allowed to proceed without resolving conflicts.
+        With such a limit, each recursion would reduce that limit by one.
+    -   A SortedTypeIndex-like property should be used to prevent exploring every single branch
+        at every stage, but rather have a strict precedence of branches to try first until
+        they're ruled out, then proceed to the next precedence, etc.  Otherwise the ubiquitous
+        error handling transitions will be explored every single time and cause the algorithm
+        to always run in exponential time.
+    -   Should a nested hypothetical action be allowed to be an error, even though the real
+        action choice is not an error?  Or should the SortedTypeIndex-like ordering apply to
+        the entire recursion?  Probably it should apply to the whole recursion.
+-   If REDUCE actions are to be non-blocking, then it follows that the stack data model, where
+    there's a "realized" part and a branch-specific "hypothetical" part of the stack has to be
+    changed, and in particular, each branch has to have a cursor for where its branch-specific
+    hypothetical stack starts, because a REDUCE action can pop its whole branch-specific stack
+    and further, so it has to be able to dig down into the realized stack.  NOTE: This observation
+    might actually just be due to a bug in the "destroy_and_recreate_parse_tree" functionality.
+    The "destroy_and_recreate_parse_tree" functionality loses some information regarding the
+    earlier part of the stack.  The bug occurs when the HPS-specific stack is empty, even though
+    it should contain at least part of the realized stack.
+-   There is a bug in the REDUCE/REDUCE conflict resolution in NPDA target; if there are two
+    HPSes (which in particular have different state stacks) that can both produce a
+    "REDUCE rule N" action for the same rule N, then that shouldn't cause a REDUCE/REDUCE
+    conflict, but rather the resulting HPSes should both appear under the "REDUCE rule N"
+    branch action.
 
 
 

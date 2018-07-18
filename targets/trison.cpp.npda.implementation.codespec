@@ -161,7 +161,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 // recreated.  This is draconian and non-optimal, but simple and effective.  TODO: Because HPS branches
                 // are blocked right after a REDUCE or POP_STACK, maybe don't bother adding any children below REDUCE
                 // or POP_STACK nodes.
-                // destroy_and_recreate_parse_tree = true; // HIPPO
+                //destroy_and_recreate_parse_tree = true; // HIPPO
                 break;
             }
             case ParseStackTreeNode_::SHIFT: {
@@ -204,11 +204,17 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                         m_npda_.m_realized_stack_.pop_back();
                     }
                 }
+                else
+                {
+                    // We're popping more than the whole stack, which is an error
+                    parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
+                    should_return = true;
+                }
 
                 // Because POP_STACK involves popping the stack, indicate that the parse tree should be destroyed and
                 // recreated (from the states in the top element of m_realized_stack_).  This is draconian and non-optimal,
                 // but simple and effective.
-                destroy_and_recreate_parse_tree = true;
+                destroy_and_recreate_parse_tree = true; // HIPPO
                 break;
             }
 
@@ -528,6 +534,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             // This hps isn't blocked, so indicate that the parse should continue.
             should_return = false;
 
+            assert(!hps.m_stack.empty());
             std::uint32_t hps_state_index = hps.m_stack.back().m_state_index;
             // Retrieve all transitions whose SortedTypeIndex is current_sorted_type_index.
             TransitionVector_ const &non_epsilon_transitions = NonEpsilonTransitionsOfState_(hps_state_index, current_sorted_type_index);
@@ -878,6 +885,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
         // to get the correct rule precedence, because that's where the conflict occurred.
         assert(!m_stack.empty());
         assert(m_stack.size() >= current_child_depth);
+        assert(!m_stack.empty());
 //         std::uint32_t state_index = m_stack.back().m_state_index;
         std::uint32_t state_index = m_stack[m_stack.size()-(current_child_depth-1)].m_state_index;
         assert(state_index < ms_state_count_);
@@ -942,11 +950,30 @@ bool <{class_name}::ParseStackTreeNode_::HasShiftReduceConflict (ParseStackTreeN
     return true;
 }
 
+<|if(is_defined(generate_debug_spew_code))
+template <typename T>
+std::ostream &operator << (std::ostream &out, std::set<T> const &s)
+{
+    out << "{ ";
+    for (typename std::set<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
+        out << *it << ", ";
+    out << '}';
+    return out;
+}
+
+<|end_if
 void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
 {
     assert(child != NULL);
     assert(child->m_parent_node == NULL);
     assert(child->m_spec.m_type != ROOT);
+
+//    std::cerr << "ParseStackTreeNode_::AddChild; this = " << this << ", child = " << child << ", m_npda_state_set = " << m_npda_state_set << '\n';
+//    std::cerr << "this:\n";
+//    this->PrintBasic(std::cerr, "HIPPO", 1);
+//    std::cerr << "child:\n";
+//    child->PrintBasic(std::cerr, "HIPPO", 1);
+
     m_child_nodes[child->m_spec].insert(child);
     child->m_parent_node = this;
 
@@ -956,9 +983,12 @@ void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
     {
         assert(!child->m_stack.empty());
         std::uint32_t child_npda_state_index = child->m_stack.back().m_state_index;
-        assert(m_npda_state_set.find(child_npda_state_index) == m_npda_state_set.end() && "NPDA state should not already be in the set");
+        // child_npda_state_index is not guaranteed to be unique in m_npda_state_set, because the
+        // deeper elements of child->m_stack may be different from HPS to HPS.
+        //assert(m_npda_state_set.find(child_npda_state_index) == m_npda_state_set.end() && "NPDA state should not already be in the set");
         m_npda_state_set.insert(child_npda_state_index);
     }
+//    std::cerr << '\n';
 }
 
 void <{class_name}::ParseStackTreeNode_::RemoveChild (ParseStackTreeNode_ *child)
@@ -1028,6 +1058,53 @@ void <{class_name}::ParseStackTreeNode_::CloneLeafNodeInto (<{class_name}::Parse
 }
 
 <|if(is_defined(generate_debug_spew_code))
+void <{class_name}::ParseStackTreeNode_::PrintBasic (std::ostream &out, std::string const &prefix, std::uint32_t indent_level) const
+{
+    out << prefix;
+    for (std::uint32_t i = 0; i < indent_level; ++i)
+        out << "    ";
+    out << AsString(m_spec.m_type) << ' ' << this;
+    if (m_spec.m_type == HPS)
+        out << (IsBlockedHPS() ? " (    blocked)" : " (non-blocked)");
+    switch (m_spec.m_type)
+    {
+        case REDUCE:    out << " rule " << m_spec.m_single_data << "; " << ms_rule_table_[m_spec.m_single_data].m_description;  break;
+        case SHIFT:     out << ' ' << Token(m_spec.m_single_data); break;
+        case POP_STACK: out << ' ' << m_spec.m_single_data << " time(s)";                                                       break;
+        default:                                                                                                                break;
+    }
+    // assert(!m_stack.empty());
+    // out << ' ' << this << ", parent = " << m_parent_node << ' ' << ms_state_table_[m_stack.back()].m_description << ' ';
+    if (!m_stack.empty())
+        out << ' ' << ms_state_table_[m_stack.back().m_state_index].m_description << ' ';
+    if (m_spec.m_type == HPS)
+    {
+        out << "    (";
+        for (std::size_t i = 0; i < m_stack.size(); ++i)
+        {
+            out << m_stack[i].m_state_index;
+            if (i+1 < m_stack.size())
+                out << ' ';
+        }
+        out << "); ";
+        for (std::size_t i = 1; i < m_stack.size(); ++i)
+            out << ms_token_name_table_[m_stack[i].m_token_id] << ' ';
+        out << ". ";
+        for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
+            out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
+        out << "<realized-lookaheads-not-printed>";
+    }
+    out << '\n';
+
+    // Print children recursively with higher indent level
+    for (ChildMap::const_iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
+    {
+        ParseStackTreeNodeSet const &child_node_set = it->second;
+        for (ParseStackTreeNodeSet::const_iterator set_it = child_node_set.begin(), set_it_end = child_node_set.end(); set_it != set_it_end; ++set_it)
+            (*set_it)->PrintBasic(out, prefix, indent_level+1);
+    }
+}
+
 void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name} const &parser, std::string const &prefix, std::uint32_t indent_level) const
 {
     out << prefix;
@@ -1138,50 +1215,64 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             ParseStackTreeNode_::Spec action_spec(action_type, action_data);
             if (hps.m_parent_node->HasChildrenHavingSpec(action_spec)) // Check for an existing REDUCE action
             {
-                // This is a REDUCE/REDUCE conflict
-<|if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
+                // This may or may not be a conflict.  Need to determine that.
 
-<|end_if
                 ParseStackTreeNode_::ParseStackTreeNodeSet &reduce_node_set = hps.m_parent_node->ChildrenHavingSpec(action_spec);
                 assert(reduce_node_set.size() == 1);
                 existing_reduce_action_node = *reduce_node_set.begin();
                 assert(existing_reduce_action_node != NULL);
-                // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
-                // (replacement instead of creating a new one and deleting the old is an optimization which also
-                // avoids an annoying traversal through m_npda_.m_hps_queue_).
-                // NOTE: This depends on the fact that a REDUCE node has exactly one HPS child,
-                // which is what these three asserts check.  TODO: maybe make abstractions for these sorts of checks.
-                assert(existing_reduce_action_node->m_child_nodes.size() == 1);
-                assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
-                assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseStackTreeNode_::HPS);
-                if (CompareRuleByPrecedence(action_data, existing_reduce_action_node->m_spec.m_single_data))
+                assert(existing_reduce_action_node->m_spec.m_type == ParseStackTreeNode_::REDUCE);
+
+                // If the hypothetical action is identical to the existing one, then there's no problem,
+                // just add it as a child to the existing one.
+                if (existing_reduce_action_node->m_spec.m_single_data == rule_index)
                 {
-<|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of new hps.\n")
-
-<|end_if
-                    reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
-                    assert(reduce_hps != NULL);
-
-                    // Remove the nodes from the ParseStackTreeNode_ tree.
-                    assert(existing_reduce_action_node != NULL);
-                    existing_reduce_action_node->RemoveFromParent();
-                    reduce_hps->RemoveFromParent();
-                    // Modify the nodes.
-                    existing_reduce_action_node->m_spec = action_spec; // Replace with the winning reduction rule Spec.
-                    hps.CloneLeafNodeInto(*reduce_hps); // NOTE: This modifies the existing hps, so no update of m_npda_.m_hps_queue_ is necessary.
-                    // Re-add them to the ParseStackTreeNode_ tree.
-                    existing_reduce_action_node->AddChild(reduce_hps);
-                    hps.m_parent_node->AddChild(existing_reduce_action_node);
+                    new_hps = hps.CloneLeafNode();
+                    reduce_hps = new_hps;
                 }
+                // Otherwise this is a REDUCE/REDUCE conflict
                 else
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of existing hps.\n")
-<|else
-                    // Resolving in favor of existing HPS.
+                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
+
 <|end_if
+                    // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
+                    // (replacement instead of creating a new one and deleting the old is an optimization which also
+                    // avoids an annoying traversal through m_npda_.m_hps_queue_).
+                    // NOTE: This depends on the fact that a REDUCE node has exactly one HPS child,
+                    // which is what these three asserts check.  TODO: maybe make abstractions for these sorts of checks.
+                    assert(existing_reduce_action_node->m_child_nodes.size() == 1);
+                    assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
+                    assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseStackTreeNode_::HPS);
+                    if (CompareRuleByPrecedence(action_data, existing_reduce_action_node->m_spec.m_single_data))
+                    {
+<|if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of new hps.\n")
+
+<|end_if
+                        reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
+                        assert(reduce_hps != NULL);
+
+                        // Remove the nodes from the ParseStackTreeNode_ tree.
+                        assert(existing_reduce_action_node != NULL);
+                        existing_reduce_action_node->RemoveFromParent();
+                        reduce_hps->RemoveFromParent();
+                        // Modify the nodes.
+                        existing_reduce_action_node->m_spec = action_spec; // Replace with the winning reduction rule Spec.
+                        hps.CloneLeafNodeInto(*reduce_hps); // NOTE: This modifies the existing hps, so no update of m_npda_.m_hps_queue_ is necessary.
+                        // Re-add them to the ParseStackTreeNode_ tree.
+                        existing_reduce_action_node->AddChild(reduce_hps);
+                        hps.m_parent_node->AddChild(existing_reduce_action_node);
+                    }
+                    else
+                    {
+<|if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of existing hps.\n")
+<|else
+                        // Resolving in favor of existing HPS.
+<|end_if
+                    }
                 }
             }
             else
@@ -1292,6 +1383,9 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating new action node of type " << ParseStackTreeNode_::AsString(action_spec.m_type) << "... ")
 <|end_if
             action_node = new ParseStackTreeNode_(action_spec);
+<|if(is_defined(generate_debug_spew_code))
+            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "(action_node = " << action_node << ") ")
+<|end_if
             hps.m_parent_node->AddChild(action_node);
         }
 
