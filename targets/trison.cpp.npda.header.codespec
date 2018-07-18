@@ -170,7 +170,7 @@ private:
         struct Spec
         {
             Type m_type;
-            // Only used by REDUCE, POP_STACK.
+            // Only used by REDUCE, SHIFT, POP_STACK. // HIPPO
             std::uint32_t m_single_data;
 
             Spec (Type type, std::uint32_t single_data = UNUSED_DATA)
@@ -184,7 +184,11 @@ private:
                 }
             }
 
-            // Lexicographic ordering on the tuple (m_type, m_single_data).
+            // The granularity of the ordering depends on m_type.  In particular,
+            // - POP_STACK is lexicographic ordering on the tuple (m_type, m_single_data).
+            // - REDUCE only cares about m_type; the rule number itself doesn't matter.
+            // - SHIFT only cares about m_type; the shifted token ID is only used in printing anyway
+            // - other types only care about m_type.
             struct Order
             {
                 bool operator () (Spec const &lhs, Spec const &rhs) const
