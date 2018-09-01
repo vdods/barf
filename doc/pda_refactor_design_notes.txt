@@ -872,6 +872,26 @@ which includes the top element.
 -   Probably should do as much processing as possible with 0 lookaheads right after adding a REDUCE
     branch.  Or maybe any branch type.  This falls under the principle of having the parser use
     each piece of information maximally before requesting more information.
+
+    Implementation notes for processing HPSes in lock-step:
+    -   Should run all branches maximally with 0 lookaheads, then 1 lookahead, then 2 lookaheads,
+        etc.  The termination condition for this loop is any of the following:
+        -   The parse tree has a trunk (which can then be executed)
+        -   The max number of lookaheads has been reached
+    -   Different possibilities for structuring the iterations:
+        -   In each iteration, run each branch maximally for the current number of lookaheads,
+            which increases by at most 1 per iteration.  This is depth-first, which probably
+            means it's easier to implement.
+        -   In each iteration, run each branch for 0 or 1 action(s) if the current number of
+            lookaheads hasn't been exceeded.  This is breadth-first, which probably means it's
+            harder to implement.  This is probably clearer from a debug-spew perspective,
+            though might not be the optimal choice for the implementation itself.
+    -   If there's a specified bound on the lookaheads, then the conflict resolutions could in
+        theory be deferred until the max lookaheads are reached, at which point there may be more
+        information and the conflict could potentially resolve itself.  If there's no bound on
+        the lookaheads, it's not clear that conflict resolution is necessarily always possible
+        without enforcing the conflict resolution via the standard rules (i.e. as implemented in
+        existing versions of trison).  Perhaps this just depends on the grammar.
 -   Idea for a different implementation of NPDA:
     -   Define a general framework for nondeterministic algorithm which must eventually choose
         one of possibly many options at each step.  The algorithm should be completely recursive,
@@ -890,6 +910,67 @@ which includes the top element.
     -   Should a nested hypothetical action be allowed to be an error, even though the real
         action choice is not an error?  Or should the SortedTypeIndex-like ordering apply to
         the entire recursion?  Probably it should apply to the whole recursion.
+    -   Random notes
+
+        There should be a global lookahead queue.
+
+        The algorithm will be a tree of what will be denoted as RecursionParserState nodes,
+        abbreviated as RPS.
+
+        RPS must be
+        -   Set of NPDA-state-stacks which represent all valid trajectories leading up to this state.
+            And actually, each NPDA-state-stack should probably be represented as the following:
+            -   Head of this NPDA-state-stack.  This is needed to know which transitions are possible.
+            -   Pointer to body of this NPDA-state-stack (which is necessarily owned by the parent RPS node).
+                This is needed to process REDUCE actions.
+            -   Pointer to the parent RPS node (though this only needs to be stored by the RPS node, not
+                each NPDA-state-stack.  This is needed to enable POP_STACK to function, since once the
+                stack is popped, it has to re-collect the previous RPS, essentially restoring everything
+                it forgot since then by taking a specific trajectory.  A POP_STACK action would continue
+                by essentially making a copy of the parent RPS (OR, is a copy even necessary?  Just have
+                it point to the parent) -- interestingly, this would make the copy's parent node the parent
+                of the original that was copied, and not the node that has a POP_STACK in its actions map.
+                In this way, there are 2 tree structures that are interacting.
+        -   Token associated with the head of the NPDA-state-stacks (it should be the same token if there
+            are multiple RPS nodes per action).
+        -   Local lookahead queue (that goes before the global lookahead queue) for this node.
+            QUESTION: Is it possible to split this data structure up as the RPS does with other stuff?
+        -   Cursor into the global lookahead queue representing the next token for this node.
+        -   Map from unique actions to the RPS node that has carried out that action.
+
+        RPS algorithm must be, given a particular RPS node
+        -   Parse :
+                (max_lookaheads_to_process:uint, max_sorted_type_index:SortedTypeIndex) ->
+                (success:bool, TrunkActionList, ResultingState:RPS)
+            Maybe return some sort of code instead of a "success" bool, where the code indicates
+            possibilities like "no resolution", "parse has unique resolution", "general parse error",
+            "internal error", "parser returned", etc.  Maybe return lowest successful SortedTypeIndex?
+            Perhaps also have a no-return version of this.
+
+            The parse algorithm will have all branches process all allowed lookaheads, allowing only
+            actions of the given SortedTypeIndex.  If it succeeded (the condition for which has yet
+            to be defined, but is vaguely defined as "some valid action resulted"), then it returns
+            success, the list of trunk actions (the sequence of unique descendant actions), and the
+            RPS that results after those actions.
+
+            The parse algorithm is defined recursively:
+            -   Base case is where max_lookaheads_to_process is 0, in which case it computes all
+                actions which can be accomplished without consuming any of the global lookahead
+                queue (though any local queue it has is totally fair game to consume).
+            -   Recursive case calls Parse(max_lookaheads_to_process-1, max_sorted_type_index).
+                If there are any conflicts and max_lookaheads_to_process is equal to the pre-specified
+                lookahead bound, then it performs conflict resolution.
+
+                Or actually the sequence of calls should be
+                Parse(n, 0) for 0 <= n <= max_allowable_lookahead_count
+                Parse(max_allowable_lookahead_count, k) for 0 <= k <= max_sorted_type_index
+
+            Processing more lookaheads should happen before processing a higher SortedTypeIndex,
+            since using up allowable lookaheads is preferable to triggering an error.
+
+            Probably there should be some stored values for the highest max_lookaheads_to_process
+            and max_sorted_type_index that have been processed by this RPS node.
+
 -   If REDUCE actions are to be non-blocking, then it follows that the stack data model, where
     there's a "realized" part and a branch-specific "hypothetical" part of the stack has to be
     changed, and in particular, each branch has to have a cursor for where its branch-specific
@@ -940,8 +1021,53 @@ which includes the top element.
             state 172: rule 34: function_definition_type_expression <- '(' . declaration_expression ')' MAPS_TO type_expression
             state 211: rule 35: function_definition_type_expression <- '(' . ERROR_ ')' MAPS_TO type_expression
 
+    Could also probably accomplish this by leaving the HPSes in the parse tree instead
+    of purging them after transitions.  This way, if REDUCE or POP_STACK happens, there's
+    no need to destroy and recreate the parse tree, but rather to use the HPSes that were
+    at the appropriate parse tree node.  These "left-behind" HPSes would not be kept in the
+    current HPS queue.  As the parse tree trunk actions are executed, the "left-behind" HPSes
+    would need to be put in the "realized state stack", whose form needing to change is the
+    motivation behind this modification.
 
+2018.09.01 ----------------------------
 
+-   In several different possible NPDA implementations, the following data structure would be
+    useful:  A reference-counted linked-list-stored state stack.  This is because of the branching
+    structure of the parse.  Currently, if there are HPSes with NPDA state stacks
 
+        bottom to top
+
+        (38 42)
+        (38 46)
+        (38 172)
+        (38 211)
+
+    then there can be realized state stack
+
+        bottom (38)
+        top    (42 46 172 211)
+
+    where in the second, the commonality is collapsed together, but this loses some
+    structure that's necessary for recovering from errors.
+
+    Instead, use a data structure that looks like
+
+        struct NpdaState {
+            NpdaStateIndex state;
+            std::shared_ptr<NpdaState> parent;
+        }
+
+    and then each NpdaState is the head of its own stack, and way less copying of state stacks
+    has to be done.  Then the realized state stack becomes a queue of "realized HPSes" that prints
+    out exactly as the first thing that had 4 lines of 2 state indices each.
+
+    Storing the whole HPS state stacks instead of the collapsed one, while allowing for a
+    more complicated set of possible parses (depending on not just the set of the tops of the
+    HPS state stacks), it would allow for a correct "destroy and recreate parse tree" step after
+    actions that pop the realized state stack.
+
+-   TODO: Need to test some grammars having lookahead requirement greater than 1.
+-   TODO: Verify that the parser can advance itself without consuming lookaheads when no lookaheads
+    are actually necessary (probably should look up some LALR(0) grammars).
 
 
