@@ -128,14 +128,32 @@ void <{class_name}::PrintIndented_ (std::ostream &stream, char const *string) co
     }
 }
 
+std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode parser_return_code)
+{
+    if (std::size_t(parser_return_code) < <{class_name}::ms_parser_return_code_string_count_)
+        stream << <{class_name}::ms_parser_return_code_string_table_[std::size_t(parser_return_code)];
+    else
+        stream << "!INVALID!ParserReturnCode!";
+    return stream;
+}
+
 std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token)
 {
     if (token.m_id < <{class_name}::ms_token_name_count_)
         stream << <{class_name}::ms_token_name_table_[token.m_id];
     else
-        stream << "!INVALID TOKEN!";
+        stream << "!INVALID!TOKEN!";
     return stream;
 }
+
+char const *const <{class_name}::ms_parser_return_code_string_table_[] =
+{
+    "PRC_SUCCESS",
+    "PRC_UNHANDLED_PARSE_ERROR",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEADS",
+    "PRC_INTERNAL_ERROR",
+};
+std::size_t const <{class_name}::ms_parser_return_code_string_count_ = sizeof(<{class_name}::ms_parser_return_code_string_table_) / sizeof(*<{class_name}::ms_parser_return_code_string_table_);
 
 char const *const <{class_name}::ms_token_name_table_[] =
 {

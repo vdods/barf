@@ -1,3 +1,7 @@
+public:
+
+    std::size_t MaxRealizedLookaheadQueueSize () const { return m_npda_.MaxRealizedLookaheadQueueSize(); }
+
 private:
 
     typedef std::set<std::uint32_t> StateSet_; // TODO: Should be NpdaStateSet_
@@ -170,20 +174,25 @@ private:
         struct Spec
         {
             Type m_type;
-            // Only used by REDUCE, POP_STACK.
+            // Only used by REDUCE, SHIFT, POP_STACK. // HIPPO
             std::uint32_t m_single_data;
 
             Spec (Type type, std::uint32_t single_data = UNUSED_DATA)
                 : m_type(type)
                 , m_single_data(single_data)
             {
-                if (m_type != REDUCE && m_type != POP_STACK)
+                //if (m_type != REDUCE && m_type != POP_STACK)
+                if (m_type != REDUCE && m_type != SHIFT && m_type != POP_STACK) // HIPPO
                 {
                     assert(m_single_data == UNUSED_DATA);
                 }
             }
 
-            // Lexicographic ordering on the tuple (m_type, m_single_data).
+            // The granularity of the ordering depends on m_type.  In particular,
+            // - POP_STACK is lexicographic ordering on the tuple (m_type, m_single_data).
+            // - REDUCE only cares about m_type; the rule number itself doesn't matter.
+            // - SHIFT only cares about m_type; the shifted token ID is only used in printing anyway
+            // - other types only care about m_type.
             struct Order
             {
                 bool operator () (Spec const &lhs, Spec const &rhs) const
@@ -197,8 +206,9 @@ private:
                             return lhs.m_single_data < rhs.m_single_data;
 
                         case REDUCE:
-                            // assert(lhs.m_single_data != UNUSED_DATA);
-                            // assert(rhs.m_single_data != UNUSED_DATA);
+                            return false;
+
+                        case SHIFT: // HIPPO
                             return false;
 
                         default:
@@ -276,6 +286,7 @@ private:
 <|if(is_defined(generate_debug_spew_code))
 
         void Print (std::ostream &out, <{class_name} const &parser, std::string const &prefix, std::uint32_t indent_level = 0) const;
+        void PrintBasic (std::ostream &out, std::string const &prefix, std::uint32_t indent_level = 0) const;
 <|end_if
     };
 

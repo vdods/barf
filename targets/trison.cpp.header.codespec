@@ -48,18 +48,18 @@ class <{class_name}<{if(is_defined(class_inheritance))} : <{class_inheritance}<{
 public:
 
     /// Return values for Parse().
-    enum ParserReturnCode
+    enum ParserReturnCode : std::uint32_t
     {
         /// Indicates the Parse() method returned successfully.
         PRC_SUCCESS = 0,
         /// Indicates an unhandled parse error occurred (i.e. no %error-accepting
         /// rules were encountered).
-        PRC_UNHANDLED_PARSE_ERROR = 1,
+        PRC_UNHANDLED_PARSE_ERROR,
         /// Indicates that the parse was halted because the number of realized
         /// lookaheads exceeded the max allowable lookahead count (NPDA target only).
-        PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEADS = 2,
+        PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEADS,
         /// Indicates that the parse didn't complete because of some internal error.
-        PRC_INTERNAL_ERROR = 3
+        PRC_INTERNAL_ERROR
     }; // end of enum <{class_name}::ParserReturnCode
 
     /// "Namespace" for <{class_name}::Terminal::Name, which enumerates all valid
@@ -277,6 +277,9 @@ private:
 
 <|end_if
 <|if(is_defined(generate_debug_spew_code))
+    static char const *const ms_parser_return_code_string_table_[];
+    static std::size_t const ms_parser_return_code_string_count_;
+
     static char const *const ms_token_name_table_[];
     static std::size_t const ms_token_name_count_;
 <|end_if
@@ -309,10 +312,13 @@ private:
     // end of internal trison-generated parser guts
     // ///////////////////////////////////////////////////////////////////////
 
+    friend std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode parser_return_code);
     friend std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
 }; // end of class <{class_name}
 
 <|if(is_defined(generate_debug_spew_code))
+std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode parser_return_code);
+
 std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
 
 <|end_if
