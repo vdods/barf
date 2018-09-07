@@ -1070,4 +1070,45 @@ which includes the top element.
 -   TODO: Verify that the parser can advance itself without consuming lookaheads when no lookaheads
     are actually necessary (probably should look up some LALR(0) grammars).
 
+2018.09.06 ----------------------------
 
+-   It looks like it makes sense to made separate, encapsulated RealizedState and
+    HypotheticalState (not to be confused with HPS which is really a "hypothetical branch")
+    classes in order to simplify the implementation of the trison NPDA target.
+
+    the HypotheticalState depends on the RealizedState in that it has a cursor into
+    the realized lookahead queue, and if the ref-counted pointer based stack implementation is
+    used, then it would have pointers into the state stacks of RealizedState.
+
+    RealizedState
+    -   Branch set (each branch is a stack of NPDA states, and all stacks have the same size).
+        Perhaps though this could still be a queue, and use logic to guarantee no duplicates.
+    -   New branch set (maybe -- to lessen memory allocation)
+    -   Token stack (this stack has the same size as all the branch stacks)
+    -   Thus there is a well defined "stack size" for the RealizedState
+    -   Lookahead [token] queue
+    -   Max realized lookahead queue size (tracks the bound on the lookahead for the LALR(k) quantification)
+    -   Has encountered error state (boolean)
+
+    HypotheticalState
+    -   Parse tree (a pointer to the root node)
+    -   HPS queue
+    -   New HPS queue (for use in storing new HPSes and purging old ones, and to lessen memory allocation)
+
+    Essentially the parse proceeds by building the HypotheticalState's parse tree, and once it has
+    a "trunk action", that trunk action is executed by the RealizedState.  This is looped until the
+    parse ends for whatever reason.
+
+    In an algorithm that produces a DPDA, a DPDA state would correspond to one of the following.
+    1)  The set of top states in RealizedState's branch set (each branch being a state stack)
+    2)  A set of substacks of RealizedState's branch set (each branch being a state stack, and a substack
+        sharing the top element with its superior stack), where the particular substack is decided based
+        on which elements of the stack were used in making the parse decision.
+    Almost certainly 2 comprises a larger set of grammars than 1, but 1 would be easier to generate
+    DPDAs for.
+
+    The ref-counted pointer based stack (equivalent to singly-linked list) could also be used for
+    the lookahead [token] queues, though this would potentially make the lookahead count logic harder,
+    since there's no constant-time way to compute the size of a linked list without caching it.
+
+-   Implemented a prototype for SharedLinkedListElement in cppplayground.
