@@ -257,7 +257,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
             m_npda_->m_hypothetical_state.m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
             // Then add HPS nodes for each npda state in the top element of m_realized_stack_.
             // TODO: assert that there is at least one branch and its depth is nonzero.
-            BranchNodePtrSet_ const &reconstruct_branch_node_ptr_set = m_npda_->m_realized_state.BranchNodePtrSet();
+            BranchNodePtrSet_ const &reconstruct_branch_node_ptr_set = m_npda_->m_realized_state.BranchNodePtrSetStack().back();
 <|if(is_defined(generate_debug_spew_code))
             //TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        reconstructing branches " << reconstruct_branch_node_ptr_set << '\n')
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        reconstructing branches " << "(branch values omitted)" << '\n')
@@ -746,9 +746,10 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
 {
     assert(m_npda_->m_hypothetical_state.m_root != NULL);
 
+    // TODO: Print full stack (this is quite a lot)
     out << <{debug_spew_prefix} << "Realized state branch node stacks are (each listed bottom to top):\n";
-    for (BranchNodePtrSet_::const_iterator it = m_npda_->m_realized_state.BranchNodePtrSet().begin(),
-                                           it_end = m_npda_->m_realized_state.BranchNodePtrSet().end();
+    for (BranchNodePtrSet_::const_iterator it = m_npda_->m_realized_state.BranchNodePtrSetStack().back().begin(),
+                                           it_end = m_npda_->m_realized_state.BranchNodePtrSetStack().back().end();
          it != it_end;
          ++it)
     {
@@ -840,7 +841,9 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     :   m_max_realized_lookahead_queue_size(0)
     ,   m_has_encountered_error_state(false)
 {
-    m_branch_node_ptr_set.insert(BranchNode_::Create(initial_state));
+    BranchNodePtrSet_ initial_branch_node_ptr_set;
+    initial_branch_node_ptr_set.insert(BranchNode_::Create(initial_state));
+    m_branch_node_ptr_set_stack.push_back(initial_branch_node_ptr_set);
     m_token_stack.push_back(Token(Nonterminal::none_));
 }
 
@@ -863,17 +866,20 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
     Token popped_token(m_token_stack.back());
     m_token_stack.pop_back();
 
-    // TODO: Maybe make a "Branch" abstraction that can handle pushing and popping
-    BranchNodePtrSet_ new_branch_set;
-    for (BranchNodePtrSet_::iterator it = m_branch_node_ptr_set.begin(), it_end = m_branch_node_ptr_set.end(); it != it_end; ++it)
-    {
-        std::shared_ptr<BranchNode_> const &branch_node = *it;
-        // In this context, "branch_node->Next()" is the element in the stack below branch_node.
-        assert(branch_node->HasNext());
-        new_branch_set.insert(branch_node->Next());
-    }
-    // Replace the contents of m_branch_node_ptr_set with the popped branches.
-    std::swap(new_branch_set, m_branch_node_ptr_set);
+    // // TODO: Maybe make a "Branch" abstraction that can handle pushing and popping
+    // BranchNodePtrSet_ new_branch_set;
+    // for (BranchNodePtrSet_::iterator it = m_branch_node_ptr_set.begin(), it_end = m_branch_node_ptr_set.end(); it != it_end; ++it)
+    // {
+    //     std::shared_ptr<BranchNode_> const &branch_node = *it;
+    //     // In this context, "branch_node->Next()" is the element in the stack below branch_node.
+    //     assert(branch_node->HasNext());
+    //     new_branch_set.insert(branch_node->Next());
+    // }
+    // // Replace the contents of m_branch_node_ptr_set with the popped branches.
+    // std::swap(new_branch_set, m_branch_node_ptr_set);
+
+    assert(!m_branch_node_ptr_set_stack.empty());
+    m_branch_node_ptr_set_stack.pop_back();
 
     return popped_token;
 }
@@ -894,17 +900,20 @@ void <{class_name}::RealizedState_::ExecuteActionShift (BranchNodePtrSet_ const 
 {
     // Ensure that each of the branch nodes in the shifted set are actually children of the current
     // set of branch nodes.
+    assert(!m_branch_node_ptr_set_stack.empty());
+    BranchNodePtrSet_ const &stack_top = m_branch_node_ptr_set_stack.back();
     for (BranchNodePtrSet_::const_iterator it = shifted_branch_node_ptr_set.begin(), it_end = shifted_branch_node_ptr_set.end(); it != it_end; ++it)
     {
         BranchNodePtr_ const &branch_node_ptr = *it;
-        assert(m_branch_node_ptr_set.find(branch_node_ptr->Next()) != m_branch_node_ptr_set.end());
+        assert(stack_top.find(branch_node_ptr->Next()) != stack_top.end());
     }
     // Ensure that there's actually a lookahead.
     assert(!m_lookahead_queue.empty());
 
 
     // Simply assign the shifted branch node set to this one.  This is effectively pushing onto the stack.
-    m_branch_node_ptr_set = shifted_branch_node_ptr_set;
+    m_branch_node_ptr_set_stack.push_back(shifted_branch_node_ptr_set);
+    //m_branch_node_ptr_set = shifted_branch_node_ptr_set;
     // Push the token onto the stack.
     m_token_stack.push_back(m_lookahead_queue.front());
     // Pop the shifted lookahead from the queue
