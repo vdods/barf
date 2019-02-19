@@ -1112,3 +1112,47 @@ which includes the top element.
     since there's no constant-time way to compute the size of a linked list without caching it.
 
 -   Implemented a prototype for SharedLinkedListElement in cppplayground.
+
+2019.02.16 ----------------------------
+
+-   Note that RealizedState is all state associated with real actions taken.
+-   Note that HypotheticalState is all state that is not RealizedState (it's the collection
+    of all branches etc).
+-   TODO: Should probably rename ParseStackTreeNode_ to something else like BranchNode, and rename
+    HPS (Hypothetical Parser State) to something like HYPOTHETICAL_STATE_LEAF_NODE.
+-   Design notes for refactor, specifically the RealizedState and HypotheticalState
+    abstractions.
+    -   RealizedState actions
+        -   Take real parser action (e.g. SHIFT, REDUCE, etc) and perform associated actions
+        -   Throw away token and perform associated actions
+        -   Scan lookahead
+        -   Push to back of lookahead queue
+        -   Push to front of lookahead queue
+        -   Pop from front of lookahead queue
+        -   Set "has encountered error" state
+        -   Update max realized lookahead count
+    -   HypotheticalState actions
+        -
+    -   TODO: Consider making a Grammar_ subclass of the parser class, which would hold all the
+        abstract grammatical data and would have the epsilon closure functions.
+
+        FOR NOW, just make the parser class a friend of RealizedState_, and allow it to use the
+        ms_rule_table_, etc members, as well as the Scan_ action.
+
+    -   TODO: Use the DebugSpewStream method of Parser in order to print debug spew messages
+        from other stuff, because there are certain methods/pieces of code in Parser which
+        really belong in RealizedState_ or HypotheticalState_
+
+    -   TODO: Continue with refactoring m_npda_state_set and m_stack in ParseStackTreeNode_;
+        make m_stack just a std::shared_ptr<BranchElement>, and make m_npda_state_set a BranchSet
+        (and think about if the BranchElement and BranchSet names are appropriate).
+        TODO: Think about if BranchElement should be renamed to BranchNode (or maybe the
+        std::shared_ptr<> version of this should be), and if BranchSet should be named something
+        like BranchNodeSet.
+
+    -   The m_token_id member of HypotheticalBranchNodeData_ is only used for printing, not
+        the actual mechanics of parsing.  There is a discrepancy between HypotheticalBranchNodeData_
+        and the type of the RealizedState_ branch nodes, which makes it hard/impossible to have
+        SharedLinkedListElements between the two.  Maybe store the m_token_id of
+        HypotheticalBranchNodeData_ separately.  This way, because m_token_id is only used in
+        debug spew, it can be compiled out entirely if debug spew is not enabled in the parser.

@@ -172,7 +172,7 @@ std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms
 
 <|end_if
 
-void <{class_name}::ThrowAwayToken_ (Token &token_) throw()
+void <{class_name}::ThrowAwayToken_ (Token const &token_) throw()
 {
 <|if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing throw-away-token actions on token " << token_ << '\n')
@@ -181,7 +181,7 @@ void <{class_name}::ThrowAwayToken_ (Token &token_) throw()
     ThrowAwayTokenData_(token_.m_data);
 }
 
-void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} &token_data) throw()
+void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) throw()
 {
 <|throw_away_token_actions?
 }

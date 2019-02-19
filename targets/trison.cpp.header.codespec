@@ -23,13 +23,251 @@
 #include <iostream>
 <|end_if
 <|if(is_defined(use_npda))
+#include <functional>
 #include <map>
+#include <memory>
 #include <set>
 #include <utility>
 #include <vector>
 <|end_if
 
 <|top_of_header_file?
+
+<|if(is_defined(use_npda))
+// NOTE: Because this uses std::shared_ptr, if you create a cycle in the list (which is valid and
+// the algorithms will work), then you must explicitly break it later in order for that memory to
+// be cleaned up (otherwise the ref count of the elements in the cycle will never go back to zero).
+template <typename DataType>
+struct SharedLinkedListElement_ : public std::enable_shared_from_this<SharedLinkedListElement_<DataType>>
+{
+    // Ideally this would be private and std::make_shared<SharedLinkedListElement_> would be a friend
+    // in order to force use of std::make_shared to construct std::shared_ptr<SharedLinkedListElement_>
+    // instances instead of bare SharedLinkedListElement_ instances, but I couldn't figure out how to
+    // do this correctly.
+    template <typename... Types>
+    SharedLinkedListElement_ (std::shared_ptr<SharedLinkedListElement_> const &next, Types&&... args)
+        :   m_next(next)
+        ,   m_data(std::forward<Types>(args)...)
+    { }
+
+    template <typename... Types>
+    static std::shared_ptr<SharedLinkedListElement_> Create (Types&&... args)
+    {
+        return std::make_shared<SharedLinkedListElement_>(nullptr, std::forward<Types>(args)...);
+    }
+
+    bool HasNext () const { return bool(m_next); }
+    std::shared_ptr<SharedLinkedListElement_ const> Next () const { return m_next; }
+    std::shared_ptr<SharedLinkedListElement_> const &Next () { return m_next; }
+    DataType const &Data () const { return m_data; }
+    DataType &Data () { return m_data; }
+    // This is O(n), where n is the length of the linked list.
+    bool HasACycle () const
+    {
+        if (HasNext())
+            return Next()->HasACycle_Impl(*this);
+        else
+            return false;
+    }
+    // This returns the number of elements, including this one, reachable by following the linkage.
+    // If there is a cycle, it will return the number of elements in the cycle.
+    // This is O(n), where n is the length of the linked list.
+    std::size_t ReachableElements () const
+    {
+        if (HasNext())
+            return 1 + Next()->ReachableElements_Impl(*this);
+        else
+            return 1;
+    }
+    // TODO: Ideally, iterators would be created for this data structure so that C++11's for_each could be used.
+    // But for now, just use a hand-implemented ForEach.
+    template <typename ReturnType>
+    ReturnType ForEach (std::function<ReturnType(DataType const &)> const &f) const
+    {
+        // TODO: Implement
+    }
+
+    // This creates a new element whose next element is this one (thereby incrementing this element's ref
+    // count), but doesn't alter any other previously existing thing.
+    template <typename... Types>
+    std::shared_ptr<SharedLinkedListElement_> CreatePrepended (Types&&... args)
+    {
+        return std::make_shared<SharedLinkedListElement_>(this->shared_from_this(), std::forward<Types>(args)...);
+    }
+    // Will throw std::invalid_argument if p is null or if p->HasNext returns true.  Otherwise will return
+    // the prepended element, which in particular is p.
+    std::shared_ptr<SharedLinkedListElement_> const &Prepended (std::shared_ptr<SharedLinkedListElement_> const &p)
+    {
+        if (!bool(p))
+            throw std::invalid_argument("p must not be null");
+        if (p->HasNext())
+            throw std::invalid_argument("p already has a next element");
+        p->m_next = this->shared_from_this();
+        return p;
+    }
+
+    // Will throw std::invalid_argument if HasNext returns true, otherwise will return the newly created element.
+    template <typename... Types>
+    std::shared_ptr<SharedLinkedListElement_> const &CreateAndAppend (Types&&... args) // throw(std::invalid_argument)
+    {
+        if (HasNext())
+            throw std::invalid_argument("SharedLinkedListElement_ already has a 'next' element -- can't append another");
+        m_next = std::make_shared<SharedLinkedListElement_>(nullptr, std::forward<Types>(args)...);
+        return m_next;
+    }
+    // Will throw std::invalid_argument if HasNext returns true, otherwise will return the appended element (i.e. p).
+    std::shared_ptr<SharedLinkedListElement_> const &Append (std::shared_ptr<SharedLinkedListElement_> const &p) // throw(std::invalid_argument)
+    {
+        if (HasNext())
+            throw std::invalid_argument("SharedLinkedListElement_ already has a 'next' element -- can't append another");
+        m_next = p;
+        return m_next;
+    }
+
+    // Replaces the next element with the given one, and returns the previously held next element.
+    std::shared_ptr<SharedLinkedListElement_> ReplaceTail (std::shared_ptr<SharedLinkedListElement_> const &p)
+    {
+        std::shared_ptr<SharedLinkedListElement_> old_next = m_next;
+        m_next = p;
+        return old_next;
+    }
+    // Ensures that the tail is removed (i.e. that HasNext will return false).  Returns the previously held next element.
+    std::shared_ptr<SharedLinkedListElement_> RemoveTail ()
+    {
+        return ReplaceTail(nullptr);
+    }
+
+    // This resizes the given vector to ReachableElements() and then populates it with the
+    // contents of this linked list.
+    void PopulateVector (std::vector<DataType> &v) const
+    {
+        v.resize(ReachableElements());
+        PopulateVector_Impl(v.begin(), v.end());
+    }
+
+private:
+
+    void PopulateVector_Impl (typename std::vector<DataType>::iterator it, typename std::vector<DataType>::iterator it_end) const
+    {
+        if (it != it_end)
+        {
+            *it = Data();
+            ++it;
+            if (HasNext())
+            {
+                assert(it != it_end);
+                Next()->PopulateVector_Impl(it, it_end);
+            }
+            else
+            {
+                assert(it == it_end);
+            }
+        }
+    }
+
+    bool HasACycle_Impl (SharedLinkedListElement_ const &initial_element) const
+    {
+        if (this == &initial_element)
+            return true;
+        else if (HasNext())
+            return Next()->HasACycle_Impl(initial_element);
+        else
+            return false;
+    }
+    std::size_t ReachableElements_Impl (SharedLinkedListElement_ const &initial_element) const
+    {
+        if (this == &initial_element)
+            return 0;
+        else if (HasNext())
+            return 1 + Next()->ReachableElements_Impl(initial_element);
+        else
+            return 1;
+    }
+    template <typename ReturnType>
+    ReturnType ForEach_Impl (std::function<ReturnType(DataType const &)> const &f, SharedLinkedListElement_ &initial_element) const
+    {
+        // TODO: Implement
+    }
+
+    std::shared_ptr<SharedLinkedListElement_> m_next;
+    DataType m_data;
+};
+
+template <typename DataType>
+struct SharedLinkedListElementOrder_
+{
+    bool operator () (std::shared_ptr<SharedLinkedListElement_<DataType>> const &lhs, std::shared_ptr<SharedLinkedListElement_<DataType>> const &rhs) const
+    {
+        if (bool(lhs))
+        {
+            if (bool(rhs))
+            {
+                if (lhs->Data() < rhs->Data())
+                    return true;
+                else if (lhs->Data() > rhs->Data())
+                    return false;
+                else
+                    // Recursive case defined on the tails of lhs and rhs respectively.
+                    return this->operator()(lhs->Next(), rhs->Next());
+            }
+            else
+                // Declare non-null to be "greater than" null.
+                return false;
+        }
+        else
+        {
+            if (bool(rhs))
+                // Declare null to be "less than" non-null.
+                return true;
+            else
+                // Declare null to be "equal to" null.
+                return false;
+        }
+    }
+};
+
+// template <typename DataType>
+// bool operator < (std::shared_ptr<SharedLinkedListElement_<DataType>> const &lhs, std::shared_ptr<SharedLinkedListElement_<DataType>> const &rhs)
+// {
+//     if (bool(lhs))
+//     {
+//         if (bool(rhs))
+//         {
+//             if (lhs->Data() < rhs->Data())
+//                 return true;
+//             else if (lhs->Data() > rhs->Data())
+//                 return false;
+//             else
+//                 // Recursive case defined on the tails of lhs and rhs respectively.
+//                 return lhs->Next() < rhs->Next();
+//         }
+//         else
+//             // Declare non-null to be "greater than" null.
+//             return false;
+//     }
+//     else
+//     {
+//         if (bool(rhs))
+//             // Declare null to be "less than" non-null.
+//             return true;
+//         else
+//             // Declare null to be "equal to" null.
+//             return false;
+//     }
+// }
+
+template <typename DataType>
+std::ostream &operator << (std::ostream &out, std::shared_ptr<SharedLinkedListElement_<DataType>> const &e)
+{
+    if (bool(e))
+    {
+        out << e->Data();
+        if (e->HasNext())
+            out << ' ' << e->Next();
+    }
+    return out;
+}
+<|end_if
 
 /** A parser class generated by trison<{if(!is_defined(dont_generate_timestamps))} at <{_creation_timestamp}<{end_if}
   * from <{_source_filename} using <{_targetspec_filename} and <{_codespec_filename}.
@@ -286,8 +524,8 @@ private:
 
     static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
     ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
-    void ThrowAwayToken_ (Token &token) throw();
-    void ThrowAwayTokenData_ (<{token_data_type} &token_data) throw();
+    void ThrowAwayToken_ (Token const &token) throw();
+    void ThrowAwayTokenData_ (<{token_data_type} const &token_data) throw();
     void ResetForNewInput_ () throw();
     Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
 <|if(is_defined(generate_debug_spew_code))
