@@ -226,36 +226,6 @@ struct SharedLinkedListElementOrder_
     }
 };
 
-// template <typename DataType>
-// bool operator < (std::shared_ptr<SharedLinkedListElement_<DataType>> const &lhs, std::shared_ptr<SharedLinkedListElement_<DataType>> const &rhs)
-// {
-//     if (bool(lhs))
-//     {
-//         if (bool(rhs))
-//         {
-//             if (lhs->Data() < rhs->Data())
-//                 return true;
-//             else if (lhs->Data() > rhs->Data())
-//                 return false;
-//             else
-//                 // Recursive case defined on the tails of lhs and rhs respectively.
-//                 return lhs->Next() < rhs->Next();
-//         }
-//         else
-//             // Declare non-null to be "greater than" null.
-//             return false;
-//     }
-//     else
-//     {
-//         if (bool(rhs))
-//             // Declare null to be "less than" non-null.
-//             return true;
-//         else
-//             // Declare null to be "equal to" null.
-//             return false;
-//     }
-// }
-
 template <typename DataType>
 std::ostream &operator << (std::ostream &out, std::shared_ptr<SharedLinkedListElement_<DataType>> const &e)
 {
@@ -538,13 +508,6 @@ private:
 <|else
     DPDA TARGET IS DEPRECATED -- TODO LATER
 <|end_if
-
-    static Rule_ const ms_rule_table_[];
-    static std::size_t const ms_rule_count_;
-    static State_ const ms_state_table_[];
-    static std::size_t const ms_state_count_;
-    static Transition_ const ms_transition_table_[];
-    static std::size_t const ms_transition_count_;
 
     // ///////////////////////////////////////////////////////////////////////
     // end of internal trison-generated parser guts

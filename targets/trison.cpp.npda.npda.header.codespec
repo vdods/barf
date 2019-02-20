@@ -1,0 +1,93 @@
+    struct Npda__ // TODO: Rename to Npda_ after the other Npda_ has been removed
+    {
+        struct Transition_;
+
+        // TODO: Get rid of trailing _ chars
+        struct State_
+        {
+            std::size_t         m_transition_count; // TODO: smallest int
+            Transition_ const * m_transition_table;
+            std::uint32_t       m_associated_rule_index;
+<|if(is_defined(generate_debug_spew_code))
+            char const *        m_description;
+<|end_if
+        }; // end of struct <{class_name}::Grammar_::State_
+
+        struct Transition_
+        {
+            // TODO: Make this into a strong enum (C++11)
+            enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
+            std::uint8_t    m_type;
+            // TODO: Rename this to m_token_id
+            std::uint32_t   m_token_index;  // TODO: smallest int
+            std::uint32_t   m_data_index;   // TODO: smallest int
+
+            // TODO: Make a typedef for sorted type index?
+
+            // Lexicographic ordering on the tuple (m_type, m_token_index, m_data_index).
+            struct Order
+            {
+                // TODO: Rename SortedTypeIndex to ActionClassIndex?
+                static std::uint32_t SortedTypeIndex (Type type)
+                {
+                    switch (type)
+                    {
+                        case REDUCE:
+                        case SHIFT:
+                            return 0;
+
+                        case DISCARD_LOOKAHEAD:
+                        case POP_STACK:
+                            return 1;
+
+                        case RETURN:
+                            return 2;
+
+                        case INSERT_LOOKAHEAD_ERROR:
+                        case EPSILON:
+                            return 3;
+
+                        default:
+                            assert(false && "this should never happen");
+                            return 3; // Arbitrary
+                    }
+                }
+
+                bool operator () (Transition_ const &lhs, Transition_ const &rhs) const
+                {
+                    std::uint32_t sorted_type_index_lhs = SortedTypeIndex(Type(lhs.m_type));
+                    std::uint32_t sorted_type_index_rhs = SortedTypeIndex(Type(rhs.m_type));
+                    if (sorted_type_index_lhs != sorted_type_index_rhs)
+                        return sorted_type_index_lhs < sorted_type_index_rhs;
+                    else if (lhs.m_type != rhs.m_type)
+                        return lhs.m_type < rhs.m_type;
+                    else if (lhs.m_token_index != rhs.m_token_index)
+                        return lhs.m_token_index < rhs.m_token_index;
+                    else
+                        return lhs.m_data_index < rhs.m_data_index;
+                }
+            }; // end of struct <{class_name}::Grammar_::Transition_::Order
+        }; // end of struct <{class_name}::Grammar_::Transition_
+
+        typedef std::set<Transition_,Transition_::Order>    TransitionSet_;
+        typedef std::vector<Transition_>                    TransitionVector_;
+        // Rename these to StateIndex, etc;
+        typedef std::uint32_t                               NpdaStateIndex_;
+        typedef std::set<NpdaStateIndex_>                   NpdaStateIndexSet_;
+        typedef std::vector<NpdaStateIndex_>                NpdaStateIndexVector_;
+
+        // Returns the epsilon closure of the given NPDA state.  Return value is memoized.
+        static NpdaStateIndexVector_ const &EpsilonClosureOfState_ (NpdaStateIndex_ state_index);
+        // Computes the epsilon closure of the given NPDA state, placing the computed value in epsilon_closure.
+        static void ComputeEpsilonClosureOfState_ (NpdaStateIndex_ state_index, NpdaStateIndexSet_ &epsilon_closure);
+        // Returns the epsilon closure of the given NPDA state set.  Return value is memoized.
+        static NpdaStateIndexVector_ const &EpsilonClosureOfStateSet_ (NpdaStateIndexSet_ const &state_set);
+        // Returns the transitions, matching given sorted_type_index, for the epsilon closure of the given NPDA state.  Return value is memoized.
+        static TransitionVector_ const &NonEpsilonTransitionsOfState_ (NpdaStateIndex_ state_index, std::uint32_t sorted_type_index);
+
+        // TODO: rename to STATE_TABLE and TRANSITION_TABLE ?
+        static State_ const         ms_state_table_[];
+        static std::size_t const    ms_state_count_;
+        static Transition_ const    ms_transition_table_[];
+        static std::size_t const    ms_transition_count_;
+    }; // end of struct <{class_name}::Npda__

@@ -1,0 +1,34 @@
+    struct Grammar_
+    {
+        // TODO: Rename to Precedence
+        struct Precedence_
+        {
+            std::int32_t    m_level;                // default precedence is 0, higher values have higher precedence.
+            std::uint32_t   m_associativity_index;  // 0 for %left, 1 for %nonassoc, and 2 for %right.
+<|if(is_defined(generate_debug_spew_code))
+            char const *    m_name;
+<|end_if
+        }; // end of struct <{class_name}::Grammar_::Precedence_
+
+        // TODO: Rename to Rule
+        struct Rule_
+        {
+            Token::Id       m_reduction_nonterminal_token_id;
+            std::uint32_t   m_token_count;
+            std::uint32_t   m_precedence_index;
+<|if(is_defined(generate_debug_spew_code))
+            char const *    m_description;
+<|end_if
+        }; // end of struct <{class_name}::Grammar_::Rule_
+
+        // TODO: Get rid of trailing _ chars
+
+        // Returns true iff lhs_rule_index denotes a rule with a higher precedence than that denoted by rhs_rule_index.
+        static bool CompareRuleByPrecedence_ (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
+
+        // TODO: rename to PRECEDENCE_TABLE and RULE_TABLE ?
+        static Precedence_ const    ms_precedence_table_[];
+        static std::size_t const    ms_precedence_count_;
+        static Rule_ const          ms_rule_table_[];
+        static std::size_t const    ms_rule_count_;
+    }; // end of struct <{class_name}::Grammar_

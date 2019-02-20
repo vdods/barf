@@ -1168,3 +1168,11 @@ which includes the top element.
     -   Handle %target.cpp.enable_scan_actions_exceptions and %target.cpp.enable_reduction_rule_exceptions
     -   Run valgrind to ensure that there are no memory leaks
     -   Run against steel parser (modify steel parser as needed).
+    -   Move SharedLinkedListElement code into separate codespec file to be included
+    -   C++ modernization (use at least C++11)
+        -   Use std::array for static storage of state/transition/etc tables.
+        -   Use range-based for loops
+        -   Use strong enums
+        -   Are there strong typedefs which don't automatically cast to the underlying type?
+
+TODO start by continuing the Grammar_ and Npda__ refactors and getting stuff to compile

@@ -5,107 +5,22 @@ public:
 
 private:
 
-    struct Precedence_
-    {
-        std::int32_t m_level; // default precedence is 0, higher values have higher precedence.
-        std::uint32_t m_associativity_index; // 0 for %left, 1 for %nonassoc, and 2 for %right.
-<|if(is_defined(generate_debug_spew_code))
-        char const *m_name;
-<|end_if
-    };
+<|include("trison.cpp.npda.grammar.header.codespec")
 
-    struct Rule_
-    {
-        Token::Id m_reduction_nonterminal_token_id;
-        std::uint32_t m_token_count;
-        std::uint32_t m_precedence_index;
-<|if(is_defined(generate_debug_spew_code))
-        char const *m_description;
-<|end_if
-    }; // end of struct <{class_name}::Rule_
+<|include("trison.cpp.npda.npda.header.codespec")
 
-    struct State_
-    {
-        std::size_t m_transition_count; // TODO: smallest int
-        Transition_ const *m_transition_table;
-        std::uint32_t m_associated_rule_index;
-<|if(is_defined(generate_debug_spew_code))
-        char const *m_description;
-<|end_if
-    }; // end of struct <{class_name}::State_
-
-    struct Transition_
-    {
-        enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
-        std::uint8_t m_type;
-        // TODO: Should this be m_token_id ?
-        std::uint32_t m_token_index; // TODO: smallest int
-        std::uint32_t m_data_index; // TODO: smallest int
-
-        // Lexicographic ordering on the tuple (m_type, m_token_index, m_data_index).
-        struct Order
-        {
-            static std::uint32_t SortedTypeIndex (Type type)
-            {
-                switch (type)
-                {
-                    case REDUCE:
-                    case SHIFT:
-                        return 0;
-
-                    case DISCARD_LOOKAHEAD:
-                    case POP_STACK:
-                        return 1;
-
-                    case RETURN:
-                        return 2;
-
-                    case INSERT_LOOKAHEAD_ERROR:
-                    case EPSILON:
-                        return 3;
-
-                    default:
-                        assert(false && "this should never happen");
-                        return 3; // Arbitrary
-                }
-            }
-
-            bool operator () (Transition_ const &lhs, Transition_ const &rhs) const
-            {
-                std::uint32_t sorted_type_index_lhs = SortedTypeIndex(Type(lhs.m_type));
-                std::uint32_t sorted_type_index_rhs = SortedTypeIndex(Type(rhs.m_type));
-                if (sorted_type_index_lhs != sorted_type_index_rhs)
-                    return sorted_type_index_lhs < sorted_type_index_rhs;
-                else if (lhs.m_type != rhs.m_type)
-                    return lhs.m_type < rhs.m_type;
-                else if (lhs.m_token_index != rhs.m_token_index)
-                    return lhs.m_token_index < rhs.m_token_index;
-                else
-                    return lhs.m_data_index < rhs.m_data_index;
-            }
-        };
-    }; // end of struct <{class_name}::Transition_
-
-    typedef std::set<Transition_,Transition_::Order>    TransitionSet_;
-    typedef std::vector<Transition_>                    TransitionVector_;
-
-    typedef std::uint32_t                               NpdaStateIndex_;
     typedef std::uint32_t                               ActionData_;
-
-    typedef std::deque<NpdaStateIndex_>                 NpdaStateIndexStack_;
-    typedef std::set<NpdaStateIndex_>                   NpdaStateIndexSet_;
-    typedef std::vector<NpdaStateIndex_>                NpdaStateIndexVector_;
 
     typedef std::deque<Token>                           TokenQueue_;
     typedef std::vector<Token>                          TokenStack_;
     typedef std::deque<Token::Id>                       TokenIdQueue_;
 
     // This forms one element, containing the NPDA state index, of a NPDA state stack (aka branch).
-    typedef SharedLinkedListElement_<NpdaStateIndex_>   BranchNode_;
+    typedef SharedLinkedListElement_<Npda__::NpdaStateIndex_>   BranchNode_;
     typedef std::shared_ptr<BranchNode_>                BranchNodePtr_;
     // This contains the tops of all the branch state stacks.  The ordering is necessary in order
     // to distinguish different branches that may have identical top states.
-    typedef std::set<BranchNodePtr_,SharedLinkedListElementOrder_<NpdaStateIndex_>> BranchNodePtrSet_;
+    typedef std::set<BranchNodePtr_,SharedLinkedListElementOrder_<Npda__::NpdaStateIndex_>> BranchNodePtrSet_;
     typedef std::vector<BranchNodePtrSet_>              BranchNodePtrSetStack_;
 
 <|if(is_defined(generate_debug_spew_code))
@@ -134,13 +49,13 @@ private:
 
         Token               PopStack                            ();
 
-        // void                ExecuteAction                       (Transition_::Type action, ActionData_ action_data);
+        // void                ExecuteAction                       (Npda__::Transition_::Type action, ActionData_ action_data);
 
         // TODO: Need to figure out how to handle popping the token stack (since in a way it should be the
         // responsibility of ExecuteAction).  Maybe ExecuteAction should accept Token* which it will populate
         // with the popped token in the case of POP_STACK, so that the parser can call the throw-away-token actions.
 
-        void                ExecuteActionReduce                 (Rule_ const &rule, Token::Data const &reduced_nonterminal_token_data, HPSQueue_ &hps_queue);
+        void                ExecuteActionReduce                 (Grammar_::Rule_ const &rule, Token::Data const &reduced_nonterminal_token_data, HPSQueue_ &hps_queue);
         void                ExecuteActionShift                  (BranchNodePtrSet_ const &shifted_branch_node_ptr_set, HPSQueue_ &hps_queue);
         void                ExecuteActionInsertLookaheadError   (HPSQueue_ &hps_queue);
         void                ExecuteActionDiscardLookahead       (HPSQueue_ &hps_queue);
@@ -192,7 +107,7 @@ private:
     // TODO: This should probably be inside HypotheticalState_
     struct ParseStackTreeNode_
     {
-        // The values of RETURN through POP_STACK coincide with the same in Transition_::Type.
+        // The values of RETURN through POP_STACK coincide with the same in Npda__::Transition_::Type.
         // Note: HPS stands for "Hypothetical Parser State", which represents one of possibly many
         // ways the non-deterministic parser can parse the input.
         // TODO: probably order this so that the Spec::Order gives an obvious way to do error handling action last
@@ -339,20 +254,6 @@ private:
 
     Npda_ *m_npda_;
 
-    // Returns true iff lhs_rule_index denotes a rule with a higher precedence than that denoted by rhs_rule_index.
-    static bool CompareRuleByPrecedence_ (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
     static bool CompareTokenId_ (Token::Id lhs, Token::Id rhs) { return lhs < rhs; }
 
-    // Returns the epsilon closure of the given NPDA state.  Return value is memoized.
-    static NpdaStateIndexVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);
-    // Computes the epsilon closure of the given NPDA state.
-    static void ComputeEpsilonClosureOfState_ (std::uint32_t state_index, NpdaStateIndexSet_ &epsilon_closure);
-    // Returns the epsilon closure of the given NPDA state set.  Return value is memoized.
-    static NpdaStateIndexVector_ const &EpsilonClosureOfStateSet_ (NpdaStateIndexSet_ const &state_set);
-    // Returns the transitions, matching given sorted_type_index, for the epsilon closure of the given NPDA state.  Return value is memoized.
-    static TransitionVector_ const &NonEpsilonTransitionsOfState_ (std::uint32_t state_index, std::uint32_t sorted_type_index);
-
-    friend struct ParseStackTreeNode_;
-
-    static Precedence_ const ms_precedence_table_[];
-    static std::size_t const ms_precedence_count_;
+    friend struct ParseStackTreeNode_; // TODO: Is this necessary?
