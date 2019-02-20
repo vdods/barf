@@ -315,6 +315,7 @@ template <Uint32 high> struct SmallestUint {
             Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
             return return_code;
         }
+
 -   Change doxygen comments to all /// style
 -   Ensure all the different types of cleanup are performed, verify with valgrind.
 -   Probably compute epsilon closure of states during trison execution, so that the NPDA implementation
@@ -331,5 +332,4 @@ template <Uint32 high> struct SmallestUint {
         label for default, so investigate this and then fix the printout).
     -   Put the epsilon closure of each NPDA state in the states file to make it easier for the reader.
 -   Collapse some options together using arguments (e.g. the pairs of "do" and "don't" options).
-
-
+-   Add [ ] brackets to "symbol" class in kate syntax highlighting file.

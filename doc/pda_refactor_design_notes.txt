@@ -1122,17 +1122,6 @@ which includes the top element.
     HPS (Hypothetical Parser State) to something like HYPOTHETICAL_STATE_LEAF_NODE.
 -   Design notes for refactor, specifically the RealizedState and HypotheticalState
     abstractions.
-    -   RealizedState actions
-        -   Take real parser action (e.g. SHIFT, REDUCE, etc) and perform associated actions
-        -   Throw away token and perform associated actions
-        -   Scan lookahead
-        -   Push to back of lookahead queue
-        -   Push to front of lookahead queue
-        -   Pop from front of lookahead queue
-        -   Set "has encountered error" state
-        -   Update max realized lookahead count
-    -   HypotheticalState actions
-        -
     -   TODO: Consider making a Grammar_ subclass of the parser class, which would hold all the
         abstract grammatical data and would have the epsilon closure functions.
 
@@ -1156,3 +1145,26 @@ which includes the top element.
         SharedLinkedListElements between the two.  Maybe store the m_token_id of
         HypotheticalBranchNodeData_ separately.  This way, because m_token_id is only used in
         debug spew, it can be compiled out entirely if debug spew is not enabled in the parser.
+
+2019.02.20 ----------------------------
+
+-   NPDA cpp target is working, including error handling, though more testing is needed.
+-   TODO
+    -   Clean up target
+        -   Get rid of Npda_
+        -   Create a Grammar_ struct which houses all the grammar structures and data
+    -   Hook up m_branch_node_token_id_ptr (have to store this in parallel with m_branch_node_ptr_set_stack
+        in RealizedState_, but in a way where the pairs of BranchNodePtr_ and BranchNodeTokenIdPtr_ are kept).
+        Hook up the equivalent of ThrowAwayRealizedStateStackElement_ (really just take care of the printing).
+    -   Figure out how to print the full state of RealizedState_
+    -   Implement infinite loop detection (maybe as an option?)
+    -   Make a more terse debug spew output which is more useful for non-barf developers to debug
+        their grammars/parsers.
+    -   Rename SharedLinkedListElement to something like TreeNode and then remove all methods that
+        aren't used.
+    -   Maybe make a Branch abstraction that handles the stack-like operations on m_branch_node_ptr, etc.
+    -   Handle the fact that case 3 of shift/reduce conflict is commented out (probably uncomment it
+        and see if it's still valid).
+    -   Handle %target.cpp.enable_scan_actions_exceptions and %target.cpp.enable_reduction_rule_exceptions
+    -   Run valgrind to ensure that there are no memory leaks
+    -   Run against steel parser (modify steel parser as needed).

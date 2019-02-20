@@ -103,8 +103,8 @@ private:
     // This forms one element, containing the NPDA state index, of a NPDA state stack (aka branch).
     typedef SharedLinkedListElement_<NpdaStateIndex_>   BranchNode_;
     typedef std::shared_ptr<BranchNode_>                BranchNodePtr_;
-    // This contains the tops of all the branch state stacks.  TODO: Maybe define an ordering on this.
-    // NOTE: This uses the `operator<` defined for std::shared_ptr<SharedLinkedListElement_<DataType>>.
+    // This contains the tops of all the branch state stacks.  The ordering is necessary in order
+    // to distinguish different branches that may have identical top states.
     typedef std::set<BranchNodePtr_,SharedLinkedListElementOrder_<NpdaStateIndex_>> BranchNodePtrSet_;
     typedef std::vector<BranchNodePtrSet_>              BranchNodePtrSetStack_;
 
@@ -125,10 +125,6 @@ private:
 
         TokenStack_ const & TokenStack                          () const { return m_token_stack; }
         TokenQueue_ const & LookaheadQueue                      () const { return m_lookahead_queue; }
-
-        // std::size_t         LookaheadQueueSize                  () const { return m_lookahead_queue.size(); }
-        // Token const &       LookaheadQueueBack                  () const { return m_lookahead_queue.back(); }
-        // Token const &       LookaheadQueueElement               (TokenQueue_::size_type index) const { return m_lookahead_queue[index]; }
 
         std::size_t         MaxRealizedLookaheadQueueSize       () const { return m_max_realized_lookahead_queue_size; }
         bool                HasEncounteredErrorState            () const { return m_has_encountered_error_state; }
@@ -193,8 +189,6 @@ private:
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
     // void ThrowAwayRealizedStateStackElement_ (BranchNodePtrSet_ const &branch_node_ptr_set, Token_ &token) throw();
 
-    struct Npda_;
-
     // TODO: This should probably be inside HypotheticalState_
     struct ParseStackTreeNode_
     {
@@ -208,15 +202,14 @@ private:
         struct Spec
         {
             Type m_type;
-            // Only used by REDUCE, SHIFT, POP_STACK. // HIPPO
+            // Only used by REDUCE, SHIFT, POP_STACK.
             std::uint32_t m_single_data;
 
             Spec (Type type, std::uint32_t single_data = UNUSED_DATA)
                 : m_type(type)
                 , m_single_data(single_data)
             {
-                //if (m_type != REDUCE && m_type != POP_STACK)
-                if (m_type != REDUCE && m_type != SHIFT && m_type != POP_STACK) // HIPPO
+                if (m_type != REDUCE && m_type != SHIFT && m_type != POP_STACK)
                 {
                     assert(m_single_data == UNUSED_DATA);
                 }
@@ -242,7 +235,7 @@ private:
                         case REDUCE:
                             return false;
 
-                        case SHIFT: // HIPPO
+                        case SHIFT:
                             return false;
 
                         default:
@@ -251,8 +244,8 @@ private:
                             return false;
                     }
                 }
-            };
-        };
+            }; // end of struct <{class_name}::ParseStackTreeNode_::Spec::Order
+        }; // end of struct <{class_name}::ParseStackTreeNode_::Spec::
 
 <|if(is_defined(generate_debug_spew_code))
         static char const *AsString (Type type);
@@ -269,10 +262,7 @@ private:
         typedef std::pair<std::int32_t,std::int32_t> PrecedenceLevelRange;
 
         Spec m_spec;
-        //NpdaStateIndexSet_ m_npda_state_set;
-        // TODO: Maybe rename this to something like m_recovery_branch_node_ptr_set
         BranchNodePtrSet_ m_child_branch_node_ptr_set;
-        //HypotheticalBranchStateStack_ m_stack;
         // This is the head node of the current branch that this ParseStackTreeNode_ is tracking.
         BranchNodePtr_ m_branch_node_ptr;
 <|if(is_defined(generate_debug_spew_code))
@@ -285,7 +275,6 @@ private:
         // lands.  In other words, this node's "total" lookahead
         TokenIdQueue_ m_hypothetical_lookahead_token_id_queue;
         std::uint32_t m_realized_lookahead_cursor; // this is an index into the realized lookahead queue.
-        // NpdaStateIndexSet_ m_top_states; // used for infinite loop detection
         ParseStackTreeNode_ *m_parent_node;
         ChildMap m_child_nodes;
 
@@ -331,7 +320,7 @@ private:
         void Print (std::ostream &out, <{class_name} const &parser, std::string const &prefix, std::uint32_t indent_level = 0) const;
         void PrintBasic (std::ostream &out, std::string const &prefix, std::uint32_t indent_level = 0) const;
 <|end_if
-    };
+    }; // end of struct <{class_name}::ParseStackTreeNode_
 
     Token const &Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
 
@@ -344,25 +333,15 @@ private:
         RealizedState_ m_realized_state;
         HypotheticalState_ m_hypothetical_state;
 
-        // TODO/NOTE: The hps-es should really have "npda stack" and "npda lookahead queue",
-        // which don't have any token data, whereas Npda_ should have "realized stack" and "realized lookahead queue",
-        // which do have (and own) the token data.
-        // The "realized" states in m_realized_state are actually each a set of NPDA state stacks.
-        // These can be memoized and indexed, or not (use config flag to determine that).  The reason you may not
-        // want to memoize all of them is if a grammar is somehow exponential in the number of NPDA states (or
-        // state stacks) -> number of DPDA states.
-
         Npda_ (Nonterminal::Name nonterminal_to_parse);
         ~Npda_ ();
     };
 
     Npda_ *m_npda_;
 
-    // TODO: Append _ to all implementation detail methods and members
     // Returns true iff lhs_rule_index denotes a rule with a higher precedence than that denoted by rhs_rule_index.
-    static bool CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
-    static bool CompareTokenId (Token::Id lhs, Token::Id rhs) { return lhs < rhs; }
-    //static bool CompareHypotheticalBranchStateStackElement (HypotheticalBranchNodeData_ const &lhs, HypotheticalBranchNodeData_ const &rhs) { return lhs.m_state_index < rhs.m_state_index; }
+    static bool CompareRuleByPrecedence_ (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
+    static bool CompareTokenId_ (Token::Id lhs, Token::Id rhs) { return lhs < rhs; }
 
     // Returns the epsilon closure of the given NPDA state.  Return value is memoized.
     static NpdaStateIndexVector_ const &EpsilonClosureOfState_ (std::uint32_t state_index);

@@ -165,15 +165,12 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_npda_->m_realized_state.TokenStack());
                 m_npda_->m_realized_state.ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_npda_->m_hypothetical_state.m_hps_queue);
 
-                // Because REDUCE involves popping the stack, indicate that the parse tree should be destroyed and
-                // recreated.  This is draconian and non-optimal, but simple and effective.  TODO: Because HPS branches
-                // are blocked right after a REDUCE or POP_STACK, maybe don't bother adding any children below REDUCE
-                // or POP_STACK nodes.
-                //destroy_and_recreate_parse_tree = true; // HIPPO
+                // Note that destroy_and_recreate_parse_tree is not needed for REDUCE, since its
+                // stack will be popped to the state at which the initial branching on the reduced
+                // nonterminal is done (i.e. before any eplison closures for that nonterminal).
                 break;
             }
             case ParseStackTreeNode_::SHIFT: {
-                //TEMP HIPPO assert(trunk_child->m_spec.m_single_data == ParseStackTreeNode_::UNUSED_DATA); // m_single_data is not used for SHIFT.
 <|if(is_defined(generate_debug_spew_code))
                 std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
@@ -226,7 +223,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 // Because POP_STACK involves popping the stack, indicate that the parse tree should be destroyed and
                 // recreated (from the states in the top element of m_realized_stack_).  This is draconian and non-optimal,
                 // but simple and effective.
-                destroy_and_recreate_parse_tree = true; // HIPPO
+                destroy_and_recreate_parse_tree = true;
                 break;
             }
 
@@ -580,23 +577,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             // This hps isn't blocked, so indicate that the parse should continue.
             should_return = false;
 
-//             assert(!hps.m_stack.empty());
-//             std::uint32_t hps_state_index = hps.m_stack.back().m_state_index;
-            // TEMP HACK HIPPO
-            std::uint32_t hps_state_index;
-            // if (hps.m_stack.empty())
-            // {
-            //     // This doesn't hold in all cases.
-            //     //assert(m_npda_->m_realized_stack_.size() == 1 && "This may not hold in all cases");
-            //     assert(!m_npda_->m_realized_stack_.empty());
-            //     assert(m_npda_->m_realized_stack_.back().m_npda_state_vector.size() == 1 && "This may not hold in all cases");
-            //     hps_state_index = m_npda_->m_realized_stack_.back().m_npda_state_vector[0];
-            // }
-            // else
-            // {
-            //     hps_state_index = hps.m_stack.back().m_state_index;
-            // }
-            hps_state_index = hps.m_branch_node_ptr->Data();
+            std::uint32_t hps_state_index = hps.m_branch_node_ptr->Data();
 
             // Retrieve all transitions whose SortedTypeIndex is current_sorted_type_index.
             TransitionVector_ const &non_epsilon_transitions = NonEpsilonTransitionsOfState_(hps_state_index, current_sorted_type_index);
@@ -1070,7 +1051,7 @@ bool <{class_name}::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (<
             return std::lexicographical_compare(
                 lhs->m_hypothetical_lookahead_token_id_queue.begin(), lhs->m_hypothetical_lookahead_token_id_queue.end(),
                 rhs->m_hypothetical_lookahead_token_id_queue.begin(), rhs->m_hypothetical_lookahead_token_id_queue.end(),
-                CompareTokenId
+                CompareTokenId_
             );
     }
     // For REDUCE, their contents must be compared.
@@ -1177,8 +1158,11 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
         return false;
     switch (m_parent_node->m_spec.m_type)
     {
+        // Nothing can happen after returning, so this has to be blocking.
         case RETURN:
-        //case REDUCE: // HIPPO
+        // TODO: Figure out if this should be considered a blocked HPS (making it non-blocking
+        // could potentially increase the depth of the state stack on which a decision depends,
+        // so this is a nontrivial decision).
         case POP_STACK: return true;
 
         default:        return false;
@@ -1194,12 +1178,8 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
 
         assert(current_child_depth >= 2);
         // These asserts are equivalent to checking that the stack depth is at least 2.
-        //assert(bool(m_branch_node_ptr)); // HIPPO this assumption is wrong
-        assert(m_branch_node_ptr->HasNext());
-
-        //assert(m_stack.size() >= current_child_depth); // HIPPO no good way to check this now
-//         std::uint32_t state_index = m_stack.back().m_state_index;
-        //std::uint32_t state_index = m_stack[m_stack.size()-(current_child_depth-1)].m_state_index;
+        assert(bool(m_branch_node_ptr));
+        assert(bool(m_branch_node_ptr->HasNext()));
 
         // Thinking of m_branch_node_ptr as the top of the state stack, we want to get the
         // (current_child_depth-1)th element from the top.
@@ -1311,20 +1291,14 @@ void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
     // m_child_branch_node_ptr_set is added to.
     if (m_spec.m_type == SHIFT && child->m_spec.m_type == HPS)
     {
-        //assert(bool(m_branch_node_ptr)); // HIPPO this assumption is wrong.  SHIFT action nodes should probably even have m_branch_node_ptr == nullptr
         assert(bool(child->m_branch_node_ptr));
-        //assert(!child->m_stack.empty());
-        //std::uint32_t child_npda_state_index = child->m_stack.back().m_state_index;
         // child_npda_state_index is not guaranteed to be unique in m_npda_state_set, because the
         // deeper elements of child->m_stack may be different from HPS to HPS.
         // NOTE: This code was already commented out, but the refactor to use SharedLinkedListElement
         // caused it to be deprecated -- it's less obvious how to check for the existence of a
         // branch node now.
-        //assert(m_npda_state_set.find(child_npda_state_index) == m_npda_state_set.end() && "NPDA state should not already be in the set");
         assert(m_child_branch_node_ptr_set.find(child->m_branch_node_ptr) == m_child_branch_node_ptr_set.end() && "child branch node should not already be in the set");
         m_child_branch_node_ptr_set.insert(child->m_branch_node_ptr);
-        // // Make sure that child->m_branch_node_ptr links back to this node's one
-        // child->m_branch_node_ptr.Append(m_branch_node_ptr);
     }
 //    std::cerr << '\n';
 }
@@ -1649,7 +1623,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
                     assert(existing_reduce_action_node->m_child_nodes.size() == 1);
                     assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
                     assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseStackTreeNode_::HPS);
-                    if (CompareRuleByPrecedence(action_data, existing_reduce_action_node->m_spec.m_single_data))
+                    if (CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
                     {
 <|if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of new hps.\n")
@@ -1717,7 +1691,6 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             new_hps->m_branch_node_token_id_ptr = BranchNodeTokenId_::Create(lookahead_token_id);
             new_hps->m_branch_node_token_id_ptr->Append(hps.m_branch_node_token_id_ptr);
 <|end_if
-            // TEMP HIPPO action_data = ParseStackTreeNode_::UNUSED_DATA; // SHIFT action doesn't store the state, the HPS children do.
             // Store the lookahead token id in action_data so it can printed.
             action_data = std::uint32_t(lookahead_token_id);
             if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
@@ -1845,7 +1818,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     // TODO: almost certainly need to throw away tokens from realized stack and lookahead queue
 }
 
-bool <{class_name}::CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index)
+bool <{class_name}::CompareRuleByPrecedence_ (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index)
 {
     if (ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level != ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level)
         return ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level > ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level;
