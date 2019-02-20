@@ -198,7 +198,7 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 <|if(is_defined(use_npda))
 <|  include("trison.cpp.npda.implementation.codespec")
 <|else
-<|  include("trison.cpp.dpda.implementation.codespec")
+    DPDA TARGET IS DEPRECATED -- TODO LATER
 <|end_if
 
 // ///////////////////////////////////////////////////////////////////////

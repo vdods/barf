@@ -536,7 +536,7 @@ private:
 <|if(is_defined(use_npda))
 <|  include("trison.cpp.npda.header.codespec")
 <|else
-<|  include("trison.cpp.dpda.header.codespec")
+    DPDA TARGET IS DEPRECATED -- TODO LATER
 <|end_if
 
     static Rule_ const ms_rule_table_[];
