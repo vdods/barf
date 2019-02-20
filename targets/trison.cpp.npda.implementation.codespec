@@ -1740,8 +1740,18 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             break;
         }
         case ParseStackTreeNode_::POP_STACK: {
-            // TODO: make separate action nodes for each pop, instead of using action data.
+            // TODO: make separate action nodes for each pop, instead of using action data,
+            // since for example two branches may agree on popping at least once, even if
+            // one of them is killed later.
             std::uint32_t const &pop_count = action_data;
+            // Check if there are actually enough stack elements to pop successfully.
+            // If not, then don't create an HPS, and break early.
+            if (pop_count >= hps.m_branch_node_ptr->ReachableElementCount())
+            {
+                new_hps = NULL;
+                break;
+            }
+
             new_hps = hps.CloneLeafNode();
             for (std::uint32_t i = 0; i < pop_count; ++i)
             {

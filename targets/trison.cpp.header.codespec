@@ -72,7 +72,7 @@ struct SharedLinkedListElement_ : public std::enable_shared_from_this<SharedLink
     // This returns the number of elements, including this one, reachable by following the linkage.
     // If there is a cycle, it will return the number of elements in the cycle.
     // This is O(n), where n is the length of the linked list.
-    std::size_t ReachableElements () const
+    std::size_t ReachableElementCount () const
     {
         if (HasNext())
             return 1 + Next()->ReachableElements_Impl(*this);
@@ -137,11 +137,11 @@ struct SharedLinkedListElement_ : public std::enable_shared_from_this<SharedLink
         return ReplaceTail(nullptr);
     }
 
-    // This resizes the given vector to ReachableElements() and then populates it with the
+    // This resizes the given vector to ReachableElementCount() and then populates it with the
     // contents of this linked list.
     void PopulateVector (std::vector<DataType> &v) const
     {
-        v.resize(ReachableElements());
+        v.resize(ReachableElementCount());
         PopulateVector_Impl(v.begin(), v.end());
     }
 
