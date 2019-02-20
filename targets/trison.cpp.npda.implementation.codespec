@@ -1692,6 +1692,10 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
                 {
                     assert(reduce_hps->m_branch_node_ptr->HasNext());
                     reduce_hps->m_branch_node_ptr = reduce_hps->m_branch_node_ptr->Next();
+<|if(is_defined(generate_debug_spew_code))
+                    if (bool(reduce_hps->m_branch_node_token_id_ptr)) // TEMP Condition
+                        reduce_hps->m_branch_node_token_id_ptr = reduce_hps->m_branch_node_token_id_ptr->Next();
+<|end_if
                 }
                 // Push the reduced nonterminal token data onto the front of the lookahead queue
                 reduce_hps->m_hypothetical_lookahead_token_id_queue.push_front(rule.m_reduction_nonterminal_token_id);
