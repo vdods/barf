@@ -60,8 +60,6 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
 <|end_if
     while (!should_return)
     {
-        if (iteration_index == 3000) // HIPPO
-            break;                 // HIPPO
 <|if(is_defined(generate_debug_spew_code))
         TRISON_CPP_DEBUG_CODE_(
             *DebugSpewStream() << <{debug_spew_prefix} << "\n";
