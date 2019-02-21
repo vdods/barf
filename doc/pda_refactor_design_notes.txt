@@ -1154,7 +1154,7 @@ which includes the top element.
         x   Get rid of Npda_
         x   Create a Grammar_ struct which houses all the grammar structures and data
         x   Ensure stack and lookahead tokens are cleaned up upon parser destruction
-        -   Change /* */ style doxygen comments to use /// style
+        x   Change /* */ style doxygen comments to use /// style
         -   Check if `friend struct ParseStackTreeNode_;` is necessary
     -   Hook up m_branch_node_token_id_ptr (have to store this in parallel with m_branch_node_ptr_set_stack
         in RealizedState_, but in a way where the pairs of BranchNodePtr_ and BranchNodeTokenIdPtr_ are kept).

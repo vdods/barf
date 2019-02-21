@@ -1,7 +1,3 @@
-public:
-
-    std::size_t MaxRealizedLookaheadQueueSize () const { return m_realized_state_->MaxRealizedLookaheadQueueSize(); }
-
 private:
 
 <|include("trison.cpp.npda.grammar.header.codespec")
