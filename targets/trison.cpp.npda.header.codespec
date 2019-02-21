@@ -250,8 +250,7 @@ private:
         void CloneLeafNodeInto (ParseStackTreeNode_ &orphan_target) const;
 <|if(is_defined(generate_debug_spew_code))
 
-        void Print (std::ostream &out, <{class_name} const &parser, std::string const &prefix, std::uint32_t indent_level = 0) const;
-        void PrintBasic (std::ostream &out, std::string const &prefix, std::uint32_t indent_level = 0) const;
+        void Print (std::ostream &out, <{class_name} const *parser, std::string const &prefix, std::uint32_t indent_level = 0) const;
 <|end_if
     }; // end of struct <{class_name}::ParseStackTreeNode_
 
