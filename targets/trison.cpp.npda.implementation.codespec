@@ -250,8 +250,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 }
 
                 // Because POP_STACK involves popping the stack, indicate that the parse tree should be destroyed and
-                // recreated (from the states in the top element of m_realized_stack_).  This is draconian and non-optimal,
-                // but simple and effective.
+                // recreated (from the branches in the top of the realized state stack).  This is draconian and
+                // non-optimal, but simple and effective.
                 destroy_and_recreate_parse_tree = true;
                 break;
             }
@@ -267,21 +267,22 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
         if (destroy_and_recreate_parse_tree)
         {
 <|if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Destroying and recreating parse tree based on top element of realized stack.\n")
+            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
 <|end_if
-            // Destroy the whole parse tree and reconstruct HPSes based on top of m_realized_stack_,
-            // but preserve m_realized_stack_ and m_realized_lookahead_queue_.  This is rather draconian and is
-            // non-optimal in terms of memory allocation operations, but it is simple and effective, and should
-            // only occur during error handling.
+            // Destroy the whole parse tree and reconstruct HPSes based on the branches on the top
+            // of the realized state stack. but preserve the realized state stack and realized lookahead queue.
+            // This is rather draconian and is non-optimal in terms of memory allocation operations, but it
+            // is simple and effective, and should only occur during error handling.
             assert(m_hypothetical_state_->m_new_hps_queue.empty());
             m_hypothetical_state_->m_hps_queue.clear();
             delete m_hypothetical_state_->m_root;
             m_hypothetical_state_->m_root = NULL;
             // At this point, the parse tree should be destroyed.  Create a new root node
             m_hypothetical_state_->m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
-            // Then add HPS nodes for each npda state in the top element of m_realized_stack_.
-            // TODO: assert that there is at least one branch and its depth is nonzero.
+            // Then add HPS nodes for each branch in the top of the realized state stack.
+            assert(!m_realized_state_->BranchNodePtrVectorStack().empty());
             BranchNodePtrVector_ const &reconstruct_branch_node_ptr_vector = m_realized_state_->BranchNodePtrVectorStack().back();
+            assert(!reconstruct_branch_node_ptr_vector.empty());
 <|if(is_defined(generate_debug_spew_code))
             BranchNodeTokenIdPtrVector_ const &reconstruct_branch_node_token_id_ptr_vector = m_realized_state_->BranchNodeTokenIdPtrVectorStack().back();
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        reconstructing branches " << reconstruct_branch_node_ptr_vector << '\n')
