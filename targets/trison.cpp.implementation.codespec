@@ -36,6 +36,8 @@
 <|superclass_and_member_constructors
 <|end_if
 {
+    m_realized_state_ = NULL;
+    m_hypothetical_state_ = NULL;
 <|if(is_defined(generate_debug_spew_code))
     SetDebugSpewStream(NULL);
 <|end_if
@@ -47,12 +49,8 @@
 
 <{class_name}::~<{class_name} ()
 {
-<|if(!is_defined(use_npda))
-    // clean up dynamically allocated memory.
-    ClearStack_();
-    ClearLookaheadQueue_();
-
-<|end_if
+    // Perform all the internal cleanup needed.
+    CleanUpAllInternals_();
 <|if(is_defined(destructor_actions))
 
 <|destructor_actions
@@ -81,11 +79,8 @@ void <{class_name}::ResetForNewInput ()
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing reset-for-new-input actions\n")
 
 <|end_if
-<|if(!is_defined(use_npda))
-    // clean up stuff that might be hanging around from the last parse's input.
-    ClearStack_();
-    ClearLookaheadQueue_();
-<|end_if
+    // Perform all the internal cleanup needed.
+    CleanUpAllInternals_();
 <|if(is_defined(reset_for_new_input_actions))
 
 <|reset_for_new_input_actions

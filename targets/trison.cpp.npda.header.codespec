@@ -1,7 +1,6 @@
 public:
 
     std::size_t MaxRealizedLookaheadQueueSize () const { return m_realized_state_->MaxRealizedLookaheadQueueSize(); }
-    //bool        HasEncounteredErrorState      () const { return m_realized_state_->HasEncounteredErrorState(); }
 
 private:
 
@@ -34,7 +33,7 @@ private:
 
     struct RealizedState_
     {
-        RealizedState_      (std::uint32_t initial_state);
+        RealizedState_      (Npda__::NpdaStateIndex_ initial_state);
 
         BranchNodePtrSetStack_ const &BranchNodePtrSetStack     () const { return m_branch_node_ptr_set_stack; }
 
@@ -61,6 +60,9 @@ private:
         void                ExecuteActionDiscardLookahead       (HPSQueue_ &hps_queue);
         // This one is tricky to implement within RealizedState_ alone.
         //void                ExecuteActionPopStack               (std::uint32_t pop_count);
+
+        void                ClearStack                          ();
+        void                Reinitialize                        (Npda__::NpdaStateIndex_ initial_state);
 
     private:
 
@@ -239,11 +241,16 @@ private:
 
     Token const &Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
 
-    ParseStackTreeNode_ *TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
+    ParseStackTreeNode_ *   TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
 
-    static bool CompareTokenId_ (Token::Id lhs, Token::Id rhs) { return lhs < rhs; }
+    static bool             CompareTokenId_             (Token::Id lhs, Token::Id rhs) { return lhs < rhs; }
 
-    RealizedState_ *    m_realized_state_;
-    HypotheticalState_ *m_hypothetical_state_;
+    // This doesn't reset the error state.
+    void                    ClearStack_                 ();
+    // This resets the error state.
+    void                    CleanUpAllInternals_        ();
+
+    RealizedState_     *    m_realized_state_;
+    HypotheticalState_ *    m_hypothetical_state_;
 
     friend struct ParseStackTreeNode_; // TODO: Is this necessary?

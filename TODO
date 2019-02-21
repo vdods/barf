@@ -334,4 +334,5 @@ template <Uint32 high> struct SmallestUint {
 -   Collapse some options together using arguments (e.g. the pairs of "do" and "don't" options).
 -   Add [ ] brackets to "symbol" class in kate syntax highlighting file.
 -   Could add "indent" and "unindent" directives to BPP in order to better format code as well as
-    allow implementation of Python targets (since they're indentation-sensitive).
+    allow implementation of Python targets (since they're indentation-sensitive).  Would need this
+    to work inside "if" blocks.

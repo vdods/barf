@@ -31,6 +31,11 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
     }
 }
 
+bool <{class_name}::HasEncounteredErrorState () const
+{
+    return m_realized_state_->HasEncounteredErrorState();
+}
+
 <{class_name}::ParserReturnCode <{class_name}::Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse)
 {
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
@@ -53,7 +58,20 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
 <|end_if
 
     std::uint32_t start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
-    m_realized_state_ = new RealizedState_(start_state_index);
+
+    if (m_realized_state_ != NULL) // This happens when parsing again, not from scratch.
+    {
+        assert(m_hypothetical_state_ == NULL);
+        // Note that this resets the error state.
+        m_realized_state_->Reinitialize(start_state_index);
+        // Delete this entirely to be initialized anew, since it has no state that
+        // carries over between parses.
+        delete m_hypothetical_state_;
+        m_hypothetical_state_ = NULL;
+    }
+    else // This happens when parsing for the first time.
+        m_realized_state_ = new RealizedState_(start_state_index);
+
     m_hypothetical_state_ = new HypotheticalState_(start_state_index);
 
     bool should_return = false;
@@ -107,12 +125,13 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
     // primary source, to allow necessary cleanup if the scan actions
     // or a reduction rule code block throws an exception.
     } catch (...) {
-        // // clear the stack, because we won't need it for the next parse.
-        // // we don't clear the lookahead queue here because we might want to
-        // // parse multiple times from the same input, and the lookahead queue
-        // // could have the next few tokens in it.
-        // ClearStack_();
-        // rethrow the (unknown) exception.
+        // Clear the stack, because we won't need it for the next parse.  We don't clear the
+        // lookahead queue here because we might want to parse multiple times from the same
+        // input, and the lookahead queue could have the next few tokens in it.
+        ClearStack_();
+        assert(m_realized_state_ != NULL);
+        assert(m_hypothetical_state_ == NULL);
+        // Rethrow the (unknown) exception.
         throw;
     }
 
@@ -814,7 +833,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
 // <{class_name}::RealizedState_
 // ////////////////////////////////////////////////////////////////////////////
 
-<{class_name}::RealizedState_::RealizedState_ (std::uint32_t initial_state)
+<{class_name}::RealizedState_::RealizedState_ (Npda__::NpdaStateIndex_ initial_state)
     :   m_max_realized_lookahead_queue_size(0)
     ,   m_has_encountered_error_state(false)
 {
@@ -907,6 +926,25 @@ void <{class_name}::RealizedState_::ExecuteActionDiscardLookahead (HPSQueue_ &hp
 {
     assert(!m_lookahead_queue.empty());
     PopFrontLookahead(hps_queue);
+}
+
+void <{class_name}::RealizedState_::ClearStack ()
+{
+    m_branch_node_ptr_set_stack.clear();
+    m_token_stack.clear();
+}
+
+void <{class_name}::RealizedState_::Reinitialize (Npda__::NpdaStateIndex_ initial_state)
+{
+    // Clear the stack(s) and reset the error state.
+    ClearStack();
+    m_has_encountered_error_state = false;
+    // But preserve m_lookahead_queue and m_max_realized_lookahead_queue_size.
+
+    BranchNodePtrSet_ initial_branch_node_ptr_set;
+    initial_branch_node_ptr_set.insert(BranchNode_::Create(initial_state));
+    m_branch_node_ptr_set_stack.push_back(initial_branch_node_ptr_set);
+    m_token_stack.push_back(Token(Nonterminal::none_));
 }
 
 void <{class_name}::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
@@ -1795,6 +1833,24 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     }
 
     return new_hps;
+}
+
+void <{class_name}::ClearStack_ ()
+{
+    m_realized_state_->ClearStack();
+
+    delete m_hypothetical_state_;
+    m_hypothetical_state_ = NULL;
+}
+
+void <{class_name}::CleanUpAllInternals_ ()
+{
+    // Note that this implicitly resets the error state (since that's tracked by m_realized_state_).
+    delete m_realized_state_;
+    m_realized_state_ = NULL;
+
+    delete m_hypothetical_state_;
+    m_hypothetical_state_ = NULL;
 }
 
 // ////////////////////////////////////////////////////////////////////////////

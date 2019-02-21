@@ -385,22 +385,25 @@ public:
       *        token is Terminal::END_.
       */
     bool IsAtEndOfInput ();
+    /// Returns true iff the most recent parse encountered an error (even if it
+    /// recovered using error handling rules in the grammar).
+    bool HasEncounteredErrorState () const;
 
 <|if(is_defined(generate_debug_spew_code))
     /// Returns true if and only if "debug spew" is enabled (which prints, to the
     /// debug spew stream, exactly what the parser is doing at each step).  This
     /// method, along with all other debug spew code can be removed by removing the
     /// %target.cpp.generate_debug_spew_code directive from the primary source.
-    bool DebugSpewIsEnabled () const { return m_debug_spew_stream != NULL; }
+    bool DebugSpewIsEnabled () const { return m_debug_spew_stream_ != NULL; }
     /// Returns the debug spew stream (see DebugSpewIsEnabled()).  This method,
     /// along with all other debug spew code can be removed by removing the
     /// %target.cpp.generate_debug_spew_code directive from the primary source.
-    std::ostream *DebugSpewStream () { return m_debug_spew_stream; }
+    std::ostream *DebugSpewStream () { return m_debug_spew_stream_; }
     /// Sets the debug spew stream (see DebugSpewIsEnabled()).  If NULL is passed
     /// in, then debug spew printing will be disabled.  The default value is NULL.
     /// This method, along with all other debug spew code can be removed by removing
     /// the %target.cpp.generate_debug_spew_code directive from the primary source.
-    void SetDebugSpewStream (std::ostream *debug_spew_stream) { m_debug_spew_stream = debug_spew_stream; }
+    void SetDebugSpewStream (std::ostream *debug_spew_stream) { m_debug_spew_stream_ = debug_spew_stream; }
     /// Returns the debug spew prefix string, which may depend on values like the
     /// current filename, line number, etc.
     std::string DebugSpewPrefix () const;
@@ -473,15 +476,11 @@ private:
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
-    struct Rule_;
-    struct State_;
-    struct Transition_;
-
 <|if(is_defined(generate_debug_spew_code))
     // debug spew methods
     void PrintIndented_ (std::ostream &stream, char const *string) const;
 
-    std::ostream *m_debug_spew_stream;
+    std::ostream *m_debug_spew_stream_;
 
 <|end_if
 <|if(is_defined(generate_debug_spew_code))
