@@ -1,7 +1,7 @@
 public:
 
-    std::size_t MaxRealizedLookaheadQueueSize () const { return m_npda_->m_realized_state.MaxRealizedLookaheadQueueSize(); }
-    //bool        HasEncounteredErrorState      () const { return m_npda_->m_realized_state.HasEncounteredErrorState(); }
+    std::size_t MaxRealizedLookaheadQueueSize () const { return m_realized_state_->MaxRealizedLookaheadQueueSize(); }
+    //bool        HasEncounteredErrorState      () const { return m_realized_state_->HasEncounteredErrorState(); }
 
 private:
 
@@ -241,19 +241,9 @@ private:
 
     ParseStackTreeNode_ *TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
 
-    // TODO: There's probably no reason to have this class anymore, just put m_realized_state
-    // and m_hypothetical_state in the parser class.
-    struct Npda_
-    {
-        RealizedState_ m_realized_state;
-        HypotheticalState_ m_hypothetical_state;
-
-        Npda_ (Nonterminal::Name nonterminal_to_parse);
-        ~Npda_ ();
-    };
-
-    Npda_ *m_npda_;
-
     static bool CompareTokenId_ (Token::Id lhs, Token::Id rhs) { return lhs < rhs; }
+
+    RealizedState_ *    m_realized_state_;
+    HypotheticalState_ *m_hypothetical_state_;
 
     friend struct ParseStackTreeNode_; // TODO: Is this necessary?

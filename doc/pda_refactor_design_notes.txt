@@ -1151,8 +1151,9 @@ which includes the top element.
 -   NPDA cpp target is working, including error handling, though more testing is needed.
 -   TODO
     -   Clean up target
-        -   Get rid of Npda_
-        -   Create a Grammar_ struct which houses all the grammar structures and data
+        x   Get rid of Npda_
+        x   Create a Grammar_ struct which houses all the grammar structures and data
+        -   Ensure stack and lookahead tokens are cleaned up upon parser destruction
     -   Hook up m_branch_node_token_id_ptr (have to store this in parallel with m_branch_node_ptr_set_stack
         in RealizedState_, but in a way where the pairs of BranchNodePtr_ and BranchNodeTokenIdPtr_ are kept).
         Hook up the equivalent of ThrowAwayRealizedStateStackElement_ (really just take care of the printing).
@@ -1174,5 +1175,3 @@ which includes the top element.
         -   Use range-based for loops
         -   Use strong enums
         -   Are there strong typedefs which don't automatically cast to the underlying type?
-
-TODO start by continuing the Grammar_ and Npda__ refactors and getting stuff to compile

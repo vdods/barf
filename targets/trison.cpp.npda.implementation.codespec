@@ -52,7 +52,9 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
 
 <|end_if
 
-    m_npda_ = new Npda_(nonterminal_to_parse);
+    std::uint32_t start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
+    m_realized_state_ = new RealizedState_(start_state_index);
+    m_hypothetical_state_ = new HypotheticalState_(start_state_index);
 
     bool should_return = false;
 <|if(is_defined(generate_debug_spew_code))
@@ -69,7 +71,7 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
         )
 
 <|end_if
-        if (<{max_allowable_lookahead_count} >= 0 && m_npda_->m_realized_state.MaxRealizedLookaheadQueueSize() > <{max_allowable_lookahead_count})
+        if (<{max_allowable_lookahead_count} >= 0 && m_realized_state_->MaxRealizedLookaheadQueueSize() > <{max_allowable_lookahead_count})
         {
 <|if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Exceeded max allowable lookahead token count (<{max_allowable_lookahead_count}); aborting with error.\n")
@@ -78,7 +80,7 @@ std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterm
             break;
         }
 
-        if (m_npda_->m_hypothetical_state.m_root->HasTrunkChild())
+        if (m_hypothetical_state_->m_root->HasTrunkChild())
             ExecuteAndRemoveTrunkActions_(should_return, parser_return_code_, return_token);
         else
             ContinueNPDAParse_(should_return);
@@ -137,11 +139,11 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Parse stack tree has trunk; executing trunk actions.\n")
 <|end_if
-    //while (m_npda_->m_hypothetical_state.m_root->HasTrunkChild())
+    //while (m_hypothetical_state_->m_root->HasTrunkChild())
     // HIPPO TEMP -- just do one at a time so that the parser state has a chance to be printed after each.
-    if (m_npda_->m_hypothetical_state.m_root->HasTrunkChild())
+    if (m_hypothetical_state_->m_root->HasTrunkChild())
     {
-        ParseStackTreeNode_ *trunk_child = m_npda_->m_hypothetical_state.m_root->PopTrunkChild();
+        ParseStackTreeNode_ *trunk_child = m_hypothetical_state_->m_root->PopTrunkChild();
         bool destroy_and_recreate_parse_tree = false;
         switch (trunk_child->m_spec.m_type)
         {
@@ -149,9 +151,9 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action RETURN.\n")
 <|end_if
-                assert(m_npda_->m_realized_state.TokenStack().size() == 2);
+                assert(m_realized_state_->TokenStack().size() == 2);
                 parser_return_code_ = PRC_SUCCESS;
-                *return_token = m_npda_->m_realized_state.TokenStack().back().m_data;
+                *return_token = m_realized_state_->TokenStack().back().m_data;
                 should_return = true;
                 break;
             }
@@ -162,8 +164,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
 <|end_if
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
-                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_npda_->m_realized_state.TokenStack());
-                m_npda_->m_realized_state.ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_npda_->m_hypothetical_state.m_hps_queue);
+                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
+                m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
 
                 // Note that destroy_and_recreate_parse_tree is not needed for REDUCE, since its
                 // stack will be popped to the state at which the initial branching on the reduced
@@ -175,21 +177,21 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
 <|end_if
-                m_npda_->m_realized_state.ExecuteActionShift(trunk_child->m_child_branch_node_ptr_set, m_npda_->m_hypothetical_state.m_hps_queue);
+                m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_node_ptr_set, m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
 <|end_if
-                m_npda_->m_realized_state.ExecuteActionInsertLookaheadError(m_npda_->m_hypothetical_state.m_hps_queue);
+                m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action DISCARD_LOOKAHEAD.\n")
 <|end_if
-                m_npda_->m_realized_state.ExecuteActionDiscardLookahead(m_npda_->m_hypothetical_state.m_hps_queue);
+                m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseStackTreeNode_::POP_STACK: {
@@ -200,17 +202,17 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 
                 // This one is tricky to implement within RealizedState_ alone, mainly because
                 // of the ThrowAwayToken_ call.
-                if (m_npda_->m_realized_state.TokenStack().size() > pop_count)
+                if (m_realized_state_->TokenStack().size() > pop_count)
                 {
                     for (std::uint32_t i = 0; i < pop_count; ++i)
                     {
                         // TODO: make this call (this is really just for the printing, since
                         // ThrowAwayToken_ is called below)
-                        //ThrowAwayRealizedStateStackElement_(m_npda_->m_realized_state.m_branch_node_ptr_set, m_);
+                        //ThrowAwayRealizedStateStackElement_(m_realized_state_->m_branch_node_ptr_set, m_);
 
                         // TODO: Print the realized state branch node ptr set (this is complicated
                         // because it's a collection of stacks), so do it later.
-                        ThrowAwayToken_(m_npda_->m_realized_state.PopStack());
+                        ThrowAwayToken_(m_realized_state_->PopStack());
                     }
                 }
                 else
@@ -244,15 +246,15 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
             // but preserve m_realized_stack_ and m_realized_lookahead_queue_.  This is rather draconian and is
             // non-optimal in terms of memory allocation operations, but it is simple and effective, and should
             // only occur during error handling.
-            assert(m_npda_->m_hypothetical_state.m_new_hps_queue.empty());
-            m_npda_->m_hypothetical_state.m_hps_queue.clear();
-            delete m_npda_->m_hypothetical_state.m_root;
-            m_npda_->m_hypothetical_state.m_root = NULL;
+            assert(m_hypothetical_state_->m_new_hps_queue.empty());
+            m_hypothetical_state_->m_hps_queue.clear();
+            delete m_hypothetical_state_->m_root;
+            m_hypothetical_state_->m_root = NULL;
             // At this point, the parse tree should be destroyed.  Create a new root node
-            m_npda_->m_hypothetical_state.m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
+            m_hypothetical_state_->m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
             // Then add HPS nodes for each npda state in the top element of m_realized_stack_.
             // TODO: assert that there is at least one branch and its depth is nonzero.
-            BranchNodePtrSet_ const &reconstruct_branch_node_ptr_set = m_npda_->m_realized_state.BranchNodePtrSetStack().back();
+            BranchNodePtrSet_ const &reconstruct_branch_node_ptr_set = m_realized_state_->BranchNodePtrSetStack().back();
 <|if(is_defined(generate_debug_spew_code))
             //TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        reconstructing branches " << reconstruct_branch_node_ptr_set << '\n')
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        reconstructing branches " << "(branch values omitted)" << '\n')
@@ -269,8 +271,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 hps->m_branch_node_token_id_ptr = nullptr; // TODO: FIGURE THIS OUT
 <|end_if
 
-                m_npda_->m_hypothetical_state.m_root->AddChild(hps);
-                m_npda_->m_hypothetical_state.m_hps_queue.push_back(hps);
+                m_hypothetical_state_->m_root->AddChild(hps);
+                m_hypothetical_state_->m_hps_queue.push_back(hps);
             }
 
             // TODO: Because HPS branches are blocked right after a REDUCE or POP_STACK, maybe don't bother
@@ -295,7 +297,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
         ParseStackTreeNode_ *shift  = NULL;
         ParseStackTreeNode_ *reduce = NULL;
         // TODO: Move this handling into its own function
-        if (m_npda_->m_hypothetical_state.m_root->HasShiftReduceConflict(shift, reduce))
+        if (m_hypothetical_state_->m_root->HasShiftReduceConflict(shift, reduce))
         {
             assert(shift != NULL);
             assert(reduce != NULL);
@@ -349,7 +351,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
 <|end_if
-                m_npda_->m_hypothetical_state.RemoveBranchIfNotTrunk(reduce);
+                m_hypothetical_state_->RemoveBranchIfNotTrunk(reduce);
                 delete reduce;
                 reduce = NULL;
                 conflict_resolved = true;
@@ -368,7 +370,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning right-associative REDUCE and continuing.\n")
 <|end_if
-                    m_npda_->m_hypothetical_state.RemoveBranchIfNotTrunk(reduce);
+                    m_hypothetical_state_->RemoveBranchIfNotTrunk(reduce);
                     delete reduce;
                     reduce = NULL;
                     conflict_resolved = true;
@@ -399,7 +401,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning left-associative SHIFT and continuing.\n")
 <|end_if
-                        m_npda_->m_hypothetical_state.RemoveBranchIfNotTrunk(shift);
+                        m_hypothetical_state_->RemoveBranchIfNotTrunk(shift);
                         delete shift;
                         shift = NULL;
                         conflict_resolved = true;
@@ -416,7 +418,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning right-associative REDUCE and continuing.\n")
 <|end_if
-                        m_npda_->m_hypothetical_state.RemoveBranchIfNotTrunk(reduce);
+                        m_hypothetical_state_->RemoveBranchIfNotTrunk(reduce);
                         delete reduce;
                         reduce = NULL;
                         conflict_resolved = true;
@@ -442,7 +444,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning left-associative SHIFT and continuing.\n")
 <|end_if
-                    m_npda_->m_hypothetical_state.RemoveBranchIfNotTrunk(shift);
+                    m_hypothetical_state_->RemoveBranchIfNotTrunk(shift);
                     delete shift;
                     shift = NULL;
                     conflict_resolved = true;
@@ -462,7 +464,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
 <|end_if
-                m_npda_->m_hypothetical_state.RemoveBranchIfNotTrunk(shift);
+                m_hypothetical_state_->RemoveBranchIfNotTrunk(shift);
                 delete shift;
                 shift = NULL;
                 conflict_resolved = true;
@@ -482,17 +484,17 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             {
                 should_return = false;
 
-                assert(m_npda_->m_hypothetical_state.m_new_hps_queue.empty());
+                assert(m_hypothetical_state_->m_new_hps_queue.empty());
                 // Take new hps-es and clear old ones.
-                for (HPSQueue_::iterator hps_it = m_npda_->m_hypothetical_state.m_hps_queue.begin(), hps_it_end = m_npda_->m_hypothetical_state.m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
                 {
                     ParseStackTreeNode_ *hps = *hps_it;
                     if (hps != NULL)
-                        m_npda_->m_hypothetical_state.m_new_hps_queue.push_back(hps);
+                        m_hypothetical_state_->m_new_hps_queue.push_back(hps);
                 }
-                m_npda_->m_hypothetical_state.m_hps_queue.clear();
-                std::swap(m_npda_->m_hypothetical_state.m_hps_queue, m_npda_->m_hypothetical_state.m_new_hps_queue);
-                assert(m_npda_->m_hypothetical_state.m_new_hps_queue.empty());
+                m_hypothetical_state_->m_hps_queue.clear();
+                std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+                assert(m_hypothetical_state_->m_new_hps_queue.empty());
                 // TODO: Break this large function up into smaller logical units
                 return;
             }
@@ -507,7 +509,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     // HPS nodes, it doesn't matter if min_realized_lookahead_cursor is not set to a value different
     // from std::numeric_limits<std::uint32_t>::max(), because it won't be used.
     std::uint32_t min_realized_lookahead_cursor = std::numeric_limits<std::uint32_t>::max();
-    for (HPSQueue_::iterator hps_it = m_npda_->m_hypothetical_state.m_hps_queue.begin(), hps_it_end = m_npda_->m_hypothetical_state.m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
         // Skip nullified HPS nodes.
         if (*hps_it == NULL)
@@ -519,14 +521,14 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     }
 
     // Process transitions in order of their SortedTypeIndex.  Only process HPSes that are at min_realized_lookahead_cursor.
-    assert(m_npda_->m_hypothetical_state.m_new_hps_queue.empty()); // This is the starting condition
+    assert(m_hypothetical_state_->m_new_hps_queue.empty()); // This is the starting condition
     for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
     {
 <|if(is_defined(generate_debug_spew_code))
         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
 <|end_if
-        if (!m_npda_->m_hypothetical_state.m_new_hps_queue.empty())
+        if (!m_hypothetical_state_->m_new_hps_queue.empty())
         {
 <|if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Early-out based on sorted type index.\n")
@@ -535,7 +537,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
         }
 
         // Process non-blocked hps-es.
-        for (HPSQueue_::iterator hps_it = m_npda_->m_hypothetical_state.m_hps_queue.begin(), hps_it_end = m_npda_->m_hypothetical_state.m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
         {
             // Skip nullified HPS nodes.
             if (*hps_it == NULL)
@@ -557,7 +559,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
 <|end_if
-                m_npda_->m_hypothetical_state.m_new_hps_queue.push_back(&hps);
+                m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
                 continue;
             }
@@ -569,7 +571,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
 <|end_if
-                m_npda_->m_hypothetical_state.m_new_hps_queue.push_back(&hps);
+                m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
                 continue;
             }
@@ -636,7 +638,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                     }
                 }
                 if (resulting_hps != NULL)
-                    m_npda_->m_hypothetical_state.m_new_hps_queue.push_back(resulting_hps);
+                    m_hypothetical_state_->m_new_hps_queue.push_back(resulting_hps);
             }
         }
     }
@@ -645,7 +647,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Removing defunct HPSes...\n")
 <|end_if
-    for (HPSQueue_::iterator hps_it = m_npda_->m_hypothetical_state.m_hps_queue.begin(), hps_it_end = m_npda_->m_hypothetical_state.m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
         ParseStackTreeNode_ *hps = *hps_it;
         if (hps != NULL)
@@ -659,9 +661,9 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             delete hps;
         }
     }
-    m_npda_->m_hypothetical_state.m_hps_queue.clear();
-    std::swap(m_npda_->m_hypothetical_state.m_hps_queue, m_npda_->m_hypothetical_state.m_new_hps_queue);
-    assert(m_npda_->m_hypothetical_state.m_new_hps_queue.empty());
+    m_hypothetical_state_->m_hps_queue.clear();
+    std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+    assert(m_hypothetical_state_->m_new_hps_queue.empty());
 }
 
 <{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if}
@@ -723,12 +725,12 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
 void <{class_name}::PrintParserStatus_ (std::ostream &out) const
 {
-    assert(m_npda_->m_hypothetical_state.m_root != NULL);
+    assert(m_hypothetical_state_->m_root != NULL);
 
     // TODO: Print full stack (this is quite a lot)
     out << <{debug_spew_prefix} << "Realized state branch node stacks are (each listed bottom to top):\n";
-    for (BranchNodePtrSet_::const_iterator it = m_npda_->m_realized_state.BranchNodePtrSetStack().back().begin(),
-                                           it_end = m_npda_->m_realized_state.BranchNodePtrSetStack().back().end();
+    for (BranchNodePtrSet_::const_iterator it = m_realized_state_->BranchNodePtrSetStack().back().begin(),
+                                           it_end = m_realized_state_->BranchNodePtrSetStack().back().end();
          it != it_end;
          ++it)
     {
@@ -772,15 +774,13 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     // }
 <|end_if
     out << <{debug_spew_prefix} << "Max realized lookahead count (so far) is:\n";
-    out << <{debug_spew_prefix} << "    " << m_npda_->m_realized_state.MaxRealizedLookaheadQueueSize() << '\n';
+    out << <{debug_spew_prefix} << "    " << m_realized_state_->MaxRealizedLookaheadQueueSize() << '\n';
     out << <{debug_spew_prefix} << "Has-encountered-error-state (so far) is:\n";
-    out << <{debug_spew_prefix} << "    " << (m_npda_->m_realized_state.HasEncounteredErrorState() ? "true" : "false") << '\n';
+    out << <{debug_spew_prefix} << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << <{debug_spew_prefix} << "Realized stack tokens then realized lookahead queue is:\n";
     out << <{debug_spew_prefix} << "    ";
-    // for (std::size_t i = 1; i < m_npda_->m_realized_stack_.size(); ++i)
-    //     out << m_npda_->m_realized_stack_[i].m_token << ' ';
-    for (TokenStack_::const_iterator it = m_npda_->m_realized_state.TokenStack().begin(),
-                                     it_end = m_npda_->m_realized_state.TokenStack().end();
+    for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
+                                     it_end = m_realized_state_->TokenStack().end();
          it != it_end;
          ++it)
     {
@@ -788,10 +788,8 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
         out << token << ' ';
     }
     out << ". ";
-    // for (std::size_t i = 0; i < m_npda_->m_realized_lookahead_queue_.size(); ++i)
-    //     out << m_npda_->m_realized_lookahead_queue_[i] << ' ';
-    for (TokenQueue_::const_iterator it = m_npda_->m_realized_state.LookaheadQueue().begin(),
-                                     it_end = m_npda_->m_realized_state.LookaheadQueue().end();
+    for (TokenQueue_::const_iterator it = m_realized_state_->LookaheadQueue().begin(),
+                                     it_end = m_realized_state_->LookaheadQueue().end();
          it != it_end;
          ++it)
     {
@@ -800,11 +798,11 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     }
     out << '\n';
 
-    m_npda_->m_hypothetical_state.m_root->Print(out, *this, DebugSpewPrefix());
+    m_hypothetical_state_->m_root->Print(out, *this, DebugSpewPrefix());
     out << <{debug_spew_prefix} << '\n';
 
     out << <{debug_spew_prefix} << "HPS queue:\n";
-    for (HPSQueue_::const_iterator it = m_npda_->m_hypothetical_state.m_hps_queue.begin(), it_end = m_npda_->m_hypothetical_state.m_hps_queue.end(); it != it_end; ++it)
+    for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
         ParseStackTreeNode_ *hps = *it;
         assert(hps != NULL);
@@ -831,7 +829,7 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
-    // be factored out into Npda_
+    // be factored out.
 
     m_lookahead_queue.push_back(lookahead);
     UpdateMaxRealizedLookaheadQueueSize(hps_queue);
@@ -916,7 +914,7 @@ void <{class_name}::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
-    // be factored out into Npda_
+    // be factored out.
 
     assert(!m_lookahead_queue.empty());
     // Because the contents of m_lookahead_queue are changing, and each hps's
@@ -934,7 +932,7 @@ void <{class_name}::RealizedState_::PushFrontLookahead (Token const &lookahead, 
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
-    // be factored out into Npda_
+    // be factored out.
 
     m_lookahead_queue.push_front(lookahead);
     // Because the contents of m_lookahead_queue_ are changing, and each hps's
@@ -952,7 +950,7 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadQueueSize (HPSQueu
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
-    // be factored out into Npda_
+    // be factored out.
 
     // HPS's m_realized_lookahead_cursor is an index into RealizedState::m_lookahead_queue, so the number
     // of lookaheads depends on the cursor for each branch.
@@ -1292,11 +1290,6 @@ void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
     if (m_spec.m_type == SHIFT && child->m_spec.m_type == HPS)
     {
         assert(bool(child->m_branch_node_ptr));
-        // child_npda_state_index is not guaranteed to be unique in m_npda_state_set, because the
-        // deeper elements of child->m_stack may be different from HPS to HPS.
-        // NOTE: This code was already commented out, but the refactor to use SharedLinkedListElement
-        // caused it to be deprecated -- it's less obvious how to check for the existence of a
-        // branch node now.
         assert(m_child_branch_node_ptr_set.find(child->m_branch_node_ptr) == m_child_branch_node_ptr_set.end() && "child branch node should not already be in the set");
         m_child_branch_node_ptr_set.insert(child->m_branch_node_ptr);
     }
@@ -1514,8 +1507,8 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
         out << ". ";
         for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
             out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
-        for (std::size_t i = m_realized_lookahead_cursor; i < parser.m_npda_->m_realized_state.LookaheadQueue().size(); ++i)
-            out << ms_token_name_table_[parser.m_npda_->m_realized_state.LookaheadQueue()[i].m_id] << ' ';
+        for (std::size_t i = m_realized_lookahead_cursor; i < parser.m_realized_state_->LookaheadQueue().size(); ++i)
+            out << ms_token_name_table_[parser.m_realized_state_->LookaheadQueue()[i].m_id] << ' ';
     }
     out << '\n';
 
@@ -1535,16 +1528,16 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
 
 <{class_name}::Token const &<{class_name}::Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
 {
-    while (index >= m_npda_->m_realized_state.LookaheadQueue().size())
+    while (index >= m_realized_state_->LookaheadQueue().size())
     {
         // This does not require updating the hps-es' m_realized_lookahead_cursor.
-        m_npda_->m_realized_state.PushBackLookahead(Scan_(), m_npda_->m_hypothetical_state.m_hps_queue);
+        m_realized_state_->PushBackLookahead(Scan_(), m_hypothetical_state_->m_hps_queue);
 <|if(is_defined(generate_debug_spew_code))
 
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Pushed " << m_npda_->m_realized_state.LookaheadQueue().back() << " onto back of lookahead queue\n")
+        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Pushed " << m_realized_state_->LookaheadQueue().back() << " onto back of lookahead queue\n")
 <|end_if
     }
-    return m_npda_->m_realized_state.LookaheadQueue()[index];
+    return m_realized_state_->LookaheadQueue()[index];
 }
 
 <{class_name}::ParseStackTreeNode_ *<{class_name}::TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data)
@@ -1617,7 +1610,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
 <|end_if
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
                     // (replacement instead of creating a new one and deleting the old is an optimization which also
-                    // avoids an annoying traversal through m_npda_->m_hypothetical_state.m_hps_queue).
+                    // avoids an annoying traversal through m_hypothetical_state_->m_hps_queue).
                     // NOTE: This depends on the fact that a REDUCE node has exactly one HPS child,
                     // which is what these three asserts check.  TODO: maybe make abstractions for these sorts of checks.
                     assert(existing_reduce_action_node->m_child_nodes.size() == 1);
@@ -1638,7 +1631,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
                         reduce_hps->RemoveFromParent();
                         // Modify the nodes.
                         existing_reduce_action_node->m_spec = action_spec; // Replace with the winning reduction rule Spec.
-                        hps.CloneLeafNodeInto(*reduce_hps); // NOTE: This modifies the existing hps, so no update of m_npda_->m_hypothetical_state.m_hps_queue is necessary.
+                        hps.CloneLeafNodeInto(*reduce_hps); // NOTE: This modifies the existing hps, so no update of m_hypothetical_state_->m_hps_queue is necessary.
                         // Re-add them to the ParseStackTreeNode_ tree.
                         existing_reduce_action_node->AddChild(reduce_hps);
                         hps.m_parent_node->AddChild(existing_reduce_action_node);
@@ -1802,20 +1795,6 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     }
 
     return new_hps;
-}
-
-// ////////////////////////////////////////////////////////////////////////////
-// <{class_name}::Npda_
-// ////////////////////////////////////////////////////////////////////////////
-
-<{class_name}::Npda_::Npda_ (Nonterminal::Name nonterminal_to_parse)
-    :   m_realized_state(NonterminalStartStateIndex_(nonterminal_to_parse))
-    ,   m_hypothetical_state(NonterminalStartStateIndex_(nonterminal_to_parse))
-{ }
-
-<{class_name}::Npda_::~Npda_ ()
-{
-    // TODO: almost certainly need to throw away tokens from realized stack and lookahead queue
 }
 
 // ////////////////////////////////////////////////////////////////////////////
