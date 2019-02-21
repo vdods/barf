@@ -11,17 +11,16 @@ private:
     typedef std::deque<Token::Id>                       TokenIdQueue_;
 
     // This forms one element, containing the NPDA state index, of a NPDA state stack (aka branch).
-    typedef SharedLinkedListElement_<Npda__::NpdaStateIndex_>   BranchNode_;
+    typedef TreeNode_<Npda__::NpdaStateIndex_>          BranchNode_;
     typedef std::shared_ptr<BranchNode_>                BranchNodePtr_;
-    // This contains the tops of all the branch state stacks.  The ordering is necessary in order
-    // to distinguish different branches that may have identical top states.
-    typedef std::set<BranchNodePtr_,SharedLinkedListElementOrder_<Npda__::NpdaStateIndex_>> BranchNodePtrSet_;
-    typedef std::vector<BranchNodePtrSet_>              BranchNodePtrSetStack_;
+    // This contains the tops of all the branch state stacks for a particular RealizedState_ state.
     typedef std::vector<BranchNodePtr_>                 BranchNodePtrVector_;
+    // This contains the stack of RealizedState_ states.
     typedef std::vector<BranchNodePtrVector_>           BranchNodePtrVectorStack_;
 
 <|if(is_defined(generate_debug_spew_code))
-    typedef SharedLinkedListElement_<Token::Id>         BranchNodeTokenId_;
+    // These are tracked in parallel with BranchNode_, etc for the purposes of debug spew only.
+    typedef TreeNode_<Token::Id>                        BranchNodeTokenId_;
     typedef std::shared_ptr<BranchNodeTokenId_>         BranchNodeTokenIdPtr_;
     typedef std::vector<BranchNodeTokenIdPtr_>          BranchNodeTokenIdPtrVector_;
     typedef std::vector<BranchNodeTokenIdPtrVector_>    BranchNodeTokenIdPtrVectorStack_;

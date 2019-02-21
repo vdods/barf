@@ -869,8 +869,8 @@ void <{class_name}::RealizedState_::ExecuteActionShift (BranchNodePtrVector_ con
     for (BranchNodePtrVector_::const_iterator it = shifted_branch_node_ptr_vector.begin(), it_end = shifted_branch_node_ptr_vector.end(); it != it_end; ++it)
     {
         BranchNodePtr_ const &branch_node_ptr = *it;
-        //assert(branch_node_ptr_vector_stack_top.find(branch_node_ptr->Next()) != branch_node_ptr_vector_stack_top.end());
-        assert(TEMP_vector_find_<SharedLinkedListElementOrder_<Npda__::NpdaStateIndex_>>(branch_node_ptr_vector_stack_top, branch_node_ptr->Next()) != branch_node_ptr_vector_stack_top.end());
+        //assert(branch_node_ptr_vector_stack_top.find(branch_node_ptr->Parent()) != branch_node_ptr_vector_stack_top.end());
+        assert(TEMP_vector_find_<TreeNodeOrder_<Npda__::NpdaStateIndex_>>(branch_node_ptr_vector_stack_top, branch_node_ptr->Parent()) != branch_node_ptr_vector_stack_top.end());
     }
 <|if(is_defined(generate_debug_spew_code))
     BranchNodeTokenIdPtrVector_ const &branch_node_token_id_ptr_vector_stack_top = m_branch_node_token_id_ptr_vector_stack.back();
@@ -879,8 +879,8 @@ void <{class_name}::RealizedState_::ExecuteActionShift (BranchNodePtrVector_ con
     for (BranchNodeTokenIdPtrVector_::const_iterator it = shifted_branch_node_token_id_ptr_vector.begin(), it_end = shifted_branch_node_token_id_ptr_vector.end(); it != it_end; ++it)
     {
         BranchNodeTokenIdPtr_ const &branch_node_token_id_ptr = *it;
-        //assert(branch_node_token_id_ptr_vector_stack_top.find(branch_node_token_id_ptr->Next()) != branch_node_token_id_ptr_vector_stack_top.end());
-        assert(TEMP_vector_find_<SharedLinkedListElementOrder_<Token::Id>>(branch_node_token_id_ptr_vector_stack_top, branch_node_token_id_ptr->Next()) != branch_node_token_id_ptr_vector_stack_top.end());
+        //assert(branch_node_token_id_ptr_vector_stack_top.find(branch_node_token_id_ptr->Parent()) != branch_node_token_id_ptr_vector_stack_top.end());
+        assert(TEMP_vector_find_<TreeNodeOrder_<Token::Id>>(branch_node_token_id_ptr_vector_stack_top, branch_node_token_id_ptr->Parent()) != branch_node_token_id_ptr_vector_stack_top.end());
     }
 <|end_if
     // Ensure that there's actually a lookahead.
@@ -939,12 +939,12 @@ void <{class_name}::RealizedState_::Initialize (Npda__::NpdaStateIndex_ initial_
     assert(m_token_stack.empty());
 
     BranchNodePtrVector_ initial_branch_node_ptr_vector;
-    initial_branch_node_ptr_vector.push_back(BranchNode_::Create(initial_state));
+    initial_branch_node_ptr_vector.push_back(BranchNode_::CreateOrphan(initial_state));
     m_branch_node_ptr_vector_stack.push_back(initial_branch_node_ptr_vector);
 <|if(is_defined(generate_debug_spew_code))
     // Put a dummy token ID in to correspond with the start state.
     BranchNodeTokenIdPtrVector_ initial_branch_node_token_id_ptr_vector;
-    initial_branch_node_token_id_ptr_vector.push_back(BranchNodeTokenId_::Create(Nonterminal::none_));
+    initial_branch_node_token_id_ptr_vector.push_back(BranchNodeTokenId_::CreateOrphan(Nonterminal::none_));
     m_branch_node_token_id_ptr_vector_stack.push_back(initial_branch_node_token_id_ptr_vector);
 <|end_if
     // Put a dummy token in to correspond with the start state.
@@ -1021,9 +1021,9 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadQueueSize (HPSQueu
     m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
 
     ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
-    hps->m_branch_node_ptr = BranchNode_::Create(initial_state);
+    hps->m_branch_node_ptr = BranchNode_::CreateOrphan(initial_state);
 <|if(is_defined(generate_debug_spew_code))
-    hps->m_branch_node_token_id_ptr = BranchNodeTokenId_::Create(Nonterminal::none_);
+    hps->m_branch_node_token_id_ptr = BranchNodeTokenId_::CreateOrphan(Nonterminal::none_);
 <|end_if
 
     m_root->AddChild(hps);
@@ -1221,7 +1221,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
         assert(current_child_depth >= 2);
         // These asserts are equivalent to checking that the stack depth is at least 2.
         assert(bool(m_branch_node_ptr));
-        assert(bool(m_branch_node_ptr->HasNext()));
+        assert(bool(m_branch_node_ptr->HasParent()));
 
         // Thinking of m_branch_node_ptr as the top of the state stack, we want to get the
         // (current_child_depth-1)th element from the top.
@@ -1229,8 +1229,8 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
         for (std::uint32_t i = 0; i < current_child_depth-2; ++i)
         {
             // This assert checks that the stack depth is sufficient.
-            assert(child_branch_node_ptr->HasNext());
-            child_branch_node_ptr = child_branch_node_ptr->Next();
+            assert(child_branch_node_ptr->HasParent());
+            child_branch_node_ptr = child_branch_node_ptr->Parent();
         }
         std::uint32_t state_index = child_branch_node_ptr->Data();
 
@@ -1324,7 +1324,7 @@ void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
     {
         assert(bool(child->m_branch_node_ptr));
         //assert(m_child_branch_node_ptr_vector.find(child->m_branch_node_ptr) == m_child_branch_node_ptr_vector.end() && "child branch node should not already be in the set");
-        assert(TEMP_vector_find_<SharedLinkedListElementOrder_<Npda__::NpdaStateIndex_>>(m_child_branch_node_ptr_vector, child->m_branch_node_ptr) == m_child_branch_node_ptr_vector.end() && "child branch node should not already be in the set");
+        assert(TEMP_vector_find_<TreeNodeOrder_<Npda__::NpdaStateIndex_>>(m_child_branch_node_ptr_vector, child->m_branch_node_ptr) == m_child_branch_node_ptr_vector.end() && "child branch node should not already be in the set");
         m_child_branch_node_ptr_vector.push_back(child->m_branch_node_ptr);
 <|if(is_defined(generate_debug_spew_code))
         assert(bool(child->m_branch_node_token_id_ptr));
@@ -1628,12 +1628,12 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
                 for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
                 {
                     assert(bool(reduce_hps->m_branch_node_ptr));
-                    assert(reduce_hps->m_branch_node_ptr->HasNext());
-                    reduce_hps->m_branch_node_ptr = reduce_hps->m_branch_node_ptr->Next();
+                    assert(reduce_hps->m_branch_node_ptr->HasParent());
+                    reduce_hps->m_branch_node_ptr = reduce_hps->m_branch_node_ptr->Parent();
 <|if(is_defined(generate_debug_spew_code))
                     assert(bool(reduce_hps->m_branch_node_token_id_ptr));
-                    assert(reduce_hps->m_branch_node_token_id_ptr->HasNext());
-                    reduce_hps->m_branch_node_token_id_ptr = reduce_hps->m_branch_node_token_id_ptr->Next();
+                    assert(reduce_hps->m_branch_node_token_id_ptr->HasParent());
+                    reduce_hps->m_branch_node_token_id_ptr = reduce_hps->m_branch_node_token_id_ptr->Parent();
 <|end_if
                 }
                 // Push the reduced nonterminal token data onto the front of the lookahead queue
@@ -1649,12 +1649,10 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             new_hps = hps.CloneLeafNode();
             Token::Id lookahead_token_id = new_hps->LookaheadTokenId(*this);
             // Create a new BranchNodePtr_ and link it to the parent node's.
-            new_hps->m_branch_node_ptr = BranchNode_::Create(state_index);
-            new_hps->m_branch_node_ptr->Append(hps.m_branch_node_ptr);
+            new_hps->m_branch_node_ptr = BranchNode_::CreateWithParent(hps.m_branch_node_ptr, state_index);
 <|if(is_defined(generate_debug_spew_code))
             // Create a new BranchNodeTokenIdPtr and link it to the parent node's
-            new_hps->m_branch_node_token_id_ptr = BranchNodeTokenId_::Create(lookahead_token_id);
-            new_hps->m_branch_node_token_id_ptr->Append(hps.m_branch_node_token_id_ptr);
+            new_hps->m_branch_node_token_id_ptr = BranchNode_::CreateWithParent(hps.m_branch_node_token_id_ptr, lookahead_token_id);
 <|end_if
             // Store the lookahead token id in action_data so it can printed.
             action_data = std::uint32_t(lookahead_token_id);
@@ -1684,7 +1682,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             std::uint32_t const &pop_count = action_data;
             // Check if there are actually enough stack elements to pop successfully.
             // If not, then don't create an HPS, and break early.
-            if (pop_count >= hps.m_branch_node_ptr->ReachableElementCount())
+            if (pop_count >= hps.m_branch_node_ptr->BranchLength())
             {
                 new_hps = NULL;
                 break;
@@ -1693,11 +1691,11 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             new_hps = hps.CloneLeafNode();
             for (std::uint32_t i = 0; i < pop_count; ++i)
             {
-                assert(new_hps->m_branch_node_ptr->HasNext());
-                new_hps->m_branch_node_ptr = new_hps->m_branch_node_ptr->Next();
+                assert(new_hps->m_branch_node_ptr->HasParent());
+                new_hps->m_branch_node_ptr = new_hps->m_branch_node_ptr->Parent();
 <|if(is_defined(generate_debug_spew_code))
-                assert(new_hps->m_branch_node_token_id_ptr->HasNext());
-                new_hps->m_branch_node_token_id_ptr = new_hps->m_branch_node_token_id_ptr->Next();
+                assert(new_hps->m_branch_node_token_id_ptr->HasParent());
+                new_hps->m_branch_node_token_id_ptr = new_hps->m_branch_node_token_id_ptr->Parent();
 <|end_if
             }
 <|if(is_defined(generate_debug_spew_code))

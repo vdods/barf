@@ -1159,17 +1159,18 @@ which includes the top element.
     x   Hook up m_branch_node_token_id_ptr (have to store this in parallel with m_branch_node_ptr_set_stack
         in RealizedState_, but in a way where the pairs of BranchNodePtr_ and BranchNodeTokenIdPtr_ are kept).
         Hook up the equivalent of ThrowAwayRealizedStateStackElement_ (really just take care of the printing).
-    -   Create a better way to print out the SharedLinkedListElement based stacks.
     x   Collapse ParseStackTreeNode_::Print and ParseStackTreeNode_::PrintBasic into one, it's dumb to
         have two almost identical functions.
-    -   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure.
+    -   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
+        (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
     -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
     -   Implement infinite loop detection (maybe as an option?)
     -   Make a more terse debug spew output which is more useful for non-barf developers to debug
         their grammars/parsers.
-    -   Rename SharedLinkedListElement to something like TreeNode and then remove all methods that
+    x   Rename SharedLinkedListElement to something like TreeNode and then remove all methods that
         aren't used.
     -   Move SharedLinkedListElement (TreeNode) code into separate codespec file to be included
+    -   Create a better way to print out the SharedLinkedListElement based stacks.
     -   Maybe make a Branch abstraction that handles the stack-like operations on m_branch_node_ptr, etc.
     -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be
         thread safe).
