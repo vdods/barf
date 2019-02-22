@@ -36,6 +36,7 @@
 <|superclass_and_member_constructors
 <|end_if
 {
+    m_max_allowable_lookahead_count = <{default_max_allowable_lookahead_count};
     m_realized_state_ = NULL;
     m_hypothetical_state_ = NULL;
 <|if(is_defined(generate_debug_spew_code))
@@ -145,7 +146,7 @@ char const *const <{class_name}::ms_parser_return_code_string_table_[] =
 {
     "PRC_SUCCESS",
     "PRC_UNHANDLED_PARSE_ERROR",
-    "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEADS",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT",
     "PRC_INTERNAL_ERROR",
 };
 std::size_t const <{class_name}::ms_parser_return_code_string_count_ = sizeof(<{class_name}::ms_parser_return_code_string_table_) / sizeof(*<{class_name}::ms_parser_return_code_string_table_);

@@ -149,7 +149,8 @@ private:
         TokenStack_ const & TokenStack                          () const { return m_token_stack; }
         TokenQueue_ const & LookaheadQueue                      () const { return m_lookahead_queue; }
 
-        std::size_t         MaxRealizedLookaheadQueueSize       () const { return m_max_realized_lookahead_queue_size; }
+        std::size_t         MaxRealizedLookaheadCount           () const { return m_max_realized_lookahead_count; }
+        bool                HasExceededMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count) const { return max_allowable_lookahead_count >= 0 && m_max_realized_lookahead_count > std::size_t(max_allowable_lookahead_count); }
         bool                HasEncounteredErrorState            () const { return m_has_encountered_error_state; }
 
         // This is used during the hypothetical branch processing for when more lookaheads are needed in the queue.
@@ -183,7 +184,7 @@ private:
 
         void                PopFrontLookahead                   (HPSQueue_ &hps_queue);
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
-        void                UpdateMaxRealizedLookaheadQueueSize (HPSQueue_ const &hps_queue);
+        void                UpdateMaxRealizedLookaheadCount     (HPSQueue_ const &hps_queue);
         void                SetHasEncounteredErrorState         () { m_has_encountered_error_state = true; }
 
         // The set of the realized branches (i.e. the set of the tops of the NPDA state stacks)
@@ -195,7 +196,7 @@ private:
         TokenQueue_                         m_lookahead_queue;
         // This is related to k in the LALR(k) quantity of the grammar, though it's only what's been realized
         // during the parse, not the theoretical bound (if it even exists).
-        std::size_t                         m_max_realized_lookahead_queue_size;
+        std::size_t                         m_max_realized_lookahead_count;
         // TODO: Maybe make this into the number of times error recovery has been entered.
         bool                                m_has_encountered_error_state;
     }; // end of struct <{class_name}::RealizedState_
@@ -207,11 +208,21 @@ private:
         HypotheticalState_      (std::uint32_t initial_state);
         ~HypotheticalState_     ();
 
+        // The min and max realized lookahead cursors being equal across all HPSes indicates that
+        // all HPSes have consumed the same number of lookaheads, so they're in a well-defined
+        // state with respect to resolving SHIFT/REDUCE conflicts.
+        bool                    MinAndMaxRealizedLookaheadCursorsAreEqual () const;
+
         // Removes the branch that the given node is a part of.  A branch of a node N is defined as the set of
         // nodes that are descendants of N, and all ancestors of N having exactly one child.
         void                    RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
 
     //private: // TEMP commented out until HypotheticalState_ is properly encapsulated.
+
+        // Note that if m_hps_queue is empty, then *min = std::numeric_limits<std::uint32_t>::max()
+        // and *max = std::numeric_limits<std::uint32_t>::min().  If min or max is nullptr, doesn't
+        // assign to that one.
+        void                    ComputeMinAndMaxRealizedLookaheadCursors (std::uint32_t *min, std::uint32_t *max) const;
 
         ParseStackTreeNode_ *   m_root;
         HPSQueue_               m_hps_queue;
@@ -335,8 +346,8 @@ private:
         // multiple children).
         ParseStackTreeNode_ *BranchRoot ();
         Token::Id LookaheadTokenId (<{class_name} &parser) const;
-        // Any HPS whose parent action pops the stack at all is blocked (because its future depends on the
-        // values of the stack below the top).  Also, RETURN is considered to block, since nothing can happen after.
+        // Some actions are considered to block the HPS from continuing (because it must be realized before
+        // continuing).  RETURN is considered to block, since nothing can happen after.
         bool IsBlockedHPS () const;
         PrecedenceLevelRange ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const;
         // Returns true if and only if there is exactly one SHIFT child and one REDUCE child.
@@ -356,7 +367,7 @@ private:
         void CloneLeafNodeInto (ParseStackTreeNode_ &orphan_target) const;
 <|if(is_defined(generate_debug_spew_code))
 
-        void Print (std::ostream &out, <{class_name} const *parser, std::string const &prefix, std::uint32_t indent_level = 0) const;
+        void Print (std::ostream &out, <{class_name} const *parser, std::string const &prefix, std::uint32_t indent_level = 0, bool suppress_initial_prefix = false) const;
 <|end_if
     }; // end of struct <{class_name}::ParseStackTreeNode_
 

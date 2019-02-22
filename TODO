@@ -333,6 +333,12 @@ template <Uint32 high> struct SmallestUint {
     -   Put the epsilon closure of each NPDA state in the states file to make it easier for the reader.
 -   Collapse some options together using arguments (e.g. the pairs of "do" and "don't" options).
 -   Add [ ] brackets to "symbol" class in kate syntax highlighting file.
+-   Add symbols and strings/chars to the body section of codespec kate syntax highlighting file, so that
+    at least some syntax highlighting is done in the body.
 -   Could add "indent" and "unindent" directives to BPP in order to better format code as well as
     allow implementation of Python targets (since they're indentation-sensitive).  Would need this
     to work inside "if" blocks.
+-   Make the npda states file grammar section print out the precedence levels and print the precedence
+    for each rule (including default)
+-   There appears to be a crash bug in trison where an undeclared terminal is used in the bracketed
+    %error[...] syntax.

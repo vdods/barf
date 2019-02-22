@@ -57,7 +57,7 @@ public:
         PRC_UNHANDLED_PARSE_ERROR,
         /// Indicates that the parse was halted because the number of realized
         /// lookaheads exceeded the max allowable lookahead count (NPDA target only).
-        PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEADS,
+        PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT,
         /// Indicates that the parse didn't complete because of some internal error.
         PRC_INTERNAL_ERROR
     }; // end of enum <{class_name}::ParserReturnCode
@@ -174,10 +174,20 @@ public:
     /// Returns true iff the most recent parse encountered an error (even if it
     /// recovered using error handling rules in the grammar).
     bool HasEncounteredErrorState () const;
+    /// Returns the highest value that MaxRealizedLookaheadCount may be before the
+    /// PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT error is generated.  The default
+    /// is set by the default_max_allowable_lookahead_count directive, which is
+    /// documented in trison.cpp.targetspec.  A negative value means that there is
+    /// no limit.
+    std::int64_t MaxAllowableLookaheadCount () const;
     /// Returns the maximum number of lookaheads used in any parser decision so far
     /// (this is not the theoretical maximum for the grammar/npda, it's the maximum
     /// only for the states the parser has actually encountered).
-    std::size_t MaxRealizedLookaheadQueueSize () const { return m_realized_state_->MaxRealizedLookaheadQueueSize(); }
+    std::size_t MaxRealizedLookaheadCount () const;
+
+    /// Sets the maximum allowable lookahead count.  The initial value is given by
+    /// the default_max_allowable_lookahead_count directive defined in trison.cpp.targetspec.
+    void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
 
 <|if(is_defined(generate_debug_spew_code))
     /// Returns true if and only if "debug spew" is enabled (which prints, to the
@@ -263,6 +273,8 @@ private:
     // ///////////////////////////////////////////////////////////////////////
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
+
+    std::int64_t m_max_allowable_lookahead_count;
 
 <|if(is_defined(generate_debug_spew_code))
     // debug spew methods

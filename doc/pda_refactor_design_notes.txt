@@ -1150,35 +1150,44 @@ which includes the top element.
 
 -   NPDA cpp target is working, including error handling, though more testing is needed.
 -   TODO
-    -   Clean up target
-        x   Get rid of Npda_
-        x   Create a Grammar_ struct which houses all the grammar structures and data
-        x   Ensure stack and lookahead tokens are cleaned up upon parser destruction
-        x   Change /* */ style doxygen comments to use /// style
-        x   Check if `friend struct ParseStackTreeNode_;` is necessary
-    x   Hook up m_branch_node_token_id_ptr (have to store this in parallel with m_branch_node_ptr_set_stack
-        in RealizedState_, but in a way where the pairs of BranchNodePtr_ and BranchNodeTokenIdPtr_ are kept).
-        Hook up the equivalent of ThrowAwayRealizedStateStackElement_ (really just take care of the printing).
-    x   Collapse ParseStackTreeNode_::Print and ParseStackTreeNode_::PrintBasic into one, it's dumb to
-        have two almost identical functions.
-    -   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
-        (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
-    -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
-    -   Implement infinite loop detection (maybe as an option?)
-    -   Make a more terse debug spew output which is more useful for non-barf developers to debug
-        their grammars/parsers.
-    x   Rename SharedLinkedListElement to something like TreeNode and then remove all methods that
-        aren't used.
-    x   Create a better way to print out the TreeNode based stacks.
-    -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be
-        thread safe).
-    -   Handle the fact that case 3 of shift/reduce conflict is commented out (probably uncomment it
-        and see if it's still valid).
-    x   Handle %target.cpp.enable_scan_actions_exceptions and %target.cpp.enable_reduction_rule_exceptions
-    -   Run valgrind to ensure that there are no memory leaks
-    -   Run against steel parser (modify steel parser as needed).
-    -   C++ modernization (use at least C++11)
-        -   Use std::array for static storage of state/transition/etc tables.
-        -   Use range-based for loops
-        -   Use strong enums
-        -   Are there strong typedefs which don't automatically cast to the underlying type?
+    -   For sure:
+        x   Clean up target
+            x   Get rid of Npda_
+            x   Create a Grammar_ struct which houses all the grammar structures and data
+            x   Ensure stack and lookahead tokens are cleaned up upon parser destruction
+            x   Change /* */ style doxygen comments to use /// style
+            x   Check if `friend struct ParseStackTreeNode_;` is necessary
+        x   Hook up m_branch_node_token_id_ptr (have to store this in parallel with m_branch_node_ptr_set_stack
+            in RealizedState_, but in a way where the pairs of BranchNodePtr_ and BranchNodeTokenIdPtr_ are kept).
+            Hook up the equivalent of ThrowAwayRealizedStateStackElement_ (really just take care of the printing).
+        x   Collapse ParseStackTreeNode_::Print and ParseStackTreeNode_::PrintBasic into one, it's dumb to
+            have two almost identical functions.
+        x   Rename SharedLinkedListElement to something like TreeNode and then remove all methods that
+            aren't used.
+        x   Create a better way to print out the TreeNode based stacks.
+        x   Handle %target.cpp.enable_scan_actions_exceptions and %target.cpp.enable_reduction_rule_exceptions
+        -   Check if POP_STACK could be considered to be a non-blocking action (this is potentially
+            ok because of the constraint regarding m_realized_lookahead_cursor on processing HPSes).
+            This might require adding cases to ParseStackTreeNode_::ComputePrecedenceLevelRange
+        -   Make an enum for rule associativity and a string table for it.
+        -   Run against all BARF parsers and ensure they still work.
+        -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
+        -   Handle the fact that case 3 of shift/reduce conflict is commented out (probably uncomment it
+            and see if it's still valid).
+        -   Run valgrind to ensure that there are no memory leaks
+        -   Run against steel parser (modify steel parser as needed).
+    -   Nice to have
+        -   C++ modernization (use at least C++11)
+            -   Use std::array for static storage of state/transition/etc tables.
+            -   Use range-based for loops
+            -   Use strong enums
+            -   Are there strong typedefs which don't automatically cast to the underlying type?
+        -   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
+            (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
+        -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
+        -   Implement infinite loop detection (maybe as an option?)
+        -   Make a more terse debug spew output which is more useful for non-barf developers to debug
+            their grammars/parsers.
+
+
+
