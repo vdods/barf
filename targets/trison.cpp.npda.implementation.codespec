@@ -20,7 +20,6 @@ std::ostream &operator << (std::ostream &out, std::vector<T> const &s)
 }
 
 <|end_if
-
 template <typename LessThan, typename T>
 typename std::vector<T>::const_iterator TEMP_vector_find_ (typename std::vector<T> const &vec, T const &val)
 {
@@ -742,25 +741,9 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
          ++it)
     {
         BranchNodePtr_ const &branch_node_ptr = *it;
-        // This is sort of dumb, but this is an effective way to traverse a singly-linked list backwards.
-        {
-            out << <{debug_spew_prefix} << "    (";
-            std::vector<Npda__::NpdaStateIndex_> npda_state_stack_reversed;
-            branch_node_ptr->PopulateVector(npda_state_stack_reversed);
-            for (std::vector<Npda__::NpdaStateIndex_>::reverse_iterator it = npda_state_stack_reversed.rbegin(),
-                                                                it_end = npda_state_stack_reversed.rend();
-                 it != it_end;
-                 ++it)
-            {
-                // TODO: Set the output width to be the max of any state
-                out << *it;
-                std::vector<Npda__::NpdaStateIndex_>::reverse_iterator next_it = it;
-                ++next_it;
-                if (next_it != it_end)
-                    out << ' ';
-            }
-            out << ")\n";
-        }
+        out << <{debug_spew_prefix} << "    (";
+        branch_node_ptr->PrintRootToLeaf(out, IdentityTransform_<Npda__::NpdaStateIndex_>);
+        out << ")\n";
     }
 
     out << <{debug_spew_prefix} << "Max realized lookahead count (so far) is:\n";
@@ -1424,7 +1407,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     out << AsString(m_spec.m_type) << ' ' << this;
     if (m_spec.m_type == HPS)
     {
-        out << (IsBlockedHPS() ? " (    blocked, " : " (non-blocked, ");
+        out << (IsBlockedHPS() ? " (    blocked," : " (non-blocked,");
         out << " m_realized_lookahead_cursor = " << m_realized_lookahead_cursor << ')';
     }
     switch (m_spec.m_type)
@@ -1440,39 +1423,15 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
         out << ' ' << Npda__::ms_state_table_[m_branch_node_ptr->Data()].m_description << ' ';
     if (m_spec.m_type == HPS)
     {
-        out << "    (";
-        // This is sort of dumb, but this is an effective way to traverse a singly-linked list backwards.
         assert(bool(m_branch_node_ptr));
-        {
-            std::vector<Npda__::NpdaStateIndex_> npda_state_stack_reversed;
-            m_branch_node_ptr->PopulateVector(npda_state_stack_reversed);
-            for (std::vector<Npda__::NpdaStateIndex_>::reverse_iterator it = npda_state_stack_reversed.rbegin(),
-                                                                it_end = npda_state_stack_reversed.rend();
-                 it != it_end;
-                 ++it)
-            {
-                out << *it;
-                std::vector<Npda__::NpdaStateIndex_>::reverse_iterator next_it = it;
-                ++next_it;
-                if (next_it != it_end)
-                    out << ' ';
-            }
-        }
-        out << "); ";
-        // This is sort of dumb, but this is an effective way to traverse a singly-linked list backwards.
         assert(bool(m_branch_node_token_id_ptr));
-        {
-            std::vector<Token::Id> token_id_stack_reversed;
-            m_branch_node_token_id_ptr->PopulateVector(token_id_stack_reversed);
-            for (std::vector<Token::Id>::reverse_iterator it = token_id_stack_reversed.rbegin(),
-                                                          it_end = token_id_stack_reversed.rend();
-                 it != it_end;
-                 ++it)
-            {
-                out << ms_token_name_table_[*it] << ' ';
-            }
-        }
-        out << ". ";
+
+        out << "    (";
+        m_branch_node_ptr->PrintRootToLeaf(out, IdentityTransform_<Npda__::NpdaStateIndex_>);
+        out << "); ";
+
+        m_branch_node_token_id_ptr->PrintRootToLeaf(out, TokenName_);
+        out << " . ";
         for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
             out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
         if (parser != NULL)

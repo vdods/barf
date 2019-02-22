@@ -1169,9 +1169,7 @@ which includes the top element.
         their grammars/parsers.
     x   Rename SharedLinkedListElement to something like TreeNode and then remove all methods that
         aren't used.
-    -   Move SharedLinkedListElement (TreeNode) code into separate codespec file to be included
-    -   Create a better way to print out the SharedLinkedListElement based stacks.
-    -   Maybe make a Branch abstraction that handles the stack-like operations on m_branch_node_ptr, etc.
+    x   Create a better way to print out the TreeNode based stacks.
     -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be
         thread safe).
     -   Handle the fact that case 3 of shift/reduce conflict is commented out (probably uncomment it

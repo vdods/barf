@@ -4,6 +4,107 @@ private:
 
 <|include("trison.cpp.npda.npda.header.codespec")
 
+    // NOTE: Because this uses std::shared_ptr, if you create a cycle in the list (which is valid and
+    // the algorithms will work), then you must explicitly break it later in order for that memory to
+    // be cleaned up (otherwise the ref count of the elements in the cycle will never go back to zero).
+    template <typename DataType>
+    struct TreeNode_ : public std::enable_shared_from_this<TreeNode_<DataType>>
+    {
+        // Ideally this would be private and std::make_shared<TreeNode_> would be a friend
+        // in order to force use of std::make_shared to construct std::shared_ptr<TreeNode_>
+        // instances instead of bare TreeNode_ instances, but I couldn't figure out how to
+        // do this correctly.
+        template <typename... Types>
+        TreeNode_ (std::shared_ptr<TreeNode_> const &parent, Types&&... args)
+            :   m_parent(parent)
+            ,   m_data(std::forward<Types>(args)...)
+        { }
+
+        template <typename... Types>
+        static std::shared_ptr<TreeNode_> CreateWithParent (std::shared_ptr<TreeNode_> const &parent, Types&&... args)
+        {
+            return std::make_shared<TreeNode_>(parent, std::forward<Types>(args)...);
+        }
+        template <typename... Types>
+        static std::shared_ptr<TreeNode_> CreateOrphan (Types&&... args)
+        {
+            return std::make_shared<TreeNode_>(nullptr, std::forward<Types>(args)...);
+        }
+
+        bool HasParent () const { return bool(m_parent); }
+        std::shared_ptr<TreeNode_ const> Parent () const { return m_parent; }
+        std::shared_ptr<TreeNode_> const &Parent () { return m_parent; }
+        DataType const &Data () const { return m_data; }
+        DataType &Data () { return m_data; }
+        std::size_t BranchLength () const
+        {
+            if (HasParent())
+                return 1 + Parent()->BranchLength_Impl(*this);
+            else
+                return 1;
+        }
+
+        template <typename T>
+        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &)) const
+        {
+            if (this->HasParent())
+            {
+                Parent()->PrintRootToLeaf(out, DataTransform);
+                out << ' ';
+            }
+            out << DataTransform(Data());
+        }
+
+    private:
+
+        // The initial_element parameter is used to prevent infinite loop in the case of a branch containing a cycle.
+        std::size_t BranchLength_Impl (TreeNode_ const &initial_element) const
+        {
+            if (this == &initial_element)
+                return 0;
+            else if (HasParent())
+                return 1 + Parent()->BranchLength_Impl(initial_element);
+            else
+                return 1;
+        }
+
+        std::shared_ptr<TreeNode_> m_parent;
+        DataType m_data;
+    };
+
+    template <typename DataType>
+    struct TreeNodeOrder_
+    {
+        bool operator () (std::shared_ptr<TreeNode_<DataType>> const &lhs, std::shared_ptr<TreeNode_<DataType>> const &rhs) const
+        {
+            if (bool(lhs))
+            {
+                if (bool(rhs))
+                {
+                    if (lhs->Data() < rhs->Data())
+                        return true;
+                    else if (lhs->Data() > rhs->Data())
+                        return false;
+                    else
+                        // Recursive case defined on the tails of lhs and rhs respectively.
+                        return this->operator()(lhs->Parent(), rhs->Parent());
+                }
+                else
+                    // Declare non-null to be "greater than" null.
+                    return false;
+            }
+            else
+            {
+                if (bool(rhs))
+                    // Declare null to be "less than" non-null.
+                    return true;
+                else
+                    // Declare null to be "equal to" null.
+                    return false;
+            }
+        }
+    };
+
     typedef std::uint32_t                               ActionData_;
 
     typedef std::deque<Token>                           TokenQueue_;
@@ -24,6 +125,12 @@ private:
     typedef std::shared_ptr<BranchNodeTokenId_>         BranchNodeTokenIdPtr_;
     typedef std::vector<BranchNodeTokenIdPtr_>          BranchNodeTokenIdPtrVector_;
     typedef std::vector<BranchNodeTokenIdPtrVector_>    BranchNodeTokenIdPtrVectorStack_;
+
+    // These are used in printing the branch state stacks and token id stacks.
+    template <typename T>
+    static T const &IdentityTransform_ (T const &x) { return x; }
+
+    static char const *TokenName_ (Token::Id const &token_id) { return ms_token_name_table_[token_id]; }
 
 <|end_if
     struct  ParseStackTreeNode_;
