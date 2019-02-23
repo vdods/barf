@@ -1166,6 +1166,7 @@ which includes the top element.
             aren't used.
         x   Create a better way to print out the TreeNode based stacks.
         x   Handle %target.cpp.enable_scan_actions_exceptions and %target.cpp.enable_reduction_rule_exceptions
+        -   Implement %lookahead directive
         -   Check if POP_STACK could be considered to be a non-blocking action (this is potentially
             ok because of the constraint regarding m_realized_lookahead_cursor on processing HPSes).
             This might require adding cases to ParseStackTreeNode_::ComputePrecedenceLevelRange
@@ -1189,5 +1190,132 @@ which includes the top element.
         -   Make a more terse debug spew output which is more useful for non-barf developers to debug
             their grammars/parsers.
 
+2018.02.23 ----------------------------
 
+-   Create a %lookahead directive that can be used at the end of a rule (and maybe in the middle)
+    where the rule can't reduce (or shift, respectively) unless the lookahead condition is satisfied.
+    It would be something like
 
+        possibly_empty_list <- possibly_empty_list ',' thing
+        possibly_empty_list <- thing
+        // This would be assuming that possibly_empty_list is always followed by ')' or %end
+        possibly_empty_list <- %lookahead[')'|%end]
+
+    And maybe add a negation operator also, something like
+
+        %lookahead[^%end]
+
+    Could then add an implicit %lookahead[^N] for any nonterminal N reduction rule, so that e.g.
+    the rule
+
+        N <- // empty reduction rule
+
+    doesn't enter an infinite loop where it just keeps reducing the empty string to N over and
+    over, filling up the lookahead queue.  This may need to come with the constraint that a
+    nonterminal which accepts `empty` can't be repeated in a rule (though maybe not, and maybe
+    it's better left up to the programmer, instead of adding an implicit %lookahead[^N]).
+
+    If this is to be a thing, then there should be general syntax for specifying subsets of
+    tokens, through "or" (using existing symbol '|'), "and" (using symbol '&'), and "not"
+    (using symbol '^'), and parens to indicate associativity in those expressions.  This
+    should apply to the bracketed expression following %error as well.
+
+    Would an efficient implementation of this require adding a negation operation to the
+    transition specification in the NPDA state DAG?
+
+    First pass would just to be to add the negation operator, so that the empty reduction
+    rule case can be implemented and tested.
+
+    Would it make sense to name the directive something like
+
+        %noconsume_lookahead
+        %require_lookahead
+        %with_lookahead
+
+    and/or somehow make it obvious that it doesn't actually consume a token, especially
+    if it occurs in the middle of a rule.
+
+    Examples
+
+        state 123:
+            rule 456: N <- A B C .
+
+            default:REDUCE rule 456
+
+    If this rule became `N <- A B C %lookahead[^K]`, then the state would look like (with a denoting
+    the modified state/rule):
+
+        state 123a:
+            rule 456a: N <- A B C . %lookahead[^K]
+
+            K:INSERT_LOOKAHEAD_ERROR
+            default:REDUCE rule 456
+            ERROR_:POP_STACK 1
+
+    Thus if the string `K` were encountered at some state that has an epsilon closure including
+    state 123a (and a state that accepts token K normally), then because INSERT_LOOKAHEAD_ERROR
+    has a lower priority than normal acceptance of a token, state 123a would not accept K, and
+    the state that does accept K would win.
+
+    Need to determine if this causes problems with complicated lookahead specs
+
+    -   `rule 123 : N <- A B C . %lookahead[^K|L]` : would require that the lookahead is not K or is L
+        (kind of a dumb requirement unless K is a nonterminal that could begin with L?).  Its
+        transitions would be
+
+            K:INSERT_LOOKAHEAD_ERROR
+            L:REDUCE rule 123
+            default(^K):REDUCE rule 123
+            ERROR_:POP_STACK 1 // exists because there is an INSERT_LOOKAHEAD_ERROR
+
+        Strictly speaking, because ^K includes L and the L transition is the same as the default
+        transition, there's no reason to have an explicit transition for L (it would be subsumed
+        by the default transition).
+
+    -   `rule 123 : N <- A B C %lookahead
+
+    Alternate idea, which may or may not simplify things: Phrase %lookahead transitions as
+    conditional epsilon transitions, so that
+
+        rule 123 : N <- A B C %lookahead[K]
+
+    would become
+
+        rule 123,0 : N <- . A B C %lookahead[K]
+        rule 123,1 : N <- A . B C %lookahead[K]
+        rule 123,2 : N <- A B . C %lookahead[K]
+        rule 123,3 : N <- A B C . %lookahead[K]
+        rule 123,4 : N <- A B C %lookahead[K] .
+
+    and then there's no fancy logic that has to be added to the REDUCE actions.  This would probably
+    make it automatic to have mid-rule %lookahead directives, such as
+
+        rule 789 : X <- '(' %lookahead[^'('] expr ')' // if you wanted to avoid X reducing from e.g. ((3))
+
+    would becomes
+
+        rule 789,0 : X <- . '(' %lookahead[^'('] expr ')'
+        rule 789,1 : X <- '(' . %lookahead[^'('] expr ')' // this would have a conditional epsilon transition
+        rule 789,2 : X <- '(' %lookahead[^'('] . expr ')'
+        rule 789,3 : X <- '(' %lookahead[^'('] expr . ')'
+        rule 789,4 : X <- '(' %lookahead[^'('] expr ')' .
+
+    Unfortunately, adding conditional epsilon transitions would add a parameter to the memoization of
+    epsilon closures, potentially multiplying the number of memoized items by the number of tokens.
+    Though that's probably ok, because there are 2 memoized functions, each currently having a single
+    state index as their parameter.  This would make the memoized value bound S*T, where S and T are
+    the number of states and the number of tokens respectively, which is probably reasonable.
+
+    That, or the logic regarding epsilon transitions would need to change somewhat.
+
+    Let "token filter" denote a subset of tokens which specifies the filter for %lookahead (or the
+    negation of the filter for %error, which should be changed so that %error specifies the filter
+    directly).  The space of token filters has size 2^T, where T is the number of tokens.  Because
+    T is usually going to be at least around 300 (all chars 0-255, then user-defined tokens starting
+    at 256), it's not really reasonable to represent these subsets directly (e.g. as a bitsets)
+
+    What is needed: an efficient way to represent these token filters along with an efficient way
+    to decide if a token is a member of that filter.  The most common filters are going to be of
+    the form [K] or [^K] for some token K.  These are easy.  The next most common will have the
+    form [K|L] or [^(K|L)] for some token K and L.  These are slightly less easy, but still doable.
+    Need a general scheme.

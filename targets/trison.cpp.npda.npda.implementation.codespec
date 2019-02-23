@@ -1,7 +1,7 @@
-<{class_name}::Npda__::NpdaStateIndexVector_ const &<{class_name}::Npda__::EpsilonClosureOfState_ (NpdaStateIndex_ state_index)
+<{class_name}::Npda_::StateIndexVector_ const &<{class_name}::Npda_::EpsilonClosureOfState_ (StateIndex_ state_index)
 {
     // Memoize this function, because it will be called so many times and is somewhat intensive.
-    typedef std::map<NpdaStateIndex_,NpdaStateIndexVector_> LookupTable;
+    typedef std::map<StateIndex_,StateIndexVector_> LookupTable;
     static LookupTable s_lookup_table;
 
     LookupTable::iterator find_it = s_lookup_table.find(state_index);
@@ -9,14 +9,14 @@
         return find_it->second;
 
     // Compute the epsilon closure as a set
-    NpdaStateIndexSet_ epsilon_closure_set;
+    StateIndexSet_ epsilon_closure_set;
     ComputeEpsilonClosureOfState_(state_index, epsilon_closure_set);
 
     // Copy the states in the set into the memoized vector.
 //    std::cerr << "EpsilonClosureOfState_(" << state_index << "):"; // HIPPO
-    NpdaStateIndexVector_ &epsilon_closure = s_lookup_table[state_index];
+    StateIndexVector_ &epsilon_closure = s_lookup_table[state_index];
     epsilon_closure.reserve(epsilon_closure_set.size());
-    for (NpdaStateIndexSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
+    for (StateIndexSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
     {
 //        std::cerr << ' ' << *it; // HIPPO
         epsilon_closure.push_back(*it);
@@ -26,7 +26,7 @@
     return epsilon_closure;
 }
 
-void <{class_name}::Npda__::ComputeEpsilonClosureOfState_ (NpdaStateIndex_ state_index, NpdaStateIndexSet_ &epsilon_closure)
+void <{class_name}::Npda_::ComputeEpsilonClosureOfState_ (StateIndex_ state_index, StateIndexSet_ &epsilon_closure)
 {
     // NOTE: The working definition of epsilon closure in this implementation used to only include
     // states that had non-epsilon transitions, but has been changed to include all epsilon-reachable
@@ -52,59 +52,12 @@ void <{class_name}::Npda__::ComputeEpsilonClosureOfState_ (NpdaStateIndex_ state
     }
 }
 
-<{class_name}::Npda__::NpdaStateIndexVector_ const &<{class_name}::Npda__::EpsilonClosureOfStateSet_ (NpdaStateIndexSet_ const &state_set)
-{
-    // This function implementation depends on there not being an epsilon transition cycle.
-
-    // Memoize this function, because it will be called so many times and is somewhat intensive.
-    typedef std::map<NpdaStateIndexSet_,NpdaStateIndexVector_> LookupTable;
-    static LookupTable s_lookup_table;
-    {
-        LookupTable::iterator find_it = s_lookup_table.find(state_set);
-        if (find_it != s_lookup_table.end())
-            return find_it->second;
-    }
-
-    // This set collects the epsilon closure with no duplicates
-    NpdaStateIndexSet_ epsilon_closure_set;
-
-    for (NpdaStateIndexSet_::const_iterator it = state_set.begin(), it_end = state_set.end(); it != it_end; ++it)
-    {
-        NpdaStateIndex_ state_index = *it;
-        State_ const &state = ms_state_table_[state_index];
-        bool state_has_non_epsilon_transitions = false;
-        for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count;
-             transition != transition_end;
-             ++transition)
-        {
-            if (transition->m_type == Transition_::EPSILON)
-            {
-                NpdaStateIndexVector_ const &sub_epsilon_closure = EpsilonClosureOfState_(transition->m_data_index);
-                for (NpdaStateIndexVector_::const_iterator it = sub_epsilon_closure.begin(), it_end = sub_epsilon_closure.end(); it != it_end; ++it)
-                    epsilon_closure_set.insert(*it);
-            }
-            else
-                state_has_non_epsilon_transitions = true;
-        }
-        // The epsilon closure of a state includes itself if it has non-epsilon transitions
-        if (state_has_non_epsilon_transitions)
-            epsilon_closure_set.insert(state_index);
-    }
-
-    // Add all the elements of epsilon_closure_set to the memoized entry.
-    NpdaStateIndexVector_ &epsilon_closure = s_lookup_table[state_set];
-    epsilon_closure.reserve(epsilon_closure_set.size());
-    for (NpdaStateIndexSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
-        epsilon_closure.push_back(*it);
-    return epsilon_closure;
-}
-
-<{class_name}::Npda__::TransitionVector_ const &<{class_name}::Npda__::NonEpsilonTransitionsOfState_ (NpdaStateIndex_ state_index, std::uint32_t sorted_type_index)
+<{class_name}::Npda_::TransitionVector_ const &<{class_name}::Npda_::NonEpsilonTransitionsOfState_ (StateIndex_ state_index, std::uint32_t sorted_type_index)
 {
     assert(0 <= sorted_type_index && sorted_type_index <= 3);
 
     // Memoize this function, because it will be called so many times and is somewhat intensive.
-    typedef std::pair<NpdaStateIndex_,std::uint32_t> KeyType;
+    typedef std::pair<StateIndex_,std::uint32_t> KeyType;
     typedef std::map<KeyType,TransitionVector_> LookupTable;
     static LookupTable s_lookup_table;
 
@@ -115,8 +68,8 @@ void <{class_name}::Npda__::ComputeEpsilonClosureOfState_ (NpdaStateIndex_ state
 
     // TODO: probably don't need to memoize epsilon closures because non-epsilon transitions is memoized.
     TransitionSet_ non_epsilon_transition_set;
-    NpdaStateIndexVector_ const &epsilon_closure = EpsilonClosureOfState_(state_index);
-    for (NpdaStateIndexVector_::const_iterator it = epsilon_closure.begin(), it_end = epsilon_closure.end(); it != it_end; ++it)
+    StateIndexVector_ const &epsilon_closure = EpsilonClosureOfState_(state_index);
+    for (StateIndexVector_::const_iterator it = epsilon_closure.begin(), it_end = epsilon_closure.end(); it != it_end; ++it)
     {
         State_ const &state = ms_state_table_[*it];
         for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count; transition != transition_end; ++transition)
@@ -134,18 +87,18 @@ void <{class_name}::Npda__::ComputeEpsilonClosureOfState_ (NpdaStateIndex_ state
     return non_epsilon_transitions;
 }
 
-<{class_name}::Npda__::State_ const <{class_name}::Npda__::ms_state_table_[] =
+<{class_name}::Npda_::State_ const <{class_name}::Npda_::ms_state_table_[] =
 {
 <|loop(i, _npda_state_count)
     { <{_npda_state_transition_count[i]}, ms_transition_table_+<{_npda_state_transition_offset[i]}, <{_npda_state_rule_index[i]}<{if(is_defined(generate_debug_spew_code))}, <{_npda_state_description[i]}<{end_if} }<{if(i < _npda_state_count-1)},<{end_if}
 <|end_loop
 };
-std::size_t const <{class_name}::Npda__::ms_state_count_ = sizeof(<{class_name}::Npda__::ms_state_table_) / sizeof(*<{class_name}::Npda__::ms_state_table_);
+std::size_t const <{class_name}::Npda_::ms_state_count_ = sizeof(<{class_name}::Npda_::ms_state_table_) / sizeof(*<{class_name}::Npda_::ms_state_table_);
 
-<{class_name}::Npda__::Transition_ const <{class_name}::Npda__::ms_transition_table_[] =
+<{class_name}::Npda_::Transition_ const <{class_name}::Npda_::ms_transition_table_[] =
 {
 <|loop(i, _npda_transition_count)
-    { <{class_name}::Npda__::Transition_::<{_npda_transition_type_name[i]}, <{_npda_transition_token_index[i]}, std::uint32_t(<{_npda_transition_data_index[i]}) }<{if(i < _npda_transition_count-1)},<{end_if}
+    { <{class_name}::Npda_::Transition_::<{_npda_transition_type_name[i]}, <{_npda_transition_token_index[i]}, std::uint32_t(<{_npda_transition_data_index[i]}) }<{if(i < _npda_transition_count-1)},<{end_if}
 <|end_loop
 };
-std::size_t const <{class_name}::Npda__::ms_transition_count_ = sizeof(<{class_name}::Npda__::ms_transition_table_) / sizeof(*<{class_name}::Npda__::ms_transition_table_);
+std::size_t const <{class_name}::Npda_::ms_transition_count_ = sizeof(<{class_name}::Npda_::ms_transition_table_) / sizeof(*<{class_name}::Npda_::ms_transition_table_);

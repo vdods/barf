@@ -272,10 +272,6 @@ template <Uint32 high> struct SmallestUint {
     This would allow a balance between DPDA-generation for commonly used grammar pathways
     and the flexibility of NPDA parsers.
 -   port NPDA code to offline DPDA generation (after NPDA has been fully unit tested)
--   For %error directives that aren't the last token, probably require that there are no
-    lookahead terminals specified (i.e. so that it's only %error, not %error[a|b|c])
--   For %error directives that are the last token, require that there are lookahead
-    terminals specified, and that %end is one of them.
 -   NPDA parser test design notes
     -   need to test a bunch of different grammars
         -   grammars with bounded lookahead (1, 2, 3, and 0 if that's possible)
@@ -342,3 +338,15 @@ template <Uint32 high> struct SmallestUint {
     for each rule (including default)
 -   There appears to be a crash bug in trison where an undeclared terminal is used in the bracketed
     %error[...] syntax.
+-   Should re-add the specification of which stage of each rule it is in the npda state file,
+    probably as a tuple, like if there is
+
+        rule 123 : blah <- A B C
+
+    then there would be
+
+        rule 123,0 : blah <- . A B C
+        rule 123,1 : blah <- A . B C
+        rule 123,2 : blah <- A B . C
+        rule 123,3 : blah <- A B C .
+

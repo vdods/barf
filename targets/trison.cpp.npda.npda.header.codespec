@@ -1,4 +1,4 @@
-    struct Npda__ // TODO: Rename to Npda_ after the other Npda_ has been removed
+    struct Npda_
     {
         struct Transition_;
 
@@ -71,23 +71,28 @@
 
         typedef std::set<Transition_,Transition_::Order>    TransitionSet_;
         typedef std::vector<Transition_>                    TransitionVector_;
-        // Rename these to StateIndex, etc;
-        typedef std::uint32_t                               NpdaStateIndex_;
-        typedef std::set<NpdaStateIndex_>                   NpdaStateIndexSet_;
-        typedef std::vector<NpdaStateIndex_>                NpdaStateIndexVector_;
+
+        typedef std::uint32_t                               StateIndex_;
+        typedef std::set<StateIndex_>                       StateIndexSet_;
+        typedef std::vector<StateIndex_>                    StateIndexVector_;
+
+    private:
+
+        // These functions are used in the implementation of NonEpsilonTransitionsOfState_.
 
         // Returns the epsilon closure of the given NPDA state.  Return value is memoized.
-        static NpdaStateIndexVector_ const &EpsilonClosureOfState_ (NpdaStateIndex_ state_index);
+        static StateIndexVector_ const &EpsilonClosureOfState_ (StateIndex_ state_index);
         // Computes the epsilon closure of the given NPDA state, placing the computed value in epsilon_closure.
-        static void ComputeEpsilonClosureOfState_ (NpdaStateIndex_ state_index, NpdaStateIndexSet_ &epsilon_closure);
-        // Returns the epsilon closure of the given NPDA state set.  Return value is memoized.
-        static NpdaStateIndexVector_ const &EpsilonClosureOfStateSet_ (NpdaStateIndexSet_ const &state_set);
+        static void ComputeEpsilonClosureOfState_ (StateIndex_ state_index, StateIndexSet_ &epsilon_closure);
+
+    public:
+
         // Returns the transitions, matching given sorted_type_index, for the epsilon closure of the given NPDA state.  Return value is memoized.
-        static TransitionVector_ const &NonEpsilonTransitionsOfState_ (NpdaStateIndex_ state_index, std::uint32_t sorted_type_index);
+        static TransitionVector_ const &NonEpsilonTransitionsOfState_ (StateIndex_ state_index, std::uint32_t sorted_type_index);
 
         // TODO: rename to STATE_TABLE and TRANSITION_TABLE ?
         static State_ const         ms_state_table_[];
         static std::size_t const    ms_state_count_;
         static Transition_ const    ms_transition_table_[];
         static std::size_t const    ms_transition_count_;
-    }; // end of struct <{class_name}::Npda__
+    }; // end of struct <{class_name}::Npda_

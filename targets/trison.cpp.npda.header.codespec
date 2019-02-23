@@ -112,7 +112,7 @@ private:
     typedef std::deque<Token::Id>                       TokenIdQueue_;
 
     // This forms one element, containing the NPDA state index, of a NPDA state stack (aka branch).
-    typedef TreeNode_<Npda__::NpdaStateIndex_>          BranchNode_;
+    typedef TreeNode_<Npda_::StateIndex_>               BranchNode_;
     typedef std::shared_ptr<BranchNode_>                BranchNodePtr_;
     // This contains the tops of all the branch state stacks for a particular RealizedState_ state.
     typedef std::vector<BranchNodePtr_>                 BranchNodePtrVector_;
@@ -139,7 +139,7 @@ private:
 
     struct RealizedState_
     {
-        RealizedState_      (Npda__::NpdaStateIndex_ initial_state);
+        RealizedState_      (Npda_::StateIndex_ initial_state);
 
         BranchNodePtrVectorStack_ const &BranchNodePtrVectorStack     () const { return m_branch_node_ptr_vector_stack; }
 <|if(is_defined(generate_debug_spew_code))
@@ -158,7 +158,7 @@ private:
 
         Token               PopStack                            ();
 
-        // void                ExecuteAction                       (Npda__::Transition_::Type action, ActionData_ action_data);
+        // void                ExecuteAction                       (Npda_::Transition_::Type action, ActionData_ action_data);
 
         // TODO: Need to figure out how to handle popping the token stack (since in a way it should be the
         // responsibility of ExecuteAction).  Maybe ExecuteAction should accept Token* which it will populate
@@ -176,11 +176,11 @@ private:
         //void                ExecuteActionPopStack               (std::uint32_t pop_count);
 
         void                ClearStack                          ();
-        void                Reinitialize                        (Npda__::NpdaStateIndex_ initial_state);
+        void                Reinitialize                        (Npda_::StateIndex_ initial_state);
 
     private:
 
-        void                Initialize                          (Npda__::NpdaStateIndex_ initial_state);
+        void                Initialize                          (Npda_::StateIndex_ initial_state);
 
         void                PopFrontLookahead                   (HPSQueue_ &hps_queue);
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
@@ -237,7 +237,7 @@ private:
     // TODO: This should probably be inside HypotheticalState_
     struct ParseStackTreeNode_
     {
-        // The values of RETURN through POP_STACK coincide with the same in Npda__::Transition_::Type.
+        // The values of RETURN through POP_STACK coincide with the same in Npda_::Transition_::Type.
         // Note: HPS stands for "Hypothetical Parser State", which represents one of possibly many
         // ways the non-deterministic parser can parse the input.
         // TODO: probably order this so that the Spec::Order gives an obvious way to do error handling action last
