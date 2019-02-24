@@ -352,3 +352,22 @@ template <Uint32 high> struct SmallestUint {
 
 -   There should be an %empty directive which is required to have an empty reduction rule.  This
     makes it possible to grep for that.
+-   Change dont_generate_timestamps to generate_timestamps, since you usually don't want that anyway.
+    OR better yet just get rid of timestamps, since that's made obsolete by version control and other
+    modern techniques.
+-   Probably restructure the `targets` directory to be hierarchical, like
+
+        targets
+            reflex
+                cpp
+                    <associated files>
+            trison
+                cpp
+                    <general use trison cpp files>
+                    dpda
+                        <associated files
+                    npda
+                        <associated files>
+
+    and then make the include directive use that directory hierarchy.  Probably require full
+    paths in include directive, and disallow relative paths.
