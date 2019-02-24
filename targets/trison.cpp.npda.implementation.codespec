@@ -825,8 +825,7 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
 
 <{class_name}::Token <{class_name}::RealizedState_::PopStack ()
 {
-    // There is a dummy token at the bottom of the stack which corresponds with the start state.
-    assert(m_token_stack.size() >= 2);
+    assert(!m_token_stack.empty());
 
     Token popped_token(m_token_stack.back());
     m_token_stack.pop_back();
@@ -838,7 +837,32 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
     m_branch_node_token_id_ptr_vector_stack.pop_back();
 <|end_if
 
+    assert(m_branch_node_ptr_vector_stack.size() == m_token_stack.size());
+<|if(is_defined(generate_debug_spew_code))
+    assert(m_branch_node_ptr_vector_stack.size() == m_branch_node_token_id_ptr_vector_stack.size());
+<|end_if
+
     return popped_token;
+}
+
+<{class_name}::Token <{class_name}::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
+{
+    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
+    // this RealizedState_ method will be responsible for handling some HypotheticalState_
+    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
+    // be factored out.
+
+    assert(!m_lookahead_queue.empty());
+    // Because the contents of m_lookahead_queue are changing, and each hps's
+    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
+    for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        ParseStackTreeNode_ &hps = **hps_it;
+        --hps.m_realized_lookahead_cursor;
+    }
+    Token retval(m_lookahead_queue.back());
+    m_lookahead_queue.pop_front();
+    return retval;
 }
 
 // void <{class_name}::RealizedState_::ExecuteAction (Npda_::Transition_::Type action, ActionData_ action_data)
@@ -953,24 +977,6 @@ void <{class_name}::RealizedState_::Initialize (Npda_::StateIndex_ initial_state
     m_token_stack.push_back(Token(Nonterminal::none_));
 }
 
-void <{class_name}::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
-{
-    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
-    // this RealizedState_ method will be responsible for handling some HypotheticalState_
-    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
-    // be factored out.
-
-    assert(!m_lookahead_queue.empty());
-    // Because the contents of m_lookahead_queue are changing, and each hps's
-    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
-    for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
-    {
-        ParseStackTreeNode_ &hps = **hps_it;
-        --hps.m_realized_lookahead_cursor;
-    }
-    m_lookahead_queue.pop_front();
-}
-
 void <{class_name}::RealizedState_::PushFrontLookahead (Token const &lookahead, HPSQueue_ &hps_queue)
 {
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
@@ -1034,10 +1040,11 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ c
 
 <{class_name}::HypotheticalState_::~HypotheticalState_ ()
 {
-    delete m_root;
-    m_root = NULL;
     m_hps_queue.clear();
     m_new_hps_queue.clear();
+
+    delete m_root;
+    m_root = NULL;
 }
 
 bool <{class_name}::HypotheticalState_::MinAndMaxRealizedLookaheadCursorsAreEqual () const
@@ -1775,7 +1782,12 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
 
 void <{class_name}::ClearStack_ ()
 {
-    m_realized_state_->ClearStack();
+    if (m_realized_state_ != NULL)
+    {
+        // TODO: Could print the m_realized_state_ m_branch_node_ptr_vector_stack element being popped.
+        while (!m_realized_state_->TokenStack().empty())
+            ThrowAwayToken_(m_realized_state_->PopStack());
+    }
 
     delete m_hypothetical_state_;
     m_hypothetical_state_ = NULL;
@@ -1783,9 +1795,19 @@ void <{class_name}::ClearStack_ ()
 
 void <{class_name}::CleanUpAllInternals_ ()
 {
-    // Note that this implicitly resets the error state (since that's tracked by m_realized_state_).
-    delete m_realized_state_;
-    m_realized_state_ = NULL;
+    if (m_realized_state_ != NULL)
+    {
+        // TODO: Could print the m_realized_state_ m_branch_node_ptr_vector_stack element being popped.
+        while (!m_realized_state_->TokenStack().empty())
+            ThrowAwayToken_(m_realized_state_->PopStack());
+
+        while (!m_realized_state_->LookaheadQueue().empty())
+            ThrowAwayToken_(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+
+        // Note that this implicitly resets the error state (since that's tracked by m_realized_state_).
+        delete m_realized_state_;
+        m_realized_state_ = NULL;
+    }
 
     delete m_hypothetical_state_;
     m_hypothetical_state_ = NULL;

@@ -157,6 +157,7 @@ private:
         void                PushBackLookahead                   (Token const &lookahead, HPSQueue_ const &hps_queue);
 
         Token               PopStack                            ();
+        Token               PopFrontLookahead                   (HPSQueue_ &hps_queue);
 
         // void                ExecuteAction                       (Npda_::Transition_::Type action, ActionData_ action_data);
 
@@ -182,7 +183,6 @@ private:
 
         void                Initialize                          (Npda_::StateIndex_ initial_state);
 
-        void                PopFrontLookahead                   (HPSQueue_ &hps_queue);
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
         void                UpdateMaxRealizedLookaheadCount     (HPSQueue_ const &hps_queue);
         void                SetHasEncounteredErrorState         () { m_has_encountered_error_state = true; }

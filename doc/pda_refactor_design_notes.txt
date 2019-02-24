@@ -1166,29 +1166,36 @@ which includes the top element.
             aren't used.
         x   Create a better way to print out the TreeNode based stacks.
         x   Handle %target.cpp.enable_scan_actions_exceptions and %target.cpp.enable_reduction_rule_exceptions
-        -   Implement %lookahead directive
+        x   Fix steel parser to work with updated trison.
+        x   Handle the fact that case 3 of shift/reduce conflict is commented out (probably uncomment it
+            and see if it's still valid).
+        -   Run against all BARF parsers and ensure they still work.
         -   Check if POP_STACK could be considered to be a non-blocking action (this is potentially
             ok because of the constraint regarding m_realized_lookahead_cursor on processing HPSes).
             This might require adding cases to ParseStackTreeNode_::ComputePrecedenceLevelRange
-        -   Make an enum for rule associativity and a string table for it.
-        -   Run against all BARF parsers and ensure they still work.
-        -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
-        -   Handle the fact that case 3 of shift/reduce conflict is commented out (probably uncomment it
-            and see if it's still valid).
-        -   Run valgrind to ensure that there are no memory leaks
-        -   Run against steel parser (modify steel parser as needed).
+        -   Implement %nonassoc error handling
+        -   Run valgrind to ensure that there are no memory leaks (it appears that there probably are)
+            NOTE: RealizedState_ doesn't apparently clean up properly (it doesn't execute throw-away actions
+            on its token stack or lookahead queue)
     -   Nice to have
         -   C++ modernization (use at least C++11)
             -   Use std::array for static storage of state/transition/etc tables.
             -   Use range-based for loops
             -   Use strong enums
             -   Are there strong typedefs which don't automatically cast to the underlying type?
+        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
+        -   Make an enum for rule associativity and a string table for it.
         -   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
             (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
         -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
         -   Implement infinite loop detection (maybe as an option?)
         -   Make a more terse debug spew output which is more useful for non-barf developers to debug
             their grammars/parsers.
+        -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
+            Useful references:
+            -   https://stackoverflow.com/questions/15129263/is-there-a-non-atomic-equivalent-of-stdshared-ptr-and-why-isnt-there-one-in/15141844#15141844
+            -   https://www.boost.org/doc/libs/1_65_0/libs/smart_ptr/doc/html/smart_ptr.html#local_shared_ptr
+            -   https://stackoverflow.com/questions/35470061/linking-pthread-disables-lock-free-shared-ptr-implementation
 
 2018.02.23 ----------------------------
 
@@ -1319,3 +1326,60 @@ which includes the top element.
     the form [K] or [^K] for some token K.  These are easy.  The next most common will have the
     form [K|L] or [^(K|L)] for some token K and L.  These are slightly less easy, but still doable.
     Need a general scheme.
+
+    In terms of the NPDA graph, the easiest way to proceed would be to just add a single conditional
+    epsilon transition for eah element in the filter.  Though this would suffer when the filter has
+    the form [^K] and therefore contains almost all tokens.  Thus the conditional epsilons have to
+    be formed in terms of this efficient token filter representation.
+
+    One thing to note is that the syntax used to specify the token filter is going to correspond
+    closely with the complexity of the filter itself.  I.e. simple filters have simple syntax, such
+    as [K] and [^K] and [^K&^L].  DeMorgan's laws can be used to express any filter as [T1|T2|...|Tn]
+    or [^(T1|T2|...|Tn)] where the presence or non-presence of ^ is chosen to minimize n.
+
+    Call [T1|...|Tn] a "positive filter in canonical form" and call [^(T1|...|Tn)] a
+    "negative filter in canonical form".
+
+    On the other hand, it's not infeasible to have a fixed-size state transition table, which
+    specifies a constant-time lookup for each token, parameterized by the state index, call it
+    L(s), where s is the state index.  This would have the form
+
+        L(s) :
+            T1 -> action for T1
+            T2 -> action for T2
+            ...
+            Tn -> action for Tn
+
+            E1,...,Ek // list of [unconditional] epsilon transitions; each of E1,...,Ek is the
+            target state index.
+
+    Note that there is a sentinal token value "NONE" (i.e. Nonterminal::none_ which is equal to zero)
+    that can't be used for transitions, and is a special value in relevant logic.
+
+    for all tokens, and then instead of performing complex logic to determine which action to
+    do, you just look up the token and perform the action if appropriate.  Because the epsilon
+    transitions don't correspond to a token, and there can be arbitrarily many of them, they
+    would need to be specified separately from the lookup table as a list.  There would be a
+    new "conditional epsilon" action, which would be used in the epsilon closure logic.
+
+    Let the epsilon closure, parameterized by (current_state, lookahead_token), be denoted as
+    EC(s,t), where s and t are the current state and lookahead token, and would be a union of
+    the following:
+    -   EC(Ej,t) for each Ej in L(s) (i.e. epsilon closure of each [unconditional] epsilon transition)
+    -   EC(L(s)(t),t) (i.e. epsilon closure of conditional epsilon transition) if t != NONE
+
+    IDEA: Allow assignment of variable to a %lookahead directive, and it will be that token ID
+    in the rule reduction handler, so you can make logic based on which lookahead it is.  e.g.
+
+    %nonterminal blah
+    :
+        A:a B:b C:c %lookahead[K|L]:lookahead_token_id %target.cpp {
+            // :lookahead_token_id is a declared and initialized variable of type Token::Id
+            // and its value is the token ID of the lookahead, which in this case is going
+            // to be K or L.
+            <do something with lookahead_token_id>
+        }
+    ;
+
+    This is a rather large refactor, and while is worth doing, it should be done after finishing
+    an MVP of this pda refactor effort.

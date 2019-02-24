@@ -350,3 +350,5 @@ template <Uint32 high> struct SmallestUint {
         rule 123,2 : blah <- A B . C
         rule 123,3 : blah <- A B C .
 
+-   There should be an %empty directive which is required to have an empty reduction rule.  This
+    makes it possible to grep for that.
