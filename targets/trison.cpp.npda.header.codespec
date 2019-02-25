@@ -211,9 +211,12 @@ private:
         // state with respect to resolving SHIFT/REDUCE conflicts.
         bool                    MinAndMaxRealizedLookaheadCursorsAreEqual () const;
 
-        // Removes the branch that the given node is a part of.  A branch of a node N is defined as the set of
-        // nodes that are descendants of N, and all ancestors of N having exactly one child.
-        ParseStackTreeNode_ *   RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
+        // Deletes the branch that the given node (which may not be the root node) is a part of.
+        // A branch of a node N is defined as the set of nodes that are descendants of N, and all
+        // ancestors of N having exactly one child, excluding the root node.  Thus if the whole parse
+        // tree is a single line of nodes extending from the root, then calling DeleteBranch on any
+        // non-root node will delete all non-root nodes.
+        void                    DeleteBranch (ParseStackTreeNode_ *branch_node);
 
         // Destroys the parse tree and recreates a root node with no children.
         void                    DestroyParseTree ();
@@ -351,6 +354,8 @@ private:
 <|end_if
         ~ParseStackTreeNode_ ();
 
+        bool IsRoot () const { return m_parent_node == NULL; }
+        bool HasParent () const { return m_parent_node != NULL; }
         bool HasTrunkChild () const;
         ParseStackTreeNode_ *PopTrunkChild ();
         bool HasChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.find(spec) != m_child_nodes.end(); }
