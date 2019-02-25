@@ -206,10 +206,6 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
                 m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
-
-                // Note that destroy_and_recreate_parse_tree is not needed for REDUCE, since its
-                // stack will be popped to the state at which the initial branching on the reduced
-                // nonterminal is done (i.e. before any eplison closures for that nonterminal).
                 break;
             }
             case ParseStackTreeNode_::SHIFT: {
@@ -259,10 +255,17 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                     should_return = true;
                 }
 
-                // Because POP_STACK involves popping the stack, indicate that the parse tree should be destroyed and
-                // recreated (from the branches in the top of the realized state stack).  This is draconian and
-                // non-optimal, but simple and effective.
-                destroy_and_recreate_parse_tree = true;
+                // Because POP_STACK involves popping the stack, the parse tree should be destroyed and
+                // recreated (from the branches in the top of the realized state stack).  This is somewhat
+                // draconian and non-optimal, but simple and effective.
+<|if(is_defined(generate_debug_spew_code))
+                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
+<|end_if
+                m_hypothetical_state_->DestroyParseTree();
+                CreateParseTreeFromRealizedState_();
+                // TODO: Because HPS branches are blocked right after POP_STACK, maybe don't bother adding any
+                // additional children below POP_STACK nodes (i.e. one HPS child of POP_STACK is sufficient to
+                // keep it alive probably).  This would reduce the number of memory operations.
                 break;
             }
 
@@ -273,50 +276,6 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
         assert(trunk_child->m_parent_node == NULL);
         assert(trunk_child->m_child_nodes.empty());
         delete trunk_child;
-
-        if (destroy_and_recreate_parse_tree)
-        {
-<|if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
-<|end_if
-            // Destroy the whole parse tree and reconstruct HPSes based on the branches on the top
-            // of the realized state stack. but preserve the realized state stack and realized lookahead queue.
-            // This is rather draconian and is non-optimal in terms of memory allocation operations, but it
-            // is simple and effective, and should only occur during error handling.
-            assert(m_hypothetical_state_->m_new_hps_queue.empty());
-            m_hypothetical_state_->m_hps_queue.clear();
-            delete m_hypothetical_state_->m_root;
-            m_hypothetical_state_->m_root = NULL;
-            // At this point, the parse tree should be destroyed.  Create a new root node
-            m_hypothetical_state_->m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
-            // Then add HPS nodes for each branch in the top of the realized state stack.
-            assert(!m_realized_state_->BranchNodePtrVectorStack().empty());
-            BranchNodePtrVector_ const &reconstruct_branch_node_ptr_vector = m_realized_state_->BranchNodePtrVectorStack().back();
-            assert(!reconstruct_branch_node_ptr_vector.empty());
-<|if(is_defined(generate_debug_spew_code))
-            BranchNodeTokenIdPtrVector_ const &reconstruct_branch_node_token_id_ptr_vector = m_realized_state_->BranchNodeTokenIdPtrVectorStack().back();
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        reconstructing branches " << reconstruct_branch_node_ptr_vector << '\n')
-            assert(reconstruct_branch_node_ptr_vector.size() == reconstruct_branch_node_token_id_ptr_vector.size());
-<|end_if
-            for (std::size_t i = 0; i < reconstruct_branch_node_ptr_vector.size(); ++i)
-            {
-                BranchNodePtr_ const &branch_node_ptr = reconstruct_branch_node_ptr_vector[i];
-<|if(is_defined(generate_debug_spew_code))
-                BranchNodeTokenIdPtr_ const &branch_node_token_id_ptr = reconstruct_branch_node_token_id_ptr_vector[i];
-<|end_if
-                ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
-                hps->m_branch_node_ptr = branch_node_ptr;
-<|if(is_defined(generate_debug_spew_code))
-                hps->m_branch_node_token_id_ptr = branch_node_token_id_ptr;
-<|end_if
-
-                m_hypothetical_state_->m_root->AddChild(hps);
-                m_hypothetical_state_->m_hps_queue.push_back(hps);
-            }
-
-            // TODO: Because HPS branches are blocked right after POP_STACK, maybe don't bother adding any
-            // children below POP_STACK nodes.  This would reduce the number of memory operations.
-        }
     }
 }
 
@@ -467,6 +426,22 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "composition of non-associative rules is an error.\n")
 <|end_if
+                        // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
+                        // action to initiate error panic.  This works only because the shift and reduce nodes
+                        // are children of the parse tree root.
+                        assert(shift->m_parent_node == m_hypothetical_state_->m_root);
+                        assert(reduce->m_parent_node == m_hypothetical_state_->m_root);
+
+                        // TODO:
+                        // - Create a new HPS for each branch on the top of the branch stack in m_realized_state_
+                        //   and add it as a child to m_hypothetical_state_->m_root
+                        // - For each of those newly created HPSes, call TakeHypotheticalActionOnHPS_ with
+                        //   action INSERT_LOOKAHEAD_ERROR.
+                        // - Delete the branches corresponding to shift and reduce, which should both die now.
+                        //   This MUST happen AFTER the INSERT_LOOKAHEAD_ERROR stuff is done, otherwise the
+                        //   RemoveBranchIfNotTrunk will fail due to it finding the root node as the branch root
+                        //   and then doing nothing.
+
                         assert(false && "TODO: implement nonassoc error handling");
                         break;
 
@@ -1055,6 +1030,8 @@ bool <{class_name}::HypotheticalState_::MinAndMaxRealizedLookaheadCursorsAreEqua
 
 <{class_name}::ParseStackTreeNode_ *<{class_name}::HypotheticalState_::RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node)
 {
+    // TODO: Change this to DeleteNonTrunkBranch, where it is an error to attempt to delete the trunk.
+
     // Find the most root-ward ancestor that is an only child.
     ParseStackTreeNode_ *branch_root = branch_node->BranchRoot();
     assert(branch_root != NULL);
@@ -1066,6 +1043,17 @@ bool <{class_name}::HypotheticalState_::MinAndMaxRealizedLookaheadCursorsAreEqua
     }
     // Return branch_root because otherwise it's a dangling pointer.
     return branch_root;
+}
+
+void <{class_name}::HypotheticalState_::DestroyParseTree ()
+{
+    assert(m_new_hps_queue.empty());
+    // Clear all HPSes, which represent the leaf nodes of the parse tree.
+    m_hps_queue.clear();
+    // Delete the parse tree root, which deletes all nodes.
+    delete m_root;
+    // At this point, the parse tree has been destroyed.  Create a new root node.
+    m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
 }
 
 void <{class_name}::HypotheticalState_::ComputeMinAndMaxRealizedLookaheadCursors (std::uint32_t *min, std::uint32_t *max) const
@@ -1791,6 +1779,34 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     }
 
     return new_hps;
+}
+
+void <{class_name}::CreateParseTreeFromRealizedState_ ()
+{
+    BranchNodePtrVector_ const &reconstruct_branch_node_ptr_vector = m_realized_state_->BranchNodePtrVectorStack().back();
+    BranchNodeTokenIdPtrVector_ const &reconstruct_branch_node_token_id_ptr_vector = m_realized_state_->BranchNodeTokenIdPtrVectorStack().back();
+
+    // Add HPS nodes for each branch in the top of the realized state stack.
+    assert(!reconstruct_branch_node_ptr_vector.empty());
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        reconstructing branches " << reconstruct_branch_node_ptr_vector << '\n')
+    assert(reconstruct_branch_node_ptr_vector.size() == reconstruct_branch_node_token_id_ptr_vector.size());
+<|end_if
+    for (std::size_t i = 0; i < reconstruct_branch_node_ptr_vector.size(); ++i)
+    {
+        BranchNodePtr_ const &branch_node_ptr = reconstruct_branch_node_ptr_vector[i];
+<|if(is_defined(generate_debug_spew_code))
+        BranchNodeTokenIdPtr_ const &branch_node_token_id_ptr = reconstruct_branch_node_token_id_ptr_vector[i];
+<|end_if
+        ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
+        hps->m_branch_node_ptr = branch_node_ptr;
+<|if(is_defined(generate_debug_spew_code))
+        hps->m_branch_node_token_id_ptr = branch_node_token_id_ptr;
+<|end_if
+
+        m_hypothetical_state_->m_root->AddChild(hps);
+        m_hypothetical_state_->m_hps_queue.push_back(hps);
+    }
 }
 
 void <{class_name}::ClearStack_ ()

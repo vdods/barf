@@ -215,6 +215,9 @@ private:
         // nodes that are descendants of N, and all ancestors of N having exactly one child.
         ParseStackTreeNode_ *   RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
 
+        // Destroys the parse tree and recreates a root node with no children.
+        void                    DestroyParseTree ();
+
     //private: // TEMP commented out until HypotheticalState_ is properly encapsulated.
 
         // Note that if m_hps_queue is empty, then *min = std::numeric_limits<std::uint32_t>::max()
@@ -387,6 +390,10 @@ private:
     Token const &Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
 
     ParseStackTreeNode_ *   TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
+    // Recreates the parse tree (i.e. the contents of m_hypothetical_state_) from the top of the
+    // branch set stack of m_realized_state_, specifically, creates an HPS corresponding to each
+    // branch, adding each created HPS as a child to the root node.
+    void                    CreateParseTreeFromRealizedState_ ();
 
     static bool             CompareTokenId_             (Token::Id lhs, Token::Id rhs) { return lhs < rhs; }
 
