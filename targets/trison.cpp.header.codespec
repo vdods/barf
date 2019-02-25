@@ -320,6 +320,17 @@ private:
 std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode parser_return_code);
 
 std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
-
+<|if(0)
+// This is for use in debugging ParseStackTreeNode_ object leaks
+template <typename T>
+std::ostream &operator << (std::ostream &out, std::set<T> const &s)
+{
+    out << "{ ";
+    for (typename std::set<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
+        out << *it << ", ";
+    out << '}';
+    return out;
+}
+<|end_if
 <|end_if
 <|bottom_of_header_file?

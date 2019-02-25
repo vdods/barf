@@ -52,6 +52,12 @@
 {
     // Perform all the internal cleanup needed.
     CleanUpAllInternals_();
+<|if(0)
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "dangling ParseStackTreeNode_ pointers:" << ParseStackTreeNode_::ms_active_pointer_set << '\n')
+
+<|end_if
+<|end_if
 <|if(is_defined(destructor_actions))
 
 <|destructor_actions

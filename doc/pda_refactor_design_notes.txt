@@ -1169,20 +1169,20 @@ which includes the top element.
         x   Fix steel parser to work with updated trison.
         x   Handle the fact that case 3 of shift/reduce conflict is commented out (probably uncomment it
             and see if it's still valid).
-        -   Run against all BARF parsers and ensure they still work.
-        -   Check if POP_STACK could be considered to be a non-blocking action (this is potentially
-            ok because of the constraint regarding m_realized_lookahead_cursor on processing HPSes).
-            This might require adding cases to ParseStackTreeNode_::ComputePrecedenceLevelRange
-        -   Implement %nonassoc error handling
-        -   Run valgrind to ensure that there are no memory leaks (it appears that there probably are)
+        x   Run valgrind to ensure that there are no memory leaks (it appears that there probably are)
             NOTE: RealizedState_ doesn't apparently clean up properly (it doesn't execute throw-away actions
             on its token stack or lookahead queue)
+        -   Run against all BARF parsers and ensure they still work.
+        -   Implement %nonassoc error handling
     -   Nice to have
-        -   C++ modernization (use at least C++11)
+        -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
+            use the highest standard that's reasonable)
             -   Use std::array for static storage of state/transition/etc tables.
             -   Use range-based for loops
             -   Use strong enums
             -   Are there strong typedefs which don't automatically cast to the underlying type?
+            -   Probably use unique_ptr to formalize ownership and simplify pointer management,
+                especially for the logic surrounding ParseStackTreeNode_, e.g. in RemoveBranchIfNotTrunk
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Make an enum for rule associativity and a string table for it.
         -   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
@@ -1191,6 +1191,9 @@ which includes the top element.
         -   Implement infinite loop detection (maybe as an option?)
         -   Make a more terse debug spew output which is more useful for non-barf developers to debug
             their grammars/parsers.
+        -   Check if POP_STACK could be considered to be a non-blocking action (this is potentially
+            ok because of the constraint regarding m_realized_lookahead_cursor on processing HPSes).
+            This might require adding cases to ParseStackTreeNode_::ComputePrecedenceLevelRange
         -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
             Useful references:
             -   https://stackoverflow.com/questions/15129263/is-there-a-non-atomic-equivalent-of-stdshared-ptr-and-why-isnt-there-one-in/15141844#15141844

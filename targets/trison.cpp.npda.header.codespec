@@ -201,8 +201,6 @@ private:
         bool                                m_has_encountered_error_state;
     }; // end of struct <{class_name}::RealizedState_
 
-    struct ParseStackTreeNode_;
-
     struct HypotheticalState_
     {
         HypotheticalState_      (std::uint32_t initial_state);
@@ -215,7 +213,7 @@ private:
 
         // Removes the branch that the given node is a part of.  A branch of a node N is defined as the set of
         // nodes that are descendants of N, and all ancestors of N having exactly one child.
-        void                    RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
+        ParseStackTreeNode_ *   RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node);
 
     //private: // TEMP commented out until HypotheticalState_ is properly encapsulated.
 
@@ -328,11 +326,26 @@ private:
         ParseStackTreeNode_ *m_parent_node;
         ChildMap m_child_nodes;
 
+<|if(0)
+<|if(is_defined(generate_debug_spew_code))
+        // TEMP
+        static std::set<ParseStackTreeNode_*> ms_active_pointer_set;
+
+<|end_if
+<|end_if
         ParseStackTreeNode_ (Spec const &spec)
-            : m_spec(spec)
-            , m_realized_lookahead_cursor(0)
-            , m_parent_node(NULL)
+            :   m_spec(spec)
+            ,   m_realized_lookahead_cursor(0)
+            ,   m_parent_node(NULL)
+<|if(0)
+<|if(is_defined(generate_debug_spew_code))
+        {
+            ms_active_pointer_set.insert(this);
+        }
+<|end_if
+<|else
         { }
+<|end_if
         ~ParseStackTreeNode_ ();
 
         bool HasTrunkChild () const;
