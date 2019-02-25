@@ -180,11 +180,13 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
     // HIPPO TEMP -- just do one at a time so that the parser state has a chance to be printed after each.
     if (m_hypothetical_state_->m_root->HasTrunkChild())
     {
-        // NOTE: Holding this raw pointer is exception unsafe -- if a reduction rule throws
-        // an exception, this pointer will be lost.  This can be handled either by using
-        // std::unique_ptr or by use of a try/catch block
-        ParseStackTreeNode_ *trunk_child = m_hypothetical_state_->m_root->PopTrunkChild();
-        bool destroy_and_recreate_parse_tree = false;
+        // The trunk_child is popped and then will die by the end of this function.
+        // Using std::unique_ptr for exception safety -- if an exception is thrown within
+        // this function, then trunk_child still needs to be deleted.
+        std::unique_ptr<ParseStackTreeNode_> trunk_child(m_hypothetical_state_->m_root->PopTrunkChild());
+        assert(trunk_child->m_parent_node == NULL);
+        assert(trunk_child->m_child_nodes.empty());
+
         switch (trunk_child->m_spec.m_type)
         {
             case ParseStackTreeNode_::RETURN: {
@@ -273,9 +275,6 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 assert(false && "this should not happen");
                 break;
         }
-        assert(trunk_child->m_parent_node == NULL);
-        assert(trunk_child->m_child_nodes.empty());
-        delete trunk_child;
     }
 }
 
