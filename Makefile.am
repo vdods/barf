@@ -610,7 +610,7 @@ endif
 test-reflex-parser:
 	mkdir -p test
 	rm -f $(top_builddir)/test/reflex_parser.*
-	./trison $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
+	./trison $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph reflex_parser.npda.dot --generate-npda-states-file reflex_parser.npda.states
 
 if DOT_EXISTS
 $(top_srcdir)/app/reflex/reflex_parser.dpda.png: $(top_srcdir)/app/reflex/reflex_parser.dpda.dot

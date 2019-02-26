@@ -1172,7 +1172,7 @@ which includes the top element.
         x   Run valgrind to ensure that there are no memory leaks (it appears that there probably are)
             NOTE: RealizedState_ doesn't apparently clean up properly (it doesn't execute throw-away actions
             on its token stack or lookahead queue)
-        -   Implement %nonassoc error handling
+        x   Implement %nonassoc error handling
         -   Run against all BARF parsers and ensure they still work.
     -   Nice to have
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and

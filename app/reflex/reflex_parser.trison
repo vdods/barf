@@ -282,7 +282,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
+    DIRECTIVE_TARGETS:throwaway %error[%end|NEWLINE] at_least_one_newline
     %target.cpp {
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         return NULL;
@@ -343,7 +343,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     }
 |
-    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -352,7 +352,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -360,7 +360,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway %error
+    DIRECTIVE_TARGET:throwaway %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -417,7 +417,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return m_regex_macro_map;
     }
 |
-    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error at_least_one_newline
+    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error[%end|NEWLINE] at_least_one_newline
     %target.cpp {
         EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -425,7 +425,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return regular_expression_map;
     }
 |
-    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error at_least_one_newline
+    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error[%end|NEWLINE] at_least_one_newline
     %target.cpp {
         EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
@@ -445,7 +445,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new StartWithStateMachineDirective(state_machine_id);
     }
 |
-    DIRECTIVE_START_IN_STATE_MACHINE:throwaway %error at_least_one_newline
+    DIRECTIVE_START_IN_STATE_MACHINE:throwaway %error[%end|NEWLINE] at_least_one_newline
     %target.cpp {
         EmitError("parse error in directive %start_with_state_machine", throwaway->GetFiLoc());
         delete throwaway;
@@ -482,7 +482,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return state_machine;
     }
 |
-    DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' %error ';'
+    DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' %error[%end|';'] ';'
     %target.cpp {
         EmitError("parse error in state machine rule list", throwaway->GetFiLoc());
         StateMachine *state_machine = new StateMachine(state_machine_id, new RuleList(), mode_flags->Value());
@@ -491,7 +491,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return state_machine;
     }
 |
-    DIRECTIVE_STATE_MACHINE:throwaway %error ':' state_machine_rules:rule_list ';'
+    DIRECTIVE_STATE_MACHINE:throwaway %error[%end|':'] ':' state_machine_rules:rule_list ';'
     %target.cpp {
         EmitError("parse error in state machine id", throwaway->GetFiLoc());
         delete throwaway;
@@ -648,7 +648,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
-    DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
+    DIRECTIVE_TARGET:throwaway %error[%end|DUMB_CODE_BLOCK|STRICT_CODE_BLOCK] any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -657,7 +657,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway %error
+    DIRECTIVE_TARGET:throwaway %error[%end|'|'|';']
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
@@ -665,7 +665,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    %error any_type_of_code_block:code_block
+    %error[%end|DUMB_CODE_BLOCK|STRICT_CODE_BLOCK] any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());

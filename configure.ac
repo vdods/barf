@@ -61,7 +61,7 @@ AC_ARG_WITH(
     [stable-trison],
     AC_HELP_STRING(
         [--with-stable-trison=full/path/to/trison.stable],
-        [specify a stable, external trison.unstable binary to compile BARF's own trison-based parsers, and should be relative to the build dir (i.e. the directory that configure is run within) -- make sure not to specify the trison build target of this package.  This option is really only useful if you're developing BARF itself.]),
+        [specify a stable, external trison binary to compile BARF's own trison-based parsers, and should be relative to the build dir (i.e. the directory that configure is run within) -- make sure not to specify the trison build target of this package.  This option is really only useful if you're developing BARF itself.]),
     [STABLE_TRISON=$withval],
     [STABLE_TRISON=])
 

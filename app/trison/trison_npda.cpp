@@ -215,6 +215,7 @@ void GenerateNpda (
     bool &this_is_an_error_terminal,
     RuleTokenList const *&error_until_lookaheads)
 {
+    this_is_an_error_terminal = false;
     error_until_lookaheads = NULL;
 
     Terminal const *terminal = graph_context.m_primary_source.m_terminal_map->Element(rule_token.m_token_id);
@@ -231,8 +232,9 @@ void GenerateNpda (
         if (this_is_an_error_terminal)
         {
             RuleTokenErrorUntilLookahead const *rule_token_error_until_lookahead = dynamic_cast<RuleTokenErrorUntilLookahead const *>(&rule_token);
-            if (rule_token_error_until_lookahead != NULL)
-                error_until_lookaheads = rule_token_error_until_lookahead->m_lookaheads;
+            assert(rule_token_error_until_lookahead != NULL);
+            assert(rule_token_error_until_lookahead->m_lookaheads != NULL && "this should be impossible");
+            error_until_lookaheads = rule_token_error_until_lookahead->m_lookaheads;
         }
     }
     else
@@ -249,6 +251,8 @@ void GenerateNpda (
         if (nonterminal != owner_nonterminal)
             graph_context.m_npda_graph.AddTransition(start_index, NpdaEpsilonTransition(nonterminal->NpdaGraphHeadState()));
     }
+
+    assert(this_is_an_error_terminal == (error_until_lookaheads != NULL));
 }
 
 void GenerateNpda (
