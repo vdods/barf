@@ -197,6 +197,11 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 <|scan_actions
 }
 
+void <{class_name}::RunNonassocErrorActions_ (Token const &lookahead)
+{
+<|nonassoc_error_actions?
+}
+
 <|if(is_defined(use_npda))
 <|  include("trison.cpp.npda.implementation.codespec")
 <|else

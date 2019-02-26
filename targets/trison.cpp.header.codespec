@@ -297,6 +297,7 @@ private:
     void ThrowAwayTokenData_ (<{token_data_type} const &token_data) throw();
     void ResetForNewInput_ () throw();
     Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
+    void RunNonassocErrorActions_ (Token const &lookahead);
 <|if(is_defined(generate_debug_spew_code))
     // debug spew methods
     void PrintParserStatus_ (std::ostream &out) const;

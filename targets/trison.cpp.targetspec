@@ -185,6 +185,19 @@
 // to start parsing from a new source.  This code is executed in addition to
 // various internal state-machine-related initialization that is required.
 %add_optional_directive reset_for_new_input_actions         %strict_code_block
+// This specifies code to be executed in the event that a SHIFT/REDUCE conflict
+// invoving a %nonassoc-precedence rule is encountered.  The variable
+// "lookahead" (which has type `Token const &`) is defined for use in this
+// code.  The lookahead var corresponds to the token that would have been
+// shifted had this conflict been resolved in favor of the SHIFT action.
+// E.g. in "x == y != z", where there are the following nonassoc rules having
+// the same precedence:
+//
+//     expr <- expr == expr
+//     expr <- expr != expr
+//
+// the "!=" token would be the lookahead.that is available to this code block.
+%add_optional_directive nonassoc_error_actions              %strict_code_block
 
 // ///////////////////////////////////////////////////////////////////////////
 // Miscellaneous directives

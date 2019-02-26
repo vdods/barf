@@ -386,7 +386,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 if (reduction_rule_precedence.m_associativity_index == 2) // 2 is right-associative
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning right-associative REDUCE and continuing.\n")
+                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning right-associative REDUCE and continuing.\n")
 <|end_if
                     m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
@@ -395,7 +395,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 else
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "can't resolve conflict at this time.\n")
+                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Can't resolve conflict at this time.\n")
 <|else
                     // Can't resolve the conflict at this time.
 <|end_if
@@ -415,7 +415,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 {
                     case 0: // 0 is left-associative
 <|if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning left-associative SHIFT and continuing.\n")
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning left-associative SHIFT and continuing.\n")
 <|end_if
                         m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
@@ -424,7 +424,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
                     case 1: // 1 is non-associative
 <|if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "composition of non-associative rules is an error.\n")
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
 <|end_if
                         // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
                         // action to initiate error panic.  This works only because the shift and reduce nodes
@@ -432,24 +432,56 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                         assert(shift->m_parent_node == m_hypothetical_state_->m_root);
                         assert(reduce->m_parent_node == m_hypothetical_state_->m_root);
 
+                        // Lookahead_(0) is the token that would be SHIFT'ed.
+                        RunNonassocErrorActions_(Lookahead_(0));
 
+                        m_hypothetical_state_->DeleteBranch(shift);
+                        m_hypothetical_state_->DeleteBranch(reduce);
+                        // Just verify that the HPS queue has been totally nullified by the above actions.
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            assert(*hps_it == NULL);
+                        }
+                        m_hypothetical_state_->m_hps_queue.clear();
+                        assert(m_hypothetical_state_->m_new_hps_queue.empty());
+                        assert(m_hypothetical_state_->m_root->m_child_nodes.empty());
 
-                        // TODO:
-                        // - Create a new HPS for each branch on the top of the branch stack in m_realized_state_
-                        //   and add it as a child to m_hypothetical_state_->m_root
-                        // - For each of those newly created HPSes, call TakeHypotheticalActionOnHPS_ with
-                        //   action INSERT_LOOKAHEAD_ERROR.
-                        // - Delete the branches corresponding to shift and reduce, which should both die now.
-                        //   This MUST happen AFTER the INSERT_LOOKAHEAD_ERROR stuff is done, otherwise the
-                        //   RemoveBranchIfNotTrunk will fail due to it finding the root node as the branch root
-                        //   and then doing nothing.
+                        // Create fresh HPSes at the root from the realized state.
+                        CreateParseTreeFromRealizedState_();
+                        // TODO: This operation could be optimized due to the fact that each HPS will
+                        // take exactly one action; INSERT_LOOKAHEAD_ERROR.  But for now, just do the
+                        // easy thing.
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            ParseStackTreeNode_ *hps = *hps_it;
+                            assert(hps != NULL);
+                            ParseStackTreeNode_ *new_hps = TakeHypotheticalActionOnHPS_(*hps, ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR, ParseStackTreeNode_::UNUSED_DATA);
+                            m_hypothetical_state_->m_new_hps_queue.push_back(new_hps);
+                            // Note that DeleteBranch only nullifies elements in m_hps_queue, it doesn't
+                            // alter the container itself.
+                            m_hypothetical_state_->DeleteBranch(hps);
+                        }
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            assert(*hps_it == NULL);
+                        }
+                        m_hypothetical_state_->m_hps_queue.clear();
 
-                        assert(false && "TODO: implement nonassoc error handling");
+                        // Now that all the INSERT_LOOKAHEAD_ERROR HPSes have been created and put into
+                        // m_new_hps_queue, the existing HPSes have been deleted, and the processing later
+                        // in this function (see `if (conflict_resolved)` block) is expecting the HPSes to
+                        // be in m_hps_queue, swap the queues.
+                        assert(m_hypothetical_state_->m_hps_queue.empty());
+                        assert(!m_hypothetical_state_->m_new_hps_queue.empty());
+                        std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+
+                        // Mark the conflict as resolved.
+                        conflict_resolved = true;
                         break;
 
                     case 2: // 2 is right-associative
 <|if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning right-associative REDUCE and continuing.\n")
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning right-associative REDUCE and continuing.\n")
 <|end_if
                         m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
@@ -473,7 +505,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 if (reduction_rule_precedence.m_associativity_index == 0) // 0 is left-associative
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning left-associative SHIFT and continuing.\n")
+                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning left-associative SHIFT and continuing.\n")
 <|end_if
                     m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
@@ -482,7 +514,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 else
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "can't resolve conflict at this time.\n")
+                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Can't resolve conflict at this time.\n")
 <|else
                     // Can't resolve the conflict at this time.
 <|end_if
