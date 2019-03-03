@@ -195,7 +195,9 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|end_if
                 assert(m_realized_state_->TokenStack().size() == 2);
                 parser_return_code_ = PRC_SUCCESS;
-                *return_token = m_realized_state_->TokenStack().back().m_data;
+                // This doesn't change the structure of the stack but does take ownership of the top stack token.
+                // This must be done so that the return token isn't destroyed with the parser.
+                m_realized_state_->StealTokenStackTop(return_token);
                 should_return = true;
                 break;
             }
@@ -872,6 +874,15 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
     Token retval(m_lookahead_queue.back());
     m_lookahead_queue.pop_front();
     return retval;
+}
+
+void <{class_name}::RealizedState_::StealTokenStackTop (<{token_data_type} *&return_token)
+{
+    assert(return_token != NULL);
+    assert(!m_token_stack.empty());
+    *return_token = m_token_stack.back().m_data;
+    // Assign the token default so that the actual return token isn't destroyed when the parser is destroyed.
+    m_token_stack.back().m_data = <{token_data_default};
 }
 
 // void <{class_name}::RealizedState_::ExecuteAction (Npda_::Transition_::Type action, ActionData_ action_data)

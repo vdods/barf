@@ -159,6 +159,8 @@ private:
         Token               PopStack                            ();
         Token               PopFrontLookahead                   (HPSQueue_ &hps_queue);
 
+        void                StealTokenStackTop                  (<{token_data_type} *&return_token);
+
         // void                ExecuteAction                       (Npda_::Transition_::Type action, ActionData_ action_data);
 
         // TODO: Need to figure out how to handle popping the token stack (since in a way it should be the
