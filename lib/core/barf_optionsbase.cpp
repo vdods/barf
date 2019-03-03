@@ -19,7 +19,7 @@ namespace Barf {
 
 string const &OptionsBase::HowtoReportError () const
 {
-    static string const s_howto_report_error("please make a bug report, containing exact reproduction instructions, in the tracker system at http://sourceforge.net/projects/barf/");
+    static string const s_howto_report_error("please make a bug report containing exact reproduction instructions at http://github.com/vdods/barf/");
     return s_howto_report_error;
 }
 
