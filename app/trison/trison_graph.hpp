@@ -22,7 +22,7 @@ namespace Trison {
 // TT_RETURN, and TT_REDUCE come before TT_SHIFT, so that they appear before
 // TT_SHIFT, because the default transition must come first (and a transition
 // is TT_ERROR_PANIC, TT_RETURN, or TT_REDUCE if and only if it is a default
-// transition).
+// transition).  NOTE (2019.02.27) not sure if this comment still applies.
 enum
 {
     TT_ERROR_PANIC = 0,

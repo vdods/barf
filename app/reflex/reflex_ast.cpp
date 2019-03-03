@@ -17,6 +17,7 @@ string const &AstTypeString (AstType ast_type)
     static string const s_ast_type_string[AST_COUNT-CommonLang::AST_START_CUSTOM_TYPES_HERE_] =
     {
         "AST_PRIMARY_SOURCE",
+        "AST_MACRO",
         "AST_RULE",
         "AST_RULE_LIST",
         "AST_START_DIRECTIVE",
@@ -29,6 +30,12 @@ string const &AstTypeString (AstType ast_type)
         return CommonLang::AstTypeString(ast_type);
     else
         return s_ast_type_string[ast_type-CommonLang::AST_START_CUSTOM_TYPES_HERE_];
+}
+
+void Macro::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    stream << Tabs(indent_level) << "Macro " << m_macro_id->GetText() << ":\n";
+    m_macro_regex->Print(stream, Stringify, indent_level+1);
 }
 
 void StartWithStateMachineDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const

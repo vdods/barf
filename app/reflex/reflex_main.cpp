@@ -99,14 +99,15 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     
     Reflex::Parser parser;
     parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
-    parser.DebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER));
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER))
+        parser.SetDebugSpewStream(&std::cerr);
 
     // go through the predefine commandline directives and parse them.
     for (vector<string>::size_type i = 0; i < ReflexOptions().PredefineCount(); ++i)
     {
         parser.OpenString(ReflexOptions().Predefine(i), "<predefine>");
 
-        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::Nonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in predefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -140,7 +141,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(ReflexOptions().Postdefine(i), "<postdefine>");
 
-        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::Nonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in postdefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -310,6 +311,7 @@ int main (int argc, char **argv)
 
         ParseAndHandleOptions(argc, argv);
         primary_source = ParsePrimarySource();
+        assert(primary_source != NULL);
         GenerateAndPrintNfaDotGraph(*primary_source, nfa);
         GenerateAndPrintDfaDotGraph(*primary_source, nfa, dfa);
         ParseTargetspecs(*primary_source);

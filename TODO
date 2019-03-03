@@ -371,3 +371,9 @@ template <Uint32 high> struct SmallestUint {
 
     and then make the include directive use that directory hierarchy.  Probably require full
     paths in include directive, and disallow relative paths.
+-   Allow an id to be associated with an %error directive, where the token associated with the
+    %error directive is produced by the error handling actions.
+-   Probably just get rid of ResetForNewInput, favoring destroying and recreating the parser/scanner.
+    At least examine if there's any reason to keep that feature.
+
+
