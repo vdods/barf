@@ -743,6 +743,9 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     }
 
 <|if(!is_defined(dont_assert_if_reduction_rule_code_doesnt_return))
+<|if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "PROGRAMMER ERROR: No value returned from reduction rule code block; rule " << rule_index_ << ": " << Grammar_::ms_rule_table_[rule_index_].m_description << '\n')
+<|end_if
     assert(false && "no value returned from reduction rule code block");
 <|end_if
     return <{token_data_default};
