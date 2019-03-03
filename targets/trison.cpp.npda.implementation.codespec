@@ -187,6 +187,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
         assert(trunk_child->m_parent_node == NULL);
         assert(trunk_child->m_child_nodes.empty());
 
+        bool destroy_and_recreate_parse_tree = false;
+
         switch (trunk_child->m_spec.m_type)
         {
             case ParseStackTreeNode_::RETURN: {
@@ -210,6 +212,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
                 m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
+                // This is done essentially so that m_realized_lookahead_cursor can be reset.
+                destroy_and_recreate_parse_tree = true;
                 break;
             }
             case ParseStackTreeNode_::SHIFT: {
@@ -262,11 +266,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 // Because POP_STACK involves popping the stack, the parse tree should be destroyed and
                 // recreated (from the branches in the top of the realized state stack).  This is somewhat
                 // draconian and non-optimal, but simple and effective.
-<|if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
-<|end_if
-                m_hypothetical_state_->DestroyParseTree();
-                CreateParseTreeFromRealizedState_();
+                destroy_and_recreate_parse_tree = true;
                 // TODO: Because HPS branches are blocked right after POP_STACK, maybe don't bother adding any
                 // additional children below POP_STACK nodes (i.e. one HPS child of POP_STACK is sufficient to
                 // keep it alive probably).  This would reduce the number of memory operations.
@@ -276,6 +276,15 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
             default:
                 assert(false && "this should not happen");
                 break;
+        }
+
+        if (destroy_and_recreate_parse_tree)
+        {
+<|if(is_defined(generate_debug_spew_code))
+            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
+<|end_if
+            m_hypothetical_state_->DestroyParseTree();
+            CreateParseTreeFromRealizedState_();
         }
     }
 }
@@ -656,16 +665,50 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|end_if
 
                 ParseStackTreeNode_ *resulting_hps = NULL;
-                // If it's a default transition, there's no need to access the lookahead.
+                // If it's a default transition, there's no need to access the lookahead (except in
+                // a certain case).
                 if (transition.m_token_index == Nonterminal::none_)
                 {
+                    // Logic regarding empty reduction rules -- if this transition is REDUCE for an empty reduction rule
+                    // and the lookahead is the nonterminal for that REDUCE action, then don't reduce, since that
+                    // would produce an infinite loop.  There is a case where it's not necessary to access the lookahead:
+                    // if this HPS is the child of a REDUCE action for the same nonterminal, then we know the lookahead
+                    // is that nonterminal, so it's not necessary to check the lookahead (we don't want to access the
+                    // lookahead unnecessarily).  But it's not an if-and-only-if condition; we could have just REDUCE'd
+                    // that nonterminal but the HPS has no parent because the trunk action was executed and then popped,
+                    // meaning that the parent of this HPS would be the parse tree root.
+                    bool take_action = true;
+                    assert(hps.m_parent_node != NULL);
+                    if (transition.m_type == Npda_::Transition_::REDUCE)
+                    {
+                        Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[transition.m_data_index];
+                        bool is_empty_reduction_rule = rule.m_token_count == 0;
+                        bool just_reduced_this_nonterminal = hps.m_parent_node->m_spec.m_type == ParseStackTreeNode_::REDUCE && hps.m_parent_node->m_spec.m_single_data == rule.m_reduction_nonterminal_token_id;
+                        // The fancy logical construction here is to avoid accessing the lookahead unless necessary
+                        // (and technically this is not optimal, since really when executing the trunk actions,
+                        // the information of "parent is REDUCE and the reduction rule nonterminal is this one"
+                        // is lost in the current implementation.
+                        if (is_empty_reduction_rule &&
+                            (just_reduced_this_nonterminal ||
+                             rule.m_reduction_nonterminal_token_id == hps.LookaheadTokenId(*this))) // lookahead is this nonterminal
+                        {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition without accessing lookahead... ")
+                            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
 <|end_if
-                    resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
+                            take_action = false;
+                        }
+                    }
+
+                    if (take_action)
+                    {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition without accessing lookahead... ")
 <|end_if
+                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
+<|if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
+<|end_if
+                    }
                 }
                 // Otherwise, the lookahead must be accessed.
                 else
@@ -1322,11 +1365,20 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
 
         assert(state_index < Npda_::ms_state_count_);
         Npda_::State_ const &state = Npda_::ms_state_table_[state_index];
-        assert(state.m_associated_rule_index < Grammar_::ms_rule_count_);
-        Grammar_::Rule_ const &associated_rule = Grammar_::ms_rule_table_[state.m_associated_rule_index];
-        assert(associated_rule.m_precedence_index < Grammar_::ms_precedence_count_);
-        Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
-        return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+        // If there's an associated rule, then use the precedence from that.
+        if (state.m_associated_rule_index < Grammar_::ms_rule_count_)
+        {
+            Grammar_::Rule_ const &associated_rule = Grammar_::ms_rule_table_[state.m_associated_rule_index];
+            assert(associated_rule.m_precedence_index < Grammar_::ms_precedence_count_);
+            Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
+            return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+        }
+        // Otherwise (e.g. a RETURN state), return default precedence.
+        else
+        {
+            Grammar_::Precedence_ const &default_precedence = Grammar_::ms_precedence_table_[0]; // 0 is default precedence.
+            return PrecedenceLevelRange(default_precedence.m_level, default_precedence.m_level);
+        }
     }
     else if (m_spec.m_type == REDUCE)
     {
@@ -1539,6 +1591,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
         out << " . ";
         for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
             out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
+        out << ", ";
         if (parser != NULL)
             for (std::size_t i = m_realized_lookahead_cursor; i < parser->m_realized_state_->LookaheadQueue().size(); ++i)
                 out << ms_token_name_table_[parser->m_realized_state_->LookaheadQueue()[i].m_id] << ' ';

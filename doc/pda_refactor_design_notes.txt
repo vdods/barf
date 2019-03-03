@@ -1173,6 +1173,19 @@ which includes the top element.
             NOTE: RealizedState_ doesn't apparently clean up properly (it doesn't execute throw-away actions
             on its token stack or lookahead queue)
         x   Implement %nonassoc error handling
+        x   See if it's possible to fix the infinite loop for rules like
+
+                %nonterminal list
+                :
+                    list list_item
+                |
+                    // empty reduction rule
+                ;
+
+            where it reduces using the empty rule first, pushing `list` onto front of lookahead queue,
+            then doesn't shift, but rather reduces using the empty rule again.  This could be resolved
+            by making a lookahead of `list` force a SHIFT and not allow a REDUCE (this may be incompatible
+            with the existing logic of "default" actions, and may require the %lookahead refactor).
         -   Run against all BARF parsers and ensure they still work.
     -   Nice to have
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
@@ -1386,3 +1399,25 @@ which includes the top element.
 
     This is a rather large refactor, and while is worth doing, it should be done after finishing
     an MVP of this pda refactor effort.
+
+2018.03.02 ----------------------------
+
+-   There is a shift/reduce conflict that can happen in the following situation.  When the
+    start nonterminal can accept an empty rule from its start state, e.g.
+
+        root <- zero_or_more_things %end
+
+    then right after root is reduced and the parse continues, there will be a shift/reduce
+    conflict of the form
+
+        REDUCE zero_or_more_things <- // empty reduction rule
+            SHIFT zero_or_more_things
+                ...
+        SHIFT root
+            RETURN root
+
+    In this case, it needs to know not to reduce anymore, since it's already consumed %end and
+    ... actually, it looks like there's a bug in the m_realized_lookahead_cursor logic.
+    This bug is resolved (perhaps non-optimally, but who cares) by using
+    destroy_and_recreate_parse_tree for executing REDUCE actions.
+
