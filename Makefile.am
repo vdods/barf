@@ -80,31 +80,21 @@ doc:
 spotless: clean clean-all-parser-extras clean-all-scanner-extras
 
 clean-all-parser-extras:
-	rm -f $(top_srcdir)/app/reflex/reflex_parser.dpda.dot
-	rm -f $(top_srcdir)/app/reflex/reflex_parser.dpda.png
-	rm -f $(top_srcdir)/app/reflex/reflex_parser.dpda.states
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.dot
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.png
-	rm -f $(top_srcdir)/app/trison/trison_parser.dpda.dot
-	rm -f $(top_srcdir)/app/trison/trison_parser.dpda.png
-	rm -f $(top_srcdir)/app/trison/trison_parser.dpda.states
+	rm -f $(top_srcdir)/app/reflex/reflex_parser.npda.states
 	rm -f $(top_srcdir)/app/trison/trison_parser.npda.dot
 	rm -f $(top_srcdir)/app/trison/trison_parser.npda.png
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.dot
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.png
-	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.states
+	rm -f $(top_srcdir)/app/trison/trison_parser.npda.states
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.dot
 	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.png
-	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.dpda.dot
-	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.dpda.png
-	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.dpda.states
+	rm -f $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.states
 	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.npda.dot
 	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.npda.png
-	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.dot
-	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.png
-	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.states
+	rm -f $(top_srcdir)/lib/regex/barf_regex_parser.npda.states
 	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.dot
 	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png
+	rm -f $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.states
 
 clean-all-parsers: clean-all-parser-extras
 	rm -f $(top_srcdir)/app/reflex/reflex_parser.cpp
@@ -431,26 +421,26 @@ if STABLE_TRISON_EXISTS
 barf-preprocessor-parser: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.hpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.cpp: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison
-	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-dpda-dot-graph barf_preprocessor_parser.dpda.dot --generate-dpda-states-file barf_preprocessor_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-npda-states-file barf_preprocessor_parser.npda.states
 
 force-barf-preprocessor-parser:
-	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-dpda-dot-graph barf_preprocessor_parser.dpda.dot --generate-dpda-states-file barf_preprocessor_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/preprocessor --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-npda-states-file barf_preprocessor_parser.npda.states
 
 barf-regex-parser: $(top_srcdir)/lib/regex/barf_regex_parser.hpp
 $(top_srcdir)/lib/regex/barf_regex_parser.hpp: $(top_srcdir)/lib/regex/barf_regex_parser.cpp
 $(top_srcdir)/lib/regex/barf_regex_parser.cpp: $(top_srcdir)/lib/regex/barf_regex_parser.trison
-	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/regex --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-dpda-dot-graph barf_regex_parser.dpda.dot --generate-dpda-states-file barf_regex_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/regex --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-npda-states-file barf_regex_parser.npda.states
 
 force-barf-regex-parser:
-	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/regex --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-dpda-dot-graph barf_regex_parser.dpda.dot --generate-dpda-states-file barf_regex_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/regex --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-npda-states-file barf_regex_parser.npda.states
 
 barf-targetspec-parser: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp
 $(top_srcdir)/lib/targetspec/barf_targetspec_parser.hpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp
 $(top_srcdir)/lib/targetspec/barf_targetspec_parser.cpp: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison
-	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/targetspec --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-dpda-dot-graph barf_targetspec_parser.dpda.dot --generate-dpda-states-file barf_targetspec_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/targetspec --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-npda-states-file barf_targetspec_parser.npda.states
 
 force-barf-targetspec-parser:
-	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/targetspec --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-dpda-dot-graph barf_targetspec_parser.dpda.dot --generate-dpda-states-file barf_targetspec_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/lib/targetspec --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-npda-states-file barf_targetspec_parser.npda.states
 else # !STABLE_TRISON_EXISTS
 barf-preprocessor-parser force-barf-preprocessor-parser:
 	@echo "!!!"
@@ -474,33 +464,24 @@ endif
 test-barf-preprocessor-parser:
 	mkdir -p test
 	rm -f $(top_builddir)/test/barf_preprocessor_parser.*
-	./trison $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-dpda-dot-graph barf_preprocessor_parser.dpda.dot --generate-dpda-states-file barf_preprocessor_parser.dpda.states
+	./trison $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_preprocessor_parser.npda.dot --generate-npda-states-file barf_preprocessor_parser.npda.states
 
 test-barf-regex-parser:
 	mkdir -p test
 	rm -f $(top_builddir)/test/barf_regex_parser.*
-	./trison $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-dpda-dot-graph barf_regex_parser.dpda.dot --generate-dpda-states-file barf_regex_parser.dpda.states
+	./trison $(top_srcdir)/lib/regex/barf_regex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_regex_parser.npda.dot --generate-npda-states-file barf_regex_parser.npda.states
 
 test-barf-targetspec-parser:
 	mkdir -p test
 	rm -f $(top_builddir)/test/barf_targetspec_parser.*
-	./trison $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-dpda-dot-graph barf_targetspec_parser.dpda.dot --generate-dpda-states-file barf_targetspec_parser.dpda.states
+	./trison $(top_srcdir)/lib/targetspec/barf_targetspec_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph barf_targetspec_parser.npda.dot --generate-npda-states-file barf_targetspec_parser.npda.states
 
 if DOT_EXISTS
-$(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.dot
-	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.dpda.png
-
 $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.png: $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.dot
 	$(DOT) $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.dot -Tpng -o $(top_srcdir)/lib/preprocessor/barf_preprocessor_parser.npda.png
 
-$(top_srcdir)/lib/regex/barf_regex_parser.dpda.png: $(top_srcdir)/lib/regex/barf_regex_parser.dpda.dot
-	$(DOT) $(top_srcdir)/lib/regex/barf_regex_parser.dpda.dot -Tpng -o $(top_srcdir)/lib/regex/barf_regex_parser.dpda.png
-
 $(top_srcdir)/lib/regex/barf_regex_parser.npda.png: $(top_srcdir)/lib/regex/barf_regex_parser.npda.dot
 	$(DOT) $(top_srcdir)/lib/regex/barf_regex_parser.npda.dot -Tpng -o $(top_srcdir)/lib/regex/barf_regex_parser.npda.png
-
-$(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.png: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.dot
-	$(DOT) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.dot -Tpng -o $(top_srcdir)/lib/targetspec/barf_targetspec_parser.dpda.png
 
 $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png: $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.dot
 	$(DOT) $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.dot -Tpng -o $(top_srcdir)/lib/targetspec/barf_targetspec_parser.npda.png
@@ -595,10 +576,10 @@ if STABLE_TRISON_EXISTS
 reflex-parser: $(top_srcdir)/app/reflex/reflex_parser.hpp
 $(top_srcdir)/app/reflex/reflex_parser.hpp: $(top_srcdir)/app/reflex/reflex_parser.cpp
 $(top_srcdir)/app/reflex/reflex_parser.cpp: $(top_srcdir)/app/reflex/reflex_parser.trison
-	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/reflex --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/reflex --generate-npda-dot-graph reflex_parser.npda.dot --generate-npda-states-file reflex_parser.npda.states
 
 force-reflex-parser:
-	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/reflex --generate-npda-dot-graph reflex_parser.npda.dot --generate-dpda-dot-graph reflex_parser.dpda.dot --generate-dpda-states-file reflex_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/reflex --generate-npda-dot-graph reflex_parser.npda.dot --generate-npda-states-file reflex_parser.npda.states
 else # !STABLE_TRISON_EXISTS
 reflex-parser force-reflex-parser:
 	@echo "!!!"
@@ -613,9 +594,6 @@ test-reflex-parser:
 	./trison $(top_srcdir)/app/reflex/reflex_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph reflex_parser.npda.dot --generate-npda-states-file reflex_parser.npda.states
 
 if DOT_EXISTS
-$(top_srcdir)/app/reflex/reflex_parser.dpda.png: $(top_srcdir)/app/reflex/reflex_parser.dpda.dot
-	$(DOT) $(top_srcdir)/app/reflex/reflex_parser.dpda.dot -Tpng -o $(top_srcdir)/app/reflex/reflex_parser.dpda.png
-
 $(top_srcdir)/app/reflex/reflex_parser.npda.png: $(top_srcdir)/app/reflex/reflex_parser.npda.dot
 	$(DOT) $(top_srcdir)/app/reflex/reflex_parser.npda.dot -Tpng -o $(top_srcdir)/app/reflex/reflex_parser.npda.png
 endif
@@ -659,10 +637,10 @@ if STABLE_TRISON_EXISTS
 trison-parser: $(top_srcdir)/app/trison/trison_parser.hpp
 $(top_srcdir)/app/trison/trison_parser.hpp: $(top_srcdir)/app/trison/trison_parser.cpp
 $(top_srcdir)/app/trison/trison_parser.cpp: $(top_srcdir)/app/trison/trison_parser.trison
-	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/trison --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/trison --generate-npda-dot-graph trison_parser.npda.dot --generate-npda-states-file trison_parser.npda.states
 
 force-trison-parser:
-	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/trison --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
+	$(STABLE_TRISON) $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_srcdir)/app/trison --generate-npda-dot-graph trison_parser.npda.dot --generate-npda-states-file trison_parser.npda.states
 else # !STABLE_TRISON_EXISTS
 trison-parser force-trison-parser:
 	@echo "!!!"
@@ -674,12 +652,9 @@ endif
 test-trison-parser:
 	mkdir -p test
 	rm -f $(top_builddir)/test/trison_parser.*
-	./trison $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph trison_parser.npda.dot --generate-dpda-dot-graph trison_parser.dpda.dot --generate-dpda-states-file trison_parser.dpda.states
+	./trison $(top_srcdir)/app/trison/trison_parser.trison --include-targets-search-path $(TARGETS_PATH) --warnings-as-errors --output-directory $(top_builddir)/test/ --generate-npda-dot-graph trison_parser.npda.dot --generate-npda-states-file trison_parser.npda.states
 
 if DOT_EXISTS
-$(top_srcdir)/app/trison/trison_parser.dpda.png: $(top_srcdir)/app/trison/trison_parser.dpda.dot
-	$(DOT) $(top_srcdir)/app/trison/trison_parser.dpda.dot -Tpng -o $(top_srcdir)/app/trison/trison_parser.dpda.png
-
 $(top_srcdir)/app/trison/trison_parser.npda.png: $(top_srcdir)/app/trison/trison_parser.npda.dot
 	$(DOT) $(top_srcdir)/app/trison/trison_parser.npda.dot -Tpng -o $(top_srcdir)/app/trison/trison_parser.npda.png
 endif
