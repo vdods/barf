@@ -105,14 +105,15 @@ Trison::PrimarySource const *ParsePrimarySource ()
     
     Trison::Parser parser;
     parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER));
-    parser.DebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER));
+    if (TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER))
+        parser.SetDebugSpewStream(&std::cerr);
 
     // go through the predefine commandline directives and parse them.
     for (vector<string>::size_type i = 0; i < TrisonOptions().PredefineCount(); ++i)
     {
         parser.OpenString(TrisonOptions().Predefine(i), "<predefine>");
 
-        if (parser.Parse(&parsed_tree_root, Trison::Parser::ParseNonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Trison::Parser::Nonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in predefine) -- " + TrisonOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -146,7 +147,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(TrisonOptions().Postdefine(i), "<postdefine>");
 
-        if (parser.Parse(&parsed_tree_root, Trison::Parser::ParseNonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Trison::Parser::Nonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in postdefine) -- " + TrisonOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {

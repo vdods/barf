@@ -20,6 +20,7 @@
             <item>default</item>
             <item>default_parse_nonterminal</item>
             <item>dumb_code_block</item>
+            <item>empty</item>
             <item>end</item>
             <item>error</item>
             <item>identifier</item>

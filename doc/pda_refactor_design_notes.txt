@@ -1421,3 +1421,64 @@ which includes the top element.
     This bug is resolved (perhaps non-optimally, but who cares) by using
     destroy_and_recreate_parse_tree for executing REDUCE actions.
 
+-   There is another use case in the trison parser which motivates the need for the %lookahead
+    feature.  In particular,
+
+        %nonterminal rule_specification %type.cpp "Rule *"
+        :
+            rule_token_list rule_precedence_directive
+        ;
+
+        %nonterminal rule_token_list %type.cpp "RuleTokenList *"
+        :
+            rule_token_list rule_token
+        |
+            // empty reduction rule
+        ;
+
+        %nonterminal rule_precedence_directive %type.cpp "Ast::Id *"
+        :
+            DIRECTIVE_PREC ID
+        |
+            // empty reduction rule
+        ;
+
+    where it would be valid for both rule_token_list and rule_precedence_directive to be empty, but
+    the current trison.cpp.npda implementation is having trouble with that situation (it enters an
+    infinite loop where after reducing rule_specification from an empty reduction for rule_token_list
+    and rule_precedence_directive, it reduces an empty rule_token_list and rule_precedence_directive
+    again, looping forever:
+
+        ROOT 0x55eb6192a560
+            REDUCE 0x55eb6192e060 rule 60; rule_precedence_directive <-
+                SHIFT 0x55eb61926940 rule_precedence_directive
+                    REDUCE 0x55eb6192c870 rule 37; rule_specification <- rule_token_list rule_precedence_directive
+                        REDUCE 0x55eb6192ebe0 rule 45; rule_token_list <-
+                            SHIFT 0x55eb619141f0 rule_token_list
+                                REDUCE 0x55eb6192e800 rule 60; rule_precedence_directive <-
+                                    SHIFT 0x55eb6192f850 rule_precedence_directive
+                                        REDUCE 0x55eb6192f330 rule 37; rule_specification <- rule_token_list rule_precedence_directive
+                                            REDUCE 0x55eb6192dcb0 rule 45; rule_token_list <-
+                                                SHIFT 0x55eb6192fa10 rule_token_list
+                                                    ...
+
+    This could be fixed by having
+
+        %nonterminal rule_token_list %type.cpp "RuleTokenList *"
+        :
+            rule_token_list rule_token
+        |
+            %lookahead[^rule_token_list & ^rule_specification]
+        ;
+
+        %nonterminal rule_precedence_directive %type.cpp "Ast::Id *"
+        :
+            DIRECTIVE_PREC ID
+        |
+            %lookahead[^rule_precedence_directive]
+        ;
+
+    or probably even less stuff in the %lookahead directives.
+
+    Note that this situation represents mutually recursive rules that, because they have empty reduction
+    rules, can enter an infinite loop during parse.
