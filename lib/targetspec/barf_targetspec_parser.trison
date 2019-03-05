@@ -180,13 +180,13 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 
 %%
 
-/* ***************************************************************************
-/* root rule
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// root rule
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal root %type.cpp "Specification *"
 :
-    at_least_zero_newlines directives
+    directives %end
     %target.cpp {
         assert(m_add_codespec_list != NULL);
         assert(m_add_directive_map != NULL);
@@ -197,17 +197,24 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
     }
 ;
 
-/* ***************************************************************************
-/* directives (add_codespec and add_*_directive)
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// directives (add_codespec and add_*_directive)
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal directives
 :
-    directives add_codespec at_least_one_newline %target.cpp { return NULL; }
+    directives directive %target.cpp { return NULL; }
 |
-    directives add_directive at_least_one_newline %target.cpp { return NULL; }
+    %empty %target.cpp { return NULL; }
+;
+
+%nonterminal directive
+:
+    add_codespec at_least_one_newline %target.cpp { return NULL; }
 |
-    /* empty reduction rule */ %target.cpp { return NULL; }
+    add_directive at_least_one_newline %target.cpp { return NULL; }
+|
+    at_least_one_newline %target.cpp { return NULL; }
 ;
 
 %nonterminal add_codespec
@@ -278,7 +285,7 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 
 %nonterminal param_spec %type.cpp "ParamType *"
 :
-    // empty reduction rule
+    %empty
     %target.cpp {
         return new ParamType(Ast::AST_NONE);
     }
@@ -316,16 +323,9 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 |   STRICT_CODE_BLOCK:value %target.cpp { return value; }
 ;
 
-/* ***************************************************************************
-/* misc rules
-/* **************************************************************************/
-
-%nonterminal at_least_zero_newlines
-:
-    at_least_zero_newlines NEWLINE %target.cpp { return NULL; }
-|
-    /* empty reduction rule */ %target.cpp { return NULL; }
-;
+// ///////////////////////////////////////////////////////////////////////////
+// misc rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal at_least_one_newline
 :

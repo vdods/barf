@@ -183,7 +183,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal body %type.cpp "Body *"
 :
-    // empty reduction rule
+    %empty
     %target.cpp {
         return new Body();
     }
@@ -251,7 +251,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal code_body %type.cpp "ExecutableAst *"
 :
-    // empty reduction rule
+    %empty
     %target.cpp { return NULL; }
 |
     expression:expression

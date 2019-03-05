@@ -1482,3 +1482,17 @@ which includes the top element.
 
     Note that this situation represents mutually recursive rules that, because they have empty reduction
     rules, can enter an infinite loop during parse.
+
+-   There is a bug in the calculation of max realized lookaheads where if ERROR_ is pushed onto the
+    front of the realized lookaheads, then that count is artificially inflated by 1.  This should not
+    increase the number of realized lookaheads, since the ERROR_ token was artificially generated.
+
+    Thinking about how the max realized lookahead count is computed (the implementation of which currently
+    uses the HPS queue), it shouldn't depend on the HPS queue, but rather only the realized lookaheads
+    (subject to the adjustment given above).
+
+-   Implementing a max parse tree depth would be a good idea for preventing infinite loop and memory
+    hogging, as well as making it easier to debug such conditions.
+-   There are 2 cases in SHIFT/REDUCE conflict resolution that could be handled before equalizing the
+    min/max realized lookahead cursors.  Cases 1 and 5, since they involve no overlap in the precedence
+    of the SHIFT or REDUCE rules, and can therefore be resolved immediately.

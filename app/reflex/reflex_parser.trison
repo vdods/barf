@@ -293,7 +293,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         return NULL;
     }
@@ -400,7 +400,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return m_target_map;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         assert(m_target_map != NULL);
         return m_target_map;
@@ -471,7 +471,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
         Regex::Parser parser;
         parser.ScannerDebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER));
-        parser.DebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER));
+        if (GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER))
+            parser.SetDebugSpewStream(&std::cerr);
         istringstream in(macro_regex_string->GetText());
         parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
         try {
@@ -612,7 +613,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return mode_flags;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
     }
@@ -682,7 +683,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         {
             Regex::Parser parser;
             parser.ScannerDebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER));
-            parser.DebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER));
+            if (GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER))
+                parser.SetDebugSpewStream(&std::cerr);
             istringstream in(regex_string->GetText());
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
@@ -745,7 +747,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_handler_map;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         return new CommonLang::RuleHandlerMap();
     }

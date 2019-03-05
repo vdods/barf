@@ -52,7 +52,8 @@ int main (int argc, char **argv)
         EmitExecutionMessage("beginning execution");
         Preprocessor::Parser parser;
         parser.ScannerDebugSpew(BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER));
-        parser.DebugSpew(BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
+        if (BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER))
+            parser.SetDebugSpewStream(&std::cerr);
 
         if (BppOptions().InputFilename() == "-" || BppOptions().InputFilename().empty())
         {
