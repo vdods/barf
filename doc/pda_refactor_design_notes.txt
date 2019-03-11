@@ -1187,12 +1187,13 @@ which includes the top element.
             by making a lookahead of `list` force a SHIFT and not allow a REDUCE (this may be incompatible
             with the existing logic of "default" actions, and may require the %lookahead refactor).
         x   Run against all BARF parsers and ensure they still work.
-        -   See if REDUCE can be made not destroy_and_recreate_parse_tree by recomputing each subordinate
-            HPS's realized lookahead cursor using the sequence of ancestors.
         -   Fix the bug in realized lookahead count in trison.cpp.npda target (detailed below) (NOTE:
             need an actual repro case -- only saw this once and the error has been fixed in that case
             through something else).
         -   Implement max parse tree depth constraint (figure out how this error should be handled).
+            Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
+            being able to prevent exponential memory usage.  Though the problem here is that there could
+            be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
         -   Test against grammars that actually require multiple lookaheads (e.g. w/ operators +, ++, +++)
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
@@ -1222,6 +1223,8 @@ which includes the top element.
             -   https://stackoverflow.com/questions/15129263/is-there-a-non-atomic-equivalent-of-stdshared-ptr-and-why-isnt-there-one-in/15141844#15141844
             -   https://www.boost.org/doc/libs/1_65_0/libs/smart_ptr/doc/html/smart_ptr.html#local_shared_ptr
             -   https://stackoverflow.com/questions/35470061/linking-pthread-disables-lock-free-shared-ptr-implementation
+        -   See if REDUCE can be made not destroy_and_recreate_parse_tree by recomputing each subordinate
+            HPS's realized lookahead cursor using the sequence of ancestors.
 
 2018.02.23 ----------------------------
 
@@ -1512,4 +1515,6 @@ which includes the top element.
     reduced nonterminal appeared on the realized lookahead queue.  But this is tricky if the executed
     reduce action is followed by other actions that change its hypothetical lookahead queue.
     It seems like probably this destroy_and_recreate_parse_tree for REDUCE actions is slowing down
-    the parses tremendously.
+    the parses tremendously (there are a TON more memory operations per REDUCE action, and REDUCE is
+    a very common operation).
+

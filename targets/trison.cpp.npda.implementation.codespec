@@ -390,14 +390,14 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                      shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
 <|if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 2; REDUCE <= SHIFT; ")
+                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 2; REDUCE <= SHIFT;\n")
 <|end_if
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
                 if (reduction_rule_precedence.m_associativity_index == 2) // 2 is right-associative
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning right-associative REDUCE and continuing.\n")
+                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
 <|end_if
                     m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
@@ -426,7 +426,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 {
                     case 0: // 0 is left-associative
 <|if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning left-associative SHIFT and continuing.\n")
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
 <|end_if
                         m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
@@ -492,7 +492,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
                     case 2: // 2 is right-associative
 <|if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning right-associative REDUCE and continuing.\n")
+                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
 <|end_if
                         m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
@@ -509,14 +509,14 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                      shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
 <|if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 4; REDUCE >= SHIFT; ")
+                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 4; REDUCE >= SHIFT;\n")
 <|end_if
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
                 if (reduction_rule_precedence.m_associativity_index == 0) // 0 is left-associative
                 {
 <|if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning left-associative SHIFT and continuing.\n")
+                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
 <|end_if
                     m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
@@ -763,7 +763,8 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 {
     assert(rule_index_ < Grammar_::ms_rule_count_);
 <|if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing reduction rule " << rule_index_ << '\n')
+    Grammar_::Rule_ const &rule_ = Grammar_::ms_rule_table_[rule_index_];
+    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing reduction rule " << rule_index_ << "; " << rule_.m_description << '\n')
 <|end_if
     switch (rule_index_)
     {
@@ -822,7 +823,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
         out << " (allowable lookahead count is unlimited)\n";
     out << <{debug_spew_prefix} << "Has-encountered-error-state (so far) is:\n";
     out << <{debug_spew_prefix} << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
-    out << <{debug_spew_prefix} << "Realized stack tokens then realized lookahead queue is:\n";
+    out << <{debug_spew_prefix} << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
     out << <{debug_spew_prefix} << "    ";
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
@@ -841,7 +842,8 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
         Token const &token = *it;
         out << token << ' ';
     }
-    out << '\n' << '\n';
+    out << '\n';
+    out << <{debug_spew_prefix} << '\n';
 
     out << <{debug_spew_prefix} << "Parse tree (hypothetical parser states); Notation legend: <real-stack> .- <hyp-stack> . <hyp-lookaheads> -. <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
