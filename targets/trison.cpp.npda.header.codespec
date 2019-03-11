@@ -44,15 +44,22 @@ private:
                 return 1;
         }
 
+        // The print_delimiter_at_branch_length parameter should be the realized stack depth.  It will
+        // print a semicolon after the realized portion of the stack, so that the hypothetical portion
+        // of the stack can be visually distinguished.
         template <typename T>
-        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &)) const
+        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &), std::int32_t print_delimiter_at_branch_length = -1) const
         {
             if (this->HasParent())
             {
-                Parent()->PrintRootToLeaf(out, DataTransform);
+                Parent()->PrintRootToLeaf(out, DataTransform, print_delimiter_at_branch_length);
                 out << ' ';
             }
             out << DataTransform(Data());
+
+            // This is a suboptimal implementation, but simple, and is only used in printing.
+            if (print_delimiter_at_branch_length >= 0 && std::size_t(print_delimiter_at_branch_length) == this->BranchLength())
+                out << " .-";
         }
 
     private:

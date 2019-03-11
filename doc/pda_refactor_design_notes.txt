@@ -1186,7 +1186,16 @@ which includes the top element.
             then doesn't shift, but rather reduces using the empty rule again.  This could be resolved
             by making a lookahead of `list` force a SHIFT and not allow a REDUCE (this may be incompatible
             with the existing logic of "default" actions, and may require the %lookahead refactor).
-        -   Run against all BARF parsers and ensure they still work.
+        x   Run against all BARF parsers and ensure they still work.
+        -   See if REDUCE can be made not destroy_and_recreate_parse_tree by recomputing each subordinate
+            HPS's realized lookahead cursor using the sequence of ancestors.
+        -   Fix the bug in realized lookahead count in trison.cpp.npda target (detailed below) (NOTE:
+            need an actual repro case -- only saw this once and the error has been fixed in that case
+            through something else).
+        -   Implement max parse tree depth constraint (figure out how this error should be handled).
+        -   Test against grammars that actually require multiple lookaheads (e.g. w/ operators +, ++, +++)
+        -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
+            will be the tricky part)
     -   Nice to have
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
             use the highest standard that's reasonable)
@@ -1196,6 +1205,10 @@ which includes the top element.
             -   Are there strong typedefs which don't automatically cast to the underlying type?
             -   Probably use unique_ptr to formalize ownership and simplify pointer management,
                 especially for the logic surrounding ParseStackTreeNode_, e.g. in RemoveBranchIfNotTrunk
+        -   Allow SHIFT/REDUCE cases 1 and 5 to be resolved before equalizing max lookahead cursor.
+        -   Implement %default precedence, so that it's possible to make precedences lower than the default
+            (without having to explicitly assign a precedence to all rules).  This is relatively easy to
+            implement.
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Make an enum for rule associativity and a string table for it.
         -   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
@@ -1204,9 +1217,6 @@ which includes the top element.
         -   Implement infinite loop detection (maybe as an option?)
         -   Make a more terse debug spew output which is more useful for non-barf developers to debug
             their grammars/parsers.
-        -   Check if POP_STACK could be considered to be a non-blocking action (this is potentially
-            ok because of the constraint regarding m_realized_lookahead_cursor on processing HPSes).
-            This might require adding cases to ParseStackTreeNode_::ComputePrecedenceLevelRange
         -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
             Useful references:
             -   https://stackoverflow.com/questions/15129263/is-there-a-non-atomic-equivalent-of-stdshared-ptr-and-why-isnt-there-one-in/15141844#15141844
@@ -1483,16 +1493,23 @@ which includes the top element.
     Note that this situation represents mutually recursive rules that, because they have empty reduction
     rules, can enter an infinite loop during parse.
 
--   There is a bug in the calculation of max realized lookaheads where if ERROR_ is pushed onto the
+-   BUG: There is a bug in the calculation of max realized lookaheads where if ERROR_ is pushed onto the
     front of the realized lookaheads, then that count is artificially inflated by 1.  This should not
     increase the number of realized lookaheads, since the ERROR_ token was artificially generated.
 
     Thinking about how the max realized lookahead count is computed (the implementation of which currently
     uses the HPS queue), it shouldn't depend on the HPS queue, but rather only the realized lookaheads
-    (subject to the adjustment given above).
+    (subject to the adjustment given above).  Maybe even just subtracting the number of leading ERROR_
+    tokens and nonterminals from the queue length would do it.
 
 -   Implementing a max parse tree depth would be a good idea for preventing infinite loop and memory
     hogging, as well as making it easier to debug such conditions.
 -   There are 2 cases in SHIFT/REDUCE conflict resolution that could be handled before equalizing the
     min/max realized lookahead cursors.  Cases 1 and 5, since they involve no overlap in the precedence
     of the SHIFT or REDUCE rules, and can therefore be resolved immediately.
+-   Is there any way to resolve the problem with having REDUCE actions not destroy and recreate the
+    parse tree?  The problem was that the lookahead cursor was not set properly to account that the
+    reduced nonterminal appeared on the realized lookahead queue.  But this is tricky if the executed
+    reduce action is followed by other actions that change its hypothetical lookahead queue.
+    It seems like probably this destroy_and_recreate_parse_tree for REDUCE actions is slowing down
+    the parses tremendously.

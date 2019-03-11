@@ -810,7 +810,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     {
         BranchNodePtr_ const &branch_node_ptr = *it;
         out << <{debug_spew_prefix} << "    (";
-        branch_node_ptr->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
+        branch_node_ptr->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>); // no need for semicolon here
         out << ")\n";
     }
 
@@ -841,8 +841,9 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
         Token const &token = *it;
         out << token << ' ';
     }
-    out << '\n';
+    out << '\n' << '\n';
 
+    out << <{debug_spew_prefix} << "Parse tree (hypothetical parser states); Notation legend: <real-stack> .- <hyp-stack> . <hyp-lookaheads> -. <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << <{debug_spew_prefix} << '\n';
 
@@ -1583,15 +1584,22 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
         assert(bool(m_branch_node_ptr));
         assert(bool(m_branch_node_token_id_ptr));
 
+        std::int32_t print_delimiter_at_branch_length = -1;
+        if (parser != NULL)
+        {
+            assert(parser->m_realized_state_->TokenStack().size() == parser->m_realized_state_->BranchNodePtrVectorStack().size());
+            print_delimiter_at_branch_length = std::min(parser->m_realized_state_->TokenStack().size(), m_branch_node_ptr->BranchLength());
+        }
+
         out << "    (";
-        m_branch_node_ptr->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
+        m_branch_node_ptr->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>, print_delimiter_at_branch_length);
         out << "); ";
 
-        m_branch_node_token_id_ptr->PrintRootToLeaf(out, TokenName_);
+        m_branch_node_token_id_ptr->PrintRootToLeaf(out, TokenName_, print_delimiter_at_branch_length);
         out << " . ";
         for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
             out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
-        out << ", ";
+        out << "-. ";
         if (parser != NULL)
             for (std::size_t i = m_realized_lookahead_cursor; i < parser->m_realized_state_->LookaheadQueue().size(); ++i)
                 out << ms_token_name_table_[parser->m_realized_state_->LookaheadQueue()[i].m_id] << ' ';
