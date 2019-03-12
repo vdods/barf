@@ -1197,6 +1197,7 @@ which includes the top element.
         -   Test against grammars that actually require multiple lookaheads (e.g. w/ operators +, ++, +++)
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
+        -   Rename ParseStackTreeNode_ to ParseTreeNode_
     -   Nice to have
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
             use the highest standard that's reasonable)
@@ -1518,3 +1519,49 @@ which includes the top element.
     the parses tremendously (there are a TON more memory operations per REDUCE action, and REDUCE is
     a very common operation).
 
+2018.03.11 ----------------------------
+
+-   There's a bug in the .- delimiter printout when there's a REDUCE involved (and maybe other cases).
+    Probably need to track some sort of cursor into the stack (in addition to the existing lookahead
+    cursor).  Keep a "realized token stack cursor" (which in this case would have the same type as
+    m_branch_node_ptr), which can be passed into TreeNode_::PrintRootToLeaf to indicate where to put
+    the .- delimiter.  Do the same with m_branch_node_token_id_ptr.
+
+    This is probably only needed for when debug spew is enabled, but need to make sure.
+
+-   There is a possibly useful distinction to be made in the "max realized lookahead count" logic.
+
+    In particular, because parser-generated lookaheads (as opposed to scanner-generated lookaheads)
+    can be pushed onto the front of the realized lookahead queue, there is a distinction between
+    the types of lookaheads (scanner-generated and non-scanner-generated).  Thus a concept of
+    "max realized scanner-generated lookahead count" can be defined, which would be the max achieved
+    number of contiguous scanner-generated lookaheads starting at the tail of the lookahead queue
+    (probably there will never be a case where the scanner-generated lookaheads will be interspersed
+    with parser-generated lookaheads).
+
+    Hypothesis: the lookahead queue always has the form
+
+        <parser-generated-lookaheads> <scanner-generated-lookaheads>
+
+    where each of those segments may be empty.  Parser-generated lookaheads are:
+    -   All nonterminals
+    -   The ERROR_ terminal
+
+    The hypothetical parser state is used to decide what action to take based on lookaheads, and
+    not all of the current lookaheads will necessarily be used to make that decision.
+
+        |-------- decision lookahead count, in this case m+1 ------------------------------------------|
+        <parser-generated-lookahead-1> ... <parser-generated-lookahead-m> <scanner-generated-lookhead-1> ... <scanner-generated-lookhead-n>
+
+    A further sub-distinction is how far into <scanner-generated-lookaheads> does the decision lookhead
+    count go?  In the above case, it's 1.  This concept may or may not be useful, since the number k
+    for an LALR(k) grammar is the upper bound on the number of lookaheads it needs to make a decision.
+
+-   For generating a DPDA from an NPDA, since now the NPDA can make decisions based on elements deeper
+    in the state stack than the top element, each DPDA state is no longer just a subset of NPDA states,
+    but rather a subset of NPDA state [sub]stacks (where "substack" here means a portion of a stack
+    where the substack shares the same head as the containing stack).  There is a natural partial order
+    on the space of subsets of NPDA state [sub]stacks, and therefore the DPDA state behavior naturally
+    has a hierarchical state machine structure (i.e. a hierarchy of states, where the "child states"
+    are special cases of their parents, and there is a fallthrough to the parent if there is no transition
+    match for that state).
