@@ -185,7 +185,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
         // The trunk_child is popped and then will die by the end of this function.
         // Using std::unique_ptr for exception safety -- if an exception is thrown within
         // this function, then trunk_child still needs to be deleted.
-        std::unique_ptr<ParseStackTreeNode_> trunk_child(m_hypothetical_state_->m_root->PopTrunkChild());
+        std::unique_ptr<ParseTreeNode_> trunk_child(m_hypothetical_state_->m_root->PopTrunkChild());
         assert(trunk_child->m_parent_node == NULL);
         assert(trunk_child->m_child_nodes.empty());
 
@@ -193,7 +193,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 
         switch (trunk_child->m_spec.m_type)
         {
-            case ParseStackTreeNode_::RETURN: {
+            case ParseTreeNode_::RETURN: {
 <|              if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action RETURN.\n")
 <|              end_if
@@ -205,7 +205,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 should_return = true;
                 break;
             }
-            case ParseStackTreeNode_::REDUCE: {
+            case ParseTreeNode_::REDUCE: {
                 // Execute the appropriate rule on the top tokens in the stack
                 std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
 <|              if(is_defined(generate_debug_spew_code))
@@ -218,7 +218,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 destroy_and_recreate_parse_tree = true;
                 break;
             }
-            case ParseStackTreeNode_::SHIFT: {
+            case ParseTreeNode_::SHIFT: {
 <|              if(is_defined(generate_debug_spew_code))
                 std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
@@ -226,21 +226,21 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
                 break;
             }
-            case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+            case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
 <|              if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
 <|              end_if
                 m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
             }
-            case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
+            case ParseTreeNode_::DISCARD_LOOKAHEAD: {
 <|              if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action DISCARD_LOOKAHEAD.\n")
 <|              end_if
                 m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
             }
-            case ParseStackTreeNode_::POP_STACK: {
+            case ParseTreeNode_::POP_STACK: {
                 std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
 <|              if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action POP_STACK " << pop_count << ".\n")
@@ -301,8 +301,8 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|  end_if
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
     {
-        ParseStackTreeNode_ *shift  = NULL;
-        ParseStackTreeNode_ *reduce = NULL;
+        ParseTreeNode_ *shift  = NULL;
+        ParseTreeNode_ *reduce = NULL;
         // TODO: Move this handling into its own function
         // NOTE: This only works at the root.  If that were to change, then various things
         // would need to scan over only the HPSes that are contained within the relevant subtree.
@@ -330,8 +330,8 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
         {
             assert(shift != NULL);
             assert(reduce != NULL);
-            ParseStackTreeNode_::PrecedenceLevelRange shift_precedence_level_range = shift->ComputePrecedenceLevelRange(1);
-            ParseStackTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
+            ParseTreeNode_::PrecedenceLevelRange shift_precedence_level_range = shift->ComputePrecedenceLevelRange(1);
+            ParseTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
             assert(reduce_precedence_level_range.first == reduce_precedence_level_range.second);
 
 <|          if(is_defined(generate_debug_spew_code))
@@ -464,9 +464,9 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                         // easy thing.
                         for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
                         {
-                            ParseStackTreeNode_ *hps = *hps_it;
+                            ParseTreeNode_ *hps = *hps_it;
                             assert(hps != NULL);
-                            ParseStackTreeNode_ *new_hps = TakeHypotheticalActionOnHPS_(*hps, ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR, ParseStackTreeNode_::UNUSED_DATA);
+                            ParseTreeNode_ *new_hps = TakeHypotheticalActionOnHPS_(*hps, ParseTreeNode_::INSERT_LOOKAHEAD_ERROR, ParseTreeNode_::UNUSED_DATA);
                             m_hypothetical_state_->m_new_hps_queue.push_back(new_hps);
                             // Note that DeleteBranch only nullifies elements in m_hps_queue, it doesn't
                             // alter the container itself.
@@ -560,7 +560,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 // Take new hps-es and clear old ones.
                 for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
                 {
-                    ParseStackTreeNode_ *hps = *hps_it;
+                    ParseTreeNode_ *hps = *hps_it;
                     if (hps != NULL)
                         m_hypothetical_state_->m_new_hps_queue.push_back(hps);
                 }
@@ -602,9 +602,9 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             if (*hps_it == NULL)
                 continue;
 
-            ParseStackTreeNode_ &hps = **hps_it;
+            ParseTreeNode_ &hps = **hps_it;
 
-            assert(hps.m_spec.m_type == ParseStackTreeNode_::HPS);
+            assert(hps.m_spec.m_type == ParseTreeNode_::HPS);
 <|          if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(
                 *DebugSpewStream() << <{debug_spew_prefix} << "        Processing ";
@@ -654,8 +654,8 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|              if(is_defined(generate_debug_spew_code))
 /*
                 TRISON_CPP_DEBUG_CODE_(
-                    *DebugSpewStream() << <{debug_spew_prefix} << "            Processing transition " << ParseStackTreeNode_::AsString(ParseStackTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
-                    if (transition.m_data_index == ParseStackTreeNode_::UNUSED_DATA)
+                    *DebugSpewStream() << <{debug_spew_prefix} << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
+                    if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
                     else
                         *DebugSpewStream() << transition.m_data_index;
@@ -664,7 +664,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 */
 
 <|              end_if
-                ParseStackTreeNode_ *resulting_hps = NULL;
+                ParseTreeNode_ *resulting_hps = NULL;
                 // If it's a default transition, there's no need to access the lookahead (except in
                 // a certain case).
                 if (transition.m_token_index == Nonterminal::none_)
@@ -683,7 +683,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                     {
                         Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[transition.m_data_index];
                         bool is_empty_reduction_rule = rule.m_token_count == 0;
-                        bool just_reduced_this_nonterminal = hps.m_parent_node->m_spec.m_type == ParseStackTreeNode_::REDUCE && hps.m_parent_node->m_spec.m_single_data == rule.m_reduction_nonterminal_token_id;
+                        bool just_reduced_this_nonterminal = hps.m_parent_node->m_spec.m_type == ParseTreeNode_::REDUCE && hps.m_parent_node->m_spec.m_single_data == rule.m_reduction_nonterminal_token_id;
                         // The fancy logical construction here is to avoid accessing the lookahead unless necessary
                         // (and technically this is not optimal, since really when executing the trunk actions,
                         // the information of "parent is REDUCE and the reduction rule nonterminal is this one"
@@ -704,7 +704,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition without accessing lookahead... ")
 <|                      end_if
-                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
+                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
 <|                      end_if
@@ -724,7 +724,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
 <|                      end_if
-                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
+                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
 <|                      end_if
@@ -743,7 +743,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|  end_if
     for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
-        ParseStackTreeNode_ *hps = *hps_it;
+        ParseTreeNode_ *hps = *hps_it;
         if (hps != NULL)
         {
 <|          if(is_defined(generate_debug_spew_code))
@@ -852,7 +852,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     out << <{debug_spew_prefix} << "HPS queue:\n";
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
-        ParseStackTreeNode_ *hps = *it;
+        ParseTreeNode_ *hps = *it;
         assert(hps != NULL);
         hps->Print(out, this, DebugSpewPrefix(), 1);
     }
@@ -907,7 +907,7 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
     // m_realized_lookahead_cursor is an index into that queue, each must be updated.
     for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
-        ParseStackTreeNode_ &hps = **hps_it;
+        ParseTreeNode_ &hps = **hps_it;
         --hps.m_realized_lookahead_cursor;
     }
     Token retval(m_lookahead_queue.back());
@@ -1018,7 +1018,7 @@ void <{class_name}::RealizedState_::PushFrontLookahead (Token const &lookahead, 
     // m_realized_lookahead_cursor is an index into that queue, each must be updated.
     for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
-        ParseStackTreeNode_ &hps = **hps_it;
+        ParseTreeNode_ &hps = **hps_it;
         ++hps.m_realized_lookahead_cursor;
     }
     UpdateMaxRealizedLookaheadCount(hps_queue);
@@ -1039,7 +1039,7 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ c
         if (*hps_it == NULL)
             continue;
 
-        ParseStackTreeNode_ const &hps = **hps_it;
+        ParseTreeNode_ const &hps = **hps_it;
         // The actual lookaheads are offset by the realized lookahead cursor, because the tokens before
         // the realized lookahead cursor are ones we've seen already, and therefore don't contribute to
         // the actual lookahead count.
@@ -1055,14 +1055,15 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ c
 
 <{class_name}::HypotheticalState_::HypotheticalState_ (std::uint32_t initial_state)
 {
-    m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
+    m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
 
-    ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
+    ParseTreeNode_ *hps    = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
 <|  if(is_defined(generate_debug_spew_code))
-    hps->m_hypothetical_head = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
+    hps->m_hypothetical_head    = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
 <|  else
-    hps->m_hypothetical_head = Branch_(BranchState_::CreateOrphan(initial_state));
+    hps->m_hypothetical_head    = Branch_(BranchState_::CreateOrphan(initial_state));
 <|  end_if
+    hps->m_first_real_ancestor  = hps->m_hypothetical_head;
 
     m_root->AddChild(hps);
     m_hps_queue.push_back(hps);
@@ -1085,12 +1086,12 @@ bool <{class_name}::HypotheticalState_::MinAndMaxRealizedLookaheadCursorsAreEqua
     return min == max;
 }
 
-void <{class_name}::HypotheticalState_::DeleteBranch (ParseStackTreeNode_ *branch_node)
+void <{class_name}::HypotheticalState_::DeleteBranch (ParseTreeNode_ *branch_node)
 {
     assert(!branch_node->IsRoot());
 
     // Find the most root-ward ancestor that is an only child that isn't the root node.
-    ParseStackTreeNode_ *branch_root = branch_node->BranchRoot();
+    ParseTreeNode_ *branch_root = branch_node->BranchRoot();
     assert(branch_root != NULL);
     assert(!branch_root->IsRoot());
     assert(branch_root->HasParent());
@@ -1108,7 +1109,7 @@ void <{class_name}::HypotheticalState_::DestroyParseTree ()
     // Delete the parse tree root, which deletes all nodes.
     delete m_root;
     // At this point, the parse tree has been destroyed.  Create a new root node.
-    m_root = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
+    m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
 }
 
 void <{class_name}::HypotheticalState_::ComputeMinAndMaxRealizedLookaheadCursors (std::uint32_t *min, std::uint32_t *max) const
@@ -1124,7 +1125,7 @@ void <{class_name}::HypotheticalState_::ComputeMinAndMaxRealizedLookaheadCursors
         if (*hps_it == NULL)
             continue;
 
-        ParseStackTreeNode_ const &hps = **hps_it;
+        ParseTreeNode_ const &hps = **hps_it;
         if (min != NULL && hps.m_realized_lookahead_cursor < *min)
             *min = hps.m_realized_lookahead_cursor;
         if (max != NULL && hps.m_realized_lookahead_cursor > *max)
@@ -1133,10 +1134,10 @@ void <{class_name}::HypotheticalState_::ComputeMinAndMaxRealizedLookaheadCursors
 }
 
 // ////////////////////////////////////////////////////////////////////////////
-// <{class_name}::ParseStackTreeNode_
+// <{class_name}::ParseTreeNode_
 // ////////////////////////////////////////////////////////////////////////////
 
-char const *<{class_name}::ParseStackTreeNode_::AsString (Type type)
+char const *<{class_name}::ParseTreeNode_::AsString (Type type)
 {
     static char const *const LOOKUP_TABLE[COUNT_] =
     {
@@ -1154,11 +1155,11 @@ char const *<{class_name}::ParseStackTreeNode_::AsString (Type type)
 }
 
 <|end_if
-bool <{class_name}::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (<{class_name}::ParseStackTreeNode_ const *lhs, <{class_name}::ParseStackTreeNode_ const *rhs) const
+bool <{class_name}::ParseTreeNode_::ParseTreeNodeOrder::operator () (<{class_name}::ParseTreeNode_ const *lhs, <{class_name}::ParseTreeNode_ const *rhs) const
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
-    assert(lhs->m_spec.m_type == rhs->m_spec.m_type); // ParseStackTreeNodeSet should contain only nodes of the same type.
+    assert(lhs->m_spec.m_type == rhs->m_spec.m_type); // ParseTreeNodeSet should contain only nodes of the same type.
     // for HPS, their contents must be compared.
     if (lhs->m_spec.m_type == HPS)
     {
@@ -1195,11 +1196,11 @@ bool <{class_name}::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (<
 
 <|if(0)
 <|if(is_defined(generate_debug_spew_code))
-std::set<<{class_name}::ParseStackTreeNode_*> <{class_name}::ParseStackTreeNode_::ms_active_pointer_set;
+std::set<<{class_name}::ParseTreeNode_*> <{class_name}::ParseTreeNode_::ms_active_pointer_set;
 
 <|end_if
 <|end_if
-<{class_name}::ParseStackTreeNode_::~ParseStackTreeNode_ ()
+<{class_name}::ParseTreeNode_::~ParseTreeNode_ ()
 {
 <|  if(0)
 <|  if(is_defined(generate_debug_spew_code))
@@ -1213,10 +1214,10 @@ std::set<<{class_name}::ParseStackTreeNode_*> <{class_name}::ParseStackTreeNode_
     // TODO: are they actually uninitialized (default value)?
     for (ChildMap::iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
     {
-        ParseStackTreeNodeSet &child_node_set = it->second;
-        for (ParseStackTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        ParseTreeNodeSet &child_node_set = it->second;
+        for (ParseTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
         {
-            ParseStackTreeNode_ *child = *child_it;
+            ParseTreeNode_ *child = *child_it;
             assert(child != NULL);
             assert(child->m_parent_node == this);
             delete child;
@@ -1225,23 +1226,23 @@ std::set<<{class_name}::ParseStackTreeNode_*> <{class_name}::ParseStackTreeNode_
     }
 }
 
-bool <{class_name}::ParseStackTreeNode_::HasTrunkChild () const
+bool <{class_name}::ParseTreeNode_::HasTrunkChild () const
 {
     if (m_spec.m_type != ROOT || m_child_nodes.size() != 1)
         return false;
-    ParseStackTreeNodeSet const &single_type_child_node_set = m_child_nodes.begin()->second;
+    ParseTreeNodeSet const &single_type_child_node_set = m_child_nodes.begin()->second;
     if (single_type_child_node_set.size() != 1)
         return false;
-    ParseStackTreeNode_ *single_child = *single_type_child_node_set.begin();
+    ParseTreeNode_ *single_child = *single_type_child_node_set.begin();
     assert(single_child != NULL);
     assert(single_child->m_spec.m_type != ROOT);
     return single_child->m_spec.m_type != HPS;
 }
 
-<{class_name}::ParseStackTreeNode_ *<{class_name}::ParseStackTreeNode_::PopTrunkChild ()
+<{class_name}::ParseTreeNode_ *<{class_name}::ParseTreeNode_::PopTrunkChild ()
 {
     assert(HasTrunkChild());
-    ParseStackTreeNode_ *trunk_child = *m_child_nodes.begin()->second.begin();
+    ParseTreeNode_ *trunk_child = *m_child_nodes.begin()->second.begin();
     assert(trunk_child != NULL);
     assert(trunk_child->m_parent_node == this);
     // Reassign the children of the trunk child to this node (root).
@@ -1250,10 +1251,10 @@ bool <{class_name}::ParseStackTreeNode_::HasTrunkChild () const
     // Set the reassigned child nodes' parent to be this node (root).
     for (ChildMap::iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
     {
-        ParseStackTreeNodeSet &child_node_set = child_map_it->second;
-        for (ParseStackTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        ParseTreeNodeSet &child_node_set = child_map_it->second;
+        for (ParseTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
         {
-            ParseStackTreeNode_ *child = *child_it;
+            ParseTreeNode_ *child = *child_it;
             assert(child != NULL);
             child->m_parent_node = this;
         }
@@ -1262,16 +1263,16 @@ bool <{class_name}::ParseStackTreeNode_::HasTrunkChild () const
     return trunk_child;
 }
 
-bool <{class_name}::ParseStackTreeNode_::HasExactlyOneChild () const
+bool <{class_name}::ParseTreeNode_::HasExactlyOneChild () const
 {
     return m_child_nodes.size() == 1 && m_child_nodes.begin()->second.size() == 1;
 }
 
-<{class_name}::ParseStackTreeNode_ *<{class_name}::ParseStackTreeNode_::BranchRoot ()
+<{class_name}::ParseTreeNode_ *<{class_name}::ParseTreeNode_::BranchRoot ()
 {
     assert(!IsRoot());
     assert(HasParent());
-    ParseStackTreeNode_ *node = this;
+    ParseTreeNode_ *node = this;
     while (node->HasParent() && !node->m_parent_node->IsRoot() && node->m_parent_node->HasExactlyOneChild())
     {
         node = node->m_parent_node;
@@ -1280,7 +1281,7 @@ bool <{class_name}::ParseStackTreeNode_::HasExactlyOneChild () const
     return node;
 }
 
-<{class_name}::Token::Id <{class_name}::ParseStackTreeNode_::LookaheadTokenId (<{class_name} &parser) const
+<{class_name}::Token::Id <{class_name}::ParseTreeNode_::LookaheadTokenId (<{class_name} &parser) const
 {
     if (m_hypothetical_lookahead_token_id_queue.empty())
         return parser.Lookahead_(m_realized_lookahead_cursor).m_id;
@@ -1288,7 +1289,7 @@ bool <{class_name}::ParseStackTreeNode_::HasExactlyOneChild () const
         return m_hypothetical_lookahead_token_id_queue.front();
 }
 
-bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
+bool <{class_name}::ParseTreeNode_::IsBlockedHPS () const
 {
     assert(m_spec.m_type == HPS);
     if (m_parent_node == NULL)
@@ -1306,7 +1307,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
     }
 }
 
-<{class_name}::ParseStackTreeNode_::PrecedenceLevelRange <{class_name}::ParseStackTreeNode_::ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const
+<{class_name}::ParseTreeNode_::PrecedenceLevelRange <{class_name}::ParseTreeNode_::ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const
 {
     if (m_spec.m_type == HPS)
     {
@@ -1361,11 +1362,11 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
         // The range is the smallest range encompassing the range of each child node.
         for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
         {
-            ParseStackTreeNodeSet const &child_node_set = child_map_it->second;
-            for (ParseStackTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+            ParseTreeNodeSet const &child_node_set = child_map_it->second;
+            for (ParseTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
             {
                 assert(*child_it != NULL);
-                ParseStackTreeNode_ const &child = **child_it;
+                ParseTreeNode_ const &child = **child_it;
                 PrecedenceLevelRange child_precedence_level_range(child.ComputePrecedenceLevelRange(current_child_depth+1));
                 retval.first = std::min(retval.first, child_precedence_level_range.first);
                 retval.second = std::max(retval.second, child_precedence_level_range.second);
@@ -1383,15 +1384,15 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
     }
 }
 
-bool <{class_name}::ParseStackTreeNode_::HasShiftReduceConflict (ParseStackTreeNode_ *&shift, ParseStackTreeNode_ *&reduce)
+bool <{class_name}::ParseTreeNode_::HasShiftReduceConflict (ParseTreeNode_ *&shift, ParseTreeNode_ *&reduce)
 {
     ChildMap::iterator shift_children_it = m_child_nodes.find(Spec(SHIFT));
     ChildMap::iterator reduce_children_it = m_child_nodes.find(Spec(REDUCE));
     if (shift_children_it == m_child_nodes.end() || reduce_children_it == m_child_nodes.end())
         return false;
 
-    ParseStackTreeNodeSet &shift_children = shift_children_it->second;
-    ParseStackTreeNodeSet &reduce_children = reduce_children_it->second;
+    ParseTreeNodeSet &shift_children = shift_children_it->second;
+    ParseTreeNodeSet &reduce_children = reduce_children_it->second;
     assert(shift_children.size() == 1);
     assert(reduce_children.size() == 1);
 
@@ -1400,14 +1401,14 @@ bool <{class_name}::ParseStackTreeNode_::HasShiftReduceConflict (ParseStackTreeN
     return true;
 }
 
-void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
+void <{class_name}::ParseTreeNode_::AddChild (ParseTreeNode_ *child)
 {
     assert(child != NULL);
     assert(child->m_parent_node == NULL);
     assert(child->m_spec.m_type != ROOT);
 
-    // // std::cerr << "ParseStackTreeNode_::AddChild; this = " << this << ", child = " << child << ", m_child_branch_node_ptr_vector = " << m_child_branch_node_ptr_vector << '\n';
-    // std::cerr << "ParseStackTreeNode_::AddChild; this = " << this << ", child = " << child << ", m_child_branch_node_ptr_vector = " << "(branch values omitted)" << '\n';
+    // // std::cerr << "ParseTreeNode_::AddChild; this = " << this << ", child = " << child << ", m_child_branch_node_ptr_vector = " << m_child_branch_node_ptr_vector << '\n';
+    // std::cerr << "ParseTreeNode_::AddChild; this = " << this << ", child = " << child << ", m_child_branch_node_ptr_vector = " << "(branch values omitted)" << '\n';
     // std::cerr << "this:\n";
     // this->Print(std::cerr, NULL, "HIPPO", 1);
     // std::cerr << "child:\n";
@@ -1427,9 +1428,9 @@ void <{class_name}::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
 //    std::cerr << '\n';
 }
 
-void <{class_name}::ParseStackTreeNode_::RemoveChild (ParseStackTreeNode_ *child)
+void <{class_name}::ParseTreeNode_::RemoveChild (ParseTreeNode_ *child)
 {
-    //std::cerr << "ParseStackTreeNode_::RemoveChild; this = " << this << ", child = " << child << '\n'; // HIPPO
+    //std::cerr << "ParseTreeNode_::RemoveChild; this = " << this << ", child = " << child << '\n'; // HIPPO
     assert(child != NULL);
     assert(child->m_parent_node == this);
     assert(HasChildrenHavingSpec(child->m_spec));
@@ -1452,14 +1453,14 @@ void <{class_name}::ParseStackTreeNode_::RemoveChild (ParseStackTreeNode_ *child
         RemoveFromParent();
 }
 
-void <{class_name}::ParseStackTreeNode_::RemoveFromParent ()
+void <{class_name}::ParseTreeNode_::RemoveFromParent ()
 {
     assert(m_parent_node != NULL);
-    //std::cerr << "ParseStackTreeNode_::RemoveFromParent; this = " << this << '\n'; // HIPPO
+    //std::cerr << "ParseTreeNode_::RemoveFromParent; this = " << this << '\n'; // HIPPO
     m_parent_node->RemoveChild(this);
 }
 
-void <{class_name}::ParseStackTreeNode_::NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_ &hps_queue) const
+void <{class_name}::ParseTreeNode_::NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_ &hps_queue) const
 {
     if (m_spec.m_type == HPS)
     {
@@ -1470,35 +1471,36 @@ void <{class_name}::ParseStackTreeNode_::NullifyHPSNodeDescendantsInHPSQueue (HP
     }
     for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
     {
-        ParseStackTreeNodeSet const &child_node_set = child_map_it->second;
-        for (ParseStackTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        ParseTreeNodeSet const &child_node_set = child_map_it->second;
+        for (ParseTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
         {
             assert(*child_it != NULL);
-            ParseStackTreeNode_ const &child = **child_it;
+            ParseTreeNode_ const &child = **child_it;
             child.NullifyHPSNodeDescendantsInHPSQueue(hps_queue);
         }
     }
 }
 
-<{class_name}::ParseStackTreeNode_ *<{class_name}::ParseStackTreeNode_::CloneLeafNode () const
+<{class_name}::ParseTreeNode_ *<{class_name}::ParseTreeNode_::CloneLeafNode () const
 {
-    ParseStackTreeNode_ *retval = new ParseStackTreeNode_(m_spec);
+    ParseTreeNode_ *retval = new ParseTreeNode_(m_spec);
     CloneLeafNodeInto(*retval);
     return retval;
 }
 
-void <{class_name}::ParseStackTreeNode_::CloneLeafNodeInto (<{class_name}::ParseStackTreeNode_ &orphan_target) const
+void <{class_name}::ParseTreeNode_::CloneLeafNodeInto (<{class_name}::ParseTreeNode_ &orphan_target) const
 {
     assert(orphan_target.m_parent_node == NULL);
     assert(m_child_nodes.empty());
     orphan_target.m_spec                                    = m_spec;
     orphan_target.m_hypothetical_head                       = m_hypothetical_head;
+    orphan_target.m_first_real_ancestor                     = m_first_real_ancestor;
     orphan_target.m_hypothetical_lookahead_token_id_queue   = m_hypothetical_lookahead_token_id_queue;
     orphan_target.m_realized_lookahead_cursor               = m_realized_lookahead_cursor;
 }
 
 <|if(is_defined(generate_debug_spew_code))
-void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name} const *parser, std::string const &prefix, std::uint32_t indent_level, bool suppress_initial_prefix) const
+void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} const *parser, std::string const &prefix, std::uint32_t indent_level, bool suppress_initial_prefix) const
 {
     if (!suppress_initial_prefix)
     {
@@ -1555,15 +1557,15 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     // Print children recursively with higher indent level
     for (ChildMap::const_iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
     {
-        ParseStackTreeNodeSet const &child_node_set = it->second;
-        for (ParseStackTreeNodeSet::const_iterator set_it = child_node_set.begin(), set_it_end = child_node_set.end(); set_it != set_it_end; ++set_it)
+        ParseTreeNodeSet const &child_node_set = it->second;
+        for (ParseTreeNodeSet::const_iterator set_it = child_node_set.begin(), set_it_end = child_node_set.end(); set_it != set_it_end; ++set_it)
             (*set_it)->Print(out, parser, prefix, indent_level+1);
     }
 }
 
 <|end_if
 // ////////////////////////////////////////////////////////////////////////////
-// End of <{class_name}::ParseStackTreeNode_
+// End of <{class_name}::ParseTreeNode_
 // ////////////////////////////////////////////////////////////////////////////
 
 <{class_name}::Token const &<{class_name}::Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
@@ -1580,10 +1582,10 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     return m_realized_state_->LookaheadQueue()[index];
 }
 
-<{class_name}::ParseStackTreeNode_ *<{class_name}::TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data)
+<{class_name}::ParseTreeNode_ *<{class_name}::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ const &hps, ParseTreeNode_::Type action_type, std::uint32_t action_data)
 {
-    // TODO: replace individual arguments action_type, action_data with ParseStackTreeNode_::Spec and just modify that struct below where it needs it.
-    assert(hps.m_spec.m_type == ParseStackTreeNode_::HPS && "Only a HPS type node can take an action");
+    // TODO: replace individual arguments action_type, action_data with ParseTreeNode_::Spec and just modify that struct below where it needs it.
+    assert(hps.m_spec.m_type == ParseTreeNode_::HPS && "Only a HPS type node can take an action");
     assert(hps.m_parent_node != NULL);
 
     // TODO: Once enough testing/verification is done, this comment and the commented-out early check code
@@ -1593,7 +1595,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     // early out if the stack will be popped empty.
 
 //     // Early check for if the stack would be popped empty, in which case, don't create the new hps.
-//     if (action_type == ParseStackTreeNode_::POP_STACK && hps.m_stack.size() <= 1)
+//     if (action_type == ParseTreeNode_::POP_STACK && hps.m_stack.size() <= 1)
 //     {
 <|      if(is_defined(generate_debug_spew_code))
 <|      if(0)
@@ -1603,36 +1605,36 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
 //         return NULL;
 //     }
 
-    ParseStackTreeNode_ *new_hps = NULL;
+    ParseTreeNode_ *new_hps = NULL;
 
     switch (action_type)
     {
-        case ParseStackTreeNode_::ROOT: {
-            assert(false && "ParseStackTreeNode_::ROOT is an invalid action type.");
+        case ParseTreeNode_::ROOT: {
+            assert(false && "ParseTreeNode_::ROOT is an invalid action type.");
             break;
         }
-        case ParseStackTreeNode_::RETURN: {
+        case ParseTreeNode_::RETURN: {
             new_hps = hps.CloneLeafNode();
             break;
         }
-        case ParseStackTreeNode_::REDUCE: {
+        case ParseTreeNode_::REDUCE: {
             // Execute the appropriate rule on the top tokens in the stack
             std::uint32_t const &rule_index = action_data;
             Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
 
             // Avoid creating the new hps altogether if it won't be added due to a REDUCE/REDUCE conflict.
-            ParseStackTreeNode_ *existing_reduce_action_node = NULL;
-            ParseStackTreeNode_ *reduce_hps = NULL;
-            ParseStackTreeNode_::Spec action_spec(action_type, action_data);
+            ParseTreeNode_ *existing_reduce_action_node = NULL;
+            ParseTreeNode_ *reduce_hps = NULL;
+            ParseTreeNode_::Spec action_spec(action_type, action_data);
             if (hps.m_parent_node->HasChildrenHavingSpec(action_spec)) // Check for an existing REDUCE action
             {
                 // This may or may not be a conflict.  Need to determine that.
 
-                ParseStackTreeNode_::ParseStackTreeNodeSet &reduce_node_set = hps.m_parent_node->ChildrenHavingSpec(action_spec);
+                ParseTreeNode_::ParseTreeNodeSet &reduce_node_set = hps.m_parent_node->ChildrenHavingSpec(action_spec);
                 assert(reduce_node_set.size() == 1);
                 existing_reduce_action_node = *reduce_node_set.begin();
                 assert(existing_reduce_action_node != NULL);
-                assert(existing_reduce_action_node->m_spec.m_type == ParseStackTreeNode_::REDUCE);
+                assert(existing_reduce_action_node->m_spec.m_type == ParseTreeNode_::REDUCE);
 
                 // If the hypothetical action is identical to the existing one, then there's no problem,
                 // just add it as a child to the existing one.
@@ -1655,7 +1657,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
                     // which is what these three asserts check.  TODO: maybe make abstractions for these sorts of checks.
                     assert(existing_reduce_action_node->m_child_nodes.size() == 1);
                     assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
-                    assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseStackTreeNode_::HPS);
+                    assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseTreeNode_::HPS);
                     if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
                     {
 <|                      if(is_defined(generate_debug_spew_code))
@@ -1665,14 +1667,14 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
                         reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
                         assert(reduce_hps != NULL);
 
-                        // Remove the nodes from the ParseStackTreeNode_ tree.
+                        // Remove the nodes from the ParseTreeNode_ tree.
                         assert(existing_reduce_action_node != NULL);
                         existing_reduce_action_node->RemoveFromParent();
                         reduce_hps->RemoveFromParent();
                         // Modify the nodes.
                         existing_reduce_action_node->m_spec = action_spec; // Replace with the winning reduction rule Spec.
                         hps.CloneLeafNodeInto(*reduce_hps); // NOTE: This modifies the existing hps, so no update of m_hypothetical_state_->m_hps_queue is necessary.
-                        // Re-add them to the ParseStackTreeNode_ tree.
+                        // Re-add them to the ParseTreeNode_ tree.
                         existing_reduce_action_node->AddChild(reduce_hps);
                         hps.m_parent_node->AddChild(existing_reduce_action_node);
                     }
@@ -1706,10 +1708,10 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
 
             break;
         }
-        case ParseStackTreeNode_::SHIFT: {
+        case ParseTreeNode_::SHIFT: {
             // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
             std::uint32_t const &state_index = action_data;
-            // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel LookaheadTokenId tracking.
+            // TODO: probably make "Shift" method for ParseTreeNode_ to do all this bookkeeping and parallel LookaheadTokenId tracking.
             new_hps = hps.CloneLeafNode();
             Token::Id lookahead_token_id = new_hps->LookaheadTokenId(*this);
             // Create a new Branch_ and link it to the parent node's.
@@ -1728,12 +1730,12 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
                 new_hps->m_hypothetical_lookahead_token_id_queue.pop_front();
             break;
         }
-        case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+        case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
             new_hps = hps.CloneLeafNode();
             new_hps->m_hypothetical_lookahead_token_id_queue.push_front(Terminal::ERROR_);
             break;
         }
-        case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
+        case ParseTreeNode_::DISCARD_LOOKAHEAD: {
             new_hps = hps.CloneLeafNode();
             if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
                 ++new_hps->m_realized_lookahead_cursor;
@@ -1741,7 +1743,7 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
                 new_hps->m_hypothetical_lookahead_token_id_queue.pop_front();
             break;
         }
-        case ParseStackTreeNode_::POP_STACK: {
+        case ParseTreeNode_::POP_STACK: {
             // TODO: make separate action nodes for each pop, instead of using action data,
             // since for example two branches may agree on popping at least once, even if
             // one of them is killed later.
@@ -1765,12 +1767,12 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
 <|          end_if
             break;
         }
-        case ParseStackTreeNode_::HPS: {
-            assert(false && "ParseStackTreeNode_::HPS is an invalid action type.");
+        case ParseTreeNode_::HPS: {
+            assert(false && "ParseTreeNode_::HPS is an invalid action type.");
             break;
         }
         default: {
-            assert(false && "invalid ParseStackTreeNode_::Type");
+            assert(false && "invalid ParseTreeNode_::Type");
             break;
         }
     }
@@ -1779,23 +1781,23 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
     {
         assert(new_hps->m_parent_node == NULL);
 
-        ParseStackTreeNode_ *action_node = NULL;
+        ParseTreeNode_ *action_node = NULL;
 
         // Ensure the action node exists, creating it if necessary.
-        ParseStackTreeNode_::Spec action_spec(action_type, action_data);
+        ParseTreeNode_::Spec action_spec(action_type, action_data);
         if (hps.m_parent_node->HasChildrenHavingSpec(action_spec))
         {
-            ParseStackTreeNode_::ParseStackTreeNodeSet &children_of_action_type = hps.m_parent_node->ChildrenHavingSpec(action_spec);
+            ParseTreeNode_::ParseTreeNodeSet &children_of_action_type = hps.m_parent_node->ChildrenHavingSpec(action_spec);
             assert(children_of_action_type.size() == 1);
             action_node = *children_of_action_type.begin();
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "using existing action node of type " << ParseStackTreeNode_::AsString(action_spec.m_type) << "... ")
+            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "using existing action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
 
 <|          end_if
             // If the new hps already exists (can only happen as a child of POP_STACK), then don't add it.
-            if (action_type == ParseStackTreeNode_::POP_STACK && action_node->HasChildrenHavingSpec(new_hps->m_spec))
+            if (action_type == ParseTreeNode_::POP_STACK && action_node->HasChildrenHavingSpec(new_hps->m_spec))
             {
-                ParseStackTreeNode_::ParseStackTreeNodeSet const &child_hps_set = action_node->ChildrenHavingSpec(new_hps->m_spec);
+                ParseTreeNode_::ParseTreeNodeSet const &child_hps_set = action_node->ChildrenHavingSpec(new_hps->m_spec);
                 if (child_hps_set.find(new_hps) != child_hps_set.end())
                 {
 <|                  if(is_defined(generate_debug_spew_code))
@@ -1809,9 +1811,9 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
         else
         {
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating new action node of type " << ParseStackTreeNode_::AsString(action_spec.m_type) << "... ")
+            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating new action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
 <|          end_if
-            action_node = new ParseStackTreeNode_(action_spec);
+            action_node = new ParseTreeNode_(action_spec);
 <|          if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "(action_node = " << action_node << ") ")
 <|          end_if
@@ -1841,7 +1843,7 @@ void <{class_name}::CreateParseTreeFromRealizedState_ ()
         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            " << reconstruct_branch.StatePtr() << '\n')
 <|      end_if
 
-        ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
+        ParseTreeNode_ *hps = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
         hps->m_hypothetical_head = reconstruct_branch;
 
         m_hypothetical_state_->m_root->AddChild(hps);

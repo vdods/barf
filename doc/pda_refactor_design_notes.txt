@@ -1187,6 +1187,7 @@ which includes the top element.
             by making a lookahead of `list` force a SHIFT and not allow a REDUCE (this may be incompatible
             with the existing logic of "default" actions, and may require the %lookahead refactor).
         x   Run against all BARF parsers and ensure they still work.
+        x   Rename ParseStackTreeNode_ to ParseTreeNode_
         -   Fix the bug in realized lookahead count in trison.cpp.npda target (detailed below) (NOTE:
             need an actual repro case -- only saw this once and the error has been fixed in that case
             through something else).
@@ -1195,9 +1196,10 @@ which includes the top element.
             being able to prevent exponential memory usage.  Though the problem here is that there could
             be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
         -   Test against grammars that actually require multiple lookaheads (e.g. w/ operators +, ++, +++)
+            and verify that the max realized lookahead count is as expected (currently there is a bug such
+            that it's not).
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
-        -   Rename ParseStackTreeNode_ to ParseTreeNode_
     -   Nice to have
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
             use the highest standard that's reasonable)
