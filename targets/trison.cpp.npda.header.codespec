@@ -132,16 +132,13 @@ private:
     typedef std::deque<Token::Id>                       TokenIdQueue_;
 
     // This forms one element, containing the NPDA state index, of a NPDA state stack (aka branch).
-    typedef TreeNode_<Npda_::StateIndex_>               BranchNode_; // TODO: Rename to BranchState_
-    typedef std::shared_ptr<BranchNode_>                BranchNodePtr_; // TODO: Rename to BranchStatePtr_
-    // This contains the tops of all the branch state stacks for a particular RealizedState_ state.
-    //typedef std::vector<BranchNodePtr_>                 BranchNodePtrVector_;
+    typedef TreeNode_<Npda_::StateIndex_>               BranchState_;
+    typedef std::shared_ptr<BranchState_>               BranchStatePtr_;
 
 <|if(is_defined(generate_debug_spew_code))
-    // These are tracked in parallel with BranchNode_, etc for the purposes of debug spew only.
-    typedef TreeNode_<Token::Id>                        BranchNodeTokenId_; // TODO: Rename to BranchTokenId_
-    typedef std::shared_ptr<BranchNodeTokenId_>         BranchNodeTokenIdPtr_; // TODO: Rename to BranchTokenIdPtr_
-    //typedef std::vector<BranchNodeTokenIdPtr_>          BranchNodeTokenIdPtrVector_;
+    // These are tracked in parallel with BranchState_, etc for the purposes of debug spew only.
+    typedef TreeNode_<Token::Id>                        BranchTokenId_;
+    typedef std::shared_ptr<BranchTokenId_>             BranchTokenIdPtr_;
 
     // These are used in printing the branch state stacks and token id stacks.
     template <typename T>
@@ -152,11 +149,11 @@ private:
     struct Branch_
     {
         // This is the head of the NPDA state branch that this HPS tracks.
-        BranchNodePtr_ m_state_ptr;
+        BranchStatePtr_ m_state_ptr;
 <|      if(is_defined(generate_debug_spew_code))
         // This is the head of the Token::Id branch that this HPS tracks (which is exactly
         // parallel to the NPDA state branch tracked by m_state_ptr).
-        BranchNodeTokenIdPtr_ m_token_id_ptr;
+        BranchTokenIdPtr_ m_token_id_ptr;
 <|      end_if
 
         // TODO: Should m_hypothetical_lookahead_token_id_queue and m_realized_lookahead_cursor
@@ -165,14 +162,14 @@ private:
 
         Branch_ () { } // Default initialization is nullptr.
 <|      if(is_defined(generate_debug_spew_code))
-        Branch_ (BranchNodePtr_ const &state_ptr, BranchNodeTokenIdPtr_ const &token_id_ptr)
+        Branch_ (BranchStatePtr_ const &state_ptr, BranchTokenIdPtr_ const &token_id_ptr)
             :   m_state_ptr(state_ptr)
             ,   m_token_id_ptr(token_id_ptr)
         {
             assert(bool(m_state_ptr) == bool(m_token_id_ptr) && "pointers must both be set or both be unset");
         }
 <|      else
-        Branch_ (BranchNodePtr_ const &state_ptr) : m_state_ptr(state_ptr) { }
+        Branch_ (BranchStatePtr_ const &state_ptr) : m_state_ptr(state_ptr) { }
 <|      end_if
 
         bool HasParent (Branch_ const &branch) const {

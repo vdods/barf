@@ -995,9 +995,9 @@ void <{class_name}::RealizedState_::Initialize (Npda_::StateIndex_ initial_state
     BranchVector_ initial_branch_vector;
 <|if(is_defined(generate_debug_spew_code))
     // The Nonterminal::none_ is just a dummy Token::Id to go along with initial_state.
-    initial_branch_vector.emplace_back(Branch_(BranchNode_::CreateOrphan(initial_state), BranchNodeTokenId_::CreateOrphan(Nonterminal::none_)));
+    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_)));
 <|else
-    initial_branch_vector.emplace_back(Branch_(BranchNode_::CreateOrphan(initial_state)));
+    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateOrphan(initial_state)));
 <|end_if
     // TODO: This probably should be emplace_back
     m_branch_vector_stack.push_back(initial_branch_vector);
@@ -1059,9 +1059,9 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ c
 
     ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
 <|if(is_defined(generate_debug_spew_code))
-    hps->m_hypothetical_head = Branch_(BranchNode_::CreateOrphan(initial_state), BranchNodeTokenId_::CreateOrphan(Nonterminal::none_));
+    hps->m_hypothetical_head = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
 <|else
-    hps->m_hypothetical_head = Branch_(BranchNode_::CreateOrphan(initial_state));
+    hps->m_hypothetical_head = Branch_(BranchState_::CreateOrphan(initial_state));
 <|end_if
 
     m_root->AddChild(hps);
@@ -1321,7 +1321,7 @@ bool <{class_name}::ParseStackTreeNode_::IsBlockedHPS () const
 
         // Thinking of m_hypothetical_head.m_state_ptr as the top of the state stack, we want to get the
         // (current_child_depth-1)th element from the top.
-        BranchNodePtr_ child_branch_node_ptr = m_hypothetical_head.m_state_ptr;
+        BranchStatePtr_ child_branch_node_ptr = m_hypothetical_head.m_state_ptr;
         for (std::uint32_t i = 0; i < current_child_depth-2; ++i)
         {
             // This assert checks that the stack depth is sufficient.
@@ -1725,13 +1725,13 @@ void <{class_name}::ParseStackTreeNode_::Print (std::ostream &out, <{class_name}
             // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel LookaheadTokenId tracking.
             new_hps = hps.CloneLeafNode();
             Token::Id lookahead_token_id = new_hps->LookaheadTokenId(*this);
-            // Create a new BranchNodePtr_ and link it to the parent node's.
-            new_hps->m_hypothetical_head.m_state_ptr = BranchNode_::CreateWithParent(hps.m_hypothetical_head.m_state_ptr, state_index);
+            // Create a new BranchStatePtr_ and link it to the parent node's.
+            new_hps->m_hypothetical_head.m_state_ptr = BranchState_::CreateWithParent(hps.m_hypothetical_head.m_state_ptr, state_index);
             assert(new_hps->m_hypothetical_head.m_state_ptr->HasParent());
             assert(new_hps->m_hypothetical_head.m_state_ptr->Parent() == hps.m_hypothetical_head.m_state_ptr);
 <|if(is_defined(generate_debug_spew_code))
             // Create a new BranchNodeTokenIdPtr and link it to the parent node's
-            new_hps->m_hypothetical_head.m_token_id_ptr = BranchNode_::CreateWithParent(hps.m_hypothetical_head.m_token_id_ptr, lookahead_token_id);
+            new_hps->m_hypothetical_head.m_token_id_ptr = BranchState_::CreateWithParent(hps.m_hypothetical_head.m_token_id_ptr, lookahead_token_id);
             assert(new_hps->m_hypothetical_head.m_token_id_ptr->HasParent());
             assert(new_hps->m_hypothetical_head.m_token_id_ptr->Parent() == hps.m_hypothetical_head.m_token_id_ptr);
 <|end_if
