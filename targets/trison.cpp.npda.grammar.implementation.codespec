@@ -8,17 +8,17 @@ bool <{class_name}::Grammar_::CompareRuleByPrecedence_ (std::uint32_t lhs_rule_i
 
 <{class_name}::Grammar_::Precedence_ const <{class_name}::Grammar_::ms_precedence_table_[] =
 {
-<|loop(i, _precedence_count)
+<|  loop(i, _precedence_count)
     { <{_precedence_level[i]}, <{_precedence_associativity_index[i]}<{if(is_defined(generate_debug_spew_code))}, "<{_precedence_name[i]}"<{end_if} }<{if(i < _precedence_count-1)},<{end_if}
-<|end_loop
+<|  end_loop
 };
 
 std::size_t const <{class_name}::Grammar_::ms_precedence_count_ = sizeof(<{class_name}::Grammar_::ms_precedence_table_) / sizeof(*<{class_name}::Grammar_::ms_precedence_table_);
 
 <{class_name}::Grammar_::Rule_ const <{class_name}::Grammar_::ms_rule_table_[] =
 {
-<|loop(i, _rule_count)
+<|  loop(i, _rule_count)
     { <{class_name}::Nonterminal::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}, <{_rule_precedence_index[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
-<|end_loop
+<|  end_loop
 };
 std::size_t const <{class_name}::Grammar_::ms_rule_count_ = sizeof(<{class_name}::Grammar_::ms_rule_table_) / sizeof(*<{class_name}::Grammar_::ms_rule_table_);

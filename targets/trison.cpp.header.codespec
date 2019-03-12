@@ -80,15 +80,15 @@ public:
         /// be used by the client when returning from %target.cpp.scan_actions.
         enum Name
         {
-<|if(sizeof(_terminal_name_list) < 1)
-<|error("the terminal list should always have at least one element")
-<|end_if
-<|if(sizeof(_terminal_name_list) != sizeof(_terminal_index_list))
-<|error("mismatch in size of _terminal_name_list and _terminal_index_list")
-<|end_if
-<|loop(i, sizeof(_terminal_name_list))
+<|          if(sizeof(_terminal_name_list) < 1)
+<|              error("the terminal list should always have at least one element")
+<|          end_if
+<|          if(sizeof(_terminal_name_list) != sizeof(_terminal_index_list))
+<|              error("mismatch in size of _terminal_name_list and _terminal_index_list")
+<|          end_if
+<|          loop(i, sizeof(_terminal_name_list))
             <{_terminal_name_list[i]} = <{_terminal_index_list[i]}<{if(i+1 < sizeof(_terminal_name_list))},<{end_if}
-<|end_loop
+<|          end_loop
         }; // end of enum <{class_name}::Terminal::Name
     }; // end of struct <{class_name}::Terminal
 
@@ -101,15 +101,15 @@ public:
         /// as it is only used internally by the parser.
         enum Name
         {
-<|if(sizeof(_nonterminal_name_list) < 1)
-<|error("the nonterminal list should always have at least one element")
-<|end_if
-<|if(sizeof(_nonterminal_name_list) != sizeof(_nonterminal_index_list))
-<|error("mismatch in size of _nonterminal_name_list and _nonterminal_index_list")
-<|end_if
-<|loop(i, sizeof(_nonterminal_name_list))
+<|          if(sizeof(_nonterminal_name_list) < 1)
+<|              error("the nonterminal list should always have at least one element")
+<|          end_if
+<|          if(sizeof(_nonterminal_name_list) != sizeof(_nonterminal_index_list))
+<|              error("mismatch in size of _nonterminal_name_list and _nonterminal_index_list")
+<|          end_if
+<|          loop(i, sizeof(_nonterminal_name_list))
             <{_nonterminal_name_list[i]} = <{_nonterminal_index_list[i]}<{if(i+1 < sizeof(_nonterminal_name_list))},<{end_if}
-<|end_loop
+<|          end_loop
         }; // end of enum <{class_name}::Nonterminal::Name
     }; // end of struct <{class_name}::Nonterminal
 
@@ -138,24 +138,24 @@ public:
         Token (Id id, Data const &data = <{token_data_default}) : m_id(id), m_data(data) { }
     }; // end of struct <{class_name}::Token
 
-<|if(is_defined(top_of_class))
-<|top_of_class
+<|  if(is_defined(top_of_class))
+<|  top_of_class
 
-<|end_if
+<|  end_if
 public:
 
     /// Constructor.  The client can specify parameters in the primary source
     /// via the %target.cpp.constructor_parameters directive.
     <{class_name} (<{constructor_parameters?});
-<|if(is_defined(force_virtual_destructor))
+<|  if(is_defined(force_virtual_destructor))
     /// Destructor.  The client can cause the destructor to not be declared
     /// virtual by removing the %target.cpp.force_virtual_destructor directive
     /// from the primary source.
-<|else
+<|  else
     /// Destructor.  The client can force the destructor to be declared virtual
     /// by specifying the %target.cpp.force_virtual_destructor directive in the
     /// primary source.
-<|end_if
+<|  end_if
     <{if(is_defined(force_virtual_destructor))}virtual <{end_if}~<{class_name} ();
 
     /// @brief Returns true if and only if the next unshifted lookahead
@@ -189,7 +189,7 @@ public:
     /// the default_max_allowable_lookahead_count directive defined in trison.cpp.targetspec.
     void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
 
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     /// Returns true if and only if "debug spew" is enabled (which prints, to the
     /// debug spew stream, exactly what the parser is doing at each step).  This
     /// method, along with all other debug spew code can be removed by removing the
@@ -208,7 +208,7 @@ public:
     /// current filename, line number, etc.
     std::string DebugSpewPrefix () const;
 
-<|end_if
+<|  end_if
     /// @brief This method must be called if the input source changes.
     ///
     /// This parser is capable of attempting multiple contiguous parses from the
@@ -218,7 +218,7 @@ public:
     /// must call this method if the input source changes.
     void ResetForNewInput ();
 
-<|define(parse_method_declaration)
+<|  define(parse_method_declaration)
     /// @brief This is the main method of the parser; it will attempt to parse
     ///        the nonterminal specified.
     ///
@@ -249,47 +249,47 @@ public:
     ///         %error-accepting rules), or <{class_name}::PRC_UNHANDLED_PARSE_ERROR
     ///         if a parse error was not handled by any %error-accepting rules.
     ParserReturnCode Parse (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::<{_default_parse_nonterminal});
-<|end_define
-<|if(parse_method_access == "public")
-<|parse_method_declaration
+<|  end_define
+<|  if(parse_method_access == "public")
+<|  parse_method_declaration
 
-<|end_if
-<|if(is_defined(bottom_of_class))
+<|  end_if
+<|  if(is_defined(bottom_of_class))
 <{bottom_of_class}
 
-<|end_if
-<|if(parse_method_access == "protected")
+<|  end_if
+<|  if(parse_method_access == "protected")
 protected:
 
-<|parse_method_declaration
+<|  parse_method_declaration
 
-<|end_if
+<|  end_if
 private:
 
-<|if(parse_method_access == "private")
-<|parse_method_declaration
+<|  if(parse_method_access == "private")
+<|  parse_method_declaration
 
-<|end_if
+<|  end_if
     // ///////////////////////////////////////////////////////////////////////
     // begin internal trison-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
 
     std::int64_t m_max_allowable_lookahead_count;
 
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     // debug spew methods
     void PrintIndented_ (std::ostream &stream, char const *string) const;
 
     std::ostream *m_debug_spew_stream_;
 
-<|end_if
-<|if(is_defined(generate_debug_spew_code))
+<|  end_if
+<|  if(is_defined(generate_debug_spew_code))
     static char const *const ms_parser_return_code_string_table_[];
     static std::size_t const ms_parser_return_code_string_count_;
 
     static char const *const ms_token_name_table_[];
     static std::size_t const ms_token_name_count_;
-<|end_if
+<|  end_if
 
     static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
     ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
@@ -298,16 +298,16 @@ private:
     void ResetForNewInput_ () throw();
     Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
     void RunNonassocErrorActions_ (Token const &lookahead);
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     // debug spew methods
     void PrintParserStatus_ (std::ostream &out) const;
-<|end_if
+<|  end_if
 
-<|if(is_defined(use_npda))
-<|  include("trison.cpp.npda.header.codespec")
-<|else
+<|  if(is_defined(use_npda))
+<|      include("trison.cpp.npda.header.codespec")
+<|  else
     DPDA TARGET IS DEPRECATED -- TODO LATER
-<|end_if
+<|  end_if
 
     // ///////////////////////////////////////////////////////////////////////
     // end of internal trison-generated parser guts

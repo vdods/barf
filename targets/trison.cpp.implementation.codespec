@@ -39,38 +39,38 @@
     m_max_allowable_lookahead_count = <{default_max_allowable_lookahead_count};
     m_realized_state_ = NULL;
     m_hypothetical_state_ = NULL;
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     SetDebugSpewStream(NULL);
-<|end_if
-<|if(is_defined(constructor_actions))
+<|  end_if
+<|  if(is_defined(constructor_actions))
 
-<|constructor_actions
-<|end_if
+<|  constructor_actions
+<|  end_if
 }
 
 <{class_name}::~<{class_name} ()
 {
     // Perform all the internal cleanup needed.
     CleanUpAllInternals_();
-<|if(0)
-<|if(is_defined(generate_debug_spew_code))
+<|  if(0)
+<|  if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "dangling ParseStackTreeNode_ pointers:" << ParseStackTreeNode_::ms_active_pointer_set << '\n')
 
-<|end_if
-<|end_if
-<|if(is_defined(destructor_actions))
+<|  end_if
+<|  end_if
+<|  if(is_defined(destructor_actions))
 
-<|destructor_actions
-<|end_if
+<|  destructor_actions
+<|  end_if
 }
 
 bool <{class_name}::IsAtEndOfInput ()
 {
-<|if(!is_defined(use_npda))
+<|  if(!is_defined(use_npda))
     return Lookahead_(0).m_id == Terminal::END_;
-<|else
+<|  else
     return true; // TEMP
-<|end_if
+<|  end_if
 }
 
 std::string <{class_name}::DebugSpewPrefix () const
@@ -82,33 +82,33 @@ std::string <{class_name}::DebugSpewPrefix () const
 
 void <{class_name}::ResetForNewInput ()
 {
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing reset-for-new-input actions\n")
 
-<|end_if
+<|  end_if
     // Perform all the internal cleanup needed.
     CleanUpAllInternals_();
-<|if(is_defined(reset_for_new_input_actions))
+<|  if(is_defined(reset_for_new_input_actions))
 
-<|reset_for_new_input_actions
-<|end_if
+<|  reset_for_new_input_actions
+<|  end_if
 }
 
 <{class_name}::ParserReturnCode <{class_name}::Parse (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse)
 {
-<|if(is_defined(top_of_parse_method_actions))
-<|top_of_parse_method_actions
+<|  if(is_defined(top_of_parse_method_actions))
+<|  top_of_parse_method_actions
 
-<|end_if
-<|if(is_defined(bottom_of_parse_method_actions))
+<|  end_if
+<|  if(is_defined(bottom_of_parse_method_actions))
     ParserReturnCode const parse_return_code = Parse_(return_token, nonterminal_to_parse);
 
-<|bottom_of_parse_method_actions
+<|  bottom_of_parse_method_actions
 
     return parse_return_code;
-<|else
+<|  else
     return Parse_(return_token, nonterminal_to_parse);
-<|end_if
+<|  end_if
 }
 
 // ///////////////////////////////////////////////////////////////////////
@@ -159,16 +159,16 @@ std::size_t const <{class_name}::ms_parser_return_code_string_count_ = sizeof(<{
 
 char const *const <{class_name}::ms_token_name_table_[] =
 {
-<|loop(i, 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1)
-<|if(i < 256)
+<|  loop(i, 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1)
+<|  if(i < 256)
     <|to_string_literal(to_character_literal(i))
-<|else_if(i < 256+sizeof(_terminal_name_list))
+<|  else_if(i < 256+sizeof(_terminal_name_list))
     <|to_string_literal(_terminal_name_list[i-256])
-<|else
+<|  else
     <|to_string_literal(_nonterminal_name_list[i-(256+sizeof(_terminal_name_list))+1])
-<|end_if
+<|  end_if
 <{if(i < 256+sizeof(_terminal_name_list)+sizeof(_nonterminal_name_list)-1-1)},<{end_if}
-<|end_loop
+<|  end_loop
 };
 std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
 
@@ -176,10 +176,9 @@ std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms
 
 void <{class_name}::ThrowAwayToken_ (Token const &token_) throw()
 {
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing throw-away-token actions on token " << token_ << '\n')
-
-<|end_if
+<|  end_if
     ThrowAwayTokenData_(token_.m_data);
 }
 
@@ -190,16 +189,16 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 
 <{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
 {
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing scan actions\n")
 
-<|end_if
-<|scan_actions
+<|  end_if
+<|  scan_actions
 }
 
 void <{class_name}::RunNonassocErrorActions_ (Token const &lookahead)
 {
-<|nonassoc_error_actions?
+<|  nonassoc_error_actions?
 }
 
 <|if(is_defined(use_npda))

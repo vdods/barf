@@ -1,8 +1,8 @@
 private:
 
-<|include("trison.cpp.npda.grammar.header.codespec")
+<|  include("trison.cpp.npda.grammar.header.codespec")
 
-<|include("trison.cpp.npda.npda.header.codespec")
+<|  include("trison.cpp.npda.npda.header.codespec")
 
     // NOTE: Because this uses std::shared_ptr, if you create a cycle in the list (which is valid and
     // the algorithms will work), then you must explicitly break it later in order for that memory to
@@ -135,7 +135,7 @@ private:
     typedef TreeNode_<Npda_::StateIndex_>               BranchState_;
     typedef std::shared_ptr<BranchState_>               BranchStatePtr_;
 
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     // These are tracked in parallel with BranchState_, etc for the purposes of debug spew only.
     typedef TreeNode_<Token::Id>                        BranchTokenId_;
     typedef std::shared_ptr<BranchTokenId_>             BranchTokenIdPtr_;
@@ -145,7 +145,7 @@ private:
     static T const &IdentityTransform_ (T const &x) { return x; }
     static char const *TokenName_ (Token::Id const &token_id) { return ms_token_name_table_[token_id]; }
 
-<|end_if
+<|  end_if
     struct Branch_
     {
         Branch_ () { } // Default initialization is nullptr.
@@ -355,10 +355,10 @@ private:
             }; // end of struct <{class_name}::ParseStackTreeNode_::Spec::Order
         }; // end of struct <{class_name}::ParseStackTreeNode_::Spec::
 
-<|if(is_defined(generate_debug_spew_code))
+<|      if(is_defined(generate_debug_spew_code))
         static char const *AsString (Type type);
 
-<|end_if
+<|      end_if
         struct ParseStackTreeNodeOrder
         {
             bool operator () (ParseStackTreeNode_ const *lhs, ParseStackTreeNode_ const *rhs) const;
@@ -380,26 +380,26 @@ private:
         ParseStackTreeNode_ *m_parent_node;
         ChildMap m_child_nodes;
 
-<|if(0)
-<|  if(is_defined(generate_debug_spew_code))
+<|      if(0)
+<|      if(is_defined(generate_debug_spew_code))
         // TEMP -- this is/was used for parser algorithm memory leak debugging
         static std::set<ParseStackTreeNode_*> ms_active_pointer_set;
 
-<|  end_if
-<|end_if
+<|      end_if
+<|      end_if
         ParseStackTreeNode_ (Spec const &spec)
             :   m_spec(spec)
             ,   m_realized_lookahead_cursor(0)
             ,   m_parent_node(NULL)
-<|if(0)
-<|  if(is_defined(generate_debug_spew_code))
+<|      if(0)
+<|      if(is_defined(generate_debug_spew_code))
         {
             ms_active_pointer_set.insert(this);
         }
-<|  end_if
-<|else
+<|      end_if
+<|      else
         { }
-<|end_if
+<|      end_if
         ~ParseStackTreeNode_ ();
 
         bool IsRoot () const { return m_parent_node == NULL; }
@@ -434,10 +434,10 @@ private:
         ParseStackTreeNode_ *CloneLeafNode () const;
         // orphan_target must not have a parent (because its m_spec may change and affect its relationship with its parent).
         void CloneLeafNodeInto (ParseStackTreeNode_ &orphan_target) const;
-<|if(is_defined(generate_debug_spew_code))
+<|      if(is_defined(generate_debug_spew_code))
 
         void Print (std::ostream &out, <{class_name} const *parser, std::string const &prefix, std::uint32_t indent_level = 0, bool suppress_initial_prefix = false) const;
-<|end_if
+<|      end_if
     }; // end of struct <{class_name}::ParseStackTreeNode_
 
     Token const &Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
