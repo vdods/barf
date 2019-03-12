@@ -57,32 +57,32 @@ class <{input_apparatus}
 {
 protected:
 
-<|if(is_defined(generate_interactive_scanner))
+<|  if(is_defined(generate_interactive_scanner))
     typedef bool (<{input_apparatus}::*IsInputAtEndMethod_)();
     typedef std::uint8_t (<{input_apparatus}::*ReadNextAtomMethod_)();
 
-<|end_if
+<|  end_if
     <{input_apparatus} (<{if(is_defined(generate_interactive_scanner))}IsInputAtEndMethod_ IsInputAtEnd, ReadNextAtomMethod_ ReadNextAtom<{end_if})
         :
-<|if(is_defined(generate_interactive_scanner))
+<|      if(is_defined(generate_interactive_scanner))
         m_IsInputAtEnd(IsInputAtEnd),
         m_ReadNextAtom(ReadNextAtom)
-<|else
+<|      else
         m_input_readahead(1024) // default, arbitrary reasonable lookahead
-<|end_if
+<|      end_if
     {
         // subclasses must call <{input_apparatus}::ResetForNewInput_ in their constructors.
     }
 
     bool IsAtEndOfInput () { return IsConditionalMet(CF_END_OF_INPUT, CF_END_OF_INPUT); }
 
-<|if(!is_defined(generate_interactive_scanner))
+<|  if(!is_defined(generate_interactive_scanner))
     std::istream_iterator<char> const IstreamIterator () const { return m_it; }
     void IstreamIterator (std::istream_iterator<char> it) { m_it = it; }
     std::size_t InputReadahead () const { return m_input_readahead; }
     void InputReadahead (std::size_t input_readahead) { m_input_readahead = input_readahead; }
 
-<|end_if
+<|  end_if
     void KeepString ()
     {
         assert(m_accept_cursor > m_start_cursor && "may only KeepString within accept or reject handler code");
@@ -137,9 +137,9 @@ protected:
         m_kept_string_cursor = 1;
         m_accept_cursor = 0;
         m_keep_string_has_been_called = false;
-<|if(!is_defined(generate_interactive_scanner))
+<|      if(!is_defined(generate_interactive_scanner))
         m_it = m_it_end;
-<|end_if
+<|      end_if
     }
 
     // for use in <{automaton_apparatus} only
@@ -255,7 +255,7 @@ private:
             return;
         }
 
-<|if(is_defined(generate_interactive_scanner))
+<|      if(is_defined(generate_interactive_scanner))
         // if we're at the end of input, push a null char
         if ((this->*m_IsInputAtEnd)())
             m_buffer.push_back('\0');
@@ -266,7 +266,7 @@ private:
             assert(atom != '\0' && "may not return '\\0' from return_next_input_char");
             m_buffer.push_back(atom);
         }
-<|else
+<|      else
         // if we're at end of input, push a null char.
         if (m_it == m_it_end)
             m_buffer.push_back('\0');
@@ -285,7 +285,7 @@ private:
                 for (std::size_t i = 0; i < m_input_readahead && m_it != m_it_end; ++i, ++m_it)
                     m_buffer.push_back(*m_it);
         }
-<|end_if
+<|      end_if
 
         // ensure there is at least one atom on each side of the read cursor.
         assert(m_buffer.size() >= 2);
@@ -346,12 +346,12 @@ private:
     Buffer::size_type m_accept_cursor;
     // indicates if KeepString has been called during the accept/reject handler
     bool m_keep_string_has_been_called;
-<|if(is_defined(generate_interactive_scanner))
+<|  if(is_defined(generate_interactive_scanner))
     // corresponds to the directive return_true_iff_input_is_at_end
     IsInputAtEndMethod_ m_IsInputAtEnd;
     // corresponds to the directive return_next_input_char
     ReadNextAtomMethod_ m_ReadNextAtom;
-<|else
+<|  else
     // an istream_iterator to read through the input source
     std::istream_iterator<char> m_it;
     // keep a handy end-of-stream input iterator
@@ -360,7 +360,7 @@ private:
     // input is pulled for bytes.  a value of 0 indicates that the input will
     // be read until EOF is hit.
     std::size_t m_input_readahead;
-<|end_if
+<|  end_if
 }; // end of class ReflexCpp_::<{input_apparatus}
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -384,10 +384,10 @@ protected:
         std::uint32_t m_accept_handler_index;
         std::uint32_t m_transition_count;
         std::uint32_t m_transition_offset;
-<|if(!is_defined(small_and_slow))
+<|      if(!is_defined(small_and_slow))
         std::uint8_t m_transition_type;
         std::uint8_t m_transition_first_index;
-<|end_if
+<|      end_if
     }; // end of struct ReflexCpp_::<{automaton_apparatus}::DfaState_
     struct DfaTransition_
     {
@@ -397,7 +397,7 @@ protected:
         }; // end of enum ReflexCpp_::<{automaton_apparatus}::DfaTransition_::Type
 
         std::uint32_t m_target_dfa_state_offset;
-<|if(is_defined(small_and_slow))
+<|      if(is_defined(small_and_slow))
         std::uint8_t m_transition_type;
         std::uint8_t m_data_0;
         std::uint8_t m_data_1;
@@ -436,7 +436,7 @@ protected:
             // (m_data_0) and flags (m_data_1).
             return ((conditional_flags ^ m_data_1) & m_data_0) == 0;
         }
-<|end_if
+<|      end_if
     }; // end of struct ReflexCpp_::<{automaton_apparatus}::DfaTransition_
 
     <{automaton_apparatus} (
@@ -546,7 +546,7 @@ private:
 
     DfaState_ const *ProcessInputAtom ()
     {
-<|if(is_defined(small_and_slow))
+<|      if(is_defined(small_and_slow))
         assert(m_current_state != NULL);
         // get the current conditional flags and input atom once before looping
         std::uint8_t current_conditional_flags;
@@ -587,7 +587,7 @@ private:
         }
         // if we reached here, no transition was possible, so return NULL.
         return NULL;
-<|else
+<|      else
         assert(m_current_state != NULL);
         std::uint32_t target_dfa_state_offset = m_state_count;
         if (m_current_state->m_transition_type == DfaTransition_::CONDITIONAL)
@@ -624,7 +624,7 @@ private:
                 AdvanceReadCursor_();
         }
         return target_dfa_state_offset < m_state_count ? m_state_table + target_dfa_state_offset : NULL;
-<|end_if
+<|      end_if
     }
     bool IsAcceptState (DfaState_ const *state) const
     {
@@ -656,10 +656,10 @@ private:
                  s != s_end;
                  ++s)
             {
-<|if(!is_defined(small_and_slow))
+<|              if(!is_defined(small_and_slow))
                 assert(s->m_transition_type == DfaTransition_::INPUT_ATOM ||
                        s->m_transition_type == DfaTransition_::CONDITIONAL);
-<|end_if
+<|              end_if
                 assert(transition_table + s->m_transition_offset == t &&
                        "states' transitions must be contiguous and in ascending order");
                 t += s->m_transition_count;
@@ -673,7 +673,7 @@ private:
              t != t_end;
              ++t)
         {
-<|if(is_defined(small_and_slow))
+<|          if(is_defined(small_and_slow))
             assert(t->m_target_dfa_state_offset < state_count &&
                    "transition target state out of range (does not point to a valid state)");
             assert((t->m_transition_type == DfaTransition_::INPUT_ATOM ||
@@ -694,10 +694,10 @@ private:
                        "there are bits set in the conditional flags "
                        "which are outside of the conditional mask");
             }
-<|else
+<|          else
             assert(t->m_target_dfa_state_offset <= state_count &&
                    "transition target state out of range (highest acceptable value is state count)");
-<|end_if
+<|          end_if
         }
     }
 
@@ -724,65 +724,65 @@ public:
     {
         enum Name
         {
-<|for_each(key, _dfa_initial_node_index)
+<|          for_each(key, _dfa_initial_node_index)
             <{key},
-<|end_for_each
+<|          end_for_each
             // default starting state machine
             START_ = <{_start_with_state_machine}
         }; // end of enum <{class_name}::StateMachine::Name
     }; // end of struct <{class_name}::StateMachine
 
-<|if(is_defined(top_of_class))
+<|  if(is_defined(top_of_class))
 <{top_of_class}
 public:
 
-<|end_if
+<|  end_if
     <{class_name} (<{constructor_parameters?});
     <{if(is_defined(force_virtual_destructor))}virtual <{end_if}~<{class_name} ();
 
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     bool DebugSpew () const { return m_debug_spew_; }
     void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
 
-<|end_if
+<|  end_if
     StateMachine::Name CurrentStateMachine () const;
     void SwitchToStateMachine (StateMachine::Name state_machine);
 
     using <{automaton_apparatus}::IsAtEndOfInput;
-<|if(!is_defined(generate_interactive_scanner))
+<|  if(!is_defined(generate_interactive_scanner))
     using <{automaton_apparatus}::IstreamIterator;
     using <{automaton_apparatus}::InputReadahead;
 
-<|end_if
+<|  end_if
     void ResetForNewInput ();
 
-<|if(is_defined(scan_method_access))
-<|if(!(scan_method_access == "public:" || scan_method_access == "protected:" || scan_method_access == "private:"))
-<|error("invalid scan_method_access \"" . scan_method_access . "\"")
-<|end_if
+<|  if(is_defined(scan_method_access))
+<|  if(!(scan_method_access == "public:" || scan_method_access == "protected:" || scan_method_access == "private:"))
+<|      error("invalid scan_method_access \"" . scan_method_access . "\"")
+<|  end_if
 <{scan_method_access}
 
-<|end_if
+<|  end_if
     <{return_type} Scan (<{scan_method_parameters?})<{if(!is_defined(enable_accept_handler_exceptions))} throw()<{end_if};
 
-<|if(is_defined(bottom_of_class))
+<|  if(is_defined(bottom_of_class))
 public:
 
 <{bottom_of_class}
 
-<|end_if
+<|  end_if
 private:
 
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     void KeepString ();
     void Unaccept (std::uint32_t unaccept_char_count);
     void Unreject (std::uint32_t unreject_char_count);
-<|else
+<|  else
     using <{input_apparatus}::KeepString;
     using <{input_apparatus}::Unaccept;
     using <{input_apparatus}::Unreject;
 
-<|end_if
+<|  end_if
     // ///////////////////////////////////////////////////////////////////////
     // begin internal reflex-generated parser guts -- don't use
     // ///////////////////////////////////////////////////////////////////////
@@ -794,33 +794,33 @@ private:
     using <{automaton_apparatus}::ResetForNewInput_;
     using <{automaton_apparatus}::RunDfa_;
 
-<|if(is_defined(generate_interactive_scanner))
+<|  if(is_defined(generate_interactive_scanner))
     bool IsInputAtEnd_ () throw();
     std::uint8_t ReadNextAtom_ () throw();
 
-<|end_if
-<|if(is_defined(generate_debug_spew_code))
+<|  end_if
+<|  if(is_defined(generate_debug_spew_code))
     // debug spew methods
     static void PrintAtom_ (std::uint8_t atom);
     static void PrintString_ (std::string const &s);
 
     bool m_debug_spew_;
 
-<|end_if
+<|  end_if
     // state machine and automaton data
     static std::uint32_t const ms_state_machine_start_state_index_[];
     static std::uint8_t const ms_state_machine_mode_flags_[];
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     static char const *const ms_state_machine_name_[];
-<|end_if
+<|  end_if
     static std::uint32_t const ms_state_machine_count_;
     static <{automaton_apparatus}::DfaState_ const ms_state_table_[];
     static std::size_t const ms_state_count_;
     static <{automaton_apparatus}::DfaTransition_ const ms_transition_table_[];
     static std::size_t const ms_transition_count_;
-<|if(is_defined(generate_debug_spew_code))
+<|  if(is_defined(generate_debug_spew_code))
     static char const *const ms_accept_handler_regex_[];
-<|end_if
+<|  end_if
     static std::uint32_t const ms_accept_handler_count_;
 
     // ///////////////////////////////////////////////////////////////////////
