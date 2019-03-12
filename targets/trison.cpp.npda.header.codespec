@@ -148,18 +148,6 @@ private:
 <|end_if
     struct Branch_
     {
-        // This is the head of the NPDA state branch that this HPS tracks.
-        BranchStatePtr_ m_state_ptr;
-<|      if(is_defined(generate_debug_spew_code))
-        // This is the head of the Token::Id branch that this HPS tracks (which is exactly
-        // parallel to the NPDA state branch tracked by m_state_ptr).
-        BranchTokenIdPtr_ m_token_id_ptr;
-<|      end_if
-
-        // TODO: Should m_hypothetical_lookahead_token_id_queue and m_realized_lookahead_cursor
-        // be included in this?  It's not clear that they should be part of the
-        // m_child_branch_vector logic.
-
         Branch_ () { } // Default initialization is nullptr.
 <|      if(is_defined(generate_debug_spew_code))
         Branch_ (BranchStatePtr_ const &state_ptr, BranchTokenIdPtr_ const &token_id_ptr)
@@ -172,7 +160,7 @@ private:
         Branch_ (BranchStatePtr_ const &state_ptr) : m_state_ptr(state_ptr) { }
 <|      end_if
 
-        bool HasParent (Branch_ const &branch) const {
+        bool HasParent () const {
 <|          if(is_defined(generate_debug_spew_code))
             assert(m_state_ptr->HasParent() == m_token_id_ptr->HasParent());
 <|          end_if
@@ -195,6 +183,19 @@ private:
             TreeNodeEquivalent_<Npda_::StateIndex_> state_ptr_equivalent;
             return state_ptr_equivalent(m_state_ptr, other.m_state_ptr);
         }
+
+        BranchStatePtr_ const &StatePtr () const { return m_state_ptr; }
+        BranchTokenIdPtr_ const &TokenIdPtr () const { return m_token_id_ptr; }
+
+    private:
+
+        // This is the head of the NPDA state branch that this HPS tracks.
+        BranchStatePtr_ m_state_ptr;
+<|      if(is_defined(generate_debug_spew_code))
+        // This is the head of the Token::Id branch that this HPS tracks (which is exactly
+        // parallel to the NPDA state branch tracked by m_state_ptr).
+        BranchTokenIdPtr_ m_token_id_ptr;
+<|      end_if
     };
 
     typedef std::vector<Branch_>                        BranchVector_;
