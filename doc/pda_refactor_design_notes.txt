@@ -1188,21 +1188,24 @@ which includes the top element.
             with the existing logic of "default" actions, and may require the %lookahead refactor).
         x   Run against all BARF parsers and ensure they still work.
         x   Rename ParseStackTreeNode_ to ParseTreeNode_
-        -   Fix the bug in realized lookahead count in trison.cpp.npda target (detailed below) (NOTE:
+        x   Fix the bug in realized lookahead count in trison.cpp.npda target (detailed below) (NOTE:
             need an actual repro case -- only saw this once and the error has been fixed in that case
             through something else).
-        -   Implement max parse tree depth constraint (figure out how this error should be handled).
-            Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
-            being able to prevent exponential memory usage.  Though the problem here is that there could
-            be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
-        -   Test against grammars that actually require multiple lookaheads (e.g. w/ operators +, ++, +++)
+        x   Test against grammars that actually require multiple lookaheads (e.g. w/ operators @, @@, @@@)
             and verify that the max realized lookahead count is as expected (currently there is a bug such
             that it's not).
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
+        -   Make reflex use the SetDebugSpewStream paradigm like trison does.
+    -   REALLY nice to have
+        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
+        -   Implement %default precedence, so that it's possible to make precedences lower than the default
+            (without having to explicitly assign a precedence to all rules).  This is relatively easy to
+            implement.
+        -   Allow SHIFT/REDUCE cases 1 and 5 to be resolved before equalizing max lookahead cursor.
+        -   Make a more terse debug spew output which is more useful for non-barf developers to debug
+            their grammars/parsers.
     -   Nice to have
-        -   Terminal::ERROR_ should probably be turned into Nonterminal::error_, since an error is sort of
-            a reduction of other tokens.
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
             use the highest standard that's reasonable)
             -   Use std::array for static storage of state/transition/etc tables.
@@ -1211,18 +1214,14 @@ which includes the top element.
             -   Are there strong typedefs which don't automatically cast to the underlying type?
             -   Probably use unique_ptr to formalize ownership and simplify pointer management,
                 especially for the logic surrounding ParseStackTreeNode_, e.g. in RemoveBranchIfNotTrunk
-        -   Allow SHIFT/REDUCE cases 1 and 5 to be resolved before equalizing max lookahead cursor.
-        -   Implement %default precedence, so that it's possible to make precedences lower than the default
-            (without having to explicitly assign a precedence to all rules).  This is relatively easy to
-            implement.
-        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Make an enum for rule associativity and a string table for it.
-        -   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
+        -   Implement max parse tree depth constraint (figure out how this error should be handled).
+            Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
+            being able to prevent exponential memory usage.  Though the problem here is that there could
+            be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
+        x   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
             (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
-        -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
         -   Implement infinite loop detection (maybe as an option?)
-        -   Make a more terse debug spew output which is more useful for non-barf developers to debug
-            their grammars/parsers.
         -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
             Useful references:
             -   https://stackoverflow.com/questions/15129263/is-there-a-non-atomic-equivalent-of-stdshared-ptr-and-why-isnt-there-one-in/15141844#15141844
@@ -1230,6 +1229,10 @@ which includes the top element.
             -   https://stackoverflow.com/questions/35470061/linking-pthread-disables-lock-free-shared-ptr-implementation
         -   See if REDUCE can be made not destroy_and_recreate_parse_tree by recomputing each subordinate
             HPS's realized lookahead cursor using the sequence of ancestors.
+    -   Low priority nice-to-have
+        -   Terminal::ERROR_ should probably be turned into Nonterminal::error_, since an error is sort of
+            a reduction of other tokens.
+        -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
 
 2018.02.23 ----------------------------
 
