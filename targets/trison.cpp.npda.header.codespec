@@ -31,6 +31,18 @@ private:
             return std::make_shared<TreeNode_>(nullptr, std::forward<Types>(args)...);
         }
 
+        static bool Equals (std::shared_ptr<TreeNode_ const> const &lhs, std::shared_ptr<TreeNode_ const> const &rhs)
+        {
+            if (lhs.get() == rhs.get())
+                return true;
+
+            assert(bool(lhs) || bool(rhs)); // They can't both be null at this point.
+            if (!bool(lhs) || !bool(rhs))
+                return false; // If either one is null, then they're not equal.
+
+            return lhs->Data() == rhs->Data() && Equals(lhs->Parent(), rhs->Parent());
+        }
+
         bool HasParent () const { return bool(m_parent); }
         std::shared_ptr<TreeNode_ const> Parent () const { return m_parent; }
         std::shared_ptr<TreeNode_> const &Parent () { return m_parent; }
@@ -48,18 +60,22 @@ private:
         // print a semicolon after the realized portion of the stack, so that the hypothetical portion
         // of the stack can be visually distinguished.
         template <typename T>
-        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &), std::int32_t print_delimiter_at_branch_length = -1) const
+        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &), std::shared_ptr<TreeNode_> const &delimiting_ancestor = std::shared_ptr<TreeNode_>(), std::string const &delimiter = std::string()) const
         {
             if (this->HasParent())
             {
-                Parent()->PrintRootToLeaf(out, DataTransform, print_delimiter_at_branch_length);
+                Parent()->PrintRootToLeaf(out, DataTransform, delimiting_ancestor);
                 out << ' ';
             }
+            // If there is no delimiting ancestor, then the delimiting ancestor is the root.
+            else if (!bool(delimiting_ancestor) && !delimiter.empty())
+                out << delimiter << ' ';
+
             out << DataTransform(Data());
 
-            // This is a suboptimal implementation, but simple, and is only used in printing.
-            if (print_delimiter_at_branch_length >= 0 && std::size_t(print_delimiter_at_branch_length) == this->BranchLength())
-                out << " .-";
+            // Print the delimiter, if called for.
+            if (Equals(this->shared_from_this(), delimiting_ancestor) && !delimiter.empty())
+                out << ' ' << delimiter;
         }
 
     private:
@@ -113,17 +129,6 @@ private:
         }
     };
 <|  end_if
-    template <typename DataType>
-    struct TreeNodeEquivalent_
-    {
-        bool operator () (std::shared_ptr<TreeNode_<DataType>> const &lhs, std::shared_ptr<TreeNode_<DataType>> const &rhs) const
-        {
-            if (lhs.get() == rhs.get())
-                return true;
-            else
-                return lhs->Data() == rhs->Data() && this->operator()(lhs->Parent(), rhs->Parent());
-        }
-    };
 
     typedef std::uint32_t                               ActionData_;
 
@@ -166,7 +171,6 @@ private:
 <|          end_if
             return m_state_ptr->HasParent();
         }
-
         Branch_ Parent () const {
 <|          if(is_defined(generate_debug_spew_code))
             return Branch_(m_state_ptr->Parent(), m_token_id_ptr->Parent());
@@ -174,15 +178,22 @@ private:
             return Branch_(m_state_ptr->Parent());
 <|          end_if
         }
+        bool HasAsAncestor (Branch_ const &other) const
+        {
+            Branch_ b(*this);
+            while (true)
+            {
+                if (b == other)
+                    return true;
 
-        bool operator == (Branch_ const &other) const {
-            // This is raw pointer comparison, which should in theory work but there's probably
-            // some subtle implementation detail regarding std::shared_ptr that makes it not work.
-            // Thus it's necessary to do the comparison by value.
-            //bool state_ptrs_are_equivalent = m_state_ptr == other.m_state_ptr;
-            TreeNodeEquivalent_<Npda_::StateIndex_> state_ptr_equivalent;
-            return state_ptr_equivalent(m_state_ptr, other.m_state_ptr);
+                if (b.HasParent())
+                    b = b.Parent();
+                else
+                    return false;
+            }
         }
+
+        bool operator == (Branch_ const &other) const { return BranchState_::Equals(m_state_ptr, other.m_state_ptr); }
 
         BranchStatePtr_ const &StatePtr () const { return m_state_ptr; }
         BranchTokenIdPtr_ const &TokenIdPtr () const { return m_token_id_ptr; }
@@ -248,6 +259,13 @@ private:
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
         void                UpdateMaxRealizedLookaheadCount     (HPSQueue_ const &hps_queue);
         void                SetHasEncounteredErrorState         () { m_has_encountered_error_state = true; }
+
+        static bool         IsScannerGeneratedTokenId           (Token::Id token_id)
+        {
+            // If this is a Terminal (anything between 0 and Terminal::<{_terminal_name_list[sizeof(_terminal_name_list)-1]})
+            // that isn't ERROR_, then it's scanner-generated (i.e. not parser-generated).
+            return token_id != Terminal::ERROR_ && token_id <= Terminal::<{_terminal_name_list[sizeof(_terminal_name_list)-1]};
+        }
 
         // The set of the realized branches (i.e. the set of the tops of the NPDA state stacks)
         BranchVectorStack_  m_branch_vector_stack;
@@ -353,7 +371,7 @@ private:
                     }
                 }
             }; // end of struct <{class_name}::ParseTreeNode_::Spec::Order
-        }; // end of struct <{class_name}::ParseTreeNode_::Spec::
+        }; // end of struct <{class_name}::ParseTreeNode_::Spec
 
 <|      if(is_defined(generate_debug_spew_code))
         static char const *AsString (Type type);
@@ -370,7 +388,7 @@ private:
 
         Spec                    m_spec;
         Branch_                 m_hypothetical_head;
-        Branch_                 m_first_real_ancestor;
+        Branch_                 m_first_realized_ancestor;
         BranchVector_           m_child_branch_vector;
         // m_hypothetical_lookahead_token_id_queue comes before the realized lookahead queue, and m_realized_lookahead_cursor
         // is the index into the realized lookahead queue for where the end of m_hypothetical_lookahead_token_id_queue
@@ -438,6 +456,8 @@ private:
 
         void Print (std::ostream &out, <{class_name} const *parser, std::string const &prefix, std::uint32_t indent_level = 0, bool suppress_initial_prefix = false) const;
 <|      end_if
+
+        bool FirstRealizedAncestorIsActualAncestor () const { return m_hypothetical_head.HasAsAncestor(m_first_realized_ancestor); }
     }; // end of struct <{class_name}::ParseTreeNode_
 
     Token const &Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};

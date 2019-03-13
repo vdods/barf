@@ -1201,6 +1201,8 @@ which includes the top element.
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
     -   Nice to have
+        -   Terminal::ERROR_ should probably be turned into Nonterminal::error_, since an error is sort of
+            a reduction of other tokens.
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
             use the highest standard that's reasonable)
             -   Use std::array for static storage of state/transition/etc tables.
@@ -1567,3 +1569,8 @@ which includes the top element.
     has a hierarchical state machine structure (i.e. a hierarchy of states, where the "child states"
     are special cases of their parents, and there is a fallthrough to the parent if there is no transition
     match for that state).
+
+2018.03.12 ----------------------------
+
+-   Tracking the first realized ancestor of m_hypothetical_head is difficult, and is only used
+    for debug spew printout, so forget it.

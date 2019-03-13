@@ -845,7 +845,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     out << '\n';
     out << <{debug_spew_prefix} << '\n';
 
-    out << <{debug_spew_prefix} << "Parse tree (hypothetical parser states); Notation legend: <real-stack> .- <hyp-stack> . <hyp-lookaheads> -. <real-lookaheads>\n";
+    out << <{debug_spew_prefix} << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << <{debug_spew_prefix} << '\n';
 
@@ -1026,6 +1026,17 @@ void <{class_name}::RealizedState_::PushFrontLookahead (Token const &lookahead, 
 
 void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ const &hps_queue)
 {
+    // Subtract the number of parser-generated tokens from the length of m_lookahead_queue.
+    std::size_t parser_generated_token_count = 0;
+    for ( ; parser_generated_token_count < m_lookahead_queue.size(); ++parser_generated_token_count)
+    {
+        Token const &lookahead = m_lookahead_queue[parser_generated_token_count];
+        if (IsScannerGeneratedTokenId(lookahead.m_id))
+            break;
+    }
+    m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, m_lookahead_queue.size() - parser_generated_token_count);
+
+<|  if(0)
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
@@ -1047,6 +1058,7 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ c
         std::size_t hps_actual_lookahead_count = m_lookahead_queue.size() - hps.m_realized_lookahead_cursor;
         m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, hps_actual_lookahead_count);
     }
+<|end_if
 }
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -1057,13 +1069,14 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ c
 {
     m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
 
-    ParseTreeNode_ *hps    = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
+    ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
 <|  if(is_defined(generate_debug_spew_code))
-    hps->m_hypothetical_head    = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
+    hps->m_hypothetical_head        = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
 <|  else
-    hps->m_hypothetical_head    = Branch_(BranchState_::CreateOrphan(initial_state));
+    hps->m_hypothetical_head        = Branch_(BranchState_::CreateOrphan(initial_state));
 <|  end_if
-    hps->m_first_real_ancestor  = hps->m_hypothetical_head;
+    hps->m_first_realized_ancestor  = hps->m_hypothetical_head;
+    assert(hps->FirstRealizedAncestorIsActualAncestor());
 
     m_root->AddChild(hps);
     m_hps_queue.push_back(hps);
@@ -1494,9 +1507,10 @@ void <{class_name}::ParseTreeNode_::CloneLeafNodeInto (<{class_name}::ParseTreeN
     assert(m_child_nodes.empty());
     orphan_target.m_spec                                    = m_spec;
     orphan_target.m_hypothetical_head                       = m_hypothetical_head;
-    orphan_target.m_first_real_ancestor                     = m_first_real_ancestor;
+    orphan_target.m_first_realized_ancestor                 = m_first_realized_ancestor;
     orphan_target.m_hypothetical_lookahead_token_id_queue   = m_hypothetical_lookahead_token_id_queue;
     orphan_target.m_realized_lookahead_cursor               = m_realized_lookahead_cursor;
+    assert(orphan_target.FirstRealizedAncestorIsActualAncestor());
 }
 
 <|if(is_defined(generate_debug_spew_code))
@@ -1530,22 +1544,17 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
         assert(bool(m_hypothetical_head.StatePtr()));
         assert(bool(m_hypothetical_head.TokenIdPtr()));
 
-        std::int32_t print_delimiter_at_branch_length = -1;
-        if (parser != NULL)
-        {
-            assert(parser->m_realized_state_->TokenStack().size() == parser->m_realized_state_->BranchVectorStack().size());
-            print_delimiter_at_branch_length = std::min(parser->m_realized_state_->TokenStack().size(), m_hypothetical_head.StatePtr()->BranchLength());
-        }
-
         out << "    (";
-        m_hypothetical_head.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>, print_delimiter_at_branch_length);
+        //m_hypothetical_head.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>, m_first_realized_ancestor.StatePtr(), "[[");
+        m_hypothetical_head.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
         out << "); ";
 
-        m_hypothetical_head.TokenIdPtr()->PrintRootToLeaf(out, TokenName_, print_delimiter_at_branch_length);
+        //m_hypothetical_head.TokenIdPtr()->PrintRootToLeaf(out, TokenName_, m_first_realized_ancestor.TokenIdPtr(), "[[");
+        m_hypothetical_head.TokenIdPtr()->PrintRootToLeaf(out, TokenName_);
         out << " . ";
         for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
             out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
-        out << "-. ";
+        out << ", ";
         if (parser != NULL)
             for (std::size_t i = m_realized_lookahead_cursor; i < parser->m_realized_state_->LookaheadQueue().size(); ++i)
                 out << ms_token_name_table_[parser->m_realized_state_->LookaheadQueue()[i].m_id] << ' ';
@@ -1700,7 +1709,11 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                 for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
                 {
                     assert(reduce_hps->m_hypothetical_head.HasParent());
+                    // If we're about to pop through m_first_realized_ancestor, then pop that first.
+                    if (reduce_hps->m_hypothetical_head == reduce_hps->m_first_realized_ancestor)
+                        reduce_hps->m_first_realized_ancestor = reduce_hps->m_first_realized_ancestor.Parent();
                     reduce_hps->m_hypothetical_head = reduce_hps->m_hypothetical_head.Parent();
+                    assert(reduce_hps->FirstRealizedAncestorIsActualAncestor());
                 }
                 // Push the reduced nonterminal token data onto the front of the lookahead queue
                 reduce_hps->m_hypothetical_lookahead_token_id_queue.push_front(rule.m_reduction_nonterminal_token_id);
@@ -1722,6 +1735,9 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
 <|          end_if
             assert(new_hps->m_hypothetical_head.HasParent());
             assert(new_hps->m_hypothetical_head.Parent() == hps.m_hypothetical_head);
+            // Don't change new_hps->m_first_realized_ancestor, since nothing realized has changed yet.
+            assert(new_hps->FirstRealizedAncestorIsActualAncestor());
+
             // Store the lookahead token id in action_data so it can printed.
             action_data = std::uint32_t(lookahead_token_id);
             if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
@@ -1760,7 +1776,11 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
             for (std::uint32_t i = 0; i < pop_count; ++i)
             {
                 assert(new_hps->m_hypothetical_head.HasParent());
+                // If we're about to pop through m_first_realized_ancestor, make sure to pop that first.
+                if (new_hps->m_hypothetical_head == new_hps->m_first_realized_ancestor)
+                    new_hps->m_first_realized_ancestor = new_hps->m_first_realized_ancestor.Parent();
                 new_hps->m_hypothetical_head = new_hps->m_hypothetical_head.Parent();
+                assert(new_hps->FirstRealizedAncestorIsActualAncestor());
             }
 <|          if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
@@ -1843,8 +1863,10 @@ void <{class_name}::CreateParseTreeFromRealizedState_ ()
         TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            " << reconstruct_branch.StatePtr() << '\n')
 <|      end_if
 
-        ParseTreeNode_ *hps = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
-        hps->m_hypothetical_head = reconstruct_branch;
+        ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
+        hps->m_hypothetical_head        = reconstruct_branch;
+        hps->m_first_realized_ancestor  = hps->m_hypothetical_head;
+        assert(hps->FirstRealizedAncestorIsActualAncestor());
 
         m_hypothetical_state_->m_root->AddChild(hps);
         m_hypothetical_state_->m_hps_queue.push_back(hps);
