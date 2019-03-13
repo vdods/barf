@@ -34,7 +34,7 @@
 <|if(is_defined(generate_debug_spew_code))
 #include <iostream>
 
-#define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
+#define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
 
 <|end_if
 <|top_of_implementation_file?
@@ -53,7 +53,7 @@
 <{end_if}
 {
 <|  if(is_defined(generate_debug_spew_code))
-    DebugSpew(false);
+    SetDebugSpewStream(NULL);
 
 <|  end_if
 <|  constructor_actions?
@@ -89,16 +89,16 @@ void <{class_name}::SwitchToStateMachine (StateMachine::Name state_machine)
         (false && "invalid StateMachine::Name"));
 <|  if(is_defined(generate_debug_spew_code))
     REFLEX_CPP_DEBUG_CODE_(
-        std::cerr << <{debug_spew_prefix} << " switching to state machine "
-                  << ms_state_machine_name_[state_machine];
+        *DebugSpewStream() << <{debug_spew_prefix} << " switching to state machine "
+                           << ms_state_machine_name_[state_machine];
         if (ms_state_machine_mode_flags_[state_machine] != 0)
         {
             if ((ms_state_machine_mode_flags_[state_machine] & <{automaton_apparatus}::MF_CASE_INSENSITIVE_) != 0)
-                std::cerr << " %case_insensitive";
+                *DebugSpewStream() << " %case_insensitive";
             if ((ms_state_machine_mode_flags_[state_machine] & <{automaton_apparatus}::MF_UNGREEDY_) != 0)
-                std::cerr << " %ungreedy";
+                *DebugSpewStream() << " %ungreedy";
         }
-        std::cerr << std::endl)
+        *DebugSpewStream() << std::endl)
 <|  end_if
     InitialState_(ms_state_table_ + ms_state_machine_start_state_index_[state_machine]);
     ModeFlags_(ms_state_machine_mode_flags_[state_machine]);
@@ -109,16 +109,16 @@ void <{class_name}::ResetForNewInput ()
 {
 <|  if(is_defined(generate_debug_spew_code))
     REFLEX_CPP_DEBUG_CODE_(
-        std::cerr << <{debug_spew_prefix} << " executing reset-for-new-input actions and switching to state machine "
-                  << ms_state_machine_name_[StateMachine::START_];
+        *DebugSpewStream() << <{debug_spew_prefix} << " executing reset-for-new-input actions and switching to state machine "
+                           << ms_state_machine_name_[StateMachine::START_];
         if (ms_state_machine_mode_flags_[StateMachine::START_] != 0)
         {
             if ((ms_state_machine_mode_flags_[StateMachine::START_] & <{automaton_apparatus}::MF_CASE_INSENSITIVE_) != 0)
-                std::cerr << " %case_insensitive";
+                *DebugSpewStream() << " %case_insensitive";
             if ((ms_state_machine_mode_flags_[StateMachine::START_] & <{automaton_apparatus}::MF_UNGREEDY_) != 0)
-                std::cerr << " %ungreedy";
+                *DebugSpewStream() << " %ungreedy";
         }
-        std::cerr << std::endl)
+        *DebugSpewStream() << std::endl)
 <|  end_if
     ReflexCpp_::<{automaton_apparatus}::ResetForNewInput_(ms_state_table_ + ms_state_machine_start_state_index_[StateMachine::START_], ms_state_machine_mode_flags_[StateMachine::START_]);
     assert(CurrentStateMachine() == StateMachine::START_);
@@ -167,11 +167,11 @@ void <{class_name}::ResetForNewInput ()
 
 <|          if(is_defined(generate_debug_spew_code))
             REFLEX_CPP_DEBUG_CODE_(
-                std::cerr << <{debug_spew_prefix} << " rejecting string ";
-                PrintString_(rejected_string);
-                std::cerr << " (rejected_atom is \'";
-                PrintAtom_(rejected_atom);
-                std::cerr << "\')" << std::endl)
+                *DebugSpewStream() << <{debug_spew_prefix} << " rejecting string ";
+                PrintString_(*DebugSpewStream(), rejected_string);
+                *DebugSpewStream() << " (rejected_atom is \'";
+                PrintAtom_(*DebugSpewStream(), rejected_atom);
+                *DebugSpewStream() << "\')" << std::endl)
 
 <|          end_if
             // execute the rejection actions.  the do/while loop is so that a
@@ -190,10 +190,10 @@ void <{class_name}::ResetForNewInput ()
 
 <|          if(is_defined(generate_debug_spew_code))
             REFLEX_CPP_DEBUG_CODE_(
-                std::cerr << <{debug_spew_prefix} << " accepting string ";
-                PrintString_(accepted_string);
-                std::cerr << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
-                          << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
+                *DebugSpewStream() << <{debug_spew_prefix} << " accepting string ";
+                PrintString_(*DebugSpewStream(), accepted_string);
+                *DebugSpewStream() << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
+                                   << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
 
 <|          end_if
             // execute the appropriate accept handler.
@@ -236,19 +236,19 @@ void <{class_name}::ResetForNewInput ()
 <|if(is_defined(generate_debug_spew_code))
 void <{class_name}::KeepString ()
 {
-    REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " keeping string" << std::endl)
+    REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << " keeping string" << std::endl)
     <{automaton_apparatus}::KeepString();
 }
 
 void <{class_name}::Unaccept (std::uint32_t unaccept_char_count)
 {
-    REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)
+    REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)
     <{automaton_apparatus}::Unaccept(unaccept_char_count);
 }
 
 void <{class_name}::Unreject (std::uint32_t unreject_char_count)
 {
-    REFLEX_CPP_DEBUG_CODE_(std::cerr << <{debug_spew_prefix} << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
+    REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
     <{automaton_apparatus}::Unreject(unreject_char_count);
 }
 
@@ -270,32 +270,32 @@ std::uint8_t <{class_name}::ReadNextAtom_ () throw()
 
 <|end_if
 <|if(is_defined(generate_debug_spew_code))
-void <{class_name}::PrintAtom_ (std::uint8_t atom)
+void <{class_name}::PrintAtom_ (std::ostream &out, std::uint8_t atom)
 {
-    if (atom == '\\')                    std::cerr << "\\\\";
-    else if (atom == '"')                std::cerr << "\\\"";
-    else if (atom >= ' ' && atom <= '~') std::cerr << atom;
-    else if (atom == '\n')               std::cerr << "\\n";
-    else if (atom == '\t')               std::cerr << "\\t";
-    else if (atom == '\0')               std::cerr << "\\0";
+    if (atom == '\\')                    out << "\\\\";
+    else if (atom == '"')                out << "\\\"";
+    else if (atom >= ' ' && atom <= '~') out << atom;
+    else if (atom == '\n')               out << "\\n";
+    else if (atom == '\t')               out << "\\t";
+    else if (atom == '\0')               out << "\\0";
     else
     {
-        std::cerr.width(2);
-        std::cerr << "\\x" << std::hex << std::uppercase << std::uint16_t(atom);
-        std::cerr.width(1);
+        out.width(2);
+        out << "\\x" << std::hex << std::uppercase << std::uint16_t(atom);
+        out.width(1);
     }
 }
 
-void <{class_name}::PrintString_ (std::string const &s)
+void <{class_name}::PrintString_ (std::ostream &out, std::string const &s)
 {
-    // save the existing std::cerr properties for later restoration
-    std::ios_base::fmtflags saved_stream_flags = std::cerr.flags();
-    char saved_stream_fill = std::cerr.fill();
-    std::streamsize saved_stream_width = std::cerr.width();
-    std::streamsize saved_stream_precision = std::cerr.precision();
+    // save the existing ostream properties for later restoration
+    std::ios_base::fmtflags saved_stream_flags = out.flags();
+    char saved_stream_fill = out.fill();
+    std::streamsize saved_stream_width = out.width();
+    std::streamsize saved_stream_precision = out.precision();
 
     // clear all format flags to a neutral state
-    std::cerr.unsetf(
+    out.unsetf(
         std::ios_base::boolalpha|std::ios_base::dec|std::ios_base::fixed|
         std::ios_base::hex|std::ios_base::internal|std::ios_base::left|
         std::ios_base::oct|std::ios_base::right|std::ios_base::scientific|
@@ -303,18 +303,18 @@ void <{class_name}::PrintString_ (std::string const &s)
         std::ios_base::skipws|std::ios_base::unitbuf|std::ios_base::uppercase|
         std::ios_base::adjustfield|std::ios_base::basefield|std::ios_base::floatfield);
     // the '0' char is used hex escape chars, which always have width 2
-    std::cerr.fill('0');
+    out.fill('0');
 
-    std::cerr << '"';
+    out << '"';
     for (std::string::size_type i = 0; i < s.size(); ++i)
-        PrintAtom_(s[i]);
-    std::cerr << '"';
+        PrintAtom_(out, s[i]);
+    out << '"';
 
-    // restore the saved std::cerr properties
-    std::cerr.setf(saved_stream_flags);
-    std::cerr.fill(saved_stream_fill);
-    std::cerr.width(saved_stream_width);
-    std::cerr.precision(saved_stream_precision);
+    // restore the saved out properties
+    out.setf(saved_stream_flags);
+    out.fill(saved_stream_fill);
+    out.width(saved_stream_width);
+    out.precision(saved_stream_precision);
 }
 
 <|end_if
