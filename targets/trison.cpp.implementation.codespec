@@ -73,6 +73,7 @@ bool <{class_name}::IsAtEndOfInput ()
 <|  end_if
 }
 
+<|if(is_defined(generate_debug_spew_code))
 std::string <{class_name}::DebugSpewPrefix () const
 {
     std::ostringstream out;
@@ -80,6 +81,7 @@ std::string <{class_name}::DebugSpewPrefix () const
     return out.str();
 }
 
+<|end_if
 void <{class_name}::ResetForNewInput ()
 {
 <|  if(is_defined(generate_debug_spew_code))
@@ -130,6 +132,7 @@ void <{class_name}::PrintIndented_ (std::ostream &stream, char const *string) co
     }
 }
 
+<|end_if
 std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode parser_return_code)
 {
     if (std::size_t(parser_return_code) < <{class_name}::ms_parser_return_code_string_count_)
@@ -139,6 +142,7 @@ std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode
     return stream;
 }
 
+<|if(is_defined(generate_debug_spew_code))
 std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token)
 {
     if (token.m_id < <{class_name}::ms_token_name_count_)
@@ -148,6 +152,7 @@ std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &tok
     return stream;
 }
 
+<|end_if
 char const *const <{class_name}::ms_parser_return_code_string_table_[] =
 {
     "PRC_SUCCESS",
@@ -171,8 +176,6 @@ char const *const <{class_name}::ms_token_name_table_[] =
 <|  end_loop
 };
 std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
-
-<|end_if
 
 void <{class_name}::ThrowAwayToken_ (Token const &token_) throw()
 {

@@ -283,13 +283,11 @@ private:
     std::ostream *m_debug_spew_stream_;
 
 <|  end_if
-<|  if(is_defined(generate_debug_spew_code))
     static char const *const ms_parser_return_code_string_table_[];
     static std::size_t const ms_parser_return_code_string_count_;
 
     static char const *const ms_token_name_table_[];
     static std::size_t const ms_token_name_count_;
-<|  end_if
 
     static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
     ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
@@ -314,14 +312,17 @@ private:
     // ///////////////////////////////////////////////////////////////////////
 
     friend std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode parser_return_code);
+<|if(is_defined(generate_debug_spew_code))
     friend std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
+<|end_if
 }; // end of class <{class_name}
 
-<|if(is_defined(generate_debug_spew_code))
 std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode parser_return_code);
+<|if(is_defined(generate_debug_spew_code))
 
 std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
 <|if(0)
+
 // This is for use in debugging ParseStackTreeNode_ object leaks
 template <typename T>
 std::ostream &operator << (std::ostream &out, std::set<T> const &s)

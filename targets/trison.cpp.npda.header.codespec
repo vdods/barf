@@ -163,7 +163,9 @@ private:
         bool operator == (Branch_ const &other) const { return BranchState_::Equals(m_state_ptr, other.m_state_ptr); }
 
         BranchStatePtr_ const &StatePtr () const { return m_state_ptr; }
+<|      if(is_defined(generate_debug_spew_code))
         BranchTokenIdPtr_ const &TokenIdPtr () const { return m_token_id_ptr; }
+<|      end_if
 
     private:
 

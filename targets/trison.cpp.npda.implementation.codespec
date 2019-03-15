@@ -844,6 +844,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     }
 }
 
+<|end_if
 // ////////////////////////////////////////////////////////////////////////////
 // <{class_name}::RealizedState_
 // ////////////////////////////////////////////////////////////////////////////
@@ -1110,6 +1111,7 @@ void <{class_name}::HypotheticalState_::ComputeMinAndMaxRealizedLookaheadCursors
 // <{class_name}::ParseTreeNode_
 // ////////////////////////////////////////////////////////////////////////////
 
+<|if(is_defined(generate_debug_spew_code))
 char const *<{class_name}::ParseTreeNode_::AsString (Type type)
 {
     static char const *const LOOKUP_TABLE[COUNT_] =
