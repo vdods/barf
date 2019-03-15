@@ -1195,9 +1195,14 @@ which includes the top element.
             and verify that the max realized lookahead count is as expected (currently there is a bug such
             that it's not).
         x   Make reflex use the SetDebugSpewStream paradigm like trison does.
+        x   Test with generate_debug_spew_code disabled
+        x   Invert dont_generate_timestamps targetspec directive (in reflex and trison) to generate_timestamps,
+            since most of the time a timestamp isn't desired.
+        x   Test with other parser directives enabled/disabled
+        -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
+            specifiers to everything that should not throw.
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
-        -   Test with generate_debug_spew_code disabled (and others)
     -   REALLY nice to have
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Implement %default precedence, so that it's possible to make precedences lower than the default

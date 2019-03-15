@@ -272,7 +272,6 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 
 %target.cpp.generate_debug_spew_code
 %target.cpp.debug_spew_prefix {"CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
-%target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
 /* target-independent scanner directives

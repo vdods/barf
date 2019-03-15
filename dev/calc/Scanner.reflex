@@ -61,7 +61,6 @@ void Scanner::attach_istream (std::istream &in)
 
 %target.cpp.generate_debug_spew_code
 %target.cpp.debug_spew_prefix {"Scanner:"}
-%target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
 /* target-independent scanner directives

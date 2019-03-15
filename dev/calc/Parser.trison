@@ -156,7 +156,6 @@ int main (int argc, char **argv)
 
 // this adds a lot of string content to parser source
 %target.cpp.generate_debug_spew_code
-%target.cpp.dont_generate_timestamps
 
 /* ***************************************************************************
 /* cpp parser terminal directives

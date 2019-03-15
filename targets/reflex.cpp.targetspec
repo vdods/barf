@@ -196,10 +196,9 @@
 // line of debug spew.  The default value is "class_name:" (where, of course,
 // class_name is replaced with the value for class_name).
 %add_optional_directive debug_spew_prefix                   %strict_code_block
-// When present, will prevent the timestamp from being added to the top of
-// the generated source code files (useful when the generated files are
-// checked into a version control system).  The default behavior is to
-// put a timestamp in the generated header and implementation files.
-%add_optional_directive dont_generate_timestamps
+// When present, will add a timestamp to the top of the generated source code
+// files (useful when the generated files are not checked into a version control
+// system).  The default behavior is not to add a timestamp.
+%add_optional_directive generate_timestamps
 
 // TODO: add BARF-developer debug code directive

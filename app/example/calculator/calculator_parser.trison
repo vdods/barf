@@ -88,7 +88,6 @@ void Parser::SetInputString (string const &input_string)
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.dont_generate_timestamps
 
 
 %terminal BAD_TOKEN

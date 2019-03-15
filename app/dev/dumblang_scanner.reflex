@@ -36,7 +36,6 @@
 
 
 %target.cpp.generate_debug_spew_code
-%target.cpp.dont_generate_timestamps
 
 
 
