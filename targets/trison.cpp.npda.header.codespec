@@ -56,6 +56,7 @@ private:
                 return 1;
         }
 
+<|      if(is_defined(generate_debug_spew_code))
         // The print_delimiter_at_branch_length parameter should be the realized stack depth.  It will
         // print a semicolon after the realized portion of the stack, so that the hypothetical portion
         // of the stack can be visually distinguished.
@@ -78,6 +79,7 @@ private:
                 out << ' ' << delimiter;
         }
 
+<|      end_if
     private:
 
         // The initial_element parameter is used to prevent infinite loop in the case of a branch containing a cycle.
@@ -94,41 +96,6 @@ private:
         std::shared_ptr<TreeNode_> m_parent;
         DataType m_data;
     };
-
-<|  if(0)
-    template <typename DataType>
-    struct TreeNodeLessThan_
-    {
-        bool operator () (std::shared_ptr<TreeNode_<DataType>> const &lhs, std::shared_ptr<TreeNode_<DataType>> const &rhs) const
-        {
-            if (bool(lhs))
-            {
-                if (bool(rhs))
-                {
-                    if (lhs->Data() < rhs->Data())
-                        return true;
-                    else if (lhs->Data() > rhs->Data())
-                        return false;
-                    else
-                        // Recursive case defined on the tails of lhs and rhs respectively.
-                        return this->operator()(lhs->Parent(), rhs->Parent());
-                }
-                else
-                    // Declare non-null to be "greater than" null.
-                    return false;
-            }
-            else
-            {
-                if (bool(rhs))
-                    // Declare null to be "less than" non-null.
-                    return true;
-                else
-                    // Declare null to be "equal to" null.
-                    return false;
-            }
-        }
-    };
-<|  end_if
 
     typedef std::uint32_t                               ActionData_;
 
@@ -257,7 +224,7 @@ private:
         void                Initialize                          (Npda_::StateIndex_ initial_state);
 
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
-        void                UpdateMaxRealizedLookaheadCount     (HPSQueue_ const &hps_queue);
+        void                UpdateMaxRealizedLookaheadCount     ();
         void                SetHasEncounteredErrorState         () { m_has_encountered_error_state = true; }
 
         static bool         IsScannerGeneratedTokenId           (Token::Id token_id)
@@ -388,7 +355,6 @@ private:
 
         Spec                    m_spec;
         Branch_                 m_hypothetical_head;
-        Branch_                 m_first_realized_ancestor;
         BranchVector_           m_child_branch_vector;
         // m_hypothetical_lookahead_token_id_queue comes before the realized lookahead queue, and m_realized_lookahead_cursor
         // is the index into the realized lookahead queue for where the end of m_hypothetical_lookahead_token_id_queue
@@ -456,8 +422,6 @@ private:
 
         void Print (std::ostream &out, <{class_name} const *parser, std::string const &prefix, std::uint32_t indent_level = 0, bool suppress_initial_prefix = false) const;
 <|      end_if
-
-        bool FirstRealizedAncestorIsActualAncestor () const { return m_hypothetical_head.HasAsAncestor(m_first_realized_ancestor); }
     }; // end of struct <{class_name}::ParseTreeNode_
 
     Token const &Lookahead_ (TokenQueue_::size_type index)<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};

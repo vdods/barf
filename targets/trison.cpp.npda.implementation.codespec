@@ -20,18 +20,6 @@ std::ostream &operator << (std::ostream &out, std::vector<T> const &s)
 }
 
 <|end_if
-<|if(0)
-template <typename LessThan, typename T>
-typename std::vector<T>::const_iterator TEMP_vector_find_ (typename std::vector<T> const &vec, T const &val)
-{
-    LessThan less_than;
-    for (typename std::vector<T>::const_iterator it = vec.begin(), it_end = vec.end(); it != it_end; ++it)
-        if (!less_than(*it, val) && !less_than(val, *it))
-            return it;
-    return vec.end();
-}
-
-<|end_if
 std::uint32_t <{class_name}::NonterminalStartStateIndex_ (<{class_name}::Nonterminal::Name nonterminal)
 {
     switch (nonterminal)
@@ -178,8 +166,6 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|  if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Parse stack tree has trunk; executing trunk actions.\n")
 <|  end_if
-    //while (m_hypothetical_state_->m_root->HasTrunkChild())
-    // HIPPO TEMP -- just do one at a time so that the parser state has a chance to be printed after each.
     if (m_hypothetical_state_->m_root->HasTrunkChild())
     {
         // The trunk_child is popped and then will die by the end of this function.
@@ -877,7 +863,7 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
     // be factored out.
 
     m_lookahead_queue.push_back(lookahead);
-    UpdateMaxRealizedLookaheadCount(hps_queue);
+    UpdateMaxRealizedLookaheadCount();
 }
 
 <{class_name}::Token <{class_name}::RealizedState_::PopStack ()
@@ -1021,10 +1007,10 @@ void <{class_name}::RealizedState_::PushFrontLookahead (Token const &lookahead, 
         ParseTreeNode_ &hps = **hps_it;
         ++hps.m_realized_lookahead_cursor;
     }
-    UpdateMaxRealizedLookaheadCount(hps_queue);
+    UpdateMaxRealizedLookaheadCount();
 }
 
-void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ const &hps_queue)
+void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount ()
 {
     // Subtract the number of parser-generated tokens from the length of m_lookahead_queue.
     std::size_t parser_generated_token_count = 0;
@@ -1035,30 +1021,6 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ c
             break;
     }
     m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, m_lookahead_queue.size() - parser_generated_token_count);
-
-<|  if(0)
-    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
-    // this RealizedState_ method will be responsible for handling some HypotheticalState_
-    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
-    // be factored out.
-
-    // HPS's m_realized_lookahead_cursor is an index into RealizedState::m_lookahead_queue, so the number
-    // of lookaheads depends on the cursor for each branch.
-    for (HPSQueue_::const_iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
-    {
-        // Skip nullified elements because they have been deleted.
-        if (*hps_it == NULL)
-            continue;
-
-        ParseTreeNode_ const &hps = **hps_it;
-        // The actual lookaheads are offset by the realized lookahead cursor, because the tokens before
-        // the realized lookahead cursor are ones we've seen already, and therefore don't contribute to
-        // the actual lookahead count.
-        assert(m_lookahead_queue.size() >= hps.m_realized_lookahead_cursor);
-        std::size_t hps_actual_lookahead_count = m_lookahead_queue.size() - hps.m_realized_lookahead_cursor;
-        m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, hps_actual_lookahead_count);
-    }
-<|end_if
 }
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -1075,8 +1037,6 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount (HPSQueue_ c
 <|  else
     hps->m_hypothetical_head        = Branch_(BranchState_::CreateOrphan(initial_state));
 <|  end_if
-    hps->m_first_realized_ancestor  = hps->m_hypothetical_head;
-    assert(hps->FirstRealizedAncestorIsActualAncestor());
 
     m_root->AddChild(hps);
     m_hps_queue.push_back(hps);
@@ -1311,9 +1271,6 @@ bool <{class_name}::ParseTreeNode_::IsBlockedHPS () const
     {
         // Nothing can happen after returning, so this has to be blocking.
         case RETURN:
-        // TODO: Figure out if this should be considered a blocked HPS (making it non-blocking
-        // could potentially increase the depth of the state stack on which a decision depends,
-        // so this is a nontrivial decision).
         case POP_STACK: return true;
 
         default:        return false;
@@ -1385,7 +1342,6 @@ bool <{class_name}::ParseTreeNode_::IsBlockedHPS () const
                 retval.second = std::max(retval.second, child_precedence_level_range.second);
             }
         }
-        //std::cerr << "HIPPO: retval = " << retval.first << ", " << retval.second << '\n';
         assert(retval.first <= retval.second);
         return retval;
     }
@@ -1420,13 +1376,6 @@ void <{class_name}::ParseTreeNode_::AddChild (ParseTreeNode_ *child)
     assert(child->m_parent_node == NULL);
     assert(child->m_spec.m_type != ROOT);
 
-    // // std::cerr << "ParseTreeNode_::AddChild; this = " << this << ", child = " << child << ", m_child_branch_node_ptr_vector = " << m_child_branch_node_ptr_vector << '\n';
-    // std::cerr << "ParseTreeNode_::AddChild; this = " << this << ", child = " << child << ", m_child_branch_node_ptr_vector = " << "(branch values omitted)" << '\n';
-    // std::cerr << "this:\n";
-    // this->Print(std::cerr, NULL, "HIPPO", 1);
-    // std::cerr << "child:\n";
-    // child->Print(std::cerr, NULL, "HIPPO", 1);
-
     m_child_nodes[child->m_spec].insert(child);
     child->m_parent_node = this;
 
@@ -1438,28 +1387,18 @@ void <{class_name}::ParseTreeNode_::AddChild (ParseTreeNode_ *child)
         assert(std::none_of(m_child_branch_vector.begin(), m_child_branch_vector.end(), [child](Branch_ const &node_state){ return node_state.StatePtr() == child->m_hypothetical_head.StatePtr(); }) && "child branch node should not already be in the set");
         m_child_branch_vector.push_back(child->m_hypothetical_head);
     }
-//    std::cerr << '\n';
 }
 
 void <{class_name}::ParseTreeNode_::RemoveChild (ParseTreeNode_ *child)
 {
-    //std::cerr << "ParseTreeNode_::RemoveChild; this = " << this << ", child = " << child << '\n'; // HIPPO
     assert(child != NULL);
     assert(child->m_parent_node == this);
     assert(HasChildrenHavingSpec(child->m_spec));
     assert(m_child_nodes[child->m_spec].find(child) != m_child_nodes[child->m_spec].end());
     m_child_nodes[child->m_spec].erase(child);
     if (m_child_nodes[child->m_spec].empty())
-    {
-        //std::cerr << "    all child nodes of spec " << AsString(child->m_spec.m_type) << " are gone; removing that subset\n"; // HIPPO
         m_child_nodes.erase(child->m_spec);
-    }
     child->m_parent_node = NULL;
-
-    // QUESTION: Should this be removed?  The recovery set is used in error recovery, so maybe
-    // it should be kept.  Keep it for now since it wasn't in the old code.
-    //assert(std::any_of(m_child_branch_vector.begin(), m_child_branch_vector.end(), [child](Branch_ const &node_state){ return node_state.StatePtr() == child->m_hypothetical_head.StatePtr(); }));
-    //m_child_branch_node_ptr_vector.erase(child->m_hypothetical_head.StatePtr()); // NOTE: This was old code meant for SET, not vector.
 
     // If there are no children and this isn't the root node, remove it from its parent.
     if (m_child_nodes.empty() && m_parent_node != NULL)
@@ -1469,7 +1408,6 @@ void <{class_name}::ParseTreeNode_::RemoveChild (ParseTreeNode_ *child)
 void <{class_name}::ParseTreeNode_::RemoveFromParent ()
 {
     assert(m_parent_node != NULL);
-    //std::cerr << "ParseTreeNode_::RemoveFromParent; this = " << this << '\n'; // HIPPO
     m_parent_node->RemoveChild(this);
 }
 
@@ -1507,10 +1445,8 @@ void <{class_name}::ParseTreeNode_::CloneLeafNodeInto (<{class_name}::ParseTreeN
     assert(m_child_nodes.empty());
     orphan_target.m_spec                                    = m_spec;
     orphan_target.m_hypothetical_head                       = m_hypothetical_head;
-    orphan_target.m_first_realized_ancestor                 = m_first_realized_ancestor;
     orphan_target.m_hypothetical_lookahead_token_id_queue   = m_hypothetical_lookahead_token_id_queue;
     orphan_target.m_realized_lookahead_cursor               = m_realized_lookahead_cursor;
-    assert(orphan_target.FirstRealizedAncestorIsActualAncestor());
 }
 
 <|if(is_defined(generate_debug_spew_code))
@@ -1536,7 +1472,6 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
         case POP_STACK: out << ' ' << m_spec.m_single_data << " time(s)";                                                       break;
         default:                                                                                                                break;
     }
-    // out << ' ' << this << ", parent = " << m_parent_node << ' ' << Npda_::ms_state_table_[m_hypothetical_head.StatePtr()->Data()].m_description << ' ';
     if (bool(m_hypothetical_head.StatePtr()))
         out << ' ' << Npda_::ms_state_table_[m_hypothetical_head.StatePtr()->Data()].m_description << ' ';
     if (m_spec.m_type == HPS)
@@ -1545,11 +1480,9 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
         assert(bool(m_hypothetical_head.TokenIdPtr()));
 
         out << "    (";
-        //m_hypothetical_head.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>, m_first_realized_ancestor.StatePtr(), "[[");
         m_hypothetical_head.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
         out << "); ";
 
-        //m_hypothetical_head.TokenIdPtr()->PrintRootToLeaf(out, TokenName_, m_first_realized_ancestor.TokenIdPtr(), "[[");
         m_hypothetical_head.TokenIdPtr()->PrintRootToLeaf(out, TokenName_);
         out << " . ";
         for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
@@ -1596,23 +1529,6 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
     // TODO: replace individual arguments action_type, action_data with ParseTreeNode_::Spec and just modify that struct below where it needs it.
     assert(hps.m_spec.m_type == ParseTreeNode_::HPS && "Only a HPS type node can take an action");
     assert(hps.m_parent_node != NULL);
-
-    // TODO: Once enough testing/verification is done, this comment and the commented-out early check code
-    // should be removed.
-    //
-    // Because the parse tree will be recreated when the trunk action is POP_STACK, there's no need to
-    // early out if the stack will be popped empty.
-
-//     // Early check for if the stack would be popped empty, in which case, don't create the new hps.
-//     if (action_type == ParseTreeNode_::POP_STACK && hps.m_stack.size() <= 1)
-//     {
-<|      if(is_defined(generate_debug_spew_code))
-<|      if(0)
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "early-out with no new HPS because POP_STACK would pop the stack all the way to empty... ")
-<|      end_if
-<|      end_if
-//         return NULL;
-//     }
 
     ParseTreeNode_ *new_hps = NULL;
 
@@ -1709,11 +1625,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                 for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
                 {
                     assert(reduce_hps->m_hypothetical_head.HasParent());
-                    // If we're about to pop through m_first_realized_ancestor, then pop that first.
-                    if (reduce_hps->m_hypothetical_head == reduce_hps->m_first_realized_ancestor)
-                        reduce_hps->m_first_realized_ancestor = reduce_hps->m_first_realized_ancestor.Parent();
                     reduce_hps->m_hypothetical_head = reduce_hps->m_hypothetical_head.Parent();
-                    assert(reduce_hps->FirstRealizedAncestorIsActualAncestor());
                 }
                 // Push the reduced nonterminal token data onto the front of the lookahead queue
                 reduce_hps->m_hypothetical_lookahead_token_id_queue.push_front(rule.m_reduction_nonterminal_token_id);
@@ -1735,8 +1647,6 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
 <|          end_if
             assert(new_hps->m_hypothetical_head.HasParent());
             assert(new_hps->m_hypothetical_head.Parent() == hps.m_hypothetical_head);
-            // Don't change new_hps->m_first_realized_ancestor, since nothing realized has changed yet.
-            assert(new_hps->FirstRealizedAncestorIsActualAncestor());
 
             // Store the lookahead token id in action_data so it can printed.
             action_data = std::uint32_t(lookahead_token_id);
@@ -1776,11 +1686,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
             for (std::uint32_t i = 0; i < pop_count; ++i)
             {
                 assert(new_hps->m_hypothetical_head.HasParent());
-                // If we're about to pop through m_first_realized_ancestor, make sure to pop that first.
-                if (new_hps->m_hypothetical_head == new_hps->m_first_realized_ancestor)
-                    new_hps->m_first_realized_ancestor = new_hps->m_first_realized_ancestor.Parent();
                 new_hps->m_hypothetical_head = new_hps->m_hypothetical_head.Parent();
-                assert(new_hps->FirstRealizedAncestorIsActualAncestor());
             }
 <|          if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
@@ -1865,8 +1771,6 @@ void <{class_name}::CreateParseTreeFromRealizedState_ ()
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
         hps->m_hypothetical_head        = reconstruct_branch;
-        hps->m_first_realized_ancestor  = hps->m_hypothetical_head;
-        assert(hps->FirstRealizedAncestorIsActualAncestor());
 
         m_hypothetical_state_->m_root->AddChild(hps);
         m_hypothetical_state_->m_hps_queue.push_back(hps);

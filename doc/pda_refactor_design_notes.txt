@@ -1194,9 +1194,10 @@ which includes the top element.
         x   Test against grammars that actually require multiple lookaheads (e.g. w/ operators @, @@, @@@)
             and verify that the max realized lookahead count is as expected (currently there is a bug such
             that it's not).
+        x   Make reflex use the SetDebugSpewStream paradigm like trison does.
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
-        -   Make reflex use the SetDebugSpewStream paradigm like trison does.
+        -   Test with generate_debug_spew_code disabled (and others)
     -   REALLY nice to have
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Implement %default precedence, so that it's possible to make precedences lower than the default
@@ -1205,6 +1206,8 @@ which includes the top element.
         -   Allow SHIFT/REDUCE cases 1 and 5 to be resolved before equalizing max lookahead cursor.
         -   Make a more terse debug spew output which is more useful for non-barf developers to debug
             their grammars/parsers.
+        -   Make the #line directive have overridable path so that gdb/KDevelop parse it correctly.
+            This should probably have to do with the output directory option of reflex/trison.
     -   Nice to have
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
             use the highest standard that's reasonable)
@@ -1214,6 +1217,7 @@ which includes the top element.
             -   Are there strong typedefs which don't automatically cast to the underlying type?
             -   Probably use unique_ptr to formalize ownership and simplify pointer management,
                 especially for the logic surrounding ParseStackTreeNode_, e.g. in RemoveBranchIfNotTrunk
+        -   Add a without_line_directives directive to targetspec.
         -   Make an enum for rule associativity and a string table for it.
         -   Implement max parse tree depth constraint (figure out how this error should be handled).
             Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
