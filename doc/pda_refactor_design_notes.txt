@@ -1199,10 +1199,9 @@ which includes the top element.
         x   Invert dont_generate_timestamps targetspec directive (in reflex and trison) to generate_timestamps,
             since most of the time a timestamp isn't desired.
         x   Test with other parser directives enabled/disabled
-        -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
-            specifiers to everything that should not throw.
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
+        -   Implement real versioning (see PACKAGE_VERSION macro used in trison_options.cpp and others)
     -   REALLY nice to have
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Implement %default precedence, so that it's possible to make precedences lower than the default
@@ -1214,6 +1213,8 @@ which includes the top element.
         -   Make the #line directive have overridable path so that gdb/KDevelop parse it correctly.
             This should probably have to do with the output directory option of reflex/trison.
     -   Nice to have
+        -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
+            specifiers to everything that should not throw.
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
             use the highest standard that's reasonable)
             -   Use std::array for static storage of state/transition/etc tables.
@@ -1242,6 +1243,7 @@ which includes the top element.
         -   Terminal::ERROR_ should probably be turned into Nonterminal::error_, since an error is sort of
             a reduction of other tokens.
         -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
+    -   Make CMakeLists.txt auto detect installed reflex/trison and use as stable binaries.
 
 2018.02.23 ----------------------------
 

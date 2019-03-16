@@ -38,8 +38,9 @@ class Scanner;
 %target.cpp.bottom_of_class {
     FiLoc const &GetFiLoc () const;
 
-    bool ScannerDebugSpew () const;
-    void ScannerDebugSpew (bool debug_spew);
+    bool ScannerDebugSpewIsEnabled () const;
+    std::ostream *ScannerDebugSpewStream ();
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream);
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -85,14 +86,19 @@ FiLoc const &Parser::GetFiLoc () const
     return m_scanner->GetFiLoc();
 }
 
-bool Parser::ScannerDebugSpew () const
+bool Parser::ScannerDebugSpewIsEnabled () const
 {
-    return m_scanner->DebugSpew();
+    return m_scanner->DebugSpewIsEnabled();
 }
 
-void Parser::ScannerDebugSpew (bool debug_spew)
+std::ostream *Parser::ScannerDebugSpewStream ()
 {
-    m_scanner->DebugSpew(debug_spew);
+    return m_scanner->DebugSpewStream();
+}
+
+void Parser::SetScannerDebugSpewStream (std::ostream *debug_spew_stream)
+{
+    m_scanner->SetDebugSpewStream(debug_spew_stream);
 }
 
 bool Parser::OpenFile (string const &input_filename)

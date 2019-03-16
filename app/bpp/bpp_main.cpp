@@ -51,7 +51,8 @@ int main (int argc, char **argv)
 
         EmitExecutionMessage("beginning execution");
         Preprocessor::Parser parser;
-        parser.ScannerDebugSpew(BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER));
+        if (BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER))
+            parser.SetScannerDebugSpewStream(&std::cerr);
         if (BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER))
             parser.SetDebugSpewStream(&std::cerr);
 

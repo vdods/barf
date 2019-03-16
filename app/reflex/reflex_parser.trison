@@ -54,8 +54,9 @@ namespace Reflex {
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
     CommonLang::TargetMap *StealTargetMap ();
 
-    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
-    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+    bool ScannerDebugSpewIsEnabled () const { return m_scanner.DebugSpewIsEnabled(); }
+    std::ostream *ScannerDebugSpewStream () { return m_scanner.DebugSpewStream(); }
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream) { m_scanner.SetDebugSpewStream(debug_spew_stream); }
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -469,7 +470,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         delete throwaway;
 
         Regex::Parser parser;
-        parser.ScannerDebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER));
+        if (GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER))
+            parser.SetScannerDebugSpewStream(&std::cerr);
         if (GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER))
             parser.SetDebugSpewStream(&std::cerr);
         istringstream in(macro_regex_string->GetText());
@@ -681,7 +683,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         Regex::RegularExpression *regex = NULL;
         {
             Regex::Parser parser;
-            parser.ScannerDebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER));
+            if (GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER))
+                parser.SetScannerDebugSpewStream(&std::cerr);
             if (GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER))
                 parser.SetDebugSpewStream(&std::cerr);
             istringstream in(regex_string->GetText());

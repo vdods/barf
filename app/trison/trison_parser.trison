@@ -53,8 +53,9 @@ struct TerminalMap;
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
     CommonLang::TargetMap *StealTargetMap ();
 
-    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
-    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+    bool ScannerDebugSpewIsEnabled () const { return m_scanner.DebugSpewIsEnabled(); }
+    std::ostream *ScannerDebugSpewStream () { return m_scanner.DebugSpewStream(); }
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream) { m_scanner.SetDebugSpewStream(debug_spew_stream); }
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);

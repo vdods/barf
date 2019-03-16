@@ -46,8 +46,12 @@ namespace Regex {
 
     using InputBase::Close;
 
-    bool ScannerDebugSpew () const { return false; } // TODO: not implemented yet
-    void ScannerDebugSpew (bool debug_spew) { } // TODO: not implemented yet
+    //bool ScannerDebugSpew () const { return false; } // TODO: not implemented yet
+    //void ScannerDebugSpew (bool debug_spew) { } // TODO: not implemented yet
+
+    bool ScannerDebugSpewIsEnabled () const { return false; } // TODO: not implemented yet
+    std::ostream *ScannerDebugSpewStream () const { return NULL; } // TODO: not implemented yet
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream) { } // TODO: not implemented yet
 
     // this method will throw a std::string if a macro is used without
     // providing a macro map, if an undefined macro is referenced, or

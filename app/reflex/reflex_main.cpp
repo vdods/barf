@@ -98,7 +98,8 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     Ast::Base *parsed_tree_root = NULL;
     
     Reflex::Parser parser;
-    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
     if (ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER))
         parser.SetDebugSpewStream(&std::cerr);
 
@@ -225,7 +226,8 @@ void ParseTargetspecs (Reflex::PrimarySource const &primary_source)
     // an error code.
 
     Targetspec::Parser parser;
-    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER));
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
     if (ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_PARSER))
         parser.SetDebugSpewStream(&std::cerr);
 
@@ -250,7 +252,8 @@ void ParseCodespecs (Reflex::PrimarySource const &primary_source)
     // accumulated during this section, abort with an error code.
 
     Preprocessor::Parser parser;
-    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_SCANNER));
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
     if (ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_PARSER))
         parser.SetDebugSpewStream(&std::cerr);
 

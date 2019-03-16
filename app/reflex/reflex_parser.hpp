@@ -286,8 +286,9 @@ public:
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
     CommonLang::TargetMap *StealTargetMap ();
 
-    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
-    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+    bool ScannerDebugSpewIsEnabled () const { return m_scanner.DebugSpewIsEnabled(); }
+    std::ostream *ScannerDebugSpewStream () { return m_scanner.DebugSpewStream(); }
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream) { m_scanner.SetDebugSpewStream(debug_spew_stream); }
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -303,7 +304,7 @@ private:
     // This is a member var because THERE CAN BE ONLY ONE.
     StartWithStateMachineDirective *m_start_with_state_machine_directive;
 
-#line 307 "reflex_parser.hpp"
+#line 308 "reflex_parser.hpp"
 
 
 private:
@@ -492,6 +493,18 @@ private:
             return std::make_shared<TreeNode_>(nullptr, std::forward<Types>(args)...);
         }
 
+        static bool Equals (std::shared_ptr<TreeNode_ const> const &lhs, std::shared_ptr<TreeNode_ const> const &rhs)
+        {
+            if (lhs.get() == rhs.get())
+                return true;
+
+            assert(bool(lhs) || bool(rhs)); // They can't both be null at this point.
+            if (!bool(lhs) || !bool(rhs))
+                return false; // If either one is null, then they're not equal.
+
+            return lhs->Data() == rhs->Data() && Equals(lhs->Parent(), rhs->Parent());
+        }
+
         bool HasParent () const { return bool(m_parent); }
         std::shared_ptr<TreeNode_ const> Parent () const { return m_parent; }
         std::shared_ptr<TreeNode_> const &Parent () { return m_parent; }
@@ -505,15 +518,26 @@ private:
                 return 1;
         }
 
+        // The print_delimiter_at_branch_length parameter should be the realized stack depth.  It will
+        // print a semicolon after the realized portion of the stack, so that the hypothetical portion
+        // of the stack can be visually distinguished.
         template <typename T>
-        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &)) const
+        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &), std::shared_ptr<TreeNode_> const &delimiting_ancestor = std::shared_ptr<TreeNode_>(), std::string const &delimiter = std::string()) const
         {
             if (this->HasParent())
             {
-                Parent()->PrintRootToLeaf(out, DataTransform);
+                Parent()->PrintRootToLeaf(out, DataTransform, delimiting_ancestor);
                 out << ' ';
             }
+            // If there is no delimiting ancestor, then the delimiting ancestor is the root.
+            else if (!bool(delimiting_ancestor) && !delimiter.empty())
+                out << delimiter << ' ';
+
             out << DataTransform(Data());
+
+            // Print the delimiter, if called for.
+            if (Equals(this->shared_from_this(), delimiting_ancestor) && !delimiter.empty())
+                out << ' ' << delimiter;
         }
 
     private:
@@ -533,39 +557,6 @@ private:
         DataType m_data;
     };
 
-    template <typename DataType>
-    struct TreeNodeOrder_
-    {
-        bool operator () (std::shared_ptr<TreeNode_<DataType>> const &lhs, std::shared_ptr<TreeNode_<DataType>> const &rhs) const
-        {
-            if (bool(lhs))
-            {
-                if (bool(rhs))
-                {
-                    if (lhs->Data() < rhs->Data())
-                        return true;
-                    else if (lhs->Data() > rhs->Data())
-                        return false;
-                    else
-                        // Recursive case defined on the tails of lhs and rhs respectively.
-                        return this->operator()(lhs->Parent(), rhs->Parent());
-                }
-                else
-                    // Declare non-null to be "greater than" null.
-                    return false;
-            }
-            else
-            {
-                if (bool(rhs))
-                    // Declare null to be "less than" non-null.
-                    return true;
-                else
-                    // Declare null to be "equal to" null.
-                    return false;
-            }
-        }
-    };
-
     typedef std::uint32_t                               ActionData_;
 
     typedef std::deque<Token>                           TokenQueue_;
@@ -573,36 +564,76 @@ private:
     typedef std::deque<Token::Id>                       TokenIdQueue_;
 
     // This forms one element, containing the NPDA state index, of a NPDA state stack (aka branch).
-    typedef TreeNode_<Npda_::StateIndex_>               BranchNode_;
-    typedef std::shared_ptr<BranchNode_>                BranchNodePtr_;
-    // This contains the tops of all the branch state stacks for a particular RealizedState_ state.
-    typedef std::vector<BranchNodePtr_>                 BranchNodePtrVector_;
-    // This contains the stack of RealizedState_ states.
-    typedef std::vector<BranchNodePtrVector_>           BranchNodePtrVectorStack_;
+    typedef TreeNode_<Npda_::StateIndex_>               BranchState_;
+    typedef std::shared_ptr<BranchState_>               BranchStatePtr_;
 
-    // These are tracked in parallel with BranchNode_, etc for the purposes of debug spew only.
-    typedef TreeNode_<Token::Id>                        BranchNodeTokenId_;
-    typedef std::shared_ptr<BranchNodeTokenId_>         BranchNodeTokenIdPtr_;
-    typedef std::vector<BranchNodeTokenIdPtr_>          BranchNodeTokenIdPtrVector_;
-    typedef std::vector<BranchNodeTokenIdPtrVector_>    BranchNodeTokenIdPtrVectorStack_;
+    // These are tracked in parallel with BranchState_, etc for the purposes of debug spew only.
+    typedef TreeNode_<Token::Id>                        BranchTokenId_;
+    typedef std::shared_ptr<BranchTokenId_>             BranchTokenIdPtr_;
 
     // These are used in printing the branch state stacks and token id stacks.
     template <typename T>
     static T const &IdentityTransform_ (T const &x) { return x; }
-
     static char const *TokenName_ (Token::Id const &token_id) { return ms_token_name_table_[token_id]; }
 
-    struct  ParseStackTreeNode_;
+    struct Branch_
+    {
+        Branch_ () { } // Default initialization is nullptr.
+        Branch_ (BranchStatePtr_ const &state_ptr, BranchTokenIdPtr_ const &token_id_ptr)
+            :   m_state_ptr(state_ptr)
+            ,   m_token_id_ptr(token_id_ptr)
+        {
+            assert(bool(m_state_ptr) == bool(m_token_id_ptr) && "pointers must both be set or both be unset");
+        }
 
-    typedef std::deque<ParseStackTreeNode_ *>           HPSQueue_;
+        bool HasParent () const {
+            assert(m_state_ptr->HasParent() == m_token_id_ptr->HasParent());
+            return m_state_ptr->HasParent();
+        }
+        Branch_ Parent () const {
+            return Branch_(m_state_ptr->Parent(), m_token_id_ptr->Parent());
+        }
+        bool HasAsAncestor (Branch_ const &other) const
+        {
+            Branch_ b(*this);
+            while (true)
+            {
+                if (b == other)
+                    return true;
+
+                if (b.HasParent())
+                    b = b.Parent();
+                else
+                    return false;
+            }
+        }
+
+        bool operator == (Branch_ const &other) const { return BranchState_::Equals(m_state_ptr, other.m_state_ptr); }
+
+        BranchStatePtr_ const &StatePtr () const { return m_state_ptr; }
+        BranchTokenIdPtr_ const &TokenIdPtr () const { return m_token_id_ptr; }
+
+    private:
+
+        // This is the head of the NPDA state branch that this HPS tracks.
+        BranchStatePtr_ m_state_ptr;
+        // This is the head of the Token::Id branch that this HPS tracks (which is exactly
+        // parallel to the NPDA state branch tracked by m_state_ptr).
+        BranchTokenIdPtr_ m_token_id_ptr;
+    };
+
+    typedef std::vector<Branch_>            BranchVector_;
+    typedef std::vector<BranchVector_>      BranchVectorStack_;
+
+    struct  ParseTreeNode_;
+
+    typedef std::deque<ParseTreeNode_ *>    HPSQueue_;
 
     struct RealizedState_
     {
         RealizedState_      (Npda_::StateIndex_ initial_state);
 
-        BranchNodePtrVectorStack_ const &BranchNodePtrVectorStack     () const { return m_branch_node_ptr_vector_stack; }
-        BranchNodeTokenIdPtrVectorStack_ const &BranchNodeTokenIdPtrVectorStack     () const { return m_branch_node_token_id_ptr_vector_stack; }
-
+        BranchVectorStack_ const &BranchVectorStack             () const { return m_branch_vector_stack; }
         TokenStack_ const & TokenStack                          () const { return m_token_stack; }
         TokenQueue_ const & LookaheadQueue                      () const { return m_lookahead_queue; }
 
@@ -625,7 +656,7 @@ private:
         // with the popped token in the case of POP_STACK, so that the parser can call the throw-away-token actions.
 
         void                ExecuteActionReduce                 (Grammar_::Rule_ const &rule, Token::Data const &reduced_nonterminal_token_data, HPSQueue_ &hps_queue);
-        void                ExecuteActionShift                  (BranchNodePtrVector_ const &shifted_branch_node_ptr_vector, BranchNodeTokenIdPtrVector_ const &shifted_branch_node_token_id_ptr_vector, HPSQueue_ &hps_queue);
+        void                ExecuteActionShift                  (BranchVector_ const &shifted_branch_vector, HPSQueue_ &hps_queue);
         void                ExecuteActionInsertLookaheadError   (HPSQueue_ &hps_queue);
         void                ExecuteActionDiscardLookahead       (HPSQueue_ &hps_queue);
         // This one is tricky to implement within RealizedState_ alone.
@@ -639,19 +670,25 @@ private:
         void                Initialize                          (Npda_::StateIndex_ initial_state);
 
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
-        void                UpdateMaxRealizedLookaheadCount     (HPSQueue_ const &hps_queue);
+        void                UpdateMaxRealizedLookaheadCount     ();
         void                SetHasEncounteredErrorState         () { m_has_encountered_error_state = true; }
 
+        static bool         IsScannerGeneratedTokenId           (Token::Id token_id)
+        {
+            // If this is a Terminal (anything between 0 and Terminal::STRING_LITERAL)
+            // that isn't ERROR_, then it's scanner-generated (i.e. not parser-generated).
+            return token_id != Terminal::ERROR_ && token_id <= Terminal::STRING_LITERAL;
+        }
+
         // The set of the realized branches (i.e. the set of the tops of the NPDA state stacks)
-        BranchNodePtrVectorStack_           m_branch_node_ptr_vector_stack;
-        BranchNodeTokenIdPtrVectorStack_    m_branch_node_token_id_ptr_vector_stack;
-        TokenStack_                         m_token_stack;
-        TokenQueue_                         m_lookahead_queue;
+        BranchVectorStack_  m_branch_vector_stack;
+        TokenStack_         m_token_stack;
+        TokenQueue_         m_lookahead_queue;
         // This is related to k in the LALR(k) quantity of the grammar, though it's only what's been realized
         // during the parse, not the theoretical bound (if it even exists).
-        std::size_t                         m_max_realized_lookahead_count;
+        std::size_t         m_max_realized_lookahead_count;
         // TODO: Maybe make this into the number of times error recovery has been entered.
-        bool                                m_has_encountered_error_state;
+        bool                m_has_encountered_error_state;
     }; // end of struct Parser::RealizedState_
 
     struct HypotheticalState_
@@ -669,7 +706,7 @@ private:
         // ancestors of N having exactly one child, excluding the root node.  Thus if the whole parse
         // tree is a single line of nodes extending from the root, then calling DeleteBranch on any
         // non-root node will delete all non-root nodes.
-        void                    DeleteBranch (ParseStackTreeNode_ *branch_node);
+        void                    DeleteBranch (ParseTreeNode_ *branch_node);
 
         // Destroys the parse tree and recreates a root node with no children.
         void                    DestroyParseTree ();
@@ -681,7 +718,7 @@ private:
         // assign to that one.
         void                    ComputeMinAndMaxRealizedLookaheadCursors (std::uint32_t *min, std::uint32_t *max) const;
 
-        ParseStackTreeNode_ *   m_root;
+        ParseTreeNode_ *        m_root;
         HPSQueue_               m_hps_queue;
         // This is stored so new memory isn't necessarily allocated for each parse iteration.
         HPSQueue_               m_new_hps_queue;
@@ -692,7 +729,7 @@ private:
     Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack) throw();
 
     // TODO: This should probably be inside HypotheticalState_
-    struct ParseStackTreeNode_
+    struct ParseTreeNode_
     {
         // The values of RETURN through POP_STACK coincide with the same in Npda_::Transition_::Type.
         // Note: HPS stands for "Hypothetical Parser State", which represents one of possibly many
@@ -746,70 +783,60 @@ private:
                             return false;
                     }
                 }
-            }; // end of struct Parser::ParseStackTreeNode_::Spec::Order
-        }; // end of struct Parser::ParseStackTreeNode_::Spec::
+            }; // end of struct Parser::ParseTreeNode_::Spec::Order
+        }; // end of struct Parser::ParseTreeNode_::Spec
 
         static char const *AsString (Type type);
 
-
-        struct ParseStackTreeNodeOrder
+        struct ParseTreeNodeOrder
         {
-            bool operator () (ParseStackTreeNode_ const *lhs, ParseStackTreeNode_ const *rhs) const;
+            bool operator () (ParseTreeNode_ const *lhs, ParseTreeNode_ const *rhs) const;
         };
 
-        typedef std::set<ParseStackTreeNode_ *,ParseStackTreeNodeOrder> ParseStackTreeNodeSet;
-        typedef std::map<Spec,ParseStackTreeNodeSet,Spec::Order> ChildMap;
-        typedef std::pair<std::int32_t,std::int32_t> PrecedenceLevelRange;
+        typedef std::set<ParseTreeNode_ *,ParseTreeNodeOrder>           ParseTreeNodeSet;
+        typedef std::map<Spec,ParseTreeNodeSet,Spec::Order>             ChildMap;
+        typedef std::pair<std::int32_t,std::int32_t>                    PrecedenceLevelRange;
 
-        Spec m_spec;
-        // This is the head node of the current branch that this ParseStackTreeNode_ is tracking.
-        BranchNodePtr_ m_branch_node_ptr;
-        // This is the set of m_branch_node_ptr values of all children.
-        BranchNodePtrVector_ m_child_branch_node_ptr_vector;
-        // This tracks the Token::Id values in parallel with m_branch_node_ptr (which is the head
-        // node of the current branch).
-        BranchNodeTokenIdPtr_ m_branch_node_token_id_ptr;
-        // This is the set of m_branch_node_token_id_ptr values for all children, and is indexed
-        // exactly the same as m_child_branch_node_ptr_vector (i.e. one index corresponds to the
-        // same child in both vectors).
-        BranchNodeTokenIdPtrVector_ m_child_branch_node_token_id_ptr_vector;
+        Spec                    m_spec;
+        Branch_                 m_hypothetical_head;
+        BranchVector_           m_child_branch_vector;
         // m_hypothetical_lookahead_token_id_queue comes before the realized lookahead queue, and m_realized_lookahead_cursor
         // is the index into the realized lookahead queue for where the end of m_hypothetical_lookahead_token_id_queue
         // lands.  In other words, this node's "total" lookahead
-        TokenIdQueue_ m_hypothetical_lookahead_token_id_queue;
-        std::uint32_t m_realized_lookahead_cursor; // this is an index into the realized lookahead queue.
-        ParseStackTreeNode_ *m_parent_node;
-        ChildMap m_child_nodes;
+        TokenIdQueue_           m_hypothetical_lookahead_token_id_queue;
+        std::uint32_t           m_realized_lookahead_cursor; // this is an index into the realized lookahead queue.
+        ParseTreeNode_ *        m_parent_node;
+        ChildMap                m_child_nodes;
 
-        ParseStackTreeNode_ (Spec const &spec)
+        ParseTreeNode_ (Spec const &spec)
             :   m_spec(spec)
             ,   m_realized_lookahead_cursor(0)
             ,   m_parent_node(NULL)
         { }
-        ~ParseStackTreeNode_ ();
+        ~ParseTreeNode_ ();
 
         bool IsRoot () const { return m_parent_node == NULL; }
         bool HasParent () const { return m_parent_node != NULL; }
         bool HasTrunkChild () const;
-        ParseStackTreeNode_ *PopTrunkChild ();
+        ParseTreeNode_ *PopTrunkChild ();
         bool HasChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.find(spec) != m_child_nodes.end(); }
-        ParseStackTreeNodeSet const &ChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.at(spec); }
-        ParseStackTreeNodeSet &ChildrenHavingSpec (Spec const &spec) { return m_child_nodes.at(spec); }
+        ParseTreeNodeSet const &ChildrenHavingSpec (Spec const &spec) const { return m_child_nodes.at(spec); }
+        ParseTreeNodeSet &ChildrenHavingSpec (Spec const &spec) { return m_child_nodes.at(spec); }
         bool HasExactlyOneChild () const;
         // This returns the most root-ward ancestor such that the entire ancestor line only has one child each.
         // This may return the root of the tree itself, or it may return this node (if this node's parent has
         // multiple children).
-        ParseStackTreeNode_ *BranchRoot ();
+        ParseTreeNode_ *BranchRoot ();
         Token::Id LookaheadTokenId (Parser &parser) const;
         // Some actions are considered to block the HPS from continuing (because it must be realized before
         // continuing).  RETURN is considered to block, since nothing can happen after.
         bool IsBlockedHPS () const;
         PrecedenceLevelRange ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const;
         // Returns true if and only if there is exactly one SHIFT child and one REDUCE child.
-        bool HasShiftReduceConflict (ParseStackTreeNode_ *&shift, ParseStackTreeNode_ *&reduce);
+        bool HasShiftReduceConflict (ParseTreeNode_ *&shift, ParseTreeNode_ *&reduce);
 
-        void AddChild (ParseStackTreeNode_ *child);
-        void RemoveChild (ParseStackTreeNode_ *child);
+        void AddChild (ParseTreeNode_ *child);
+        void RemoveChild (ParseTreeNode_ *child);
         void RemoveFromParent ();
         // Traverses this node's descendants, and for each HPS node descendant, if that HPS node is present
         // in the given HPSQueue_, that HPSQueue_ entry is replaced with NULL.  This is so that a costly
@@ -817,16 +844,16 @@ private:
         // into m_new_hps_queue_.
         void NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_ &hps_queue) const;
 
-        ParseStackTreeNode_ *CloneLeafNode () const;
+        ParseTreeNode_ *CloneLeafNode () const;
         // orphan_target must not have a parent (because its m_spec may change and affect its relationship with its parent).
-        void CloneLeafNodeInto (ParseStackTreeNode_ &orphan_target) const;
+        void CloneLeafNodeInto (ParseTreeNode_ &orphan_target) const;
 
         void Print (std::ostream &out, Parser const *parser, std::string const &prefix, std::uint32_t indent_level = 0, bool suppress_initial_prefix = false) const;
-    }; // end of struct Parser::ParseStackTreeNode_
+    }; // end of struct Parser::ParseTreeNode_
 
     Token const &Lookahead_ (TokenQueue_::size_type index) throw();
 
-    ParseStackTreeNode_ *   TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data);
+    ParseTreeNode_ *        TakeHypotheticalActionOnHPS_ (ParseTreeNode_ const &hps, ParseTreeNode_::Type action_type, std::uint32_t action_data);
     // Recreates the parse tree (i.e. the contents of m_hypothetical_state_) from the top of the
     // branch set stack of m_realized_state_, specifically, creates an HPS corresponding to each
     // branch, adding each created HPS as a child to the root node.
@@ -854,10 +881,10 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 74 "reflex_parser.trison"
+#line 75 "reflex_parser.trison"
 
 } // end of namespace Reflex
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 864 "reflex_parser.hpp"
+#line 891 "reflex_parser.hpp"

@@ -39,8 +39,9 @@ struct AddDirectiveMap;
 %target.cpp.bottom_of_class {
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
-    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
-    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+    bool ScannerDebugSpewIsEnabled () const { return m_scanner.DebugSpewIsEnabled(); }
+    std::ostream *ScannerDebugSpewStream () { return m_scanner.DebugSpewStream(); }
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream) { m_scanner.SetDebugSpewStream(debug_spew_stream); }
 
     bool OpenTargetspec (string const &input_filename, string const &target_id);
 

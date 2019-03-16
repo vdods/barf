@@ -104,7 +104,8 @@ Trison::PrimarySource const *ParsePrimarySource ()
     Ast::Base *parsed_tree_root = NULL;
     
     Trison::Parser parser;
-    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER));
+    if (TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
     if (TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER))
         parser.SetDebugSpewStream(&std::cerr);
 
@@ -289,7 +290,8 @@ void ParseTargetspecs (Trison::PrimarySource const &primary_source)
     // an error code.
 
     Targetspec::Parser parser;
-    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_SCANNER));
+    if (TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
     if (TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_PARSER))
         parser.SetDebugSpewStream(&std::cerr);
 
@@ -314,7 +316,8 @@ void ParseCodespecs (Trison::PrimarySource const &primary_source)
     // accumulated during this section, abort with an error code.
 
     Preprocessor::Parser parser;
-    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_SCANNER));
+    if (TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
     if (TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_PARSER))
         parser.SetDebugSpewStream(&std::cerr);
 
