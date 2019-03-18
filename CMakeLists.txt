@@ -20,7 +20,15 @@ if(I_MAKE_BARF)
     find_path(STABLE_TRISON_BINARY NAMES trison DOC "absolute path to stable trison binary (only needed for barf developers)" PATHS $ENV{STABLE_TRISON_BINARY})
     find_path(STABLE_BARF_TARGETS_DIR PATH_SUFFIXES barf/targets DOC "absolute path to stable targets directory (only needed for barf developers)" PATHS $ENV{STABLE_BARF_TARGETS_DIR})
 
-    # TODO: validate STABLE_* vars
+    if(NOT EXISTS ${STABLE_REFLEX_BINARY})
+        message(ERROR "If I_MAKE_BARF is ON, then STABLE_REFLEX_BINARY must be set.")
+    endif()
+    if(NOT EXISTS ${STABLE_TRISON_BINARY})
+        message(ERROR "If I_MAKE_BARF is ON, then STABLE_TRISON_BINARY must be set.")
+    endif()
+    if(NOT IS_DIRECTORY ${STABLE_BARF_TARGETS_DIR})
+        message(ERROR "If I_MAKE_BARF is ON, then STABLE_BARF_TARGETS_DIR must be set.")
+    endif()
 endif()
 
 # This sets the DOXYGEN_EXECUTABLE and DOXYGEN_DOT_EXECUTABLE vars.
@@ -114,8 +122,7 @@ function(__add_reflex_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME TARG
 endfunction()
 
 function(add_reflex_source SOURCE_FILE)
-    # TODO: Use I_MAKE_BARF var instead
-    if(DEFINED STABLE_REFLEX_BINARY AND DEFINED STABLE_BARF_TARGETS_DIR)
+    if(I_MAKE_BARF)
         get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
         if(NOT (${SOURCE_FILE_EXT} STREQUAL ".reflex"))
             message(FATAL_ERROR "Source file \"${SOURCE_FILE}\" in call to add_reflex_source does not have extension \".reflex\"")
@@ -138,8 +145,6 @@ function(add_reflex_source SOURCE_FILE)
             add_custom_target(${SOURCE_BASENAME}_dot_png DEPENDS ${SOURCE_BASENAME}_dfa_png ${SOURCE_BASENAME}_nfa_png)
             add_custom_target(clean_${SOURCE_BASENAME}_dot_png DEPENDS clean_${SOURCE_BASENAME}_dfa_png clean_${SOURCE_BASENAME}_nfa_png)
         endif()
-    else()
-        message(STATUS "Not adding rule(s) for generating scanner source code from reflex file(s) because at least one of STABLE_REFLEX_BINARY, STABLE_BARF_TARGETS_DIR is not defined (this is not a problem if you're not a BARF developer).")
     endif()
 endfunction()
 
@@ -154,11 +159,11 @@ function(add_reflex_source_test SOURCE_FILE)
     __add_reflex_source__impl(${PROJECT_BINARY_DIR}/reflex ${SOURCE_DIR} ${SOURCE_BASENAME} ${PROJECT_SOURCE_DIR}/targets ${PROJECT_BINARY_DIR}/test)
 
     set(OUTPUT_FILES ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.dfa.dot ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.nfa.dot)
-    add_custom_target(test_${SOURCE_BASENAME} DEPENDS ${OUTPUT_FILES})
-    add_custom_target(clean_test_${SOURCE_BASENAME} COMMAND rm -f ${OUTPUT_FILES} ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.dfa.png ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.nfa.png)
+    add_custom_target(dev_${SOURCE_BASENAME} DEPENDS ${OUTPUT_FILES})
+    add_custom_target(clean_dev_${SOURCE_BASENAME} COMMAND rm -f ${OUTPUT_FILES} ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.dfa.png ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.nfa.png)
 
     add_custom_target(
-            diff_test_${SOURCE_BASENAME}
+            diff_dev_${SOURCE_BASENAME}
         DEPENDS
             ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.cpp
             ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.hpp
@@ -169,14 +174,14 @@ function(add_reflex_source_test SOURCE_FILE)
     )
 
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
-        add_custom_target(test_${SOURCE_BASENAME}_dfa_png DEPENDS ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.dfa.png)
-        add_custom_target(clean_test_${SOURCE_BASENAME}_dfa_png COMMAND rm -f ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.dfa.png)
+        add_custom_target(dev_${SOURCE_BASENAME}_dfa_png DEPENDS ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.dfa.png)
+        add_custom_target(clean_dev_${SOURCE_BASENAME}_dfa_png COMMAND rm -f ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.dfa.png)
 
-        add_custom_target(test_${SOURCE_BASENAME}_nfa_png DEPENDS ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.nfa.png)
-        add_custom_target(clean_test_${SOURCE_BASENAME}_nfa_png COMMAND rm -f ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.nfa.png)
+        add_custom_target(dev_${SOURCE_BASENAME}_nfa_png DEPENDS ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.nfa.png)
+        add_custom_target(clean_dev_${SOURCE_BASENAME}_nfa_png COMMAND rm -f ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.nfa.png)
 
-        add_custom_target(test_${SOURCE_BASENAME}_dot_png DEPENDS test_${SOURCE_BASENAME}_dfa_png test_${SOURCE_BASENAME}_nfa_png)
-        add_custom_target(clean_test_${SOURCE_BASENAME}_dot_png DEPENDS clean_test_${SOURCE_BASENAME}_dfa_png clean_test_${SOURCE_BASENAME}_nfa_png)
+        add_custom_target(dev_${SOURCE_BASENAME}_dot_png DEPENDS dev_${SOURCE_BASENAME}_dfa_png dev_${SOURCE_BASENAME}_nfa_png)
+        add_custom_target(clean_dev_${SOURCE_BASENAME}_dot_png DEPENDS clean_dev_${SOURCE_BASENAME}_dfa_png clean_dev_${SOURCE_BASENAME}_nfa_png)
     endif()
 endfunction()
 
@@ -231,8 +236,7 @@ function(__add_trison_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME TARG
 endfunction()
 
 function(add_trison_source SOURCE_FILE)
-    # TODO: use I_MAKE_BARF var instead
-    if(DEFINED STABLE_TRISON_BINARY AND DEFINED STABLE_BARF_TARGETS_DIR)
+    if(I_MAKE_BARF)
         get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
         if(NOT (${SOURCE_FILE_EXT} STREQUAL ".trison"))
             message(FATAL_ERROR "Source file \"${SOURCE_FILE}\" in call to add_trison_source does not have extension \".trison\"")
@@ -252,8 +256,6 @@ function(add_trison_source SOURCE_FILE)
             add_custom_target(${SOURCE_BASENAME}_dot_png DEPENDS ${SOURCE_BASENAME}_npda_png)
             add_custom_target(clean_${SOURCE_BASENAME}_dot_png DEPENDS clean_${SOURCE_BASENAME}_npda_png)
         endif()
-    else()
-        message(STATUS "Not adding rule(s) for generating parser source code from trison file(s) because at least one of STABLE_TRISON_BINARY, STABLE_BARF_TARGETS_DIR is not defined (this is not a problem if you're not a BARF developer).")
     endif()
 endfunction()
 
@@ -268,11 +270,11 @@ function(add_trison_source_test SOURCE_FILE)
     __add_trison_source__impl(${PROJECT_BINARY_DIR}/trison ${SOURCE_DIR} ${SOURCE_BASENAME} ${PROJECT_SOURCE_DIR}/targets ${PROJECT_BINARY_DIR}/test)
 
     set(OUTPUT_FILES ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.npda.dot ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.npda.states)
-    add_custom_target(test_${SOURCE_BASENAME} DEPENDS ${OUTPUT_FILES})
-    add_custom_target(clean_test_${SOURCE_BASENAME} COMMAND rm -f ${OUTPUT_FILES})
+    add_custom_target(dev_${SOURCE_BASENAME} DEPENDS ${OUTPUT_FILES})
+    add_custom_target(clean_dev_${SOURCE_BASENAME} COMMAND rm -f ${OUTPUT_FILES})
 
     add_custom_target(
-            diff_test_${SOURCE_BASENAME}
+            diff_dev_${SOURCE_BASENAME}
         DEPENDS
             ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.cpp
             ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.hpp
@@ -283,11 +285,11 @@ function(add_trison_source_test SOURCE_FILE)
     )
 
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
-        add_custom_target(test_${SOURCE_BASENAME}_npda_png DEPENDS ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.npda.png)
-        add_custom_target(clean_test_${SOURCE_BASENAME}_npda_png COMMAND rm -f ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.npda.png)
+        add_custom_target(dev_${SOURCE_BASENAME}_npda_png DEPENDS ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.npda.png)
+        add_custom_target(clean_dev_${SOURCE_BASENAME}_npda_png COMMAND rm -f ${PROJECT_BINARY_DIR}/test/${SOURCE_BASENAME}.npda.png)
 
-        add_custom_target(test_${SOURCE_BASENAME}_dot_png DEPENDS test_${SOURCE_BASENAME}_npda_png)
-        add_custom_target(clean_test_${SOURCE_BASENAME}_dot_png DEPENDS clean_test_${SOURCE_BASENAME}_npda_png)
+        add_custom_target(dev_${SOURCE_BASENAME}_dot_png DEPENDS dev_${SOURCE_BASENAME}_npda_png)
+        add_custom_target(clean_dev_${SOURCE_BASENAME}_dot_png DEPENDS clean_dev_${SOURCE_BASENAME}_npda_png)
     endif()
 endfunction()
 
@@ -506,21 +508,21 @@ add_custom_target(all_parsers DEPENDS barf_preprocessor_parser barf_regex_parser
 add_custom_target(all_scanners DEPENDS barf_commonlang_scanner barf_preprocessor_scanner)
 add_custom_target(all_thingies DEPENDS all_parsers all_scanners)
 
-add_custom_target(all_test_parsers DEPENDS test_barf_preprocessor_parser test_barf_regex_parser test_barf_targetspec_parser test_reflex_parser test_trison_parser)
-add_custom_target(all_test_scanners DEPENDS test_barf_commonlang_scanner test_barf_preprocessor_scanner)
-add_custom_target(all_test_thingies DEPENDS all_test_parsers all_test_scanners)
+add_custom_target(all_dev_parsers DEPENDS dev_barf_preprocessor_parser dev_barf_regex_parser dev_barf_targetspec_parser dev_reflex_parser dev_trison_parser)
+add_custom_target(all_dev_scanners DEPENDS dev_barf_commonlang_scanner dev_barf_preprocessor_scanner)
+add_custom_target(all_dev_thingies DEPENDS all_dev_parsers all_dev_scanners)
 
-add_custom_target(diff_all_test_parsers DEPENDS diff_test_barf_preprocessor_parser diff_test_barf_regex_parser diff_test_barf_targetspec_parser diff_test_reflex_parser diff_test_trison_parser)
-add_custom_target(diff_all_test_scanners DEPENDS diff_test_barf_commonlang_scanner diff_test_barf_preprocessor_scanner)
-add_custom_target(diff_all_test_thingies DEPENDS diff_all_test_parsers diff_all_test_scanners)
+add_custom_target(diff_all_dev_parsers DEPENDS diff_dev_barf_preprocessor_parser diff_dev_barf_regex_parser diff_dev_barf_targetspec_parser diff_dev_reflex_parser diff_dev_trison_parser)
+add_custom_target(diff_all_dev_scanners DEPENDS diff_dev_barf_commonlang_scanner diff_dev_barf_preprocessor_scanner)
+add_custom_target(diff_all_dev_thingies DEPENDS diff_all_dev_parsers diff_all_dev_scanners)
 
 add_custom_target(clean_all_parsers DEPENDS clean_barf_preprocessor_parser clean_barf_regex_parser clean_barf_targetspec_parser clean_reflex_parser clean_trison_parser)
 add_custom_target(clean_all_scanners DEPENDS clean_barf_commonlang_scanner clean_barf_preprocessor_scanner)
 add_custom_target(clean_all_thingies DEPENDS clean_all_parsers clean_all_scanners)
 
-add_custom_target(clean_all_test_parsers DEPENDS clean_test_barf_preprocessor_parser clean_test_barf_regex_parser clean_test_barf_targetspec_parser clean_test_reflex_parser clean_test_trison_parser)
-add_custom_target(clean_all_test_scanners DEPENDS clean_test_barf_commonlang_scanner clean_test_barf_preprocessor_scanner)
-add_custom_target(clean_all_test_thingies DEPENDS clean_all_test_parsers clean_all_test_scanners)
+add_custom_target(clean_all_dev_parsers DEPENDS clean_dev_barf_preprocessor_parser clean_dev_barf_regex_parser clean_dev_barf_targetspec_parser clean_dev_reflex_parser clean_dev_trison_parser)
+add_custom_target(clean_all_dev_scanners DEPENDS clean_dev_barf_commonlang_scanner clean_dev_barf_preprocessor_scanner)
+add_custom_target(clean_all_dev_thingies DEPENDS clean_all_dev_parsers clean_all_dev_scanners)
 
 add_custom_target(all_parser_dot_pngs DEPENDS barf_preprocessor_parser_dot_png barf_regex_parser_dot_png barf_targetspec_parser_dot_png reflex_parser_dot_png trison_parser_dot_png)
 add_custom_target(all_parser_npda_pngs DEPENDS barf_preprocessor_parser_npda_png barf_regex_parser_npda_png barf_targetspec_parser_npda_png reflex_parser_npda_png trison_parser_npda_png)
@@ -536,16 +538,16 @@ add_custom_target(clean_all_scanner_nfa_pngs DEPENDS clean_barf_commonlang_scann
 add_custom_target(clean_all_scanner_dot_pngs DEPENDS clean_barf_commonlang_scanner_dot_png clean_barf_preprocessor_scanner_dot_png)
 add_custom_target(clean_all_thingy_dot_pngs DEPENDS clean_all_parser_dot_pngs clean_all_scanner_dot_pngs)
 
-add_custom_target(all_test_parser_dot_pngs DEPENDS test_barf_preprocessor_parser_dot_png test_barf_regex_parser_dot_png test_barf_targetspec_parser_dot_png test_reflex_parser_dot_png test_trison_parser_dot_png)
-add_custom_target(all_test_parser_npda_pngs DEPENDS test_barf_preprocessor_parser_npda_png test_barf_regex_parser_npda_png test_barf_targetspec_parser_npda_png test_reflex_parser_npda_png test_trison_parser_npda_png)
-add_custom_target(all_test_scanner_dfa_pngs DEPENDS test_barf_commonlang_scanner_dfa_png test_barf_preprocessor_scanner_dfa_png)
-add_custom_target(all_test_scanner_nfa_pngs DEPENDS test_barf_commonlang_scanner_nfa_png test_barf_preprocessor_scanner_nfa_png)
-add_custom_target(all_test_scanner_dot_pngs DEPENDS test_barf_commonlang_scanner_dot_png test_barf_preprocessor_scanner_dot_png)
-add_custom_target(all_test_thingy_dot_pngs DEPENDS all_test_parser_dot_pngs all_test_scanner_dot_pngs)
+add_custom_target(all_dev_parser_dot_pngs DEPENDS dev_barf_preprocessor_parser_dot_png dev_barf_regex_parser_dot_png dev_barf_targetspec_parser_dot_png dev_reflex_parser_dot_png dev_trison_parser_dot_png)
+add_custom_target(all_dev_parser_npda_pngs DEPENDS dev_barf_preprocessor_parser_npda_png dev_barf_regex_parser_npda_png dev_barf_targetspec_parser_npda_png dev_reflex_parser_npda_png dev_trison_parser_npda_png)
+add_custom_target(all_dev_scanner_dfa_pngs DEPENDS dev_barf_commonlang_scanner_dfa_png dev_barf_preprocessor_scanner_dfa_png)
+add_custom_target(all_dev_scanner_nfa_pngs DEPENDS dev_barf_commonlang_scanner_nfa_png dev_barf_preprocessor_scanner_nfa_png)
+add_custom_target(all_dev_scanner_dot_pngs DEPENDS dev_barf_commonlang_scanner_dot_png dev_barf_preprocessor_scanner_dot_png)
+add_custom_target(all_dev_thingy_dot_pngs DEPENDS all_dev_parser_dot_pngs all_dev_scanner_dot_pngs)
 
-add_custom_target(clean_all_test_parser_dot_pngs DEPENDS clean_test_barf_preprocessor_parser_dot_png clean_test_barf_regex_parser_dot_png clean_test_barf_targetspec_parser_dot_png clean_test_reflex_parser_dot_png clean_test_trison_parser_dot_png)
-add_custom_target(clean_all_test_parser_npda_pngs DEPENDS clean_test_barf_preprocessor_parser_npda_png clean_test_barf_regex_parser_npda_png clean_test_barf_targetspec_parser_npda_png clean_test_reflex_parser_npda_png clean_test_trison_parser_npda_png)
-add_custom_target(clean_all_test_scanner_dfa_pngs DEPENDS clean_test_barf_commonlang_scanner_dfa_png clean_test_barf_preprocessor_scanner_dfa_png)
-add_custom_target(clean_all_test_scanner_nfa_pngs DEPENDS clean_test_barf_commonlang_scanner_nfa_png clean_test_barf_preprocessor_scanner_nfa_png)
-add_custom_target(clean_all_test_scanner_dot_pngs DEPENDS clean_test_barf_commonlang_scanner_dot_png clean_test_barf_preprocessor_scanner_dot_png)
-add_custom_target(clean_all_test_thingy_dot_pngs DEPENDS clean_all_test_parser_dot_pngs clean_all_test_scanner_dot_pngs)
+add_custom_target(clean_all_dev_parser_dot_pngs DEPENDS clean_dev_barf_preprocessor_parser_dot_png clean_dev_barf_regex_parser_dot_png clean_dev_barf_targetspec_parser_dot_png clean_dev_reflex_parser_dot_png clean_dev_trison_parser_dot_png)
+add_custom_target(clean_all_dev_parser_npda_pngs DEPENDS clean_dev_barf_preprocessor_parser_npda_png clean_dev_barf_regex_parser_npda_png clean_dev_barf_targetspec_parser_npda_png clean_dev_reflex_parser_npda_png clean_dev_trison_parser_npda_png)
+add_custom_target(clean_all_dev_scanner_dfa_pngs DEPENDS clean_dev_barf_commonlang_scanner_dfa_png clean_dev_barf_preprocessor_scanner_dfa_png)
+add_custom_target(clean_all_dev_scanner_nfa_pngs DEPENDS clean_dev_barf_commonlang_scanner_nfa_png clean_dev_barf_preprocessor_scanner_nfa_png)
+add_custom_target(clean_all_dev_scanner_dot_pngs DEPENDS clean_dev_barf_commonlang_scanner_dot_png clean_dev_barf_preprocessor_scanner_dot_png)
+add_custom_target(clean_all_dev_thingy_dot_pngs DEPENDS clean_all_dev_parser_dot_pngs clean_all_dev_scanner_dot_pngs)
