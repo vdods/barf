@@ -17,32 +17,48 @@ ltmain.sh
 missing
 
 app/reflex/reflex_parser.dpda.dot
+app/reflex/reflex_parser.dpda.png
 app/reflex/reflex_parser.dpda.states
 app/reflex/reflex_parser.npda.dot
+app/reflex/reflex_parser.npda.png
 app/reflex/reflex_parser.npda.states
 app/trison/trison_parser.dpda.dot
+app/trison/trison_parser.dpda.png
 app/trison/trison_parser.dpda.states
 app/trison/trison_parser.npda.dot
+app/trison/trison_parser.npda.png
 app/trison/trison_parser.npda.states
 
 dev/calc/Parser.npda.dot
+dev/calc/Parser.npda.png
 dev/calc/Parser.npda.dot.png
 
 lib/commonlang/barf_commonlang_scanner.dfa.dot
+lib/commonlang/barf_commonlang_scanner.dfa.png
 lib/commonlang/barf_commonlang_scanner.nfa.dot
+lib/commonlang/barf_commonlang_scanner.nfa.png
 lib/preprocessor/barf_preprocessor_parser.dpda.dot
+lib/preprocessor/barf_preprocessor_parser.dpda.png
 lib/preprocessor/barf_preprocessor_parser.dpda.states
 lib/preprocessor/barf_preprocessor_parser.npda.dot
+lib/preprocessor/barf_preprocessor_parser.npda.png
 lib/preprocessor/barf_preprocessor_parser.npda.states
 lib/preprocessor/barf_preprocessor_scanner.dfa.dot
+lib/preprocessor/barf_preprocessor_scanner.dfa.png
 lib/preprocessor/barf_preprocessor_scanner.nfa.dot
+lib/preprocessor/barf_preprocessor_scanner.nfa.png
 lib/regex/barf_regex_parser.dpda.dot
+lib/regex/barf_regex_parser.dpda.png
 lib/regex/barf_regex_parser.dpda.states
 lib/regex/barf_regex_parser.npda.dot
+lib/regex/barf_regex_parser.npda.png
 lib/regex/barf_regex_parser.npda.states
 lib/targetspec/barf_targetspec_parser.dpda.dot
+lib/targetspec/barf_targetspec_parser.dpda.png
 lib/targetspec/barf_targetspec_parser.dpda.states
 lib/targetspec/barf_targetspec_parser.npda.dot
+lib/targetspec/barf_targetspec_parser.npda.png
 lib/targetspec/barf_targetspec_parser.npda.states
 
 test/CalcParser.npda.dot
+test/CalcParser.npda.png
