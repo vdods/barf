@@ -138,8 +138,7 @@ Options::Options (string const &executable_filename)
         ms_option,
         ms_option_count,
         executable_filename,
-//         "BPP - the BARF preprocessor - version " PACKAGE_VERSION "\n"
-        "BPP - the BARF preprocessor - version XXX\n"
+        "BPP - the BARF preprocessor - version " PACKAGE_VERSION "\n"
         "Part of the BARF compiler tool suite - written by Victor Dods",
         "[options] [input_filename]",
         V_EXECUTION|V_PRIMARY_SOURCE_SCANNER|V_PRIMARY_SOURCE_PARSER|V_PRIMARY_SOURCE_AST)

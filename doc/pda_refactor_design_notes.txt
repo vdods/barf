@@ -1201,12 +1201,12 @@ which includes the top element.
         x   Test with other parser directives enabled/disabled
         -   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
             will be the tricky part)
+            x   Implement real versioning (see PACKAGE_VERSION macro used in trison_options.cpp and others)
             x   Have `make clean` not delete any generated scanner or parser sources, and make a separate target for that.
             x   Make clean* targets.
             -   Make force*, *extras targets.  Make doxygen-doc- and dot-graph-generating targets.
             -   Make targets for building the examples (probably need to clean up the examples)
             -   Get the distribution packaging working
-        -   Implement real versioning (see PACKAGE_VERSION macro used in trison_options.cpp and others)
     -   REALLY nice to have
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Implement %default precedence, so that it's possible to make precedences lower than the default

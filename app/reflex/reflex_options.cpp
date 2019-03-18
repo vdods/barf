@@ -201,8 +201,7 @@ Options::Options (string const &executable_filename)
         ms_option,
         ms_option_count,
         executable_filename,
-//         "Reflex - a lexical scanner generator - version " PACKAGE_VERSION "\n"
-        "Reflex - a lexical scanner generator - version XXX\n"
+        "Reflex - a lexical scanner generator - version " PACKAGE_VERSION "\n"
         "Part of the BARF compiler tool suite - written by Victor Dods",
         "[options] <input_filename>")
 { }
