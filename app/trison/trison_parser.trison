@@ -103,7 +103,8 @@ namespace Trison {
     m_nonterminal_list = NULL;
     m_rule_count = 0;
 
-    // initialize m_terminal_map and m_terminal_list
+    // initialize m_terminal_map and m_terminal_list and populate the special,
+    // pre-defined terminals.
     {
         m_terminal_list = new TerminalList();
         m_terminal_map = new TerminalMap();
@@ -128,23 +129,8 @@ namespace Trison {
         m_terminal_map->Add(terminal->GetText(), terminal);
     }
 
-    // initialize m_precedence_map and m_precedence_list
-    {
-        m_precedence_list = new PrecedenceList();
-        m_precedence_map = new PrecedenceMap();
-
-        // TEMP for phase 1 of implementing %default precedence
-        assert(m_precedence_list->size() == 0);
-        assert(m_precedence_map->size() == 0);
-        Precedence *precedence =
-            new Precedence(
-                "DEFAULT_",
-                A_LEFT,
-                m_scanner.GetFiLoc(), // arbitrary
-                m_precedence_map->size());
-        m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_id, precedence);
-    }
+    m_precedence_list = new PrecedenceList();
+    m_precedence_map = new PrecedenceMap();
 
     EmitExecutionMessage("starting trison parser");
 %}
@@ -280,6 +266,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 %terminal '.' ':' ';' '|' '[' ']'
 
 
+%prec.left %default
+
+
 %default_parse_nonterminal root
 
 %%
@@ -345,40 +334,22 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         if (m_default_parse_nonterminal_id == NULL)
             EmitError("missing %default_parse_nonterminal directive; must specify a valid nonterminal", throwaway->GetFiLoc());
 
-        // validate that m_precedence_map has an entry for "DEFAULT_", or if the number
-        // of declared precedences is 0, just declare a DEFAULT_ precedence implicitly.
-        // this has to be done here so that the precedences are ready to be used in the
-        // nonterminal reduction rules.
-        if (m_precedence_map->empty())
-//         if (false)
-        {
-            assert(m_precedence_map->size() == 0);
-            Precedence *precedence =
-                new Precedence(
-                    "DEFAULT_",
-                    A_LEFT,
-                    throwaway->GetFiLoc(), // arbitrarily use the END_PREAMBLE FiLoc
-                    m_precedence_map->size());
-            m_precedence_list->Append(precedence);
-            m_precedence_map->Add(precedence->m_precedence_id, precedence);
-        }
+        // validate that m_precedence_map has an entry for "DEFAULT_".  this has to be done
+        // here so that the precedences are ready to be used in the nonterminal reduction rules.
+        Precedence *default_precedence = m_precedence_map->Element("DEFAULT_");
+        if (default_precedence == NULL)
+            EmitError("preamble is missing %default precedence directive; suggested reasonable default: %prec.left %default", throwaway->GetFiLoc());
         else
         {
-            Precedence *default_precedence = m_precedence_map->Element("DEFAULT_");
-            if (default_precedence == NULL)
-                EmitError("missing %default precedence directive", throwaway->GetFiLoc());
-            else
+            // Shift all the m_precedence_level values such that default_precedence has level 0.
+            for (PrecedenceList::iterator it = m_precedence_list->begin(), it_end = m_precedence_list->end(); it != it_end; ++it)
             {
-                // Shift all the m_precedence_level values such that default_precedence has level 0.
-                for (PrecedenceList::iterator it = m_precedence_list->begin(), it_end = m_precedence_list->end(); it != it_end; ++it)
-                {
-                    Precedence *precedence = *it;
-                    assert(precedence != NULL);
-                    precedence->m_precedence_level -= default_precedence->m_precedence_level;
-                }
-                // Because default_precedence was in the list, its level should now be at zero.
-                assert(default_precedence->m_precedence_level == 0);
+                Precedence *precedence = *it;
+                assert(precedence != NULL);
+                precedence->m_precedence_level -= default_precedence->m_precedence_level;
             }
+            // Because default_precedence was in the list, its level should now be at zero.
+            assert(default_precedence->m_precedence_level == 0);
         }
 
         return throwaway;

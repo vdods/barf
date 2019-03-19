@@ -155,6 +155,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
 
 // Lowest precedence is first, highest is last.
 
+%prec.left      %default
 %prec.left      LOWEST
 %prec.left      LOW
 %prec.left      ADDITIVE

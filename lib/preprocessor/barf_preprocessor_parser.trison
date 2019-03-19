@@ -173,6 +173,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 %terminal '!' '&' '|' '=' '<' '>'
 %terminal BAD_TOKEN
 
+%prec.left %default
 %prec.left LOGICAL_OR
 %prec.left LOGICAL_AND
 %prec.left EQUALITY

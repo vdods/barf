@@ -1343,7 +1343,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 190 "barf_targetspec_parser.trison"
+#line 192 "barf_targetspec_parser.trison"
 
         assert(m_add_codespec_list != NULL);
         assert(m_add_directive_map != NULL);
@@ -1360,7 +1360,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 206 "barf_targetspec_parser.trison"
+#line 208 "barf_targetspec_parser.trison"
  return NULL; 
 #line 1366 "barf_targetspec_parser.cpp"
             break;
@@ -1370,7 +1370,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 208 "barf_targetspec_parser.trison"
+#line 210 "barf_targetspec_parser.trison"
  return NULL; 
 #line 1376 "barf_targetspec_parser.cpp"
             break;
@@ -1380,7 +1380,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 213 "barf_targetspec_parser.trison"
+#line 215 "barf_targetspec_parser.trison"
  return NULL; 
 #line 1386 "barf_targetspec_parser.cpp"
             break;
@@ -1390,7 +1390,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 215 "barf_targetspec_parser.trison"
+#line 217 "barf_targetspec_parser.trison"
  return NULL; 
 #line 1396 "barf_targetspec_parser.cpp"
             break;
@@ -1400,7 +1400,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 217 "barf_targetspec_parser.trison"
+#line 219 "barf_targetspec_parser.trison"
  return NULL; 
 #line 1406 "barf_targetspec_parser.cpp"
             break;
@@ -1413,7 +1413,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::String * filename(Dsc<Ast::String *>(token_stack[token_stack.size()-2].m_data));
             Ast::Id * filename_directive_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-1].m_data));
 
-#line 223 "barf_targetspec_parser.trison"
+#line 225 "barf_targetspec_parser.trison"
 
         assert(m_add_codespec_list != NULL);
         assert(m_add_directive_map != NULL);
@@ -1439,7 +1439,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * directive_to_add_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
             ParamType * param_type(Dsc<ParamType *>(token_stack[token_stack.size()-1].m_data));
 
-#line 242 "barf_targetspec_parser.trison"
+#line 244 "barf_targetspec_parser.trison"
 
         assert(m_add_directive_map != NULL);
         m_add_directive_map->Add(
@@ -1462,7 +1462,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::ThrowAway * throwaway2(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
             Ast::TextBase * default_value(Dsc<Ast::TextBase *>(token_stack[token_stack.size()-1].m_data));
 
-#line 253 "barf_targetspec_parser.trison"
+#line 255 "barf_targetspec_parser.trison"
 
         assert(m_add_directive_map != NULL);
         AddDirective *directive =
@@ -1494,7 +1494,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * directive_to_add_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
             ParamType * param_type(Dsc<ParamType *>(token_stack[token_stack.size()-1].m_data));
 
-#line 275 "barf_targetspec_parser.trison"
+#line 277 "barf_targetspec_parser.trison"
 
         assert(m_add_directive_map != NULL);
         m_add_directive_map->Add(
@@ -1512,7 +1512,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 289 "barf_targetspec_parser.trison"
+#line 291 "barf_targetspec_parser.trison"
 
         return new ParamType(Ast::AST_NONE);
     
@@ -1525,7 +1525,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Base * throwaway(token_stack[token_stack.size()-1].m_data);
 
-#line 294 "barf_targetspec_parser.trison"
+#line 296 "barf_targetspec_parser.trison"
 
         delete throwaway;
         return new ParamType(Ast::AST_ID);
@@ -1539,7 +1539,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Base * throwaway(token_stack[token_stack.size()-1].m_data);
 
-#line 300 "barf_targetspec_parser.trison"
+#line 302 "barf_targetspec_parser.trison"
 
         delete throwaway;
         return new ParamType(Ast::AST_STRING);
@@ -1553,7 +1553,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Base * throwaway(token_stack[token_stack.size()-1].m_data);
 
-#line 306 "barf_targetspec_parser.trison"
+#line 308 "barf_targetspec_parser.trison"
 
         delete throwaway;
         return new ParamType(Ast::AST_DUMB_CODE_BLOCK);
@@ -1567,7 +1567,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Base * throwaway(token_stack[token_stack.size()-1].m_data);
 
-#line 312 "barf_targetspec_parser.trison"
+#line 314 "barf_targetspec_parser.trison"
 
         delete throwaway;
         return new ParamType(Ast::AST_STRICT_CODE_BLOCK);
@@ -1581,7 +1581,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * value(Dsc<Ast::Id *>(token_stack[token_stack.size()-1].m_data));
 
-#line 320 "barf_targetspec_parser.trison"
+#line 322 "barf_targetspec_parser.trison"
  return value; 
 #line 1587 "barf_targetspec_parser.cpp"
             break;
@@ -1592,7 +1592,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::String * value(Dsc<Ast::String *>(token_stack[token_stack.size()-1].m_data));
 
-#line 321 "barf_targetspec_parser.trison"
+#line 323 "barf_targetspec_parser.trison"
  return value; 
 #line 1598 "barf_targetspec_parser.cpp"
             break;
@@ -1603,7 +1603,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 322 "barf_targetspec_parser.trison"
+#line 324 "barf_targetspec_parser.trison"
  return value; 
 #line 1609 "barf_targetspec_parser.cpp"
             break;
@@ -1614,7 +1614,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 323 "barf_targetspec_parser.trison"
+#line 325 "barf_targetspec_parser.trison"
  return value; 
 #line 1620 "barf_targetspec_parser.cpp"
             break;
@@ -1624,7 +1624,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 332 "barf_targetspec_parser.trison"
+#line 334 "barf_targetspec_parser.trison"
  return NULL; 
 #line 1630 "barf_targetspec_parser.cpp"
             break;
@@ -1634,7 +1634,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 334 "barf_targetspec_parser.trison"
+#line 336 "barf_targetspec_parser.trison"
  return NULL; 
 #line 1640 "barf_targetspec_parser.cpp"
             break;

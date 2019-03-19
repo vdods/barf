@@ -1354,7 +1354,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 192 "barf_preprocessor_parser.trison"
+#line 193 "barf_preprocessor_parser.trison"
 
         return new Body();
     
@@ -1367,7 +1367,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Text * text(Dsc<Text *>(token_stack[token_stack.size()-1].m_data));
 
-#line 197 "barf_preprocessor_parser.trison"
+#line 198 "barf_preprocessor_parser.trison"
 
         Body *body = new Body();
         body->Append(text);
@@ -1383,7 +1383,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
             ExecutableAst * executable(Dsc<ExecutableAst *>(token_stack[token_stack.size()-1].m_data));
 
-#line 204 "barf_preprocessor_parser.trison"
+#line 205 "barf_preprocessor_parser.trison"
 
         if (executable != NULL)
             body->Append(executable);
@@ -1400,7 +1400,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             ExecutableAst * executable(Dsc<ExecutableAst *>(token_stack[token_stack.size()-2].m_data));
             Text * text(Dsc<Text *>(token_stack[token_stack.size()-1].m_data));
 
-#line 211 "barf_preprocessor_parser.trison"
+#line 212 "barf_preprocessor_parser.trison"
 
         if (executable != NULL)
             body->Append(executable);
@@ -1416,7 +1416,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             ExecutableAst * code(Dsc<ExecutableAst *>(token_stack[token_stack.size()-1].m_data));
 
-#line 222 "barf_preprocessor_parser.trison"
+#line 223 "barf_preprocessor_parser.trison"
 
         return code;
     
@@ -1429,7 +1429,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Conditional * conditional(Dsc<Conditional *>(token_stack[token_stack.size()-1].m_data));
 
-#line 227 "barf_preprocessor_parser.trison"
+#line 228 "barf_preprocessor_parser.trison"
 
         return conditional;
     
@@ -1443,7 +1443,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Define * define(Dsc<Define *>(token_stack[token_stack.size()-3].m_data));
             Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
 
-#line 232 "barf_preprocessor_parser.trison"
+#line 233 "barf_preprocessor_parser.trison"
 
         define->SetBody(body);
         return define;
@@ -1458,7 +1458,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Loop * loop(Dsc<Loop *>(token_stack[token_stack.size()-3].m_data));
             Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
 
-#line 238 "barf_preprocessor_parser.trison"
+#line 239 "barf_preprocessor_parser.trison"
 
         loop->SetBody(body);
         return loop;
@@ -1473,7 +1473,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             ForEach * for_each(Dsc<ForEach *>(token_stack[token_stack.size()-3].m_data));
             Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
 
-#line 244 "barf_preprocessor_parser.trison"
+#line 245 "barf_preprocessor_parser.trison"
 
         for_each->SetBody(body);
         return for_each;
@@ -1487,7 +1487,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             ExecutableAst * code_body(Dsc<ExecutableAst *>(token_stack[token_stack.size()-2].m_data));
 
-#line 252 "barf_preprocessor_parser.trison"
+#line 253 "barf_preprocessor_parser.trison"
  return code_body; 
 #line 1493 "barf_preprocessor_parser.cpp"
             break;
@@ -1498,7 +1498,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             ExecutableAst * code_body(Dsc<ExecutableAst *>(token_stack[token_stack.size()-2].m_data));
 
-#line 254 "barf_preprocessor_parser.trison"
+#line 255 "barf_preprocessor_parser.trison"
  return code_body; 
 #line 1504 "barf_preprocessor_parser.cpp"
             break;
@@ -1508,7 +1508,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 260 "barf_preprocessor_parser.trison"
+#line 261 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1514 "barf_preprocessor_parser.cpp"
             break;
@@ -1519,7 +1519,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 263 "barf_preprocessor_parser.trison"
+#line 264 "barf_preprocessor_parser.trison"
  return expression; 
 #line 1525 "barf_preprocessor_parser.cpp"
             break;
@@ -1529,7 +1529,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 266 "barf_preprocessor_parser.trison"
+#line 267 "barf_preprocessor_parser.trison"
  return new DumpSymbolTable(); 
 #line 1535 "barf_preprocessor_parser.cpp"
             break;
@@ -1540,7 +1540,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 269 "barf_preprocessor_parser.trison"
+#line 270 "barf_preprocessor_parser.trison"
  return new Undefine(id); 
 #line 1546 "barf_preprocessor_parser.cpp"
             break;
@@ -1551,7 +1551,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 272 "barf_preprocessor_parser.trison"
+#line 273 "barf_preprocessor_parser.trison"
  return new DeclareArray(id); 
 #line 1557 "barf_preprocessor_parser.cpp"
             break;
@@ -1562,7 +1562,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 275 "barf_preprocessor_parser.trison"
+#line 276 "barf_preprocessor_parser.trison"
  return new DeclareMap(id); 
 #line 1568 "barf_preprocessor_parser.cpp"
             break;
@@ -1573,7 +1573,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * include_filename_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 278 "barf_preprocessor_parser.trison"
+#line 279 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, false); 
 #line 1579 "barf_preprocessor_parser.cpp"
             break;
@@ -1584,7 +1584,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * include_filename_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 281 "barf_preprocessor_parser.trison"
+#line 282 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, true); 
 #line 1590 "barf_preprocessor_parser.cpp"
             break;
@@ -1595,7 +1595,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * message_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 284 "barf_preprocessor_parser.trison"
+#line 285 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::WARNING); 
 #line 1601 "barf_preprocessor_parser.cpp"
             break;
@@ -1606,7 +1606,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * message_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 287 "barf_preprocessor_parser.trison"
+#line 288 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::ERROR); 
 #line 1612 "barf_preprocessor_parser.cpp"
             break;
@@ -1617,7 +1617,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * message_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 290 "barf_preprocessor_parser.trison"
+#line 291 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::FATAL_ERROR); 
 #line 1623 "barf_preprocessor_parser.cpp"
             break;
@@ -1630,7 +1630,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Body * if_body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
             Body * else_body(Dsc<Body *>(token_stack[token_stack.size()-1].m_data));
 
-#line 296 "barf_preprocessor_parser.trison"
+#line 297 "barf_preprocessor_parser.trison"
 
         conditional->SetIfBody(if_body);
         conditional->SetElseBody(else_body);
@@ -1644,7 +1644,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 305 "barf_preprocessor_parser.trison"
+#line 306 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1650 "barf_preprocessor_parser.cpp"
             break;
@@ -1655,7 +1655,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
 
-#line 307 "barf_preprocessor_parser.trison"
+#line 308 "barf_preprocessor_parser.trison"
  return body; 
 #line 1661 "barf_preprocessor_parser.cpp"
             break;
@@ -1668,7 +1668,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Body * if_body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
             Body * else_body(Dsc<Body *>(token_stack[token_stack.size()-1].m_data));
 
-#line 310 "barf_preprocessor_parser.trison"
+#line 311 "barf_preprocessor_parser.trison"
 
         conditional->SetIfBody(if_body);
         conditional->SetElseBody(else_body);
@@ -1685,7 +1685,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
 
-#line 322 "barf_preprocessor_parser.trison"
+#line 323 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
 #line 1691 "barf_preprocessor_parser.cpp"
             break;
@@ -1696,7 +1696,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
 
-#line 325 "barf_preprocessor_parser.trison"
+#line 326 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
 #line 1702 "barf_preprocessor_parser.cpp"
             break;
@@ -1706,7 +1706,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 330 "barf_preprocessor_parser.trison"
+#line 331 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1712 "barf_preprocessor_parser.cpp"
             break;
@@ -1716,7 +1716,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 332 "barf_preprocessor_parser.trison"
+#line 333 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1722 "barf_preprocessor_parser.cpp"
             break;
@@ -1727,7 +1727,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
 
-#line 338 "barf_preprocessor_parser.trison"
+#line 339 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
 #line 1733 "barf_preprocessor_parser.cpp"
             break;
@@ -1738,7 +1738,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
 
-#line 341 "barf_preprocessor_parser.trison"
+#line 342 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
 #line 1744 "barf_preprocessor_parser.cpp"
             break;
@@ -1748,7 +1748,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 346 "barf_preprocessor_parser.trison"
+#line 347 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1754 "barf_preprocessor_parser.cpp"
             break;
@@ -1758,7 +1758,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 348 "barf_preprocessor_parser.trison"
+#line 349 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1764 "barf_preprocessor_parser.cpp"
             break;
@@ -1769,7 +1769,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Define * define(Dsc<Define *>(token_stack[token_stack.size()-1].m_data));
 
-#line 353 "barf_preprocessor_parser.trison"
+#line 354 "barf_preprocessor_parser.trison"
  return define; 
 #line 1775 "barf_preprocessor_parser.cpp"
             break;
@@ -1780,7 +1780,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Define * define(Dsc<Define *>(token_stack[token_stack.size()-1].m_data));
 
-#line 355 "barf_preprocessor_parser.trison"
+#line 356 "barf_preprocessor_parser.trison"
  return define; 
 #line 1786 "barf_preprocessor_parser.cpp"
             break;
@@ -1791,7 +1791,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Define * define(Dsc<Define *>(token_stack[token_stack.size()-1].m_data));
 
-#line 357 "barf_preprocessor_parser.trison"
+#line 358 "barf_preprocessor_parser.trison"
  return define; 
 #line 1797 "barf_preprocessor_parser.cpp"
             break;
@@ -1802,7 +1802,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
 
-#line 363 "barf_preprocessor_parser.trison"
+#line 364 "barf_preprocessor_parser.trison"
  return new Define(id); 
 #line 1808 "barf_preprocessor_parser.cpp"
             break;
@@ -1813,7 +1813,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
 
-#line 366 "barf_preprocessor_parser.trison"
+#line 367 "barf_preprocessor_parser.trison"
  return new Define(id); 
 #line 1819 "barf_preprocessor_parser.cpp"
             break;
@@ -1824,7 +1824,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
 
-#line 372 "barf_preprocessor_parser.trison"
+#line 373 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
 #line 1830 "barf_preprocessor_parser.cpp"
             break;
@@ -1835,7 +1835,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
 
-#line 375 "barf_preprocessor_parser.trison"
+#line 376 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
 #line 1841 "barf_preprocessor_parser.cpp"
             break;
@@ -1847,7 +1847,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-6].m_data));
             Text * key(Dsc<Text *>(token_stack[token_stack.size()-4].m_data));
 
-#line 381 "barf_preprocessor_parser.trison"
+#line 382 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
 #line 1853 "barf_preprocessor_parser.cpp"
             break;
@@ -1859,7 +1859,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-6].m_data));
             Text * key(Dsc<Text *>(token_stack[token_stack.size()-4].m_data));
 
-#line 384 "barf_preprocessor_parser.trison"
+#line 385 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
 #line 1865 "barf_preprocessor_parser.cpp"
             break;
@@ -1869,7 +1869,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 389 "barf_preprocessor_parser.trison"
+#line 390 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1875 "barf_preprocessor_parser.cpp"
             break;
@@ -1879,7 +1879,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 391 "barf_preprocessor_parser.trison"
+#line 392 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1885 "barf_preprocessor_parser.cpp"
             break;
@@ -1891,7 +1891,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * iterator_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
             Expression * iteration_count_expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
 
-#line 397 "barf_preprocessor_parser.trison"
+#line 398 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
 #line 1897 "barf_preprocessor_parser.cpp"
             break;
@@ -1903,7 +1903,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * iterator_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
             Expression * iteration_count_expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
 
-#line 400 "barf_preprocessor_parser.trison"
+#line 401 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
 #line 1909 "barf_preprocessor_parser.cpp"
             break;
@@ -1913,7 +1913,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 405 "barf_preprocessor_parser.trison"
+#line 406 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1919 "barf_preprocessor_parser.cpp"
             break;
@@ -1923,7 +1923,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 407 "barf_preprocessor_parser.trison"
+#line 408 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1929 "barf_preprocessor_parser.cpp"
             break;
@@ -1935,7 +1935,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * key_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
             Ast::Id * map_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
 
-#line 413 "barf_preprocessor_parser.trison"
+#line 414 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
 #line 1941 "barf_preprocessor_parser.cpp"
             break;
@@ -1947,7 +1947,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * key_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
             Ast::Id * map_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
 
-#line 416 "barf_preprocessor_parser.trison"
+#line 417 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
 #line 1953 "barf_preprocessor_parser.cpp"
             break;
@@ -1957,7 +1957,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 421 "barf_preprocessor_parser.trison"
+#line 422 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1963 "barf_preprocessor_parser.cpp"
             break;
@@ -1967,7 +1967,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 423 "barf_preprocessor_parser.trison"
+#line 424 "barf_preprocessor_parser.trison"
  return NULL; 
 #line 1973 "barf_preprocessor_parser.cpp"
             break;
@@ -1978,7 +1978,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Text * str(Dsc<Text *>(token_stack[token_stack.size()-1].m_data));
 
-#line 429 "barf_preprocessor_parser.trison"
+#line 430 "barf_preprocessor_parser.trison"
  return str; 
 #line 1984 "barf_preprocessor_parser.cpp"
             break;
@@ -1989,7 +1989,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Integer * integer(Dsc<Integer *>(token_stack[token_stack.size()-1].m_data));
 
-#line 432 "barf_preprocessor_parser.trison"
+#line 433 "barf_preprocessor_parser.trison"
  return integer; 
 #line 1995 "barf_preprocessor_parser.cpp"
             break;
@@ -2000,7 +2000,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 435 "barf_preprocessor_parser.trison"
+#line 436 "barf_preprocessor_parser.trison"
  return new Sizeof(id); 
 #line 2006 "barf_preprocessor_parser.cpp"
             break;
@@ -2011,7 +2011,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 438 "barf_preprocessor_parser.trison"
+#line 439 "barf_preprocessor_parser.trison"
  return new Operation(Operation::INT_CAST, expression); 
 #line 2017 "barf_preprocessor_parser.cpp"
             break;
@@ -2022,7 +2022,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 441 "barf_preprocessor_parser.trison"
+#line 442 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_CAST, expression); 
 #line 2028 "barf_preprocessor_parser.cpp"
             break;
@@ -2033,7 +2033,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 444 "barf_preprocessor_parser.trison"
+#line 445 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_LENGTH, expression); 
 #line 2039 "barf_preprocessor_parser.cpp"
             break;
@@ -2044,7 +2044,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * character_index_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 447 "barf_preprocessor_parser.trison"
+#line 448 "barf_preprocessor_parser.trison"
  return new Operation(Operation::TO_CHARACTER_LITERAL, character_index_expression); 
 #line 2050 "barf_preprocessor_parser.cpp"
             break;
@@ -2055,7 +2055,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * string_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 450 "barf_preprocessor_parser.trison"
+#line 451 "barf_preprocessor_parser.trison"
  return new Operation(Operation::TO_STRING_LITERAL, string_expression); 
 #line 2061 "barf_preprocessor_parser.cpp"
             break;
@@ -2066,7 +2066,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 453 "barf_preprocessor_parser.trison"
+#line 454 "barf_preprocessor_parser.trison"
  return new IsDefined(id, NULL); 
 #line 2072 "barf_preprocessor_parser.cpp"
             break;
@@ -2078,7 +2078,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
             Expression * element_index_expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
 
-#line 456 "barf_preprocessor_parser.trison"
+#line 457 "barf_preprocessor_parser.trison"
  return new IsDefined(id, element_index_expression); 
 #line 2084 "barf_preprocessor_parser.cpp"
             break;
@@ -2089,7 +2089,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-1].m_data));
 
-#line 459 "barf_preprocessor_parser.trison"
+#line 460 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
 #line 2095 "barf_preprocessor_parser.cpp"
             break;
@@ -2101,7 +2101,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-4].m_data));
             Expression * element_index_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 462 "barf_preprocessor_parser.trison"
+#line 463 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); 
 #line 2107 "barf_preprocessor_parser.cpp"
             break;
@@ -2112,7 +2112,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 465 "barf_preprocessor_parser.trison"
+#line 466 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
 #line 2118 "barf_preprocessor_parser.cpp"
             break;
@@ -2124,7 +2124,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
             Expression * element_index_expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
 
-#line 468 "barf_preprocessor_parser.trison"
+#line 469 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); 
 #line 2130 "barf_preprocessor_parser.cpp"
             break;
@@ -2136,7 +2136,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 471 "barf_preprocessor_parser.trison"
+#line 472 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::CONCATENATE, right); 
 #line 2142 "barf_preprocessor_parser.cpp"
             break;
@@ -2148,7 +2148,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 474 "barf_preprocessor_parser.trison"
+#line 475 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_OR, right); 
 #line 2154 "barf_preprocessor_parser.cpp"
             break;
@@ -2160,7 +2160,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 477 "barf_preprocessor_parser.trison"
+#line 478 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_AND, right); 
 #line 2166 "barf_preprocessor_parser.cpp"
             break;
@@ -2172,7 +2172,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 480 "barf_preprocessor_parser.trison"
+#line 481 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::EQUAL, right); 
 #line 2178 "barf_preprocessor_parser.cpp"
             break;
@@ -2184,7 +2184,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 483 "barf_preprocessor_parser.trison"
+#line 484 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::NOT_EQUAL, right); 
 #line 2190 "barf_preprocessor_parser.cpp"
             break;
@@ -2196,7 +2196,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 486 "barf_preprocessor_parser.trison"
+#line 487 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN, right); 
 #line 2202 "barf_preprocessor_parser.cpp"
             break;
@@ -2208,7 +2208,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 489 "barf_preprocessor_parser.trison"
+#line 490 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN_OR_EQUAL, right); 
 #line 2214 "barf_preprocessor_parser.cpp"
             break;
@@ -2220,7 +2220,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 492 "barf_preprocessor_parser.trison"
+#line 493 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN, right); 
 #line 2226 "barf_preprocessor_parser.cpp"
             break;
@@ -2232,7 +2232,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 495 "barf_preprocessor_parser.trison"
+#line 496 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN_OR_EQUAL, right); 
 #line 2238 "barf_preprocessor_parser.cpp"
             break;
@@ -2244,7 +2244,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 498 "barf_preprocessor_parser.trison"
+#line 499 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::PLUS, right); 
 #line 2250 "barf_preprocessor_parser.cpp"
             break;
@@ -2256,7 +2256,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 501 "barf_preprocessor_parser.trison"
+#line 502 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MINUS, right); 
 #line 2262 "barf_preprocessor_parser.cpp"
             break;
@@ -2268,7 +2268,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 504 "barf_preprocessor_parser.trison"
+#line 505 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MULTIPLY, right); 
 #line 2274 "barf_preprocessor_parser.cpp"
             break;
@@ -2280,7 +2280,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 507 "barf_preprocessor_parser.trison"
+#line 508 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::DIVIDE, right); 
 #line 2286 "barf_preprocessor_parser.cpp"
             break;
@@ -2292,7 +2292,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
             Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 510 "barf_preprocessor_parser.trison"
+#line 511 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::REMAINDER, right); 
 #line 2298 "barf_preprocessor_parser.cpp"
             break;
@@ -2303,7 +2303,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 513 "barf_preprocessor_parser.trison"
+#line 514 "barf_preprocessor_parser.trison"
  return new Operation(Operation::NEGATIVE, expression); 
 #line 2309 "barf_preprocessor_parser.cpp"
             break;
@@ -2314,7 +2314,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
 
-#line 516 "barf_preprocessor_parser.trison"
+#line 517 "barf_preprocessor_parser.trison"
  return new Operation(Operation::LOGICAL_NOT, expression); 
 #line 2320 "barf_preprocessor_parser.cpp"
             break;
@@ -2325,7 +2325,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
 
-#line 519 "barf_preprocessor_parser.trison"
+#line 520 "barf_preprocessor_parser.trison"
  return expression; 
 #line 2331 "barf_preprocessor_parser.cpp"
             break;

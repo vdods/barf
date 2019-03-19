@@ -98,6 +98,7 @@ void Parser::SetInputString (string const &input_string)
 %terminal LOG
 %terminal '+' '-' '*' '/' '^' '(' ')' '\\'
 
+%prec.left %default
 %prec.left ADDITION
 %prec.left MULTIPLICATION
 %prec.right UNARY

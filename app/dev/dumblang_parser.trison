@@ -201,6 +201,7 @@ int main (int argc, char **argv)
 %terminal INTEGER_LITERAL
 %terminal KEYWORD_IF KEYWORD_ELSE KEYWORD_VAR KEYWORD_FUNC KEYWORD_RETURN
 
+%prec.left %default
 %prec.right ASSIGNMENT
 %prec.left COMPARISON
 %prec.left ADDITION

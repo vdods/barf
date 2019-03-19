@@ -236,6 +236,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 %terminal '.' ':' '|' ';'
 
 
+%prec.left %default
+
+
 %default_parse_nonterminal root
 
 %%

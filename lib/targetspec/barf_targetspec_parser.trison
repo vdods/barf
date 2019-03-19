@@ -176,6 +176,8 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 %terminal STRICT_CODE_BLOCK %type.cpp "Ast::StrictCodeBlock *"
 %terminal STRING_LITERAL %type.cpp "Ast::String *"
 
+%prec.left %default
+
 %default_parse_nonterminal root
 
 %%

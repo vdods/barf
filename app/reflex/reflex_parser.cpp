@@ -1410,7 +1410,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
             StateMachineMap * state_machine_map(Dsc<StateMachineMap *>(token_stack[token_stack.size()-1].m_data));
 
-#line 252 "reflex_parser.trison"
+#line 255 "reflex_parser.trison"
 
         assert(preamble_directives == NULL);
         assert(m_target_map != NULL);
@@ -1455,7 +1455,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Base * preamble_directives(token_stack[token_stack.size()-2].m_data);
             Ast::Base * preamble_directive(token_stack[token_stack.size()-1].m_data);
 
-#line 290 "reflex_parser.trison"
+#line 293 "reflex_parser.trison"
 
         assert(preamble_directives == NULL);
         assert(preamble_directive == NULL);
@@ -1469,7 +1469,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 297 "reflex_parser.trison"
+#line 300 "reflex_parser.trison"
 
         return NULL;
     
@@ -1482,7 +1482,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Base * targets_directive(token_stack[token_stack.size()-2].m_data);
 
-#line 305 "reflex_parser.trison"
+#line 308 "reflex_parser.trison"
 
         // The logic is already handled by the targets_directive (and subordinate) nonterminal reduction rule handlers.
         assert(targets_directive == NULL);
@@ -1497,7 +1497,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             CommonLang::TargetDirective * target_directive(Dsc<CommonLang::TargetDirective *>(token_stack[token_stack.size()-2].m_data));
 
-#line 312 "reflex_parser.trison"
+#line 315 "reflex_parser.trison"
 
         assert(target_directive != NULL);
         assert(m_target_map != NULL);
@@ -1514,7 +1514,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Macro * macro(Dsc<Macro *>(token_stack[token_stack.size()-2].m_data));
 
-#line 321 "reflex_parser.trison"
+#line 324 "reflex_parser.trison"
 
         assert(m_regex_macro_map != NULL);
 
@@ -1538,7 +1538,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             StartWithStateMachineDirective * start_with_state_machine_directive(Dsc<StartWithStateMachineDirective *>(token_stack[token_stack.size()-2].m_data));
 
-#line 337 "reflex_parser.trison"
+#line 340 "reflex_parser.trison"
 
         if (m_start_with_state_machine_directive != NULL)
         {
@@ -1557,7 +1557,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 349 "reflex_parser.trison"
+#line 352 "reflex_parser.trison"
 
         return NULL;
     
@@ -1569,7 +1569,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 354 "reflex_parser.trison"
+#line 357 "reflex_parser.trison"
 
         EmitError("parse error in preamble directives", m_scanner.GetFiLoc());
         return NULL;
@@ -1584,7 +1584,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
             Ast::Base * target_map(token_stack[token_stack.size()-1].m_data);
 
-#line 367 "reflex_parser.trison"
+#line 370 "reflex_parser.trison"
 
         assert(target_map != NULL);
         assert(target_map == m_target_map);
@@ -1600,7 +1600,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
 
-#line 375 "reflex_parser.trison"
+#line 378 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
 
@@ -1617,7 +1617,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Base * target_map(token_stack[token_stack.size()-2].m_data);
             Ast::Id * target_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-1].m_data));
 
-#line 386 "reflex_parser.trison"
+#line 389 "reflex_parser.trison"
 
         assert(target_map != NULL);
         assert(target_map == m_target_map);
@@ -1642,7 +1642,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 404 "reflex_parser.trison"
+#line 407 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         return m_target_map;
@@ -1659,7 +1659,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * target_directive(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
             Ast::TextBase * param(Dsc<Ast::TextBase *>(token_stack[token_stack.size()-1].m_data));
 
-#line 417 "reflex_parser.trison"
+#line 420 "reflex_parser.trison"
 
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, param);
@@ -1675,7 +1675,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * target_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
             Ast::Id * target_directive(Dsc<Ast::Id *>(token_stack[token_stack.size()-1].m_data));
 
-#line 423 "reflex_parser.trison"
+#line 426 "reflex_parser.trison"
 
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, NULL);
@@ -1691,7 +1691,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * target_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-4].m_data));
             Ast::Id * target_directive(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 429 "reflex_parser.trison"
+#line 432 "reflex_parser.trison"
 
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -1709,7 +1709,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-4].m_data));
             Ast::Id * target_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 438 "reflex_parser.trison"
+#line 441 "reflex_parser.trison"
 
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -1725,7 +1725,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
 
-#line 446 "reflex_parser.trison"
+#line 449 "reflex_parser.trison"
 
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -1740,7 +1740,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::Id * value(Dsc<Ast::Id *>(token_stack[token_stack.size()-1].m_data));
 
-#line 455 "reflex_parser.trison"
+#line 458 "reflex_parser.trison"
  return value; 
 #line 1746 "reflex_parser.cpp"
             break;
@@ -1751,7 +1751,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::String * value(Dsc<Ast::String *>(token_stack[token_stack.size()-1].m_data));
 
-#line 456 "reflex_parser.trison"
+#line 459 "reflex_parser.trison"
  return value; 
 #line 1757 "reflex_parser.cpp"
             break;
@@ -1762,7 +1762,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::StrictCodeBlock * value(Dsc<Ast::StrictCodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 457 "reflex_parser.trison"
+#line 460 "reflex_parser.trison"
  return value; 
 #line 1768 "reflex_parser.cpp"
             break;
@@ -1773,7 +1773,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::DumbCodeBlock * value(Dsc<Ast::DumbCodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 458 "reflex_parser.trison"
+#line 461 "reflex_parser.trison"
  return value; 
 #line 1779 "reflex_parser.cpp"
             break;
@@ -1786,7 +1786,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * macro_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
             Ast::String * macro_regex_string(Dsc<Ast::String *>(token_stack[token_stack.size()-1].m_data));
 
-#line 468 "reflex_parser.trison"
+#line 471 "reflex_parser.trison"
 
         FiLoc throwaway_filoc(throwaway->GetFiLoc());
         delete throwaway;
@@ -1825,7 +1825,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-3].m_data));
             Ast::Id * macro_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
 
-#line 498 "reflex_parser.trison"
+#line 501 "reflex_parser.trison"
 
         EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -1842,7 +1842,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
 
-#line 507 "reflex_parser.trison"
+#line 510 "reflex_parser.trison"
 
         EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
@@ -1859,7 +1859,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
             Ast::Id * state_machine_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-1].m_data));
 
-#line 522 "reflex_parser.trison"
+#line 525 "reflex_parser.trison"
 
         delete throwaway;
         return new StartWithStateMachineDirective(state_machine_id);
@@ -1873,7 +1873,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
 
-#line 528 "reflex_parser.trison"
+#line 531 "reflex_parser.trison"
 
         EmitError("parse error in directive %start_with_state_machine", throwaway->GetFiLoc());
         delete throwaway;
@@ -1888,7 +1888,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             StateMachineMap * state_machine_map(Dsc<StateMachineMap *>(token_stack[token_stack.size()-2].m_data));
 
-#line 542 "reflex_parser.trison"
+#line 545 "reflex_parser.trison"
 
         assert(state_machine_map != NULL);
         return state_machine_map;
@@ -1901,7 +1901,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 548 "reflex_parser.trison"
+#line 551 "reflex_parser.trison"
 
         return new StateMachineMap();
     
@@ -1915,7 +1915,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             StateMachineMap * state_machine_map(Dsc<StateMachineMap *>(token_stack[token_stack.size()-2].m_data));
             StateMachine * state_machine(Dsc<StateMachine *>(token_stack[token_stack.size()-1].m_data));
 
-#line 556 "reflex_parser.trison"
+#line 559 "reflex_parser.trison"
 
         assert(state_machine_map != NULL);
         if (state_machine != NULL)
@@ -1931,7 +1931,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             StateMachine * state_machine(Dsc<StateMachine *>(token_stack[token_stack.size()-1].m_data));
 
-#line 564 "reflex_parser.trison"
+#line 567 "reflex_parser.trison"
 
         StateMachineMap *state_machine_map = new StateMachineMap();
         if (state_machine != NULL)
@@ -1950,7 +1950,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::UnsignedInteger * mode_flags(Dsc<Ast::UnsignedInteger *>(token_stack[token_stack.size()-2].m_data));
             RuleList * rule_list(Dsc<RuleList *>(token_stack[token_stack.size()-1].m_data));
 
-#line 575 "reflex_parser.trison"
+#line 578 "reflex_parser.trison"
 
         StateMachine *state_machine = new StateMachine(state_machine_id, rule_list, mode_flags->Value());
         delete throwaway;
@@ -1968,7 +1968,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::UnsignedInteger * mode_flags(Dsc<Ast::UnsignedInteger *>(token_stack[token_stack.size()-3].m_data));
             RuleList * rule_list(Dsc<RuleList *>(token_stack[token_stack.size()-2].m_data));
 
-#line 583 "reflex_parser.trison"
+#line 586 "reflex_parser.trison"
 
         EmitError("parse error in state machine id", throwaway->GetFiLoc());
         delete throwaway;
@@ -1985,7 +1985,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::UnsignedInteger * mode_flags(Dsc<Ast::UnsignedInteger *>(token_stack[token_stack.size()-2].m_data));
 
-#line 595 "reflex_parser.trison"
+#line 598 "reflex_parser.trison"
 
         return mode_flags;
     
@@ -1997,7 +1997,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 600 "reflex_parser.trison"
+#line 603 "reflex_parser.trison"
 
         EmitError("parse error in state machine mode flags", m_scanner.GetFiLoc());
         return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
@@ -2012,7 +2012,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::UnsignedInteger * mode_flags(Dsc<Ast::UnsignedInteger *>(token_stack[token_stack.size()-2].m_data));
             Ast::UnsignedInteger * mode_flag(Dsc<Ast::UnsignedInteger *>(token_stack[token_stack.size()-1].m_data));
 
-#line 609 "reflex_parser.trison"
+#line 612 "reflex_parser.trison"
 
         if (mode_flags->Value() & mode_flags->Value())
             EmitWarning("duplicate state machine mode flag", mode_flag->GetFiLoc());
@@ -2028,7 +2028,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 618 "reflex_parser.trison"
+#line 621 "reflex_parser.trison"
 
         return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
     
@@ -2041,7 +2041,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-1].m_data));
 
-#line 626 "reflex_parser.trison"
+#line 629 "reflex_parser.trison"
 
         Ast::UnsignedInteger *mode_flag = new Ast::UnsignedInteger(StateMachine::MF_CASE_INSENSITIVE, throwaway->GetFiLoc());
         delete throwaway;
@@ -2056,7 +2056,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-1].m_data));
 
-#line 633 "reflex_parser.trison"
+#line 636 "reflex_parser.trison"
 
         Ast::UnsignedInteger *mode_flag = new Ast::UnsignedInteger(StateMachine::MF_UNGREEDY, throwaway->GetFiLoc());
         delete throwaway;
@@ -2070,7 +2070,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 640 "reflex_parser.trison"
+#line 643 "reflex_parser.trison"
 
         EmitError("parse error in state machine mode flag", m_scanner.GetFiLoc());
         return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
@@ -2084,7 +2084,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             RuleList * rule_list(Dsc<RuleList *>(token_stack[token_stack.size()-2].m_data));
 
-#line 649 "reflex_parser.trison"
+#line 652 "reflex_parser.trison"
 
         return rule_list;
     
@@ -2096,7 +2096,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 654 "reflex_parser.trison"
+#line 657 "reflex_parser.trison"
 
         EmitError("parse error in state machine rule list", m_scanner.GetFiLoc());
         return new RuleList();
@@ -2111,7 +2111,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             RuleList * rule_list(Dsc<RuleList *>(token_stack[token_stack.size()-3].m_data));
             Rule * rule(Dsc<Rule *>(token_stack[token_stack.size()-1].m_data));
 
-#line 663 "reflex_parser.trison"
+#line 666 "reflex_parser.trison"
 
         rule_list->Append(rule);
         return rule_list;
@@ -2125,7 +2125,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Rule * rule(Dsc<Rule *>(token_stack[token_stack.size()-1].m_data));
 
-#line 669 "reflex_parser.trison"
+#line 672 "reflex_parser.trison"
 
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
@@ -2141,7 +2141,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::String * regex_string(Dsc<Ast::String *>(token_stack[token_stack.size()-2].m_data));
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(token_stack[token_stack.size()-1].m_data));
 
-#line 679 "reflex_parser.trison"
+#line 682 "reflex_parser.trison"
 
         assert(m_regex_macro_map != NULL);
 
@@ -2214,7 +2214,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             CommonLang::RuleHandlerMap * rule_handler_map(Dsc<CommonLang::RuleHandlerMap *>(token_stack[token_stack.size()-2].m_data));
             CommonLang::RuleHandler * rule_handler(Dsc<CommonLang::RuleHandler *>(token_stack[token_stack.size()-1].m_data));
 
-#line 746 "reflex_parser.trison"
+#line 749 "reflex_parser.trison"
 
         if (rule_handler != NULL)
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
@@ -2228,7 +2228,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 753 "reflex_parser.trison"
+#line 756 "reflex_parser.trison"
 
         return new CommonLang::RuleHandlerMap();
     
@@ -2243,7 +2243,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::Id * target_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 761 "reflex_parser.trison"
+#line 764 "reflex_parser.trison"
 
         delete throwaway;
         assert(m_target_map != NULL);
@@ -2263,7 +2263,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-3].m_data));
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 772 "reflex_parser.trison"
+#line 775 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -2280,7 +2280,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::ThrowAway * throwaway(Dsc<Ast::ThrowAway *>(token_stack[token_stack.size()-2].m_data));
 
-#line 781 "reflex_parser.trison"
+#line 784 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
@@ -2296,7 +2296,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::CodeBlock * code_block(Dsc<Ast::CodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 789 "reflex_parser.trison"
+#line 792 "reflex_parser.trison"
 
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
@@ -2312,7 +2312,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::DumbCodeBlock * dumb_code_block(Dsc<Ast::DumbCodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 803 "reflex_parser.trison"
+#line 806 "reflex_parser.trison"
  return dumb_code_block; 
 #line 2318 "reflex_parser.cpp"
             break;
@@ -2323,7 +2323,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
             Ast::StrictCodeBlock * strict_code_block(Dsc<Ast::StrictCodeBlock *>(token_stack[token_stack.size()-1].m_data));
 
-#line 805 "reflex_parser.trison"
+#line 808 "reflex_parser.trison"
  return strict_code_block; 
 #line 2329 "reflex_parser.cpp"
             break;
@@ -2333,7 +2333,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 810 "reflex_parser.trison"
+#line 813 "reflex_parser.trison"
  return NULL; 
 #line 2339 "reflex_parser.cpp"
             break;
@@ -2343,7 +2343,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 812 "reflex_parser.trison"
+#line 815 "reflex_parser.trison"
  return NULL; 
 #line 2349 "reflex_parser.cpp"
             break;

@@ -325,6 +325,8 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
                        //                    or "5" or "6" or "7" or "8" or "9"
                        // other char classes include "alnum", "alpha", etc
 
+%prec.left %default
+
 %default_parse_nonterminal regex_then_end
 
 %%
