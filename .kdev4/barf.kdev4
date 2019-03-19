@@ -1,52 +1,16 @@
-[Buildset]
-BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x08\x00b\x00a\x00r\x00f)
+[CMake]
+Build Directory Count=1
+Current Build Directory Index-Host System=0
 
-[Launch]
-Launch Configurations=Launch Configuration 0,Launch Configuration 1
-
-[Launch][Launch Configuration 0]
-Configured Launch Modes=execute
-Configured Launchers=nativeAppLauncher
-Name=trison
-Type=Native Application
-
-[Launch][Launch Configuration 0][Data]
-Arguments=../app/reflex/reflex_parser.trison --include-targets-search-path ./../targets --warnings-as-errors --output-directory ./test/ --generate-npda-dot-graph reflex_parser.npda.dot --generate-npda-states-file reflex_parser.npda.states
-Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x00)
-Dependency Action=Nothing
-EnvironmentGroup=
-Executable=file:///home/vdods/files/github/vdods/barf/debug-refactor-pda-concrete-states/trison
-External Terminal=konsole --noclose --workdir %workdir -e %exe
-Project Target=
-Use External Terminal=false
-Working Directory=file:///home/vdods/files/github/vdods/barf/debug-refactor-pda-concrete-states
-isExecutable=true
-
-[Launch][Launch Configuration 1]
-Configured Launch Modes=execute
-Configured Launchers=nativeAppLauncher
-Name=reflex
-Type=Native Application
-
-[Launch][Launch Configuration 1][Data]
-Arguments=../lib/commonlang/barf_commonlang_scanner.reflex --include-targets-search-path ./../targets --warnings-as-errors --output-directory ./test/ --generate-nfa-dot-graph barf_commonlang_scanner.nfa.dot --generate-dfa-dot-graph barf_commonlang_scanner.dfa.dot
-Debugger Shell=
-Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x00)
-Dependency Action=Nothing
-Display Demangle Names=true
-Display Static Members=false
-EnvironmentGroup=
-Executable=file:///home/vdods/files/github/vdods/barf/debug-refactor-pda-concrete-states/reflex
-External Terminal=konsole --noclose --workdir %workdir -e %exe
-GDB Path=
-Project Target=
-Remote GDB Config Script=
-Remote GDB Run Script=
-Remote GDB Shell Script=
-Start With=ApplicationOutput
-Use External Terminal=false
-Working Directory=file:///home/vdods/files/github/vdods/barf/debug-refactor-pda-concrete-states
-isExecutable=true
+[CMake][CMake Build Directory 0]
+Build Directory Path=/home/vdods/files/github/vdods/barf/build
+Build Type=Debug
+CMake Binary=/usr/bin/cmake
+CMake Executable=/usr/bin/cmake
+Environment Profile=
+Extra Arguments=
+Install Directory=/usr/local
+Runtime=Host System
 
 [Project]
 VersionControlSupport=kdevgit
