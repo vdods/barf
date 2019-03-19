@@ -57,6 +57,11 @@ CommandLineOption const Options::ms_option[] =
 
     CommandLineOption("Input behavior options"),
     CommandLineOption(
+        'c',
+        "clear-search-path",
+        &OptionsBase::ClearSearchPath,
+        "    Clears the existing search path."),
+    CommandLineOption(
         'I',
         "include-search-path",
         &OptionsBase::IncludeSearchPath,
@@ -68,15 +73,15 @@ CommandLineOption const Options::ms_option[] =
         "print-search-path",
         &OptionsBase::RequestShortPrintSearchPath,
         "    Prints to stdout, from highest priority to lowest, the include search path\n"
-        "    once all -I options have been processed, then exits.  Each path entry is\n"
-        "    delimited by a newline."),
+        "    once all -c and -I options have been processed, then exits.  Each path entry\n"
+        "    is delimited by a newline."),
     CommandLineOption(
         'P',
         "print-verbose-search-path",
         &OptionsBase::RequestVerbosePrintSearchPath,
         "    Prints to stdout, from highest priority to lowest, the include search path\n"
-        "    once all -I options have been processed, then exits.  Each path entry is\n"
-        "    followed by a description of how each was added.  Each entry is delimited\n"
+        "    once all -c and -I options have been processed, then exits.  Each path entry\n"
+        "    is followed by a description of how each was added.  Each entry is delimited\n"
         "    by a newline.  This is identical to option -p except for the description."),
 
 

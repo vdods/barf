@@ -147,6 +147,7 @@ public:
     void AssertOnError_Disable ();
 #endif
     // input options
+    void ClearSearchPath ();
     void IncludeSearchPath (string const &search_path);
     void RequestShortPrintSearchPath ();
     void RequestVerbosePrintSearchPath ();

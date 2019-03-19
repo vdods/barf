@@ -63,6 +63,11 @@ void OptionsBase::AssertOnError_Disable ()
 }
 #endif
 
+void OptionsBase::ClearSearchPath ()
+{
+    m_search_path_entry.clear();
+}
+
 void OptionsBase::IncludeSearchPath (string const &search_path)
 {
     m_search_path_entry.push_back(SearchPathEntry(search_path, "set by commandline option", ABORT_ON_FAILURE));
@@ -156,15 +161,15 @@ void OptionsBase::Parse (int argc, char const *const *argv)
 
 void OptionsBase::AddDefaultSearchPathEntries ()
 {
-#if defined(BARFDATADIR)
-    // add "BARFDATADIR/targets" (i.e. the installed targets data)
+#if defined(BARF_TARGETS_DIR)
+    // add "BARF_TARGETS_DIR" (i.e. the installed targets data)
     // as the lowest-priority targets search path.
-    if (!string(BARFDATADIR).empty())
-        m_search_path_entry.push_back(SearchPathEntry(BARFDATADIR DIRECTORY_SLASH_STRING "targets", "location of installed targets directory", IGNORE_FAILURE));
-#endif // defined(BARFDATADIR)
+    if (!string(BARF_TARGETS_DIR).empty())
+        m_search_path_entry.push_back(SearchPathEntry(BARF_TARGETS_DIR, "location of installed targets directory", IGNORE_FAILURE));
+#endif // defined(BARF_TARGETS_DIR)
 
-    // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
-    // add it as the lowest-priority targets search path.
+    // if the BARF_TARGETS_SEARCH_PATH environment variable is set, add it (as higher
+    // priority than BARF_TARGETS_DIR, if present).
     char const *search_path = getenv("BARF_TARGETS_SEARCH_PATH");
     if (search_path != NULL)
         m_search_path_entry.push_back(SearchPathEntry(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable", ABORT_ON_FAILURE));

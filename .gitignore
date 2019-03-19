@@ -3,6 +3,8 @@ aclocal.m4
 autom4te.cache/
 build/
 build2/
+build3/
+build4/
 compile
 config.guess
 config.h.in

@@ -48,6 +48,16 @@ int main (int argc, char **argv)
             BppOptions().PrintHelpMessage(cerr);
             return 0;
         }
+        else if (BppOptions().GetPrintSearchPathRequest() == Bpp::Options::PSPR_SHORT)
+        {
+            cout << BppOptions().GetSearchPath().AsString("\n") << endl;
+            return 0;
+        }
+        else if (BppOptions().GetPrintSearchPathRequest() == Bpp::Options::PSPR_VERBOSE)
+        {
+            cout << BppOptions().GetSearchPath().AsVerboseString("\n") << endl;
+            return 0;
+        }
 
         EmitExecutionMessage("beginning execution");
         Preprocessor::Parser parser;

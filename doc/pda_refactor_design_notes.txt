@@ -1204,7 +1204,9 @@ which includes the top element.
             x   Implement real versioning (see PACKAGE_VERSION macro used in trison_options.cpp and others)
             x   Have `make clean` not delete any generated scanner or parser sources, and make a separate target for that.
             x   Make clean* targets.
-            -   Make force*, *extras targets.  Make doxygen-doc- and dot-graph-generating targets.
+            x   Make install rules.
+            x   Make dot-graph-generating targets.
+            -   Make force* targets.  Make doxygen-doc-generating targets.
             -   Make targets for building the examples (probably need to clean up the examples)
             -   Get the distribution packaging working
     -   REALLY nice to have
