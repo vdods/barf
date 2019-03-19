@@ -245,31 +245,28 @@ struct NonterminalMap : public Ast::AstMap<Nonterminal>
 
 struct Precedence : public Ast::Base
 {
-    enum
-    {
-        DEFAULT_PRECEDENCE_LEVEL = -1
-    };
-
     string const m_precedence_id;
     Associativity const m_precedence_associativity;
+    Uint32 m_precedence_index;
     Sint32 m_precedence_level;
 
     Precedence (
         string const &precedence_id,
         Associativity precedence_associativity,
         FiLoc const &filoc,
-        Sint32 precedence_level = DEFAULT_PRECEDENCE_LEVEL)
+        Uint32 precedence_index,
+        Sint32 precedence_level)
         :
         Ast::Base(filoc, AST_PRECEDENCE),
         m_precedence_id(precedence_id),
         m_precedence_associativity(precedence_associativity),
+        m_precedence_index(precedence_index),
         m_precedence_level(precedence_level)
     {
         assert(!m_precedence_id.empty());
         assert(m_precedence_associativity == A_LEFT ||
                m_precedence_associativity == A_NONASSOC ||
                m_precedence_associativity == A_RIGHT);
-        assert(m_precedence_level >= DEFAULT_PRECEDENCE_LEVEL);
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;

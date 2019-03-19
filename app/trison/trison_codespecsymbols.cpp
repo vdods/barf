@@ -210,7 +210,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             // the level and index are the same at the time trison runs
             precedence_index->SetMapElement(
                 precedence_id,
-                new Preprocessor::Body(precedence.m_precedence_level));
+                new Preprocessor::Body(precedence.m_precedence_index));
         }
 
         Preprocessor::ArraySymbol *precedence_name =
@@ -280,7 +280,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
                 new Preprocessor::Body(rule.m_owner_nonterminal->GetText()));
 
             rule_precedence_index->AppendArrayElement(
-                new Preprocessor::Body(Sint32(rule.m_rule_precedence->m_precedence_level)));
+                new Preprocessor::Body(Sint32(rule.m_rule_precedence->m_precedence_index)));
             rule_precedence_name->AppendArrayElement(
                 new Preprocessor::Body(rule.m_rule_precedence->m_precedence_id));
 

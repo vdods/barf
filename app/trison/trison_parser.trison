@@ -603,7 +603,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 id->GetText(),
                 associativity,
                 id->GetFiLoc(),
-                m_precedence_map->size());
+                m_precedence_map->size(), // precedence_index
+                m_precedence_map->size()); // precedence_level (to be offset by level of default precedence later)
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_id, precedence);
         delete throwaway;
@@ -632,7 +633,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 "DEFAULT_",
                 associativity,
                 throwaway1->GetFiLoc(),
-                m_precedence_map->size());
+                m_precedence_map->size(), // precedence_index
+                m_precedence_map->size()); // precedence_level (to be offset by level of default precedence later)
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_id, precedence);
         delete throwaway0;

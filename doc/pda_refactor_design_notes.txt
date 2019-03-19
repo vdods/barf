@@ -1208,10 +1208,10 @@ which includes the top element.
             x   Make dot-graph-generating targets.
             x   Auto detect installed reflex/trison and use as stable binaries.
     -   REALLY nice to have
-        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
-        -   Implement %default precedence, so that it's possible to make precedences lower than the default
+        x   Implement %default precedence, so that it's possible to make precedences lower than the default
             (without having to explicitly assign a precedence to all rules).  This is relatively easy to
             implement.
+        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Allow SHIFT/REDUCE cases 1 and 5 to be resolved before equalizing max lookahead cursor.
         -   Make a more terse debug spew output which is more useful for non-barf developers to debug
             their grammars/parsers.
