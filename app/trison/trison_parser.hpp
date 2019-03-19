@@ -30,6 +30,7 @@ namespace Barf {
 namespace Ast {
 
 class Base;
+struct Id;
 struct IdMap;
 class IntegerMap;
 
@@ -50,7 +51,7 @@ struct PrecedenceMap;
 struct TerminalList;
 struct TerminalMap;
 
-#line 54 "trison_parser.hpp"
+#line 55 "trison_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -104,22 +105,23 @@ public:
             ERROR_ = 257,
             BAD_TOKEN = 258,
             CHAR_LITERAL = 259,
-            DIRECTIVE_DEFAULT_PARSE_NONTERMINAL = 260,
-            DIRECTIVE_EMPTY = 261,
-            DIRECTIVE_END = 262,
-            DIRECTIVE_ERROR = 263,
-            DIRECTIVE_NONTERMINAL = 264,
-            DIRECTIVE_PREC = 265,
-            DIRECTIVE_TARGET = 266,
-            DIRECTIVE_TARGETS = 267,
-            DIRECTIVE_TERMINAL = 268,
-            DIRECTIVE_TYPE = 269,
-            DUMB_CODE_BLOCK = 270,
-            END_PREAMBLE = 271,
-            ID = 272,
-            NEWLINE = 273,
-            STRICT_CODE_BLOCK = 274,
-            STRING_LITERAL = 275
+            DIRECTIVE_DEFAULT = 260,
+            DIRECTIVE_DEFAULT_PARSE_NONTERMINAL = 261,
+            DIRECTIVE_EMPTY = 262,
+            DIRECTIVE_END = 263,
+            DIRECTIVE_ERROR = 264,
+            DIRECTIVE_NONTERMINAL = 265,
+            DIRECTIVE_PREC = 266,
+            DIRECTIVE_TARGET = 267,
+            DIRECTIVE_TARGETS = 268,
+            DIRECTIVE_TERMINAL = 269,
+            DIRECTIVE_TYPE = 270,
+            DUMB_CODE_BLOCK = 271,
+            END_PREAMBLE = 272,
+            ID = 273,
+            NEWLINE = 274,
+            STRICT_CODE_BLOCK = 275,
+            STRING_LITERAL = 276
         }; // end of enum Parser::Terminal::Name
     }; // end of struct Parser::Terminal
 
@@ -133,39 +135,37 @@ public:
         enum Name
         {
             none_ = 0,
-            root = 276,
-            targets_directive = 277,
-            target_ids = 278,
-            target_directives = 279,
-            target_directive = 280,
-            target_directive_param = 281,
-            terminal_directives = 282,
-            terminal_directive = 283,
-            terminals = 284,
-            precedence_directives = 285,
+            root = 277,
+            preamble = 278,
+            preamble_directives = 279,
+            preamble_directive = 280,
+            targets_directive = 281,
+            target_ids = 282,
+            target_directive = 283,
+            target_directive_param = 284,
+            terminals = 285,
             precedence_directive = 286,
-            start_directive = 287,
-            nonterminals = 288,
-            nonterminal = 289,
-            nonterminal_specification = 290,
-            rules = 291,
-            rule = 292,
-            rule_specification = 293,
-            rule_handlers = 294,
-            rule_handler = 295,
-            rule_token_list = 296,
-            nonempty_rule_token_list = 297,
-            rule_token = 298,
-            bracketed_lookahead_terminal_list = 299,
-            lookahead_terminal_list = 300,
-            lookahead_terminal = 301,
-            rule_precedence_directive = 302,
-            at_least_zero_newlines = 303,
-            at_least_one_newline = 304,
-            token_id = 305,
-            terminal = 306,
-            any_type_of_code_block = 307,
-            type_spec = 308
+            nonterminals = 287,
+            nonterminal = 288,
+            nonterminal_specification = 289,
+            rules = 290,
+            rule = 291,
+            rule_specification = 292,
+            rule_handlers = 293,
+            rule_handler = 294,
+            rule_token_list = 295,
+            nonempty_rule_token_list = 296,
+            rule_token = 297,
+            bracketed_lookahead_terminal_list = 298,
+            lookahead_terminal_list = 299,
+            lookahead_terminal = 300,
+            rule_precedence_directive = 301,
+            at_least_zero_newlines = 302,
+            at_least_one_newline = 303,
+            token_id = 304,
+            terminal = 305,
+            any_type_of_code_block = 306,
+            type_spec = 307
         }; // end of enum Parser::Nonterminal::Name
     }; // end of struct Parser::Nonterminal
 
@@ -294,7 +294,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 51 "trison_parser.trison"
+#line 52 "trison_parser.trison"
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
@@ -317,10 +317,11 @@ private:
     Uint32 m_token_index;
     PrecedenceList *m_precedence_list;
     PrecedenceMap *m_precedence_map;
+    Ast::Id *m_default_parse_nonterminal_id;
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 324 "trison_parser.hpp"
+#line 325 "trison_parser.hpp"
 
 
 private:
@@ -897,10 +898,10 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 76 "trison_parser.trison"
+#line 78 "trison_parser.trison"
 
 } // end of namespace Trison
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 907 "trison_parser.hpp"
+#line 908 "trison_parser.hpp"

@@ -252,7 +252,7 @@ struct Precedence : public Ast::Base
 
     string const m_precedence_id;
     Associativity const m_precedence_associativity;
-    Sint32 const m_precedence_level;
+    Sint32 m_precedence_level;
 
     Precedence (
         string const &precedence_id,

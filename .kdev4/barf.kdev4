@@ -1,3 +1,6 @@
+[Buildset]
+BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x08\x00b\x00a\x00r\x00f)
+
 [CMake]
 Build Directory Count=1
 Current Build Directory Index-Host System=0
@@ -11,6 +14,9 @@ Environment Profile=
 Extra Arguments=
 Install Directory=/usr/local
 Runtime=Host System
+
+[Launch]
+Launch Configurations=
 
 [Project]
 VersionControlSupport=kdevgit

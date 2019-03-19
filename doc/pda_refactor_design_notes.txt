@@ -1206,6 +1206,7 @@ which includes the top element.
             x   Make clean* targets.
             x   Make install rules.
             x   Make dot-graph-generating targets.
+            x   Auto detect installed reflex/trison and use as stable binaries.
     -   REALLY nice to have
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Implement %default precedence, so that it's possible to make precedences lower than the default
@@ -1251,7 +1252,6 @@ which includes the top element.
         -   Terminal::ERROR_ should probably be turned into Nonterminal::error_, since an error is sort of
             a reduction of other tokens.
         -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
-    -   Make CMakeLists.txt auto detect installed reflex/trison and use as stable binaries.
 
 2018.02.23 ----------------------------
 
