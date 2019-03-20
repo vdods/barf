@@ -1211,13 +1211,15 @@ which includes the top element.
         x   Implement %default precedence, so that it's possible to make precedences lower than the default
             (without having to explicitly assign a precedence to all rules).  This is relatively easy to
             implement.
-        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
-        -   Allow SHIFT/REDUCE cases 1 and 5 to be resolved before equalizing max lookahead cursor.
         -   Make a more terse debug spew output which is more useful for non-barf developers to debug
-            their grammars/parsers.
-        -   Make the #line directive have overridable path so that gdb/KDevelop parse it correctly.
-            This should probably have to do with the output directory option of reflex/trison.
+            their grammars/parsers.  Use bit flags to be able to enable/disable each group of output
+            separately, and then provide a few predefined "common profiles" for output.
+        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
     -   Nice to have
+        -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
+            This should probably have to do with the output directory option of reflex/trison.
+            NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
+            so defer for later.
         -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
             specifiers to everything that should not throw.
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
@@ -1252,6 +1254,10 @@ which includes the top element.
         -   Terminal::ERROR_ should probably be turned into Nonterminal::error_, since an error is sort of
             a reduction of other tokens.
         -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
+        -   Allow SHIFT/REDUCE cases 1 and 5 to be resolved before equalizing max lookahead cursor.
+            Actually more cases than that could be resolved conditionally based on associativity:
+            cases 2, 3, 4.  This may be more involved than expected, and may not be worth it.  It's
+            not causing a problem currently.
 
 2018.02.23 ----------------------------
 
