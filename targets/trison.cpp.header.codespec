@@ -190,6 +190,32 @@ public:
     void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
 
 <|  if(is_defined(generate_debug_spew_code))
+    /// Bitflag enums for granular specification of debug spew.
+    enum DebugSpewFlags
+    {
+        // Individual flags
+        DSF_START_END_PARSE             = 1 << 0,
+        DSF_ITERATION_COUNT             = 1 << 1,
+        DSF_ACTION                      = 1 << 2,
+        DSF_PROGRAMMER_ERROR            = 1 << 3,
+        DSF_PARSE_TREE_MESSAGE          = 1 << 4,
+        DSF_REALIZED_LOOKAHEAD_QUEUE    = 1 << 5,
+        DSF_SHIFT_REDUCE_CONFLICT       = 1 << 6,
+        DSF_REDUCE_REDUCE_CONFLICT      = 1 << 7,
+        DSF_TRANSITION_PROCESSING       = 1 << 8,
+        DSF_TRANSITION_EXERCISING       = 1 << 9,
+        DSF_HPS_REMOVE_DEFUNCT          = 1 << 10,
+        DSF_HPS_NODE_CREATION_DELETION  = 1 << 11,
+        // If more are added, then make sure to update DSF_HIGHEST_.
+        DSF_HIGHEST_                    = DSF_HPS_NODE_CREATION_DELETION,
+
+        // Pre-defined common sets of bitflags, in ascending order of verbosity.
+        DSF_NONE                        = 0,
+        DSF_MINIMAL                     = DSF_START_END_PARSE|DSF_ACTION|DSF_PROGRAMMER_ERROR,
+        DSF_INTERMEDIATE                = DSF_START_END_PARSE|DSF_ITERATION_COUNT|DSF_PARSE_TREE_MESSAGE|DSF_ACTION|DSF_SHIFT_REDUCE_CONFLICT|DSF_PROGRAMMER_ERROR,
+        DSF_ALL                         = DSF_HIGHEST_-1
+    };
+
     /// Returns true if and only if "debug spew" is enabled (which prints, to the
     /// debug spew stream, exactly what the parser is doing at each step).  This
     /// method, along with all other debug spew code can be removed by removing the
@@ -204,6 +230,12 @@ public:
     /// This method, along with all other debug spew code can be removed by removing
     /// the %target.cpp.generate_debug_spew_code directive from the primary source.
     void SetDebugSpewStream (std::ostream *debug_spew_stream) { m_debug_spew_stream_ = debug_spew_stream; }
+    /// Gets the flags which specify which debug spew messages to allow.
+    DebugSpewFlags ActiveDebugSpewFlags () const { return m_active_debug_spew_flags_; }
+    /// Sets the flags which specify which debug spew messages to allow.  The values
+    /// DSF_NONE, DSF_MINIMAL, DSF_INTERMEDIATE, and DSF_ALL are designed to give convenient
+    /// common sets of flags.
+    void SetActiveDebugSpewFlags (DebugSpewFlags active_debug_spew_flags) { m_active_debug_spew_flags_ = active_debug_spew_flags; }
     /// Returns the debug spew prefix string, which may depend on values like the
     /// current filename, line number, etc.
     std::string DebugSpewPrefix () const;
@@ -281,6 +313,7 @@ private:
     void PrintIndented_ (std::ostream &stream, char const *string) const;
 
     std::ostream *m_debug_spew_stream_;
+    DebugSpewFlags m_active_debug_spew_flags_;
 
 <|  end_if
     static char const *const ms_parser_return_code_string_table_[];

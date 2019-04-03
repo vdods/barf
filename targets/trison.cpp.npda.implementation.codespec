@@ -56,7 +56,7 @@ void <{class_name}::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lo
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Starting parse\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_START_END_PARSE, *DebugSpewStream() << <{debug_spew_prefix} << "Starting parse\n")
 
 <|  end_if
     ParserReturnCode parser_return_code_ = PRC_INTERNAL_ERROR;
@@ -97,6 +97,7 @@ void <{class_name}::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lo
     {
 <|      if(is_defined(generate_debug_spew_code))
         TRISON_CPP_DEBUG_CODE_(
+            DSF_ITERATION_COUNT,
             *DebugSpewStream() << <{debug_spew_prefix} << "\n";
             *DebugSpewStream() << <{debug_spew_prefix} << "---------- ITERATION " << iteration_index << " --------------\n";
             PrintParserStatus_(*DebugSpewStream());
@@ -107,7 +108,7 @@ void <{class_name}::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lo
         if (m_realized_state_->HasExceededMaxAllowableLookaheadCount(m_max_allowable_lookahead_count))
         {
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method. returning with error.\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << <{debug_spew_prefix} << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method. returning with error.\n")
 <|          end_if
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
             break;
@@ -119,13 +120,14 @@ void <{class_name}::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lo
             ContinueNPDAParse_(should_return);
 <|      if(is_defined(generate_debug_spew_code))
 
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << '\n')
+        TRISON_CPP_DEBUG_CODE_(DSF_ITERATION_COUNT, *DebugSpewStream() << <{debug_spew_prefix} << '\n')
         ++iteration_index;
 <|      end_if
     }
 
 <|  if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(
+        DSF_ITERATION_COUNT,
         *DebugSpewStream() << <{debug_spew_prefix} << "\n";
         *DebugSpewStream() << <{debug_spew_prefix} << "---------- RETURNING --------------\n";
         PrintParserStatus_(*DebugSpewStream());
@@ -154,6 +156,7 @@ void <{class_name}::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lo
 <|  if(is_defined(generate_debug_spew_code))
     assert(std::size_t(parser_return_code_) < ms_parser_return_code_string_count_ && "this should never happen");
     TRISON_CPP_DEBUG_CODE_(
+        DSF_START_END_PARSE,
         *DebugSpewStream() << <{debug_spew_prefix} << "Parse() is returning " << ms_parser_return_code_string_table_[parser_return_code_] << '\n';
     )
 
@@ -164,7 +167,7 @@ void <{class_name}::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lo
 void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code_, <{token_data_type} *&return_token)
 {
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Parse stack tree has trunk; executing trunk actions.\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << <{debug_spew_prefix} << "Parse stack tree has trunk; executing trunk actions.\n")
 <|  end_if
     if (m_hypothetical_state_->m_root->HasTrunkChild())
     {
@@ -181,7 +184,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
         {
             case ParseTreeNode_::RETURN: {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action RETURN.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action RETURN.\n")
 <|              end_if
                 assert(m_realized_state_->TokenStack().size() == 2);
                 parser_return_code_ = PRC_SUCCESS;
@@ -195,7 +198,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 // Execute the appropriate rule on the top tokens in the stack
                 std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
 <|              end_if
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
@@ -207,21 +210,21 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
             case ParseTreeNode_::SHIFT: {
 <|              if(is_defined(generate_debug_spew_code))
                 std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
 <|              end_if
                 m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
 <|              end_if
                 m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::DISCARD_LOOKAHEAD: {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action DISCARD_LOOKAHEAD.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action DISCARD_LOOKAHEAD.\n")
 <|              end_if
                 m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
@@ -229,7 +232,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
             case ParseTreeNode_::POP_STACK: {
                 std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action POP_STACK " << pop_count << ".\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action POP_STACK " << pop_count << ".\n")
 <|              end_if
 
                 // This one is tricky to implement within RealizedState_ alone, mainly because
@@ -267,7 +270,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
         if (destroy_and_recreate_parse_tree)
         {
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << <{debug_spew_prefix} << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
 <|          end_if
             m_hypothetical_state_->DestroyParseTree();
             CreateParseTreeFromRealizedState_();
@@ -282,7 +285,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     should_return = true;
 
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Parse stack tree does not have trunk; continuing parse.\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << <{debug_spew_prefix} << "Parse stack tree does not have trunk; continuing parse.\n")
 
 <|  end_if
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
@@ -307,7 +310,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|          if(is_defined(generate_debug_spew_code))
             else
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
             }
 <|          end_if
         }
@@ -321,7 +324,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             assert(reduce_precedence_level_range.first == reduce_precedence_level_range.second);
 
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
 
 <|          end_if
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
@@ -364,7 +367,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             if (reduce_precedence_level_range.second < shift_precedence_level_range.first)
             {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
 <|              end_if
                 // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
                 m_hypothetical_state_->DeleteBranch(reduce);
@@ -376,14 +379,14 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                      shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 2; REDUCE <= SHIFT;\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Case 2; REDUCE <= SHIFT;\n")
 <|              end_if
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
                 if (reduction_rule_precedence.m_associativity_index == 2) // 2 is right-associative
                 {
 <|                  if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
 <|                  end_if
                     m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
@@ -392,7 +395,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 else
                 {
 <|                  if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Can't resolve conflict at this time.\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Can't resolve conflict at this time.\n")
 <|                  else
                     // Can't resolve the conflict at this time.
 <|                  end_if
@@ -405,14 +408,14 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity index: " <<
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity index: " <<
  reduction_rule_precedence.m_associativity_index << '\n')
 <|              end_if
                 switch (reduction_rule_precedence.m_associativity_index)
                 {
                     case 0: // 0 is left-associative
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
 <|                      end_if
                         m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
@@ -421,7 +424,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
                     case 1: // 1 is non-associative
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
 <|                      end_if
                         // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
                         // action to initiate error panic.  This works only because the shift and reduce nodes
@@ -478,7 +481,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
                     case 2: // 2 is right-associative
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
 <|                      end_if
                         m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
@@ -495,14 +498,14 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                      shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 4; REDUCE >= SHIFT;\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Case 4; REDUCE >= SHIFT;\n")
 <|              end_if
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
                 if (reduction_rule_precedence.m_associativity_index == 0) // 0 is left-associative
                 {
 <|                  if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
 <|                  end_if
                     m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
@@ -511,7 +514,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 else
                 {
 <|                  if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Can't resolve conflict at this time.\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Can't resolve conflict at this time.\n")
 <|                  else
                     // Can't resolve the conflict at this time.
 <|                  end_if
@@ -521,7 +524,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             else if (reduce_precedence_level_range.first > shift_precedence_level_range.second)
             {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
 <|              end_if
                 m_hypothetical_state_->DeleteBranch(shift);
                 shift = NULL;
@@ -530,7 +533,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             // Case 6
             else {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
 <|              else
                 // Ambiguous SHIFT/REDUCE precedence comparison; can't resolve the conflict at this time.
 <|              end_if
@@ -570,13 +573,13 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
     {
 <|      if(is_defined(generate_debug_spew_code))
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
+        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << <{debug_spew_prefix} << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
 <|      end_if
         if (!m_hypothetical_state_->m_new_hps_queue.empty())
         {
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Early-out based on sorted type index.\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << <{debug_spew_prefix} << "        Early-out based on sorted type index.\n")
 <|          end_if
             break;
         }
@@ -593,6 +596,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             assert(hps.m_spec.m_type == ParseTreeNode_::HPS);
 <|          if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(
+                DSF_TRANSITION_PROCESSING,
                 *DebugSpewStream() << <{debug_spew_prefix} << "        Processing ";
                 hps.Print(*DebugSpewStream(), this, DebugSpewPrefix(), 0, true);
             )
@@ -602,7 +606,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             if (hps.IsBlockedHPS())
             {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << <{debug_spew_prefix} << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
 <|              end_if
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -614,7 +618,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
             if (hps.m_realized_lookahead_cursor > min_realized_lookahead_cursor)
             {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << <{debug_spew_prefix} << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
 <|              end_if
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -640,6 +644,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|              if(is_defined(generate_debug_spew_code))
 /*
                 TRISON_CPP_DEBUG_CODE_(
+                    DSF_TRANSITION_PROCESSING,
                     *DebugSpewStream() << <{debug_spew_prefix} << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
                     if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
@@ -679,7 +684,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                              rule.m_reduction_nonterminal_token_id == hps.LookaheadTokenId(*this))) // lookahead is this nonterminal
                         {
 <|                          if(is_defined(generate_debug_spew_code))
-                            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
+                            TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << <{debug_spew_prefix} << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
 <|                          end_if
                             take_action = false;
                         }
@@ -688,11 +693,11 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                     if (take_action)
                     {
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition without accessing lookahead... ")
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition without accessing lookahead... ")
 <|                      end_if
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
 <|                      end_if
                     }
                 }
@@ -700,19 +705,14 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 else
                 {
                     Token::Id lookahead_token_id = hps.LookaheadTokenId(*this);
-<|                  if(is_defined(generate_debug_spew_code))
-                    /*
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "                Lookahead is " << Token(lookahead_token_id) << '\n')
-                    */
-<|                  end_if
                     if (transition.m_token_index == lookahead_token_id)
                     {
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << <{debug_spew_prefix} << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
 <|                      end_if
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
 <|                      end_if
                     }
                 }
@@ -725,7 +725,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     // Take new hps-es and clear old ones.
     assert(!m_hypothetical_state_->m_new_hps_queue.empty());
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "    Removing defunct HPSes...\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << <{debug_spew_prefix} << "    Removing defunct HPSes...\n")
 <|  end_if
     for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
@@ -734,6 +734,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
         {
 <|          if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(
+                DSF_HPS_REMOVE_DEFUNCT,
                 hps->Print(*DebugSpewStream(), this, DebugSpewPrefix(), 2);
             )
 <|          end_if
@@ -750,7 +751,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     assert(rule_index_ < Grammar_::ms_rule_count_);
 <|  if(is_defined(generate_debug_spew_code))
     Grammar_::Rule_ const &rule_ = Grammar_::ms_rule_table_[rule_index_];
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Executing reduction rule " << rule_index_ << "; " << rule_.m_description << '\n')
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing reduction rule " << rule_index_ << "; " << rule_.m_description << '\n')
 <|  end_if
     switch (rule_index_)
     {
@@ -776,7 +777,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
 <|  if(!is_defined(dont_assert_if_reduction_rule_code_doesnt_return))
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "PROGRAMMER ERROR: No value returned from reduction rule code block; rule " << rule_index_ << ": " << Grammar_::ms_rule_table_[rule_index_].m_description << '\n')
+    TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from reduction rule code block; rule " << rule_index_ << ": " << Grammar_::ms_rule_table_[rule_index_].m_description << '\n')
 <|  end_if
     assert(false && "no value returned from reduction rule code block");
 <|  end_if
@@ -1520,7 +1521,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
         m_realized_state_->PushBackLookahead(Scan_(), m_hypothetical_state_->m_hps_queue);
 <|      if(is_defined(generate_debug_spew_code))
 
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "Pushed " << m_realized_state_->LookaheadQueue().back() << " onto back of lookahead queue\n")
+        TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << <{debug_spew_prefix} << "Pushed " << m_realized_state_->LookaheadQueue().back() << " onto back of lookahead queue\n")
 <|      end_if
     }
     return m_realized_state_->LookaheadQueue()[index];
@@ -1574,7 +1575,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                 else
                 {
 <|                  if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
 
 <|                  end_if
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
@@ -1588,7 +1589,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                     if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
                     {
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of new hps.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.\n")
 
 <|                      end_if
                         reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
@@ -1608,7 +1609,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                     else
                     {
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of existing hps.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of existing hps.\n")
 <|                      else
                         // Resolving in favor of existing HPS.
 <|                      end_if
@@ -1691,7 +1692,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                 new_hps->m_hypothetical_head = new_hps->m_hypothetical_head.Parent();
             }
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
 <|          end_if
             break;
         }
@@ -1719,7 +1720,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
             assert(children_of_action_type.size() == 1);
             action_node = *children_of_action_type.begin();
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "using existing action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "using existing action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
 
 <|          end_if
             // If the new hps already exists (can only happen as a child of POP_STACK), then don't add it.
@@ -1729,7 +1730,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                 if (child_hps_set.find(new_hps) != child_hps_set.end())
                 {
 <|                  if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "not adding duplicate HPS as child of POP_STACK node... ")
+                    TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "not adding duplicate HPS as child of POP_STACK node... ")
 <|                  end_if
                     delete new_hps;
                     new_hps = NULL;
@@ -1739,11 +1740,11 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
         else
         {
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating new action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating new action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
 <|          end_if
             action_node = new ParseTreeNode_(action_spec);
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "(action_node = " << action_node << ") ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "(action_node = " << action_node << ") ")
 <|          end_if
             hps.m_parent_node->AddChild(action_node);
         }
@@ -1762,13 +1763,13 @@ void <{class_name}::CreateParseTreeFromRealizedState_ ()
     // Add HPS nodes for each branch in the top of the realized state stack.
     assert(!reconstruct_branch_vector.empty());
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "        Reconstructing branches:\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << <{debug_spew_prefix} << "        Reconstructing branches:\n")
 <|  end_if
     for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
         Branch_ const &reconstruct_branch = *it;
 <|      if(is_defined(generate_debug_spew_code))
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << <{debug_spew_prefix} << "            " << reconstruct_branch.StatePtr() << '\n')
+        TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << <{debug_spew_prefix} << "            " << reconstruct_branch.StatePtr() << '\n')
 <|      end_if
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));

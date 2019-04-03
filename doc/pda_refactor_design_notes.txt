@@ -1211,9 +1211,38 @@ which includes the top element.
         x   Implement %default precedence, so that it's possible to make precedences lower than the default
             (without having to explicitly assign a precedence to all rules).  This is relatively easy to
             implement.
-        -   Make a more terse debug spew output which is more useful for non-barf developers to debug
+        x   Make a more terse debug spew output which is more useful for non-barf developers to debug
             their grammars/parsers.  Use bit flags to be able to enable/disable each group of output
             separately, and then provide a few predefined "common profiles" for output.
+            -   Mainly curtail excessive spew
+            -   Minimal output would be something like
+                -   Parser starting
+                -   Actions executed (including throw away actions, nonassoc error actions)
+                -   Parser returning
+            -   Intermediate useful output should be something like
+                -   Parser starting
+                -   Iteration number
+                -   Parse tree
+                -   Actions executed
+                -   Presence of SHIFT/REDUCE conflicts
+                -   RETURN or error handling
+            -   Debug spew flags
+                -   Start/end parse
+                -   Iteration count
+                -   Actions (TODO: debug spew for destructor actions -- generally make a printout for all actions)
+                -   Shift/reduce conflicts
+                -   Reduce/reduce conflicts
+                -   Processing transitions (determining if a hypothetical transition should be made)
+                -   Exercising transitions (actually making a hypothetical transition)
+                -   Removing defunct HPSes
+                -   Programmer errors (e.g. no return statement in reduction rule handler)
+                -   Realized lookahead queue activity
+                -   HPS node creation/deletion specific messages
+                -   Parse tree messages (has trunk; reconstructing branches)
+        -   Implement max parse tree depth constraint (figure out how this error should be handled).
+            Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
+            being able to prevent exponential memory usage.  Though the problem here is that there could
+            be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
     -   Nice to have
         -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
@@ -1224,6 +1253,7 @@ which includes the top element.
             specifiers to everything that should not throw.
         -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
             use the highest standard that's reasonable)
+            -   Use std::unique_ptr
             -   Use std::array for static storage of state/transition/etc tables.
             -   Use range-based for loops
             -   Use strong enums
@@ -1236,10 +1266,6 @@ which includes the top element.
             -   Make force* targets.  Make doxygen-doc-generating targets.
             -   Make targets for building the examples (probably need to clean up the examples)
             -   Get the distribution packaging working
-        -   Implement max parse tree depth constraint (figure out how this error should be handled).
-            Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
-            being able to prevent exponential memory usage.  Though the problem here is that there could
-            be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
         x   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
             (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
         -   Implement infinite loop detection (maybe as an option?)
@@ -1272,7 +1298,7 @@ which includes the top element.
 
     And maybe add a negation operator also, something like
 
-        %lookahead[^%end]
+        %lookahead[^(%end|',')]
 
     Could then add an implicit %lookahead[^N] for any nonterminal N reduction rule, so that e.g.
     the rule
@@ -1301,8 +1327,9 @@ which includes the top element.
         %require_lookahead
         %with_lookahead
 
-    and/or somehow make it obvious that it doesn't actually consume a token, especially
-    if it occurs in the middle of a rule.
+    and/or somehow make it obvious that it doesn't actually consume a token (though it may
+    cause a token to be read into the lookahead queue), especially if it occurs in the middle
+    of a rule.
 
     Examples
 
@@ -1431,7 +1458,8 @@ which includes the top element.
     -   EC(L(s)(t),t) (i.e. epsilon closure of conditional epsilon transition) if t != NONE
 
     IDEA: Allow assignment of variable to a %lookahead directive, and it will be that token ID
-    in the rule reduction handler, so you can make logic based on which lookahead it is.  e.g.
+    (or maybe just the token itself?) in the rule reduction handler, so you can make logic based
+    on which lookahead it is.  e.g.
 
     %nonterminal blah
     :
