@@ -1239,7 +1239,7 @@ which includes the top element.
                 -   Realized lookahead queue activity
                 -   HPS node creation/deletion specific messages
                 -   Parse tree messages (has trunk; reconstructing branches)
-        -   Implement max parse tree depth constraint (figure out how this error should be handled).
+        x   Implement max parse tree depth constraint (figure out how this error should be handled).
             Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
             being able to prevent exponential memory usage.  Though the problem here is that there could
             be valid parses that take a lot of nodes, and it's not obvious what the limit should be.

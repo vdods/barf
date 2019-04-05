@@ -256,6 +256,8 @@ private:
         // all HPSes have consumed the same number of lookaheads, so they're in a well-defined
         // state with respect to resolving SHIFT/REDUCE conflicts.
         bool                    MinAndMaxRealizedLookaheadCursorsAreEqual () const;
+        // Indicates if ParseTreeDepth() has exceeded max_allowable_parse_tree_depth.
+        bool                    HasExceededMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth) const;
 
         // Deletes the branch that the given node (which may not be the root node) is a part of.
         // A branch of a node N is defined as the set of nodes that are descendants of N, and all
@@ -273,11 +275,15 @@ private:
         // and *max = std::numeric_limits<std::uint32_t>::min().  If min or max is nullptr, doesn't
         // assign to that one.
         void                    ComputeMinAndMaxRealizedLookaheadCursors (std::uint32_t *min, std::uint32_t *max) const;
+        // Returns max of m_depth of each of m_hps_queue minus m_root->m_depth, giving a relative depth.
+        std::uint32_t           ParseTreeDepth () const;
+        std::uint32_t           MaxRealizedParseTreeDepth () const { return m_max_realized_parse_tree_depth; }
 
         ParseTreeNode_ *        m_root;
         HPSQueue_               m_hps_queue;
         // This is stored so new memory isn't necessarily allocated for each parse iteration.
         HPSQueue_               m_new_hps_queue;
+        mutable std::uint32_t   m_max_realized_parse_tree_depth;
     }; // end of struct <{class_name}::HypotheticalState_
 
     void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, <{token_data_type} *&return_token);
@@ -365,6 +371,10 @@ private:
         std::uint32_t           m_realized_lookahead_cursor; // this is an index into the realized lookahead queue.
         ParseTreeNode_ *        m_parent_node;
         ChildMap                m_child_nodes;
+        // Index of depth in from the initial root.  Used to compute relative depth of parse tree.
+        // Yes, this may wrap, but it doesn't matter, because the relative parse tree depth is what
+        // matters, and it won't be more than can be stored in std::uint32_t.
+        std::uint32_t           m_depth;
 
 <|      if(0)
 <|      if(is_defined(generate_debug_spew_code))
@@ -377,6 +387,7 @@ private:
             :   m_spec(spec)
             ,   m_realized_lookahead_cursor(0)
             ,   m_parent_node(NULL)
+            ,   m_depth(0)
 <|      if(0)
 <|      if(is_defined(generate_debug_spew_code))
         {

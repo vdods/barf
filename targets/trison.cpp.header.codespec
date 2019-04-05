@@ -58,6 +58,9 @@ public:
         /// Indicates that the parse was halted because the number of realized
         /// lookaheads exceeded the max allowable lookahead count (NPDA target only).
         PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT,
+        /// Indicates that the parse was halted because the depth of the parse tree
+        /// exceeded the max allowable parse tree depth (NPDA target only).
+        PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH,
         /// Indicates that the parse didn't complete because of some internal error.
         PRC_INTERNAL_ERROR
     }; // end of enum <{class_name}::ParserReturnCode
@@ -184,10 +187,23 @@ public:
     /// (this is not the theoretical maximum for the grammar/npda, it's the maximum
     /// only for the states the parser has actually encountered).
     std::size_t MaxRealizedLookaheadCount () const;
+    /// Returns the maximum parse tree depth that may occur before the
+    /// PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH error is generated.  The default
+    /// is set by the default_max_allowable_parse_tree_depth directive, which is
+    /// documented in trison.cpp.targetspec.  A negative value means that there is
+    /// no limit.
+    std::int64_t MaxAllowableParseTreeDepth () const;
+    /// Returns the maximum parse tree depth achieved in any parser decision so far
+    /// (this is not the theoretical maximum for the grammar/npda, it's the maximum
+    /// only for the states the parser has actually encountered).
+    std::uint32_t MaxRealizedParseTreeDepth () const;
 
     /// Sets the maximum allowable lookahead count.  The initial value is given by
     /// the default_max_allowable_lookahead_count directive defined in trison.cpp.targetspec.
     void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
+    /// Sets the maximum allowable parse tree depth.  The initial value is given by
+    /// the default_max_allowable_parse_tree_depth directive defined in trison.cpp.targetspec.
+    void SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth);
 
 <|  if(is_defined(generate_debug_spew_code))
     /// Bitflag enums for granular specification of debug spew.
@@ -307,6 +323,7 @@ private:
     // ///////////////////////////////////////////////////////////////////////
 
     std::int64_t m_max_allowable_lookahead_count;
+    std::int64_t m_max_allowable_parse_tree_depth;
 
 <|  if(is_defined(generate_debug_spew_code))
     // debug spew methods
