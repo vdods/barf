@@ -9,6 +9,8 @@ project(barf)
 set(PROJECT_VERSION "2.0.0-dev")
 
 # This includes the reflex and trison source file rules (for generating C++).
+# Other projects that want to define cmake rules for compiling reflex or trison
+# source to C++ should copy the barf/cmake dir into their project and include it.
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(barf)
 
@@ -34,7 +36,7 @@ if(I_MAKE_BARF)
 
     option(SPECIFY_STABLE_BARF_TARGETS_DIR "Enable specification of an alternate targets include path in invocations of the stable reflex and trison binaries (see -I option in reflex and trison help messages)." OFF)
     if(SPECIFY_STABLE_BARF_TARGETS_DIR)
-        find_path(STABLE_BARF_TARGETS_DIR DOC "absolute path to stable targets directory")
+        find_path(STABLE_BARF_TARGETS_DIR DOC "absolute path to stable barf targets directory")
     endif()
 
     if(NOT EXISTS ${STABLE_REFLEX_BINARY})
@@ -56,6 +58,81 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # This is the correct way to detect Ma
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     endif()
 endif()
+
+###############################################################################
+# BARF-development specific functions
+###############################################################################
+
+function(add_reflex_source_dev SOURCE_FILE TARGET_NAME)
+    get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
+    if(NOT (${SOURCE_FILE_EXT} STREQUAL ".reflex"))
+        message(FATAL_ERROR "Source file \"${SOURCE_FILE}\" in call to add_reflex_source_dev does not have extension \".reflex\"")
+    endif()
+    get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
+    get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
+    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/dev)
+    __add_reflex_source__impl(${PROJECT_BINARY_DIR}/bin/reflex ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE ${PROJECT_SOURCE_DIR}/targets ${PROJECT_BINARY_DIR}/dev)
+
+    set(OUTPUT_FILES ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.dot ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.dot)
+    add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+    add_custom_target(clean_${TARGET_NAME} COMMAND rm -f ${OUTPUT_FILES} ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.png ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.png)
+
+    add_custom_target(
+            diff_${TARGET_NAME}
+        DEPENDS
+            ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp
+            ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp
+        COMMAND
+            diff ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp
+        COMMAND
+            diff ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp
+    )
+
+    if(DEFINED DOXYGEN_DOT_EXECUTABLE)
+        add_custom_target(${TARGET_NAME}_dfa_png DEPENDS ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.png)
+        add_custom_target(clean_${TARGET_NAME}_dfa_png COMMAND rm -f ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.png)
+
+        add_custom_target(${TARGET_NAME}_nfa_png DEPENDS ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.png)
+        add_custom_target(clean_${TARGET_NAME}_nfa_png COMMAND rm -f ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.png)
+
+        add_custom_target(${TARGET_NAME}_dot_png DEPENDS ${TARGET_NAME}_dfa_png ${TARGET_NAME}_nfa_png)
+        add_custom_target(clean_${TARGET_NAME}_dot_png DEPENDS clean_${TARGET_NAME}_dfa_png clean_${TARGET_NAME}_nfa_png)
+    endif()
+endfunction()
+
+function(add_trison_source_dev SOURCE_FILE TARGET_NAME)
+    get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
+    if(NOT (${SOURCE_FILE_EXT} STREQUAL ".trison"))
+        message(FATAL_ERROR "Source file \"${SOURCE_FILE}\" in call to add_trison_source_dev does not have extension \".trison\"")
+    endif()
+    get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
+    get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
+    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/dev)
+    __add_trison_source__impl(${PROJECT_BINARY_DIR}/bin/trison ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE ${PROJECT_SOURCE_DIR}/targets ${PROJECT_BINARY_DIR}/dev)
+
+    set(OUTPUT_FILES ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.npda.dot ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.npda.states)
+    add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+    add_custom_target(clean_${TARGET_NAME} COMMAND rm -f ${OUTPUT_FILES})
+
+    add_custom_target(
+            diff_${TARGET_NAME}
+        DEPENDS
+            ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp
+            ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp
+        COMMAND
+            diff ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp
+        COMMAND
+            diff ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp
+    )
+
+    if(DEFINED DOXYGEN_DOT_EXECUTABLE)
+        add_custom_target(${TARGET_NAME}_npda_png DEPENDS ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.npda.png)
+        add_custom_target(clean_${TARGET_NAME}_npda_png COMMAND rm -f ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.npda.png)
+
+        add_custom_target(${TARGET_NAME}_dot_png DEPENDS ${TARGET_NAME}_npda_png)
+        add_custom_target(clean_${TARGET_NAME}_dot_png DEPENDS clean_${TARGET_NAME}_npda_png)
+    endif()
+endfunction()
 
 ###############################################################################
 # Dependencies
@@ -89,12 +166,12 @@ endif()
 #
 
 if(I_MAKE_BARF)
-    add_reflex_source(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex)
-    add_trison_source(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison)
+    add_reflex_source(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex barf_commonlang_scanner)
+    add_trison_source(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison barf_targetspec_parser)
 endif()
 
-add_reflex_source_dev(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex)
-add_trison_source_dev(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison)
+add_reflex_source_dev(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex dev_barf_commonlang_scanner)
+add_trison_source_dev(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison dev_barf_targetspec_parser)
 
 set(barf_commonlang_and_targetspec_SOURCES
     lib/commonlang/barf_commonlang.hpp
@@ -162,12 +239,12 @@ target_link_libraries(barf_core PUBLIC Strict)
 #
 
 if(I_MAKE_BARF)
-    add_reflex_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex)
-    add_trison_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison)
+    add_reflex_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex barf_preprocessor_scanner)
+    add_trison_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison barf_preprocessor_parser)
 endif()
 
-add_reflex_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex)
-add_trison_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison)
+add_reflex_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex dev_barf_preprocessor_scanner)
+add_trison_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison dev_barf_preprocessor_parser)
 
 set(barf_preprocessor_SOURCES
     lib/preprocessor/barf_preprocessor.hpp
@@ -197,10 +274,10 @@ target_link_libraries(barf_preprocessor PUBLIC Strict barf_core)
 #
 
 if(I_MAKE_BARF)
-    add_trison_source(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison)
+    add_trison_source(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison barf_regex_parser)
 endif()
 
-add_trison_source_dev(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison)
+add_trison_source_dev(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison dev_barf_regex_parser)
 
 set(barf_regex_SOURCES
     lib/regex/barf_regex.cpp
@@ -247,10 +324,10 @@ target_link_libraries(bpp PUBLIC Strict barf_core barf_preprocessor)
 #
 
 if(I_MAKE_BARF)
-    add_trison_source(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison)
+    add_trison_source(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison reflex_parser)
 endif()
 
-add_trison_source_dev(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison)
+add_trison_source_dev(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison dev_reflex_parser)
 
 set(REFLEX_SOURCES
     app/reflex/reflex.hpp
@@ -277,10 +354,10 @@ target_link_libraries(reflex PUBLIC Strict barf_commonlang_and_targetspec barf_c
 #
 
 if(I_MAKE_BARF)
-    add_trison_source(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison)
+    add_trison_source(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison trison_parser)
 endif()
 
-add_trison_source_dev(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison)
+add_trison_source_dev(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison dev_trison_parser)
 
 set(TRISON_SOURCES
     app/trison/trison.hpp
@@ -318,6 +395,10 @@ install(
 )
 install(
     DIRECTORY targets # This holds all the reflex and trison targets (targetspec and codespec files)
+    DESTINATION barf # This is relative to CMAKE_INSTALL_PREFIX
+)
+install(
+    DIRECTORY cmake # This has all cmake modules for barf
     DESTINATION barf # This is relative to CMAKE_INSTALL_PREFIX
 )
 install(

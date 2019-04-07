@@ -80,65 +80,50 @@ function(__add_reflex_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
     endif()
 endfunction()
 
-function(add_reflex_source SOURCE_FILE)
+# SOURCE_FILE is the .reflex file.  TARGET_NAME is the target that can be invoked to build this particular scanner.
+function(add_reflex_source SOURCE_FILE TARGET_NAME)
+    if(NOT DEFINED REFLEX_BINARY)
+        if(NOT DEFINED STABLE_REFLEX_BINARY)
+            message(FATAL_ERROR "Must specify REFLEX_BINARY or STABLE_REFLEX_BINARY (which is the backup)")
+        endif()
+        set(REFLEX_BINARY ${STABLE_REFLEX_BINARY})
+    endif()
+    if(NOT DEFINED SPECIFY_BARF_TARGETS_DIR)
+        if(NOT DEFINED SPECIFY_STABLE_BARF_TARGETS_DIR)
+            message(FATAL_ERROR "Must specify SPECIFY_BARF_TARGETS_DIR (a bool option) or SPECIFY_STABLE_BARF_TARGETS_DIR (which is the backup)")
+        endif()
+        set(SPECIFY_BARF_TARGETS_DIR ${SPECIFY_STABLE_BARF_TARGETS_DIR})
+    endif()
+    if(SPECIFY_BARF_TARGETS_DIR)
+        if(NOT DEFINED BARF_TARGETS_DIR)
+            if(NOT DEFINED STABLE_BARF_TARGETS_DIR)
+                message(FATAL_ERROR "Must specify BARF_TARGETS_DIR (a bool option) or STABLE_BARF_TARGETS_DIR (which is the backup)")
+            endif()
+            set(BARF_TARGETS_DIR ${STABLE_BARF_TARGETS_DIR})
+        endif()
+    endif()
+
     get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
     if(NOT (${SOURCE_FILE_EXT} STREQUAL ".reflex"))
         message(FATAL_ERROR "Source file \"${SOURCE_FILE}\" in call to add_reflex_source does not have extension \".reflex\"")
     endif()
     get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
     get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    __add_reflex_source__impl(${STABLE_REFLEX_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${SPECIFY_STABLE_BARF_TARGETS_DIR} "${STABLE_BARF_TARGETS_DIR}" ${SOURCE_DIR})
+    __add_reflex_source__impl(${REFLEX_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${SPECIFY_BARF_TARGETS_DIR} "${BARF_TARGETS_DIR}" ${SOURCE_DIR})
 
     set(OUTPUT_FILES ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.dot ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.dot)
-    add_custom_target(${SOURCE_BASENAME} DEPENDS ${OUTPUT_FILES})
-    add_custom_target(clean_${SOURCE_BASENAME} COMMAND rm -f ${OUTPUT_FILES} ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.png ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.png)
+    add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+    add_custom_target(clean_${TARGET_NAME} COMMAND rm -f ${OUTPUT_FILES} ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.png ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.png)
 
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
-        add_custom_target(${SOURCE_BASENAME}_dfa_png DEPENDS ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.png)
-        add_custom_target(clean_${SOURCE_BASENAME}_dfa_png COMMAND rm -f ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.png)
+        add_custom_target(${TARGET_NAME}_dfa_png DEPENDS ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.png)
+        add_custom_target(clean_${TARGET_NAME}_dfa_png COMMAND rm -f ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.png)
 
-        add_custom_target(${SOURCE_BASENAME}_nfa_png DEPENDS ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.png)
-        add_custom_target(clean_${SOURCE_BASENAME}_nfa_png COMMAND rm -f ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.png)
+        add_custom_target(${TARGET_NAME}_nfa_png DEPENDS ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.png)
+        add_custom_target(clean_${TARGET_NAME}_nfa_png COMMAND rm -f ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.png)
 
-        add_custom_target(${SOURCE_BASENAME}_dot_png DEPENDS ${SOURCE_BASENAME}_dfa_png ${SOURCE_BASENAME}_nfa_png)
-        add_custom_target(clean_${SOURCE_BASENAME}_dot_png DEPENDS clean_${SOURCE_BASENAME}_dfa_png clean_${SOURCE_BASENAME}_nfa_png)
-    endif()
-endfunction()
-
-function(add_reflex_source_dev SOURCE_FILE)
-    get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
-    if(NOT (${SOURCE_FILE_EXT} STREQUAL ".reflex"))
-        message(FATAL_ERROR "Source file \"${SOURCE_FILE}\" in call to add_reflex_source_dev does not have extension \".reflex\"")
-    endif()
-    get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
-    get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/dev)
-    __add_reflex_source__impl(${PROJECT_BINARY_DIR}/bin/reflex ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE ${PROJECT_SOURCE_DIR}/targets ${PROJECT_BINARY_DIR}/dev)
-
-    set(OUTPUT_FILES ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.dot ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.dot)
-    add_custom_target(dev_${SOURCE_BASENAME} DEPENDS ${OUTPUT_FILES})
-    add_custom_target(clean_dev_${SOURCE_BASENAME} COMMAND rm -f ${OUTPUT_FILES} ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.png ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.png)
-
-    add_custom_target(
-            diff_dev_${SOURCE_BASENAME}
-        DEPENDS
-            ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp
-            ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp
-        COMMAND
-            diff ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp
-        COMMAND
-            diff ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp
-    )
-
-    if(DEFINED DOXYGEN_DOT_EXECUTABLE)
-        add_custom_target(dev_${SOURCE_BASENAME}_dfa_png DEPENDS ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.png)
-        add_custom_target(clean_dev_${SOURCE_BASENAME}_dfa_png COMMAND rm -f ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.png)
-
-        add_custom_target(dev_${SOURCE_BASENAME}_nfa_png DEPENDS ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.png)
-        add_custom_target(clean_dev_${SOURCE_BASENAME}_nfa_png COMMAND rm -f ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.png)
-
-        add_custom_target(dev_${SOURCE_BASENAME}_dot_png DEPENDS dev_${SOURCE_BASENAME}_dfa_png dev_${SOURCE_BASENAME}_nfa_png)
-        add_custom_target(clean_dev_${SOURCE_BASENAME}_dot_png DEPENDS clean_dev_${SOURCE_BASENAME}_dfa_png clean_dev_${SOURCE_BASENAME}_nfa_png)
+        add_custom_target(${TARGET_NAME}_dot_png DEPENDS ${TARGET_NAME}_dfa_png ${TARGET_NAME}_nfa_png)
+        add_custom_target(clean_${TARGET_NAME}_dot_png DEPENDS clean_${TARGET_NAME}_dfa_png clean_${TARGET_NAME}_nfa_png)
     endif()
 endfunction()
 
@@ -215,59 +200,46 @@ function(__add_trison_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
     endif()
 endfunction()
 
-function(add_trison_source SOURCE_FILE)
+# SOURCE_FILE is the .trison file.  TARGET_NAME is the target that can be invoked to build this particular parser.
+function(add_trison_source SOURCE_FILE TARGET_NAME)
+    if(NOT DEFINED TRISON_BINARY)
+        if(NOT DEFINED STABLE_TRISON_BINARY)
+            message(FATAL_ERROR "Must specify TRISON_BINARY or STABLE_TRISON_BINARY (which is the backup)")
+        endif()
+        set(TRISON_BINARY ${STABLE_TRISON_BINARY})
+    endif()
+    if(NOT DEFINED SPECIFY_BARF_TARGETS_DIR)
+        if(NOT DEFINED SPECIFY_STABLE_BARF_TARGETS_DIR)
+            message(FATAL_ERROR "Must specify SPECIFY_BARF_TARGETS_DIR (a bool option) or SPECIFY_STABLE_BARF_TARGETS_DIR (which is the backup)")
+        endif()
+        set(SPECIFY_BARF_TARGETS_DIR ${SPECIFY_STABLE_BARF_TARGETS_DIR})
+    endif()
+    if(SPECIFY_BARF_TARGETS_DIR)
+        if(NOT DEFINED BARF_TARGETS_DIR)
+            if(NOT DEFINED STABLE_BARF_TARGETS_DIR)
+                message(FATAL_ERROR "Must specify BARF_TARGETS_DIR (a bool option) or STABLE_BARF_TARGETS_DIR (which is the backup)")
+            endif()
+            set(BARF_TARGETS_DIR ${STABLE_BARF_TARGETS_DIR})
+        endif()
+    endif()
+
     get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
     if(NOT (${SOURCE_FILE_EXT} STREQUAL ".trison"))
         message(FATAL_ERROR "Source file \"${SOURCE_FILE}\" in call to add_trison_source does not have extension \".trison\"")
     endif()
     get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
     get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    __add_trison_source__impl(${STABLE_TRISON_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${SPECIFY_STABLE_BARF_TARGETS_DIR} "${STABLE_BARF_TARGETS_DIR}" ${SOURCE_DIR})
+    __add_trison_source__impl(${TRISON_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${SPECIFY_BARF_TARGETS_DIR} "${BARF_TARGETS_DIR}" ${SOURCE_DIR})
 
     set(OUTPUT_FILES ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.dot ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.states)
-    add_custom_target(${SOURCE_BASENAME} DEPENDS ${OUTPUT_FILES})
-    add_custom_target(clean_${SOURCE_BASENAME} COMMAND rm -f ${OUTPUT_FILES})
+    add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+    add_custom_target(clean_${TARGET_NAME} COMMAND rm -f ${OUTPUT_FILES})
 
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
-        add_custom_target(${SOURCE_BASENAME}_npda_png DEPENDS ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.png)
-        add_custom_target(clean_${SOURCE_BASENAME}_npda_png COMMAND rm -f ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.png)
+        add_custom_target(${TARGET_NAME}_npda_png DEPENDS ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.png)
+        add_custom_target(clean_${TARGET_NAME}_npda_png COMMAND rm -f ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.png)
 
-        add_custom_target(${SOURCE_BASENAME}_dot_png DEPENDS ${SOURCE_BASENAME}_npda_png)
-        add_custom_target(clean_${SOURCE_BASENAME}_dot_png DEPENDS clean_${SOURCE_BASENAME}_npda_png)
+        add_custom_target(${TARGET_NAME}_dot_png DEPENDS ${TARGET_NAME}_npda_png)
+        add_custom_target(clean_${TARGET_NAME}_dot_png DEPENDS clean_${TARGET_NAME}_npda_png)
     endif()
 endfunction()
-
-function(add_trison_source_dev SOURCE_FILE)
-    get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
-    if(NOT (${SOURCE_FILE_EXT} STREQUAL ".trison"))
-        message(FATAL_ERROR "Source file \"${SOURCE_FILE}\" in call to add_trison_source_dev does not have extension \".trison\"")
-    endif()
-    get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
-    get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/dev)
-    __add_trison_source__impl(${PROJECT_BINARY_DIR}/bin/trison ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE ${PROJECT_SOURCE_DIR}/targets ${PROJECT_BINARY_DIR}/dev)
-
-    set(OUTPUT_FILES ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.npda.dot ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.npda.states)
-    add_custom_target(dev_${SOURCE_BASENAME} DEPENDS ${OUTPUT_FILES})
-    add_custom_target(clean_dev_${SOURCE_BASENAME} COMMAND rm -f ${OUTPUT_FILES})
-
-    add_custom_target(
-            diff_dev_${SOURCE_BASENAME}
-        DEPENDS
-            ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp
-            ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp
-        COMMAND
-            diff ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp
-        COMMAND
-            diff ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp
-    )
-
-    if(DEFINED DOXYGEN_DOT_EXECUTABLE)
-        add_custom_target(dev_${SOURCE_BASENAME}_npda_png DEPENDS ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.npda.png)
-        add_custom_target(clean_dev_${SOURCE_BASENAME}_npda_png COMMAND rm -f ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.npda.png)
-
-        add_custom_target(dev_${SOURCE_BASENAME}_dot_png DEPENDS dev_${SOURCE_BASENAME}_npda_png)
-        add_custom_target(clean_dev_${SOURCE_BASENAME}_dot_png DEPENDS clean_dev_${SOURCE_BASENAME}_npda_png)
-    endif()
-endfunction()
-
