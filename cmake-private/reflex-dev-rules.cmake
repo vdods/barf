@@ -2,6 +2,9 @@
 # reflex-development specific functions
 ###############################################################################
 
+# This is similar to reflex_add_source, but runs against the reflex built in
+# the project binary dir and the targets dir within this project source dir
+# and adds some other useful targets.  Only to be used for barf development.
 function(reflex_add_source_dev SOURCE_FILE TARGET_NAME)
     get_filename_component(SOURCE_FILE_EXT ${SOURCE_FILE} EXT)
     if(NOT (${SOURCE_FILE_EXT} STREQUAL ".reflex"))
@@ -10,7 +13,7 @@ function(reflex_add_source_dev SOURCE_FILE TARGET_NAME)
     get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
     get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
     file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/dev)
-    __reflex_add_source__impl(${PROJECT_BINARY_DIR}/bin/reflex ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE ${PROJECT_SOURCE_DIR}/targets ${PROJECT_BINARY_DIR}/dev)
+    __reflex_add_source__impl(${PROJECT_BINARY_DIR}/bin/reflex ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE ${PROJECT_SOURCE_DIR}/targets ${PROJECT_BINARY_DIR}/dev force_${TARGET_NAME})
 
     set(OUTPUT_FILES ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.cpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.hpp ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.dfa.dot ${PROJECT_BINARY_DIR}/dev/${SOURCE_BASENAME}.nfa.dot)
     add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})

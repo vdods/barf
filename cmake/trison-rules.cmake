@@ -3,8 +3,8 @@
 # named targets for them and for diff-based tests for them.
 ###############################################################################
 
-# Don't use this function directly.  Use one of trison_add_source, trison_add_source_dev instead.
-function(__trison_add_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME SPECIFY_TARGETS_DIR TARGETS_DIR OUTPUT_DIR)
+# Don't use this function directly.  Use trison_add_source instead.
+function(__trison_add_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME SPECIFY_TARGETS_DIR TARGETS_DIR OUTPUT_DIR FORCE_TARGET_NAME)
     if(NOT TARGETS_DIR)
         #message(FATAL_ERROR "TARGETS_DIR not specified")
         execute_process(
@@ -59,6 +59,23 @@ function(__trison_add_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
             ${DEPENDENCIES}
     )
 
+    # This target forces the build to happen -- command should be identical to the actual build rule above.
+    add_custom_target(
+        ${FORCE_TARGET_NAME}
+        COMMAND
+            ${TRISON_BINARY}
+            ${TARGETS_DIR_OPTION}
+            ${SOURCE_DIR}/${SOURCE_BASENAME}.trison
+            -o ${OUTPUT_DIR}
+            --generate-npda-dot-graph ${SOURCE_BASENAME}.npda.dot
+            --generate-npda-states-file ${SOURCE_BASENAME}.npda.states
+        # Ideally the .trison file would be MAIN_DEPENDENCY, but for some reason this causes targets
+        # that depend on that file to be built, even if not called for.
+        DEPENDS
+            ${SOURCE_DIR}/${SOURCE_BASENAME}.trison
+            ${DEPENDENCIES}
+    )
+
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
         add_custom_command(
             OUTPUT
@@ -79,23 +96,14 @@ endfunction()
 # SOURCE_FILE is the .trison file.  TARGET_NAME is the target that can be invoked to build this particular parser.
 function(trison_add_source SOURCE_FILE TARGET_NAME)
     if(NOT DEFINED TRISON_BINARY)
-        if(NOT DEFINED STABLE_TRISON_BINARY)
-            message(FATAL_ERROR "Must specify TRISON_BINARY or STABLE_TRISON_BINARY (which is the backup)")
-        endif()
-        set(TRISON_BINARY ${STABLE_TRISON_BINARY})
+        message(FATAL_ERROR "Must specify TRISON_BINARY")
     endif()
     if(NOT DEFINED SPECIFY_BARF_TARGETS_DIR)
-        if(NOT DEFINED SPECIFY_STABLE_BARF_TARGETS_DIR)
-            message(FATAL_ERROR "Must specify SPECIFY_BARF_TARGETS_DIR (a bool option) or SPECIFY_STABLE_BARF_TARGETS_DIR (which is the backup)")
-        endif()
-        set(SPECIFY_BARF_TARGETS_DIR ${SPECIFY_STABLE_BARF_TARGETS_DIR})
+        message(FATAL_ERROR "Must specify SPECIFY_BARF_TARGETS_DIR (a bool option)")
     endif()
     if(SPECIFY_BARF_TARGETS_DIR)
         if(NOT DEFINED BARF_TARGETS_DIR)
-            if(NOT DEFINED STABLE_BARF_TARGETS_DIR)
-                message(FATAL_ERROR "Must specify BARF_TARGETS_DIR (a bool option) or STABLE_BARF_TARGETS_DIR (which is the backup)")
-            endif()
-            set(BARF_TARGETS_DIR ${STABLE_BARF_TARGETS_DIR})
+            message(FATAL_ERROR "If SPECIFY_BARF_TARGETS_DIR is set, then must specify BARF_TARGETS_DIR (a bool option)")
         endif()
     endif()
 
@@ -105,7 +113,7 @@ function(trison_add_source SOURCE_FILE TARGET_NAME)
     endif()
     get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
     get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    __trison_add_source__impl(${TRISON_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${SPECIFY_BARF_TARGETS_DIR} "${BARF_TARGETS_DIR}" ${SOURCE_DIR})
+    __trison_add_source__impl(${TRISON_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${SPECIFY_BARF_TARGETS_DIR} "${BARF_TARGETS_DIR}" ${SOURCE_DIR} force_${TARGET_NAME})
 
     set(OUTPUT_FILES ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.dot ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.states)
     add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})

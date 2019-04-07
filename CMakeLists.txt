@@ -20,7 +20,7 @@ include(./cmake-private/trison-dev-rules.cmake)
 # This is the root dir for files to be installed (notably the barf target files)
 # This particular value is used as a #define to the various libs and executables
 # so they know where the targets dir is.
-set(BARF_TARGETS_DIR ${CMAKE_INSTALL_PREFIX}/lib/barf/targets)
+set(HARDCODED_BARF_TARGETS_DIR ${CMAKE_INSTALL_PREFIX}/lib/barf/targets)
 
 # This indicates all executables should be put in the bin subdir of the build dir.
 # Normally this wouldn't be done, but there's a stupid bug in find_program, where
@@ -34,22 +34,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 # if the corresponding reflex or trison source (or other source files) changes.
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM true)
 
-option(I_MAKE_BARF "Enable (and require) BARF developer configuration options.  Not necessary to simply build this package from source." OFF)
+option(I_MAKE_BARF "Enable (and require) barf developer configuration options; requires having a stable version of barf installed already, which will be used to build the barf parsers and scanners in a self-hosting manner.  Not necessary to simply build this package from source." OFF)
 if(I_MAKE_BARF)
-    find_program(STABLE_REFLEX_BINARY reflex DOC "absolute path to stable reflex binary")
-    find_program(STABLE_TRISON_BINARY trison DOC "absolute path to stable trison binary")
-
-    option(SPECIFY_STABLE_BARF_TARGETS_DIR "Enable specification of an alternate targets include path in invocations of the stable reflex and trison binaries (see -I option in reflex and trison help messages)." OFF)
-    if(SPECIFY_STABLE_BARF_TARGETS_DIR)
-        find_path(STABLE_BARF_TARGETS_DIR DOC "absolute path to stable barf targets directory")
-    endif()
-
-    if(NOT EXISTS ${STABLE_REFLEX_BINARY})
-        message(FATAL_ERROR "If I_MAKE_BARF is ON, then STABLE_REFLEX_BINARY must be set.")
-    endif()
-    if(NOT EXISTS ${STABLE_TRISON_BINARY})
-        message(FATAL_ERROR "If I_MAKE_BARF is ON, then STABLE_TRISON_BINARY must be set.")
-    endif()
+    find_package(barf REQUIRED)
 endif()
 
 # This sets the DOXYGEN_EXECUTABLE and DOXYGEN_DOT_EXECUTABLE vars.
@@ -126,7 +113,7 @@ set(barf_commonlang_and_targetspec_SOURCES
 )
 
 add_library(barf_commonlang_and_targetspec ${barf_commonlang_and_targetspec_SOURCES})
-target_compile_definitions(barf_commonlang_and_targetspec PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" BARF_TARGETS_DIR="${BARF_TARGETS_DIR}")
+target_compile_definitions(barf_commonlang_and_targetspec PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
 target_include_directories(barf_commonlang_and_targetspec PUBLIC ${PROJECT_SOURCE_DIR}/lib/commonlang)
 target_include_directories(barf_commonlang_and_targetspec PUBLIC ${PROJECT_SOURCE_DIR}/lib/targetspec)
 target_link_libraries(barf_commonlang_and_targetspec PUBLIC Strict barf_core barf_preprocessor)
@@ -167,7 +154,7 @@ set(barf_core_SOURCES
 )
 
 add_library(barf_core ${barf_core_SOURCES})
-target_compile_definitions(barf_core PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" BARF_TARGETS_DIR="${BARF_TARGETS_DIR}")
+target_compile_definitions(barf_core PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
 target_include_directories(barf_core PUBLIC ${PROJECT_SOURCE_DIR}/lib/core)
 target_link_libraries(barf_core PUBLIC Strict)
 
@@ -202,7 +189,7 @@ set(barf_preprocessor_SOURCES
 )
 
 add_library(barf_preprocessor ${barf_preprocessor_SOURCES})
-target_compile_definitions(barf_preprocessor PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" BARF_TARGETS_DIR="${BARF_TARGETS_DIR}")
+target_compile_definitions(barf_preprocessor PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
 target_include_directories(barf_preprocessor PUBLIC ${PROJECT_SOURCE_DIR}/lib/preprocessor)
 target_link_libraries(barf_preprocessor PUBLIC Strict barf_core)
 
@@ -233,7 +220,7 @@ set(barf_regex_SOURCES
 )
 
 add_library(barf_regex ${barf_regex_SOURCES})
-target_compile_definitions(barf_regex PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" BARF_TARGETS_DIR="${BARF_TARGETS_DIR}")
+target_compile_definitions(barf_regex PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
 target_include_directories(barf_regex PUBLIC ${PROJECT_SOURCE_DIR}/lib/regex)
 target_link_libraries(barf_regex PUBLIC Strict barf_core)
 
@@ -252,7 +239,7 @@ set(BPP_SOURCES
     app/bpp/bpp_options.hpp
 )
 add_executable(bpp ${BPP_SOURCES})
-target_compile_definitions(bpp PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" BARF_TARGETS_DIR="${BARF_TARGETS_DIR}")
+target_compile_definitions(bpp PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
 target_include_directories(bpp PUBLIC ${PROJECT_SOURCE_DIR}/app/bpp)
 target_link_libraries(bpp PUBLIC Strict barf_core barf_preprocessor)
 
@@ -282,7 +269,7 @@ set(REFLEX_SOURCES
     app/reflex/reflex_parser.trison
 )
 add_executable(reflex ${REFLEX_SOURCES})
-target_compile_definitions(reflex PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" BARF_TARGETS_DIR="${BARF_TARGETS_DIR}")
+target_compile_definitions(reflex PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
 target_include_directories(reflex PUBLIC ${PROJECT_SOURCE_DIR}/app/reflex)
 target_link_libraries(reflex PUBLIC Strict barf_commonlang_and_targetspec barf_core barf_preprocessor barf_regex)
 
@@ -318,7 +305,7 @@ set(TRISON_SOURCES
     app/trison/trison_parser.trison
 )
 add_executable(trison ${TRISON_SOURCES})
-target_compile_definitions(trison PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" BARF_TARGETS_DIR="${BARF_TARGETS_DIR}")
+target_compile_definitions(trison PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
 target_include_directories(trison PUBLIC ${PROJECT_SOURCE_DIR}/app/trison)
 target_link_libraries(trison PUBLIC Strict barf_commonlang_and_targetspec barf_core barf_preprocessor)
 
@@ -361,6 +348,10 @@ if(I_MAKE_BARF)
     add_custom_target(all_parsers DEPENDS barf_preprocessor_parser barf_regex_parser barf_targetspec_parser reflex_parser trison_parser)
     add_custom_target(all_scanners DEPENDS barf_commonlang_scanner barf_preprocessor_scanner)
     add_custom_target(all_thingies DEPENDS all_parsers all_scanners)
+
+    add_custom_target(force_all_parsers DEPENDS force_barf_preprocessor_parser force_barf_regex_parser force_barf_targetspec_parser force_reflex_parser trison_parser)
+    add_custom_target(force_all_scanners DEPENDS force_barf_commonlang_scanner force_barf_preprocessor_scanner)
+    add_custom_target(force_all_thingies DEPENDS force_all_parsers force_all_scanners)
 
     add_custom_target(clean_all_parsers DEPENDS clean_barf_preprocessor_parser clean_barf_regex_parser clean_barf_targetspec_parser clean_reflex_parser clean_trison_parser)
     add_custom_target(clean_all_scanners DEPENDS clean_barf_commonlang_scanner clean_barf_preprocessor_scanner)

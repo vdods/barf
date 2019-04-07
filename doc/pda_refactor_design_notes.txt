@@ -1247,6 +1247,10 @@ which includes the top element.
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Have each tool have commands which determine all source files (i.e. dependencies) and all
             files that will be output.  This will make it easier to determine input/outputs in e.g. cmake.
+            This might be more trouble than it's worth, since the codespec files can include arbitrary
+            files which can depend on decisions made based on the input.  So essentially the only way
+            to implement this is to do a "dry run" and see which files are read/included, and which
+            files would be written to.
         -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
             This should probably have to do with the output directory option of reflex/trison.
             NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
@@ -1265,9 +1269,9 @@ which includes the top element.
         -   Add a without_line_directives directive to targetspec.
         -   Make an enum for rule associativity and a string table for it.
         -   CMake stuff
-            -   Make force* targets.  Make doxygen-doc-generating targets.
+            x   Make force* targets.  Make doxygen-doc-generating targets.
             -   Make targets for building the examples (probably need to clean up the examples)
-            -   Get the distribution packaging working
+            x   Get the distribution packaging working
         x   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
             (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
         -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
@@ -1641,12 +1645,16 @@ which includes the top element.
     -   Nice to have
         -   Have each tool have commands which determine all source files (i.e. dependencies) and all
             files that will be output.  This will make it easier to determine input/outputs in e.g. cmake.
+            This might be more trouble than it's worth, since the codespec files can include arbitrary
+            files which can depend on decisions made based on the input.  So essentially the only way
+            to implement this is to do a "dry run" and see which files are read/included, and which
+            files would be written to.
         -   CMake stuff
-            -   Make force* targets.
+            x   Make force* targets.
             x   Make doxygen-doc-generating targets.
             -   Make doxygen docs actually render correctly (e.g. table of contents is wrong)
             -   Make targets for building the examples (probably need to clean up the examples)
-            -   Get the distribution packaging working (CPack?)
+            x   Get the distribution packaging working (CPack?)
         -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
             specifiers to everything that should not throw.
     -   Low priority nice-to-have

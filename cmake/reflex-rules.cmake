@@ -3,8 +3,8 @@
 # named targets for them and for diff-based tests for them.
 ###############################################################################
 
-# Don't use this function directly.  Use one of reflex_add_source, reflex_add_source_dev_dev instead.
-function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPECIFY_TARGETS_DIR TARGETS_DIR OUTPUT_DIR)
+# Don't use this function directly.  Use reflex_add_source instead.
+function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPECIFY_TARGETS_DIR TARGETS_DIR OUTPUT_DIR FORCE_TARGET_NAME)
     if(NOT TARGETS_DIR)
         #message(FATAL_ERROR "TARGETS_DIR not specified")
         execute_process(
@@ -52,6 +52,23 @@ function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
             ${DEPENDENCIES}
     )
 
+    # This target forces the build to happen -- command should be identical to the actual build rule above.
+    add_custom_target(
+        ${FORCE_TARGET_NAME}
+        COMMAND
+            ${REFLEX_BINARY}
+            ${TARGETS_DIR_OPTION}
+            ${SOURCE_DIR}/${SOURCE_BASENAME}.reflex
+            -o ${OUTPUT_DIR}
+            --generate-nfa-dot-graph ${SOURCE_BASENAME}.nfa.dot
+            --generate-dfa-dot-graph ${SOURCE_BASENAME}.dfa.dot
+        # Ideally the .reflex file would be MAIN_DEPENDENCY, but for some reason this causes targets
+        # that depend on that file to be built, even if not called for.
+        DEPENDS
+            ${SOURCE_DIR}/${SOURCE_BASENAME}.reflex
+            ${DEPENDENCIES}
+    )
+
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
         add_custom_command(
             OUTPUT
@@ -83,23 +100,14 @@ endfunction()
 # SOURCE_FILE is the .reflex file.  TARGET_NAME is the target that can be invoked to build this particular scanner.
 function(reflex_add_source SOURCE_FILE TARGET_NAME)
     if(NOT DEFINED REFLEX_BINARY)
-        if(NOT DEFINED STABLE_REFLEX_BINARY)
-            message(FATAL_ERROR "Must specify REFLEX_BINARY or STABLE_REFLEX_BINARY (which is the backup)")
-        endif()
-        set(REFLEX_BINARY ${STABLE_REFLEX_BINARY})
+        message(FATAL_ERROR "Must specify REFLEX_BINARY")
     endif()
     if(NOT DEFINED SPECIFY_BARF_TARGETS_DIR)
-        if(NOT DEFINED SPECIFY_STABLE_BARF_TARGETS_DIR)
-            message(FATAL_ERROR "Must specify SPECIFY_BARF_TARGETS_DIR (a bool option) or SPECIFY_STABLE_BARF_TARGETS_DIR (which is the backup)")
-        endif()
-        set(SPECIFY_BARF_TARGETS_DIR ${SPECIFY_STABLE_BARF_TARGETS_DIR})
+        message(FATAL_ERROR "Must specify SPECIFY_BARF_TARGETS_DIR (a bool option)")
     endif()
     if(SPECIFY_BARF_TARGETS_DIR)
         if(NOT DEFINED BARF_TARGETS_DIR)
-            if(NOT DEFINED STABLE_BARF_TARGETS_DIR)
-                message(FATAL_ERROR "Must specify BARF_TARGETS_DIR (a bool option) or STABLE_BARF_TARGETS_DIR (which is the backup)")
-            endif()
-            set(BARF_TARGETS_DIR ${STABLE_BARF_TARGETS_DIR})
+            message(FATAL_ERROR "If SPECIFY_BARF_TARGETS_DIR is set, then must specify BARF_TARGETS_DIR (a bool option)")
         endif()
     endif()
 
@@ -109,7 +117,7 @@ function(reflex_add_source SOURCE_FILE TARGET_NAME)
     endif()
     get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
     get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    __reflex_add_source__impl(${REFLEX_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${SPECIFY_BARF_TARGETS_DIR} "${BARF_TARGETS_DIR}" ${SOURCE_DIR})
+    __reflex_add_source__impl(${REFLEX_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${SPECIFY_BARF_TARGETS_DIR} "${BARF_TARGETS_DIR}" ${SOURCE_DIR} force_${TARGET_NAME})
 
     set(OUTPUT_FILES ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.dot ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.dot)
     add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})
