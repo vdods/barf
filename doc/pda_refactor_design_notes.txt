@@ -1245,6 +1245,8 @@ which includes the top element.
             be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
     -   Nice to have
         -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
+        -   Have each tool have commands which determine all source files (i.e. dependencies) and all
+            files that will be output.  This will make it easier to determine input/outputs in e.g. cmake.
         -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
             This should probably have to do with the output directory option of reflex/trison.
             NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
@@ -1637,9 +1639,12 @@ which includes the top element.
     steel repo to work against the latest version of BARF.
 -   What TODOs should perhaps go into the BARF 2.0 release?
     -   Nice to have
+        -   Have each tool have commands which determine all source files (i.e. dependencies) and all
+            files that will be output.  This will make it easier to determine input/outputs in e.g. cmake.
         -   CMake stuff
             -   Make force* targets.
-            -   Make doxygen-doc-generating targets.
+            x   Make doxygen-doc-generating targets.
+            -   Make doxygen docs actually render correctly (e.g. table of contents is wrong)
             -   Make targets for building the examples (probably need to clean up the examples)
             -   Get the distribution packaging working (CPack?)
         -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
