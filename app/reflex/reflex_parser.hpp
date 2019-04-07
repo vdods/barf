@@ -390,11 +390,20 @@ private:
 
     struct Grammar_
     {
+        // These values are prescribed within trison and can't be changed.
+        enum Associativity : std::uint32_t
+        {
+            ASSOC_LEFT      = 0, // %left
+            ASSOC_NONASSOC  = 1, // %nonassoc
+            ASSOC_RIGHT     = 2  // %right
+        };
+
         // TODO: Rename to Precedence
         struct Precedence_
         {
-            std::int32_t    m_level;                // default precedence is 0, higher values have higher precedence.
-            std::uint32_t   m_associativity_index;  // 0 for %left, 1 for %nonassoc, and 2 for %right.
+            // Default precedence is always 0, higher values have higher precedence.
+            std::int32_t    m_level;
+            Associativity   m_associativity;
             char const *    m_name;
         }; // end of struct Parser::Grammar_::Precedence_
 
@@ -412,6 +421,8 @@ private:
         // Returns true iff lhs_rule_index denotes a rule with a higher precedence than that denoted by rhs_rule_index.
         static bool CompareRuleByPrecedence_ (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index);
 
+        static char const *const    ms_associativity_string_table_[];
+        static std::size_t const    ms_associativity_count_;
         // TODO: rename to PRECEDENCE_TABLE and RULE_TABLE ?
         static Precedence_ const    ms_precedence_table_[];
         static std::size_t const    ms_precedence_count_;
@@ -948,4 +959,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 952 "reflex_parser.hpp"
+#line 963 "reflex_parser.hpp"

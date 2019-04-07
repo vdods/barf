@@ -407,7 +407,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|              end_if
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
-                if (reduction_rule_precedence.m_associativity_index == 2) // 2 is right-associative
+                if (reduction_rule_precedence.m_associativity == Grammar_::ASSOC_RIGHT)
                 {
 <|                  if(is_defined(generate_debug_spew_code))
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
@@ -432,12 +432,12 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity index: " <<
- reduction_rule_precedence.m_associativity_index << '\n')
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity: " <<
+ Grammar_::ms_associativity_string_table_[reduction_rule_precedence.m_associativity] << '\n')
 <|              end_if
-                switch (reduction_rule_precedence.m_associativity_index)
+                switch (reduction_rule_precedence.m_associativity)
                 {
-                    case 0: // 0 is left-associative
+                    case Grammar_::ASSOC_LEFT:
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
 <|                      end_if
@@ -446,7 +446,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                         conflict_resolved = true;
                         break;
 
-                    case 1: // 1 is non-associative
+                    case Grammar_::ASSOC_NONASSOC:
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
 <|                      end_if
@@ -503,7 +503,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                         conflict_resolved = true;
                         break;
 
-                    case 2: // 2 is right-associative
+                    case Grammar_::ASSOC_RIGHT:
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
 <|                      end_if
@@ -526,7 +526,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|              end_if
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
-                if (reduction_rule_precedence.m_associativity_index == 0) // 0 is left-associative
+                if (reduction_rule_precedence.m_associativity == Grammar_::ASSOC_LEFT)
                 {
 <|                  if(is_defined(generate_debug_spew_code))
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")

@@ -1267,7 +1267,7 @@ which includes the top element.
             -   Probably use unique_ptr to formalize ownership and simplify pointer management,
                 especially for the logic surrounding ParseStackTreeNode_, e.g. in RemoveBranchIfNotTrunk
         -   Add a without_line_directives directive to targetspec.
-        -   Make an enum for rule associativity and a string table for it.
+        x   Make an enum for rule associativity and a string table for it.
         -   CMake stuff
             x   Make force* targets.  Make doxygen-doc-generating targets.
             -   Make targets for building the examples (probably need to clean up the examples)
@@ -1663,4 +1663,4 @@ which includes the top element.
             NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
             so defer for later.
         -   Add a without_line_directives directive to targetspec.
-        -   Make an enum for rule associativity and a string table for it.
+        x   Make an enum for rule associativity and a string table for it.

@@ -975,7 +975,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
  << "        Case 2; REDUCE <= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
-                if (reduction_rule_precedence.m_associativity_index == 2) // 2 is right-associative
+                if (reduction_rule_precedence.m_associativity == Grammar_::ASSOC_RIGHT)
                 {
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
@@ -1005,11 +1005,11 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1008 "barf_preprocessor_parser.cpp"
- << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity index: " <<
- reduction_rule_precedence.m_associativity_index << '\n')
-                switch (reduction_rule_precedence.m_associativity_index)
+ << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity: " <<
+ Grammar_::ms_associativity_string_table_[reduction_rule_precedence.m_associativity] << '\n')
+                switch (reduction_rule_precedence.m_associativity)
                 {
-                    case 0: // 0 is left-associative
+                    case Grammar_::ASSOC_LEFT:
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
@@ -1020,7 +1020,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         conflict_resolved = true;
                         break;
 
-                    case 1: // 1 is non-associative
+                    case Grammar_::ASSOC_NONASSOC:
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
@@ -1079,7 +1079,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         conflict_resolved = true;
                         break;
 
-                    case 2: // 2 is right-associative
+                    case Grammar_::ASSOC_RIGHT:
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
@@ -1106,7 +1106,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
  << "        Case 4; REDUCE >= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
-                if (reduction_rule_precedence.m_associativity_index == 0) // 0 is left-associative
+                if (reduction_rule_precedence.m_associativity == Grammar_::ASSOC_LEFT)
                 {
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
@@ -3467,17 +3467,27 @@ bool Parser::Grammar_::CompareRuleByPrecedence_ (std::uint32_t lhs_rule_index, s
         return lhs_rule_index < rhs_rule_index;
 }
 
+// These values are prescribed within trison and can't be changed.
+char const *const Parser::Grammar_::ms_associativity_string_table_[] =
+{
+    "%left",
+    "%nonassoc",
+    "%right",
+};
+
+std::size_t const Parser::Grammar_::ms_associativity_count_ = sizeof(Parser::Grammar_::ms_associativity_string_table_) / sizeof(*Parser::Grammar_::ms_associativity_string_table_);
+
 Parser::Grammar_::Precedence_ const Parser::Grammar_::ms_precedence_table_[] =
 {
-    { 0, 0, "DEFAULT_" },
-    { 1, 0, "LOGICAL_OR" },
-    { 2, 0, "LOGICAL_AND" },
-    { 3, 0, "EQUALITY" },
-    { 4, 0, "COMPARISON" },
-    { 5, 0, "CONCATENATION" },
-    { 6, 0, "ADDITION" },
-    { 7, 0, "MULTIPLICATION" },
-    { 8, 2, "UNARY" }
+    { 0, Parser::Grammar_::Associativity(0), "DEFAULT_" },
+    { 1, Parser::Grammar_::Associativity(0), "LOGICAL_OR" },
+    { 2, Parser::Grammar_::Associativity(0), "LOGICAL_AND" },
+    { 3, Parser::Grammar_::Associativity(0), "EQUALITY" },
+    { 4, Parser::Grammar_::Associativity(0), "COMPARISON" },
+    { 5, Parser::Grammar_::Associativity(0), "CONCATENATION" },
+    { 6, Parser::Grammar_::Associativity(0), "ADDITION" },
+    { 7, Parser::Grammar_::Associativity(0), "MULTIPLICATION" },
+    { 8, Parser::Grammar_::Associativity(2), "UNARY" }
 };
 
 std::size_t const Parser::Grammar_::ms_precedence_count_ = sizeof(Parser::Grammar_::ms_precedence_table_) / sizeof(*Parser::Grammar_::ms_precedence_table_);
@@ -5399,4 +5409,4 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 5403 "barf_preprocessor_parser.cpp"
+#line 5413 "barf_preprocessor_parser.cpp"
