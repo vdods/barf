@@ -1243,8 +1243,8 @@ which includes the top element.
             Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
             being able to prevent exponential memory usage.  Though the problem here is that there could
             be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
-        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
     -   Nice to have
+        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
         -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
             This should probably have to do with the output directory option of reflex/trison.
             NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
@@ -1268,7 +1268,6 @@ which includes the top element.
             -   Get the distribution packaging working
         x   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
             (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
-        -   Implement infinite loop detection (maybe as an option?)
         -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
             Useful references:
             -   https://stackoverflow.com/questions/15129263/is-there-a-non-atomic-equivalent-of-stdshared-ptr-and-why-isnt-there-one-in/15141844#15141844
@@ -1284,6 +1283,7 @@ which includes the top element.
             Actually more cases than that could be resolved conditionally based on associativity:
             cases 2, 3, 4.  This may be more involved than expected, and may not be worth it.  It's
             not causing a problem currently.
+        -   Implement infinite loop detection (maybe as an option?)
 
 2018.02.23 ----------------------------
 
@@ -1630,3 +1630,24 @@ which includes the top element.
 
 -   Tracking the first realized ancestor of m_hypothetical_head is difficult, and is only used
     for debug spew printout, so forget it.
+
+2018.04.06 ----------------------------
+
+-   Finished a feature set which could be considered the complete BARF 2.0.  Updated Danny's
+    steel repo to work against the latest version of BARF.
+-   What TODOs should perhaps go into the BARF 2.0 release?
+    -   Nice to have
+        -   CMake stuff
+            -   Make force* targets.
+            -   Make doxygen-doc-generating targets.
+            -   Make targets for building the examples (probably need to clean up the examples)
+            -   Get the distribution packaging working (CPack?)
+        -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
+            specifiers to everything that should not throw.
+    -   Low priority nice-to-have
+        -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
+            This should probably have to do with the output directory option of reflex/trison.
+            NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
+            so defer for later.
+        -   Add a without_line_directives directive to targetspec.
+        -   Make an enum for rule associativity and a string table for it.

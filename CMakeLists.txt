@@ -60,6 +60,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # This is the correct way to detect Ma
 endif()
 
 ###############################################################################
+# Doxygen doc rules
+###############################################################################
+
+doxygen_add_docs(doc ${PROJECT_SOURCE_DIR}/doc/doxygen_pages)
+
+###############################################################################
 # BARF-development specific functions
 ###############################################################################
 
