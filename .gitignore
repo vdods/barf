@@ -32,8 +32,10 @@ app/trison/trison_parser.npda.png
 app/trison/trison_parser.npda.states
 
 dev/calc/Parser.npda.dot
+dev/calc/Parser.npda.states
 dev/calc/Parser.npda.png
-dev/calc/Parser.npda.dot.png
+dev/calc/Scanner.dfa.dot
+dev/calc/Scanner.nfa.dot
 
 lib/commonlang/barf_commonlang_scanner.dfa.dot
 lib/commonlang/barf_commonlang_scanner.dfa.png

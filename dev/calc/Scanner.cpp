@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-#define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
+#define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
 
 
 #line 30 "Scanner.reflex"
@@ -28,7 +28,7 @@ Scanner::Scanner ()
         ms_transition_count_,
         ms_accept_handler_count_)
 {
-    DebugSpew(false);
+    SetDebugSpewStream(NULL);
 
 
     ResetForNewInput();
@@ -56,20 +56,20 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
         state_machine == StateMachine::MAIN ||
         (false && "invalid StateMachine::Name"));
     REFLEX_CPP_DEBUG_CODE_(
-        std::cerr << 
+        *DebugSpewStream() << 
 #line 63 "Scanner.reflex"
 "Scanner:"
 #line 63 "Scanner.cpp"
  << " switching to state machine "
-                  << ms_state_machine_name_[state_machine];
+                           << ms_state_machine_name_[state_machine];
         if (ms_state_machine_mode_flags_[state_machine] != 0)
         {
             if ((ms_state_machine_mode_flags_[state_machine] & AutomatonApparatus_FastAndBig_Noninteractive_::MF_CASE_INSENSITIVE_) != 0)
-                std::cerr << " %case_insensitive";
+                *DebugSpewStream() << " %case_insensitive";
             if ((ms_state_machine_mode_flags_[state_machine] & AutomatonApparatus_FastAndBig_Noninteractive_::MF_UNGREEDY_) != 0)
-                std::cerr << " %ungreedy";
+                *DebugSpewStream() << " %ungreedy";
         }
-        std::cerr << std::endl)
+        *DebugSpewStream() << std::endl)
     InitialState_(ms_state_table_ + ms_state_machine_start_state_index_[state_machine]);
     ModeFlags_(ms_state_machine_mode_flags_[state_machine]);
     assert(CurrentStateMachine() == state_machine);
@@ -78,20 +78,20 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
 void Scanner::ResetForNewInput ()
 {
     REFLEX_CPP_DEBUG_CODE_(
-        std::cerr << 
+        *DebugSpewStream() << 
 #line 63 "Scanner.reflex"
 "Scanner:"
 #line 85 "Scanner.cpp"
  << " executing reset-for-new-input actions and switching to state machine "
-                  << ms_state_machine_name_[StateMachine::START_];
+                           << ms_state_machine_name_[StateMachine::START_];
         if (ms_state_machine_mode_flags_[StateMachine::START_] != 0)
         {
             if ((ms_state_machine_mode_flags_[StateMachine::START_] & AutomatonApparatus_FastAndBig_Noninteractive_::MF_CASE_INSENSITIVE_) != 0)
-                std::cerr << " %case_insensitive";
+                *DebugSpewStream() << " %case_insensitive";
             if ((ms_state_machine_mode_flags_[StateMachine::START_] & AutomatonApparatus_FastAndBig_Noninteractive_::MF_UNGREEDY_) != 0)
-                std::cerr << " %ungreedy";
+                *DebugSpewStream() << " %ungreedy";
         }
-        std::cerr << std::endl)
+        *DebugSpewStream() << std::endl)
     ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_::ResetForNewInput_(ms_state_table_ + ms_state_machine_start_state_index_[StateMachine::START_], ms_state_machine_mode_flags_[StateMachine::START_]);
     assert(CurrentStateMachine() == StateMachine::START_);
 
@@ -128,15 +128,15 @@ Parser::Token Scanner::Scan () throw()
             std::uint8_t rejected_atom = rejected_string.empty() ? '\0' : *rejected_string.rbegin();
 
             REFLEX_CPP_DEBUG_CODE_(
-                std::cerr << 
+                *DebugSpewStream() << 
 #line 63 "Scanner.reflex"
 "Scanner:"
 #line 135 "Scanner.cpp"
  << " rejecting string ";
-                PrintString_(rejected_string);
-                std::cerr << " (rejected_atom is \'";
-                PrintAtom_(rejected_atom);
-                std::cerr << "\')" << std::endl)
+                PrintString_(*DebugSpewStream(), rejected_string);
+                *DebugSpewStream() << " (rejected_atom is \'";
+                PrintAtom_(*DebugSpewStream(), rejected_atom);
+                *DebugSpewStream() << "\')" << std::endl)
 
             // execute the rejection actions.  the do/while loop is so that a
             // break statement inside the rejection actions doesn't break out
@@ -159,14 +159,14 @@ Parser::Token Scanner::Scan () throw()
             std::string &accepted_string = work_string;
 
             REFLEX_CPP_DEBUG_CODE_(
-                std::cerr << 
+                *DebugSpewStream() << 
 #line 63 "Scanner.reflex"
 "Scanner:"
 #line 166 "Scanner.cpp"
  << " accepting string ";
-                PrintString_(accepted_string);
-                std::cerr << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
-                          << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
+                PrintString_(*DebugSpewStream(), accepted_string);
+                *DebugSpewStream() << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
+                                   << " using regex (" << ms_accept_handler_regex_[accept_handler_index_] << ")" << std::endl)
 
             // execute the appropriate accept handler.
             // the accepted string is in accepted_string.
@@ -175,7 +175,7 @@ Parser::Token Scanner::Scan () throw()
                 case 0:
                 {
 
-#line 95 "Scanner.reflex"
+#line 94 "Scanner.reflex"
  return Parser::Token(Parser::Terminal::Name(accepted_string[0])); 
 #line 181 "Scanner.cpp"
 
@@ -185,7 +185,7 @@ Parser::Token Scanner::Scan () throw()
                 case 1:
                 {
 
-#line 96 "Scanner.reflex"
+#line 95 "Scanner.reflex"
  return Parser::Token(Parser::Terminal::NUM, std::stod(accepted_string)); 
 #line 191 "Scanner.cpp"
 
@@ -195,7 +195,7 @@ Parser::Token Scanner::Scan () throw()
                 case 2:
                 {
 
-#line 97 "Scanner.reflex"
+#line 96 "Scanner.reflex"
  
 #line 201 "Scanner.cpp"
 
@@ -205,7 +205,7 @@ Parser::Token Scanner::Scan () throw()
                 case 3:
                 {
 
-#line 98 "Scanner.reflex"
+#line 97 "Scanner.reflex"
  return Parser::Token(Parser::Terminal::END_); 
 #line 211 "Scanner.cpp"
 
@@ -215,7 +215,7 @@ Parser::Token Scanner::Scan () throw()
                 case 4:
                 {
 
-#line 99 "Scanner.reflex"
+#line 98 "Scanner.reflex"
  return Parser::Token(Parser::Terminal::BAD_TOKEN); 
 #line 221 "Scanner.cpp"
 
@@ -238,7 +238,7 @@ Parser::Token Scanner::Scan () throw()
 
 void Scanner::KeepString ()
 {
-    REFLEX_CPP_DEBUG_CODE_(std::cerr << 
+    REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
 #line 63 "Scanner.reflex"
 "Scanner:"
 #line 245 "Scanner.cpp"
@@ -248,7 +248,7 @@ void Scanner::KeepString ()
 
 void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 {
-    REFLEX_CPP_DEBUG_CODE_(std::cerr << 
+    REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
 #line 63 "Scanner.reflex"
 "Scanner:"
 #line 255 "Scanner.cpp"
@@ -258,7 +258,7 @@ void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 
 void Scanner::Unreject (std::uint32_t unreject_char_count)
 {
-    REFLEX_CPP_DEBUG_CODE_(std::cerr << 
+    REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
 #line 63 "Scanner.reflex"
 "Scanner:"
 #line 265 "Scanner.cpp"
@@ -270,32 +270,32 @@ void Scanner::Unreject (std::uint32_t unreject_char_count)
 // begin internal reflex-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-void Scanner::PrintAtom_ (std::uint8_t atom)
+void Scanner::PrintAtom_ (std::ostream &out, std::uint8_t atom)
 {
-    if (atom == '\\')                    std::cerr << "\\\\";
-    else if (atom == '"')                std::cerr << "\\\"";
-    else if (atom >= ' ' && atom <= '~') std::cerr << atom;
-    else if (atom == '\n')               std::cerr << "\\n";
-    else if (atom == '\t')               std::cerr << "\\t";
-    else if (atom == '\0')               std::cerr << "\\0";
+    if (atom == '\\')                    out << "\\\\";
+    else if (atom == '"')                out << "\\\"";
+    else if (atom >= ' ' && atom <= '~') out << atom;
+    else if (atom == '\n')               out << "\\n";
+    else if (atom == '\t')               out << "\\t";
+    else if (atom == '\0')               out << "\\0";
     else
     {
-        std::cerr.width(2);
-        std::cerr << "\\x" << std::hex << std::uppercase << std::uint16_t(atom);
-        std::cerr.width(1);
+        out.width(2);
+        out << "\\x" << std::hex << std::uppercase << std::uint16_t(atom);
+        out.width(1);
     }
 }
 
-void Scanner::PrintString_ (std::string const &s)
+void Scanner::PrintString_ (std::ostream &out, std::string const &s)
 {
-    // save the existing std::cerr properties for later restoration
-    std::ios_base::fmtflags saved_stream_flags = std::cerr.flags();
-    char saved_stream_fill = std::cerr.fill();
-    std::streamsize saved_stream_width = std::cerr.width();
-    std::streamsize saved_stream_precision = std::cerr.precision();
+    // save the existing ostream properties for later restoration
+    std::ios_base::fmtflags saved_stream_flags = out.flags();
+    char saved_stream_fill = out.fill();
+    std::streamsize saved_stream_width = out.width();
+    std::streamsize saved_stream_precision = out.precision();
 
     // clear all format flags to a neutral state
-    std::cerr.unsetf(
+    out.unsetf(
         std::ios_base::boolalpha|std::ios_base::dec|std::ios_base::fixed|
         std::ios_base::hex|std::ios_base::internal|std::ios_base::left|
         std::ios_base::oct|std::ios_base::right|std::ios_base::scientific|
@@ -303,18 +303,18 @@ void Scanner::PrintString_ (std::string const &s)
         std::ios_base::skipws|std::ios_base::unitbuf|std::ios_base::uppercase|
         std::ios_base::adjustfield|std::ios_base::basefield|std::ios_base::floatfield);
     // the '0' char is used hex escape chars, which always have width 2
-    std::cerr.fill('0');
+    out.fill('0');
 
-    std::cerr << '"';
+    out << '"';
     for (std::string::size_type i = 0; i < s.size(); ++i)
-        PrintAtom_(s[i]);
-    std::cerr << '"';
+        PrintAtom_(out, s[i]);
+    out << '"';
 
-    // restore the saved std::cerr properties
-    std::cerr.setf(saved_stream_flags);
-    std::cerr.fill(saved_stream_fill);
-    std::cerr.width(saved_stream_width);
-    std::cerr.precision(saved_stream_precision);
+    // restore the saved out properties
+    out.setf(saved_stream_flags);
+    out.fill(saved_stream_fill);
+    out.width(saved_stream_width);
+    out.precision(saved_stream_precision);
 }
 
 std::uint32_t const Scanner::ms_state_machine_start_state_index_[] =

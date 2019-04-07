@@ -7,40 +7,53 @@
 
 
 
-#define TRISON_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
+#define TRISON_CPP_DEBUG_CODE_(flags, spew_code) if (DebugSpewIsEnabled() && ((flags) & ActiveDebugSpewFlags()) != 0) { spew_code; }
+
+#include <algorithm>
+#include <limits>
+#include <sstream>
+#include <utility>
 
 
-#line 34 "Parser.trison"
+#line 31 "Parser.trison"
 
 #include <cmath>
 #include <sstream>
 #include "Scanner.hpp"
 
-#line 20 "Parser.cpp"
+#line 25 "Parser.cpp"
 
 Parser::Parser ()
 {
+    m_max_allowable_lookahead_count = 1;
+    m_max_allowable_parse_tree_depth = 64;
+    m_realized_state_ = NULL;
+    m_hypothetical_state_ = NULL;
     SetDebugSpewStream(NULL);
+    SetActiveDebugSpewFlags(DSF_ALL);
 
 
-#line 39 "Parser.trison"
+#line 36 "Parser.trison"
 
     m_scanner = new Scanner();
-    m_scanner->DebugSpew(true);
+    m_scanner->SetDebugSpewStream(&std::cerr);
 
-#line 32 "Parser.cpp"
+#line 42 "Parser.cpp"
 }
 
 Parser::~Parser ()
 {
+    // Perform all the internal cleanup needed.
+    CleanUpAllInternals_();
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "Executing destructor actions\n")
 
 
-#line 43 "Parser.trison"
+#line 40 "Parser.trison"
 
     delete m_scanner;
     m_scanner = NULL;
 
-#line 44 "Parser.cpp"
+#line 57 "Parser.cpp"
 }
 
 bool Parser::IsAtEndOfInput ()
@@ -48,17 +61,19 @@ bool Parser::IsAtEndOfInput ()
     return true; // TEMP
 }
 
+std::string Parser::DebugSpewPrefix () const
+{
+    std::ostringstream out;
+    out << "Parser: ";
+    return out.str();
+}
+
 void Parser::ResetForNewInput ()
 {
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "Executing reset-for-new-input actions\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "Executing reset-for-new-input actions\n")
 
-
-
-#line 149 "Parser.trison"
-
-    // m_recoverable_error_encountered = false;
-
-#line 62 "Parser.cpp"
+    // Perform all the internal cleanup needed.
+    CleanUpAllInternals_();
 }
 
 Parser::ParserReturnCode Parser::Parse (double *return_token, Nonterminal::Name nonterminal_to_parse)
@@ -84,14 +99,33 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     }
 }
 
+std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser_return_code)
+{
+    if (std::size_t(parser_return_code) < Parser::ms_parser_return_code_string_count_)
+        stream << Parser::ms_parser_return_code_string_table_[std::size_t(parser_return_code)];
+    else
+        stream << "!INVALID!ParserReturnCode!";
+    return stream;
+}
+
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
 {
     if (token.m_id < Parser::ms_token_name_count_)
         stream << Parser::ms_token_name_table_[token.m_id];
     else
-        stream << "!INVALID TOKEN!";
+        stream << "!INVALID!TOKEN!";
     return stream;
 }
+
+char const *const Parser::ms_parser_return_code_string_table_[] =
+{
+    "PRC_SUCCESS",
+    "PRC_UNHANDLED_PARSE_ERROR",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH",
+    "PRC_INTERNAL_ERROR",
+};
+std::size_t const Parser::ms_parser_return_code_string_count_ = sizeof(Parser::ms_parser_return_code_string_table_) / sizeof(*Parser::ms_parser_return_code_string_table_);
 
 char const *const Parser::ms_token_name_table_[] =
 {
@@ -361,37 +395,56 @@ char const *const Parser::ms_token_name_table_[] =
 };
 std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
 
-
-void Parser::ThrowAwayToken_ (Token &token_) throw()
+void Parser::ThrowAwayToken_ (Token const &token_) throw()
 {
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "Executing throw-away-token actions on token " << token_ << '\n')
-
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "Executing throw-away-token actions on token " << token_ << '\n')
     ThrowAwayTokenData_(token_.m_data);
 }
 
-void Parser::ThrowAwayTokenData_ (double &token_data) throw()
+void Parser::ThrowAwayTokenData_ (double const &token_data) throw()
 {
 
-#line 144 "Parser.trison"
+#line 85 "Parser.trison"
  
-#line 378 "Parser.cpp"
+#line 410 "Parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
 {
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "Executing scan actions\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "Executing scan actions\n")
 
 
-#line 145 "Parser.trison"
+#line 86 "Parser.trison"
 
     assert(m_scanner != NULL);
     return m_scanner->Scan();
 
-#line 391 "Parser.cpp"
+#line 423 "Parser.cpp"
 }
 
-#include <algorithm>
-#include <limits>
+void Parser::RunNonassocErrorActions_ (Token const &lookahead)
+{
+}
+
+template <typename T>
+std::ostream &operator << (std::ostream &out, std::set<T> const &s)
+{
+    out << "{ ";
+    for (typename std::set<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
+        out << *it << ", ";
+    out << '}';
+    return out;
+}
+
+template <typename T>
+std::ostream &operator << (std::ostream &out, std::vector<T> const &s)
+{
+    out << "[ ";
+    for (typename std::vector<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
+        out << *it << ", ";
+    out << ']';
+    return out;
+}
 
 std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
 {
@@ -404,66 +457,115 @@ std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name non
     }
 }
 
+bool Parser::HasEncounteredErrorState () const
+{
+    return (m_realized_state_ == NULL) ? false : m_realized_state_->HasEncounteredErrorState();
+}
+
+std::int64_t Parser::MaxAllowableLookaheadCount () const
+{
+    return m_max_allowable_lookahead_count;
+}
+
+std::size_t Parser::MaxRealizedLookaheadCount () const
+{
+    return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadCount();
+}
+
+std::int64_t Parser::MaxAllowableParseTreeDepth () const
+{
+    return m_max_allowable_parse_tree_depth;
+}
+
+std::uint32_t Parser::MaxRealizedParseTreeDepth () const
+{
+    return (m_hypothetical_state_ == NULL) ? 0 : m_hypothetical_state_->m_max_realized_parse_tree_depth;
+}
+
+void Parser::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count)
+{
+    m_max_allowable_lookahead_count = max_allowable_lookahead_count;
+}
+
+void Parser::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth)
+{
+    m_max_allowable_parse_tree_depth = max_allowable_parse_tree_depth;
+}
+
 Parser::ParserReturnCode Parser::Parse_ (double *return_token, Nonterminal::Name nonterminal_to_parse)
 {
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "Starting parse\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_START_END_PARSE, *DebugSpewStream() << "Parser: " << "Starting parse\n")
 
     ParserReturnCode parser_return_code_ = PRC_INTERNAL_ERROR;
     *return_token = 0.0;
 
 
-    m_npda_.m_root_ = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
+    std::uint32_t start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
 
-    ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
-    std::uint32_t initial_state = NonterminalStartStateIndex_(nonterminal_to_parse);
-    hps->m_stack.push_back(HypotheticalBranchStackElement_(initial_state, Nonterminal::none_));
+    if (m_realized_state_ != NULL) // This happens when parsing again, not from scratch.
+    {
+        assert(m_hypothetical_state_ == NULL);
+        // Note that this resets the error state.
+        m_realized_state_->Reinitialize(start_state_index);
+        // Delete this entirely to be initialized anew, since it has no state that
+        // carries over between parses.
+        delete m_hypothetical_state_;
+        m_hypothetical_state_ = NULL;
+    }
+    else // This happens when parsing for the first time.
+        m_realized_state_ = new RealizedState_(start_state_index);
 
-    m_npda_.m_root_->AddChild(hps);
-    m_npda_.m_hps_queue_.push_back(hps);
-
-    StateSet_ initial_npda_state_set;
-    initial_npda_state_set.insert(initial_state);
-    m_npda_.m_realized_stack_.push_back(RealizedBranchStackElement_(initial_npda_state_set, Token(Nonterminal::none_)));
+    m_hypothetical_state_ = new HypotheticalState_(start_state_index);
 
     bool should_return = false;
     std::size_t iteration_index = 0;
     while (!should_return)
     {
         TRISON_CPP_DEBUG_CODE_(
+            DSF_ITERATION_COUNT,
             *DebugSpewStream() << "Parser: " << "\n";
             *DebugSpewStream() << "Parser: " << "---------- ITERATION " << iteration_index << " --------------\n";
             PrintParserStatus_(*DebugSpewStream());
             *DebugSpewStream() << "Parser: " << '\n';
         )
 
-        if (m_npda_.m_root_->HasTrunkChild())
+        if (m_realized_state_->HasExceededMaxAllowableLookaheadCount(m_max_allowable_lookahead_count))
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << "Parser: " << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
+            break;
+        }
+
+        if (m_hypothetical_state_->HasExceededMaxAllowableParseTreeDepth(m_max_allowable_parse_tree_depth))
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << "Parser: " << "Parse tree depth (" << m_hypothetical_state_->ParseTreeDepth() << ") has exceeded max allowable parse tree depth (" << m_max_allowable_parse_tree_depth << "); modify this limit using the default_max_allowable_parse_tree_depth directive (see trison.cpp.targetspec), or using the SetMaxAllowableParseTreeDepth method.  Returning with error.\n")
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH;
+            break;
+        }
+
+        if (m_hypothetical_state_->m_root->HasTrunkChild())
             ExecuteAndRemoveTrunkActions_(should_return, parser_return_code_, return_token);
         else
             ContinueNPDAParse_(should_return);
 
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << '\n')
+        TRISON_CPP_DEBUG_CODE_(DSF_ITERATION_COUNT, *DebugSpewStream() << "Parser: " << '\n')
         ++iteration_index;
     }
 
     TRISON_CPP_DEBUG_CODE_(
+        DSF_ITERATION_COUNT,
         *DebugSpewStream() << "Parser: " << "\n";
         *DebugSpewStream() << "Parser: " << "---------- RETURNING --------------\n";
         PrintParserStatus_(*DebugSpewStream());
         *DebugSpewStream() << "Parser: " << '\n';
     )
 
+    assert(std::size_t(parser_return_code_) < ms_parser_return_code_string_count_ && "this should never happen");
     TRISON_CPP_DEBUG_CODE_(
-        *DebugSpewStream() << "Parser: " << "Parse() is returning ";
-        switch (parser_return_code_)
-        {
-            case PRC_SUCCESS:               *DebugSpewStream() << "PRC_SUCCESS\n";               break;
-            case PRC_UNHANDLED_PARSE_ERROR: *DebugSpewStream() << "PRC_UNHANDLED_PARSE_ERROR\n"; break;
-            default:                        assert(false && "this should never happen");
-                                            parser_return_code_ = PRC_INTERNAL_ERROR; // fall through
-            case PRC_INTERNAL_ERROR:        *DebugSpewStream() << "PRC_INTERNAL_ERROR\n";        break;
-        }
+        DSF_START_END_PARSE,
+        *DebugSpewStream() << "Parser: " << "Parse() is returning " << ms_parser_return_code_string_table_[parser_return_code_] << '\n';
     )
 
     return parser_return_code_;
@@ -471,76 +573,85 @@ Parser::ParserReturnCode Parser::Parse_ (double *return_token, Nonterminal::Name
 
 void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code_, double *&return_token)
 {
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "Parse stack tree has trunk; executing trunk actions.\n")
-    while (m_npda_.m_root_->HasTrunkChild())
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << "Parser: " << "Parse stack tree has trunk; executing trunk actions.\n")
+    if (m_hypothetical_state_->m_root->HasTrunkChild())
     {
-        ParseStackTreeNode_ *trunk_child = m_npda_.m_root_->PopTrunkChild();
+        // The trunk_child is popped and then will die by the end of this function.
+        // Using std::unique_ptr for exception safety -- if an exception is thrown within
+        // this function, then trunk_child still needs to be deleted.
+        std::unique_ptr<ParseTreeNode_> trunk_child(m_hypothetical_state_->m_root->PopTrunkChild());
+        assert(trunk_child->m_parent_node == NULL);
+        assert(trunk_child->m_child_nodes.empty());
+
         bool destroy_and_recreate_parse_tree = false;
+
         switch (trunk_child->m_spec.m_type)
         {
-            case ParseStackTreeNode_::RETURN: {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    Executing trunk action RETURN.\n")
-                assert(m_npda_.m_realized_stack_.size() == 2);
+            case ParseTreeNode_::RETURN: {
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "    Executing trunk action RETURN.\n")
+                assert(m_realized_state_->TokenStack().size() == 2);
                 parser_return_code_ = PRC_SUCCESS;
-                *return_token = m_npda_.m_realized_stack_.back().m_token.m_data;
+                // This doesn't change the structure of the stack but does take ownership of the top stack token.
+                // This must be done so that the return token isn't destroyed with the parser.
+                m_realized_state_->StealTokenStackTop(return_token);
                 should_return = true;
                 break;
             }
-            case ParseStackTreeNode_::REDUCE: {
+            case ParseTreeNode_::REDUCE: {
                 // Execute the appropriate rule on the top tokens in the stack
                 std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    Executing trunk action REDUCE rule " << rule_index << ".\n")
-                // NOTE: dont actually execute reduction rules here, that should be saved for executing the trunk
-                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_npda_.m_realized_stack_);
-                Rule_ const &rule = ms_rule_table_[rule_index];
-                // Pop those stack tokens
-                for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
-                    m_npda_.m_realized_stack_.pop_back();
-                // Push the reduced nonterminal token data onto the front of the lookahead queue
-                m_npda_.PushFrontRealizedLookahead(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data));
-                // Because REDUCE involves popping the stack, indicate that the parse tree should be destroyed and
-                // recreated.  This is draconian and non-optimal, but simple and effective.  TODO: Because HPS branches
-                // are blocked right after a REDUCE or POP_STACK, maybe don't bother adding any children below REDUCE
-                // or POP_STACK nodes.
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "    Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
+                Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
+                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
+                m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
+                // This is done essentially so that m_realized_lookahead_cursor can be reset.
                 destroy_and_recreate_parse_tree = true;
                 break;
             }
-            case ParseStackTreeNode_::SHIFT: {
-                assert(trunk_child->m_spec.m_single_data == ParseStackTreeNode_::UNUSED_DATA); // m_single_data is not used for SHIFT.
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    Executing trunk action SHIFT.\n") // TODO: Print the lookahead that was shifted?
-                // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
-                m_npda_.m_realized_stack_.push_back(RealizedBranchStackElement_(trunk_child->m_npda_state_set, Lookahead_(0)));
-                m_npda_.PopFrontRealizedLookahead();
+            case ParseTreeNode_::SHIFT: {
+                std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
+                m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
                 break;
             }
-            case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
-                m_npda_.PushFrontRealizedLookahead(Token(Terminal::ERROR_));
-                m_npda_.SetHasEncounteredErrorState();
+            case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "    Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
+                m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
             }
-            case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    Executing trunk action DISCARD_LOOKAHEAD.\n")
-                assert(!m_npda_.m_realized_lookahead_queue_.empty());
-                m_npda_.PopFrontRealizedLookahead();
+            case ParseTreeNode_::DISCARD_LOOKAHEAD: {
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "    Executing trunk action DISCARD_LOOKAHEAD.\n")
+                m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
             }
-            case ParseStackTreeNode_::POP_STACK: {
+            case ParseTreeNode_::POP_STACK: {
                 std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    Executing trunk action POP_STACK " << pop_count << ".\n")
-                if (m_npda_.m_realized_stack_.size() > pop_count)
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "    Executing trunk action POP_STACK " << pop_count << ".\n")
+
+                // This one is tricky to implement within RealizedState_ alone, mainly because
+                // of the ThrowAwayToken_ call.
+                if (m_realized_state_->TokenStack().size() > pop_count)
                 {
                     for (std::uint32_t i = 0; i < pop_count; ++i)
                     {
-                        ThrowAwayRealizedBranchStackElement_(m_npda_.m_realized_stack_.back());
-                        m_npda_.m_realized_stack_.pop_back();
+                        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
+                        ThrowAwayToken_(m_realized_state_->PopStack());
                     }
                 }
+                else
+                {
+                    // We're popping more than the whole stack, which is an error
+                    parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
+                    should_return = true;
+                }
 
-                // Because POP_STACK involves popping the stack, indicate that the parse tree should be destroyed and
-                // recreated (from the states in the top element of m_realized_stack_).  This is draconian and non-optimal,
-                // but simple and effective.
+                // Because POP_STACK involves popping the stack, the parse tree should be destroyed and
+                // recreated (from the branches in the top of the realized state stack).  This is somewhat
+                // draconian and non-optimal, but simple and effective.
                 destroy_and_recreate_parse_tree = true;
+                // TODO: Because HPS branches are blocked right after POP_STACK, maybe don't bother adding any
+                // additional children below POP_STACK nodes (i.e. one HPS child of POP_STACK is sufficient to
+                // keep it alive probably).  This would reduce the number of memory operations.
                 break;
             }
 
@@ -548,42 +659,12 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 assert(false && "this should not happen");
                 break;
         }
-        assert(trunk_child->m_parent_node == NULL);
-        assert(trunk_child->m_child_nodes.empty());
-        delete trunk_child;
 
         if (destroy_and_recreate_parse_tree)
         {
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    Destroying and recreating parse tree based on top element of realized stack.\n")
-            // Destroy the whole parse tree and reconstruct HPSes based on top of m_realized_stack_,
-            // but preserve m_realized_stack_ and m_realized_lookahead_queue_.  This is rather draconian and is
-            // non-optimal in terms of memory allocation operations, but it is simple and effective, and should
-            // only occur during error handling.
-            assert(m_npda_.m_new_hps_queue_.empty());
-            m_npda_.m_hps_queue_.clear();
-            delete m_npda_.m_root_;
-            m_npda_.m_root_ = NULL;
-            // At this point, the parse tree should be destroyed.  Create a new root node
-            m_npda_.m_root_ = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::ROOT));
-            // Then add HPS nodes for each npda state in the top element of m_realized_stack_.
-            assert(!m_npda_.m_realized_stack_.empty());
-            StateVector_ const &reconstruct_state_vector = m_npda_.m_realized_stack_.back().m_npda_state_vector;
-            for (StateVector_::const_iterator it = reconstruct_state_vector.begin(),
-                                              it_end = reconstruct_state_vector.end();
-                 it != it_end;
-                 ++it)
-            {
-                std::uint32_t state_index = *it;
-                ParseStackTreeNode_ *hps = new ParseStackTreeNode_(ParseStackTreeNode_::Spec(ParseStackTreeNode_::HPS));
-                hps->m_stack.push_back(HypotheticalBranchStackElement_(state_index, Nonterminal::none_));
-
-                m_npda_.m_root_->AddChild(hps);
-                m_npda_.m_hps_queue_.push_back(hps);
-            }
-
-            // TODO: Because HPS branches are blocked right after a REDUCE or POP_STACK, maybe don't bother
-            // adding any children below REDUCE or POP_STACK nodes.  This would reduce the number of memory
-            // operations.
+            TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << "Parser: " << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
+            m_hypothetical_state_->DestroyParseTree();
+            CreateParseTreeFromRealizedState_();
         }
     }
 }
@@ -594,22 +675,42 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     // are processed, then this flag will be set to false.
     should_return = true;
 
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "Parse stack tree does not have trunk; continuing parse.\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << "Parser: " << "Parse stack tree does not have trunk; continuing parse.\n")
 
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
     {
-        ParseStackTreeNode_ *shift  = NULL;
-        ParseStackTreeNode_ *reduce = NULL;
+        ParseTreeNode_ *shift  = NULL;
+        ParseTreeNode_ *reduce = NULL;
         // TODO: Move this handling into its own function
-        if (m_npda_.m_root_->HasShiftReduceConflict(shift, reduce))
+        // NOTE: This only works at the root.  If that were to change, then various things
+        // would need to scan over only the HPSes that are contained within the relevant subtree.
+        bool has_shift_reduce_conflict = m_hypothetical_state_->m_root->HasShiftReduceConflict(shift, reduce);
+        bool has_shift_reduce_conflict_and_should_resolve = false;
+        if (has_shift_reduce_conflict)
+        {
+            // Should not do anything unless the shift and reduce branches have the same
+            // m_realized_lookahead_cursor (e.g. a REDUCE action will start out with
+            // m_realized_lookahead_cursor == 0, while a SHIFT action will start out with
+            // m_realized_lookahead_cursor == 1, but the REDUCE action branch needs to be
+            // allowed to catch up before having any chance at the SHIFT/REDUCE conflict
+            // being resolvable).
+            if (m_hypothetical_state_->MinAndMaxRealizedLookaheadCursorsAreEqual())
+                has_shift_reduce_conflict_and_should_resolve = true;
+            else
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
+            }
+        }
+
+        if (has_shift_reduce_conflict_and_should_resolve)
         {
             assert(shift != NULL);
             assert(reduce != NULL);
-            ParseStackTreeNode_::PrecedenceLevelRange shift_precedence_level_range = shift->ComputePrecedenceLevelRange(1);
-            ParseStackTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
+            ParseTreeNode_::PrecedenceLevelRange shift_precedence_level_range = shift->ComputePrecedenceLevelRange(1);
+            ParseTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
             assert(reduce_precedence_level_range.first == reduce_precedence_level_range.second);
 
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
             // indicates equality).  there is always exactly one reduce hps, and at least
@@ -650,9 +751,9 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             // Case 1
             if (reduce_precedence_level_range.second < shift_precedence_level_range.first)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
-                m_npda_.RemoveBranchIfNotTrunk(reduce);
-                delete reduce;
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
+                // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
+                m_hypothetical_state_->DeleteBranch(reduce);
                 reduce = NULL;
                 conflict_resolved = true;
             }
@@ -660,49 +761,96 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             else if (reduce_precedence_level_range.first == shift_precedence_level_range.first &&
                      shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "        Case 2; REDUCE <= SHIFT; ")
-                Rule_ const &reduction_rule = ms_rule_table_[reduce->m_spec.m_single_data];
-                Precedence_ const &reduction_rule_precedence = ms_precedence_table_[reduction_rule.m_precedence_index];
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Case 2; REDUCE <= SHIFT;\n")
+                Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
+                Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
                 if (reduction_rule_precedence.m_associativity_index == 2) // 2 is right-associative
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning right-associative REDUCE and continuing.\n")
-                    m_npda_.RemoveBranchIfNotTrunk(reduce);
-                    delete reduce;
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
+                    m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
                     conflict_resolved = true;
                 }
                 else
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "can't resolve conflict at this time.\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Can't resolve conflict at this time.\n")
                 }
             }
             // Case 3
             else if (reduce_precedence_level_range.second == shift_precedence_level_range.first &&
                      shift_precedence_level_range.first == shift_precedence_level_range.second)
             {
-                Rule_ const &reduction_rule = ms_rule_table_[reduce->m_spec.m_single_data];
-                Precedence_ const &reduction_rule_precedence = ms_precedence_table_[reduction_rule.m_precedence_index];
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity index: " <<
+                Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
+                Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity index: " <<
  reduction_rule_precedence.m_associativity_index << '\n')
                 switch (reduction_rule_precedence.m_associativity_index)
                 {
                     case 0: // 0 is left-associative
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning left-associative SHIFT and continuing.\n")
-                        m_npda_.RemoveBranchIfNotTrunk(shift);
-                        delete shift;
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
+                        m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
                         conflict_resolved = true;
                         break;
 
                     case 1: // 1 is non-associative
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "composition of non-associative rules is an error.\n")
-                        assert(false && "TODO: implement nonassoc error handling");
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
+                        // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
+                        // action to initiate error panic.  This works only because the shift and reduce nodes
+                        // are children of the parse tree root.
+                        assert(shift->m_parent_node == m_hypothetical_state_->m_root);
+                        assert(reduce->m_parent_node == m_hypothetical_state_->m_root);
+
+                        // Lookahead_(0) is the token that would be SHIFT'ed.
+                        RunNonassocErrorActions_(Lookahead_(0));
+
+                        m_hypothetical_state_->DeleteBranch(shift);
+                        m_hypothetical_state_->DeleteBranch(reduce);
+                        // Just verify that the HPS queue has been totally nullified by the above actions.
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            assert(*hps_it == NULL);
+                        }
+                        m_hypothetical_state_->m_hps_queue.clear();
+                        assert(m_hypothetical_state_->m_new_hps_queue.empty());
+                        assert(m_hypothetical_state_->m_root->m_child_nodes.empty());
+
+                        // Create fresh HPSes at the root from the realized state.
+                        CreateParseTreeFromRealizedState_();
+                        // TODO: This operation could be optimized due to the fact that each HPS will
+                        // take exactly one action; INSERT_LOOKAHEAD_ERROR.  But for now, just do the
+                        // easy thing.
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            ParseTreeNode_ *hps = *hps_it;
+                            assert(hps != NULL);
+                            ParseTreeNode_ *new_hps = TakeHypotheticalActionOnHPS_(*hps, ParseTreeNode_::INSERT_LOOKAHEAD_ERROR, ParseTreeNode_::UNUSED_DATA);
+                            m_hypothetical_state_->m_new_hps_queue.push_back(new_hps);
+                            // Note that DeleteBranch only nullifies elements in m_hps_queue, it doesn't
+                            // alter the container itself.
+                            m_hypothetical_state_->DeleteBranch(hps);
+                        }
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            assert(*hps_it == NULL);
+                        }
+                        m_hypothetical_state_->m_hps_queue.clear();
+
+                        // Now that all the INSERT_LOOKAHEAD_ERROR HPSes have been created and put into
+                        // m_new_hps_queue, the existing HPSes have been deleted, and the processing later
+                        // in this function (see `if (conflict_resolved)` block) is expecting the HPSes to
+                        // be in m_hps_queue, swap the queues.
+                        assert(m_hypothetical_state_->m_hps_queue.empty());
+                        assert(!m_hypothetical_state_->m_new_hps_queue.empty());
+                        std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+
+                        // Mark the conflict as resolved.
+                        conflict_resolved = true;
                         break;
 
                     case 2: // 2 is right-associative
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning right-associative REDUCE and continuing.\n")
-                        m_npda_.RemoveBranchIfNotTrunk(reduce);
-                        delete reduce;
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
+                        m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
                         conflict_resolved = true;
                         break;
@@ -716,34 +864,32 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             else if (reduce_precedence_level_range.second == shift_precedence_level_range.second &&
                      shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "        Case 4; REDUCE >= SHIFT; ")
-                Rule_ const &reduction_rule = ms_rule_table_[reduce->m_spec.m_single_data];
-                Precedence_ const &reduction_rule_precedence = ms_precedence_table_[reduction_rule.m_precedence_index];
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Case 4; REDUCE >= SHIFT;\n")
+                Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
+                Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
                 if (reduction_rule_precedence.m_associativity_index == 0) // 0 is left-associative
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "pruning left-associative SHIFT and continuing.\n")
-                    m_npda_.RemoveBranchIfNotTrunk(shift);
-                    delete shift;
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
+                    m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
                     conflict_resolved = true;
                 }
                 else
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "can't resolve conflict at this time.\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Can't resolve conflict at this time.\n")
                 }
             }
             // Case 5
             else if (reduce_precedence_level_range.first > shift_precedence_level_range.second)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
-                m_npda_.RemoveBranchIfNotTrunk(shift);
-                delete shift;
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
+                m_hypothetical_state_->DeleteBranch(shift);
                 shift = NULL;
                 conflict_resolved = true;
             }
             // Case 6
             else {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
                 assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
                 assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
             }
@@ -752,54 +898,72 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             {
                 should_return = false;
 
-                assert(m_npda_.m_new_hps_queue_.empty());
+                assert(m_hypothetical_state_->m_new_hps_queue.empty());
                 // Take new hps-es and clear old ones.
-                for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
+                for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
                 {
-                    ParseStackTreeNode_ *hps = *hps_it;
+                    ParseTreeNode_ *hps = *hps_it;
                     if (hps != NULL)
-                        m_npda_.m_new_hps_queue_.push_back(hps);
+                        m_hypothetical_state_->m_new_hps_queue.push_back(hps);
                 }
-                m_npda_.m_hps_queue_.clear();
-                std::swap(m_npda_.m_hps_queue_, m_npda_.m_new_hps_queue_);
-                assert(m_npda_.m_new_hps_queue_.empty());
+                m_hypothetical_state_->m_hps_queue.clear();
+                std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+                assert(m_hypothetical_state_->m_new_hps_queue.empty());
                 // TODO: Break this large function up into smaller logical units
                 return;
             }
         }
     }
 
-    // Process transitions in order of their SortedTypeIndex.
+    // Compute the minimum of all hps-es' m_realized_lookahead_cursor values, in order
+    // to determine which ones have processed the lowest number of lookaheads.  This is
+    // done so that one hps doesn't get way ahead of the others.
+    std::uint32_t min_realized_lookahead_cursor;
+    m_hypothetical_state_->ComputeMinAndMaxRealizedLookaheadCursors(&min_realized_lookahead_cursor, NULL);
+
+    // Process transitions in order of their SortedTypeIndex.  Only process HPSes that are at min_realized_lookahead_cursor.
+    assert(m_hypothetical_state_->m_new_hps_queue.empty()); // This is the starting condition
     for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
     {
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << ".\n")
+        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << "Parser: " << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
-        if (!m_npda_.m_new_hps_queue_.empty())
+        if (!m_hypothetical_state_->m_new_hps_queue.empty())
         {
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "        Early-out based on sorted type index.\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << "Parser: " << "        Early-out based on sorted type index.\n")
             break;
         }
 
         // Process non-blocked hps-es.
-        for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
+        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
         {
             // Skip nullified HPS nodes.
             if (*hps_it == NULL)
                 continue;
 
-            ParseStackTreeNode_ &hps = **hps_it;
+            ParseTreeNode_ &hps = **hps_it;
 
-            assert(hps.m_spec.m_type == ParseStackTreeNode_::HPS);
+            assert(hps.m_spec.m_type == ParseTreeNode_::HPS);
             TRISON_CPP_DEBUG_CODE_(
-                *DebugSpewStream() << "Parser: " << "        Processing hps: ";
-                hps.Print(*DebugSpewStream(), *this, "Parser: ", 0);
+                DSF_TRANSITION_PROCESSING,
+                *DebugSpewStream() << "Parser: " << "        Processing ";
+                hps.Print(*DebugSpewStream(), this, DebugSpewPrefix(), 0, true);
             )
 
-            // If a hps is blocked, save it for the next parse iteration but don't do anything with it.
+            // If a hps is blocked, then save it for the next parse iteration but don't do anything with it.
             if (hps.IsBlockedHPS())
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
-                m_npda_.m_new_hps_queue_.push_back(&hps);
+                TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << "Parser: " << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
+                m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
+                *hps_it = NULL;
+                continue;
+            }
+
+            // If a hps' m_realized_lookahead_cursor is greater than min_realized_lookahead_cursor, then
+            // save it for the next parse iteration but don't do anything with it.
+            if (hps.m_realized_lookahead_cursor > min_realized_lookahead_cursor)
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << "Parser: " << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
+                m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
                 continue;
             }
@@ -807,72 +971,113 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             // This hps isn't blocked, so indicate that the parse should continue.
             should_return = false;
 
-            std::uint32_t hps_state_index = hps.m_stack.back().m_state_index;
+            std::uint32_t hps_state_index = hps.m_hypothetical_head.StatePtr()->Data();
+
             // Retrieve all transitions whose SortedTypeIndex is current_sorted_type_index.
-            TransitionVector_ const &non_epsilon_transitions = NonEpsilonTransitionsOfState_(hps_state_index, current_sorted_type_index);
+            Npda_::TransitionVector_ const &non_epsilon_transitions = Npda_::NonEpsilonTransitionsOfState_(hps_state_index, current_sorted_type_index);
             // Exercise all valid transitions whose SortedTypeIndex is current_sorted_type_index.
-            for (TransitionVector_::const_iterator transition_it = non_epsilon_transitions.begin(), transition_it_end = non_epsilon_transitions.end(); transition_it != transition_it_end; ++transition_it)
+            for (Npda_::TransitionVector_::const_iterator transition_it = non_epsilon_transitions.begin(), transition_it_end = non_epsilon_transitions.end(); transition_it != transition_it_end; ++transition_it)
             {
-                Transition_ const &transition = *transition_it;
-                assert(transition.m_type >= Transition_::RETURN);
-                assert(transition.m_type <= Transition_::POP_STACK);
-                std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type));
+                Npda_::Transition_ const &transition = *transition_it;
+                assert(transition.m_type >= Npda_::Transition_::RETURN);
+                assert(transition.m_type <= Npda_::Transition_::POP_STACK);
+                std::uint32_t transition_sorted_type_index = Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type));
                 assert(transition_sorted_type_index == current_sorted_type_index);
 
+/*
                 TRISON_CPP_DEBUG_CODE_(
-                    *DebugSpewStream() << "Parser: " << "            Processing transition " << ParseStackTreeNode_::AsString(ParseStackTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
-                    if (transition.m_data_index == ParseStackTreeNode_::UNUSED_DATA)
+                    DSF_TRANSITION_PROCESSING,
+                    *DebugSpewStream() << "Parser: " << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
+                    if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
                     else
                         *DebugSpewStream() << transition.m_data_index;
-                    *DebugSpewStream() << " and sorted type index " << Transition_::Order::SortedTypeIndex(Transition_::Type(transition.m_type)) << '\n';
+                    *DebugSpewStream() << " and sorted type index " << Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) << '\n';
                 )
+*/
 
-                ParseStackTreeNode_ *resulting_hps = NULL;
-                // If it's a default transition, there's no need to access the lookahead.
+                ParseTreeNode_ *resulting_hps = NULL;
+                // If it's a default transition, there's no need to access the lookahead (except in
+                // a certain case).
                 if (transition.m_token_index == Nonterminal::none_)
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "                Exercising transition without accessing lookahead... ")
-                    resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
+                    // Logic regarding empty reduction rules -- if this transition is REDUCE for an empty reduction rule
+                    // and the lookahead is the nonterminal for that REDUCE action, then don't reduce, since that
+                    // would produce an infinite loop.  There is a case where it's not necessary to access the lookahead:
+                    // if this HPS is the child of a REDUCE action for the same nonterminal, then we know the lookahead
+                    // is that nonterminal, so it's not necessary to check the lookahead (we don't want to access the
+                    // lookahead unnecessarily).  But it's not an if-and-only-if condition; we could have just REDUCE'd
+                    // that nonterminal but the HPS has no parent because the trunk action was executed and then popped,
+                    // meaning that the parent of this HPS would be the parse tree root.
+                    bool take_action = true;
+                    assert(hps.m_parent_node != NULL);
+                    if (transition.m_type == Npda_::Transition_::REDUCE)
+                    {
+                        Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[transition.m_data_index];
+                        bool is_empty_reduction_rule = rule.m_token_count == 0;
+                        bool just_reduced_this_nonterminal = hps.m_parent_node->m_spec.m_type == ParseTreeNode_::REDUCE && hps.m_parent_node->m_spec.m_single_data == rule.m_reduction_nonterminal_token_id;
+                        // The fancy logical construction here is to avoid accessing the lookahead unless necessary
+                        // (and technically this is not optimal, since really when executing the trunk actions,
+                        // the information of "parent is REDUCE and the reduction rule nonterminal is this one"
+                        // is lost in the current implementation.
+                        if (is_empty_reduction_rule &&
+                            (just_reduced_this_nonterminal ||
+                             rule.m_reduction_nonterminal_token_id == hps.LookaheadTokenId(*this))) // lookahead is this nonterminal
+                        {
+                            TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << "Parser: " << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
+                            take_action = false;
+                        }
+                    }
+
+                    if (take_action)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << "Parser: " << "            Exercising transition without accessing lookahead... ")
+                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
+                    }
                 }
                 // Otherwise, the lookahead must be accessed.
                 else
                 {
                     Token::Id lookahead_token_id = hps.LookaheadTokenId(*this);
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "                Lookahead is " << Token(lookahead_token_id) << '\n')
                     if (transition.m_token_index == lookahead_token_id)
                     {
-                        TRISON_CPP_DEBUG_CODE_(                        *DebugSpewStream() << "Parser: " << "                Exercising transition with access to lookahead... ")
-                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseStackTreeNode_::Type(transition.m_type), transition.m_data_index);
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << "Parser: " << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
+                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
                     }
                 }
                 if (resulting_hps != NULL)
-                    m_npda_.m_new_hps_queue_.push_back(resulting_hps);
+                    m_hypothetical_state_->m_new_hps_queue.push_back(resulting_hps);
             }
         }
     }
 
     // Take new hps-es and clear old ones.
-    for (HPSQueue_::iterator hps_it = m_npda_.m_hps_queue_.begin(), hps_it_end = m_npda_.m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
+    assert(!m_hypothetical_state_->m_new_hps_queue.empty());
+    TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << "Parser: " << "    Removing defunct HPSes...\n")
+    for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
-        ParseStackTreeNode_ *hps = *hps_it;
+        ParseTreeNode_ *hps = *hps_it;
         if (hps != NULL)
         {
-            hps->RemoveFromParent();
-            delete hps;
+            TRISON_CPP_DEBUG_CODE_(
+                DSF_HPS_REMOVE_DEFUNCT,
+                hps->Print(*DebugSpewStream(), this, DebugSpewPrefix(), 2);
+            )
+            m_hypothetical_state_->DeleteBranch(hps);
         }
     }
-    m_npda_.m_hps_queue_.clear();
-    std::swap(m_npda_.m_hps_queue_, m_npda_.m_new_hps_queue_);
-    assert(m_npda_.m_new_hps_queue_.empty());
+    m_hypothetical_state_->m_hps_queue.clear();
+    std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+    assert(m_hypothetical_state_->m_new_hps_queue.empty());
 }
 
-Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_, RealizedBranchStack_ &stack) throw()
+Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack) throw()
 {
-    assert(rule_index_ < ms_rule_count_);
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "Executing reduction rule " << rule_index_ << '\n')
+    assert(rule_index_ < Grammar_::ms_rule_count_);
+    Grammar_::Rule_ const &rule_ = Grammar_::ms_rule_table_[rule_index_];
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << "Parser: " << "Executing reduction rule " << rule_index_ << "; " << rule_.m_description << '\n')
     switch (rule_index_)
     {
         default:
@@ -881,252 +1086,555 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         case 0:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double st(stack[stack.size()-2].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double st(token_stack[token_stack.size()-2].m_data);
 
-#line 194 "Parser.trison"
+#line 132 "Parser.trison"
  std::cout << "stmt_then_end <- stmt %end\n"; return st; 
-#line 890 "Parser.cpp"
+#line 1095 "Parser.cpp"
             break;
         }
 
         case 1:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 196 "Parser.trison"
+#line 134 "Parser.trison"
  std::cout << "stmt_then_end <- %error[%end] %end\n"; return 0.0; 
-#line 900 "Parser.cpp"
+#line 1105 "Parser.cpp"
             break;
         }
 
         case 2:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double ex(stack[stack.size()-2].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double ex(token_stack[token_stack.size()-2].m_data);
 
-#line 201 "Parser.trison"
+#line 139 "Parser.trison"
  std::cout << "stmt <- expr ';'\n"; return ex; 
-#line 911 "Parser.cpp"
+#line 1116 "Parser.cpp"
             break;
         }
 
         case 3:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 203 "Parser.trison"
+#line 141 "Parser.trison"
  std::cout << "stmt <- %error ';'\n"; return 0.0; 
-#line 921 "Parser.cpp"
+#line 1126 "Parser.cpp"
             break;
         }
 
         case 4:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double e(stack[stack.size()-2].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double e(token_stack[token_stack.size()-2].m_data);
 
-#line 208 "Parser.trison"
+#line 146 "Parser.trison"
  std::cout << "expr <- '(' expr ')'\n"; return e; 
-#line 932 "Parser.cpp"
+#line 1137 "Parser.cpp"
             break;
         }
 
         case 5:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 210 "Parser.trison"
- std::cout << "expr <- '(' %error[')'] ')'\n"; return 0.0; 
-#line 942 "Parser.cpp"
+#line 148 "Parser.trison"
+ std::cout << "expr <- '(' %error[%end|')'] ')'\n"; return 0.0; 
+#line 1147 "Parser.cpp"
             break;
         }
 
         case 6:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
 
-#line 216 "Parser.trison"
- std::cout << "expr <- '(' %error[%end | ';']\n"; return 0.0; 
-#line 952 "Parser.cpp"
+#line 151 "Parser.trison"
+ std::cout << "expr <- '(' %error[%end|';']\n"; return 0.0; 
+#line 1157 "Parser.cpp"
             break;
         }
 
         case 7:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double num(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double num(token_stack[token_stack.size()-1].m_data);
 
-#line 218 "Parser.trison"
+#line 153 "Parser.trison"
  std::cout << "expr <- NUM(" << num << ")\n"; return num; 
-#line 963 "Parser.cpp"
+#line 1168 "Parser.cpp"
             break;
         }
 
         case 8:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double lhs(stack[stack.size()-3].m_token.m_data);
-            double rhs(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double lhs(token_stack[token_stack.size()-3].m_data);
+            double rhs(token_stack[token_stack.size()-1].m_data);
 
-#line 220 "Parser.trison"
+#line 155 "Parser.trison"
  std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n"; return lhs + rhs; 
-#line 975 "Parser.cpp"
+#line 1180 "Parser.cpp"
             break;
         }
 
         case 9:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double lhs(stack[stack.size()-6].m_token.m_data);
-            double rhs(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double lhs(token_stack[token_stack.size()-6].m_data);
+            double rhs(token_stack[token_stack.size()-1].m_data);
 
-#line 222 "Parser.trison"
+#line 157 "Parser.trison"
  std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n"; return lhs / rhs; 
-#line 987 "Parser.cpp"
+#line 1192 "Parser.cpp"
             break;
         }
 
         case 10:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double lhs(stack[stack.size()-5].m_token.m_data);
-            double rhs(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double lhs(token_stack[token_stack.size()-5].m_data);
+            double rhs(token_stack[token_stack.size()-1].m_data);
 
-#line 224 "Parser.trison"
+#line 159 "Parser.trison"
  std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n"; return std::pow(lhs, rhs); 
-#line 999 "Parser.cpp"
+#line 1204 "Parser.cpp"
             break;
         }
 
         case 11:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double lhs(stack[stack.size()-4].m_token.m_data);
-            double rhs(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double lhs(token_stack[token_stack.size()-4].m_data);
+            double rhs(token_stack[token_stack.size()-1].m_data);
 
-#line 226 "Parser.trison"
+#line 161 "Parser.trison"
  std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n"; return lhs * rhs; 
-#line 1011 "Parser.cpp"
+#line 1216 "Parser.cpp"
             break;
         }
 
         case 12:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double lhs(stack[stack.size()-3].m_token.m_data);
-            double rhs(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double lhs(token_stack[token_stack.size()-3].m_data);
+            double rhs(token_stack[token_stack.size()-1].m_data);
 
-#line 228 "Parser.trison"
+#line 163 "Parser.trison"
  std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n"; return lhs * rhs; 
-#line 1023 "Parser.cpp"
+#line 1228 "Parser.cpp"
             break;
         }
 
         case 13:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double lhs(stack[stack.size()-3].m_token.m_data);
-            double rhs(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double lhs(token_stack[token_stack.size()-3].m_data);
+            double rhs(token_stack[token_stack.size()-1].m_data);
 
-#line 230 "Parser.trison"
+#line 165 "Parser.trison"
  std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n"; return lhs - rhs; 
-#line 1035 "Parser.cpp"
+#line 1240 "Parser.cpp"
             break;
         }
 
         case 14:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double op(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double op(token_stack[token_stack.size()-1].m_data);
 
-#line 232 "Parser.trison"
+#line 167 "Parser.trison"
  std::cout << "expr <- '-' expr(" << op << ")\n"; return -op; 
-#line 1046 "Parser.cpp"
+#line 1251 "Parser.cpp"
             break;
         }
 
         case 15:
         {
-            assert(ms_rule_table_[rule_index_].m_token_count < stack.size());
-            double lhs(stack[stack.size()-3].m_token.m_data);
-            double rhs(stack[stack.size()-1].m_token.m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            double lhs(token_stack[token_stack.size()-3].m_data);
+            double rhs(token_stack[token_stack.size()-1].m_data);
 
-#line 234 "Parser.trison"
+#line 169 "Parser.trison"
  std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n"; return std::pow(lhs, rhs); 
-#line 1058 "Parser.cpp"
+#line 1263 "Parser.cpp"
+            break;
+        }
+
+        case 16:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 171 "Parser.trison"
+ std::cout << "expr <- %error[%end|';']\n"; return 0.0; 
+#line 1273 "Parser.cpp"
             break;
         }
 
     }
 
+    TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from reduction rule code block; rule " << rule_index_ << ": " << Grammar_::ms_rule_table_[rule_index_].m_description << '\n')
     assert(false && "no value returned from reduction rule code block");
     return 0.0;
 }
 
-void Parser::ThrowAwayRealizedBranchStackElement_ (RealizedBranchStackElement_ &stack_element) throw()
-{
-    TRISON_CPP_DEBUG_CODE_(
-        *DebugSpewStream() << "Parser: " << "Executing throw-away-token actions on token " << stack_element.m_token << " corresponding to stack element with npda state set ( ";
-        for (StateVector_::const_iterator it = stack_element.m_npda_state_vector.begin(),
-                                            it_end = stack_element.m_npda_state_vector.end();
-                it != it_end;
-                ++it)
-        {
-            std::uint32_t npda_state = *it;
-            *DebugSpewStream() << npda_state << ' ';
-        }
-        *DebugSpewStream() << ")\n";
-    )
-
-    ThrowAwayTokenData_(stack_element.m_token.m_data);
-}
-
 void Parser::PrintParserStatus_ (std::ostream &out) const
 {
-    assert(m_npda_.m_root_ != NULL);
+    assert(m_hypothetical_state_->m_root != NULL);
 
-    out << "Parser: " << "Realized state stack (bottom to top) is:\n";
-    for (std::size_t i = 0; i < m_npda_.m_realized_stack_.size(); ++i)
+    // TODO: Print full stack (this is quite a lot)
+    out << "Parser: " << "Realized state branch node stacks are (each listed bottom to top):\n";
+    for (BranchVector_::const_iterator it = m_realized_state_->BranchVectorStack().back().begin(),
+                                       it_end = m_realized_state_->BranchVectorStack().back().end();
+         it != it_end;
+         ++it)
     {
-        RealizedBranchStackElement_ const &stack_element = m_npda_.m_realized_stack_[i];
-        out << "Parser: " << "    ( ";
-        for (StateVector_::const_iterator it = stack_element.m_npda_state_vector.begin(),
-                                          it_end = stack_element.m_npda_state_vector.end();
-             it != it_end;
-             ++it)
-        {
-            std::uint32_t npda_state = *it;
-            out << npda_state << ' ';
-        }
+        Branch_ const &branch = *it;
+        out << "Parser: " << "    (";
+        branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>); // no need for delimiter here
         out << ")\n";
     }
-    out << "Parser: " << "Max realized lookahead count (so far) is:\n";
-    out << "Parser: " << "    " << m_npda_.MaxRealizedLookaheadQueueSize() << '\n';
-    out << "Parser: " << "Has-encountered-error-state (so far) is :\n";
-    out << "Parser: " << "    " << (m_npda_.HasEncounteredErrorState() ? "true" : "false") << '\n';
-    out << "Parser: " << "Realized stack tokens then realized lookahead queue is:\n";
-    out << "Parser: " << "    ";
-    for (std::size_t i = 1; i < m_npda_.m_realized_stack_.size(); ++i)
-        out << m_npda_.m_realized_stack_[i].m_token << ' ';
-    out << ". ";
-    for (std::size_t i = 0; i < m_npda_.m_realized_lookahead_queue_.size(); ++i)
-        out << m_npda_.m_realized_lookahead_queue_[i] << ' ';
-    out << '\n';
 
-    m_npda_.m_root_->Print(out, *this, "Parser: ");
+    out << "Parser: " << "Max realized lookahead count (so far) is:\n";
+    out << "Parser: " << "    " << m_realized_state_->MaxRealizedLookaheadCount();
+    if (m_max_allowable_lookahead_count >= 0)
+        out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
+    else
+        out << " (allowable lookahead count is unlimited)\n";
+    out << "Parser: " << "Max realized parse tree depth (so far) is:\n";
+    out << "Parser: " << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
+    if (m_max_allowable_parse_tree_depth >= 0)
+        out << " (max allowable parse tree depth is " << m_max_allowable_parse_tree_depth << ")\n";
+    else
+        out << " (allowable parse tree depth is unlimited)\n";
+    out << "Parser: " << "Has-encountered-error-state (so far) is:\n";
+    out << "Parser: " << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
+    out << "Parser: " << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
+    out << "Parser: " << "    ";
+    for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
+                                     it_end = m_realized_state_->TokenStack().end();
+         it != it_end;
+         ++it)
+    {
+        Token const &token = *it;
+        out << token << ' ';
+    }
+    out << ". ";
+    for (TokenQueue_::const_iterator it = m_realized_state_->LookaheadQueue().begin(),
+                                     it_end = m_realized_state_->LookaheadQueue().end();
+         it != it_end;
+         ++it)
+    {
+        Token const &token = *it;
+        out << token << ' ';
+    }
+    out << '\n';
+    out << "Parser: " << '\n';
+
+    out << "Parser: " << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
+    m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << "Parser: " << '\n';
 
     out << "Parser: " << "HPS queue:\n";
-    for (HPSQueue_::const_iterator it = m_npda_.m_hps_queue_.begin(), it_end = m_npda_.m_hps_queue_.end(); it != it_end; ++it)
+    for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
-        ParseStackTreeNode_ *hps = *it;
+        ParseTreeNode_ *hps = *it;
         assert(hps != NULL);
-        hps->Print(out, *this, "Parser: ", 1);
+        hps->Print(out, this, DebugSpewPrefix(), 1);
     }
 }
 
-char const *Parser::ParseStackTreeNode_::AsString (Type type)
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::RealizedState_
+// ////////////////////////////////////////////////////////////////////////////
+
+Parser::RealizedState_::RealizedState_ (Npda_::StateIndex_ initial_state)
+    :   m_max_realized_lookahead_count(0)
+    ,   m_has_encountered_error_state(false)
+{
+    Initialize(initial_state);
+}
+
+void Parser::RealizedState_::PushBackLookahead (Token const &lookahead, HPSQueue_ const &hps_queue)
+{
+    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
+    // this RealizedState_ method will be responsible for handling some HypotheticalState_
+    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
+    // be factored out.
+
+    m_lookahead_queue.push_back(lookahead);
+    UpdateMaxRealizedLookaheadCount();
+}
+
+Parser::Token Parser::RealizedState_::PopStack ()
+{
+    assert(!m_token_stack.empty());
+
+    Token popped_token(m_token_stack.back());
+    m_token_stack.pop_back();
+
+    assert(!m_branch_vector_stack.empty());
+    m_branch_vector_stack.pop_back();
+
+    assert(m_branch_vector_stack.size() == m_token_stack.size());
+
+    return popped_token;
+}
+
+Parser::Token Parser::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
+{
+    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
+    // this RealizedState_ method will be responsible for handling some HypotheticalState_
+    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
+    // be factored out.
+
+    assert(!m_lookahead_queue.empty());
+    // Because the contents of m_lookahead_queue are changing, and each hps's
+    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
+    for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        ParseTreeNode_ &hps = **hps_it;
+        --hps.m_realized_lookahead_cursor;
+    }
+    Token retval(m_lookahead_queue.back());
+    m_lookahead_queue.pop_front();
+    return retval;
+}
+
+void Parser::RealizedState_::StealTokenStackTop (double *&return_token)
+{
+    assert(return_token != NULL);
+    assert(!m_token_stack.empty());
+    *return_token = m_token_stack.back().m_data;
+    // Assign the token default so that the actual return token isn't destroyed when the parser is destroyed.
+    m_token_stack.back().m_data = 0.0;
+}
+
+// void Parser::RealizedState_::ExecuteAction (Npda_::Transition_::Type action, ActionData_ action_data)
+// {
+// }
+
+void Parser::RealizedState_::ExecuteActionReduce (Grammar_::Rule_ const &rule, Token::Data const &reduced_nonterminal_token_data, HPSQueue_ &hps_queue)
+{
+    for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
+        PopStack();
+    // Push the reduced nonterminal token data onto the front of the lookahead queue
+    PushFrontLookahead(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data), hps_queue);
+}
+
+void Parser::RealizedState_::ExecuteActionShift (BranchVector_ const &shifted_branch_vector, HPSQueue_ &hps_queue)
+{
+    // Ensure that each of the branch nodes in the shifted vector are actually children of
+    // the current set of branch nodes.
+    assert(!m_branch_vector_stack.empty());
+    BranchVector_ const &branch_vector_stack_top = m_branch_vector_stack.back();
+    // Ensure that the stack is actually consistent with regard to the parent/child relationships.
+    for (BranchVector_::const_iterator it = shifted_branch_vector.begin(), it_end = shifted_branch_vector.end(); it != it_end; ++it)
+    {
+        Branch_ const &branch = *it;
+        assert(std::any_of(branch_vector_stack_top.begin(), branch_vector_stack_top.end(), [branch](Branch_ const &stack_top_branch){ return stack_top_branch == branch.Parent(); }));
+    }
+    // Ensure that there's actually a lookahead.
+    assert(!m_lookahead_queue.empty());
+
+    // Push onto the branch node stack.
+    m_branch_vector_stack.push_back(shifted_branch_vector);
+    // Push the token onto the stack.
+    m_token_stack.push_back(m_lookahead_queue.front());
+    // Pop the shifted lookahead from the queue
+    PopFrontLookahead(hps_queue);
+}
+
+void Parser::RealizedState_::ExecuteActionInsertLookaheadError (HPSQueue_ &hps_queue)
+{
+    PushFrontLookahead(Token(Terminal::ERROR_), hps_queue);
+    SetHasEncounteredErrorState();
+}
+
+void Parser::RealizedState_::ExecuteActionDiscardLookahead (HPSQueue_ &hps_queue)
+{
+    assert(!m_lookahead_queue.empty());
+    PopFrontLookahead(hps_queue);
+}
+
+void Parser::RealizedState_::ClearStack ()
+{
+    m_branch_vector_stack.clear();
+    m_token_stack.clear();
+}
+
+void Parser::RealizedState_::Reinitialize (Npda_::StateIndex_ initial_state)
+{
+    // Clear the stack(s) and reset the error state.
+    ClearStack();
+    m_has_encountered_error_state = false;
+    // But preserve m_lookahead_queue and m_max_realized_lookahead_count.
+
+    Initialize(initial_state);
+}
+
+void Parser::RealizedState_::Initialize (Npda_::StateIndex_ initial_state)
+{
+    assert(m_branch_vector_stack.empty());
+    assert(m_token_stack.empty());
+
+    BranchVector_ initial_branch_vector;
+    // The Nonterminal::none_ is just a dummy Token::Id to go along with initial_state.
+    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_)));
+    // TODO: This probably should be emplace_back
+    m_branch_vector_stack.push_back(initial_branch_vector);
+
+    // Put a dummy token in to correspond with the start state.
+    m_token_stack.push_back(Token(Nonterminal::none_));
+}
+
+void Parser::RealizedState_::PushFrontLookahead (Token const &lookahead, HPSQueue_ &hps_queue)
+{
+    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
+    // this RealizedState_ method will be responsible for handling some HypotheticalState_
+    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
+    // be factored out.
+
+    m_lookahead_queue.push_front(lookahead);
+    // Because the contents of m_lookahead_queue_ are changing, and each hps's
+    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
+    for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        ParseTreeNode_ &hps = **hps_it;
+        ++hps.m_realized_lookahead_cursor;
+    }
+    UpdateMaxRealizedLookaheadCount();
+}
+
+void Parser::RealizedState_::UpdateMaxRealizedLookaheadCount ()
+{
+    // Subtract the number of parser-generated tokens from the length of m_lookahead_queue.
+    std::size_t parser_generated_token_count = 0;
+    for ( ; parser_generated_token_count < m_lookahead_queue.size(); ++parser_generated_token_count)
+    {
+        Token const &lookahead = m_lookahead_queue[parser_generated_token_count];
+        if (IsScannerGeneratedTokenId(lookahead.m_id))
+            break;
+    }
+    m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, m_lookahead_queue.size() - parser_generated_token_count);
+}
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::HypotheticalState_
+// ////////////////////////////////////////////////////////////////////////////
+
+Parser::HypotheticalState_::HypotheticalState_ (std::uint32_t initial_state)
+{
+    m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
+
+    ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
+    hps->m_hypothetical_head        = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
+
+    m_root->AddChild(hps);
+    m_hps_queue.push_back(hps);
+    m_max_realized_parse_tree_depth = 0;
+}
+
+Parser::HypotheticalState_::~HypotheticalState_ ()
+{
+    m_hps_queue.clear();
+    m_new_hps_queue.clear();
+
+    delete m_root;
+    m_root = NULL;
+}
+
+bool Parser::HypotheticalState_::MinAndMaxRealizedLookaheadCursorsAreEqual () const
+{
+    std::uint32_t min;
+    std::uint32_t max;
+    ComputeMinAndMaxRealizedLookaheadCursors(&min, &max);
+    return min == max;
+}
+
+bool Parser::HypotheticalState_::HasExceededMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth) const
+{
+    // If the limit is negative, then excess is not possible.
+    return max_allowable_parse_tree_depth >= 0 && std::int64_t(ParseTreeDepth()) > max_allowable_parse_tree_depth;
+}
+
+void Parser::HypotheticalState_::DeleteBranch (ParseTreeNode_ *branch_node)
+{
+    assert(!branch_node->IsRoot());
+
+    // Find the most root-ward ancestor that is an only child that isn't the root node.
+    ParseTreeNode_ *branch_root = branch_node->BranchRoot();
+    assert(branch_root != NULL);
+    assert(!branch_root->IsRoot());
+    assert(branch_root->HasParent());
+
+    branch_root->RemoveFromParent();
+    branch_node->NullifyHPSNodeDescendantsInHPSQueue(m_hps_queue);
+    delete branch_root;
+}
+
+void Parser::HypotheticalState_::DestroyParseTree ()
+{
+    assert(m_new_hps_queue.empty());
+    // Clear all HPSes, which represent the leaf nodes of the parse tree.
+    m_hps_queue.clear();
+    // Delete the parse tree root, which deletes all nodes.
+    delete m_root;
+    // At this point, the parse tree has been destroyed.  Create a new root node.
+    m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
+}
+
+void Parser::HypotheticalState_::ComputeMinAndMaxRealizedLookaheadCursors (std::uint32_t *min, std::uint32_t *max) const
+{
+    if (min != NULL)
+        *min = std::numeric_limits<std::uint32_t>::max();
+    if (max != NULL)
+        *max = std::numeric_limits<std::uint32_t>::min();
+
+    for (HPSQueue_::const_iterator hps_it = m_hps_queue.begin(), hps_it_end = m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        // Skip nullified HPS nodes.
+        if (*hps_it == NULL)
+            continue;
+
+        ParseTreeNode_ const &hps = **hps_it;
+        if (min != NULL && hps.m_realized_lookahead_cursor < *min)
+            *min = hps.m_realized_lookahead_cursor;
+        if (max != NULL && hps.m_realized_lookahead_cursor > *max)
+            *max = hps.m_realized_lookahead_cursor;
+    }
+}
+
+std::uint32_t Parser::HypotheticalState_::ParseTreeDepth () const
+{
+    std::uint32_t parse_tree_depth = 0;
+
+    for (HPSQueue_::const_iterator hps_it = m_hps_queue.begin(), hps_it_end = m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        // Skip nullified HPS nodes.
+        if (*hps_it == NULL)
+            continue;
+
+        ParseTreeNode_ const &hps = **hps_it;
+        std::uint32_t branch_depth = hps.m_depth - m_root->m_depth;
+        if (branch_depth > parse_tree_depth)
+            parse_tree_depth = branch_depth;
+    }
+
+    // Update m_max_realized_parse_tree_depth
+    if (parse_tree_depth > m_max_realized_parse_tree_depth)
+        m_max_realized_parse_tree_depth = parse_tree_depth;
+
+    return parse_tree_depth;
+}
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::ParseTreeNode_
+// ////////////////////////////////////////////////////////////////////////////
+
+char const *Parser::ParseTreeNode_::AsString (Type type)
 {
     static char const *const LOOKUP_TABLE[COUNT_] =
     {
@@ -1143,12 +1651,11 @@ char const *Parser::ParseStackTreeNode_::AsString (Type type)
     return LOOKUP_TABLE[std::uint32_t(type)];
 }
 
-
-bool Parser::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (Parser::ParseStackTreeNode_ const *lhs, Parser::ParseStackTreeNode_ const *rhs) const
+bool Parser::ParseTreeNode_::ParseTreeNodeOrder::operator () (Parser::ParseTreeNode_ const *lhs, Parser::ParseTreeNode_ const *rhs) const
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
-    assert(lhs->m_spec.m_type == rhs->m_spec.m_type); // ParseStackTreeNodeSet should contain only nodes of the same type.
+    assert(lhs->m_spec.m_type == rhs->m_spec.m_type); // ParseTreeNodeSet should contain only nodes of the same type.
     // for HPS, their contents must be compared.
     if (lhs->m_spec.m_type == HPS)
     {
@@ -1157,28 +1664,24 @@ bool Parser::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (Parser::
         // hps-es are equal if their m_realized_lookahead_cursor and m_hypothetical_lookahead_token_id_queue members are.
         if (lhs->m_realized_lookahead_cursor != rhs->m_realized_lookahead_cursor)
             return lhs->m_realized_lookahead_cursor < rhs->m_realized_lookahead_cursor;
-        else if (lhs->m_stack != rhs->m_stack)
-            return std::lexicographical_compare(
-                lhs->m_stack.begin(), lhs->m_stack.end(),
-                rhs->m_stack.begin(), rhs->m_stack.end(),
-                CompareHypotheticalBranchStackElement
-            );
+        else if (lhs->m_hypothetical_head.StatePtr() != rhs->m_hypothetical_head.StatePtr())
+            return lhs->m_hypothetical_head.StatePtr() < rhs->m_hypothetical_head.StatePtr();
         else
             return std::lexicographical_compare(
                 lhs->m_hypothetical_lookahead_token_id_queue.begin(), lhs->m_hypothetical_lookahead_token_id_queue.end(),
                 rhs->m_hypothetical_lookahead_token_id_queue.begin(), rhs->m_hypothetical_lookahead_token_id_queue.end(),
-                CompareTokenId
+                CompareTokenId_
             );
     }
     // For REDUCE, their contents must be compared.
     else if (lhs->m_spec.m_type == REDUCE)
     {
         // m_single_data contains the reduction rule index.
-        Rule_ const &lhs_rule = ms_rule_table_[lhs->m_spec.m_single_data];
-        Rule_ const &rhs_rule = ms_rule_table_[rhs->m_spec.m_single_data];
+        Grammar_::Rule_ const &lhs_rule = Grammar_::ms_rule_table_[lhs->m_spec.m_single_data];
+        Grammar_::Rule_ const &rhs_rule = Grammar_::ms_rule_table_[rhs->m_spec.m_single_data];
         // Sort first by rule precedence, then by rule index (lower has higher priority).
-        if (ms_precedence_table_[lhs_rule.m_precedence_index].m_level != ms_precedence_table_[rhs_rule.m_precedence_index].m_level)
-            return ms_precedence_table_[lhs_rule.m_precedence_index].m_level > ms_precedence_table_[rhs_rule.m_precedence_index].m_level;
+        if (Grammar_::ms_precedence_table_[lhs_rule.m_precedence_index].m_level != Grammar_::ms_precedence_table_[rhs_rule.m_precedence_index].m_level)
+            return Grammar_::ms_precedence_table_[lhs_rule.m_precedence_index].m_level > Grammar_::ms_precedence_table_[rhs_rule.m_precedence_index].m_level;
         else // Sort based on rule index.
             return lhs->m_spec.m_single_data < rhs->m_spec.m_single_data;
     }
@@ -1187,17 +1690,17 @@ bool Parser::ParseStackTreeNode_::ParseStackTreeNodeOrder::operator () (Parser::
         return lhs < rhs;
 }
 
-Parser::ParseStackTreeNode_::~ParseStackTreeNode_ ()
+Parser::ParseTreeNode_::~ParseTreeNode_ ()
 {
     // TODO: figure out if stack element tokens should be thrown away
     // TODO: figure out if local lookahead queue tokens should be thrown away
     // TODO: are they actually uninitialized (default value)?
     for (ChildMap::iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
     {
-        ParseStackTreeNodeSet &child_node_set = it->second;
-        for (ParseStackTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        ParseTreeNodeSet &child_node_set = it->second;
+        for (ParseTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
         {
-            ParseStackTreeNode_ *child = *child_it;
+            ParseTreeNode_ *child = *child_it;
             assert(child != NULL);
             assert(child->m_parent_node == this);
             delete child;
@@ -1206,23 +1709,23 @@ Parser::ParseStackTreeNode_::~ParseStackTreeNode_ ()
     }
 }
 
-bool Parser::ParseStackTreeNode_::HasTrunkChild () const
+bool Parser::ParseTreeNode_::HasTrunkChild () const
 {
     if (m_spec.m_type != ROOT || m_child_nodes.size() != 1)
         return false;
-    ParseStackTreeNodeSet const &single_type_child_node_set = m_child_nodes.begin()->second;
+    ParseTreeNodeSet const &single_type_child_node_set = m_child_nodes.begin()->second;
     if (single_type_child_node_set.size() != 1)
         return false;
-    ParseStackTreeNode_ *single_child = *single_type_child_node_set.begin();
+    ParseTreeNode_ *single_child = *single_type_child_node_set.begin();
     assert(single_child != NULL);
     assert(single_child->m_spec.m_type != ROOT);
     return single_child->m_spec.m_type != HPS;
 }
 
-Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::PopTrunkChild ()
+Parser::ParseTreeNode_ *Parser::ParseTreeNode_::PopTrunkChild ()
 {
     assert(HasTrunkChild());
-    ParseStackTreeNode_ *trunk_child = *m_child_nodes.begin()->second.begin();
+    ParseTreeNode_ *trunk_child = *m_child_nodes.begin()->second.begin();
     assert(trunk_child != NULL);
     assert(trunk_child->m_parent_node == this);
     // Reassign the children of the trunk child to this node (root).
@@ -1231,10 +1734,10 @@ Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::PopTrunkChild ()
     // Set the reassigned child nodes' parent to be this node (root).
     for (ChildMap::iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
     {
-        ParseStackTreeNodeSet &child_node_set = child_map_it->second;
-        for (ParseStackTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        ParseTreeNodeSet &child_node_set = child_map_it->second;
+        for (ParseTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
         {
-            ParseStackTreeNode_ *child = *child_it;
+            ParseTreeNode_ *child = *child_it;
             assert(child != NULL);
             child->m_parent_node = this;
         }
@@ -1243,15 +1746,17 @@ Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::PopTrunkChild ()
     return trunk_child;
 }
 
-bool Parser::ParseStackTreeNode_::HasExactlyOneChild () const
+bool Parser::ParseTreeNode_::HasExactlyOneChild () const
 {
     return m_child_nodes.size() == 1 && m_child_nodes.begin()->second.size() == 1;
 }
 
-Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::BranchRoot ()
+Parser::ParseTreeNode_ *Parser::ParseTreeNode_::BranchRoot ()
 {
-    ParseStackTreeNode_ *node = this;
-    while (node->m_parent_node != NULL && node->m_parent_node->HasExactlyOneChild())
+    assert(!IsRoot());
+    assert(HasParent());
+    ParseTreeNode_ *node = this;
+    while (node->HasParent() && !node->m_parent_node->IsRoot() && node->m_parent_node->HasExactlyOneChild())
     {
         node = node->m_parent_node;
         assert(node->m_spec.m_type != HPS);
@@ -1259,7 +1764,7 @@ Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::BranchRoot ()
     return node;
 }
 
-Parser::Token::Id Parser::ParseStackTreeNode_::LookaheadTokenId (Parser &parser) const
+Parser::Token::Id Parser::ParseTreeNode_::LookaheadTokenId (Parser &parser) const
 {
     if (m_hypothetical_lookahead_token_id_queue.empty())
         return parser.Lookahead_(m_realized_lookahead_cursor).m_id;
@@ -1267,58 +1772,81 @@ Parser::Token::Id Parser::ParseStackTreeNode_::LookaheadTokenId (Parser &parser)
         return m_hypothetical_lookahead_token_id_queue.front();
 }
 
-bool Parser::ParseStackTreeNode_::IsBlockedHPS () const
+bool Parser::ParseTreeNode_::IsBlockedHPS () const
 {
     assert(m_spec.m_type == HPS);
     if (m_parent_node == NULL)
         return false;
     switch (m_parent_node->m_spec.m_type)
     {
+        // Nothing can happen after returning, so this has to be blocking.
         case RETURN:
-        case REDUCE:
         case POP_STACK: return true;
 
         default:        return false;
     }
 }
 
-Parser::ParseStackTreeNode_::PrecedenceLevelRange Parser::ParseStackTreeNode_::ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const
+Parser::ParseTreeNode_::PrecedenceLevelRange Parser::ParseTreeNode_::ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const
 {
     if (m_spec.m_type == HPS)
     {
         // Need to look back at the rule of the (current_child_depth-1)th ancestor of this node in order
         // to get the correct rule precedence, because that's where the conflict occurred.
-        assert(!m_stack.empty());
-        assert(m_stack.size() >= current_child_depth);
-//         std::uint32_t state_index = m_stack.back().m_state_index;
-        std::uint32_t state_index = m_stack[m_stack.size()-(current_child_depth-1)].m_state_index;
-        assert(state_index < ms_state_count_);
-        State_ const &state = ms_state_table_[state_index];
-        assert(state.m_associated_rule_index < ms_rule_count_);
-        Rule_ const &associated_rule = ms_rule_table_[state.m_associated_rule_index];
-        assert(associated_rule.m_precedence_index < ms_precedence_count_);
-        Precedence_ const &rule_precedence = ms_precedence_table_[associated_rule.m_precedence_index];
-        return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+
+        assert(current_child_depth >= 2);
+        // These asserts are equivalent to checking that the stack depth is at least 2.
+        assert(bool(m_hypothetical_head.StatePtr()));
+        assert(bool(m_hypothetical_head.StatePtr()->HasParent()));
+
+        // Thinking of m_hypothetical_head.StatePtr() as the top of the state stack, we want to get the
+        // (current_child_depth-1)th element from the top.
+        BranchStatePtr_ child_branch_node_ptr = m_hypothetical_head.StatePtr();
+        for (std::uint32_t i = 0; i < current_child_depth-2; ++i)
+        {
+            // This assert checks that the stack depth is sufficient.
+            assert(child_branch_node_ptr->HasParent());
+            child_branch_node_ptr = child_branch_node_ptr->Parent();
+        }
+        std::uint32_t state_index = child_branch_node_ptr->Data();
+
+        assert(state_index < Npda_::ms_state_count_);
+        Npda_::State_ const &state = Npda_::ms_state_table_[state_index];
+        // If there's an associated rule, then use the precedence from that.
+        if (state.m_associated_rule_index < Grammar_::ms_rule_count_)
+        {
+            Grammar_::Rule_ const &associated_rule = Grammar_::ms_rule_table_[state.m_associated_rule_index];
+            assert(associated_rule.m_precedence_index < Grammar_::ms_precedence_count_);
+            Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
+            return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+        }
+        // Otherwise (e.g. a RETURN state), return default precedence.
+        else
+        {
+            Grammar_::Precedence_ const &default_precedence = Grammar_::ms_precedence_table_[0]; // 0 is default precedence.
+            return PrecedenceLevelRange(default_precedence.m_level, default_precedence.m_level);
+        }
     }
     else if (m_spec.m_type == REDUCE)
     {
         std::uint32_t reduction_rule_index = m_spec.m_single_data;
-        Rule_ const &reduction_rule = ms_rule_table_[reduction_rule_index];
-        assert(reduction_rule.m_precedence_index < ms_precedence_count_);
-        Precedence_ const &rule_precedence = ms_precedence_table_[reduction_rule.m_precedence_index];
+        Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduction_rule_index];
+        assert(reduction_rule.m_precedence_index < Grammar_::ms_precedence_count_);
+        Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
         return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
     }
     else if (m_spec.m_type == SHIFT)
     {
         PrecedenceLevelRange retval(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::min());
+        assert(!m_child_nodes.empty());
         // The range is the smallest range encompassing the range of each child node.
         for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
         {
-            ParseStackTreeNodeSet const &child_node_set = child_map_it->second;
-            for (ParseStackTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+            ParseTreeNodeSet const &child_node_set = child_map_it->second;
+            for (ParseTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
             {
                 assert(*child_it != NULL);
-                ParseStackTreeNode_ const &child = **child_it;
+                ParseTreeNode_ const &child = **child_it;
                 PrecedenceLevelRange child_precedence_level_range(child.ComputePrecedenceLevelRange(current_child_depth+1));
                 retval.first = std::min(retval.first, child_precedence_level_range.first);
                 retval.second = std::max(retval.second, child_precedence_level_range.second);
@@ -1335,15 +1863,15 @@ Parser::ParseStackTreeNode_::PrecedenceLevelRange Parser::ParseStackTreeNode_::C
     }
 }
 
-bool Parser::ParseStackTreeNode_::HasShiftReduceConflict (ParseStackTreeNode_ *&shift, ParseStackTreeNode_ *&reduce)
+bool Parser::ParseTreeNode_::HasShiftReduceConflict (ParseTreeNode_ *&shift, ParseTreeNode_ *&reduce)
 {
     ChildMap::iterator shift_children_it = m_child_nodes.find(Spec(SHIFT));
     ChildMap::iterator reduce_children_it = m_child_nodes.find(Spec(REDUCE));
     if (shift_children_it == m_child_nodes.end() || reduce_children_it == m_child_nodes.end())
         return false;
 
-    ParseStackTreeNodeSet &shift_children = shift_children_it->second;
-    ParseStackTreeNodeSet &reduce_children = reduce_children_it->second;
+    ParseTreeNodeSet &shift_children = shift_children_it->second;
+    ParseTreeNodeSet &reduce_children = reduce_children_it->second;
     assert(shift_children.size() == 1);
     assert(reduce_children.size() == 1);
 
@@ -1352,43 +1880,50 @@ bool Parser::ParseStackTreeNode_::HasShiftReduceConflict (ParseStackTreeNode_ *&
     return true;
 }
 
-void Parser::ParseStackTreeNode_::AddChild (ParseStackTreeNode_ *child)
+void Parser::ParseTreeNode_::AddChild (ParseTreeNode_ *child)
 {
     assert(child != NULL);
     assert(child->m_parent_node == NULL);
     assert(child->m_spec.m_type != ROOT);
+
     m_child_nodes[child->m_spec].insert(child);
     child->m_parent_node = this;
+    child->m_depth = m_depth + 1; // Always +1 relative to parent.
 
-    // If this node is SHIFT and the child is HPS, then add the child's NPDA state to this node's m_npda_state_set.
-    // This is the only situation in which m_npda_state_set is added to.
+    // If this node is SHIFT and the child is HPS, then add the child's NPDA state to this node's
+    // m_child_branch_vector.  This is the only situation in which m_child_branch_vector is added to.
     if (m_spec.m_type == SHIFT && child->m_spec.m_type == HPS)
     {
-        assert(!child->m_stack.empty());
-        std::uint32_t child_npda_state_index = child->m_stack.back().m_state_index;
-        assert(m_npda_state_set.find(child_npda_state_index) == m_npda_state_set.end() && "NPDA state should not already be in the set");
-        m_npda_state_set.insert(child_npda_state_index);
+        assert(bool(child->m_hypothetical_head.StatePtr()));
+        assert(std::none_of(m_child_branch_vector.begin(), m_child_branch_vector.end(), [child](Branch_ const &node_state){ return node_state.StatePtr() == child->m_hypothetical_head.StatePtr(); }) && "child branch node should not already be in the set");
+        m_child_branch_vector.push_back(child->m_hypothetical_head);
     }
 }
 
-void Parser::ParseStackTreeNode_::RemoveChild (ParseStackTreeNode_ *child)
+void Parser::ParseTreeNode_::RemoveChild (ParseTreeNode_ *child)
 {
     assert(child != NULL);
     assert(child->m_parent_node == this);
     assert(HasChildrenHavingSpec(child->m_spec));
+    assert(m_child_nodes[child->m_spec].find(child) != m_child_nodes[child->m_spec].end());
     m_child_nodes[child->m_spec].erase(child);
     if (m_child_nodes[child->m_spec].empty())
         m_child_nodes.erase(child->m_spec);
     child->m_parent_node = NULL;
+    child->m_depth = 0; // Reset.
+
+    // If there are no children and this isn't the root node, remove it from its parent.
+    if (m_child_nodes.empty() && m_parent_node != NULL)
+        RemoveFromParent();
 }
 
-void Parser::ParseStackTreeNode_::RemoveFromParent ()
+void Parser::ParseTreeNode_::RemoveFromParent ()
 {
     assert(m_parent_node != NULL);
     m_parent_node->RemoveChild(this);
 }
 
-void Parser::ParseStackTreeNode_::NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_ &hps_queue) const
+void Parser::ParseTreeNode_::NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_ &hps_queue) const
 {
     if (m_spec.m_type == HPS)
     {
@@ -1399,170 +1934,183 @@ void Parser::ParseStackTreeNode_::NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_
     }
     for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
     {
-        ParseStackTreeNodeSet const &child_node_set = child_map_it->second;
-        for (ParseStackTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        ParseTreeNodeSet const &child_node_set = child_map_it->second;
+        for (ParseTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
         {
             assert(*child_it != NULL);
-            ParseStackTreeNode_ const &child = **child_it;
+            ParseTreeNode_ const &child = **child_it;
             child.NullifyHPSNodeDescendantsInHPSQueue(hps_queue);
         }
     }
 }
 
-Parser::ParseStackTreeNode_ *Parser::ParseStackTreeNode_::CloneLeafNode () const
+Parser::ParseTreeNode_ *Parser::ParseTreeNode_::CloneLeafNode () const
 {
-    ParseStackTreeNode_ *retval = new ParseStackTreeNode_(m_spec);
+    ParseTreeNode_ *retval = new ParseTreeNode_(m_spec);
     CloneLeafNodeInto(*retval);
     return retval;
 }
 
-void Parser::ParseStackTreeNode_::CloneLeafNodeInto (Parser::ParseStackTreeNode_ &orphan_target) const
+void Parser::ParseTreeNode_::CloneLeafNodeInto (Parser::ParseTreeNode_ &orphan_target) const
 {
     assert(orphan_target.m_parent_node == NULL);
     assert(m_child_nodes.empty());
     orphan_target.m_spec                                    = m_spec;
-    orphan_target.m_npda_state_set                          = m_npda_state_set;
-    orphan_target.m_stack                                   = m_stack;
+    orphan_target.m_hypothetical_head                       = m_hypothetical_head;
     orphan_target.m_hypothetical_lookahead_token_id_queue   = m_hypothetical_lookahead_token_id_queue;
     orphan_target.m_realized_lookahead_cursor               = m_realized_lookahead_cursor;
 }
 
-void Parser::ParseStackTreeNode_::Print (std::ostream &out, Parser const &parser, std::string const &prefix, std::uint32_t indent_level) const
+void Parser::ParseTreeNode_::Print (std::ostream &out, Parser const *parser, std::string const &prefix, std::uint32_t indent_level, bool suppress_initial_prefix) const
 {
-    out << prefix;
-    for (std::uint32_t i = 0; i < indent_level; ++i)
-        out << "    ";
-    out << AsString(m_spec.m_type);
+    if (!suppress_initial_prefix)
+    {
+        out << prefix;
+        for (std::uint32_t i = 0; i < indent_level; ++i)
+            out << "    ";
+    }
+    out << AsString(m_spec.m_type) << ' ' << this << " (depth = " << m_depth << ')';
     if (m_spec.m_type == HPS)
-        out << (IsBlockedHPS() ? " (    blocked)" : " (non-blocked)");
+    {
+        out << (IsBlockedHPS() ? " (    blocked," : " (non-blocked,");
+        out << " m_realized_lookahead_cursor = " << m_realized_lookahead_cursor << ')';
+    }
     switch (m_spec.m_type)
     {
-        case REDUCE:    out << " rule " << m_spec.m_single_data << "; " << ms_rule_table_[m_spec.m_single_data].m_description;  break;
+        case REDUCE:    out << " rule " << m_spec.m_single_data << "; " << Grammar_::ms_rule_table_[m_spec.m_single_data].m_description;  break;
+        //case SHIFT:     out << " to (?) state " << m_spec.m_single_data << "; " << Npda_::ms_state_table_[m_spec.m_single_data].m_description; break;
+        case SHIFT:     out << ' ' << Token(m_spec.m_single_data); break;
         case POP_STACK: out << ' ' << m_spec.m_single_data << " time(s)";                                                       break;
         default:                                                                                                                break;
     }
-    // assert(!m_stack.empty());
-    // out << ' ' << this << ", parent = " << m_parent_node << ' ' << ms_state_table_[m_stack.back()].m_description << ' ';
-    if (!m_stack.empty())
-        out << ' ' << ms_state_table_[m_stack.back().m_state_index].m_description << ' ';
+    if (bool(m_hypothetical_head.StatePtr()))
+        out << ' ' << Npda_::ms_state_table_[m_hypothetical_head.StatePtr()->Data()].m_description << ' ';
     if (m_spec.m_type == HPS)
     {
+        assert(bool(m_hypothetical_head.StatePtr()));
+        assert(bool(m_hypothetical_head.TokenIdPtr()));
+
         out << "    (";
-        for (std::size_t i = 0; i < m_stack.size(); ++i)
-        {
-            out << m_stack[i].m_state_index;
-            if (i+1 < m_stack.size())
-                out << ' ';
-        }
+        m_hypothetical_head.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
         out << "); ";
-        for (std::size_t i = 1; i < m_stack.size(); ++i)
-            out << ms_token_name_table_[m_stack[i].m_token_id] << ' ';
-        out << ". ";
+
+        m_hypothetical_head.TokenIdPtr()->PrintRootToLeaf(out, TokenName_);
+        out << " . ";
         for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
             out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
-        for (std::size_t i = m_realized_lookahead_cursor; i < parser.m_npda_.m_realized_lookahead_queue_.size(); ++i)
-            out << ms_token_name_table_[parser.m_npda_.m_realized_lookahead_queue_[i].m_id] << ' ';
+        out << ", ";
+        if (parser != NULL)
+            for (std::size_t i = m_realized_lookahead_cursor; i < parser->m_realized_state_->LookaheadQueue().size(); ++i)
+                out << ms_token_name_table_[parser->m_realized_state_->LookaheadQueue()[i].m_id] << ' ';
+        else
+            out << "<realized-lookaheads-not-printed>";
     }
     out << '\n';
 
     // Print children recursively with higher indent level
     for (ChildMap::const_iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
     {
-        ParseStackTreeNodeSet const &child_node_set = it->second;
-        for (ParseStackTreeNodeSet::const_iterator set_it = child_node_set.begin(), set_it_end = child_node_set.end(); set_it != set_it_end; ++set_it)
+        ParseTreeNodeSet const &child_node_set = it->second;
+        for (ParseTreeNodeSet::const_iterator set_it = child_node_set.begin(), set_it_end = child_node_set.end(); set_it != set_it_end; ++set_it)
             (*set_it)->Print(out, parser, prefix, indent_level+1);
     }
 }
 
+// ////////////////////////////////////////////////////////////////////////////
+// End of Parser::ParseTreeNode_
+// ////////////////////////////////////////////////////////////////////////////
+
 Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index) throw()
 {
-    while (index >= m_npda_.m_realized_lookahead_queue_.size())
+    while (index >= m_realized_state_->LookaheadQueue().size())
     {
         // This does not require updating the hps-es' m_realized_lookahead_cursor.
-        m_npda_.PushBackRealizedLookahead(Scan_());
+        m_realized_state_->PushBackLookahead(Scan_(), m_hypothetical_state_->m_hps_queue);
 
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "Pushed " << m_npda_.m_realized_lookahead_queue_.back() << " onto back of lookahead queue\n")
+        TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << "Parser: " << "Pushed " << m_realized_state_->LookaheadQueue().back() << " onto back of lookahead queue\n")
     }
-    return m_npda_.m_realized_lookahead_queue_[index];
+    return m_realized_state_->LookaheadQueue()[index];
 }
 
-Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTreeNode_ const &hps, ParseStackTreeNode_::Type action_type, std::uint32_t action_data)
+Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ const &hps, ParseTreeNode_::Type action_type, std::uint32_t action_data)
 {
-    // TODO: replace individual arguments action_type, action_data with ParseStackTreeNode_::Spec and just modify that struct below where it needs it.
-    assert(hps.m_spec.m_type == ParseStackTreeNode_::HPS && "Only a HPS type node can take an action");
+    // TODO: replace individual arguments action_type, action_data with ParseTreeNode_::Spec and just modify that struct below where it needs it.
+    assert(hps.m_spec.m_type == ParseTreeNode_::HPS && "Only a HPS type node can take an action");
     assert(hps.m_parent_node != NULL);
 
-    // TODO: Once enough testing/verification is done, this comment and the commented-out early check code
-    // should be removed.
-    //
-    // Because the parse tree will be recreated when the trunk action is POP_STACK, there's no need to
-    // early out if the stack will be popped empty.
-
-//     // Early check for if the stack would be popped empty, in which case, don't create the new hps.
-//     if (action_type == ParseStackTreeNode_::POP_STACK && hps.m_stack.size() <= 1)
-//     {
-//         return NULL;
-//     }
-
-    ParseStackTreeNode_ *new_hps = NULL;
+    ParseTreeNode_ *new_hps = NULL;
 
     switch (action_type)
     {
-        case ParseStackTreeNode_::ROOT: {
-            assert(false && "ParseStackTreeNode_::ROOT is an invalid action type.");
+        case ParseTreeNode_::ROOT: {
+            assert(false && "ParseTreeNode_::ROOT is an invalid action type.");
             break;
         }
-        case ParseStackTreeNode_::RETURN: {
+        case ParseTreeNode_::RETURN: {
             new_hps = hps.CloneLeafNode();
             break;
         }
-        case ParseStackTreeNode_::REDUCE: {
+        case ParseTreeNode_::REDUCE: {
             // Execute the appropriate rule on the top tokens in the stack
             std::uint32_t const &rule_index = action_data;
-            Rule_ const &rule = ms_rule_table_[rule_index];
+            Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
 
             // Avoid creating the new hps altogether if it won't be added due to a REDUCE/REDUCE conflict.
-            ParseStackTreeNode_ *existing_reduce_action_node = NULL;
-            ParseStackTreeNode_ *reduce_hps = NULL;
-            ParseStackTreeNode_::Spec action_spec(action_type, action_data);
+            ParseTreeNode_ *existing_reduce_action_node = NULL;
+            ParseTreeNode_ *reduce_hps = NULL;
+            ParseTreeNode_::Spec action_spec(action_type, action_data);
             if (hps.m_parent_node->HasChildrenHavingSpec(action_spec)) // Check for an existing REDUCE action
             {
-                // This is a REDUCE/REDUCE conflict
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "Parser: " << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
+                // This may or may not be a conflict.  Need to determine that.
 
-                ParseStackTreeNode_::ParseStackTreeNodeSet &reduce_node_set = hps.m_parent_node->ChildrenHavingSpec(action_spec);
+                ParseTreeNode_::ParseTreeNodeSet &reduce_node_set = hps.m_parent_node->ChildrenHavingSpec(action_spec);
                 assert(reduce_node_set.size() == 1);
                 existing_reduce_action_node = *reduce_node_set.begin();
                 assert(existing_reduce_action_node != NULL);
-                // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
-                // (replacement instead of creating a new one and deleting the old is an optimization which also
-                // avoids an annoying traversal through m_npda_.m_hps_queue_).
-                // NOTE: This depends on the fact that a REDUCE node has exactly one HPS child,
-                // which is what these three asserts check.  TODO: maybe make abstractions for these sorts of checks.
-                assert(existing_reduce_action_node->m_child_nodes.size() == 1);
-                assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
-                assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseStackTreeNode_::HPS);
-                if (CompareRuleByPrecedence(action_data, existing_reduce_action_node->m_spec.m_single_data))
+                assert(existing_reduce_action_node->m_spec.m_type == ParseTreeNode_::REDUCE);
+
+                // If the hypothetical action is identical to the existing one, then there's no problem,
+                // just add it as a child to the existing one.
+                if (existing_reduce_action_node->m_spec.m_single_data == rule_index)
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of new hps.\n")
-
-                    reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
-                    assert(reduce_hps != NULL);
-
-                    // Remove the nodes from the ParseStackTreeNode_ tree.
-                    assert(existing_reduce_action_node != NULL);
-                    existing_reduce_action_node->RemoveFromParent();
-                    reduce_hps->RemoveFromParent();
-                    // Modify the nodes.
-                    existing_reduce_action_node->m_spec = action_spec; // Replace with the winning reduction rule Spec.
-                    hps.CloneLeafNodeInto(*reduce_hps); // NOTE: This modifies the existing hps, so no update of m_npda_.m_hps_queue_ is necessary.
-                    // Re-add them to the ParseStackTreeNode_ tree.
-                    existing_reduce_action_node->AddChild(reduce_hps);
-                    hps.m_parent_node->AddChild(existing_reduce_action_node);
+                    new_hps = hps.CloneLeafNode();
+                    reduce_hps = new_hps;
                 }
+                // Otherwise this is a REDUCE/REDUCE conflict
                 else
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of existing hps.\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "Parser: " << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
+
+                    // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
+                    // (replacement instead of creating a new one and deleting the old is an optimization which also
+                    // avoids an annoying traversal through m_hypothetical_state_->m_hps_queue).
+                    // NOTE: This depends on the fact that a REDUCE node has exactly one HPS child,
+                    // which is what these three asserts check.  TODO: maybe make abstractions for these sorts of checks.
+                    assert(existing_reduce_action_node->m_child_nodes.size() == 1);
+                    assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
+                    assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseTreeNode_::HPS);
+                    if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
+                    {
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.\n")
+
+                        reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
+                        assert(reduce_hps != NULL);
+
+                        // Remove the nodes from the ParseTreeNode_ tree.
+                        assert(existing_reduce_action_node != NULL);
+                        existing_reduce_action_node->RemoveFromParent();
+                        reduce_hps->RemoveFromParent();
+                        // Modify the nodes.
+                        existing_reduce_action_node->m_spec = action_spec; // Replace with the winning reduction rule Spec.
+                        hps.CloneLeafNodeInto(*reduce_hps); // NOTE: This modifies the existing hps, so no update of m_hypothetical_state_->m_hps_queue is necessary.
+                        // Re-add them to the ParseTreeNode_ tree.
+                        existing_reduce_action_node->AddChild(reduce_hps);
+                        hps.m_parent_node->AddChild(existing_reduce_action_node);
+                    }
+                    else
+                    {
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of existing hps.\n")
+                    }
                 }
             }
             else
@@ -1574,36 +2122,42 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTre
             if (reduce_hps != NULL)
             {
                 // Pop those stack tokens.
-                // Computing the number of elements to pop is necessary because we don't guarantee that
-                // the number of pops is not greater than the stack size (due to destruction and recreation
-                // of parse tree upon REDUCE and POP_STACK trunk actions).
-                std::size_t actual_pop_count = std::min(std::size_t(rule.m_token_count), reduce_hps->m_stack.size());
-                reduce_hps->m_stack.resize(reduce_hps->m_stack.size() - actual_pop_count);
+                for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
+                {
+                    assert(reduce_hps->m_hypothetical_head.HasParent());
+                    reduce_hps->m_hypothetical_head = reduce_hps->m_hypothetical_head.Parent();
+                }
                 // Push the reduced nonterminal token data onto the front of the lookahead queue
                 reduce_hps->m_hypothetical_lookahead_token_id_queue.push_front(rule.m_reduction_nonterminal_token_id);
             }
 
             break;
         }
-        case ParseStackTreeNode_::SHIFT: {
+        case ParseTreeNode_::SHIFT: {
             // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
             std::uint32_t const &state_index = action_data;
-            // TODO: probably make "Shift" method for ParseStackTreeNode_ to do all this bookkeeping and parallel LookaheadTokenId tracking.
+            // TODO: probably make "Shift" method for ParseTreeNode_ to do all this bookkeeping and parallel LookaheadTokenId tracking.
             new_hps = hps.CloneLeafNode();
-            new_hps->m_stack.push_back(HypotheticalBranchStackElement_(state_index, new_hps->LookaheadTokenId(*this)));
-            action_data = ParseStackTreeNode_::UNUSED_DATA; // SHIFT action doesn't store the state, the HPS children do.
+            Token::Id lookahead_token_id = new_hps->LookaheadTokenId(*this);
+            // Create a new Branch_ and link it to the parent node's.
+            new_hps->m_hypothetical_head = Branch_(BranchState_::CreateWithParent(hps.m_hypothetical_head.StatePtr(), state_index), BranchTokenId_::CreateWithParent(hps.m_hypothetical_head.TokenIdPtr(), lookahead_token_id));
+            assert(new_hps->m_hypothetical_head.HasParent());
+            assert(new_hps->m_hypothetical_head.Parent() == hps.m_hypothetical_head);
+
+            // Store the lookahead token id in action_data so it can printed.
+            action_data = std::uint32_t(lookahead_token_id);
             if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
                 ++new_hps->m_realized_lookahead_cursor;
             else
                 new_hps->m_hypothetical_lookahead_token_id_queue.pop_front();
             break;
         }
-        case ParseStackTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+        case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
             new_hps = hps.CloneLeafNode();
             new_hps->m_hypothetical_lookahead_token_id_queue.push_front(Terminal::ERROR_);
             break;
         }
-        case ParseStackTreeNode_::DISCARD_LOOKAHEAD: {
+        case ParseTreeNode_::DISCARD_LOOKAHEAD: {
             new_hps = hps.CloneLeafNode();
             if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
                 ++new_hps->m_realized_lookahead_cursor;
@@ -1611,22 +2165,34 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTre
                 new_hps->m_hypothetical_lookahead_token_id_queue.pop_front();
             break;
         }
-        case ParseStackTreeNode_::POP_STACK: {
-            // TODO: make separate action nodes for each pop, instead of using action data.
+        case ParseTreeNode_::POP_STACK: {
+            // TODO: make separate action nodes for each pop, instead of using action data,
+            // since for example two branches may agree on popping at least once, even if
+            // one of them is killed later.
             std::uint32_t const &pop_count = action_data;
+            // Check if there are actually enough stack elements to pop successfully.
+            // If not, then don't create an HPS, and break early.
+            if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
+            {
+                new_hps = NULL;
+                break;
+            }
+
             new_hps = hps.CloneLeafNode();
-            assert(new_hps->m_stack.size() >= pop_count);
             for (std::uint32_t i = 0; i < pop_count; ++i)
-                new_hps->m_stack.pop_back();
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
+            {
+                assert(new_hps->m_hypothetical_head.HasParent());
+                new_hps->m_hypothetical_head = new_hps->m_hypothetical_head.Parent();
+            }
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
             break;
         }
-        case ParseStackTreeNode_::HPS: {
-            assert(false && "ParseStackTreeNode_::HPS is an invalid action type.");
+        case ParseTreeNode_::HPS: {
+            assert(false && "ParseTreeNode_::HPS is an invalid action type.");
             break;
         }
         default: {
-            assert(false && "invalid ParseStackTreeNode_::Type");
+            assert(false && "invalid ParseTreeNode_::Type");
             break;
         }
     }
@@ -1635,24 +2201,24 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTre
     {
         assert(new_hps->m_parent_node == NULL);
 
-        ParseStackTreeNode_ *action_node = NULL;
+        ParseTreeNode_ *action_node = NULL;
 
         // Ensure the action node exists, creating it if necessary.
-        ParseStackTreeNode_::Spec action_spec(action_type, action_data);
+        ParseTreeNode_::Spec action_spec(action_type, action_data);
         if (hps.m_parent_node->HasChildrenHavingSpec(action_spec))
         {
-            ParseStackTreeNode_::ParseStackTreeNodeSet &children_of_action_type = hps.m_parent_node->ChildrenHavingSpec(action_spec);
+            ParseTreeNode_::ParseTreeNodeSet &children_of_action_type = hps.m_parent_node->ChildrenHavingSpec(action_spec);
             assert(children_of_action_type.size() == 1);
             action_node = *children_of_action_type.begin();
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "using existing action node of type " << ParseStackTreeNode_::AsString(action_spec.m_type) << "... ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "using existing action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
 
             // If the new hps already exists (can only happen as a child of POP_STACK), then don't add it.
-            if (action_type == ParseStackTreeNode_::POP_STACK && action_node->HasChildrenHavingSpec(new_hps->m_spec))
+            if (action_type == ParseTreeNode_::POP_STACK && action_node->HasChildrenHavingSpec(new_hps->m_spec))
             {
-                ParseStackTreeNode_::ParseStackTreeNodeSet const &child_hps_set = action_node->ChildrenHavingSpec(new_hps->m_spec);
+                ParseTreeNode_::ParseTreeNodeSet const &child_hps_set = action_node->ChildrenHavingSpec(new_hps->m_spec);
                 if (child_hps_set.find(new_hps) != child_hps_set.end())
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "not adding duplicate HPS as child of POP_STACK node... ")
+                    TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "not adding duplicate HPS as child of POP_STACK node... ")
                     delete new_hps;
                     new_hps = NULL;
                 }
@@ -1660,8 +2226,9 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTre
         }
         else
         {
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating new action node of type " << ParseStackTreeNode_::AsString(action_spec.m_type) << "... ")
-            action_node = new ParseStackTreeNode_(action_spec);
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating new action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
+            action_node = new ParseTreeNode_(action_spec);
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "(action_node = " << action_node << ") ")
             hps.m_parent_node->AddChild(action_node);
         }
 
@@ -1672,81 +2239,64 @@ Parser::ParseStackTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseStackTre
     return new_hps;
 }
 
-Parser::Npda_::~Npda_ ()
+void Parser::CreateParseTreeFromRealizedState_ ()
 {
-    // TODO: figure out if realized stack and lookahead queue should have their tokens thrown away
-    delete m_root_;
-    m_root_ = NULL;
-    m_hps_queue_.clear();
-    m_new_hps_queue_.clear();
-}
+    BranchVector_ const &reconstruct_branch_vector = m_realized_state_->BranchVectorStack().back();
 
-void Parser::Npda_::PopFrontRealizedLookahead ()
-{
-    assert(!m_realized_lookahead_queue_.empty());
-    // Because the contents of m_npda_.m_realized_lookahead_queue_ are changing, and each hps's
-    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
-    for (HPSQueue_::iterator hps_it = m_hps_queue_.begin(), hps_it_end = m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
+    // Add HPS nodes for each branch in the top of the realized state stack.
+    assert(!reconstruct_branch_vector.empty());
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << "Parser: " << "        Reconstructing branches:\n")
+    for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
-        ParseStackTreeNode_ &hps = **hps_it;
-        --hps.m_realized_lookahead_cursor;
-    }
-    m_realized_lookahead_queue_.pop_front();
-}
+        Branch_ const &reconstruct_branch = *it;
+        TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << "Parser: " << "            " << reconstruct_branch.StatePtr() << '\n')
 
-void Parser::Npda_::PushFrontRealizedLookahead (Parser::Token const &lookahead)
-{
-    m_realized_lookahead_queue_.push_front(lookahead);
-    // Because the contents of m_npda_.m_realized_lookahead_queue_ are changing, and each hps's
-    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
-    for (HPSQueue_::iterator hps_it = m_hps_queue_.begin(), hps_it_end = m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
-    {
-        ParseStackTreeNode_ &hps = **hps_it;
-        ++hps.m_realized_lookahead_cursor;
-    }
-    UpdateMaxRealizedLookaheadQueueSize();
-}
+        ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
+        hps->m_hypothetical_head        = reconstruct_branch;
 
-void Parser::Npda_::PushBackRealizedLookahead (Parser::Token const &lookahead)
-{
-    m_realized_lookahead_queue_.push_back(lookahead);
-    UpdateMaxRealizedLookaheadQueueSize();
-}
-
-void Parser::Npda_::RemoveBranchIfNotTrunk (ParseStackTreeNode_ *branch_node)
-{
-    // Find the most root-ward ancestor that is an only child.
-    ParseStackTreeNode_ *branch_root = branch_node->BranchRoot();
-    assert(branch_root != NULL);
-    // Only do stuff if the branch isn't the trunk (i.e. only if its root isn't the tree root).
-    if (branch_root->m_parent_node != NULL)
-    {
-        branch_root->RemoveFromParent();
-        branch_node->NullifyHPSNodeDescendantsInHPSQueue(m_hps_queue_);
+        m_hypothetical_state_->m_root->AddChild(hps);
+        m_hypothetical_state_->m_hps_queue.push_back(hps);
     }
 }
 
-void Parser::Npda_::UpdateMaxRealizedLookaheadQueueSize ()
+void Parser::ClearStack_ ()
 {
-    // m_realized_lookahead_cursor is an index into m_realized_lookahead_queue_ for each branch, so the number
-    // of lookaheads depends on the cursor for each branch.
-    for (HPSQueue_::iterator hps_it = m_hps_queue_.begin(), hps_it_end = m_hps_queue_.end(); hps_it != hps_it_end; ++hps_it)
+    if (m_realized_state_ != NULL)
     {
-        // Skip nullified elements because they have been deleted.
-        if (*hps_it == NULL)
-            continue;
-
-        ParseStackTreeNode_ &hps = **hps_it;
-        // The actual lookaheads are offset by the realized lookahead cursor, because the tokens before
-        // the realized lookahead cursor are ones we've seen already, and therefore don't contribute to
-        // the actual lookahead count.
-        assert(m_realized_lookahead_queue_.size() >= hps.m_realized_lookahead_cursor);
-        std::size_t hps_actual_lookahead_count = m_realized_lookahead_queue_.size() - hps.m_realized_lookahead_cursor;
-        m_max_realized_lookahead_queue_size_ = std::max(m_max_realized_lookahead_queue_size_, hps_actual_lookahead_count);
+        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
+        while (!m_realized_state_->TokenStack().empty())
+            ThrowAwayToken_(m_realized_state_->PopStack());
     }
+
+    delete m_hypothetical_state_;
+    m_hypothetical_state_ = NULL;
 }
 
-bool Parser::CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index)
+void Parser::CleanUpAllInternals_ ()
+{
+    if (m_realized_state_ != NULL)
+    {
+        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
+        while (!m_realized_state_->TokenStack().empty())
+            ThrowAwayToken_(m_realized_state_->PopStack());
+
+        while (!m_realized_state_->LookaheadQueue().empty())
+            ThrowAwayToken_(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+
+        // Note that this implicitly resets the error state (since that's tracked by m_realized_state_).
+        delete m_realized_state_;
+        m_realized_state_ = NULL;
+    }
+
+    delete m_hypothetical_state_;
+    m_hypothetical_state_ = NULL;
+}
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::Grammar_
+// ////////////////////////////////////////////////////////////////////////////
+
+bool Parser::Grammar_::CompareRuleByPrecedence_ (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index)
 {
     if (ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level != ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level)
         return ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level > ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level;
@@ -1754,101 +2304,107 @@ bool Parser::CompareRuleByPrecedence (std::uint32_t lhs_rule_index, std::uint32_
         return lhs_rule_index < rhs_rule_index;
 }
 
-Parser::StateVector_ const &Parser::EpsilonClosureOfState_ (std::uint32_t state_index)
+Parser::Grammar_::Precedence_ const Parser::Grammar_::ms_precedence_table_[] =
 {
-    // This function implementation depends on there not being an epsilon transition cycle.
+    { 0, 0, "DEFAULT_" },
+    { 1, 0, "LOWEST" },
+    { 2, 0, "LOW" },
+    { 3, 0, "ADDITIVE" },
+    { 4, 0, "MULTIPLICATIVE" },
+    { 5, 1, "QUESTION" },
+    { 6, 2, "UNARY" },
+    { 7, 2, "EXPONENTIATION" },
+    { 8, 0, "HIGHEST" }
+};
 
+std::size_t const Parser::Grammar_::ms_precedence_count_ = sizeof(Parser::Grammar_::ms_precedence_table_) / sizeof(*Parser::Grammar_::ms_precedence_table_);
+
+Parser::Grammar_::Rule_ const Parser::Grammar_::ms_rule_table_[] =
+{
+    { Parser::Nonterminal::stmt_then_end, 2, 0, "stmt_then_end <- stmt END_" },
+    { Parser::Nonterminal::stmt_then_end, 2, 0, "stmt_then_end <- ERROR_ END_" },
+    { Parser::Nonterminal::stmt, 2, 0, "stmt <- expr ';'" },
+    { Parser::Nonterminal::stmt, 2, 0, "stmt <- ERROR_ ';'" },
+    { Parser::Nonterminal::expr, 3, 0, "expr <- '(' expr ')'" },
+    { Parser::Nonterminal::expr, 3, 0, "expr <- '(' ERROR_ ')'" },
+    { Parser::Nonterminal::expr, 2, 0, "expr <- '(' ERROR_" },
+    { Parser::Nonterminal::expr, 1, 0, "expr <- NUM" },
+    { Parser::Nonterminal::expr, 3, 3, "expr <- expr '+' expr" },
+    { Parser::Nonterminal::expr, 6, 1, "expr <- expr '+' '+' '+' '+' expr" },
+    { Parser::Nonterminal::expr, 5, 2, "expr <- expr '+' '+' '+' expr" },
+    { Parser::Nonterminal::expr, 4, 8, "expr <- expr '+' '+' expr" },
+    { Parser::Nonterminal::expr, 3, 4, "expr <- expr '*' expr" },
+    { Parser::Nonterminal::expr, 3, 5, "expr <- expr '?' expr" },
+    { Parser::Nonterminal::expr, 2, 6, "expr <- '-' expr" },
+    { Parser::Nonterminal::expr, 3, 7, "expr <- expr '^' expr" },
+    { Parser::Nonterminal::expr, 1, 0, "expr <- ERROR_" }
+};
+std::size_t const Parser::Grammar_::ms_rule_count_ = sizeof(Parser::Grammar_::ms_rule_table_) / sizeof(*Parser::Grammar_::ms_rule_table_);
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::Npda_
+// ////////////////////////////////////////////////////////////////////////////
+
+Parser::Npda_::StateIndexVector_ const &Parser::Npda_::EpsilonClosureOfState_ (StateIndex_ state_index)
+{
     // Memoize this function, because it will be called so many times and is somewhat intensive.
-    typedef std::map<std::uint32_t,StateVector_> LookupTable;
+    typedef std::map<StateIndex_,StateIndexVector_> LookupTable;
     static LookupTable s_lookup_table;
+
+    LookupTable::iterator find_it = s_lookup_table.find(state_index);
+    if (find_it != s_lookup_table.end())
+        return find_it->second;
+
+    // Compute the epsilon closure as a set
+    StateIndexSet_ epsilon_closure_set;
+    ComputeEpsilonClosureOfState_(state_index, epsilon_closure_set);
+
+    // Copy the states in the set into the memoized vector.
+//    std::cerr << "EpsilonClosureOfState_(" << state_index << "):"; // HIPPO
+    StateIndexVector_ &epsilon_closure = s_lookup_table[state_index];
+    epsilon_closure.reserve(epsilon_closure_set.size());
+    for (StateIndexSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
     {
-        LookupTable::iterator find_it = s_lookup_table.find(state_index);
-        if (find_it != s_lookup_table.end())
-            return find_it->second;
+//        std::cerr << ' ' << *it; // HIPPO
+        epsilon_closure.push_back(*it);
     }
+//    std::cerr << ";\n"; // HIPPO
+    // Return the memoized value.
+    return epsilon_closure;
+}
+
+void Parser::Npda_::ComputeEpsilonClosureOfState_ (StateIndex_ state_index, StateIndexSet_ &epsilon_closure)
+{
+    // NOTE: The working definition of epsilon closure in this implementation used to only include
+    // states that had non-epsilon transitions, but has been changed to include all epsilon-reachable
+    // states, including those having no non-epsilon transitions.
+
+    // This implementation allows epsilon cycles.
+
+    // If this state has already been visited, there's no reason to continue.
+    if (epsilon_closure.find(state_index) != epsilon_closure.end())
+        return;
+    // Otherwise, mark it as visited.  This also prevents infinite recursion.
+    else
+        epsilon_closure.insert(state_index);
 
     // This set collects the epsilon closure with no duplicates
-    StateSet_ epsilon_closure_set;
     State_ const &state = ms_state_table_[state_index];
-    bool state_has_non_epsilon_transitions = false;
     for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count;
          transition != transition_end;
          ++transition)
     {
         if (transition->m_type == Transition_::EPSILON)
-        {
-            StateVector_ const &sub_epsilon_closure = EpsilonClosureOfState_(transition->m_data_index);
-            for (StateVector_::const_iterator it = sub_epsilon_closure.begin(), it_end = sub_epsilon_closure.end(); it != it_end; ++it)
-                epsilon_closure_set.insert(*it);
-        }
-        else
-            state_has_non_epsilon_transitions = true;
+            ComputeEpsilonClosureOfState_(transition->m_data_index, epsilon_closure);
     }
-    // The epsilon closure of a state includes itself if it has non-epsilon transitions
-    if (state_has_non_epsilon_transitions)
-        epsilon_closure_set.insert(state_index);
-
-    // Add all the elements of epsilon_closure_set to the memoized entry.
-    StateVector_ &epsilon_closure = s_lookup_table[state_index];
-    epsilon_closure.reserve(epsilon_closure_set.size());
-    for (StateSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
-        epsilon_closure.push_back(*it);
-    return epsilon_closure;
 }
 
-Parser::StateVector_ const &Parser::EpsilonClosureOfStateSet_ (StateSet_ const &state_set)
-{
-    // This function implementation depends on there not being an epsilon transition cycle.
-
-    // Memoize this function, because it will be called so many times and is somewhat intensive.
-    typedef std::map<StateSet_,StateVector_> LookupTable;
-    static LookupTable s_lookup_table;
-    {
-        LookupTable::iterator find_it = s_lookup_table.find(state_set);
-        if (find_it != s_lookup_table.end())
-            return find_it->second;
-    }
-
-    // This set collects the epsilon closure with no duplicates
-    StateSet_ epsilon_closure_set;
-
-    for (StateSet_::const_iterator it = state_set.begin(), it_end = state_set.end(); it != it_end; ++it)
-    {
-        std::uint32_t state_index = *it;
-        State_ const &state = ms_state_table_[state_index];
-        bool state_has_non_epsilon_transitions = false;
-        for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count;
-            transition != transition_end;
-            ++transition)
-        {
-            if (transition->m_type == Transition_::EPSILON)
-            {
-                StateVector_ const &sub_epsilon_closure = EpsilonClosureOfState_(transition->m_data_index);
-                for (StateVector_::const_iterator it = sub_epsilon_closure.begin(), it_end = sub_epsilon_closure.end(); it != it_end; ++it)
-                    epsilon_closure_set.insert(*it);
-            }
-            else
-                state_has_non_epsilon_transitions = true;
-        }
-        // The epsilon closure of a state includes itself if it has non-epsilon transitions
-        if (state_has_non_epsilon_transitions)
-            epsilon_closure_set.insert(state_index);
-    }
-
-    // Add all the elements of epsilon_closure_set to the memoized entry.
-    StateVector_ &epsilon_closure = s_lookup_table[state_set];
-    epsilon_closure.reserve(epsilon_closure_set.size());
-    for (StateSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
-        epsilon_closure.push_back(*it);
-    return epsilon_closure;
-}
-
-Parser::TransitionVector_ const &Parser::NonEpsilonTransitionsOfState_ (std::uint32_t state_index, std::uint32_t sorted_type_index)
+Parser::Npda_::TransitionVector_ const &Parser::Npda_::NonEpsilonTransitionsOfState_ (StateIndex_ state_index, std::uint32_t sorted_type_index)
 {
     assert(0 <= sorted_type_index && sorted_type_index <= 3);
 
     // Memoize this function, because it will be called so many times and is somewhat intensive.
-    typedef std::pair<std::uint32_t,std::uint32_t> KeyType;
+    typedef std::pair<StateIndex_,std::uint32_t> KeyType;
     typedef std::map<KeyType,TransitionVector_> LookupTable;
     static LookupTable s_lookup_table;
 
@@ -1859,8 +2415,8 @@ Parser::TransitionVector_ const &Parser::NonEpsilonTransitionsOfState_ (std::uin
 
     // TODO: probably don't need to memoize epsilon closures because non-epsilon transitions is memoized.
     TransitionSet_ non_epsilon_transition_set;
-    StateVector_ const &epsilon_closure = EpsilonClosureOfState_(state_index);
-    for (StateVector_::const_iterator it = epsilon_closure.begin(), it_end = epsilon_closure.end(); it != it_end; ++it)
+    StateIndexVector_ const &epsilon_closure = EpsilonClosureOfState_(state_index);
+    for (StateIndexVector_::const_iterator it = epsilon_closure.begin(), it_end = epsilon_closure.end(); it != it_end; ++it)
     {
         State_ const &state = ms_state_table_[*it];
         for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count; transition != transition_end; ++transition)
@@ -1878,365 +2434,295 @@ Parser::TransitionVector_ const &Parser::NonEpsilonTransitionsOfState_ (std::uin
     return non_epsilon_transitions;
 }
 
-Parser::Precedence_ const Parser::ms_precedence_table_[] =
+Parser::Npda_::State_ const Parser::Npda_::ms_state_table_[] =
 {
-    { 0, 0, "DEFAULT_" },
-    { 1, 0, "LOWEST" },
-    { 2, 0, "LOW" },
-    { 3, 0, "ADDITIVE" },
-    { 4, 0, "MULTIPLICATIVE" },
-    { 5, 1, "QUESTION" },
-    { 6, 2, "UNARY" },
-    { 7, 2, "EXPONENTIATION" },
-    { 8, 0, "HIGHEST" }
-};
-
-std::size_t const Parser::ms_precedence_count_ = sizeof(Parser::ms_precedence_table_) / sizeof(*Parser::ms_precedence_table_);
-
-Parser::Rule_ const Parser::ms_rule_table_[] =
-{
-    { Parser::Nonterminal::stmt_then_end, 2, 0, "stmt_then_end <- stmt END_" },
-    { Parser::Nonterminal::stmt_then_end, 2, 0, "stmt_then_end <- ERROR_ END_" },
-    { Parser::Nonterminal::stmt, 2, 0, "stmt <- expr ';'" },
-    { Parser::Nonterminal::stmt, 2, 0, "stmt <- ERROR_ ';'" },
-    { Parser::Nonterminal::expr, 3, 0, "expr <- '(' expr ')'" },
-    { Parser::Nonterminal::expr, 3, 0, "expr <- '(' ERROR_ ')'" },
-    { Parser::Nonterminal::expr, 2, 0, "expr <- '(' ERROR_" },
-    { Parser::Nonterminal::expr, 1, 0, "expr <- NUM" },
-    { Parser::Nonterminal::expr, 3, 3, "expr <- expr '+' expr" },
-    { Parser::Nonterminal::expr, 6, 1, "expr <- expr '+' '+' '+' '+' expr" },
-    { Parser::Nonterminal::expr, 5, 2, "expr <- expr '+' '+' '+' expr" },
-    { Parser::Nonterminal::expr, 4, 8, "expr <- expr '+' '+' expr" },
-    { Parser::Nonterminal::expr, 3, 4, "expr <- expr '*' expr" },
-    { Parser::Nonterminal::expr, 3, 5, "expr <- expr '?' expr" },
-    { Parser::Nonterminal::expr, 2, 6, "expr <- '-' expr" },
-    { Parser::Nonterminal::expr, 3, 7, "expr <- expr '^' expr" }
-};
-std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
-
-Parser::State_ const Parser::ms_state_table_[] =
-{
-    { 2, ms_transition_table_+0, 16, "START stmt_then_end" },
-    { 1, ms_transition_table_+2, 16, "RETURN stmt_then_end" },
-    { 2, ms_transition_table_+3, 16, "head of: stmt_then_end" },
+    { 2, ms_transition_table_+0, 17, "START stmt_then_end" },
+    { 1, ms_transition_table_+2, 17, "RETURN stmt_then_end" },
+    { 2, ms_transition_table_+3, 17, "head of: stmt_then_end" },
     { 4, ms_transition_table_+5, 0, "rule 0: stmt_then_end <- . stmt END_" },
     { 3, ms_transition_table_+9, 0, "rule 0: stmt_then_end <- stmt . END_" },
-    { 2, ms_transition_table_+12, 16, "START stmt" },
-    { 1, ms_transition_table_+14, 16, "RETURN stmt" },
-    { 2, ms_transition_table_+15, 16, "head of: stmt" },
+    { 2, ms_transition_table_+12, 17, "START stmt" },
+    { 1, ms_transition_table_+14, 17, "RETURN stmt" },
+    { 2, ms_transition_table_+15, 17, "head of: stmt" },
     { 4, ms_transition_table_+17, 2, "rule 2: stmt <- . expr ';'" },
     { 3, ms_transition_table_+21, 2, "rule 2: stmt <- expr . ';'" },
-    { 2, ms_transition_table_+24, 16, "START expr" },
-    { 1, ms_transition_table_+26, 16, "RETURN expr" },
-    { 12, ms_transition_table_+27, 16, "head of: expr" },
-    { 3, ms_transition_table_+39, 4, "rule 4: expr <- . '(' expr ')'" },
-    { 4, ms_transition_table_+42, 4, "rule 4: expr <- '(' . expr ')'" },
-    { 3, ms_transition_table_+46, 4, "rule 4: expr <- '(' expr . ')'" },
-    { 1, ms_transition_table_+49, 4, "rule 4: expr <- '(' expr ')' ." },
-    { 3, ms_transition_table_+50, 5, "rule 5: expr <- . '(' ERROR_ ')'" },
-    { 2, ms_transition_table_+53, 5, "rule 5: expr <- '(' . ERROR_ ')'" },
-    { 3, ms_transition_table_+55, 5, "rule 5: expr <- '(' ERROR_ . ')'" },
-    { 1, ms_transition_table_+58, 5, "rule 5: expr <- '(' ERROR_ ')' ." },
-    { 3, ms_transition_table_+59, 6, "rule 6: expr <- . '(' ERROR_" },
-    { 2, ms_transition_table_+62, 6, "rule 6: expr <- '(' . ERROR_" },
-    { 3, ms_transition_table_+64, 6, "rule 6: expr <- '(' ERROR_ ." },
-    { 3, ms_transition_table_+67, 7, "rule 7: expr <- . NUM" },
-    { 1, ms_transition_table_+70, 7, "rule 7: expr <- NUM ." },
-    { 3, ms_transition_table_+71, 8, "rule 8: expr <- . expr '+' expr" },
-    { 3, ms_transition_table_+74, 8, "rule 8: expr <- expr . '+' expr" },
-    { 4, ms_transition_table_+77, 8, "rule 8: expr <- expr '+' . expr" },
-    { 1, ms_transition_table_+81, 8, "rule 8: expr <- expr '+' expr ." },
-    { 3, ms_transition_table_+82, 9, "rule 9: expr <- . expr '+' '+' '+' '+' expr" },
-    { 3, ms_transition_table_+85, 9, "rule 9: expr <- expr . '+' '+' '+' '+' expr" },
-    { 3, ms_transition_table_+88, 9, "rule 9: expr <- expr '+' . '+' '+' '+' expr" },
-    { 3, ms_transition_table_+91, 9, "rule 9: expr <- expr '+' '+' . '+' '+' expr" },
-    { 3, ms_transition_table_+94, 9, "rule 9: expr <- expr '+' '+' '+' . '+' expr" },
-    { 4, ms_transition_table_+97, 9, "rule 9: expr <- expr '+' '+' '+' '+' . expr" },
-    { 1, ms_transition_table_+101, 9, "rule 9: expr <- expr '+' '+' '+' '+' expr ." },
-    { 3, ms_transition_table_+102, 10, "rule 10: expr <- . expr '+' '+' '+' expr" },
-    { 3, ms_transition_table_+105, 10, "rule 10: expr <- expr . '+' '+' '+' expr" },
-    { 3, ms_transition_table_+108, 10, "rule 10: expr <- expr '+' . '+' '+' expr" },
-    { 3, ms_transition_table_+111, 10, "rule 10: expr <- expr '+' '+' . '+' expr" },
-    { 4, ms_transition_table_+114, 10, "rule 10: expr <- expr '+' '+' '+' . expr" },
-    { 1, ms_transition_table_+118, 10, "rule 10: expr <- expr '+' '+' '+' expr ." },
-    { 3, ms_transition_table_+119, 11, "rule 11: expr <- . expr '+' '+' expr" },
-    { 3, ms_transition_table_+122, 11, "rule 11: expr <- expr . '+' '+' expr" },
-    { 3, ms_transition_table_+125, 11, "rule 11: expr <- expr '+' . '+' expr" },
-    { 4, ms_transition_table_+128, 11, "rule 11: expr <- expr '+' '+' . expr" },
-    { 1, ms_transition_table_+132, 11, "rule 11: expr <- expr '+' '+' expr ." },
-    { 3, ms_transition_table_+133, 12, "rule 12: expr <- . expr '*' expr" },
-    { 3, ms_transition_table_+136, 12, "rule 12: expr <- expr . '*' expr" },
-    { 4, ms_transition_table_+139, 12, "rule 12: expr <- expr '*' . expr" },
-    { 1, ms_transition_table_+143, 12, "rule 12: expr <- expr '*' expr ." },
-    { 3, ms_transition_table_+144, 13, "rule 13: expr <- . expr '?' expr" },
-    { 3, ms_transition_table_+147, 13, "rule 13: expr <- expr . '?' expr" },
-    { 4, ms_transition_table_+150, 13, "rule 13: expr <- expr '?' . expr" },
-    { 1, ms_transition_table_+154, 13, "rule 13: expr <- expr '?' expr ." },
-    { 3, ms_transition_table_+155, 14, "rule 14: expr <- . '-' expr" },
-    { 4, ms_transition_table_+158, 14, "rule 14: expr <- '-' . expr" },
-    { 1, ms_transition_table_+162, 14, "rule 14: expr <- '-' expr ." },
-    { 3, ms_transition_table_+163, 15, "rule 15: expr <- . expr '^' expr" },
-    { 3, ms_transition_table_+166, 15, "rule 15: expr <- expr . '^' expr" },
-    { 4, ms_transition_table_+169, 15, "rule 15: expr <- expr '^' . expr" },
-    { 1, ms_transition_table_+173, 15, "rule 15: expr <- expr '^' expr ." },
-    { 1, ms_transition_table_+174, 2, "rule 2: stmt <- expr ';' ." },
-    { 2, ms_transition_table_+175, 3, "rule 3: stmt <- . ERROR_ ';'" },
-    { 3, ms_transition_table_+177, 3, "rule 3: stmt <- ERROR_ . ';'" },
-    { 1, ms_transition_table_+180, 3, "rule 3: stmt <- ERROR_ ';' ." },
-    { 1, ms_transition_table_+181, 0, "rule 0: stmt_then_end <- stmt END_ ." },
-    { 2, ms_transition_table_+182, 1, "rule 1: stmt_then_end <- . ERROR_ END_" },
-    { 3, ms_transition_table_+184, 1, "rule 1: stmt_then_end <- ERROR_ . END_" },
-    { 1, ms_transition_table_+187, 1, "rule 1: stmt_then_end <- ERROR_ END_ ." }
+    { 2, ms_transition_table_+24, 17, "START expr" },
+    { 1, ms_transition_table_+26, 17, "RETURN expr" },
+    { 13, ms_transition_table_+27, 17, "head of: expr" },
+    { 3, ms_transition_table_+40, 4, "rule 4: expr <- . '(' expr ')'" },
+    { 4, ms_transition_table_+43, 4, "rule 4: expr <- '(' . expr ')'" },
+    { 3, ms_transition_table_+47, 4, "rule 4: expr <- '(' expr . ')'" },
+    { 1, ms_transition_table_+50, 4, "rule 4: expr <- '(' expr ')' ." },
+    { 3, ms_transition_table_+51, 5, "rule 5: expr <- . '(' ERROR_ ')'" },
+    { 2, ms_transition_table_+54, 5, "rule 5: expr <- '(' . ERROR_ ')'" },
+    { 3, ms_transition_table_+56, 5, "rule 5: expr <- '(' ERROR_ . ')'" },
+    { 1, ms_transition_table_+59, 5, "rule 5: expr <- '(' ERROR_ ')' ." },
+    { 3, ms_transition_table_+60, 6, "rule 6: expr <- . '(' ERROR_" },
+    { 2, ms_transition_table_+63, 6, "rule 6: expr <- '(' . ERROR_" },
+    { 3, ms_transition_table_+65, 6, "rule 6: expr <- '(' ERROR_ ." },
+    { 3, ms_transition_table_+68, 7, "rule 7: expr <- . NUM" },
+    { 1, ms_transition_table_+71, 7, "rule 7: expr <- NUM ." },
+    { 3, ms_transition_table_+72, 8, "rule 8: expr <- . expr '+' expr" },
+    { 3, ms_transition_table_+75, 8, "rule 8: expr <- expr . '+' expr" },
+    { 4, ms_transition_table_+78, 8, "rule 8: expr <- expr '+' . expr" },
+    { 1, ms_transition_table_+82, 8, "rule 8: expr <- expr '+' expr ." },
+    { 3, ms_transition_table_+83, 9, "rule 9: expr <- . expr '+' '+' '+' '+' expr" },
+    { 3, ms_transition_table_+86, 9, "rule 9: expr <- expr . '+' '+' '+' '+' expr" },
+    { 3, ms_transition_table_+89, 9, "rule 9: expr <- expr '+' . '+' '+' '+' expr" },
+    { 3, ms_transition_table_+92, 9, "rule 9: expr <- expr '+' '+' . '+' '+' expr" },
+    { 3, ms_transition_table_+95, 9, "rule 9: expr <- expr '+' '+' '+' . '+' expr" },
+    { 4, ms_transition_table_+98, 9, "rule 9: expr <- expr '+' '+' '+' '+' . expr" },
+    { 1, ms_transition_table_+102, 9, "rule 9: expr <- expr '+' '+' '+' '+' expr ." },
+    { 3, ms_transition_table_+103, 10, "rule 10: expr <- . expr '+' '+' '+' expr" },
+    { 3, ms_transition_table_+106, 10, "rule 10: expr <- expr . '+' '+' '+' expr" },
+    { 3, ms_transition_table_+109, 10, "rule 10: expr <- expr '+' . '+' '+' expr" },
+    { 3, ms_transition_table_+112, 10, "rule 10: expr <- expr '+' '+' . '+' expr" },
+    { 4, ms_transition_table_+115, 10, "rule 10: expr <- expr '+' '+' '+' . expr" },
+    { 1, ms_transition_table_+119, 10, "rule 10: expr <- expr '+' '+' '+' expr ." },
+    { 3, ms_transition_table_+120, 11, "rule 11: expr <- . expr '+' '+' expr" },
+    { 3, ms_transition_table_+123, 11, "rule 11: expr <- expr . '+' '+' expr" },
+    { 3, ms_transition_table_+126, 11, "rule 11: expr <- expr '+' . '+' expr" },
+    { 4, ms_transition_table_+129, 11, "rule 11: expr <- expr '+' '+' . expr" },
+    { 1, ms_transition_table_+133, 11, "rule 11: expr <- expr '+' '+' expr ." },
+    { 3, ms_transition_table_+134, 12, "rule 12: expr <- . expr '*' expr" },
+    { 3, ms_transition_table_+137, 12, "rule 12: expr <- expr . '*' expr" },
+    { 4, ms_transition_table_+140, 12, "rule 12: expr <- expr '*' . expr" },
+    { 1, ms_transition_table_+144, 12, "rule 12: expr <- expr '*' expr ." },
+    { 3, ms_transition_table_+145, 13, "rule 13: expr <- . expr '?' expr" },
+    { 3, ms_transition_table_+148, 13, "rule 13: expr <- expr . '?' expr" },
+    { 4, ms_transition_table_+151, 13, "rule 13: expr <- expr '?' . expr" },
+    { 1, ms_transition_table_+155, 13, "rule 13: expr <- expr '?' expr ." },
+    { 3, ms_transition_table_+156, 14, "rule 14: expr <- . '-' expr" },
+    { 4, ms_transition_table_+159, 14, "rule 14: expr <- '-' . expr" },
+    { 1, ms_transition_table_+163, 14, "rule 14: expr <- '-' expr ." },
+    { 3, ms_transition_table_+164, 15, "rule 15: expr <- . expr '^' expr" },
+    { 3, ms_transition_table_+167, 15, "rule 15: expr <- expr . '^' expr" },
+    { 4, ms_transition_table_+170, 15, "rule 15: expr <- expr '^' . expr" },
+    { 1, ms_transition_table_+174, 15, "rule 15: expr <- expr '^' expr ." },
+    { 2, ms_transition_table_+175, 16, "rule 16: expr <- . ERROR_" },
+    { 3, ms_transition_table_+177, 16, "rule 16: expr <- ERROR_ ." },
+    { 1, ms_transition_table_+180, 2, "rule 2: stmt <- expr ';' ." },
+    { 2, ms_transition_table_+181, 3, "rule 3: stmt <- . ERROR_ ';'" },
+    { 3, ms_transition_table_+183, 3, "rule 3: stmt <- ERROR_ . ';'" },
+    { 1, ms_transition_table_+186, 3, "rule 3: stmt <- ERROR_ ';' ." },
+    { 1, ms_transition_table_+187, 0, "rule 0: stmt_then_end <- stmt END_ ." },
+    { 2, ms_transition_table_+188, 1, "rule 1: stmt_then_end <- . ERROR_ END_" },
+    { 3, ms_transition_table_+190, 1, "rule 1: stmt_then_end <- ERROR_ . END_" },
+    { 1, ms_transition_table_+193, 1, "rule 1: stmt_then_end <- ERROR_ END_ ." }
 };
-std::size_t const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
+std::size_t const Parser::Npda_::ms_state_count_ = sizeof(Parser::Npda_::ms_state_table_) / sizeof(*Parser::Npda_::ms_state_table_);
 
-Parser::Transition_ const Parser::ms_transition_table_[] =
+Parser::Npda_::Transition_ const Parser::Npda_::ms_transition_table_[] =
 {
-    { Parser::Transition_::SHIFT, 260, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Transition_::RETURN, 0, std::uint32_t(-1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(3) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(68) },
-    { Parser::Transition_::SHIFT, 261, std::uint32_t(4) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(7) },
-    { Parser::Transition_::SHIFT, 256, std::uint32_t(67) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 261, std::uint32_t(6) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(7) },
-    { Parser::Transition_::RETURN, 0, std::uint32_t(-1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(8) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(64) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(9) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::SHIFT, 59, std::uint32_t(63) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(11) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::RETURN, 0, std::uint32_t(-1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(13) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(17) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(21) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(24) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(26) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(30) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(37) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(43) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(48) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(52) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(56) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(59) },
-    { Parser::Transition_::SHIFT, 40, std::uint32_t(14) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(15) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::SHIFT, 41, std::uint32_t(16) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(4) },
-    { Parser::Transition_::SHIFT, 40, std::uint32_t(18) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 257, std::uint32_t(19) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::SHIFT, 41, std::uint32_t(20) },
-    { Parser::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 256, std::uint32_t(2) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(5) },
-    { Parser::Transition_::SHIFT, 40, std::uint32_t(22) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 257, std::uint32_t(23) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::REDUCE, 59, std::uint32_t(6) },
-    { Parser::Transition_::REDUCE, 256, std::uint32_t(6) },
-    { Parser::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
-    { Parser::Transition_::SHIFT, 258, std::uint32_t(25) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(7) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(27) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(28) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(29) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(8) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(31) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(32) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(33) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(34) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(35) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(36) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(9) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(38) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(39) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(40) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(41) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(42) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(10) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(44) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(45) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 43, std::uint32_t(46) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(47) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(11) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(49) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 42, std::uint32_t(50) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(51) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(12) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(53) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 63, std::uint32_t(54) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(55) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(13) },
-    { Parser::Transition_::SHIFT, 45, std::uint32_t(57) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(58) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(14) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(60) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 94, std::uint32_t(61) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::SHIFT, 262, std::uint32_t(62) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(15) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(2) },
-    { Parser::Transition_::SHIFT, 257, std::uint32_t(65) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::SHIFT, 59, std::uint32_t(66) },
-    { Parser::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 256, std::uint32_t(2) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(3) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(0) },
-    { Parser::Transition_::SHIFT, 257, std::uint32_t(69) },
-    { Parser::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Transition_::SHIFT, 256, std::uint32_t(70) },
-    { Parser::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
-    { Parser::Transition_::POP_STACK, 256, std::uint32_t(2) },
-    { Parser::Transition_::REDUCE, 0, std::uint32_t(1) }
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(70) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(4) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::SHIFT, 256, std::uint32_t(69) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(6) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(8) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(66) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(9) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::SHIFT, 59, std::uint32_t(65) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(17) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(21) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(24) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(26) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(30) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(37) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(43) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(48) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(52) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(56) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(59) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(63) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(14) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(15) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(16) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(4) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(18) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 257, std::uint32_t(19) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(20) },
+    { Parser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 256, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(5) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 257, std::uint32_t(23) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::REDUCE, 59, std::uint32_t(6) },
+    { Parser::Npda_::Transition_::REDUCE, 256, std::uint32_t(6) },
+    { Parser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::SHIFT, 258, std::uint32_t(25) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(27) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(8) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(31) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(32) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(33) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(34) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(35) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(36) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(9) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(38) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(39) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(40) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(41) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(42) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(10) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(44) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(45) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(46) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(47) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(49) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 42, std::uint32_t(50) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(51) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(53) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 63, std::uint32_t(54) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(55) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(13) },
+    { Parser::Npda_::Transition_::SHIFT, 45, std::uint32_t(57) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(58) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(14) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(60) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 94, std::uint32_t(61) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(62) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(15) },
+    { Parser::Npda_::Transition_::SHIFT, 257, std::uint32_t(64) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::REDUCE, 59, std::uint32_t(16) },
+    { Parser::Npda_::Transition_::REDUCE, 256, std::uint32_t(16) },
+    { Parser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 257, std::uint32_t(67) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::SHIFT, 59, std::uint32_t(68) },
+    { Parser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 256, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(0) },
+    { Parser::Npda_::Transition_::SHIFT, 257, std::uint32_t(71) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::SHIFT, 256, std::uint32_t(72) },
+    { Parser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 256, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(1) }
 };
-std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
+std::size_t const Parser::Npda_::ms_transition_count_ = sizeof(Parser::Npda_::ms_transition_table_) / sizeof(*Parser::Npda_::ms_transition_table_);
 
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 54 "Parser.trison"
+#line 44 "Parser.trison"
 
 void Parser::attach_istream (std::istream &in)
 {
     assert(m_scanner != NULL);
     m_scanner->attach_istream(in);
 }
-// FiLoc const &Parser::GetFiLoc () const
-// {
-//     assert(m_scanner != nullptr);
-//     return m_scanner->GetFiLoc();
-// }
-
-// bool Parser::ScannerDebugSpew () const
-// {
-//     return m_scanner->DebugSpew();
-// }
-
-// void Parser::ScannerDebugSpew (bool debug_spew)
-// {
-//     m_scanner->DebugSpew(debug_spew);
-// }
-
-// bool Parser::OpenFile (std::string const &input_filename)
-// {
-//     assert(m_scanner != nullptr);
-//     ResetForNewInput();
-//     EmitExecutionMessage("opening file \"" + input_filename + "\" for input");
-//     bool scanner_open_file_succeeded = m_scanner->OpenFile(input_filename);
-//     if (scanner_open_file_succeeded)
-//         EmitExecutionMessage("opened file \"" + input_filename + "\" successfully");
-//     return scanner_open_file_succeeded;
-// }
-
-// void Parser::OpenString (std::string const &input_string, std::string const &input_name, bool use_line_numbers)
-// {
-//     assert(m_scanner != nullptr);
-//     ResetForNewInput();
-//     return m_scanner->OpenString(input_string, input_name, use_line_numbers);
-// }
-
-// void Parser::OpenUsingStream (std::istream *input_stream, std::string const &input_name, bool use_line_numbers)
-// {
-//     assert(m_scanner != nullptr);
-//     ResetForNewInput();
-//     return m_scanner->OpenUsingStream(input_stream, input_name, use_line_numbers);
-// }
-
-// } // end of namespace Text
 
 Parser::ParserReturnCode parse (std::string const &s, double &parsed_value)
 {
@@ -2255,14 +2741,7 @@ int main (int argc, char **argv)
         double parsed_value;
         Parser::ParserReturnCode return_code = parse(argv[1], parsed_value);
         std::cout << "string to parse was \"" << argv[1] << "\"\n";
-        std::cout << "return code was ";
-        switch (return_code)
-        {
-            case Parser::PRC_SUCCESS: std::cout << "PRC_SUCCESS"; break;
-            case Parser::PRC_UNHANDLED_PARSE_ERROR: std::cout << "PRC_UNHANDLED_PARSE_ERROR"; break;
-            case Parser::PRC_INTERNAL_ERROR: std::cout << "PRC_INTERNAL_ERROR"; break;
-        }
-        std::cout << '\n';
+        std::cout << "return code was " << return_code << '\n';
         std::cout << "parsed value was " << parsed_value << '\n';
     }
     else
@@ -2272,4 +2751,4 @@ int main (int argc, char **argv)
     return 0;
 }
 
-#line 2276 "Parser.cpp"
+#line 2755 "Parser.cpp"
