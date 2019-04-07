@@ -406,3 +406,47 @@ add_custom_target(clean_all_dev_scanner_dfa_pngs DEPENDS clean_dev_barf_commonla
 add_custom_target(clean_all_dev_scanner_nfa_pngs DEPENDS clean_dev_barf_commonlang_scanner_nfa_png clean_dev_barf_preprocessor_scanner_nfa_png)
 add_custom_target(clean_all_dev_scanner_dot_pngs DEPENDS clean_dev_barf_commonlang_scanner_dot_png clean_dev_barf_preprocessor_scanner_dot_png)
 add_custom_target(clean_all_dev_thingy_dot_pngs DEPENDS clean_all_dev_parser_dot_pngs clean_all_dev_scanner_dot_pngs)
+
+###############################################################################
+# CPack rules for creating distributions
+###############################################################################
+
+# Reference: https://github.com/geoffmcl/cpack-test
+
+if(WIN32)
+    if(USE_WIX_TOOLSET)
+        set(CPACK_GENERATOR "WIX") # this need WiX Tooset installed and a path to candle.exe
+    else ()
+        set(CPACK_GENERATOR "NSIS") # this needs NSIS installed, and available
+    endif ()
+    set(CPACK_SOURCE_GENERATOR "ZIP")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CPACK_GENERATOR "PackageMake")
+else()
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_SOURCE_GENERATOR "TGZ")
+endif()
+
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Victor Dods")
+
+string(REPLACE "." ";" VERSION_LIST ${PROJECT_VERSION})
+list(GET VERSION_LIST 0 barf_VERSION_MAJOR)
+list(GET VERSION_LIST 1 barf_VERSION_MINOR)
+list(GET VERSION_LIST 2 barf_VERSION_PATCH)
+
+set(CPACK_PACKAGE_VERSION "${barf_VERSION_MAJOR}.${barf_VERSION_MINOR}.${barf_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${barf_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${barf_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${barf_VERSION_PATCH}")
+
+# set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.html")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README")
+# set(CPACK_RESOURCE_FILE_WELCOME "${PROJECT_SOURCE_DIR}/README.html")
+
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
+
+set(CPACK_SOURCE_IGNORE_FILES "${PROJECT_SOURCE_DIR}/build/;${PROJECT_SOURCE_DIR}/.git/;${PROJECT_SOURCE_DIR}/.gitignore;${PROJECT_SOURCE_DIR}/barf.kdev4;${PROJECT_SOURCE_DIR}/.kdev4;${PROJECT_SOURCE_DIR}/dev/calc/build/;${PROJECT_SOURCE_DIR}/test/build/")
+
+include(CPack)
