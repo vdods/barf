@@ -7,7 +7,7 @@
 
 
 
-#define TRISON_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
+#define TRISON_CPP_DEBUG_CODE_(flags, spew_code) if (DebugSpewIsEnabled() && ((flags) & ActiveDebugSpewFlags()) != 0) { spew_code; }
 
 #include <algorithm>
 #include <limits>
@@ -28,9 +28,11 @@ namespace Targetspec {
 Parser::Parser ()
 {
     m_max_allowable_lookahead_count = 1;
+    m_max_allowable_parse_tree_depth = 64;
     m_realized_state_ = NULL;
     m_hypothetical_state_ = NULL;
     SetDebugSpewStream(NULL);
+    SetActiveDebugSpewFlags(DSF_ALL);
 }
 
 Parser::~Parser ()
@@ -50,17 +52,17 @@ std::string Parser::DebugSpewPrefix () const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 54 "barf_targetspec_parser.cpp"
+#line 56 "barf_targetspec_parser.cpp"
 ;
     return out.str();
 }
 
 void Parser::ResetForNewInput ()
 {
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 64 "barf_targetspec_parser.cpp"
+#line 66 "barf_targetspec_parser.cpp"
  << "Executing reset-for-new-input actions\n")
 
     // Perform all the internal cleanup needed.
@@ -76,7 +78,7 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::
     m_add_directive_map = new AddDirectiveMap();
     EmitExecutionMessage("starting targetspec parser");
 
-#line 80 "barf_targetspec_parser.cpp"
+#line 82 "barf_targetspec_parser.cpp"
 
     ParserReturnCode const parse_return_code = Parse_(return_token, nonterminal_to_parse);
 
@@ -86,7 +88,7 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::
     if (parse_return_code == PRC_SUCCESS)
         EmitExecutionMessage("targetspec parse was successful");
 
-#line 90 "barf_targetspec_parser.cpp"
+#line 92 "barf_targetspec_parser.cpp"
 
     return parse_return_code;
 }
@@ -101,7 +103,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     stream << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 105 "barf_targetspec_parser.cpp"
+#line 107 "barf_targetspec_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -109,7 +111,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 113 "barf_targetspec_parser.cpp"
+#line 115 "barf_targetspec_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -140,6 +142,7 @@ char const *const Parser::ms_parser_return_code_string_table_[] =
     "PRC_SUCCESS",
     "PRC_UNHANDLED_PARSE_ERROR",
     "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH",
     "PRC_INTERNAL_ERROR",
 };
 std::size_t const Parser::ms_parser_return_code_string_count_ = sizeof(Parser::ms_parser_return_code_string_table_) / sizeof(*Parser::ms_parser_return_code_string_table_);
@@ -432,10 +435,10 @@ std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_ta
 
 void Parser::ThrowAwayToken_ (Token const &token_) throw()
 {
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 439 "barf_targetspec_parser.cpp"
+#line 442 "barf_targetspec_parser.cpp"
  << "Executing throw-away-token actions on token " << token_ << '\n')
     ThrowAwayTokenData_(token_.m_data);
 }
@@ -447,15 +450,15 @@ void Parser::ThrowAwayTokenData_ (Ast::Base * const &token_data) throw()
 
     delete token_data;
 
-#line 451 "barf_targetspec_parser.cpp"
+#line 454 "barf_targetspec_parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
 {
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 459 "barf_targetspec_parser.cpp"
+#line 462 "barf_targetspec_parser.cpp"
  << "Executing scan actions\n")
 
 
@@ -510,7 +513,7 @@ Parser::Token Parser::Scan_ () throw()
             return Token(Terminal::BAD_TOKEN);
     }
 
-#line 514 "barf_targetspec_parser.cpp"
+#line 517 "barf_targetspec_parser.cpp"
 }
 
 void Parser::RunNonassocErrorActions_ (Token const &lookahead)
@@ -568,19 +571,34 @@ std::size_t Parser::MaxRealizedLookaheadCount () const
     return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadCount();
 }
 
+std::int64_t Parser::MaxAllowableParseTreeDepth () const
+{
+    return m_max_allowable_parse_tree_depth;
+}
+
+std::uint32_t Parser::MaxRealizedParseTreeDepth () const
+{
+    return (m_hypothetical_state_ == NULL) ? 0 : m_hypothetical_state_->m_max_realized_parse_tree_depth;
+}
+
 void Parser::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count)
 {
     m_max_allowable_lookahead_count = max_allowable_lookahead_count;
+}
+
+void Parser::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth)
+{
+    m_max_allowable_parse_tree_depth = max_allowable_parse_tree_depth;
 }
 
 Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
 {
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_START_END_PARSE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 584 "barf_targetspec_parser.cpp"
+#line 602 "barf_targetspec_parser.cpp"
  << "Starting parse\n")
 
     ParserReturnCode parser_return_code_ = PRC_INTERNAL_ERROR;
@@ -609,32 +627,44 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
     while (!should_return)
     {
         TRISON_CPP_DEBUG_CODE_(
+            DSF_ITERATION_COUNT,
             *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 616 "barf_targetspec_parser.cpp"
+#line 635 "barf_targetspec_parser.cpp"
  << "\n";
             *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 621 "barf_targetspec_parser.cpp"
+#line 640 "barf_targetspec_parser.cpp"
  << "---------- ITERATION " << iteration_index << " --------------\n";
             PrintParserStatus_(*DebugSpewStream());
             *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 627 "barf_targetspec_parser.cpp"
+#line 646 "barf_targetspec_parser.cpp"
  << '\n';
         )
 
         if (m_realized_state_->HasExceededMaxAllowableLookaheadCount(m_max_allowable_lookahead_count))
         {
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+            TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 636 "barf_targetspec_parser.cpp"
- << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method. returning with error.\n")
+#line 655 "barf_targetspec_parser.cpp"
+ << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
+            break;
+        }
+
+        if (m_hypothetical_state_->HasExceededMaxAllowableParseTreeDepth(m_max_allowable_parse_tree_depth))
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 666 "barf_targetspec_parser.cpp"
+ << "Parse tree depth (" << m_hypothetical_state_->ParseTreeDepth() << ") has exceeded max allowable parse tree depth (" << m_max_allowable_parse_tree_depth << "); modify this limit using the default_max_allowable_parse_tree_depth directive (see trison.cpp.targetspec), or using the SetMaxAllowableParseTreeDepth method.  Returning with error.\n")
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH;
             break;
         }
 
@@ -643,39 +673,41 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         else
             ContinueNPDAParse_(should_return);
 
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+        TRISON_CPP_DEBUG_CODE_(DSF_ITERATION_COUNT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 650 "barf_targetspec_parser.cpp"
+#line 680 "barf_targetspec_parser.cpp"
  << '\n')
         ++iteration_index;
     }
 
     TRISON_CPP_DEBUG_CODE_(
+        DSF_ITERATION_COUNT,
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 659 "barf_targetspec_parser.cpp"
+#line 690 "barf_targetspec_parser.cpp"
  << "\n";
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 664 "barf_targetspec_parser.cpp"
+#line 695 "barf_targetspec_parser.cpp"
  << "---------- RETURNING --------------\n";
         PrintParserStatus_(*DebugSpewStream());
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 670 "barf_targetspec_parser.cpp"
+#line 701 "barf_targetspec_parser.cpp"
  << '\n';
     )
 
     assert(std::size_t(parser_return_code_) < ms_parser_return_code_string_count_ && "this should never happen");
     TRISON_CPP_DEBUG_CODE_(
+        DSF_START_END_PARSE,
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 679 "barf_targetspec_parser.cpp"
+#line 711 "barf_targetspec_parser.cpp"
  << "Parse() is returning " << ms_parser_return_code_string_table_[parser_return_code_] << '\n';
     )
 
@@ -684,10 +716,10 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
 
 void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code_, Ast::Base * *&return_token)
 {
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 691 "barf_targetspec_parser.cpp"
+#line 723 "barf_targetspec_parser.cpp"
  << "Parse stack tree has trunk; executing trunk actions.\n")
     if (m_hypothetical_state_->m_root->HasTrunkChild())
     {
@@ -703,10 +735,10 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
         switch (trunk_child->m_spec.m_type)
         {
             case ParseTreeNode_::RETURN: {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 710 "barf_targetspec_parser.cpp"
+#line 742 "barf_targetspec_parser.cpp"
  << "    Executing trunk action RETURN.\n")
                 assert(m_realized_state_->TokenStack().size() == 2);
                 parser_return_code_ = PRC_SUCCESS;
@@ -719,10 +751,10 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             case ParseTreeNode_::REDUCE: {
                 // Execute the appropriate rule on the top tokens in the stack
                 std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 726 "barf_targetspec_parser.cpp"
+#line 758 "barf_targetspec_parser.cpp"
  << "    Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
@@ -733,38 +765,38 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             }
             case ParseTreeNode_::SHIFT: {
                 std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 740 "barf_targetspec_parser.cpp"
+#line 772 "barf_targetspec_parser.cpp"
  << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
                 m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 749 "barf_targetspec_parser.cpp"
+#line 781 "barf_targetspec_parser.cpp"
  << "    Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
                 m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::DISCARD_LOOKAHEAD: {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 758 "barf_targetspec_parser.cpp"
+#line 790 "barf_targetspec_parser.cpp"
  << "    Executing trunk action DISCARD_LOOKAHEAD.\n")
                 m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::POP_STACK: {
                 std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 768 "barf_targetspec_parser.cpp"
+#line 800 "barf_targetspec_parser.cpp"
  << "    Executing trunk action POP_STACK " << pop_count << ".\n")
 
                 // This one is tricky to implement within RealizedState_ alone, mainly because
@@ -801,10 +833,10 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
 
         if (destroy_and_recreate_parse_tree)
         {
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+            TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 808 "barf_targetspec_parser.cpp"
+#line 840 "barf_targetspec_parser.cpp"
  << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
             m_hypothetical_state_->DestroyParseTree();
             CreateParseTreeFromRealizedState_();
@@ -818,10 +850,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     // are processed, then this flag will be set to false.
     should_return = true;
 
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 825 "barf_targetspec_parser.cpp"
+#line 857 "barf_targetspec_parser.cpp"
  << "Parse stack tree does not have trunk; continuing parse.\n")
 
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
@@ -845,10 +877,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 has_shift_reduce_conflict_and_should_resolve = true;
             else
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 852 "barf_targetspec_parser.cpp"
+#line 884 "barf_targetspec_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
             }
         }
@@ -861,10 +893,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             ParseTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
             assert(reduce_precedence_level_range.first == reduce_precedence_level_range.second);
 
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+            TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 868 "barf_targetspec_parser.cpp"
+#line 900 "barf_targetspec_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
@@ -906,10 +938,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             // Case 1
             if (reduce_precedence_level_range.second < shift_precedence_level_range.first)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 913 "barf_targetspec_parser.cpp"
+#line 945 "barf_targetspec_parser.cpp"
  << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
                 // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
                 m_hypothetical_state_->DeleteBranch(reduce);
@@ -920,19 +952,19 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             else if (reduce_precedence_level_range.first == shift_precedence_level_range.first &&
                      shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 927 "barf_targetspec_parser.cpp"
+#line 959 "barf_targetspec_parser.cpp"
  << "        Case 2; REDUCE <= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
                 if (reduction_rule_precedence.m_associativity_index == 2) // 2 is right-associative
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 936 "barf_targetspec_parser.cpp"
+#line 968 "barf_targetspec_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
@@ -940,10 +972,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 }
                 else
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 947 "barf_targetspec_parser.cpp"
+#line 979 "barf_targetspec_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -953,19 +985,19 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             {
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 960 "barf_targetspec_parser.cpp"
+#line 992 "barf_targetspec_parser.cpp"
  << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity index: " <<
  reduction_rule_precedence.m_associativity_index << '\n')
                 switch (reduction_rule_precedence.m_associativity_index)
                 {
                     case 0: // 0 is left-associative
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 969 "barf_targetspec_parser.cpp"
+#line 1001 "barf_targetspec_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
@@ -973,10 +1005,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         break;
 
                     case 1: // 1 is non-associative
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 980 "barf_targetspec_parser.cpp"
+#line 1012 "barf_targetspec_parser.cpp"
  << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
                         // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
                         // action to initiate error panic.  This works only because the shift and reduce nodes
@@ -1032,10 +1064,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         break;
 
                     case 2: // 2 is right-associative
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1039 "barf_targetspec_parser.cpp"
+#line 1071 "barf_targetspec_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
@@ -1051,19 +1083,19 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             else if (reduce_precedence_level_range.second == shift_precedence_level_range.second &&
                      shift_precedence_level_range.first < shift_precedence_level_range.second)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1058 "barf_targetspec_parser.cpp"
+#line 1090 "barf_targetspec_parser.cpp"
  << "        Case 4; REDUCE >= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
                 if (reduction_rule_precedence.m_associativity_index == 0) // 0 is left-associative
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1067 "barf_targetspec_parser.cpp"
+#line 1099 "barf_targetspec_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
@@ -1071,20 +1103,20 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 }
                 else
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1078 "barf_targetspec_parser.cpp"
+#line 1110 "barf_targetspec_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
             // Case 5
             else if (reduce_precedence_level_range.first > shift_precedence_level_range.second)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1088 "barf_targetspec_parser.cpp"
+#line 1120 "barf_targetspec_parser.cpp"
  << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
                 m_hypothetical_state_->DeleteBranch(shift);
                 shift = NULL;
@@ -1092,10 +1124,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             }
             // Case 6
             else {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1099 "barf_targetspec_parser.cpp"
+#line 1131 "barf_targetspec_parser.cpp"
  << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
                 assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
                 assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
@@ -1132,18 +1164,18 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     assert(m_hypothetical_state_->m_new_hps_queue.empty()); // This is the starting condition
     for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
     {
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1139 "barf_targetspec_parser.cpp"
+#line 1171 "barf_targetspec_parser.cpp"
  << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
         if (!m_hypothetical_state_->m_new_hps_queue.empty())
         {
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+            TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1147 "barf_targetspec_parser.cpp"
+#line 1179 "barf_targetspec_parser.cpp"
  << "        Early-out based on sorted type index.\n")
             break;
         }
@@ -1159,10 +1191,11 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
 
             assert(hps.m_spec.m_type == ParseTreeNode_::HPS);
             TRISON_CPP_DEBUG_CODE_(
+                DSF_TRANSITION_PROCESSING,
                 *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1166 "barf_targetspec_parser.cpp"
+#line 1199 "barf_targetspec_parser.cpp"
  << "        Processing ";
                 hps.Print(*DebugSpewStream(), this, DebugSpewPrefix(), 0, true);
             )
@@ -1170,10 +1203,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             // If a hps is blocked, then save it for the next parse iteration but don't do anything with it.
             if (hps.IsBlockedHPS())
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1177 "barf_targetspec_parser.cpp"
+#line 1210 "barf_targetspec_parser.cpp"
  << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1184,10 +1217,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             // save it for the next parse iteration but don't do anything with it.
             if (hps.m_realized_lookahead_cursor > min_realized_lookahead_cursor)
             {
-                TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1191 "barf_targetspec_parser.cpp"
+#line 1224 "barf_targetspec_parser.cpp"
  << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1212,10 +1245,11 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
 
 /*
                 TRISON_CPP_DEBUG_CODE_(
+                    DSF_TRANSITION_PROCESSING,
                     *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1219 "barf_targetspec_parser.cpp"
+#line 1253 "barf_targetspec_parser.cpp"
  << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
                     if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
@@ -1253,10 +1287,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                             (just_reduced_this_nonterminal ||
                              rule.m_reduction_nonterminal_token_id == hps.LookaheadTokenId(*this))) // lookahead is this nonterminal
                         {
-                            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                            TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1260 "barf_targetspec_parser.cpp"
+#line 1294 "barf_targetspec_parser.cpp"
  << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
                             take_action = false;
                         }
@@ -1264,35 +1298,28 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
 
                     if (take_action)
                     {
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1271 "barf_targetspec_parser.cpp"
+#line 1305 "barf_targetspec_parser.cpp"
  << "            Exercising transition without accessing lookahead... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
                     }
                 }
                 // Otherwise, the lookahead must be accessed.
                 else
                 {
                     Token::Id lookahead_token_id = hps.LookaheadTokenId(*this);
-                    /*
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
-#line 160 "barf_targetspec_parser.trison"
-"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1285 "barf_targetspec_parser.cpp"
- << "                Lookahead is " << Token(lookahead_token_id) << '\n')
-                    */
                     if (transition.m_token_index == lookahead_token_id)
                     {
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1293 "barf_targetspec_parser.cpp"
+#line 1320 "barf_targetspec_parser.cpp"
  << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << '\n')
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
                     }
                 }
                 if (resulting_hps != NULL)
@@ -1303,10 +1330,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
 
     // Take new hps-es and clear old ones.
     assert(!m_hypothetical_state_->m_new_hps_queue.empty());
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1310 "barf_targetspec_parser.cpp"
+#line 1337 "barf_targetspec_parser.cpp"
  << "    Removing defunct HPSes...\n")
     for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
@@ -1314,6 +1341,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
         if (hps != NULL)
         {
             TRISON_CPP_DEBUG_CODE_(
+                DSF_HPS_REMOVE_DEFUNCT,
                 hps->Print(*DebugSpewStream(), this, DebugSpewPrefix(), 2);
             )
             m_hypothetical_state_->DeleteBranch(hps);
@@ -1328,10 +1356,10 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 {
     assert(rule_index_ < Grammar_::ms_rule_count_);
     Grammar_::Rule_ const &rule_ = Grammar_::ms_rule_table_[rule_index_];
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1335 "barf_targetspec_parser.cpp"
+#line 1363 "barf_targetspec_parser.cpp"
  << "Executing reduction rule " << rule_index_ << "; " << rule_.m_description << '\n')
     switch (rule_index_)
     {
@@ -1352,7 +1380,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             m_add_codespec_list,
             m_add_directive_map);
     
-#line 1356 "barf_targetspec_parser.cpp"
+#line 1384 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1362,7 +1390,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 208 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1366 "barf_targetspec_parser.cpp"
+#line 1394 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1372,7 +1400,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 210 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1376 "barf_targetspec_parser.cpp"
+#line 1404 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1382,7 +1410,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 215 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1386 "barf_targetspec_parser.cpp"
+#line 1414 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1392,7 +1420,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 217 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1396 "barf_targetspec_parser.cpp"
+#line 1424 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1402,7 +1430,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 219 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1406 "barf_targetspec_parser.cpp"
+#line 1434 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1428,7 +1456,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return NULL;
     
-#line 1432 "barf_targetspec_parser.cpp"
+#line 1460 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1449,7 +1477,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete param_type;
         return NULL;
     
-#line 1453 "barf_targetspec_parser.cpp"
+#line 1481 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1483,7 +1511,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway2;
         return NULL;
     
-#line 1487 "barf_targetspec_parser.cpp"
+#line 1515 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1504,7 +1532,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete param_type;
         return NULL;
     
-#line 1508 "barf_targetspec_parser.cpp"
+#line 1536 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1516,7 +1544,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return new ParamType(Ast::AST_NONE);
     
-#line 1520 "barf_targetspec_parser.cpp"
+#line 1548 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1530,7 +1558,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new ParamType(Ast::AST_ID);
     
-#line 1534 "barf_targetspec_parser.cpp"
+#line 1562 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1544,7 +1572,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new ParamType(Ast::AST_STRING);
     
-#line 1548 "barf_targetspec_parser.cpp"
+#line 1576 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1558,7 +1586,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new ParamType(Ast::AST_DUMB_CODE_BLOCK);
     
-#line 1562 "barf_targetspec_parser.cpp"
+#line 1590 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1572,7 +1600,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new ParamType(Ast::AST_STRICT_CODE_BLOCK);
     
-#line 1576 "barf_targetspec_parser.cpp"
+#line 1604 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1583,7 +1611,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 322 "barf_targetspec_parser.trison"
  return value; 
-#line 1587 "barf_targetspec_parser.cpp"
+#line 1615 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1594,7 +1622,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 323 "barf_targetspec_parser.trison"
  return value; 
-#line 1598 "barf_targetspec_parser.cpp"
+#line 1626 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1605,7 +1633,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 324 "barf_targetspec_parser.trison"
  return value; 
-#line 1609 "barf_targetspec_parser.cpp"
+#line 1637 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1616,7 +1644,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 325 "barf_targetspec_parser.trison"
  return value; 
-#line 1620 "barf_targetspec_parser.cpp"
+#line 1648 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1626,7 +1654,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 334 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1630 "barf_targetspec_parser.cpp"
+#line 1658 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1636,13 +1664,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 336 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1640 "barf_targetspec_parser.cpp"
+#line 1668 "barf_targetspec_parser.cpp"
             break;
         }
 
     }
 
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "PROGRAMMER ERROR: No value returned from reduction rule code block; rule " << rule_index_ << ": " << Grammar_::ms_rule_table_[rule_index_].m_description << '\n')
+    TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from reduction rule code block; rule " << rule_index_ << ": " << Grammar_::ms_rule_table_[rule_index_].m_description << '\n')
     assert(false && "no value returned from reduction rule code block");
     return NULL;
 }
@@ -1655,7 +1683,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1659 "barf_targetspec_parser.cpp"
+#line 1687 "barf_targetspec_parser.cpp"
  << "Realized state branch node stacks are (each listed bottom to top):\n";
     for (BranchVector_::const_iterator it = m_realized_state_->BranchVectorStack().back().begin(),
                                        it_end = m_realized_state_->BranchVectorStack().back().end();
@@ -1666,7 +1694,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
         out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1670 "barf_targetspec_parser.cpp"
+#line 1698 "barf_targetspec_parser.cpp"
  << "    (";
         branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>); // no need for delimiter here
         out << ")\n";
@@ -1675,12 +1703,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1679 "barf_targetspec_parser.cpp"
+#line 1707 "barf_targetspec_parser.cpp"
  << "Max realized lookahead count (so far) is:\n";
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1684 "barf_targetspec_parser.cpp"
+#line 1712 "barf_targetspec_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadCount();
     if (m_max_allowable_lookahead_count >= 0)
         out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
@@ -1689,22 +1717,36 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1693 "barf_targetspec_parser.cpp"
+#line 1721 "barf_targetspec_parser.cpp"
+ << "Max realized parse tree depth (so far) is:\n";
+    out << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1726 "barf_targetspec_parser.cpp"
+ << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
+    if (m_max_allowable_parse_tree_depth >= 0)
+        out << " (max allowable parse tree depth is " << m_max_allowable_parse_tree_depth << ")\n";
+    else
+        out << " (allowable parse tree depth is unlimited)\n";
+    out << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1735 "barf_targetspec_parser.cpp"
  << "Has-encountered-error-state (so far) is:\n";
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1698 "barf_targetspec_parser.cpp"
+#line 1740 "barf_targetspec_parser.cpp"
  << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1703 "barf_targetspec_parser.cpp"
+#line 1745 "barf_targetspec_parser.cpp"
  << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1708 "barf_targetspec_parser.cpp"
+#line 1750 "barf_targetspec_parser.cpp"
  << "    ";
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
@@ -1727,25 +1769,25 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1731 "barf_targetspec_parser.cpp"
+#line 1773 "barf_targetspec_parser.cpp"
  << '\n';
 
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1737 "barf_targetspec_parser.cpp"
+#line 1779 "barf_targetspec_parser.cpp"
  << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1743 "barf_targetspec_parser.cpp"
+#line 1785 "barf_targetspec_parser.cpp"
  << '\n';
 
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1749 "barf_targetspec_parser.cpp"
+#line 1791 "barf_targetspec_parser.cpp"
  << "HPS queue:\n";
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
@@ -1943,6 +1985,7 @@ Parser::HypotheticalState_::HypotheticalState_ (std::uint32_t initial_state)
 
     m_root->AddChild(hps);
     m_hps_queue.push_back(hps);
+    m_max_realized_parse_tree_depth = 0;
 }
 
 Parser::HypotheticalState_::~HypotheticalState_ ()
@@ -1960,6 +2003,12 @@ bool Parser::HypotheticalState_::MinAndMaxRealizedLookaheadCursorsAreEqual () co
     std::uint32_t max;
     ComputeMinAndMaxRealizedLookaheadCursors(&min, &max);
     return min == max;
+}
+
+bool Parser::HypotheticalState_::HasExceededMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth) const
+{
+    // If the limit is negative, then excess is not possible.
+    return max_allowable_parse_tree_depth >= 0 && std::int64_t(ParseTreeDepth()) > max_allowable_parse_tree_depth;
 }
 
 void Parser::HypotheticalState_::DeleteBranch (ParseTreeNode_ *branch_node)
@@ -2007,6 +2056,29 @@ void Parser::HypotheticalState_::ComputeMinAndMaxRealizedLookaheadCursors (std::
         if (max != NULL && hps.m_realized_lookahead_cursor > *max)
             *max = hps.m_realized_lookahead_cursor;
     }
+}
+
+std::uint32_t Parser::HypotheticalState_::ParseTreeDepth () const
+{
+    std::uint32_t parse_tree_depth = 0;
+
+    for (HPSQueue_::const_iterator hps_it = m_hps_queue.begin(), hps_it_end = m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        // Skip nullified HPS nodes.
+        if (*hps_it == NULL)
+            continue;
+
+        ParseTreeNode_ const &hps = **hps_it;
+        std::uint32_t branch_depth = hps.m_depth - m_root->m_depth;
+        if (branch_depth > parse_tree_depth)
+            parse_tree_depth = branch_depth;
+    }
+
+    // Update m_max_realized_parse_tree_depth
+    if (parse_tree_depth > m_max_realized_parse_tree_depth)
+        m_max_realized_parse_tree_depth = parse_tree_depth;
+
+    return parse_tree_depth;
 }
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -2267,6 +2339,7 @@ void Parser::ParseTreeNode_::AddChild (ParseTreeNode_ *child)
 
     m_child_nodes[child->m_spec].insert(child);
     child->m_parent_node = this;
+    child->m_depth = m_depth + 1; // Always +1 relative to parent.
 
     // If this node is SHIFT and the child is HPS, then add the child's NPDA state to this node's
     // m_child_branch_vector.  This is the only situation in which m_child_branch_vector is added to.
@@ -2288,6 +2361,7 @@ void Parser::ParseTreeNode_::RemoveChild (ParseTreeNode_ *child)
     if (m_child_nodes[child->m_spec].empty())
         m_child_nodes.erase(child->m_spec);
     child->m_parent_node = NULL;
+    child->m_depth = 0; // Reset.
 
     // If there are no children and this isn't the root node, remove it from its parent.
     if (m_child_nodes.empty() && m_parent_node != NULL)
@@ -2346,7 +2420,7 @@ void Parser::ParseTreeNode_::Print (std::ostream &out, Parser const *parser, std
         for (std::uint32_t i = 0; i < indent_level; ++i)
             out << "    ";
     }
-    out << AsString(m_spec.m_type) << ' ' << this;
+    out << AsString(m_spec.m_type) << ' ' << this << " (depth = " << m_depth << ')';
     if (m_spec.m_type == HPS)
     {
         out << (IsBlockedHPS() ? " (    blocked," : " (non-blocked,");
@@ -2404,10 +2478,10 @@ Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index) throw()
         // This does not require updating the hps-es' m_realized_lookahead_cursor.
         m_realized_state_->PushBackLookahead(Scan_(), m_hypothetical_state_->m_hps_queue);
 
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+        TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2411 "barf_targetspec_parser.cpp"
+#line 2485 "barf_targetspec_parser.cpp"
  << "Pushed " << m_realized_state_->LookaheadQueue().back() << " onto back of lookahead queue\n")
     }
     return m_realized_state_->LookaheadQueue()[index];
@@ -2460,10 +2534,10 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                 // Otherwise this is a REDUCE/REDUCE conflict
                 else
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2467 "barf_targetspec_parser.cpp"
+#line 2541 "barf_targetspec_parser.cpp"
  << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
 
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
@@ -2476,7 +2550,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                     assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseTreeNode_::HPS);
                     if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
                     {
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of new hps.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.\n")
 
                         reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
                         assert(reduce_hps != NULL);
@@ -2494,7 +2568,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                     }
                     else
                     {
-                        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "resolving in favor of existing hps.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of existing hps.\n")
                     }
                 }
             }
@@ -2569,7 +2643,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                 assert(new_hps->m_hypothetical_head.HasParent());
                 new_hps->m_hypothetical_head = new_hps->m_hypothetical_head.Parent();
             }
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
             break;
         }
         case ParseTreeNode_::HPS: {
@@ -2595,7 +2669,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
             ParseTreeNode_::ParseTreeNodeSet &children_of_action_type = hps.m_parent_node->ChildrenHavingSpec(action_spec);
             assert(children_of_action_type.size() == 1);
             action_node = *children_of_action_type.begin();
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "using existing action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "using existing action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
 
             // If the new hps already exists (can only happen as a child of POP_STACK), then don't add it.
             if (action_type == ParseTreeNode_::POP_STACK && action_node->HasChildrenHavingSpec(new_hps->m_spec))
@@ -2603,7 +2677,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                 ParseTreeNode_::ParseTreeNodeSet const &child_hps_set = action_node->ChildrenHavingSpec(new_hps->m_spec);
                 if (child_hps_set.find(new_hps) != child_hps_set.end())
                 {
-                    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "not adding duplicate HPS as child of POP_STACK node... ")
+                    TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "not adding duplicate HPS as child of POP_STACK node... ")
                     delete new_hps;
                     new_hps = NULL;
                 }
@@ -2611,9 +2685,9 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
         }
         else
         {
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "creating new action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating new action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
             action_node = new ParseTreeNode_(action_spec);
-            TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << "(action_node = " << action_node << ") ")
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "(action_node = " << action_node << ") ")
             hps.m_parent_node->AddChild(action_node);
         }
 
@@ -2630,18 +2704,18 @@ void Parser::CreateParseTreeFromRealizedState_ ()
 
     // Add HPS nodes for each branch in the top of the realized state stack.
     assert(!reconstruct_branch_vector.empty());
-    TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2637 "barf_targetspec_parser.cpp"
+#line 2711 "barf_targetspec_parser.cpp"
  << "        Reconstructing branches:\n")
     for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
         Branch_ const &reconstruct_branch = *it;
-        TRISON_CPP_DEBUG_CODE_(*DebugSpewStream() << 
+        TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2645 "barf_targetspec_parser.cpp"
+#line 2719 "barf_targetspec_parser.cpp"
  << "            " << reconstruct_branch.StatePtr() << '\n')
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
@@ -3117,4 +3191,4 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#line 3121 "barf_targetspec_parser.cpp"
+#line 3195 "barf_targetspec_parser.cpp"

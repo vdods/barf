@@ -65,6 +65,9 @@ public:
         /// Indicates that the parse was halted because the number of realized
         /// lookaheads exceeded the max allowable lookahead count (NPDA target only).
         PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT,
+        /// Indicates that the parse was halted because the depth of the parse tree
+        /// exceeded the max allowable parse tree depth (NPDA target only).
+        PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH,
         /// Indicates that the parse didn't complete because of some internal error.
         PRC_INTERNAL_ERROR
     }; // end of enum Parser::ParserReturnCode
@@ -188,10 +191,49 @@ public:
     /// (this is not the theoretical maximum for the grammar/npda, it's the maximum
     /// only for the states the parser has actually encountered).
     std::size_t MaxRealizedLookaheadCount () const;
+    /// Returns the maximum parse tree depth that may occur before the
+    /// PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH error is generated.  The default
+    /// is set by the default_max_allowable_parse_tree_depth directive, which is
+    /// documented in trison.cpp.targetspec.  A negative value means that there is
+    /// no limit.
+    std::int64_t MaxAllowableParseTreeDepth () const;
+    /// Returns the maximum parse tree depth achieved in any parser decision so far
+    /// (this is not the theoretical maximum for the grammar/npda, it's the maximum
+    /// only for the states the parser has actually encountered).
+    std::uint32_t MaxRealizedParseTreeDepth () const;
 
     /// Sets the maximum allowable lookahead count.  The initial value is given by
     /// the default_max_allowable_lookahead_count directive defined in trison.cpp.targetspec.
     void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
+    /// Sets the maximum allowable parse tree depth.  The initial value is given by
+    /// the default_max_allowable_parse_tree_depth directive defined in trison.cpp.targetspec.
+    void SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth);
+
+    /// Bitflag enums for granular specification of debug spew.
+    enum DebugSpewFlags
+    {
+        // Individual flags
+        DSF_START_END_PARSE             = 1 << 0,
+        DSF_ITERATION_COUNT             = 1 << 1,
+        DSF_ACTION                      = 1 << 2,
+        DSF_PROGRAMMER_ERROR            = 1 << 3,
+        DSF_PARSE_TREE_MESSAGE          = 1 << 4,
+        DSF_REALIZED_LOOKAHEAD_QUEUE    = 1 << 5,
+        DSF_SHIFT_REDUCE_CONFLICT       = 1 << 6,
+        DSF_REDUCE_REDUCE_CONFLICT      = 1 << 7,
+        DSF_TRANSITION_PROCESSING       = 1 << 8,
+        DSF_TRANSITION_EXERCISING       = 1 << 9,
+        DSF_HPS_REMOVE_DEFUNCT          = 1 << 10,
+        DSF_HPS_NODE_CREATION_DELETION  = 1 << 11,
+        // If more are added, then make sure to update DSF_HIGHEST_.
+        DSF_HIGHEST_                    = DSF_HPS_NODE_CREATION_DELETION,
+
+        // Pre-defined common sets of bitflags, in ascending order of verbosity.
+        DSF_NONE                        = 0,
+        DSF_MINIMAL                     = DSF_START_END_PARSE|DSF_ACTION|DSF_PROGRAMMER_ERROR,
+        DSF_INTERMEDIATE                = DSF_START_END_PARSE|DSF_ITERATION_COUNT|DSF_PARSE_TREE_MESSAGE|DSF_ACTION|DSF_SHIFT_REDUCE_CONFLICT|DSF_PROGRAMMER_ERROR,
+        DSF_ALL                         = DSF_HIGHEST_-1
+    };
 
     /// Returns true if and only if "debug spew" is enabled (which prints, to the
     /// debug spew stream, exactly what the parser is doing at each step).  This
@@ -207,6 +249,12 @@ public:
     /// This method, along with all other debug spew code can be removed by removing
     /// the %target.cpp.generate_debug_spew_code directive from the primary source.
     void SetDebugSpewStream (std::ostream *debug_spew_stream) { m_debug_spew_stream_ = debug_spew_stream; }
+    /// Gets the flags which specify which debug spew messages to allow.
+    DebugSpewFlags ActiveDebugSpewFlags () const { return m_active_debug_spew_flags_; }
+    /// Sets the flags which specify which debug spew messages to allow.  The values
+    /// DSF_NONE, DSF_MINIMAL, DSF_INTERMEDIATE, and DSF_ALL are designed to give convenient
+    /// common sets of flags.
+    void SetActiveDebugSpewFlags (DebugSpewFlags active_debug_spew_flags) { m_active_debug_spew_flags_ = active_debug_spew_flags; }
     /// Returns the debug spew prefix string, which may depend on values like the
     /// current filename, line number, etc.
     std::string DebugSpewPrefix () const;
@@ -256,7 +304,7 @@ private:
     // job; parsing of hex chars, e.g. \xA7)
     bool m_active_backslash;
 
-#line 260 "barf_regex_parser.hpp"
+#line 308 "barf_regex_parser.hpp"
 
 
 private:
@@ -297,11 +345,13 @@ private:
     // ///////////////////////////////////////////////////////////////////////
 
     std::int64_t m_max_allowable_lookahead_count;
+    std::int64_t m_max_allowable_parse_tree_depth;
 
     // debug spew methods
     void PrintIndented_ (std::ostream &stream, char const *string) const;
 
     std::ostream *m_debug_spew_stream_;
+    DebugSpewFlags m_active_debug_spew_flags_;
 
     static char const *const ms_parser_return_code_string_table_[];
     static std::size_t const ms_parser_return_code_string_count_;
@@ -683,6 +733,8 @@ private:
         // all HPSes have consumed the same number of lookaheads, so they're in a well-defined
         // state with respect to resolving SHIFT/REDUCE conflicts.
         bool                    MinAndMaxRealizedLookaheadCursorsAreEqual () const;
+        // Indicates if ParseTreeDepth() has exceeded max_allowable_parse_tree_depth.
+        bool                    HasExceededMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth) const;
 
         // Deletes the branch that the given node (which may not be the root node) is a part of.
         // A branch of a node N is defined as the set of nodes that are descendants of N, and all
@@ -700,11 +752,15 @@ private:
         // and *max = std::numeric_limits<std::uint32_t>::min().  If min or max is nullptr, doesn't
         // assign to that one.
         void                    ComputeMinAndMaxRealizedLookaheadCursors (std::uint32_t *min, std::uint32_t *max) const;
+        // Returns max of m_depth of each of m_hps_queue minus m_root->m_depth, giving a relative depth.
+        std::uint32_t           ParseTreeDepth () const;
+        std::uint32_t           MaxRealizedParseTreeDepth () const { return m_max_realized_parse_tree_depth; }
 
         ParseTreeNode_ *        m_root;
         HPSQueue_               m_hps_queue;
         // This is stored so new memory isn't necessarily allocated for each parse iteration.
         HPSQueue_               m_new_hps_queue;
+        mutable std::uint32_t   m_max_realized_parse_tree_depth;
     }; // end of struct Parser::HypotheticalState_
 
     void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, Ast::Base * *&return_token);
@@ -790,11 +846,16 @@ private:
         std::uint32_t           m_realized_lookahead_cursor; // this is an index into the realized lookahead queue.
         ParseTreeNode_ *        m_parent_node;
         ChildMap                m_child_nodes;
+        // Index of depth in from the initial root.  Used to compute relative depth of parse tree.
+        // Yes, this may wrap, but it doesn't matter, because the relative parse tree depth is what
+        // matters, and it won't be more than can be stored in std::uint32_t.
+        std::uint32_t           m_depth;
 
         ParseTreeNode_ (Spec const &spec)
             :   m_spec(spec)
             ,   m_realized_lookahead_cursor(0)
             ,   m_parent_node(NULL)
+            ,   m_depth(0)
         { }
         ~ParseTreeNode_ ();
 
@@ -871,4 +932,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 875 "barf_regex_parser.hpp"
+#line 936 "barf_regex_parser.hpp"
