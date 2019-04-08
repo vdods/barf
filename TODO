@@ -219,13 +219,6 @@ $   also add post-undefine option
 
 -   pass reference instead of double pointer to Parse
 !   refactor the DPDA generation to be simpler and faster (difficult)
--   make NPDA states file (?)
--   correctly determine LALR(0) (which is when all shift transitions have
-    exactly one lookahead, and no lookahead is ever required for a reduce
-    transition.
-*   put some cap on the lookahead count while generating the DPDA, and emit
-    errors when it exceeds this, and allow this cap to be specified by targetspec
-    directive (and maybe also commandline param)
 -   figure out why minimal graphing isn't working (the right lookaheads
     aren't being generated).
 -   if possible, make the dpda.states file put the states' rules in order.
@@ -257,8 +250,6 @@ template <Uint32 high> struct SmallestUint {
         >::T >::T Type;
 };
 
--   implement nonassoc error handling in NPDA
--   make sure error handling is working correctly in NPDA (via unit tests)
 -   unit tests for NPDA
 -   add some nice metrics to the NPDA parser -- make this part of the parser API
     x   max lookahead count
@@ -289,12 +280,6 @@ template <Uint32 high> struct SmallestUint {
         %nonterminal maybe_assigned_id %type "Ast::Id *"
 
     caused the generic error `syntax error in %nonterminal directive` because of missing `.cpp`
--   Making `maybe_bracketed_lookahead_terminal_list` and `maybe_assigned_id` caused (old) trison
-    binary to take too long.  Maybe try just `maybe_assigned_id`.  This may be a problem more
-    generally with two possibly-empty rule tokens in a row.
--   Make a %default precedence level so that the grammar can have rule precedences below default.
--   Because HPS branches are blocked right after a REDUCE or POP_STACK, maybe don't bother adding
-    any children below REDUCE or POP_STACK nodes.  This would be experimental.
 -   Ensure that commandline-specified values for parser directives override in-source values,
     so that parser generation can be controlled from the build system if needed, e.g. for unit testing.
 -   Run preprocessor on code blocks in reflex and trison, so that e.g. stuff like this can work
@@ -319,14 +304,6 @@ template <Uint32 high> struct SmallestUint {
     the reader to do less work.
 -   Perhaps in NPDA states file, show epsilon closure and transitions from all states in that epsilon
     closure, so that the human reader doesn't have to do as much mental work.
--   Make NPDA max_allowable_lookahead_count value modifiable at runtime, and probably rename the directive
-    to default_max_allowable_lookahead_count, and only use that during construction of the parser.
--   Implement creation of NPDA states output file.
-    -   Implement "Print" method for Graph::Transition, so that the implementation details (e.g. for
-        handling SHIFT) don't have to be handled in the function that uses it.
-    -   In NPDA, apparently first transition isn't necessarily the default transition (there is an explicit
-        label for default, so investigate this and then fix the printout).
-    -   Put the epsilon closure of each NPDA state in the states file to make it easier for the reader.
 -   Collapse some options together using arguments (e.g. the pairs of "do" and "don't" options).
 -   Add [ ] brackets to "symbol" class in kate syntax highlighting file.
 -   Add symbols and strings/chars to the body section of codespec kate syntax highlighting file, so that
@@ -368,7 +345,8 @@ template <Uint32 high> struct SmallestUint {
     paths in include directive, and disallow relative paths.
 -   Allow an id to be associated with an %error directive, where the token associated with the
     %error directive is produced by the error handling actions.  This is so the parser can store
-    a file location (or range) for the error.
+    a file location (or range) for the error.  This would support the idea of making ERROR_ into
+    a nonterminal, which would then be called error_.
 -   Probably just get rid of ResetForNewInput, favoring destroying and recreating the parser/scanner.
     At least examine if there's any reason to keep that feature.
 -   Make an option in reflex and trison for printing a list of dependent targetspec and codespec files
