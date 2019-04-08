@@ -1658,6 +1658,8 @@ which includes the top element.
             x   Get the distribution packaging working (CPack?)
         -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
             specifiers to everything that should not throw.
+        -   Clean up example apps
+        x   Make an up-to-date README.md with basic installation and usage instructions.
     -   Low priority nice-to-have
         -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
             This should probably have to do with the output directory option of reflex/trison.

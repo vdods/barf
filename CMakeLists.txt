@@ -8,6 +8,7 @@ project(barf)
 # See https://gitlab.kitware.com/cmake/cmake/issues/16716
 set(PROJECT_VERSION "2.0.0-dev")
 
+# Set and require the C++11 standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -328,13 +329,18 @@ install(
     DESTINATION lib/barf                        # This is relative to CMAKE_INSTALL_PREFIX
 )
 install(
-    FILES LICENSE README TODO barf-config.cmake # Important files; barf-config.cmake is how find_package(barf) works.
+    FILES                                       # Important files
+        LICENSE
+        README.md
+        TODO
+        barf-config.cmake                       # barf-config.cmake is how find_package(barf) works.
     DESTINATION lib/barf                        # This is relative to CMAKE_INSTALL_PREFIX
 )
 if(DEFINED DOXYGEN_EXECUTABLE)
     install(
         DIRECTORY ${PROJECT_BINARY_DIR}/doc     # Doxygen-generated documentation
         DESTINATION lib/barf                    # This is relative to CMAKE_INSTALL_PREFIX
+        EXCLUDE_FROM_ALL
     )
 endif()
 
@@ -430,7 +436,7 @@ set(CPACK_PACKAGE_VERSION_PATCH "${barf_VERSION_PATCH}")
 
 # set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.html")
 set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README")
+set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
 # set(CPACK_RESOURCE_FILE_WELCOME "${PROJECT_SOURCE_DIR}/README.html")
 
 set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")

@@ -3,6 +3,10 @@
 cmake_minimum_required(VERSION 3.10) # I had problems if I only specified "VERSION 3".
 project(calc)
 
+# Set and require the C++11 standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # This defines rules for adding reflex and trison sources to produce C++ scanners and parsers.
 # It requires having installed the barf package; the find_package function looks for the file
 # barf-config.cmake in various locations to determine barf_DIR such that
@@ -17,23 +21,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # This is the correct way to detect Ma
     endif()
 endif()
 
-# Setup proper compiler flags for Debug and Release builds
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g2")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g2")
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # TODO
-endif()
-
 # Helper target(s)
-
-add_library(C++11 INTERFACE)
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_compile_options(C++11 INTERFACE -std=c++11)
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # TODO
-endif()
 
 add_library(Strict INTERFACE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -63,4 +51,4 @@ set(calc_SOURCES
     Scanner.reflex
 )
 add_executable(calc ${calc_SOURCES})
-target_link_libraries(calc PUBLIC C++11 Strict)
+target_link_libraries(calc PUBLIC Strict)
