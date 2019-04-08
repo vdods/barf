@@ -3,14 +3,14 @@
 # as creating named targets for them and for diff-based tests for them.
 ###############################################################################
 
-find_program(REFLEX_BINARY reflex DOC "absolute path to reflex binary for building scanner code from reflex sources")
-find_program(TRISON_BINARY trison DOC "absolute path to trison binary for building parser code from trison sources")
+find_program(barf_REFLEX_BINARY reflex DOC "absolute path to reflex binary for building scanner code from reflex sources")
+find_program(barf_TRISON_BINARY trison DOC "absolute path to trison binary for building parser code from trison sources")
 
-option(SPECIFY_BARF_TARGETS_DIR "Enable optional specification of an alternate targets include path in invocations of the reflex and trison binaries (see -I option in reflex and trison help messages)." OFF)
-if(SPECIFY_BARF_TARGETS_DIR)
-    if(NOT DEFINED BARF_TARGETS_DIR)
+option(barf_ENABLE_TARGETS_DIR_OVERRIDE "Enable optional override of the targets dir (barf_TARGETS_DIR_OVERRIDE) in invocations of the reflex and trison binaries (see -I option in reflex and trison help messages)." OFF)
+if(barf_ENABLE_TARGETS_DIR_OVERRIDE)
+    if(NOT DEFINED barf_TARGETS_DIR_OVERRIDE)
         # Set a reasonable default
-        set(BARF_TARGETS_DIR "${barf_DIR}/targets" CACHE FILEPATH "absolute path to barf targets directory (overrides -I option in reflex and trison invocations)")
+        set(barf_TARGETS_DIR_OVERRIDE "${barf_DIR}/targets" CACHE FILEPATH "absolute path to barf targets directory (overrides -I option in reflex and trison invocations)")
     endif()
 endif()
 

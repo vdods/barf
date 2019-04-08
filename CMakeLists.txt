@@ -34,8 +34,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 # if the corresponding reflex or trison source (or other source files) changes.
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM true)
 
-option(I_MAKE_BARF "Enable (and require) barf developer configuration options; requires having a stable version of barf installed already, which will be used to build the barf parsers and scanners in a self-hosting manner.  Not necessary to simply build this package from source." OFF)
-if(I_MAKE_BARF)
+option(barf_DEVELOPER_MODE "Enable (and require) barf developer configuration options; requires having a stable version of barf installed already, which will be used to build the barf parsers and scanners in a self-hosting manner.  Not necessary to simply build this package from source." OFF)
+if(barf_DEVELOPER_MODE)
     find_package(barf REQUIRED)
 endif()
 
@@ -89,7 +89,7 @@ endif()
 # barf_commonlang_and_targetspec
 #
 
-if(I_MAKE_BARF)
+if(barf_DEVELOPER_MODE)
     reflex_add_source(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex barf_commonlang_scanner)
     trison_add_source(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison barf_targetspec_parser)
 endif()
@@ -162,7 +162,7 @@ target_link_libraries(barf_core PUBLIC Strict)
 # barf_preprocessor
 #
 
-if(I_MAKE_BARF)
+if(barf_DEVELOPER_MODE)
     reflex_add_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex barf_preprocessor_scanner)
     trison_add_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison barf_preprocessor_parser)
 endif()
@@ -197,7 +197,7 @@ target_link_libraries(barf_preprocessor PUBLIC Strict barf_core)
 # barf_regex
 #
 
-if(I_MAKE_BARF)
+if(barf_DEVELOPER_MODE)
     trison_add_source(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison barf_regex_parser)
 endif()
 
@@ -247,7 +247,7 @@ target_link_libraries(bpp PUBLIC Strict barf_core barf_preprocessor)
 # reflex (scanner generator)
 #
 
-if(I_MAKE_BARF)
+if(barf_DEVELOPER_MODE)
     trison_add_source(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison reflex_parser)
 endif()
 
@@ -277,7 +277,7 @@ target_link_libraries(reflex PUBLIC Strict barf_commonlang_and_targetspec barf_c
 # trison (parser generator)
 #
 
-if(I_MAKE_BARF)
+if(barf_DEVELOPER_MODE)
     trison_add_source(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison trison_parser)
 endif()
 
@@ -344,7 +344,7 @@ endif()
 # Helper targets (this defines a hierarchy of related build rules)
 ###############################################################################
 
-if(I_MAKE_BARF)
+if(barf_DEVELOPER_MODE)
     add_custom_target(all_parsers DEPENDS barf_preprocessor_parser barf_regex_parser barf_targetspec_parser reflex_parser trison_parser)
     add_custom_target(all_scanners DEPENDS barf_commonlang_scanner barf_preprocessor_scanner)
     add_custom_target(all_thingies DEPENDS all_parsers all_scanners)
