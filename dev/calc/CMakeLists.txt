@@ -51,18 +51,6 @@ endif()
 
 # Executables
 
-# set(BARF_TARGETS_DIR ${PROJECT_BINARY_DIR}/${BARF_TARGETS_PATH})
-#
-# add_custom_command(
-#     OUTPUT ${calc_SOURCE_DIR}/Scanner.cpp ${calc_SOURCE_DIR}/Scanner.hpp
-#     COMMAND ${REFLEX_BINARY} -I ${BARF_TARGETS_DIR} ${calc_SOURCE_DIR}/Scanner.reflex -o ${calc_SOURCE_DIR}
-#     DEPENDS ${calc_SOURCE_DIR}/Scanner.reflex ${BARF_TARGETS_DIR}/reflex.cpp.header.codespec ${BARF_TARGETS_DIR}/reflex.cpp.implementation.codespec ${BARF_TARGETS_DIR}/reflex.cpp.targetspec)
-#
-# add_custom_command(
-#     OUTPUT ${calc_SOURCE_DIR}/Parser.cpp ${calc_SOURCE_DIR}/Parser.hpp
-#     COMMAND ${TRISON_BINARY} -I ${BARF_TARGETS_DIR} ${calc_SOURCE_DIR}/Parser.trison -o ${calc_SOURCE_DIR} -S Parser.states --generate-npda-dot-graph Parser.npda.dot
-#     DEPENDS ${calc_SOURCE_DIR}/Parser.trison ${BARF_TARGETS_DIR}/trison.cpp.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.targetspec)
-
 reflex_add_source(${calc_SOURCE_DIR}/Scanner.reflex Scanner)
 trison_add_source(${calc_SOURCE_DIR}/Parser.trison Parser)
 
