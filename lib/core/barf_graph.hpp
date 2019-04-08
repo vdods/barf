@@ -100,7 +100,7 @@ public:
 
         struct Order
         {
-            bool operator () (Transition const &t0, Transition const &t1)
+            bool operator () (Transition const &t0, Transition const &t1) const
             {
                 if (t0.Type() < t1.Type())
                     return true;
