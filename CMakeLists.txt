@@ -8,6 +8,9 @@ project(barf)
 # See https://gitlab.kitware.com/cmake/cmake/issues/16716
 set(PROJECT_VERSION "2.0.0-dev")
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # This includes the reflex and trison source file rules (for generating C++).
 # Other projects that want to define cmake rules for compiling reflex or trison
 # source to C++ should copy the barf/cmake dir into their project and include it.
@@ -63,11 +66,6 @@ doxygen_add_docs(doc ${PROJECT_SOURCE_DIR}/doc/doxygen_pages)
 ###############################################################################
 
 # Helper target(s)
-
-# add_library(C++11 INTERFACE)
-# if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#     target_compile_options(C++11 INTERFACE -std=c++11)
-# endif()
 
 add_library(Strict INTERFACE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
