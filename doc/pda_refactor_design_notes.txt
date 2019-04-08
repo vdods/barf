@@ -1643,6 +1643,7 @@ which includes the top element.
     steel repo to work against the latest version of BARF.
 -   What TODOs should perhaps go into the BARF 2.0 release?
     -   Nice to have
+        -   Add a without_line_directives directive to targetspec.
         -   Have each tool have commands which determine all source files (i.e. dependencies) and all
             files that will be output.  This will make it easier to determine input/outputs in e.g. cmake.
             This might be more trouble than it's worth, since the codespec files can include arbitrary
@@ -1662,5 +1663,4 @@ which includes the top element.
             This should probably have to do with the output directory option of reflex/trison.
             NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
             so defer for later.
-        -   Add a without_line_directives directive to targetspec.
         x   Make an enum for rule associativity and a string table for it.

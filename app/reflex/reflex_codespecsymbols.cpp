@@ -136,8 +136,8 @@ void GenerateNfaSymbols (PrimarySource const &primary_source, Graph const &nfa_g
             ++it)
         {
             string const &state_machine_name = it->first;
-            StateMachine const *state_machine = it->second;
-            assert(state_machine != NULL);
+            // Note that it->second is of type StateMachine const *
+            assert(it->second != NULL);
             assert(state_index < nfa_start_state_index.size());
             nfa_initial_node_index->SetMapElement(
                 state_machine_name,
@@ -259,8 +259,8 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
             ++it)
         {
             string const &state_machine_name = it->first;
-            StateMachine const *state_machine = it->second;
-            assert(state_machine != NULL);
+            // Note that it->second is of type StateMachine const *
+            assert(it->second != NULL);
             assert(state_index < dfa_start_state_index.size());
             dfa_initial_node_index->SetMapElement(
                 state_machine_name,
@@ -408,17 +408,17 @@ void GenerateDfaSymbols (PrimarySource const &primary_source, Graph const &dfa_g
                      it != it_end;
                      ++it)
                 {
-                    Graph::Transition const &transition = *it;
+                    // Note that *it is of type Graph::Transition const &
                     switch (first_transition.Type())
                     {
                         case Regex::TT_INPUT_ATOM:
                         case Regex::TT_INPUT_ATOM_RANGE:
-                            assert(transition.Type() == Regex::TT_INPUT_ATOM || transition.Type() == Regex::TT_INPUT_ATOM_RANGE);
+                            assert(it->Type() == Regex::TT_INPUT_ATOM || it->Type() == Regex::TT_INPUT_ATOM_RANGE);
                             break;
 
                         case Regex::TT_CONDITIONAL:
-                            assert(transition.Type() == Regex::TT_CONDITIONAL);
-                            assert(transition.Data(0) == first_transition.Data(0)); // make sure the bitmask is the same
+                            assert(it->Type() == Regex::TT_CONDITIONAL);
+                            assert(it->Data(0) == first_transition.Data(0)); // make sure the bitmask is the same
                             break;
 
                         case Regex::TT_EPSILON:

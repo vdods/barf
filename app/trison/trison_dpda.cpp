@@ -442,8 +442,8 @@ private:
                  it != it_end;
                  ++it)
             {
-                RuleShiftReferencePair const &rule_shift_reference_pair = *it;
-                assert(rule_shift_reference_pair.second.InstanceIsValid());
+                // Note that *it is of type RuleShiftReferencePair const &
+                assert(it->second.InstanceIsValid());
             }
         }
         void CleanUpShiftReferenceListIfNecessary () const

@@ -1379,8 +1379,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 Npda_::Transition_ const &transition = *transition_it;
                 assert(transition.m_type >= Npda_::Transition_::RETURN);
                 assert(transition.m_type <= Npda_::Transition_::POP_STACK);
-                std::uint32_t transition_sorted_type_index = Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type));
-                assert(transition_sorted_type_index == current_sorted_type_index);
+                assert(Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) == current_sorted_type_index);
 
 /*
                 TRISON_CPP_DEBUG_CODE_(
@@ -1388,7 +1387,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1392 "barf_regex_parser.cpp"
+#line 1391 "barf_regex_parser.cpp"
  << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
                     if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
@@ -1429,7 +1428,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1433 "barf_regex_parser.cpp"
+#line 1432 "barf_regex_parser.cpp"
  << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
                             take_action = false;
                         }
@@ -1440,7 +1439,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1444 "barf_regex_parser.cpp"
+#line 1443 "barf_regex_parser.cpp"
  << "            Exercising transition without accessing lookahead... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1455,7 +1454,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1459 "barf_regex_parser.cpp"
+#line 1458 "barf_regex_parser.cpp"
  << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1472,7 +1471,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1476 "barf_regex_parser.cpp"
+#line 1475 "barf_regex_parser.cpp"
  << "    Removing defunct HPSes...\n")
     for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
@@ -1498,7 +1497,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
     TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1502 "barf_regex_parser.cpp"
+#line 1501 "barf_regex_parser.cpp"
  << "Executing reduction rule " << rule_index_ << "; " << rule_.m_description << '\n')
     switch (rule_index_)
     {
@@ -1521,7 +1520,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1525 "barf_regex_parser.cpp"
+#line 1524 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1536,7 +1535,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1540 "barf_regex_parser.cpp"
+#line 1539 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1555,7 +1554,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1559 "barf_regex_parser.cpp"
+#line 1558 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1570,7 +1569,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1574 "barf_regex_parser.cpp"
+#line 1573 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1589,7 +1588,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1593 "barf_regex_parser.cpp"
+#line 1592 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1604,7 +1603,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1608 "barf_regex_parser.cpp"
+#line 1607 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1615,7 +1614,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 420 "barf_regex_parser.trison"
  return branch; 
-#line 1619 "barf_regex_parser.cpp"
+#line 1618 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1626,7 +1625,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 421 "barf_regex_parser.trison"
  return branch; 
-#line 1630 "barf_regex_parser.cpp"
+#line 1629 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1636,7 +1635,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 422 "barf_regex_parser.trison"
  return new Branch(); 
-#line 1640 "barf_regex_parser.cpp"
+#line 1639 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1651,7 +1650,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddBound(bound);
         return branch;
     
-#line 1655 "barf_regex_parser.cpp"
+#line 1654 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1666,7 +1665,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddAtom(atom);
         return branch;
     
-#line 1670 "barf_regex_parser.cpp"
+#line 1669 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1681,7 +1680,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddAtom(atom);
         return branch;
     
-#line 1685 "barf_regex_parser.cpp"
+#line 1684 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1696,7 +1695,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddAtom(atom);
         return branch;
     
-#line 1700 "barf_regex_parser.cpp"
+#line 1699 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1715,7 +1714,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             THROW_STRING("undefined macro \"" + macro_name->GetText() + "\"");
         return macro_regex;
     
-#line 1719 "barf_regex_parser.cpp"
+#line 1718 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1726,7 +1725,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 472 "barf_regex_parser.trison"
  return regex; 
-#line 1730 "barf_regex_parser.cpp"
+#line 1729 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1736,7 +1735,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 474 "barf_regex_parser.trison"
  return new ConditionalChar(CT_BEGINNING_OF_LINE); 
-#line 1740 "barf_regex_parser.cpp"
+#line 1739 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1746,7 +1745,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 475 "barf_regex_parser.trison"
  return new ConditionalChar(CT_END_OF_LINE); 
-#line 1750 "barf_regex_parser.cpp"
+#line 1749 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1756,7 +1755,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 476 "barf_regex_parser.trison"
  return new BracketCharSet('\n', true); 
-#line 1760 "barf_regex_parser.cpp"
+#line 1759 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1767,7 +1766,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 477 "barf_regex_parser.trison"
  return ch; 
-#line 1771 "barf_regex_parser.cpp"
+#line 1770 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1786,7 +1785,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             delete ch;
         return escaped;
     
-#line 1790 "barf_regex_parser.cpp"
+#line 1789 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1797,7 +1796,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 488 "barf_regex_parser.trison"
  return ch; 
-#line 1801 "barf_regex_parser.cpp"
+#line 1800 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1808,7 +1807,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 489 "barf_regex_parser.trison"
  return ch; 
-#line 1812 "barf_regex_parser.cpp"
+#line 1811 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1819,7 +1818,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 490 "barf_regex_parser.trison"
  return exp; 
-#line 1823 "barf_regex_parser.cpp"
+#line 1822 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1829,7 +1828,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 495 "barf_regex_parser.trison"
  return new Bound(0, Bound::NO_UPPER_BOUND); 
-#line 1833 "barf_regex_parser.cpp"
+#line 1832 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1839,7 +1838,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 497 "barf_regex_parser.trison"
  return new Bound(1, Bound::NO_UPPER_BOUND); 
-#line 1843 "barf_regex_parser.cpp"
+#line 1842 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1849,7 +1848,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 499 "barf_regex_parser.trison"
  return new Bound(0, 1); 
-#line 1853 "barf_regex_parser.cpp"
+#line 1852 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1865,7 +1864,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete exact_bound;
         return bound;
     
-#line 1869 "barf_regex_parser.cpp"
+#line 1868 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1879,7 +1878,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         assert(lower_bound->Value() >= 0);
         return new Bound(lower_bound->Value(), Bound::NO_UPPER_BOUND);
     
-#line 1883 "barf_regex_parser.cpp"
+#line 1882 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1917,7 +1916,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete upper_bound;
         return bound;
     
-#line 1921 "barf_regex_parser.cpp"
+#line 1920 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1932,7 +1931,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             THROW_STRING("invalid empty bracket expression");
         return bracket_char_set;
     
-#line 1936 "barf_regex_parser.cpp"
+#line 1935 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1948,7 +1947,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         bracket_char_set->Negate();
         return bracket_char_set;
     
-#line 1952 "barf_regex_parser.cpp"
+#line 1951 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1964,7 +1963,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return bracket_char_set;
     
-#line 1968 "barf_regex_parser.cpp"
+#line 1967 "barf_regex_parser.cpp"
             break;
         }
 
@@ -1986,7 +1985,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete end_range;
         return bracket_char_set;
     
-#line 1990 "barf_regex_parser.cpp"
+#line 1989 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2002,7 +2001,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete id;
         return bracket_char_set;
     
-#line 2006 "barf_regex_parser.cpp"
+#line 2005 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2015,7 +2014,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         BracketCharSet *bracket_char_set = new BracketCharSet();
         return bracket_char_set;
     
-#line 2019 "barf_regex_parser.cpp"
+#line 2018 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2026,7 +2025,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 604 "barf_regex_parser.trison"
  return normal_char; 
-#line 2030 "barf_regex_parser.cpp"
+#line 2029 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2037,7 +2036,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 606 "barf_regex_parser.trison"
  normal_char->EscapeInsideBracketExpression(); return normal_char; 
-#line 2041 "barf_regex_parser.cpp"
+#line 2040 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2048,7 +2047,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 608 "barf_regex_parser.trison"
  return control_char; 
-#line 2052 "barf_regex_parser.cpp"
+#line 2051 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2059,7 +2058,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 610 "barf_regex_parser.trison"
  return hex_char; 
-#line 2063 "barf_regex_parser.cpp"
+#line 2062 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2069,7 +2068,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 626 "barf_regex_parser.trison"
  return new Char('|'); 
-#line 2073 "barf_regex_parser.cpp"
+#line 2072 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2079,7 +2078,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 628 "barf_regex_parser.trison"
  return new Char('('); 
-#line 2083 "barf_regex_parser.cpp"
+#line 2082 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2089,7 +2088,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 630 "barf_regex_parser.trison"
  return new Char(')'); 
-#line 2093 "barf_regex_parser.cpp"
+#line 2092 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2099,7 +2098,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 632 "barf_regex_parser.trison"
  return new Char('{'); 
-#line 2103 "barf_regex_parser.cpp"
+#line 2102 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2109,7 +2108,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 634 "barf_regex_parser.trison"
  return new Char('}'); 
-#line 2113 "barf_regex_parser.cpp"
+#line 2112 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2119,7 +2118,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 636 "barf_regex_parser.trison"
  return new Char('['); 
-#line 2123 "barf_regex_parser.cpp"
+#line 2122 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2129,7 +2128,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 638 "barf_regex_parser.trison"
  return new Char(']'); 
-#line 2133 "barf_regex_parser.cpp"
+#line 2132 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2139,7 +2138,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 640 "barf_regex_parser.trison"
  return new Char('?'); 
-#line 2143 "barf_regex_parser.cpp"
+#line 2142 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2149,7 +2148,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 642 "barf_regex_parser.trison"
  return new Char('*'); 
-#line 2153 "barf_regex_parser.cpp"
+#line 2152 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2159,7 +2158,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 644 "barf_regex_parser.trison"
  return new Char('+'); 
-#line 2163 "barf_regex_parser.cpp"
+#line 2162 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2169,7 +2168,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 646 "barf_regex_parser.trison"
  return new Char('.'); 
-#line 2173 "barf_regex_parser.cpp"
+#line 2172 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2179,7 +2178,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 648 "barf_regex_parser.trison"
  return new Char('^'); 
-#line 2183 "barf_regex_parser.cpp"
+#line 2182 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2189,7 +2188,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 650 "barf_regex_parser.trison"
  return new Char('$'); 
-#line 2193 "barf_regex_parser.cpp"
+#line 2192 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2199,7 +2198,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 652 "barf_regex_parser.trison"
  return new Char('\\'); 
-#line 2203 "barf_regex_parser.cpp"
+#line 2202 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2210,7 +2209,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 663 "barf_regex_parser.trison"
  return alpha; 
-#line 2214 "barf_regex_parser.cpp"
+#line 2213 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2221,7 +2220,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 664 "barf_regex_parser.trison"
  return digit; 
-#line 2225 "barf_regex_parser.cpp"
+#line 2224 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2232,7 +2231,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 665 "barf_regex_parser.trison"
  return ch; 
-#line 2236 "barf_regex_parser.cpp"
+#line 2235 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2242,7 +2241,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 666 "barf_regex_parser.trison"
  return new Char(','); 
-#line 2246 "barf_regex_parser.cpp"
+#line 2245 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2252,7 +2251,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 667 "barf_regex_parser.trison"
  return new Char('-'); 
-#line 2256 "barf_regex_parser.cpp"
+#line 2255 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2262,7 +2261,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 668 "barf_regex_parser.trison"
  return new Char(':'); 
-#line 2266 "barf_regex_parser.cpp"
+#line 2265 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2272,7 +2271,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 680 "barf_regex_parser.trison"
  return new Char('-'); 
-#line 2276 "barf_regex_parser.cpp"
+#line 2275 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2282,7 +2281,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 682 "barf_regex_parser.trison"
  return new Char('^'); 
-#line 2286 "barf_regex_parser.cpp"
+#line 2285 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2292,7 +2291,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 684 "barf_regex_parser.trison"
  return new Char('['); 
-#line 2296 "barf_regex_parser.cpp"
+#line 2295 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2302,7 +2301,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 686 "barf_regex_parser.trison"
  return new Char(']'); 
-#line 2306 "barf_regex_parser.cpp"
+#line 2305 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2312,7 +2311,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 688 "barf_regex_parser.trison"
  return new Char('\\'); 
-#line 2316 "barf_regex_parser.cpp"
+#line 2315 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2323,7 +2322,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 699 "barf_regex_parser.trison"
  return alpha; 
-#line 2327 "barf_regex_parser.cpp"
+#line 2326 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2334,7 +2333,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 700 "barf_regex_parser.trison"
  return digit; 
-#line 2338 "barf_regex_parser.cpp"
+#line 2337 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2345,7 +2344,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 701 "barf_regex_parser.trison"
  return ch; 
-#line 2349 "barf_regex_parser.cpp"
+#line 2348 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2355,7 +2354,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 702 "barf_regex_parser.trison"
  return new Char('|'); 
-#line 2359 "barf_regex_parser.cpp"
+#line 2358 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2365,7 +2364,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 703 "barf_regex_parser.trison"
  return new Char(':'); 
-#line 2369 "barf_regex_parser.cpp"
+#line 2368 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2375,7 +2374,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 704 "barf_regex_parser.trison"
  return new Char('?'); 
-#line 2379 "barf_regex_parser.cpp"
+#line 2378 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2385,7 +2384,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 705 "barf_regex_parser.trison"
  return new Char('*'); 
-#line 2389 "barf_regex_parser.cpp"
+#line 2388 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2395,7 +2394,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 706 "barf_regex_parser.trison"
  return new Char('+'); 
-#line 2399 "barf_regex_parser.cpp"
+#line 2398 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2405,7 +2404,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 707 "barf_regex_parser.trison"
  return new Char('.'); 
-#line 2409 "barf_regex_parser.cpp"
+#line 2408 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2415,7 +2414,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 708 "barf_regex_parser.trison"
  return new Char('$'); 
-#line 2419 "barf_regex_parser.cpp"
+#line 2418 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2425,7 +2424,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 709 "barf_regex_parser.trison"
  return new Char(','); 
-#line 2429 "barf_regex_parser.cpp"
+#line 2428 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2435,7 +2434,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 710 "barf_regex_parser.trison"
  return new Char('('); 
-#line 2439 "barf_regex_parser.cpp"
+#line 2438 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2445,7 +2444,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 711 "barf_regex_parser.trison"
  return new Char(')'); 
-#line 2449 "barf_regex_parser.cpp"
+#line 2448 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2455,7 +2454,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 712 "barf_regex_parser.trison"
  return new Char('{'); 
-#line 2459 "barf_regex_parser.cpp"
+#line 2458 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2465,7 +2464,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 713 "barf_regex_parser.trison"
  return new Char('}'); 
-#line 2469 "barf_regex_parser.cpp"
+#line 2468 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2482,7 +2481,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete alpha;
         return id;
     
-#line 2486 "barf_regex_parser.cpp"
+#line 2485 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2499,7 +2498,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return id;
     
-#line 2503 "barf_regex_parser.cpp"
+#line 2502 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2516,7 +2515,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return id;
     
-#line 2520 "barf_regex_parser.cpp"
+#line 2519 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2533,7 +2532,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete alpha;
         return id;
     
-#line 2537 "barf_regex_parser.cpp"
+#line 2536 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2550,7 +2549,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return id;
     
-#line 2554 "barf_regex_parser.cpp"
+#line 2553 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2568,7 +2567,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return integer;
     
-#line 2572 "barf_regex_parser.cpp"
+#line 2571 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2583,7 +2582,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return integer;
     
-#line 2587 "barf_regex_parser.cpp"
+#line 2586 "barf_regex_parser.cpp"
             break;
         }
 
@@ -2602,7 +2601,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2606 "barf_regex_parser.cpp"
+#line 2605 "barf_regex_parser.cpp"
  << "Realized state branch node stacks are (each listed bottom to top):\n";
     for (BranchVector_::const_iterator it = m_realized_state_->BranchVectorStack().back().begin(),
                                        it_end = m_realized_state_->BranchVectorStack().back().end();
@@ -2613,7 +2612,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
         out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2617 "barf_regex_parser.cpp"
+#line 2616 "barf_regex_parser.cpp"
  << "    (";
         branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>); // no need for delimiter here
         out << ")\n";
@@ -2622,12 +2621,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2626 "barf_regex_parser.cpp"
+#line 2625 "barf_regex_parser.cpp"
  << "Max realized lookahead count (so far) is:\n";
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2631 "barf_regex_parser.cpp"
+#line 2630 "barf_regex_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadCount();
     if (m_max_allowable_lookahead_count >= 0)
         out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
@@ -2636,12 +2635,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2640 "barf_regex_parser.cpp"
+#line 2639 "barf_regex_parser.cpp"
  << "Max realized parse tree depth (so far) is:\n";
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2645 "barf_regex_parser.cpp"
+#line 2644 "barf_regex_parser.cpp"
  << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
     if (m_max_allowable_parse_tree_depth >= 0)
         out << " (max allowable parse tree depth is " << m_max_allowable_parse_tree_depth << ")\n";
@@ -2650,22 +2649,22 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2654 "barf_regex_parser.cpp"
+#line 2653 "barf_regex_parser.cpp"
  << "Has-encountered-error-state (so far) is:\n";
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2659 "barf_regex_parser.cpp"
+#line 2658 "barf_regex_parser.cpp"
  << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2664 "barf_regex_parser.cpp"
+#line 2663 "barf_regex_parser.cpp"
  << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2669 "barf_regex_parser.cpp"
+#line 2668 "barf_regex_parser.cpp"
  << "    ";
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
@@ -2688,25 +2687,25 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2692 "barf_regex_parser.cpp"
+#line 2691 "barf_regex_parser.cpp"
  << '\n';
 
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2698 "barf_regex_parser.cpp"
+#line 2697 "barf_regex_parser.cpp"
  << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2704 "barf_regex_parser.cpp"
+#line 2703 "barf_regex_parser.cpp"
  << '\n';
 
     out << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2710 "barf_regex_parser.cpp"
+#line 2709 "barf_regex_parser.cpp"
  << "HPS queue:\n";
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
@@ -2799,12 +2798,11 @@ void Parser::RealizedState_::ExecuteActionShift (BranchVector_ const &shifted_br
     // Ensure that each of the branch nodes in the shifted vector are actually children of
     // the current set of branch nodes.
     assert(!m_branch_vector_stack.empty());
-    BranchVector_ const &branch_vector_stack_top = m_branch_vector_stack.back();
     // Ensure that the stack is actually consistent with regard to the parent/child relationships.
     for (BranchVector_::const_iterator it = shifted_branch_vector.begin(), it_end = shifted_branch_vector.end(); it != it_end; ++it)
     {
-        Branch_ const &branch = *it;
-        assert(std::any_of(branch_vector_stack_top.begin(), branch_vector_stack_top.end(), [branch](Branch_ const &stack_top_branch){ return stack_top_branch == branch.Parent(); }));
+        // Note that m_branch_vector_stack.back() is the top of the branch vector stack.
+        assert(std::any_of(m_branch_vector_stack.back().begin(), m_branch_vector_stack.back().end(), [it](Branch_ const &stack_top_branch){ return stack_top_branch == it->Parent(); }));
     }
     // Ensure that there's actually a lookahead.
     assert(!m_lookahead_queue.empty());
@@ -3400,7 +3398,7 @@ Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index)
         TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3404 "barf_regex_parser.cpp"
+#line 3402 "barf_regex_parser.cpp"
  << "Pushed " << m_realized_state_->LookaheadQueue().back() << " onto back of lookahead queue\n")
     }
     return m_realized_state_->LookaheadQueue()[index];
@@ -3456,7 +3454,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                     TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3460 "barf_regex_parser.cpp"
+#line 3458 "barf_regex_parser.cpp"
  << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
 
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
@@ -3626,7 +3624,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3630 "barf_regex_parser.cpp"
+#line 3628 "barf_regex_parser.cpp"
  << "        Reconstructing branches:\n")
     for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
@@ -3634,7 +3632,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
         TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 294 "barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3638 "barf_regex_parser.cpp"
+#line 3636 "barf_regex_parser.cpp"
  << "            " << reconstruct_branch.StatePtr() << '\n')
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
@@ -4866,4 +4864,4 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 } // end of namespace Regex
 } // end of namespace Barf
 
-#line 4870 "barf_regex_parser.cpp"
+#line 4868 "barf_regex_parser.cpp"

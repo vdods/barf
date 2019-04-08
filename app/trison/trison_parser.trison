@@ -318,9 +318,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal preamble %type.cpp "Ast::ThrowAway *"
 :
-    preamble_directives:preamble_directives END_PREAMBLE:throwaway
+    preamble_directives END_PREAMBLE:throwaway
     %target.cpp {
-        assert(preamble_directives == NULL);
         assert(m_target_map != NULL);
         assert(m_terminal_list != NULL);
         assert(m_terminal_map != NULL);
@@ -358,10 +357,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal preamble_directives
 :
-    preamble_directives:preamble_directives preamble_directive:preamble_directive
+    preamble_directives preamble_directive
     %target.cpp {
-        assert(preamble_directives == NULL);
-        assert(preamble_directive == NULL);
         return NULL;
     }
 |
@@ -373,10 +370,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal preamble_directive
 :
-    targets_directive:targets_directive at_least_one_newline
+    targets_directive at_least_one_newline
     %target.cpp {
         // The logic is already handled by targets_directive
-        assert(targets_directive == NULL);
         assert(m_target_map != NULL);
         return NULL;
     }
@@ -413,9 +409,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    precedence_directive:precedence_directive at_least_one_newline
+    precedence_directive at_least_one_newline
     %target.cpp {
-        assert(precedence_directive == NULL);
         // Already handled by precedence_directive reduction rule.
         return NULL;
     }

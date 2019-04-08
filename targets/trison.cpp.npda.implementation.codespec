@@ -662,8 +662,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                 Npda_::Transition_ const &transition = *transition_it;
                 assert(transition.m_type >= Npda_::Transition_::RETURN);
                 assert(transition.m_type <= Npda_::Transition_::POP_STACK);
-                std::uint32_t transition_sorted_type_index = Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type));
-                assert(transition_sorted_type_index == current_sorted_type_index);
+                assert(Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) == current_sorted_type_index);
 
 <|              if(is_defined(generate_debug_spew_code))
 /*
@@ -959,12 +958,11 @@ void <{class_name}::RealizedState_::ExecuteActionShift (BranchVector_ const &shi
     // Ensure that each of the branch nodes in the shifted vector are actually children of
     // the current set of branch nodes.
     assert(!m_branch_vector_stack.empty());
-    BranchVector_ const &branch_vector_stack_top = m_branch_vector_stack.back();
     // Ensure that the stack is actually consistent with regard to the parent/child relationships.
     for (BranchVector_::const_iterator it = shifted_branch_vector.begin(), it_end = shifted_branch_vector.end(); it != it_end; ++it)
     {
-        Branch_ const &branch = *it;
-        assert(std::any_of(branch_vector_stack_top.begin(), branch_vector_stack_top.end(), [branch](Branch_ const &stack_top_branch){ return stack_top_branch == branch.Parent(); }));
+        // Note that m_branch_vector_stack.back() is the top of the branch vector stack.
+        assert(std::any_of(m_branch_vector_stack.back().begin(), m_branch_vector_stack.back().end(), [it](Branch_ const &stack_top_branch){ return stack_top_branch == it->Parent(); }));
     }
     // Ensure that there's actually a lookahead.
     assert(!m_lookahead_queue.empty());

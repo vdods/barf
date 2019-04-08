@@ -249,11 +249,10 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal root %type.cpp "PrimarySource *"
 :
-    preamble_directives:preamble_directives
+    preamble_directives
     END_PREAMBLE:throwaway
     state_machines:state_machine_map // This includes %end
     %target.cpp {
-        assert(preamble_directives == NULL);
         assert(m_target_map != NULL);
 
         if (m_start_with_state_machine_directive == NULL)
@@ -290,9 +289,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal preamble_directives
 :
-    preamble_directives:preamble_directives preamble_directive:preamble_directive %target.cpp {
-        assert(preamble_directives == NULL);
-        assert(preamble_directive == NULL);
+    preamble_directives preamble_directive %target.cpp {
         return NULL;
     }
 |
@@ -304,10 +301,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal preamble_directive
 :
-    targets_directive:targets_directive at_least_one_newline
+    targets_directive at_least_one_newline
     %target.cpp {
         // The logic is already handled by the targets_directive (and subordinate) nonterminal reduction rule handlers.
-        assert(targets_directive == NULL);
         return NULL;
     }
 |
@@ -366,10 +362,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal targets_directive
 :
-    DIRECTIVE_TARGETS:throwaway target_ids:target_map
+    DIRECTIVE_TARGETS:throwaway target_ids
     %target.cpp {
-        assert(target_map != NULL);
-        assert(target_map == m_target_map);
         delete throwaway;
         return NULL;
     }
@@ -385,10 +379,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal target_ids
 :
-    target_ids:target_map ID:target_id
+    target_ids ID:target_id
     %target.cpp {
-        assert(target_map != NULL);
-        assert(target_map == m_target_map);
         if (m_target_map->Element(target_id->GetText()) == NULL)
         {
             CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
