@@ -66,3 +66,4 @@ lib/targetspec/barf_targetspec_parser.npda.states
 
 test/CalcParser.npda.dot
 test/CalcParser.npda.png
+test/CalcParser.npda.states

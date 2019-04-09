@@ -10,9 +10,9 @@
 
 %targets cpp
 
-/* ***************************************************************************
-/* cpp parser header-file-related directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser header-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.header_filename "CalcParser.hpp"
 %target.cpp.implementation_filename "CalcParser.cpp"
@@ -40,9 +40,9 @@ private:
     Scanner *m_scanner;
 }
 
-/* ***************************************************************************
-/* cpp parser implementation-file-related directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser implementation-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.top_of_implementation_file %{
 #include "ast.hpp"
@@ -96,9 +96,9 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
 }
 %}
 
-/* ***************************************************************************
-/* cpp parser token-specific directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser token-specific directives
+// ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.token_data_type "std::shared_ptr<Ast::Base>"
 %target.cpp.token_data_default "std::shared_ptr<Ast::Base>()"
@@ -134,24 +134,24 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     // m_recoverable_error_encountered = false;
 }
 
-/* ***************************************************************************
-/* cpp parser misc directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser misc directives
+// ///////////////////////////////////////////////////////////////////////////
 
 // this adds a lot of string content to parser source
 %target.cpp.generate_debug_spew_code
 
-/* ***************************************************************************
-/* cpp parser terminal directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser terminal directives
+// ///////////////////////////////////////////////////////////////////////////
 
 %terminal '+' '-' '*' '/' '^' '?'
 %terminal '(' ')' ';'
 %terminal NUM BAD_TOKEN
 
-/* ***************************************************************************
-/* cpp parser precedence directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser precedence directives
+// ///////////////////////////////////////////////////////////////////////////
 
 // Lowest precedence is first, highest is last.
 
@@ -165,9 +165,9 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
 %prec.right     EXPONENTIATION
 %prec.left      HIGHEST
 
-/* ***************************************************************************
-/* cpp parser grammar specification
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser grammar specification
+// ///////////////////////////////////////////////////////////////////////////
 
 %default_parse_nonterminal stmt_then_end
 
@@ -192,13 +192,13 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
 :
     expr:ex ';'
     %target.cpp {
-        std::cout << "stmt <- expr ';'\n";
+//         std::cout << "stmt <- expr ';'\n";
         return ex;
     }
 |
     %error[%end] ';'
     %target.cpp {
-        std::cout << "stmt <- %error ';'\n";
+//         std::cout << "stmt <- %error ';'\n";
         return Ast::error_dummy("stmt <- %error ';'");
     }
 ;
@@ -207,13 +207,13 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
 :
     '(' expr:e ')'
     %target.cpp {
-        std::cout << "expr <- '(' expr ')'\n";
+//         std::cout << "expr <- '(' expr ')'\n";
         return e;
     }
 |
     '(' %error[%end] ')'
     %target.cpp {
-        std::cout << "expr <- '(' %error[')'] ')'\n";
+//         std::cout << "expr <- '(' %error[')'] ')'\n";
         return Ast::error_dummy("expr <- '(' %error[')'] ')'");
     }
 |
@@ -223,61 +223,61 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     // If %error_until(%end, ';') were added, this situation could be handled better.
     '(' %error[%end | ';']
     %target.cpp {
-        std::cout << "expr <- '(' %error[%end | ';']\n";
+//         std::cout << "expr <- '(' %error[%end | ';']\n";
         return Ast::error_dummy("expr <- '(' %error[%end | ';']");
     }
 |
     NUM:num
     %target.cpp {
-        std::cout << "expr <- NUM(" << num << ")\n";
+//         std::cout << "expr <- NUM(" << num << ")\n";
         return num;
     }
 |
     expr:lhs '+' expr:rhs               %prec ADDITIVE
     %target.cpp {
-        std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
+//         std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
         return base_operator("+", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '+' '+' '+' '+' expr:rhs   %prec LOWEST
     %target.cpp {
-        std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
+//         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("++++", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '+' '+' '+' expr:rhs       %prec LOW
     %target.cpp {
-        std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
+//         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("+++", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '+' '+' expr:rhs           %prec HIGHEST
     %target.cpp {
-        std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
+//         std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
         return base_operator("++", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '*' expr:rhs               %prec MULTIPLICATIVE
     %target.cpp {
-        std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
+//         std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
         return base_operator("*", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     expr:lhs '?' expr:rhs               %prec QUESTION
     %target.cpp {
-        std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
+//         std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
         return base_operator("?", BaseOperator::ChildNodes{lhs, rhs});
     }
 |
     '-' expr:op                         %prec UNARY
     %target.cpp {
-        std::cout << "expr <- '-' expr(" << op << ")\n";
+//         std::cout << "expr <- '-' expr(" << op << ")\n";
         return base_operator("-", BaseOperator::ChildNodes{op});
     }
 |
     expr:lhs '^' expr:rhs               %prec EXPONENTIATION
     %target.cpp {
-        std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
+//         std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
         return base_operator("^", BaseOperator::ChildNodes{lhs, rhs});
     }
 // |

@@ -10,9 +10,9 @@
 
 %targets cpp
 
-/* ***************************************************************************
-/* cpp scanner header-file-related directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner header-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.header_filename "Scanner.hpp"
 %target.cpp.implementation_filename "Scanner.cpp"
@@ -58,9 +58,9 @@ std::string AsString (TokenId token_id);
     std::vector<StateMachine::Name> m_state_machine_stack;
 }
 
-/* ***************************************************************************
-/* cpp scanner implementation-file-related directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner implementation-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.top_of_implementation_file %{
 #include "ast.hpp"
@@ -99,9 +99,9 @@ void Scanner::AttachIstream (std::istream &in)
     return TokenId::END_OF_FILE;
 %}
 
-/* ***************************************************************************
-/* cpp scanner I/O parameters
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner I/O parameters
+// ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.return_type "TokenId"
 %target.cpp.rejection_actions {
@@ -111,16 +111,16 @@ void Scanner::AttachIstream (std::istream &in)
     m_state_machine_stack.clear();
 }
 
-/* ***************************************************************************
-/* cpp scanner misc directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner misc directives
+// ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.generate_debug_spew_code
 %target.cpp.debug_spew_prefix {"Scanner:"}
 
-/* ***************************************************************************
-/* target-independent scanner directives
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// target-independent scanner directives
+// ///////////////////////////////////////////////////////////////////////////
 
 // integer literal
 %macro INTEGER_LITERAL      (0|[1-9][0-9]*)
@@ -169,9 +169,9 @@ void Scanner::AttachIstream (std::istream &in)
 
 %%
 
-/* ***************************************************************************
-/* state machines and constituent regex rules
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// state machines and constituent regex rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %state_machine MAIN
 :

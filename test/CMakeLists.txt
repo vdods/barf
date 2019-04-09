@@ -1,11 +1,17 @@
 # Suite of tests for BARF
 
-cmake_minimum_required(VERSION 3.0) # I had problems if I only specified "VERSION 3".
+cmake_minimum_required(VERSION 3.10) # I had problems if I only specified "VERSION 3".
 project(barftest)
 
-find_path(REFLEX_BINARY "path to reflex binary" PATHS $ENV{REFLEX_BINARY} NO_DEFAULT_PATH)
-find_path(TRISON_BINARY "path to trison binary" PATHS $ENV{TRISON_BINARY} NO_DEFAULT_PATH)
-find_path(BARF_TARGETS_PATH "path to barf targets" PATHS $ENV{BARF_TARGETS_PATH} NO_DEFAULT_PATH)
+# Set and require the C++11 standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# This defines rules for adding reflex and trison sources to produce C++ scanners and parsers.
+# It requires having installed the barf package; the find_package function looks for the file
+# barf-config.cmake in various locations to determine barf_DIR such that
+# ${barf_DIR}/barf-config.cmake is a valid path, and then includes that cmake script.
+find_package(barf REQUIRED)
 
 # Options to correctly link the standard C++ lib on Mac.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # This is the correct way to detect Mac OS X operating system -- see http://www.openguru.com/2009/04/cmake-detecting-platformoperating.html
@@ -15,23 +21,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # This is the correct way to detect Ma
     endif()
 endif()
 
-# Setup proper compiler flags for Debug and Release builds
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g2")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g2")
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # TODO
-endif()
-
 # Helper target(s)
-
-add_library(C++11 INTERFACE)
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_compile_options(C++11 INTERFACE -std=c++11)
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # TODO
-endif()
 
 add_library(Strict INTERFACE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -49,17 +39,8 @@ endif()
 
 # Executables
 
-set(BARF_TARGETS_DIR ${PROJECT_BINARY_DIR}/${BARF_TARGETS_PATH})
-
-add_custom_command(
-    OUTPUT ${barftest_SOURCE_DIR}/Scanner.cpp ${barftest_SOURCE_DIR}/Scanner.hpp
-    COMMAND ${REFLEX_BINARY} -I ${BARF_TARGETS_DIR} ${barftest_SOURCE_DIR}/Scanner.reflex -o ${barftest_SOURCE_DIR}
-    DEPENDS ${barftest_SOURCE_DIR}/Scanner.reflex ${BARF_TARGETS_DIR}/reflex.cpp.header.codespec ${BARF_TARGETS_DIR}/reflex.cpp.implementation.codespec ${BARF_TARGETS_DIR}/reflex.cpp.targetspec)
-
-add_custom_command(
-    OUTPUT ${barftest_SOURCE_DIR}/CalcParser.cpp ${barftest_SOURCE_DIR}/CalcParser.hpp
-    COMMAND ${TRISON_BINARY} -I ${BARF_TARGETS_DIR} ${barftest_SOURCE_DIR}/CalcParser.trison -o ${barftest_SOURCE_DIR} -S Parser.states --generate-npda-dot-graph CalcParser.npda.dot
-    DEPENDS ${barftest_SOURCE_DIR}/CalcParser.trison ${BARF_TARGETS_DIR}/trison.cpp.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.dpda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.header.codespec ${BARF_TARGETS_DIR}/trison.cpp.npda.implementation.codespec ${BARF_TARGETS_DIR}/trison.cpp.targetspec)
+reflex_add_source(${barftest_SOURCE_DIR}/CalcSanner.reflex CalcScanner)
+trison_add_source(${barftest_SOURCE_DIR}/CalcParser.trison CalcParser)
 
 set(barftest_SOURCES
     ast.cpp
@@ -77,4 +58,4 @@ set(barftest_SOURCES
     util.hpp
 )
 add_executable(barftest ${barftest_SOURCES})
-target_link_libraries(barftest PUBLIC C++11 Strict)
+target_link_libraries(barftest PUBLIC Strict)
