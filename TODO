@@ -2,7 +2,7 @@
 // BARF bugs
 // ///////////////////////////////////////////////////////////////////////////
 
--   think about what to do when a reflex state is empty
+-   disallow empty reflex states
 -   reflex: an unterminated regex causes a hang;
     %state_machine BLAH
     :
@@ -105,8 +105,6 @@ $   do comprehensive deleting of stuff (this might be hard with all the throwing
     print out a list of all available codespec symbols and their descriptions
     from the commandline for easier development (i.e. to the state machine ones
     so that you don't have to look through xxx_codespecsymbols.cpp for these)
--   allow targetspec-declared, primary-source-defined codespec symbols to use
-    codespec symbols? (i.e. { printf(<{_rule_regex}); } ) ?
 -   make better error message (i.e. anything informative at all) when there's
     an error in an included codespec file.
 
@@ -173,6 +171,7 @@ $   do comprehensive deleting of stuff (this might be hard with all the throwing
     OR
     somehow just return pointers into the buffer for the accepted string, so
     that there is as little overhead as possible when running the scanner.
+    Could do this with std::span (newer C++ standard)
 -   maybe consistencize the codespec symbol names
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -181,9 +180,7 @@ $   do comprehensive deleting of stuff (this might be hard with all the throwing
 
 -   use smallest integer type to store state and transition indices, etc.
     (in C++, this can be done easily with templates)
-*   c++ target -- ability to set the debug spew ostream
 -   move the --with-line-directives option to be an optional targetspec directive
--   add commandline option to describe the return codes (?)
 $   add targetspec directive for line directives referencing codespecs (the
     default should be to not refer to codespecs), making development easier
 $   add option which prints the reflex/trison targets available in the current

@@ -57,26 +57,15 @@ private:
         }
 
 <|      if(is_defined(generate_debug_spew_code))
-        // The print_delimiter_at_branch_length parameter should be the realized stack depth.  It will
-        // print a semicolon after the realized portion of the stack, so that the hypothetical portion
-        // of the stack can be visually distinguished.
         template <typename T>
-        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &), std::shared_ptr<TreeNode_> const &delimiting_ancestor = std::shared_ptr<TreeNode_>(), std::string const &delimiter = std::string()) const
+        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &)) const
         {
             if (this->HasParent())
             {
-                Parent()->PrintRootToLeaf(out, DataTransform, delimiting_ancestor);
+                Parent()->PrintRootToLeaf(out, DataTransform);
                 out << ' ';
             }
-            // If there is no delimiting ancestor, then the delimiting ancestor is the root.
-            else if (!bool(delimiting_ancestor) && !delimiter.empty())
-                out << delimiter << ' ';
-
             out << DataTransform(Data());
-
-            // Print the delimiter, if called for.
-            if (Equals(this->shared_from_this(), delimiting_ancestor) && !delimiter.empty())
-                out << ' ' << delimiter;
         }
 
 <|      end_if
@@ -217,6 +206,8 @@ private:
         void                ExecuteActionDiscardLookahead       (HPSQueue_ &hps_queue);
         // This one is tricky to implement within RealizedState_ alone.
         //void                ExecuteActionPopStack               (std::uint32_t pop_count);
+
+        void                PrintStackAndLookaheads             (std::ostream &out) const;
 
         void                ClearStack                          ();
         void                Reinitialize                        (Npda_::StateIndex_ initial_state);

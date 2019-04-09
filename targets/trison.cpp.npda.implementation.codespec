@@ -104,6 +104,14 @@ void <{class_name}::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_pa
 
     m_hypothetical_state_ = new HypotheticalState_(start_state_index);
 
+<|  if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(DSF_STACK_AND_LOOKAHEADS,
+        *DebugSpewStream() << <{debug_spew_prefix} << "<stack> . <lookaheads>: ";
+        m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
+        *DebugSpewStream() << '\n';
+    )
+
+<|  end_if
     bool should_return = false;
 <|  if(is_defined(generate_debug_spew_code))
     std::size_t iteration_index = 0;
@@ -123,7 +131,7 @@ void <{class_name}::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_pa
         if (m_realized_state_->HasExceededMaxAllowableLookaheadCount(m_max_allowable_lookahead_count))
         {
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << <{debug_spew_prefix} << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << <{debug_spew_prefix} << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
 <|          end_if
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
             break;
@@ -132,7 +140,7 @@ void <{class_name}::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_pa
         if (m_hypothetical_state_->HasExceededMaxAllowableParseTreeDepth(m_max_allowable_parse_tree_depth))
         {
 <|          if(is_defined(generate_debug_spew_code))
-            TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << <{debug_spew_prefix} << "Parse tree depth (" << m_hypothetical_state_->ParseTreeDepth() << ") has exceeded max allowable parse tree depth (" << m_max_allowable_parse_tree_depth << "); modify this limit using the default_max_allowable_parse_tree_depth directive (see trison.cpp.targetspec), or using the SetMaxAllowableParseTreeDepth method.  Returning with error.\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << <{debug_spew_prefix} << "Parse tree depth (" << m_hypothetical_state_->ParseTreeDepth() << ") has exceeded max allowable parse tree depth (" << m_max_allowable_parse_tree_depth << "); modify this limit using the default_max_allowable_parse_tree_depth directive (see trison.cpp.targetspec), or using the SetMaxAllowableParseTreeDepth method.  Returning with error.\n")
 <|          end_if
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH;
             break;
@@ -192,6 +200,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 {
 <|  if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << <{debug_spew_prefix} << "Parse stack tree has trunk; executing trunk actions.\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << <{debug_spew_prefix} << '\n')
+
 <|  end_if
     if (m_hypothetical_state_->m_root->HasTrunkChild())
     {
@@ -208,7 +218,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
         {
             case ParseTreeNode_::RETURN: {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action RETURN.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action RETURN.\n")
 <|              end_if
                 assert(m_realized_state_->TokenStack().size() == 2);
                 parser_return_code_ = PRC_SUCCESS;
@@ -222,7 +232,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 // Execute the appropriate rule on the top tokens in the stack
                 std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
 <|              end_if
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
@@ -234,21 +244,21 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
             case ParseTreeNode_::SHIFT: {
 <|              if(is_defined(generate_debug_spew_code))
                 std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
-                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
 <|              end_if
                 m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
 <|              end_if
                 m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::DISCARD_LOOKAHEAD: {
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action DISCARD_LOOKAHEAD.\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action DISCARD_LOOKAHEAD.\n")
 <|              end_if
                 m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
@@ -256,7 +266,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
             case ParseTreeNode_::POP_STACK: {
                 std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
 <|              if(is_defined(generate_debug_spew_code))
-                TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "    Executing trunk action POP_STACK " << pop_count << ".\n")
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action POP_STACK " << pop_count << ".\n")
 <|              end_if
 
                 // This one is tricky to implement within RealizedState_ alone, mainly because
@@ -290,6 +300,14 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 assert(false && "this should not happen");
                 break;
         }
+<|      if(is_defined(generate_debug_spew_code))
+
+        TRISON_CPP_DEBUG_CODE_(DSF_STACK_AND_LOOKAHEADS,
+            *DebugSpewStream() << <{debug_spew_prefix} << "<stack> . <lookaheads>: ";
+            m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
+            *DebugSpewStream() << '\n';
+        )
+<|      end_if
 
         if (destroy_and_recreate_parse_tree)
         {
@@ -772,10 +790,6 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if}
 {
     assert(rule_index_ < Grammar_::ms_rule_count_);
-<|  if(is_defined(generate_debug_spew_code))
-    Grammar_::Rule_ const &rule_ = Grammar_::ms_rule_table_[rule_index_];
-    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing reduction rule " << rule_index_ << "; " << rule_.m_description << '\n')
-<|  end_if
     switch (rule_index_)
     {
         default:
@@ -821,7 +835,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     {
         Branch_ const &branch = *it;
         out << <{debug_spew_prefix} << "    (";
-        branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>); // no need for delimiter here
+        branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
         out << ")\n";
     }
 
@@ -985,6 +999,21 @@ void <{class_name}::RealizedState_::ExecuteActionDiscardLookahead (HPSQueue_ &hp
 {
     assert(!m_lookahead_queue.empty());
     PopFrontLookahead(hps_queue);
+}
+
+void <{class_name}::RealizedState_::PrintStackAndLookaheads (std::ostream &out) const
+{
+    for (TokenStack_::const_iterator it = TokenStack().begin(), it_end = TokenStack().end(); it != it_end; ++it)
+    {
+        Token const &token = *it;
+        out << token << ' ';
+    }
+    out << '.';
+    for (TokenQueue_::const_iterator it = LookaheadQueue().begin(), it_end = LookaheadQueue().end(); it != it_end; ++it)
+    {
+        Token const &token = *it;
+        out << ' ' << token;
+    }
 }
 
 void <{class_name}::RealizedState_::ClearStack ()
@@ -1581,7 +1610,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
         m_realized_state_->PushBackLookahead(Scan_(), m_hypothetical_state_->m_hps_queue);
 <|      if(is_defined(generate_debug_spew_code))
 
-        TRISON_CPP_DEBUG_CODE_(DSF_REALIZED_LOOKAHEAD_QUEUE, *DebugSpewStream() << <{debug_spew_prefix} << "Pushed " << m_realized_state_->LookaheadQueue().back() << " onto back of lookahead queue\n")
+        TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Retrieved token " << m_realized_state_->LookaheadQueue().back() << " from scan actions; pushing token onto back of lookahead queue\n")
 <|      end_if
     }
     return m_realized_state_->LookaheadQueue()[index];

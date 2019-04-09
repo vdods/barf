@@ -243,24 +243,27 @@ public:
         // Individual flags
         DSF_START_END_PARSE             = 1 << 0,
         DSF_ITERATION_COUNT             = 1 << 1,
-        DSF_ACTION                      = 1 << 2,
-        DSF_PROGRAMMER_ERROR            = 1 << 3,
-        DSF_PARSE_TREE_MESSAGE          = 1 << 4,
-        DSF_REALIZED_LOOKAHEAD_QUEUE    = 1 << 5,
-        DSF_SHIFT_REDUCE_CONFLICT       = 1 << 6,
-        DSF_REDUCE_REDUCE_CONFLICT      = 1 << 7,
-        DSF_TRANSITION_PROCESSING       = 1 << 8,
-        DSF_TRANSITION_EXERCISING       = 1 << 9,
-        DSF_HPS_REMOVE_DEFUNCT          = 1 << 10,
-        DSF_HPS_NODE_CREATION_DELETION  = 1 << 11,
+        DSF_SCANNER_ACTION              = 1 << 2,
+        DSF_PARSER_ACTION               = 1 << 3,
+        DSF_STACK_AND_LOOKAHEADS        = 1 << 4,
+        DSF_PROGRAMMER_ERROR            = 1 << 5,
+        DSF_PARSE_TREE_MESSAGE          = 1 << 6,
+        DSF_LIMIT_EXCEEDED              = 1 << 7,
+        DSF_SHIFT_REDUCE_CONFLICT       = 1 << 8,
+        DSF_REDUCE_REDUCE_CONFLICT      = 1 << 9,
+        DSF_TRANSITION_PROCESSING       = 1 << 10,
+        DSF_TRANSITION_EXERCISING       = 1 << 11,
+        DSF_HPS_REMOVE_DEFUNCT          = 1 << 12,
+        DSF_HPS_NODE_CREATION_DELETION  = 1 << 13,
         // If more are added, then make sure to update DSF_HIGHEST_.
         DSF_HIGHEST_                    = DSF_HPS_NODE_CREATION_DELETION,
 
         // Pre-defined common sets of bitflags, in ascending order of verbosity.
-        DSF_NONE                        = 0,
-        DSF_MINIMAL                     = DSF_START_END_PARSE|DSF_ACTION|DSF_PROGRAMMER_ERROR,
-        DSF_INTERMEDIATE                = DSF_START_END_PARSE|DSF_ITERATION_COUNT|DSF_PARSE_TREE_MESSAGE|DSF_ACTION|DSF_SHIFT_REDUCE_CONFLICT|DSF_PROGRAMMER_ERROR,
-        DSF_ALL                         = DSF_HIGHEST_-1
+        DSF__NONE                        = 0,
+        DSF__MINIMAL                     = DSF_START_END_PARSE|DSF_SCANNER_ACTION|DSF_PARSER_ACTION|DSF_LIMIT_EXCEEDED|DSF_PROGRAMMER_ERROR,
+        DSF__MINIMAL_VERBOSE             = DSF__MINIMAL|DSF_STACK_AND_LOOKAHEADS,
+        DSF__INTERMEDIATE                = DSF__MINIMAL_VERBOSE|DSF_ITERATION_COUNT|DSF_PARSE_TREE_MESSAGE|DSF_SHIFT_REDUCE_CONFLICT,
+        DSF__ALL                         = DSF_HIGHEST_-1 // This depends on everything being contiguous bitflags
     };
 
     /// Returns true if and only if "debug spew" is enabled (which prints, to the
@@ -352,7 +355,7 @@ private:
     // This is a member var because THERE CAN BE ONLY ONE.
     StartWithStateMachineDirective *m_start_with_state_machine_directive;
 
-#line 356 "reflex_parser.hpp"
+#line 359 "reflex_parser.hpp"
 
 
 private:
@@ -579,26 +582,15 @@ private:
                 return 1;
         }
 
-        // The print_delimiter_at_branch_length parameter should be the realized stack depth.  It will
-        // print a semicolon after the realized portion of the stack, so that the hypothetical portion
-        // of the stack can be visually distinguished.
         template <typename T>
-        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &), std::shared_ptr<TreeNode_> const &delimiting_ancestor = std::shared_ptr<TreeNode_>(), std::string const &delimiter = std::string()) const
+        void PrintRootToLeaf (std::ostream &out, T (*DataTransform)(DataType const &)) const
         {
             if (this->HasParent())
             {
-                Parent()->PrintRootToLeaf(out, DataTransform, delimiting_ancestor);
+                Parent()->PrintRootToLeaf(out, DataTransform);
                 out << ' ';
             }
-            // If there is no delimiting ancestor, then the delimiting ancestor is the root.
-            else if (!bool(delimiting_ancestor) && !delimiter.empty())
-                out << delimiter << ' ';
-
             out << DataTransform(Data());
-
-            // Print the delimiter, if called for.
-            if (Equals(this->shared_from_this(), delimiting_ancestor) && !delimiter.empty())
-                out << ' ' << delimiter;
         }
 
     private:
@@ -722,6 +714,8 @@ private:
         void                ExecuteActionDiscardLookahead       (HPSQueue_ &hps_queue);
         // This one is tricky to implement within RealizedState_ alone.
         //void                ExecuteActionPopStack               (std::uint32_t pop_count);
+
+        void                PrintStackAndLookaheads             (std::ostream &out) const;
 
         void                ClearStack                          ();
         void                Reinitialize                        (Npda_::StateIndex_ initial_state);
@@ -959,4 +953,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 963 "reflex_parser.hpp"
+#line 957 "reflex_parser.hpp"

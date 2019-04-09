@@ -42,7 +42,7 @@
     m_hypothetical_state_ = NULL;
 <|  if(is_defined(generate_debug_spew_code))
     SetDebugSpewStream(NULL);
-    SetActiveDebugSpewFlags(DSF_ALL);
+    SetActiveDebugSpewFlags(DSF__ALL);
 <|  end_if
 <|  if(is_defined(constructor_actions))
 
@@ -62,7 +62,7 @@
 <|  end_if
 <|  if(is_defined(destructor_actions))
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing destructor actions\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing destructor actions\n")
 <|  end_if
 
 <|  destructor_actions
@@ -90,7 +90,7 @@ std::string <{class_name}::DebugSpewPrefix () const
 void <{class_name}::ResetForNewInput ()
 {
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing reset-for-new-input actions\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing reset-for-new-input actions\n")
 
 <|  end_if
     // Perform all the internal cleanup needed.
@@ -186,7 +186,7 @@ std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms
 void <{class_name}::ThrowAwayToken_ (Token const &token_) throw()
 {
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing throw-away-token actions on token " << token_ << '\n')
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing throw-away-token actions on token " << token_ << '\n')
 <|  end_if
     ThrowAwayTokenData_(token_.m_data);
 }
@@ -199,10 +199,15 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 <{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
 {
 <|  if(is_defined(generate_debug_spew_code))
-    TRISON_CPP_DEBUG_CODE_(DSF_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing scan actions\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing scan actions to retrieve next token...\n")
 
 <|  end_if
 <|  scan_actions
+<|  if(is_defined(generate_debug_spew_code))
+
+    TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from scan_actions code block\n")
+    assert(false && "no value returned from scan_actions code block");
+<|  end_if
 }
 
 void <{class_name}::RunNonassocErrorActions_ (Token const &lookahead)
