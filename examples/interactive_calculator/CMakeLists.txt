@@ -1,7 +1,7 @@
-# example app which uses reflex and trison
+# Suite of tests for BARF
 
 cmake_minimum_required(VERSION 3.10) # I had problems if I only specified "VERSION 3".
-project(calc)
+project(calculator)
 
 # Set and require the C++11 standard
 set(CMAKE_CXX_STANDARD 11)
@@ -30,25 +30,20 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # TODO
 endif()
 
-add_library(SaveTemps INTERFACE)
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_compile_options(SaveTemps INTERFACE -save-temps)
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # TODO
-endif()
-
 # Executables
 
-reflex_add_source(${calc_SOURCE_DIR}/Scanner.reflex Scanner)
-trison_add_source(${calc_SOURCE_DIR}/Parser.trison Parser)
+reflex_add_source(${calculator_SOURCE_DIR}/calculator_scanner.reflex calculator_scanner)
+trison_add_source(${calculator_SOURCE_DIR}/calculator_parser.trison calculator_parser)
 
-set(calc_SOURCES
-    Parser.cpp
-    Parser.hpp
-    Parser.trison
-    Scanner.cpp
-    Scanner.hpp
-    Scanner.reflex
+set(calculator_SOURCES
+    calculator.hpp
+    calculator_main.cpp
+    calculator_parser.cpp
+    calculator_parser.hpp
+    calculator_parser.trison
+    calculator_scanner.cpp
+    calculator_scanner.hpp
+    calculator_scanner.reflex
 )
-add_executable(calc ${calc_SOURCES})
-target_link_libraries(calc PUBLIC Strict)
+add_executable(calculator ${calculator_SOURCES})
+target_link_libraries(calculator PUBLIC Strict)

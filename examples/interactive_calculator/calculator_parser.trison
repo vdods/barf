@@ -110,7 +110,7 @@ void Parser::SetInputString (string const &input_string)
 
 %nonterminal root
 :
-    // empty reduction rule
+    %empty
     %target.cpp {
         m_should_print_result = false;
         return 0.0;
@@ -219,5 +219,5 @@ void Parser::SetInputString (string const &input_string)
 :
     at_least_zero_newlines NEWLINE %target.cpp { return 0.0; }
 |
-    /* empty reduction rule */ %target.cpp { return 0.0; }
+    %empty %target.cpp { return 0.0; }
 ;

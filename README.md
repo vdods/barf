@@ -59,7 +59,24 @@ This defines the functions
 which when invoked create build rules for generating C++ code from reflex code or
 trison code respectively.
 
-See the `dev/calc` project for a full example project that uses BARF.
+## Examples
+
+There are several reflex scanners and trison parsers within the BARF codebase itself
+which function as realistic examples.
+-   [reflex_parser](app/reflex/reflex_parser.trison)
+-   [trison parser](app/trison/trison_parser.trison)
+-   [barf_commonlang_scanner](lib/commonlang/barf_commonlang_scanner.reflex)
+-   [barf_preprocessor_parser](lib/preprocessor/barf_preprocessor_parser.trison)
+-   [barf_preprocessor_scanner](lib/preprocessor/barf_preprocessor_scanner.reflex)
+-   [barf_regex_parser](lib/regex/barf_regex_parser.trison)
+-   [barf_targetspec_parser](lib/targetspec/barf_targetspec_parser.trison)
+
+Additional examples, presented as standalone programs, complete with cmake-based build
+systems, are presented under the `examples` directory.
+-   [interactive_calculator parser](examples/interactive_calculator/calculator_parser.trison)
+-   [interactive_calculator scanner](examples/interactive_calculator/calculator_scanner.reflex)
+-   [noninteractive_calculator parser](examples/noninteractive_calculator/CalcParser.trison)
+-   [noninteractive_calculator scanner](examples/noninteractive_calculator/Scanner.reflex)
 
 ## Licensing
 

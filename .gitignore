@@ -31,12 +31,6 @@ app/trison/trison_parser.npda.dot
 app/trison/trison_parser.npda.png
 app/trison/trison_parser.npda.states
 
-dev/calc/Parser.npda.dot
-dev/calc/Parser.npda.states
-dev/calc/Parser.npda.png
-dev/calc/Scanner.dfa.dot
-dev/calc/Scanner.nfa.dot
-
 lib/commonlang/barf_commonlang_scanner.dfa.dot
 lib/commonlang/barf_commonlang_scanner.dfa.png
 lib/commonlang/barf_commonlang_scanner.nfa.dot
@@ -64,6 +58,13 @@ lib/targetspec/barf_targetspec_parser.npda.dot
 lib/targetspec/barf_targetspec_parser.npda.png
 lib/targetspec/barf_targetspec_parser.npda.states
 
-test/CalcParser.npda.dot
-test/CalcParser.npda.png
-test/CalcParser.npda.states
+examples/interactive_calculator/calculator_parser.npda.dot
+examples/interactive_calculator/calculator_parser.npda.png
+examples/interactive_calculator/calculator_parser.npda.states
+examples/interactive_calculator/calculator_scanner.dfa.dot
+examples/interactive_calculator/calculator_scanner.dfa.png
+examples/interactive_calculator/calculator_scanner.nfa.dot
+examples/interactive_calculator/calculator_scanner.nfa.png
+examples/noninteractive_calculator/CalcParser.npda.dot
+examples/noninteractive_calculator/CalcParser.npda.png
+examples/noninteractive_calculator/CalcParser.npda.states

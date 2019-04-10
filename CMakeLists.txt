@@ -308,6 +308,22 @@ target_compile_definitions(trison PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HA
 target_include_directories(trison PUBLIC ${PROJECT_SOURCE_DIR}/app/trison)
 target_link_libraries(trison PUBLIC Strict barf_commonlang_and_targetspec barf_core barf_preprocessor)
 
+#
+# playground (miscellaneous tooling around; only if barf_DEVELOPER_MODE is enabled)
+#
+
+if(barf_DEVELOPER_MODE)
+    set(playground_SOURCES
+        app/playground.cpp
+    )
+    add_executable(playground ${playground_SOURCES})
+    # This is probably not strictly needed, but might as well include anyway.
+    # Could be solved by having these propagate automatically through the public
+    # or interface parts of the dependent cmake targets
+    target_compile_definitions(playground PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+    target_link_libraries(playground PUBLIC Strict barf_regex)
+endif()
+
 ###############################################################################
 # Install rules
 ###############################################################################

@@ -1658,7 +1658,7 @@ which includes the top element.
             x   Get the distribution packaging working (CPack?)
         -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
             specifiers to everything that should not throw.
-        -   Clean up example apps
+        -   Clean up example apps dir structure (should probably just have a single example)
         x   Make an up-to-date README.md with basic installation and usage instructions.
     -   Low priority nice-to-have
         -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
@@ -1666,3 +1666,16 @@ which includes the top element.
             NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
             so defer for later.
         x   Make an enum for rule associativity and a string table for it.
+
+2018.04.09 ----------------------------
+
+-   Finalizing BARF 2.0 release
+    -   Examples
+        -   Condense down calculator example (there are currently 3 different ones)
+            -   app/example/calculator  dates back to 2006 - 2008
+            -   dev/calc                dates back to 2016 - 2017
+            -   test/*                  dates back to 2017
+        -   Is dumblang viable?  It looks pretty not working.  Doesn't even use cmake.
+            git blame says it dates back to 2008.  Delete this?
+        x   Add documentation for these in the README.md.  Mention that other examples
+            are given in the barf codebase itself.
