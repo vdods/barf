@@ -323,7 +323,7 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
     {
         if (m_element_index_expression != NULL)
         {
-            EmitError("trying to dereference a scalar macro as an array or map", GetFiLoc());
+            EmitError("trying to dereference a scalar macro \"" + symbol->Id() + "\" as an array or map", GetFiLoc());
             return NULL;
         }
         dereferenced_body = Dsc<ScalarSymbol *>(symbol)->ScalarBody();
@@ -333,14 +333,14 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
     {
         if (m_element_index_expression == NULL)
         {
-            EmitError("trying to dereference an array macro without an array index", GetFiLoc());
+            EmitError("trying to dereference an array macro \"" + symbol->Id() + "\" without an array index", GetFiLoc());
             return NULL;
         }
         Sint32 element_index = m_element_index_expression->IntegerValue(symbol_table);
         if (element_index < 0)
         {
             ostringstream out;
-            out << "negative value (" << element_index << ") invalid for array index";
+            out << "negative value (" << element_index << ") invalid for array index for array macro \"" << symbol->Id() << '"';
             EmitError(out.str(), GetFiLoc());
             return 0;
         }
@@ -358,16 +358,14 @@ Body const *Dereference::DereferencedBody (SymbolTable &symbol_table) const
         assert(symbol->IsMapSymbol());
         if (m_element_index_expression == NULL)
         {
-            EmitError("trying to dereference a map macro without a map key", GetFiLoc());
+            EmitError("trying to dereference a map macro \"" + symbol->Id() + "\" without a map key", GetFiLoc());
             return NULL;
         }
         string element_key = m_element_index_expression->TextValue(symbol_table);
         dereferenced_body = Dsc<MapSymbol *>(symbol)->MapElement(element_key);
         if (dereferenced_body == NULL)
         {
-            EmitError(
-                "macro \"" + m_id->GetText() + "\" has no such element " + StringLiteral(element_key),
-                GetFiLoc());
+            EmitError("macro \"" + m_id->GetText() + "\" has no such element " + StringLiteral(element_key), GetFiLoc());
             return NULL;
         }
     }

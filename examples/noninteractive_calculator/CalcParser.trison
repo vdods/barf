@@ -1,0 +1,287 @@
+// ///////////////////////////////////////////////////////////////////////////
+// CalcParser.trison by Victor Dods, created 2017/08/17
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%targets cpp
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser header-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.header_filename "CalcParser.hpp"
+%target.cpp.implementation_filename "CalcParser.cpp"
+
+%target.cpp.top_of_header_file %{
+#include <iostream>
+
+class Scanner;
+
+namespace Ast {
+
+struct Base;
+
+} // end of namespace Ast
+%}
+%target.cpp.class_name CalcParser
+%target.cpp.parse_method_access "public"
+%target.cpp.bottom_of_class {
+    bool ScannerDebugSpew () const;
+    void ScannerDebugSpew (bool debug_spew);
+    void AttachIstream (std::istream &in);
+
+private:
+
+    Scanner *m_scanner;
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser implementation-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.top_of_implementation_file %{
+#include "ast.hpp"
+#include <cmath>
+#include <sstream>
+#include "Scanner.hpp"
+
+typedef Ast::Operator<Ast::Base> BaseOperator;
+
+template <typename... Args_>
+std::shared_ptr<BaseOperator> base_operator (Args_&&... args)
+{
+    return std::make_shared<BaseOperator>(std::forward<Args_>(args)...);
+}
+%}
+%target.cpp.constructor_actions {
+    m_scanner = new Scanner();
+    m_scanner->DebugSpew(true);
+}
+%target.cpp.destructor_actions {
+    delete m_scanner;
+    m_scanner = NULL;
+}
+// %target.cpp.top_of_parse_method_actions %{
+//     EmitExecutionMessage("starting parser");
+// %}
+// %target.cpp.bottom_of_parse_method_actions %{
+//     if (parse_return_code == PRC_SUCCESS)
+//         EmitExecutionMessage("parse was successful");
+// %}
+%target.cpp.bottom_of_implementation_file %{
+void CalcParser::AttachIstream (std::istream &in)
+{
+    assert(m_scanner != NULL);
+    m_scanner->AttachIstream(in);
+}
+// FiLoc const &CalcParser::GetFiLoc () const
+// {
+//     assert(m_scanner != nullptr);
+//     return m_scanner->GetFiLoc();
+// }
+
+bool CalcParser::ScannerDebugSpew () const
+{
+    return m_scanner->DebugSpew();
+}
+
+void CalcParser::ScannerDebugSpew (bool debug_spew)
+{
+    m_scanner->DebugSpew(debug_spew);
+}
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser token-specific directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.token_data_type "std::shared_ptr<Ast::Base>"
+%target.cpp.token_data_default "std::shared_ptr<Ast::Base>()"
+// none are necessary because std::shared_ptr is reference counted
+%target.cpp.throw_away_token_actions { }
+%target.cpp.scan_actions {
+    assert(m_scanner != NULL);
+    std::shared_ptr<Ast::Base> token;
+    TokenId scanner_token_id = m_scanner->Scan(token);
+    switch (scanner_token_id)
+    {
+        case BAD_TOKEN:
+        case CHAR_LITERAL:
+        case IDENTIFIER:
+        case STRING_LITERAL:
+            return Token(Terminal::BAD_TOKEN, token);
+
+        case END_OF_FILE:
+            return Token(Terminal::END_, token);
+
+        case INTEGER_LITERAL:
+            return Token(Terminal::NUM, Ast::numeric_literal(double(token->as<Ast::IntegerLiteral>().m_value)));
+
+        case NUMERIC_LITERAL:
+            return Token(Terminal::NUM, token);
+
+        default:
+            assert(std::uint32_t(scanner_token_id) < 256 && "You probably forgot a TokenId");
+            return Token(Terminal::Name(scanner_token_id), nullptr);
+    }
+}
+%target.cpp.reset_for_new_input_actions {
+    // m_recoverable_error_encountered = false;
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser misc directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// this adds a lot of string content to parser source
+%target.cpp.generate_debug_spew_code
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser terminal directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%terminal '+' '-' '*' '/' '^' '?'
+%terminal '(' ')' ';'
+%terminal NUM BAD_TOKEN
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser precedence directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// Lowest precedence is first, highest is last.
+
+%prec.left      %default
+%prec.left      LOWEST
+%prec.left      LOW
+%prec.left      ADDITIVE
+%prec.left      MULTIPLICATIVE
+%prec.nonassoc  QUESTION
+%prec.right     UNARY
+%prec.right     EXPONENTIATION
+%prec.left      HIGHEST
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser grammar specification
+// ///////////////////////////////////////////////////////////////////////////
+
+%default_parse_nonterminal stmt_then_end
+
+%%
+
+%nonterminal stmt_then_end
+:
+    stmt:st %end
+    %target.cpp {
+        std::cout << "stmt_then_end <- stmt %end\n";
+        return st;
+    }
+|
+    %error[%end] %end
+    %target.cpp {
+        std::cout << "stmt_then_end <- %error[%end] %end\n";
+        return Ast::error_dummy("stmt_then_end <- %error[%end] %end");
+    }
+;
+
+%nonterminal stmt
+:
+    expr:ex ';'
+    %target.cpp {
+//         std::cout << "stmt <- expr ';'\n";
+        return ex;
+    }
+|
+    %error[%end] ';'
+    %target.cpp {
+//         std::cout << "stmt <- %error ';'\n";
+        return Ast::error_dummy("stmt <- %error ';'");
+    }
+;
+
+%nonterminal expr
+:
+    '(' expr:e ')'
+    %target.cpp {
+//         std::cout << "expr <- '(' expr ')'\n";
+        return e;
+    }
+|
+    '(' %error[%end] ')'
+    %target.cpp {
+//         std::cout << "expr <- '(' %error[')'] ')'\n";
+        return Ast::error_dummy("expr <- '(' %error[')'] ')'");
+    }
+|
+    // NOTE: This will match everything until %end.
+    // This rule prevents ';' from being the error-stopper in statements, since
+    // the %error token matches everything including ';'.
+    // If %error_until(%end, ';') were added, this situation could be handled better.
+    '(' %error[%end | ';']
+    %target.cpp {
+//         std::cout << "expr <- '(' %error[%end | ';']\n";
+        return Ast::error_dummy("expr <- '(' %error[%end | ';']");
+    }
+|
+    NUM:num
+    %target.cpp {
+//         std::cout << "expr <- NUM(" << num << ")\n";
+        return num;
+    }
+|
+    expr:lhs '+' expr:rhs               %prec ADDITIVE
+    %target.cpp {
+//         std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
+        return base_operator("+", BaseOperator::ChildNodes{lhs, rhs});
+    }
+|
+    expr:lhs '+' '+' '+' '+' expr:rhs   %prec LOWEST
+    %target.cpp {
+//         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
+        return base_operator("++++", BaseOperator::ChildNodes{lhs, rhs});
+    }
+|
+    expr:lhs '+' '+' '+' expr:rhs       %prec LOW
+    %target.cpp {
+//         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
+        return base_operator("+++", BaseOperator::ChildNodes{lhs, rhs});
+    }
+|
+    expr:lhs '+' '+' expr:rhs           %prec HIGHEST
+    %target.cpp {
+//         std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
+        return base_operator("++", BaseOperator::ChildNodes{lhs, rhs});
+    }
+|
+    expr:lhs '*' expr:rhs               %prec MULTIPLICATIVE
+    %target.cpp {
+//         std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
+        return base_operator("*", BaseOperator::ChildNodes{lhs, rhs});
+    }
+|
+    expr:lhs '?' expr:rhs               %prec QUESTION
+    %target.cpp {
+//         std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
+        return base_operator("?", BaseOperator::ChildNodes{lhs, rhs});
+    }
+|
+    '-' expr:op                         %prec UNARY
+    %target.cpp {
+//         std::cout << "expr <- '-' expr(" << op << ")\n";
+        return base_operator("-", BaseOperator::ChildNodes{op});
+    }
+|
+    expr:lhs '^' expr:rhs               %prec EXPONENTIATION
+    %target.cpp {
+//         std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
+        return base_operator("^", BaseOperator::ChildNodes{lhs, rhs});
+    }
+// |
+//     // This just screws everything up.  It seems like there should just never be
+//     // a lone %error in a rule.  Though %error[%end | ';'] could solve this.
+//     %error[%end | ';']                                          %target.cpp { std::cout << "expr <- %error[%end | ';']\n"; return 0.0; }
+;

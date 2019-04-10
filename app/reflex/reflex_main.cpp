@@ -98,15 +98,17 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     Ast::Base *parsed_tree_root = NULL;
     
     Reflex::Parser parser;
-    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER));
-    parser.DebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER));
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_PARSER))
+        parser.SetDebugSpewStream(&std::cerr);
 
     // go through the predefine commandline directives and parse them.
     for (vector<string>::size_type i = 0; i < ReflexOptions().PredefineCount(); ++i)
     {
         parser.OpenString(ReflexOptions().Predefine(i), "<predefine>");
 
-        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::Nonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in predefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -121,10 +123,10 @@ Reflex::PrimarySource const *ParsePrimarySource ()
 
     if (!parser.OpenFile(ReflexOptions().InputFilename()))
         EmitError("file not found: \"" + ReflexOptions().InputFilename() + "\"");
-        
+
     if (g_errors_encountered)
         exit(RS_INPUT_FILE_ERROR);
-        
+
     if (parser.Parse(&parsed_tree_root) != Reflex::Parser::PRC_SUCCESS)
         EmitError("general reflex parse error -- " + ReflexOptions().HowtoReportError(), FiLoc(ReflexOptions().InputFilename()));
     else if (g_errors_encountered)
@@ -140,7 +142,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(ReflexOptions().Postdefine(i), "<postdefine>");
 
-        if (parser.Parse(&parsed_tree_root, Reflex::Parser::ParseNonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Reflex::Parser::Nonterminal::target_directive) != Reflex::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in postdefine) -- " + ReflexOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -156,7 +158,7 @@ Reflex::PrimarySource const *ParsePrimarySource ()
     primary_source->SetTargetMap(parser.StealTargetMap());
     if (ReflexOptions().IsVerbose(Reflex::Options::V_PRIMARY_SOURCE_AST))
         primary_source->Print(cerr);
-        
+
     return primary_source;
 }
 
@@ -224,8 +226,10 @@ void ParseTargetspecs (Reflex::PrimarySource const &primary_source)
     // an error code.
 
     Targetspec::Parser parser;
-    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER));
-    parser.DebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_PARSER));
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_TARGETSPEC_PARSER))
+        parser.SetDebugSpewStream(&std::cerr);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -248,8 +252,10 @@ void ParseCodespecs (Reflex::PrimarySource const &primary_source)
     // accumulated during this section, abort with an error code.
 
     Preprocessor::Parser parser;
-    parser.ScannerDebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_SCANNER));
-    parser.DebugSpew(ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_PARSER));
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
+    if (ReflexOptions().IsVerbose(Reflex::Options::V_CODESPEC_PARSER))
+        parser.SetDebugSpewStream(&std::cerr);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -310,6 +316,7 @@ int main (int argc, char **argv)
 
         ParseAndHandleOptions(argc, argv);
         primary_source = ParsePrimarySource();
+        assert(primary_source != NULL);
         GenerateAndPrintNfaDotGraph(*primary_source, nfa);
         GenerateAndPrintDfaDotGraph(*primary_source, nfa, dfa);
         ParseTargetspecs(*primary_source);

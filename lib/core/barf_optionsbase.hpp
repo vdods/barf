@@ -89,7 +89,7 @@ public:
         m_assert_on_error(false),
     #endif
         m_print_search_path_request(PSPR_NONE),
-        m_with_line_directives(false),
+        m_with_line_directives(true),
         m_enabled_verbosity(V_NONE),
         m_is_help_requested(false),
         m_abort_flag(false),
@@ -147,6 +147,7 @@ public:
     void AssertOnError_Disable ();
 #endif
     // input options
+    void ClearSearchPath ();
     void IncludeSearchPath (string const &search_path);
     void RequestShortPrintSearchPath ();
     void RequestVerbosePrintSearchPath ();

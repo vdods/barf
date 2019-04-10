@@ -209,6 +209,7 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
             try {
                 Preprocessor::Textifier textifier(stream, FilenamePortion(filename));
                 // TODO: here's where you indicate line directives shouldn't be used
+                textifier.GeneratesLineDirectives(GetOptions().WithLineDirectives());
                 EmitExecutionMessage("generating code for file \"" + filename + "\"");
                 codespec.m_codespec_body->Execute(textifier, codespec_symbol_table);
                 EmitExecutionMessage("done generating code for file \"" + filename + "\"");

@@ -602,6 +602,7 @@ public:
             DIRECTIVE_DEFAULT,
             DIRECTIVE_DEFAULT_PARSE_NONTERMINAL,
             DIRECTIVE_DUMB_CODE_BLOCK,
+            DIRECTIVE_EMPTY,
             DIRECTIVE_END,
             DIRECTIVE_ERROR,
             DIRECTIVE_ID,
@@ -630,17 +631,31 @@ public:
         }; // end of enum Scanner::Token::Type
     }; // end of struct Scanner::Token
 
-#line 634 "barf_commonlang_scanner.hpp"
+#line 635 "barf_commonlang_scanner.hpp"
 
 public:
 
     Scanner ();
     ~Scanner ();
 
-    bool DebugSpew () const { return m_debug_spew_; }
-    void DebugSpew (bool debug_spew) { m_debug_spew_ = debug_spew; }
+    /// Returns true if and only if "debug spew" is enabled (which prints, to the
+    /// debug spew stream, what actions the scanner is taking).  This method, along
+    /// with all other debug spew code can be removed by removing the
+    /// %target.cpp.generate_debug_spew_code directive from the primary source.
+    bool DebugSpewIsEnabled () const { return m_debug_spew_stream_ != NULL; }
+    /// Returns the debug spew stream (see DebugSpewIsEnabled()).  This method,
+    /// along with all other debug spew code can be removed by removing the
+    /// %target.cpp.generate_debug_spew_code directive from the primary source.
+    std::ostream *DebugSpewStream () { return m_debug_spew_stream_; }
+    /// Sets the debug spew stream (see DebugSpewIsEnabled()).  If NULL is passed
+    /// in, then debug spew printing will be disabled.  The default value is NULL.
+    /// This method, along with all other debug spew code can be removed by removing
+    /// the %target.cpp.generate_debug_spew_code directive from the primary source.
+    void SetDebugSpewStream (std::ostream *debug_spew_stream) { m_debug_spew_stream_ = debug_spew_stream; }
 
+    /// Returns the currently active state machine.
     StateMachine::Name CurrentStateMachine () const;
+    /// Switches the current state machine to the specified one.
     void SwitchToStateMachine (StateMachine::Name state_machine);
 
     using AutomatonApparatus_FastAndBig_Noninteractive_::IsAtEndOfInput;
@@ -650,15 +665,15 @@ public:
     void ResetForNewInput ();
 
     Scanner::Token::Type Scan (
-#line 83 "barf_commonlang_scanner.reflex"
+#line 84 "barf_commonlang_scanner.reflex"
  Ast::Base *&token 
-#line 656 "barf_commonlang_scanner.hpp"
+#line 671 "barf_commonlang_scanner.hpp"
 ) throw();
 
 public:
 
 
-#line 84 "barf_commonlang_scanner.reflex"
+#line 85 "barf_commonlang_scanner.reflex"
 
     using InputBase::IsOpen;
     using InputBase::GetFiLoc;
@@ -680,7 +695,7 @@ private:
     Uint32 m_code_block_bracket_level;
     StateMachine::Name m_return_state;
 
-#line 684 "barf_commonlang_scanner.hpp"
+#line 699 "barf_commonlang_scanner.hpp"
 
 
 private:
@@ -700,10 +715,10 @@ private:
     using AutomatonApparatus_FastAndBig_Noninteractive_::RunDfa_;
 
     // debug spew methods
-    static void PrintAtom_ (std::uint8_t atom);
-    static void PrintString_ (std::string const &s);
+    static void PrintAtom_ (std::ostream &out, std::uint8_t atom);
+    static void PrintString_ (std::ostream &out, std::string const &s);
 
-    bool m_debug_spew_;
+    std::ostream *m_debug_spew_stream_;
 
     // state machine and automaton data
     static std::uint32_t const ms_state_machine_start_state_index_[];
@@ -723,7 +738,7 @@ private:
 }; // end of class Scanner
 
 
-#line 105 "barf_commonlang_scanner.reflex"
+#line 106 "barf_commonlang_scanner.reflex"
 
 ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
@@ -732,4 +747,4 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 
 #endif // !defined(BARF_COMMONLANG_SCANNER_HPP_)
 
-#line 736 "barf_commonlang_scanner.hpp"
+#line 751 "barf_commonlang_scanner.hpp"

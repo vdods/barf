@@ -21,8 +21,6 @@ struct Nonterminal;
 struct PrimarySource;
 struct Rule;
 
-extern bool const g_minimal_npda_graphing;
-
 struct NpdaNodeData : public Graph::Node::Data
 {
     virtual Nonterminal const *AssociatedNonterminal () const { return NULL; }
@@ -41,6 +39,7 @@ struct NpdaNodeData : public Graph::Node::Data
 }; // end of struct NpdaNodeData
 
 void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph);
+void PrintNpdaStatesFile (PrimarySource const &primary_source, Graph const &npda_graph, ostream &stream);
 
 } // end of namespace Trison
 

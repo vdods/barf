@@ -104,15 +104,17 @@ Trison::PrimarySource const *ParsePrimarySource ()
     Ast::Base *parsed_tree_root = NULL;
     
     Trison::Parser parser;
-    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER));
-    parser.DebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER));
+    if (TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
+    if (TrisonOptions().IsVerbose(Trison::Options::V_PRIMARY_SOURCE_PARSER))
+        parser.SetDebugSpewStream(&std::cerr);
 
     // go through the predefine commandline directives and parse them.
     for (vector<string>::size_type i = 0; i < TrisonOptions().PredefineCount(); ++i)
     {
         parser.OpenString(TrisonOptions().Predefine(i), "<predefine>");
 
-        if (parser.Parse(&parsed_tree_root, Trison::Parser::ParseNonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Trison::Parser::Nonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in predefine) -- " + TrisonOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -146,7 +148,7 @@ Trison::PrimarySource const *ParsePrimarySource ()
     {
         parser.OpenString(TrisonOptions().Postdefine(i), "<postdefine>");
 
-        if (parser.Parse(&parsed_tree_root, Trison::Parser::ParseNonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
+        if (parser.Parse(&parsed_tree_root, Trison::Parser::Nonterminal::target_directive) != Trison::Parser::PRC_SUCCESS)
             EmitError("general reflex parse error (in postdefine) -- " + TrisonOptions().HowtoReportError());
         else if (!g_errors_encountered)
         {
@@ -221,6 +223,34 @@ void GenerateDpdaGraphAndPrintDotGraph (Trison::PrimarySource const &primary_sou
         exit(RS_DETERMINISTIC_AUTOMATON_GENERATION_ERROR);
 }
 
+void GenerateNpdaStatesFile (Trison::PrimarySource const &primary_source, Graph const &npda_graph)
+{
+    // generate the bison-like .states file associated with the DPDA parser.
+
+    string filename(TrisonOptions().NpdaStatesPath());
+
+    if (filename.empty())
+        return;
+
+    if (filename == "-")
+    {
+        EmitExecutionMessage("printing NPDA states file to <stdout>");
+        Trison::PrintNpdaStatesFile(primary_source, npda_graph, cout);
+    }
+    else
+    {
+        EmitExecutionMessage("opening file \"" + filename + "\" for output of NPDA states file");
+        ofstream file(filename.c_str());
+        if (file.is_open())
+        {
+            EmitExecutionMessage("opened file \"" + filename + "\" successfully");
+            Trison::PrintNpdaStatesFile(primary_source, npda_graph, file);
+        }
+        else
+            EmitError("could not open file \"" + filename + "\" for writing");
+    }
+}
+
 void GenerateDpdaStatesFile (Trison::PrimarySource const &primary_source, Graph const &npda_graph, Graph const &dpda_graph, Uint32 lalr_lookahead_count)
 {
     // generate the bison-like .states file associated with the DPDA parser.
@@ -260,8 +290,10 @@ void ParseTargetspecs (Trison::PrimarySource const &primary_source)
     // an error code.
 
     Targetspec::Parser parser;
-    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_SCANNER));
-    parser.DebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_PARSER));
+    if (TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
+    if (TrisonOptions().IsVerbose(Trison::Options::V_TARGETSPEC_PARSER))
+        parser.SetDebugSpewStream(&std::cerr);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -284,8 +316,10 @@ void ParseCodespecs (Trison::PrimarySource const &primary_source)
     // accumulated during this section, abort with an error code.
 
     Preprocessor::Parser parser;
-    parser.ScannerDebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_SCANNER));
-    parser.DebugSpew(TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_PARSER));
+    if (TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_SCANNER))
+        parser.SetScannerDebugSpewStream(&std::cerr);
+    if (TrisonOptions().IsVerbose(Trison::Options::V_CODESPEC_PARSER))
+        parser.SetDebugSpewStream(&std::cerr);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -314,7 +348,7 @@ void WriteTargets (Trison::PrimarySource const &primary_source, Graph const &npd
 
     Trison::GenerateGeneralAutomatonSymbols(primary_source, global_symbol_table);
     Trison::GenerateNpdaSymbols(primary_source, npda_graph, global_symbol_table);
-    Trison::GenerateDpdaSymbols(primary_source, dpda_graph, global_symbol_table);
+    // Trison::GenerateDpdaSymbols(primary_source, dpda_graph, global_symbol_table);
 
     for (CommonLang::TargetMap::const_iterator it = primary_source.GetTargetMap().begin(),
                                                it_end = primary_source.GetTargetMap().end();
@@ -343,13 +377,14 @@ int main (int argc, char **argv)
     try {
         Trison::PrimarySource const *primary_source = NULL;
         Graph npda_graph, dpda_graph;
-        Uint32 lalr_lookahead_count = static_cast<Uint32>(-1);
+        // Uint32 lalr_lookahead_count = static_cast<Uint32>(-1);
 
         ParseAndHandleOptions(argc, argv);
         primary_source = ParsePrimarySource();
         GenerateNpdaGraphAndPrintDotGraph(*primary_source, npda_graph);
-        GenerateDpdaGraphAndPrintDotGraph(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
-        GenerateDpdaStatesFile(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
+        GenerateNpdaStatesFile(*primary_source, npda_graph);
+        // GenerateDpdaGraphAndPrintDotGraph(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
+        // GenerateDpdaStatesFile(*primary_source, npda_graph, dpda_graph, lalr_lookahead_count);
         ParseTargetspecs(*primary_source);
         ParseCodespecs(*primary_source);
         WriteTargets(*primary_source, npda_graph, dpda_graph);

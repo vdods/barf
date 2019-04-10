@@ -24,9 +24,13 @@ public:
     Options (string const &executable_filename);
 
     // output behavior option accessors
+    inline string NpdaStatesPath () const { return m_npda_states_filename.empty() ? g_empty_string : OutputDirectory() + m_npda_states_filename; }
     inline string DpdaStatesPath () const { return m_dpda_states_filename.empty() ? g_empty_string : OutputDirectory() + m_dpda_states_filename; }
 
     // output behavior options
+    void GenerateNpdaStatesFile (string const &npda_states_filename);
+    void DontGenerateNpdaStatesFile ();
+
     void GenerateDpdaStatesFile (string const &dpda_states_filename);
     void DontGenerateDpdaStatesFile ();
 
@@ -35,6 +39,7 @@ public:
 private:
 
     // output behavior option values
+    string m_npda_states_filename;
     string m_dpda_states_filename;
 
     static CommandLineOption const ms_option[];

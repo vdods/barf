@@ -6,10 +6,16 @@
 #include "barf_preprocessor_parser.hpp"
 
 
-#define TRISON_CPP_DEBUG_CODE_(spew_code) if (DebugSpew()) { spew_code; }
+
+#define TRISON_CPP_DEBUG_CODE_(flags, spew_code) if (DebugSpewIsEnabled() && ((flags) & ActiveDebugSpewFlags()) != 0) { spew_code; }
+
+#include <algorithm>
+#include <limits>
+#include <sstream>
+#include <utility>
 
 
-#line 60 "barf_preprocessor_parser.trison"
+#line 61 "barf_preprocessor_parser.trison"
 
 #include "barf_preprocessor_ast.hpp"
 #include "barf_preprocessor_scanner.hpp"
@@ -17,72 +23,90 @@
 namespace Barf {
 namespace Preprocessor {
 
-#line 21 "barf_preprocessor_parser.cpp"
+#line 27 "barf_preprocessor_parser.cpp"
 
 Parser::Parser ()
 {
-    DebugSpew(false);
+    m_max_allowable_lookahead_count = 1;
+    m_max_allowable_parse_tree_depth = 64;
+    m_realized_state_ = NULL;
+    m_hypothetical_state_ = NULL;
+    SetDebugSpewStream(NULL);
+    SetActiveDebugSpewFlags(DSF__ALL);
 
 
-#line 67 "barf_preprocessor_parser.trison"
+#line 68 "barf_preprocessor_parser.trison"
 
     m_scanner = new Scanner();
 
-#line 32 "barf_preprocessor_parser.cpp"
+#line 43 "barf_preprocessor_parser.cpp"
 }
 
 Parser::~Parser ()
 {
-    // clean up dynamically allocated memory.
-    ClearStack_();
-    ClearLookaheadQueue_();
+    // Perform all the internal cleanup needed.
+    CleanUpAllInternals_();
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 53 "barf_preprocessor_parser.cpp"
+ << "Executing destructor actions\n")
 
 
-
-#line 70 "barf_preprocessor_parser.trison"
+#line 71 "barf_preprocessor_parser.trison"
 
     delete m_scanner;
     m_scanner = NULL;
 
-#line 48 "barf_preprocessor_parser.cpp"
+#line 62 "barf_preprocessor_parser.cpp"
 }
 
 bool Parser::IsAtEndOfInput ()
 {
-    return Lookahead_(0).m_id == Terminal::END_;
+    return true; // TEMP
+}
+
+std::string Parser::DebugSpewPrefix () const
+{
+    std::ostringstream out;
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 76 "barf_preprocessor_parser.cpp"
+;
+    return out.str();
 }
 
 void Parser::ResetForNewInput ()
 {
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 61 "barf_preprocessor_parser.cpp"
- << " executing reset-for-new-input actions" << std::endl)
+#line 86 "barf_preprocessor_parser.cpp"
+ << "Executing reset-for-new-input actions\n")
 
-    // clean up stuff that might be hanging around from the last parse's input.
-    ClearStack_();
-    ClearLookaheadQueue_();
+    // Perform all the internal cleanup needed.
+    CleanUpAllInternals_();
 }
 
-Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
+Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
 {
 
-#line 74 "barf_preprocessor_parser.trison"
+#line 75 "barf_preprocessor_parser.trison"
 
     EmitExecutionMessage("starting preprocessor parser");
 
-#line 76 "barf_preprocessor_parser.cpp"
+#line 100 "barf_preprocessor_parser.cpp"
 
     ParserReturnCode const parse_return_code = Parse_(return_token, nonterminal_to_parse);
 
 
-#line 77 "barf_preprocessor_parser.trison"
+#line 78 "barf_preprocessor_parser.trison"
 
     if (parse_return_code == PRC_SUCCESS)
         EmitExecutionMessage("preprocessor parse was successful");
 
-#line 86 "barf_preprocessor_parser.cpp"
+#line 110 "barf_preprocessor_parser.cpp"
 
     return parse_return_code;
 }
@@ -91,1535 +115,21 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, ParseNontermi
 // begin internal trison-generated parser guts -- don't use
 // ///////////////////////////////////////////////////////////////////////
 
-Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, ParseNonterminal::Name nonterminal_to_parse)
-{
-    assert(return_token != NULL && "the return-token pointer must be non-NULL");
-
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 102 "barf_preprocessor_parser.cpp"
- << " starting parse" << std::endl)
-
-    ParserReturnCode parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
-    *return_token = NULL;
-
-    // make sure all our structures are empty and variables initialized.
-    // we don't clear the lookahead queue here because we might want to
-    // parse multiple times from the same input, and the lookahead queue
-    // could have the next few tokens in it.
-    ClearStack_();
-    m_is_in_error_panic_ = false;
-
-    // push the initial state of the DPDA.
-    assert((false
-           || nonterminal_to_parse == ParseNonterminal::body
-           || nonterminal_to_parse == ParseNonterminal::code
-           || nonterminal_to_parse == ParseNonterminal::code_body
-           || nonterminal_to_parse == ParseNonterminal::conditional_series
-           || nonterminal_to_parse == ParseNonterminal::conditional_series_end
-           || nonterminal_to_parse == ParseNonterminal::define
-           || nonterminal_to_parse == ParseNonterminal::define_array_element
-           || nonterminal_to_parse == ParseNonterminal::define_map_element
-           || nonterminal_to_parse == ParseNonterminal::define_scalar
-           || nonterminal_to_parse == ParseNonterminal::else_if_statement
-           || nonterminal_to_parse == ParseNonterminal::else_statement
-           || nonterminal_to_parse == ParseNonterminal::end_define
-           || nonterminal_to_parse == ParseNonterminal::end_for_each
-           || nonterminal_to_parse == ParseNonterminal::end_if
-           || nonterminal_to_parse == ParseNonterminal::end_loop
-           || nonterminal_to_parse == ParseNonterminal::executable
-           || nonterminal_to_parse == ParseNonterminal::expression
-           || nonterminal_to_parse == ParseNonterminal::for_each
-           || nonterminal_to_parse == ParseNonterminal::if_statement
-           || nonterminal_to_parse == ParseNonterminal::loop
-           ) && "invalid nonterminal_to_parse");
-    m_stack_.push_back(StackElement_(nonterminal_to_parse, Token(Nonterminal_::none_, NULL)));
-    // main parser loop
-    while (true)
-    {
-        if (m_is_in_error_panic_)
-        {
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 147 "barf_preprocessor_parser.cpp"
- << " begin error panic" << std::endl)
-
-            while (true)
-            {
-                // get the current state (top of the stack)
-                assert(!m_stack_.empty());
-                std::uint32_t current_state_index = m_stack_.back().m_state_index;
-                assert(current_state_index < ms_state_count_);
-                State_ const &current_state = ms_state_table_[current_state_index];
-                TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
-
-                // check if the current state accepts ERROR_ (only need to check the
-                // non-default transitions, since the default transition can't be a shift).
-                bool accepts_error = false;
-                for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
-                                       *transition_end = current_state.m_transition_table+current_state.m_transition_count;
-                     transition != transition_end;
-                     ++transition)
-                {
-                    if (transition->m_type == Transition_::SHIFT && transition->m_lookahead_count == 1 && *transition->m_lookahead_sequence == Terminal::ERROR_)
-                    {
-                        accepts_error = true;
-                        break;
-                    }
-                }
-
-                if (accepts_error)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 179 "barf_preprocessor_parser.cpp"
- << " end error panic; success (current state accepts ERROR_ token)" << std::endl)
-                    // if the current state accepts error, then we check if the lookahead token
-                    // is Terminal::END_.  if it is, then we add a dummy Terminal::ERROR_ token
-                    // in before it (since %error can't accept END_).  otherwise, we throw away
-                    // the lookahead token, then clear the thrown-away token data, and set the
-                    // token id to ERROR_.
-                    assert(!m_lookahead_queue_.empty());
-                    if (m_lookahead_queue_[0].m_id == Terminal::END_)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 192 "barf_preprocessor_parser.cpp"
- << " deferring Terminal::END_ (padding with Terminal::ERROR_ token)" << std::endl)
-                        m_lookahead_queue_.push_front(Token(Terminal::END_)); // dummy value
-                    }
-                    else
-                        ThrowAwayToken_(m_lookahead_queue_[0]);
-                    m_lookahead_queue_[0].m_id = Terminal::ERROR_;
-                    m_lookahead_queue_[0].m_data = NULL;
-                    m_is_in_error_panic_ = false;
-                    break;
-                }
-                else
-                {
-                    if (m_stack_.size() > 1)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 210 "barf_preprocessor_parser.cpp"
- << " continue error panic; pop stack (current state doesn't accept ERROR_ token)" << std::endl)
-                    }
-                    else
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 218 "barf_preprocessor_parser.cpp"
- << " end error panic; abort (stack is empty)" << std::endl)
-                    }
-                    // otherwise throw away the data at the top of the stack, and pop the stack.
-                    // then if the stack is empty, an unhandled parse error occurred.
-                    ThrowAwayStackElement_(m_stack_.back());
-                    m_stack_.resize(m_stack_.size()-1);
-                    if (m_stack_.empty())
-                    {
-                        // parser_return_code_ and return_token are already appropriately
-                        // set, so just break out of the inner loop.
-                        break;
-                    }
-                }
-            }
-
-            // if we're still in error panic, then this indicates that we bottomed-
-            // out the stack and it's an unhandled parse error, so break from the
-            // main loop.
-            if (m_is_in_error_panic_)
-                break;
-        }
-        else // !m_is_in_error_panic_
-        {
-            // get the current state (top of the stack)
-            assert(!m_stack_.empty());
-            std::uint32_t current_state_index = m_stack_.back().m_state_index;
-            assert(current_state_index < ms_state_count_);
-            State_ const &current_state = ms_state_table_[current_state_index];
-            TRISON_CPP_DEBUG_CODE_(PrintParserStatus_(std::cerr))
-
-            // TODO -- binary search for faster transition matching?
-
-            // loop through the current state's transitions and see if any match
-            bool transition_exercised = false;
-            std::uint32_t tested_lookahead_count = 0;
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 257 "barf_preprocessor_parser.cpp"
- << " current transitions:" << std::endl)
-            for (Transition_ const *transition = current_state.m_transition_table+1, // +1 because the first is the default
-                                   *transition_end = current_state.m_transition_table+current_state.m_transition_count;
-                transition != transition_end;
-                ++transition)
-            {
-                // the non-default transitions can only be REDUCE or SHIFT
-                assert(transition->m_type == Transition_::REDUCE || transition->m_type == Transition_::SHIFT);
-
-                // make sure enough lookaheads are in the queue (this must be done before
-                // checking if the lookaheads match because otherwise the debug-spew printing will
-                // be interrupted by the debug-spew printing that happens in the call to Looahead_).
-                if (transition->m_lookahead_count > 0)
-                    Lookahead_(transition->m_lookahead_count - 1);
-
-                // check if the lookaheads match those of this transition.
-                bool lookahead_sequence_matched = true;
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 278 "barf_preprocessor_parser.cpp"
- << "    transition with " << transition->m_lookahead_count << " lookahead(s):")
-                for (std::uint32_t i = 0; i < transition->m_lookahead_count; ++i)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << ms_token_name_table_[transition->m_lookahead_sequence[i]])
-                    if (Lookahead_(i).m_id != transition->m_lookahead_sequence[i])
-                    {
-                        lookahead_sequence_matched = false;
-                        break;
-                    }
-                    else
-                    {
-                        if (i+1 > tested_lookahead_count)
-                            tested_lookahead_count = i+1;
-                    }
-                }
-                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                // if all the lookaheads matched, then exercise this transition,
-                // and break out of this inner (transition) loop.
-                if (lookahead_sequence_matched)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 303 "barf_preprocessor_parser.cpp"
- << " currently usable lookahead(s):")
-                    for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
-                    {
-                        TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
-                    }
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                    ExerciseTransition_(*transition);
-                    transition_exercised = true;
-                    break;
-                }
-            }
-
-            // if no transition was exercised, then exercise the default transition
-            if (!transition_exercised)
-            {
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 323 "barf_preprocessor_parser.cpp"
- << " currently usable lookahead(s):")
-                for (std::uint32_t i = 0; i < tested_lookahead_count; ++i)
-                {
-                    TRISON_CPP_DEBUG_CODE_(std::cerr << ' ' << Lookahead_(i))
-                }
-                TRISON_CPP_DEBUG_CODE_(std::cerr << std::endl)
-
-                TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 334 "barf_preprocessor_parser.cpp"
- << " exercising default transition" << std::endl)
-                // exercise the default transition.  a return value of true indicates
-                // that the parser should return.
-                if (ExerciseTransition_(*current_state.m_transition_table))
-                {
-                    // the token (data) on the top of the stack is the return token.
-                    // set parser_return_code_ and assign the top stack token data to
-                    // *return_token and then break out of the main parser loop.
-                    assert(m_stack_[0].m_state_index == std::uint32_t(nonterminal_to_parse));
-                    assert(m_stack_.size() == 2);
-                    parser_return_code_ = PRC_SUCCESS;
-                    *return_token = m_stack_.back().m_token.m_data;
-                    // take the return token out of the stack, so it's not thrown away
-                    // when we clear the stack later.
-                    m_stack_.back().m_token.m_data = NULL;
-                    break;
-                }
-            }
-        }
-    }
-
-    // clear the stack, because we won't need it for the next parse.
-    // we don't clear the lookahead queue here because we might want to
-    // parse multiple times from the same input, and the lookahead queue
-    // could have the next few tokens in it.
-    ClearStack_();
-
-    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_SUCCESS) std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 365 "barf_preprocessor_parser.cpp"
- << " Parse() is returning PRC_SUCCESS" << std::endl)
-    TRISON_CPP_DEBUG_CODE_(if (parser_return_code_ == PRC_UNHANDLED_PARSE_ERROR) std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 370 "barf_preprocessor_parser.cpp"
- << " Parse() is returning PRC_UNHANDLED_PARSE_ERROR" << std::endl)
-
-    return parser_return_code_;
-}
-
-void Parser::ThrowAwayToken_ (Token &token_) throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 381 "barf_preprocessor_parser.cpp"
- << " executing throw-away-token actions on token " << token_ << std::endl)
-
-    ThrowAwayTokenData_(token_.m_data);
-}
-
-void Parser::ThrowAwayStackElement_ (StackElement_ &stack_element_) throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 392 "barf_preprocessor_parser.cpp"
- << " executing throw-away-token actions on token " << stack_element_.m_token << " corresponding to stack element with index " << stack_element_.m_state_index << std::endl)
-
-    ThrowAwayTokenData_(stack_element_.m_token.m_data);
-}
-
-void Parser::ThrowAwayTokenData_ (Ast::Base * &token_data) throw()
-{
-
-#line 131 "barf_preprocessor_parser.trison"
-
-    delete token_data;
-
-#line 405 "barf_preprocessor_parser.cpp"
-}
-
-Parser::Token Parser::Scan_ () throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 413 "barf_preprocessor_parser.cpp"
- << " executing scan actions" << std::endl)
-
-
-#line 134 "barf_preprocessor_parser.trison"
-
-    assert(m_scanner != NULL);
-    return m_scanner->Scan();
-
-#line 422 "barf_preprocessor_parser.cpp"
-}
-
-void Parser::ClearStack_ () throw()
-{
-    if (m_stack_.empty())
-        return; // nothing to do
-
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 433 "barf_preprocessor_parser.cpp"
- << " clearing the stack" << std::endl)
-
-    Stack_::iterator it = m_stack_.begin();
-    Stack_::iterator it_end = m_stack_.end();
-    // skip the bottom of the stack, since it
-    // contains the start state and no token data.
-    ++it;
-    for ( ; it != it_end; ++it)
-        ThrowAwayStackElement_(*it);
-    m_stack_.clear();
-}
-
-void Parser::ClearLookaheadQueue_ () throw()
-{
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 451 "barf_preprocessor_parser.cpp"
- << " clearing the lookahead queue" << std::endl)
-
-    for (LookaheadQueue_::iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
-        ThrowAwayToken_(*it);
-    m_lookahead_queue_.clear();
-}
-
-Parser::Token const &Parser::Lookahead_ (LookaheadQueue_::size_type index) throw()
-{
-    while (index >= m_lookahead_queue_.size())
-    {
-        m_lookahead_queue_.push_back(Scan_());
-
-        TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 468 "barf_preprocessor_parser.cpp"
- << " pushed " << m_lookahead_queue_.back() << " onto back of lookahead queue" << std::endl)
-    }
-    return m_lookahead_queue_[index];
-}
-
-bool Parser::ExerciseTransition_ (Transition_ const &transition)
-{
-    switch (transition.m_type)
-    {
-        case Transition_::REDUCE:
-        {
-            // execute the indicated reduction rule, push the returned Token
-            // onto the front of the lookahead queue, then pop the corresponding
-            // number of stack elements.
-            assert(transition.m_data < ms_rule_count_);
-            Rule_ const &rule = ms_rule_table_[transition.m_data];
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 488 "barf_preprocessor_parser.cpp"
- << " REDUCE " << rule.m_description << std::endl)
-            assert(m_stack_.size() > rule.m_token_count);
-            m_lookahead_queue_.push_front(
-                Token(
-                    rule.m_reduction_nonterminal_token_id,
-                    ExecuteReductionRule_(transition.m_data)));
-            m_stack_.resize(m_stack_.size() - rule.m_token_count);
-            assert(rule.m_reduction_nonterminal_token_id < ms_token_name_count_);
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 500 "barf_preprocessor_parser.cpp"
- << " pushed " << Token(rule.m_reduction_nonterminal_token_id) << " onto front of lookahead queue" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 505 "barf_preprocessor_parser.cpp"
- << std::endl)
-            return false; // indicating the parser isn't returning
-        }
-
-        case Transition_::RETURN:
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 514 "barf_preprocessor_parser.cpp"
- << " RETURN" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 519 "barf_preprocessor_parser.cpp"
- << std::endl)
-            return true; // indicating the parser is returning
-
-        case Transition_::SHIFT:
-            // push the state (indicated by the shift transition) and token data
-            // onto the stack, then pop the corresponding lookahead.
-            assert(transition.m_data < ms_state_count_);
-            assert(Lookahead_(0).m_id < ms_token_name_count_); // at this point, we're past a possible
-                                                               // client error, so asserting here is ok.
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 532 "barf_preprocessor_parser.cpp"
- << " SHIFT " << Lookahead_(0) << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 537 "barf_preprocessor_parser.cpp"
- << std::endl)
-            m_stack_.push_back(StackElement_(transition.m_data, Lookahead_(0)));
-            m_lookahead_queue_.pop_front();
-            return false; // indicating the parser isn't returning
-
-        case Transition_::ERROR_PANIC:
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 547 "barf_preprocessor_parser.cpp"
- << " ERROR_PANIC" << std::endl)
-            TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 552 "barf_preprocessor_parser.cpp"
- << std::endl)
-            m_is_in_error_panic_ = true;
-            return false; // indicating the parser isn't returning
-
-        default:
-            assert(false && "invalid transition type (bad state machine, or memory corruption)");
-            return false; // indicating the parser isn't returning
-    }
-}
-
-Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_) throw()
-{
-    assert(rule_index_ < ms_rule_count_);
-    TRISON_CPP_DEBUG_CODE_(std::cerr << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 569 "barf_preprocessor_parser.cpp"
- << " executing reduction rule " << rule_index_ << std::endl)
-    switch (rule_index_)
-    {
-        default:
-            assert(false && "this should never happen");
-            return NULL;
-
-        case 0:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 187 "barf_preprocessor_parser.trison"
-
-        return new Body();
-    
-#line 585 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 1:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Text * text(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 192 "barf_preprocessor_parser.trison"
-
-        Body *body = new Body();
-        body->Append(text);
-        return body;
-    
-#line 600 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 2:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            ExecutableAst * executable(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 199 "barf_preprocessor_parser.trison"
-
-        if (executable != NULL)
-            body->Append(executable);
-        return body;
-    
-#line 616 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 3:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            ExecutableAst * executable(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Text * text(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 206 "barf_preprocessor_parser.trison"
-
-        if (executable != NULL)
-            body->Append(executable);
-        body->Append(text);
-        return body;
-    
-#line 634 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 4:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ExecutableAst * code(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 217 "barf_preprocessor_parser.trison"
-
-        return code;
-    
-#line 647 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 5:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 222 "barf_preprocessor_parser.trison"
-
-        return conditional;
-    
-#line 660 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 6:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 227 "barf_preprocessor_parser.trison"
-
-        define->SetBody(body);
-        return define;
-    
-#line 675 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 7:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Loop * loop(Dsc<Loop *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 233 "barf_preprocessor_parser.trison"
-
-        loop->SetBody(body);
-        return loop;
-    
-#line 690 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 8:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ForEach * for_each(Dsc<ForEach *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 239 "barf_preprocessor_parser.trison"
-
-        for_each->SetBody(body);
-        return for_each;
-    
-#line 705 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 9:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ExecutableAst * code_body(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 247 "barf_preprocessor_parser.trison"
- return code_body; 
-#line 716 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 10:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            ExecutableAst * code_body(Dsc<ExecutableAst *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 249 "barf_preprocessor_parser.trison"
- return code_body; 
-#line 727 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 11:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 255 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 737 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 12:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 258 "barf_preprocessor_parser.trison"
- return expression; 
-#line 748 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 13:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 261 "barf_preprocessor_parser.trison"
- return new DumpSymbolTable(); 
-#line 758 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 14:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 264 "barf_preprocessor_parser.trison"
- return new Undefine(id); 
-#line 769 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 15:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 267 "barf_preprocessor_parser.trison"
- return new DeclareArray(id); 
-#line 780 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 16:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 270 "barf_preprocessor_parser.trison"
- return new DeclareMap(id); 
-#line 791 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 17:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * include_filename_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 273 "barf_preprocessor_parser.trison"
- return new Include(include_filename_expression, false); 
-#line 802 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 18:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * include_filename_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 276 "barf_preprocessor_parser.trison"
- return new Include(include_filename_expression, true); 
-#line 813 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 19:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 279 "barf_preprocessor_parser.trison"
- return new Message(message_expression, Message::WARNING); 
-#line 824 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 20:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 282 "barf_preprocessor_parser.trison"
- return new Message(message_expression, Message::ERROR); 
-#line 835 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 21:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * message_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 285 "barf_preprocessor_parser.trison"
- return new Message(message_expression, Message::FATAL_ERROR); 
-#line 846 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 22:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Body * if_body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Body * else_body(Dsc<Body *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 291 "barf_preprocessor_parser.trison"
-
-        conditional->SetIfBody(if_body);
-        conditional->SetElseBody(else_body);
-        return conditional;
-    
-#line 863 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 23:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 300 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 873 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 24:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Body * body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 302 "barf_preprocessor_parser.trison"
- return body; 
-#line 884 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 25:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Conditional * conditional(Dsc<Conditional *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Body * if_body(Dsc<Body *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-            Body * else_body(Dsc<Body *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 305 "barf_preprocessor_parser.trison"
-
-        conditional->SetIfBody(if_body);
-        conditional->SetElseBody(else_body);
-        Body *body = new Body();
-        body->Append(conditional);
-        return body;
-    
-#line 903 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 26:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 317 "barf_preprocessor_parser.trison"
- return new Conditional(expression); 
-#line 914 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 27:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 320 "barf_preprocessor_parser.trison"
- return new Conditional(expression); 
-#line 925 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 28:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 325 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 935 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 29:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 327 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 945 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 30:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 333 "barf_preprocessor_parser.trison"
- return new Conditional(expression); 
-#line 956 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 31:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 336 "barf_preprocessor_parser.trison"
- return new Conditional(expression); 
-#line 967 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 32:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 341 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 977 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 33:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 343 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 987 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 34:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 348 "barf_preprocessor_parser.trison"
- return define; 
-#line 998 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 35:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 350 "barf_preprocessor_parser.trison"
- return define; 
-#line 1009 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 36:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Define * define(Dsc<Define *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 352 "barf_preprocessor_parser.trison"
- return define; 
-#line 1020 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 37:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 358 "barf_preprocessor_parser.trison"
- return new Define(id); 
-#line 1031 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 38:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 361 "barf_preprocessor_parser.trison"
- return new Define(id); 
-#line 1042 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 39:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-
-#line 367 "barf_preprocessor_parser.trison"
- return new DefineArrayElement(id); 
-#line 1053 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 40:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-
-#line 370 "barf_preprocessor_parser.trison"
- return new DefineArrayElement(id); 
-#line 1064 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 41:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-6].m_token.m_data));
-            Text * key(Dsc<Text *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-
-#line 376 "barf_preprocessor_parser.trison"
- return new DefineMapElement(id, key); 
-#line 1076 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 42:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-6].m_token.m_data));
-            Text * key(Dsc<Text *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-
-#line 379 "barf_preprocessor_parser.trison"
- return new DefineMapElement(id, key); 
-#line 1088 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 43:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 384 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1098 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 44:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 386 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1108 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 45:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * iterator_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Expression * iteration_count_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 392 "barf_preprocessor_parser.trison"
- return new Loop(iterator_id, iteration_count_expression); 
-#line 1120 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 46:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * iterator_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Expression * iteration_count_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 395 "barf_preprocessor_parser.trison"
- return new Loop(iterator_id, iteration_count_expression); 
-#line 1132 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 47:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 400 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1142 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 48:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 402 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1152 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 49:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * key_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Ast::Id * map_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 408 "barf_preprocessor_parser.trison"
- return new ForEach(key_id, map_id); 
-#line 1164 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 50:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * key_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Ast::Id * map_id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 411 "barf_preprocessor_parser.trison"
- return new ForEach(key_id, map_id); 
-#line 1176 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 51:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 416 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1186 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 52:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-
-#line 418 "barf_preprocessor_parser.trison"
- return NULL; 
-#line 1196 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 53:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Text * str(Dsc<Text *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 424 "barf_preprocessor_parser.trison"
- return str; 
-#line 1207 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 54:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Integer * integer(Dsc<Integer *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 427 "barf_preprocessor_parser.trison"
- return integer; 
-#line 1218 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 55:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 430 "barf_preprocessor_parser.trison"
- return new Sizeof(id); 
-#line 1229 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 56:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 433 "barf_preprocessor_parser.trison"
- return new Operation(Operation::INT_CAST, expression); 
-#line 1240 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 57:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 436 "barf_preprocessor_parser.trison"
- return new Operation(Operation::STRING_CAST, expression); 
-#line 1251 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 58:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 439 "barf_preprocessor_parser.trison"
- return new Operation(Operation::STRING_LENGTH, expression); 
-#line 1262 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 59:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * character_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 442 "barf_preprocessor_parser.trison"
- return new Operation(Operation::TO_CHARACTER_LITERAL, character_index_expression); 
-#line 1273 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 60:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * string_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 445 "barf_preprocessor_parser.trison"
- return new Operation(Operation::TO_STRING_LITERAL, string_expression); 
-#line 1284 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 61:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 448 "barf_preprocessor_parser.trison"
- return new IsDefined(id, NULL); 
-#line 1295 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 62:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 451 "barf_preprocessor_parser.trison"
- return new IsDefined(id, element_index_expression); 
-#line 1307 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 63:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 454 "barf_preprocessor_parser.trison"
- return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
-#line 1318 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 64:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 457 "barf_preprocessor_parser.trison"
- return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); 
-#line 1330 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 65:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 460 "barf_preprocessor_parser.trison"
- return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
-#line 1341 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 66:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(m_stack_[m_stack_.size()-5].m_token.m_data));
-            Expression * element_index_expression(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-
-#line 463 "barf_preprocessor_parser.trison"
- return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); 
-#line 1353 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 67:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 466 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::CONCATENATE, right); 
-#line 1365 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 68:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 469 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::LOGICAL_OR, right); 
-#line 1377 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 69:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 472 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::LOGICAL_AND, right); 
-#line 1389 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 70:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 475 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::EQUAL, right); 
-#line 1401 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 71:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 478 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::NOT_EQUAL, right); 
-#line 1413 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 72:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 481 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::LESS_THAN, right); 
-#line 1425 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 73:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 484 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::LESS_THAN_OR_EQUAL, right); 
-#line 1437 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 74:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 487 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::GREATER_THAN, right); 
-#line 1449 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 75:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-4].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 490 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::GREATER_THAN_OR_EQUAL, right); 
-#line 1461 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 76:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 493 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::PLUS, right); 
-#line 1473 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 77:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 496 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::MINUS, right); 
-#line 1485 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 78:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 499 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::MULTIPLY, right); 
-#line 1497 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 79:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 502 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::DIVIDE, right); 
-#line 1509 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 80:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * left(Dsc<Expression *>(m_stack_[m_stack_.size()-3].m_token.m_data));
-            Expression * right(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 505 "barf_preprocessor_parser.trison"
- return new Operation(left, Operation::REMAINDER, right); 
-#line 1521 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 81:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 508 "barf_preprocessor_parser.trison"
- return new Operation(Operation::NEGATIVE, expression); 
-#line 1532 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 82:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-1].m_token.m_data));
-
-#line 511 "barf_preprocessor_parser.trison"
- return new Operation(Operation::LOGICAL_NOT, expression); 
-#line 1543 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-        case 83:
-        {
-            assert(ms_rule_table_[rule_index_].m_token_count < m_stack_.size());
-            Expression * expression(Dsc<Expression *>(m_stack_[m_stack_.size()-2].m_token.m_data));
-
-#line 514 "barf_preprocessor_parser.trison"
- return expression; 
-#line 1554 "barf_preprocessor_parser.cpp"
-            break;
-        }
-
-    }
-
-    assert(false && "no value returned from reduction rule code block");
-    return NULL;
-}
-
-void Parser::PrintParserStatus_ (std::ostream &stream) const
-{
-    assert(!m_stack_.empty());
-
-    stream << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1571 "barf_preprocessor_parser.cpp"
- << " parser state stack: ";
-    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
-    {
-        stream << it->m_state_index;
-        Stack_::const_iterator next_it = it;
-        if (++next_it != it_end)
-            stream << ' ';
-    }
-    stream << std::endl;
-
-    assert(m_stack_.size() >= 1);
-    assert(m_stack_.front().m_token.m_id == std::uint32_t(Nonterminal_::none_));
-    stream << 
-#line 141 "barf_preprocessor_parser.trison"
-"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1587 "barf_preprocessor_parser.cpp"
- << " parser stack tokens . lookahead queue: ";
-    for (Stack_::const_iterator it = m_stack_.begin(), it_end = m_stack_.end(); it != it_end; ++it)
-    {
-        // the first token is always Nonterminal_::none_, which doesn't correspond to a real token, so skip it.
-        if (it == m_stack_.begin())
-            continue;
-        stream << it->m_token << ' ';
-    }
-    stream << '.';
-    for (LookaheadQueue_::const_iterator it = m_lookahead_queue_.begin(), it_end = m_lookahead_queue_.end(); it != it_end; ++it)
-    {
-        Token const &lookahead_token = *it;
-        assert(lookahead_token.m_id < ms_token_name_count_ && "Token id out of range");
-        stream << ' ' << lookahead_token;
-    }
-    stream << std::endl;
-
-    PrintIndented_(stream, ms_state_table_[m_stack_.back().m_state_index].m_description);
-    stream << std::endl;
-}
-
 void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
 {
     assert(string != NULL);
     stream << 
-#line 141 "barf_preprocessor_parser.trison"
+#line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1615 "barf_preprocessor_parser.cpp"
+#line 125 "barf_preprocessor_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
         if (*string == '\n')
             stream << '\n' << 
-#line 141 "barf_preprocessor_parser.trison"
+#line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1623 "barf_preprocessor_parser.cpp"
+#line 133 "barf_preprocessor_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -1627,4042 +137,33 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     }
 }
 
+std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser_return_code)
+{
+    if (std::size_t(parser_return_code) < Parser::ms_parser_return_code_string_count_)
+        stream << Parser::ms_parser_return_code_string_table_[std::size_t(parser_return_code)];
+    else
+        stream << "!INVALID!ParserReturnCode!";
+    return stream;
+}
+
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
 {
     if (token.m_id < Parser::ms_token_name_count_)
         stream << Parser::ms_token_name_table_[token.m_id];
     else
-        stream << "!INVALID TOKEN!";
+        stream << "!INVALID!TOKEN!";
     return stream;
 }
 
-Parser::Rule_ const Parser::ms_rule_table_[] =
+char const *const Parser::ms_parser_return_code_string_table_[] =
 {
-    { Parser::Nonterminal_::body, 0, "body <-" },
-    { Parser::Nonterminal_::body, 1, "body <- TEXT" },
-    { Parser::Nonterminal_::body, 2, "body <- body executable" },
-    { Parser::Nonterminal_::body, 3, "body <- body executable TEXT" },
-    { Parser::Nonterminal_::executable, 1, "executable <- code" },
-    { Parser::Nonterminal_::executable, 1, "executable <- conditional_series" },
-    { Parser::Nonterminal_::executable, 3, "executable <- define body end_define" },
-    { Parser::Nonterminal_::executable, 3, "executable <- loop body end_loop" },
-    { Parser::Nonterminal_::executable, 3, "executable <- for_each body end_for_each" },
-    { Parser::Nonterminal_::code, 3, "code <- START_CODE code_body END_CODE" },
-    { Parser::Nonterminal_::code, 3, "code <- CODE_LINE code_body CODE_NEWLINE" },
-    { Parser::Nonterminal_::code_body, 0, "code_body <-" },
-    { Parser::Nonterminal_::code_body, 1, "code_body <- expression" },
-    { Parser::Nonterminal_::code_body, 3, "code_body <- DUMP_SYMBOL_TABLE '(' ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- UNDEFINE '(' ID ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- DECLARE_ARRAY '(' ID ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- DECLARE_MAP '(' ID ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- INCLUDE '(' expression ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- SANDBOX_INCLUDE '(' expression ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- WARNING '(' expression ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- ERROR '(' expression ')'" },
-    { Parser::Nonterminal_::code_body, 4, "code_body <- FATAL_ERROR '(' expression ')'" },
-    { Parser::Nonterminal_::conditional_series, 3, "conditional_series <- if_statement body conditional_series_end" },
-    { Parser::Nonterminal_::conditional_series_end, 1, "conditional_series_end <- end_if" },
-    { Parser::Nonterminal_::conditional_series_end, 3, "conditional_series_end <- else_statement body end_if" },
-    { Parser::Nonterminal_::conditional_series_end, 3, "conditional_series_end <- else_if_statement body conditional_series_end" },
-    { Parser::Nonterminal_::if_statement, 6, "if_statement <- START_CODE IF '(' expression ')' END_CODE" },
-    { Parser::Nonterminal_::if_statement, 6, "if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::else_statement, 3, "else_statement <- START_CODE ELSE END_CODE" },
-    { Parser::Nonterminal_::else_statement, 3, "else_statement <- CODE_LINE ELSE CODE_NEWLINE" },
-    { Parser::Nonterminal_::else_if_statement, 6, "else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE" },
-    { Parser::Nonterminal_::else_if_statement, 6, "else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::end_if, 3, "end_if <- START_CODE END_IF END_CODE" },
-    { Parser::Nonterminal_::end_if, 3, "end_if <- CODE_LINE END_IF CODE_NEWLINE" },
-    { Parser::Nonterminal_::define, 1, "define <- define_scalar" },
-    { Parser::Nonterminal_::define, 1, "define <- define_array_element" },
-    { Parser::Nonterminal_::define, 1, "define <- define_map_element" },
-    { Parser::Nonterminal_::define_scalar, 6, "define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE" },
-    { Parser::Nonterminal_::define_scalar, 6, "define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::define_array_element, 8, "define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE" },
-    { Parser::Nonterminal_::define_array_element, 8, "define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::define_map_element, 9, "define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { Parser::Nonterminal_::define_map_element, 9, "define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::end_define, 3, "end_define <- START_CODE END_DEFINE END_CODE" },
-    { Parser::Nonterminal_::end_define, 3, "end_define <- CODE_LINE END_DEFINE CODE_NEWLINE" },
-    { Parser::Nonterminal_::loop, 8, "loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE" },
-    { Parser::Nonterminal_::loop, 8, "loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::end_loop, 3, "end_loop <- START_CODE END_LOOP END_CODE" },
-    { Parser::Nonterminal_::end_loop, 3, "end_loop <- CODE_LINE END_LOOP CODE_NEWLINE" },
-    { Parser::Nonterminal_::for_each, 8, "for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE" },
-    { Parser::Nonterminal_::for_each, 8, "for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
-    { Parser::Nonterminal_::end_for_each, 3, "end_for_each <- START_CODE END_FOR_EACH END_CODE" },
-    { Parser::Nonterminal_::end_for_each, 3, "end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE" },
-    { Parser::Nonterminal_::expression, 1, "expression <- STRING_LITERAL" },
-    { Parser::Nonterminal_::expression, 1, "expression <- INTEGER_LITERAL" },
-    { Parser::Nonterminal_::expression, 4, "expression <- SIZEOF '(' ID ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- KEYWORD_INT '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- KEYWORD_STRING '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- STRING_LENGTH '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- TO_CHARACTER_LITERAL '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- TO_STRING_LITERAL '(' expression ')'" },
-    { Parser::Nonterminal_::expression, 4, "expression <- IS_DEFINED '(' ID ')'" },
-    { Parser::Nonterminal_::expression, 7, "expression <- IS_DEFINED '(' ID '[' expression ']' ')'" },
-    { Parser::Nonterminal_::expression, 1, "expression <- ID" },
-    { Parser::Nonterminal_::expression, 4, "expression <- ID '[' expression ']'" },
-    { Parser::Nonterminal_::expression, 2, "expression <- ID '?'" },
-    { Parser::Nonterminal_::expression, 5, "expression <- ID '[' expression ']' '?'" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '.' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '|' '|' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '&' '&' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '=' '=' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '!' '=' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '<' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '<' '=' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '>' expression" },
-    { Parser::Nonterminal_::expression, 4, "expression <- expression '>' '=' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '+' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '-' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '*' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '/' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- expression '%' expression" },
-    { Parser::Nonterminal_::expression, 2, "expression <- '-' expression" },
-    { Parser::Nonterminal_::expression, 2, "expression <- '!' expression" },
-    { Parser::Nonterminal_::expression, 3, "expression <- '(' expression ')'" }
+    "PRC_SUCCESS",
+    "PRC_UNHANDLED_PARSE_ERROR",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH",
+    "PRC_INTERNAL_ERROR",
 };
-std::size_t const Parser::ms_rule_count_ = sizeof(Parser::ms_rule_table_) / sizeof(*Parser::ms_rule_table_);
-
-Parser::State_ const Parser::ms_state_table_[] =
-{
-    { 3, ms_transition_table_+0, "START body                            \nrule 0: body <- .                     \nrule 1: body <- . TEXT                \nrule 2: body <- . body executable     \nrule 3: body <- . body executable TEXT" },
-    { 1, ms_transition_table_+3, "rule 1: body <- TEXT ." },
-    { 13, ms_transition_table_+4, "RETURN body                                                                                     \nrule 2: body <- body . executable                                                               \nrule 4: executable <- . code                                                                    \nrule 9: code <- . START_CODE code_body END_CODE                                                 \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE                                             \nrule 5: executable <- . conditional_series                                                      \nrule 22: conditional_series <- . if_statement body conditional_series_end                       \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE                            \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE                         \nrule 6: executable <- . define body end_define                                                  \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 7: executable <- . loop body end_loop                                                      \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE                           \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 8: executable <- . for_each body end_for_each                                              \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE                           \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        \nrule 3: body <- body . executable TEXT                                                          " },
-    { 29, ms_transition_table_+17, "rule 9: code <- START_CODE . code_body END_CODE                                              \nrule 11: code_body <- .                                                                      \nrule 12: code_body <- . expression                                                           \nrule 53: expression <- . STRING_LITERAL                                                      \nrule 54: expression <- . INTEGER_LITERAL                                                     \nrule 55: expression <- . SIZEOF '(' ID ')'                                                   \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                      \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                   \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                    \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                             \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                               \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                            \nrule 63: expression <- . ID                                                                  \nrule 64: expression <- . ID '[' expression ']'                                               \nrule 65: expression <- . ID '?'                                                              \nrule 66: expression <- . ID '[' expression ']' '?'                                           \nrule 67: expression <- . expression '.' expression                                           \nrule 68: expression <- . expression '|' '|' expression                                       \nrule 69: expression <- . expression '&' '&' expression                                       \nrule 70: expression <- . expression '=' '=' expression                                       \nrule 71: expression <- . expression '!' '=' expression                                       \nrule 72: expression <- . expression '<' expression                                           \nrule 73: expression <- . expression '<' '=' expression                                       \nrule 74: expression <- . expression '>' expression                                           \nrule 75: expression <- . expression '>' '=' expression                                       \nrule 76: expression <- . expression '+' expression                                           \nrule 77: expression <- . expression '-' expression                                           \nrule 78: expression <- . expression '*' expression                                           \nrule 79: expression <- . expression '/' expression                                           \nrule 80: expression <- . expression '%' expression                                           \nrule 81: expression <- . '-' expression                                                      \nrule 82: expression <- . '!' expression                                                      \nrule 83: expression <- . '(' expression ')'                                                  \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                            \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                  \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                             \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                               \nrule 17: code_body <- . INCLUDE '(' expression ')'                                           \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                   \nrule 19: code_body <- . WARNING '(' expression ')'                                           \nrule 20: code_body <- . ERROR '(' expression ')'                                             \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                       \nrule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE                         \nrule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE\nrule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE                        \nrule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE                        " },
-    { 15, ms_transition_table_+46, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 82: expression <- '!' . expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 15, ms_transition_table_+61, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 83: expression <- '(' . expression ')'                      " },
-    { 15, ms_transition_table_+76, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 81: expression <- '-' . expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 3, ms_transition_table_+91, "rule 63: expression <- ID .                       \nrule 64: expression <- ID . '[' expression ']'    \nrule 65: expression <- ID . '?'                   \nrule 66: expression <- ID . '[' expression ']' '?'" },
-    { 1, ms_transition_table_+94, "rule 65: expression <- ID '?' ." },
-    { 15, ms_transition_table_+95, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 64: expression <- ID '[' . expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 66: expression <- ID '[' . expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 2, ms_transition_table_+110, "rule 55: expression <- SIZEOF . '(' ID ')'" },
-    { 2, ms_transition_table_+112, "rule 55: expression <- SIZEOF '(' . ID ')'" },
-    { 2, ms_transition_table_+114, "rule 55: expression <- SIZEOF '(' ID . ')'" },
-    { 1, ms_transition_table_+116, "rule 55: expression <- SIZEOF '(' ID ')' ." },
-    { 2, ms_transition_table_+117, "rule 61: expression <- IS_DEFINED . '(' ID ')'                   \nrule 62: expression <- IS_DEFINED . '(' ID '[' expression ']' ')'" },
-    { 2, ms_transition_table_+119, "rule 61: expression <- IS_DEFINED '(' . ID ')'                   \nrule 62: expression <- IS_DEFINED '(' . ID '[' expression ']' ')'" },
-    { 3, ms_transition_table_+121, "rule 61: expression <- IS_DEFINED '(' ID . ')'                   \nrule 62: expression <- IS_DEFINED '(' ID . '[' expression ']' ')'" },
-    { 1, ms_transition_table_+124, "rule 61: expression <- IS_DEFINED '(' ID ')' ." },
-    { 15, ms_transition_table_+125, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 62: expression <- IS_DEFINED '(' ID '[' . expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 1, ms_transition_table_+140, "rule 54: expression <- INTEGER_LITERAL ." },
-    { 1, ms_transition_table_+141, "rule 53: expression <- STRING_LITERAL ." },
-    { 2, ms_transition_table_+142, "rule 56: expression <- KEYWORD_INT . '(' expression ')'" },
-    { 15, ms_transition_table_+144, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 56: expression <- KEYWORD_INT '(' . expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 2, ms_transition_table_+159, "rule 57: expression <- KEYWORD_STRING . '(' expression ')'" },
-    { 15, ms_transition_table_+161, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 57: expression <- KEYWORD_STRING '(' . expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 2, ms_transition_table_+176, "rule 58: expression <- STRING_LENGTH . '(' expression ')'" },
-    { 15, ms_transition_table_+178, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 58: expression <- STRING_LENGTH '(' . expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 2, ms_transition_table_+193, "rule 59: expression <- TO_CHARACTER_LITERAL . '(' expression ')'" },
-    { 15, ms_transition_table_+195, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 59: expression <- TO_CHARACTER_LITERAL '(' . expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 2, ms_transition_table_+210, "rule 60: expression <- TO_STRING_LITERAL . '(' expression ')'" },
-    { 15, ms_transition_table_+212, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 60: expression <- TO_STRING_LITERAL '(' . expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 14, ms_transition_table_+227, "rule 60: expression <- TO_STRING_LITERAL '(' expression . ')'\nrule 67: expression <- expression . '.' expression           \nrule 68: expression <- expression . '|' '|' expression       \nrule 69: expression <- expression . '&' '&' expression       \nrule 70: expression <- expression . '=' '=' expression       \nrule 71: expression <- expression . '!' '=' expression       \nrule 72: expression <- expression . '<' expression           \nrule 73: expression <- expression . '<' '=' expression       \nrule 74: expression <- expression . '>' expression           \nrule 75: expression <- expression . '>' '=' expression       \nrule 76: expression <- expression . '+' expression           \nrule 77: expression <- expression . '-' expression           \nrule 78: expression <- expression . '*' expression           \nrule 79: expression <- expression . '/' expression           \nrule 80: expression <- expression . '%' expression           " },
-    { 2, ms_transition_table_+241, "rule 71: expression <- expression '!' . '=' expression" },
-    { 15, ms_transition_table_+243, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 71: expression <- expression '!' '=' . expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 9, ms_transition_table_+258, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 71: expression <- expression '!' '=' expression .\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 15, ms_transition_table_+267, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 80: expression <- expression '%' . expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 1, ms_transition_table_+282, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    \nrule 80: expression <- expression '%' expression .    " },
-    { 15, ms_transition_table_+283, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 78: expression <- expression '*' . expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 1, ms_transition_table_+298, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 78: expression <- expression '*' expression .    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 15, ms_transition_table_+299, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 76: expression <- expression '+' . expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 4, ms_transition_table_+314, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 76: expression <- expression '+' expression .    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 15, ms_transition_table_+318, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 79: expression <- expression '/' . expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 1, ms_transition_table_+333, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 79: expression <- expression '/' expression .    \nrule 80: expression <- expression . '%' expression    " },
-    { 15, ms_transition_table_+334, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 77: expression <- expression '-' . expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 4, ms_transition_table_+349, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 77: expression <- expression '-' expression .    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 15, ms_transition_table_+353, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 67: expression <- expression '.' . expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 6, ms_transition_table_+368, "rule 67: expression <- expression . '.' expression    \nrule 67: expression <- expression '.' expression .    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 16, ms_transition_table_+374, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 72: expression <- expression '<' . expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 73: expression <- expression '<' . '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 15, ms_transition_table_+390, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 73: expression <- expression '<' '=' . expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 7, ms_transition_table_+405, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 73: expression <- expression '<' '=' expression .\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 7, ms_transition_table_+412, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 72: expression <- expression '<' expression .    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 16, ms_transition_table_+419, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 74: expression <- expression '>' . expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 75: expression <- expression '>' . '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 15, ms_transition_table_+435, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 75: expression <- expression '>' '=' . expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 7, ms_transition_table_+450, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 75: expression <- expression '>' '=' expression .\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 7, ms_transition_table_+457, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 74: expression <- expression '>' expression .    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 2, ms_transition_table_+464, "rule 69: expression <- expression '&' . '&' expression" },
-    { 15, ms_transition_table_+466, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 69: expression <- expression '&' '&' . expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 11, ms_transition_table_+481, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 69: expression <- expression '&' '&' expression .\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 2, ms_transition_table_+492, "rule 70: expression <- expression '=' . '=' expression" },
-    { 15, ms_transition_table_+494, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 70: expression <- expression '=' '=' . expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 9, ms_transition_table_+509, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 70: expression <- expression '=' '=' expression .\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 1, ms_transition_table_+518, "rule 60: expression <- TO_STRING_LITERAL '(' expression ')' ." },
-    { 2, ms_transition_table_+519, "rule 68: expression <- expression '|' . '|' expression" },
-    { 15, ms_transition_table_+521, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 68: expression <- expression '|' '|' . expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 12, ms_transition_table_+536, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 68: expression <- expression '|' '|' expression .\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 14, ms_transition_table_+548, "rule 59: expression <- TO_CHARACTER_LITERAL '(' expression . ')'\nrule 67: expression <- expression . '.' expression              \nrule 68: expression <- expression . '|' '|' expression          \nrule 69: expression <- expression . '&' '&' expression          \nrule 70: expression <- expression . '=' '=' expression          \nrule 71: expression <- expression . '!' '=' expression          \nrule 72: expression <- expression . '<' expression              \nrule 73: expression <- expression . '<' '=' expression          \nrule 74: expression <- expression . '>' expression              \nrule 75: expression <- expression . '>' '=' expression          \nrule 76: expression <- expression . '+' expression              \nrule 77: expression <- expression . '-' expression              \nrule 78: expression <- expression . '*' expression              \nrule 79: expression <- expression . '/' expression              \nrule 80: expression <- expression . '%' expression              " },
-    { 1, ms_transition_table_+562, "rule 59: expression <- TO_CHARACTER_LITERAL '(' expression ')' ." },
-    { 14, ms_transition_table_+563, "rule 58: expression <- STRING_LENGTH '(' expression . ')'\nrule 67: expression <- expression . '.' expression       \nrule 68: expression <- expression . '|' '|' expression   \nrule 69: expression <- expression . '&' '&' expression   \nrule 70: expression <- expression . '=' '=' expression   \nrule 71: expression <- expression . '!' '=' expression   \nrule 72: expression <- expression . '<' expression       \nrule 73: expression <- expression . '<' '=' expression   \nrule 74: expression <- expression . '>' expression       \nrule 75: expression <- expression . '>' '=' expression   \nrule 76: expression <- expression . '+' expression       \nrule 77: expression <- expression . '-' expression       \nrule 78: expression <- expression . '*' expression       \nrule 79: expression <- expression . '/' expression       \nrule 80: expression <- expression . '%' expression       " },
-    { 1, ms_transition_table_+577, "rule 58: expression <- STRING_LENGTH '(' expression ')' ." },
-    { 14, ms_transition_table_+578, "rule 57: expression <- KEYWORD_STRING '(' expression . ')'\nrule 67: expression <- expression . '.' expression        \nrule 68: expression <- expression . '|' '|' expression    \nrule 69: expression <- expression . '&' '&' expression    \nrule 70: expression <- expression . '=' '=' expression    \nrule 71: expression <- expression . '!' '=' expression    \nrule 72: expression <- expression . '<' expression        \nrule 73: expression <- expression . '<' '=' expression    \nrule 74: expression <- expression . '>' expression        \nrule 75: expression <- expression . '>' '=' expression    \nrule 76: expression <- expression . '+' expression        \nrule 77: expression <- expression . '-' expression        \nrule 78: expression <- expression . '*' expression        \nrule 79: expression <- expression . '/' expression        \nrule 80: expression <- expression . '%' expression        " },
-    { 1, ms_transition_table_+592, "rule 57: expression <- KEYWORD_STRING '(' expression ')' ." },
-    { 14, ms_transition_table_+593, "rule 56: expression <- KEYWORD_INT '(' expression . ')'\nrule 67: expression <- expression . '.' expression     \nrule 68: expression <- expression . '|' '|' expression \nrule 69: expression <- expression . '&' '&' expression \nrule 70: expression <- expression . '=' '=' expression \nrule 71: expression <- expression . '!' '=' expression \nrule 72: expression <- expression . '<' expression     \nrule 73: expression <- expression . '<' '=' expression \nrule 74: expression <- expression . '>' expression     \nrule 75: expression <- expression . '>' '=' expression \nrule 76: expression <- expression . '+' expression     \nrule 77: expression <- expression . '-' expression     \nrule 78: expression <- expression . '*' expression     \nrule 79: expression <- expression . '/' expression     \nrule 80: expression <- expression . '%' expression     " },
-    { 1, ms_transition_table_+607, "rule 56: expression <- KEYWORD_INT '(' expression ')' ." },
-    { 14, ms_transition_table_+608, "rule 62: expression <- IS_DEFINED '(' ID '[' expression . ']' ')'\nrule 67: expression <- expression . '.' expression               \nrule 68: expression <- expression . '|' '|' expression           \nrule 69: expression <- expression . '&' '&' expression           \nrule 70: expression <- expression . '=' '=' expression           \nrule 71: expression <- expression . '!' '=' expression           \nrule 72: expression <- expression . '<' expression               \nrule 73: expression <- expression . '<' '=' expression           \nrule 74: expression <- expression . '>' expression               \nrule 75: expression <- expression . '>' '=' expression           \nrule 76: expression <- expression . '+' expression               \nrule 77: expression <- expression . '-' expression               \nrule 78: expression <- expression . '*' expression               \nrule 79: expression <- expression . '/' expression               \nrule 80: expression <- expression . '%' expression               " },
-    { 2, ms_transition_table_+622, "rule 62: expression <- IS_DEFINED '(' ID '[' expression ']' . ')'" },
-    { 1, ms_transition_table_+624, "rule 62: expression <- IS_DEFINED '(' ID '[' expression ']' ')' ." },
-    { 14, ms_transition_table_+625, "rule 64: expression <- ID '[' expression . ']'        \nrule 66: expression <- ID '[' expression . ']' '?'    \nrule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 2, ms_transition_table_+639, "rule 64: expression <- ID '[' expression ']' .    \nrule 66: expression <- ID '[' expression ']' . '?'" },
-    { 1, ms_transition_table_+641, "rule 66: expression <- ID '[' expression ']' '?' ." },
-    { 1, ms_transition_table_+642, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    \nrule 81: expression <- '-' expression .               " },
-    { 14, ms_transition_table_+643, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    \nrule 83: expression <- '(' expression . ')'           " },
-    { 1, ms_transition_table_+657, "rule 83: expression <- '(' expression ')' ." },
-    { 1, ms_transition_table_+658, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    \nrule 82: expression <- '!' expression .               " },
-    { 15, ms_transition_table_+659, "rule 12: code_body <- . expression                               \nrule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 13, ms_transition_table_+674, "rule 12: code_body <- expression .                    \nrule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " },
-    { 2, ms_transition_table_+687, "rule 13: code_body <- DUMP_SYMBOL_TABLE . '(' ')'" },
-    { 2, ms_transition_table_+689, "rule 13: code_body <- DUMP_SYMBOL_TABLE '(' . ')'" },
-    { 1, ms_transition_table_+691, "rule 13: code_body <- DUMP_SYMBOL_TABLE '(' ')' ." },
-    { 2, ms_transition_table_+692, "rule 26: if_statement <- START_CODE IF . '(' expression ')' END_CODE" },
-    { 15, ms_transition_table_+694, "rule 53: expression <- . STRING_LITERAL                             \nrule 54: expression <- . INTEGER_LITERAL                            \nrule 55: expression <- . SIZEOF '(' ID ')'                          \nrule 56: expression <- . KEYWORD_INT '(' expression ')'             \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'          \nrule 58: expression <- . STRING_LENGTH '(' expression ')'           \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'    \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'       \nrule 61: expression <- . IS_DEFINED '(' ID ')'                      \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'   \nrule 63: expression <- . ID                                         \nrule 64: expression <- . ID '[' expression ']'                      \nrule 65: expression <- . ID '?'                                     \nrule 66: expression <- . ID '[' expression ']' '?'                  \nrule 67: expression <- . expression '.' expression                  \nrule 68: expression <- . expression '|' '|' expression              \nrule 69: expression <- . expression '&' '&' expression              \nrule 70: expression <- . expression '=' '=' expression              \nrule 71: expression <- . expression '!' '=' expression              \nrule 72: expression <- . expression '<' expression                  \nrule 73: expression <- . expression '<' '=' expression              \nrule 74: expression <- . expression '>' expression                  \nrule 75: expression <- . expression '>' '=' expression              \nrule 76: expression <- . expression '+' expression                  \nrule 77: expression <- . expression '-' expression                  \nrule 78: expression <- . expression '*' expression                  \nrule 79: expression <- . expression '/' expression                  \nrule 80: expression <- . expression '%' expression                  \nrule 81: expression <- . '-' expression                             \nrule 82: expression <- . '!' expression                             \nrule 83: expression <- . '(' expression ')'                         \nrule 26: if_statement <- START_CODE IF '(' . expression ')' END_CODE" },
-    { 14, ms_transition_table_+709, "rule 67: expression <- expression . '.' expression                  \nrule 68: expression <- expression . '|' '|' expression              \nrule 69: expression <- expression . '&' '&' expression              \nrule 70: expression <- expression . '=' '=' expression              \nrule 71: expression <- expression . '!' '=' expression              \nrule 72: expression <- expression . '<' expression                  \nrule 73: expression <- expression . '<' '=' expression              \nrule 74: expression <- expression . '>' expression                  \nrule 75: expression <- expression . '>' '=' expression              \nrule 76: expression <- expression . '+' expression                  \nrule 77: expression <- expression . '-' expression                  \nrule 78: expression <- expression . '*' expression                  \nrule 79: expression <- expression . '/' expression                  \nrule 80: expression <- expression . '%' expression                  \nrule 26: if_statement <- START_CODE IF '(' expression . ')' END_CODE" },
-    { 2, ms_transition_table_+723, "rule 26: if_statement <- START_CODE IF '(' expression ')' . END_CODE" },
-    { 1, ms_transition_table_+725, "rule 26: if_statement <- START_CODE IF '(' expression ')' END_CODE ." },
-    { 2, ms_transition_table_+726, "rule 14: code_body <- UNDEFINE . '(' ID ')'" },
-    { 2, ms_transition_table_+728, "rule 14: code_body <- UNDEFINE '(' . ID ')'" },
-    { 2, ms_transition_table_+730, "rule 14: code_body <- UNDEFINE '(' ID . ')'" },
-    { 1, ms_transition_table_+732, "rule 14: code_body <- UNDEFINE '(' ID ')' ." },
-    { 2, ms_transition_table_+733, "rule 15: code_body <- DECLARE_ARRAY . '(' ID ')'" },
-    { 2, ms_transition_table_+735, "rule 15: code_body <- DECLARE_ARRAY '(' . ID ')'" },
-    { 2, ms_transition_table_+737, "rule 15: code_body <- DECLARE_ARRAY '(' ID . ')'" },
-    { 1, ms_transition_table_+739, "rule 15: code_body <- DECLARE_ARRAY '(' ID ')' ." },
-    { 2, ms_transition_table_+740, "rule 16: code_body <- DECLARE_MAP . '(' ID ')'" },
-    { 2, ms_transition_table_+742, "rule 16: code_body <- DECLARE_MAP '(' . ID ')'" },
-    { 2, ms_transition_table_+744, "rule 16: code_body <- DECLARE_MAP '(' ID . ')'" },
-    { 1, ms_transition_table_+746, "rule 16: code_body <- DECLARE_MAP '(' ID ')' ." },
-    { 2, ms_transition_table_+747, "rule 37: define_scalar <- START_CODE DEFINE . '(' ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE DEFINE . '(' ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+749, "rule 37: define_scalar <- START_CODE DEFINE '(' . ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE DEFINE '(' . ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 3, ms_transition_table_+751, "rule 37: define_scalar <- START_CODE DEFINE '(' ID . ')' END_CODE                            \nrule 39: define_array_element <- START_CODE DEFINE '(' ID . '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+754, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' . END_CODE" },
-    { 1, ms_transition_table_+756, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE ." },
-    { 3, ms_transition_table_+757, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' . ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+760, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' . ')' END_CODE" },
-    { 2, ms_transition_table_+762, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' . END_CODE" },
-    { 1, ms_transition_table_+764, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE ." },
-    { 2, ms_transition_table_+765, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL . ']' ')' END_CODE" },
-    { 2, ms_transition_table_+767, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' . ')' END_CODE" },
-    { 2, ms_transition_table_+769, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' . END_CODE" },
-    { 1, ms_transition_table_+771, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE ." },
-    { 2, ms_transition_table_+772, "rule 45: loop <- START_CODE LOOP . '(' ID ',' expression ')' END_CODE" },
-    { 2, ms_transition_table_+774, "rule 45: loop <- START_CODE LOOP '(' . ID ',' expression ')' END_CODE" },
-    { 2, ms_transition_table_+776, "rule 45: loop <- START_CODE LOOP '(' ID . ',' expression ')' END_CODE" },
-    { 15, ms_transition_table_+778, "rule 53: expression <- . STRING_LITERAL                              \nrule 54: expression <- . INTEGER_LITERAL                             \nrule 55: expression <- . SIZEOF '(' ID ')'                           \nrule 56: expression <- . KEYWORD_INT '(' expression ')'              \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'           \nrule 58: expression <- . STRING_LENGTH '(' expression ')'            \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'     \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'        \nrule 61: expression <- . IS_DEFINED '(' ID ')'                       \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'    \nrule 63: expression <- . ID                                          \nrule 64: expression <- . ID '[' expression ']'                       \nrule 65: expression <- . ID '?'                                      \nrule 66: expression <- . ID '[' expression ']' '?'                   \nrule 67: expression <- . expression '.' expression                   \nrule 68: expression <- . expression '|' '|' expression               \nrule 69: expression <- . expression '&' '&' expression               \nrule 70: expression <- . expression '=' '=' expression               \nrule 71: expression <- . expression '!' '=' expression               \nrule 72: expression <- . expression '<' expression                   \nrule 73: expression <- . expression '<' '=' expression               \nrule 74: expression <- . expression '>' expression                   \nrule 75: expression <- . expression '>' '=' expression               \nrule 76: expression <- . expression '+' expression                   \nrule 77: expression <- . expression '-' expression                   \nrule 78: expression <- . expression '*' expression                   \nrule 79: expression <- . expression '/' expression                   \nrule 80: expression <- . expression '%' expression                   \nrule 81: expression <- . '-' expression                              \nrule 82: expression <- . '!' expression                              \nrule 83: expression <- . '(' expression ')'                          \nrule 45: loop <- START_CODE LOOP '(' ID ',' . expression ')' END_CODE" },
-    { 14, ms_transition_table_+793, "rule 67: expression <- expression . '.' expression                   \nrule 68: expression <- expression . '|' '|' expression               \nrule 69: expression <- expression . '&' '&' expression               \nrule 70: expression <- expression . '=' '=' expression               \nrule 71: expression <- expression . '!' '=' expression               \nrule 72: expression <- expression . '<' expression                   \nrule 73: expression <- expression . '<' '=' expression               \nrule 74: expression <- expression . '>' expression                   \nrule 75: expression <- expression . '>' '=' expression               \nrule 76: expression <- expression . '+' expression                   \nrule 77: expression <- expression . '-' expression                   \nrule 78: expression <- expression . '*' expression                   \nrule 79: expression <- expression . '/' expression                   \nrule 80: expression <- expression . '%' expression                   \nrule 45: loop <- START_CODE LOOP '(' ID ',' expression . ')' END_CODE" },
-    { 2, ms_transition_table_+807, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' . END_CODE" },
-    { 1, ms_transition_table_+809, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE ." },
-    { 2, ms_transition_table_+810, "rule 49: for_each <- START_CODE FOR_EACH . '(' ID ',' ID ')' END_CODE" },
-    { 2, ms_transition_table_+812, "rule 49: for_each <- START_CODE FOR_EACH '(' . ID ',' ID ')' END_CODE" },
-    { 2, ms_transition_table_+814, "rule 49: for_each <- START_CODE FOR_EACH '(' ID . ',' ID ')' END_CODE" },
-    { 2, ms_transition_table_+816, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' . ID ')' END_CODE" },
-    { 2, ms_transition_table_+818, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID . ')' END_CODE" },
-    { 2, ms_transition_table_+820, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' . END_CODE" },
-    { 1, ms_transition_table_+822, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE ." },
-    { 2, ms_transition_table_+823, "rule 17: code_body <- INCLUDE . '(' expression ')'" },
-    { 15, ms_transition_table_+825, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 17: code_body <- INCLUDE '(' . expression ')'               " },
-    { 14, ms_transition_table_+840, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    \nrule 17: code_body <- INCLUDE '(' expression . ')'    " },
-    { 1, ms_transition_table_+854, "rule 17: code_body <- INCLUDE '(' expression ')' ." },
-    { 2, ms_transition_table_+855, "rule 18: code_body <- SANDBOX_INCLUDE . '(' expression ')'" },
-    { 15, ms_transition_table_+857, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 18: code_body <- SANDBOX_INCLUDE '(' . expression ')'       " },
-    { 14, ms_transition_table_+872, "rule 67: expression <- expression . '.' expression        \nrule 68: expression <- expression . '|' '|' expression    \nrule 69: expression <- expression . '&' '&' expression    \nrule 70: expression <- expression . '=' '=' expression    \nrule 71: expression <- expression . '!' '=' expression    \nrule 72: expression <- expression . '<' expression        \nrule 73: expression <- expression . '<' '=' expression    \nrule 74: expression <- expression . '>' expression        \nrule 75: expression <- expression . '>' '=' expression    \nrule 76: expression <- expression . '+' expression        \nrule 77: expression <- expression . '-' expression        \nrule 78: expression <- expression . '*' expression        \nrule 79: expression <- expression . '/' expression        \nrule 80: expression <- expression . '%' expression        \nrule 18: code_body <- SANDBOX_INCLUDE '(' expression . ')'" },
-    { 1, ms_transition_table_+886, "rule 18: code_body <- SANDBOX_INCLUDE '(' expression ')' ." },
-    { 2, ms_transition_table_+887, "rule 19: code_body <- WARNING . '(' expression ')'" },
-    { 15, ms_transition_table_+889, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 19: code_body <- WARNING '(' . expression ')'               " },
-    { 14, ms_transition_table_+904, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    \nrule 19: code_body <- WARNING '(' expression . ')'    " },
-    { 1, ms_transition_table_+918, "rule 19: code_body <- WARNING '(' expression ')' ." },
-    { 2, ms_transition_table_+919, "rule 20: code_body <- ERROR . '(' expression ')'" },
-    { 15, ms_transition_table_+921, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 20: code_body <- ERROR '(' . expression ')'                 " },
-    { 14, ms_transition_table_+936, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    \nrule 20: code_body <- ERROR '(' expression . ')'      " },
-    { 1, ms_transition_table_+950, "rule 20: code_body <- ERROR '(' expression ')' ." },
-    { 2, ms_transition_table_+951, "rule 21: code_body <- FATAL_ERROR . '(' expression ')'" },
-    { 15, ms_transition_table_+953, "rule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 21: code_body <- FATAL_ERROR '(' . expression ')'           " },
-    { 14, ms_transition_table_+968, "rule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    \nrule 21: code_body <- FATAL_ERROR '(' expression . ')'" },
-    { 1, ms_transition_table_+982, "rule 21: code_body <- FATAL_ERROR '(' expression ')' ." },
-    { 2, ms_transition_table_+983, "rule 9: code <- START_CODE code_body . END_CODE" },
-    { 1, ms_transition_table_+985, "rule 9: code <- START_CODE code_body END_CODE ." },
-    { 29, ms_transition_table_+986, "rule 11: code_body <- .                                                                         \nrule 12: code_body <- . expression                                                              \nrule 53: expression <- . STRING_LITERAL                                                         \nrule 54: expression <- . INTEGER_LITERAL                                                        \nrule 55: expression <- . SIZEOF '(' ID ')'                                                      \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                         \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                      \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                       \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                                \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                   \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                                  \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                               \nrule 63: expression <- . ID                                                                     \nrule 64: expression <- . ID '[' expression ']'                                                  \nrule 65: expression <- . ID '?'                                                                 \nrule 66: expression <- . ID '[' expression ']' '?'                                              \nrule 67: expression <- . expression '.' expression                                              \nrule 68: expression <- . expression '|' '|' expression                                          \nrule 69: expression <- . expression '&' '&' expression                                          \nrule 70: expression <- . expression '=' '=' expression                                          \nrule 71: expression <- . expression '!' '=' expression                                          \nrule 72: expression <- . expression '<' expression                                              \nrule 73: expression <- . expression '<' '=' expression                                          \nrule 74: expression <- . expression '>' expression                                              \nrule 75: expression <- . expression '>' '=' expression                                          \nrule 76: expression <- . expression '+' expression                                              \nrule 77: expression <- . expression '-' expression                                              \nrule 78: expression <- . expression '*' expression                                              \nrule 79: expression <- . expression '/' expression                                              \nrule 80: expression <- . expression '%' expression                                              \nrule 81: expression <- . '-' expression                                                         \nrule 82: expression <- . '!' expression                                                         \nrule 83: expression <- . '(' expression ')'                                                     \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                               \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                     \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                                \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                                  \nrule 17: code_body <- . INCLUDE '(' expression ')'                                              \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                      \nrule 19: code_body <- . WARNING '(' expression ')'                                              \nrule 20: code_body <- . ERROR '(' expression ')'                                                \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                          \nrule 10: code <- CODE_LINE . code_body CODE_NEWLINE                                             \nrule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE                         \nrule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        " },
-    { 2, ms_transition_table_+1015, "rule 27: if_statement <- CODE_LINE IF . '(' expression ')' CODE_NEWLINE" },
-    { 15, ms_transition_table_+1017, "rule 53: expression <- . STRING_LITERAL                                \nrule 54: expression <- . INTEGER_LITERAL                               \nrule 55: expression <- . SIZEOF '(' ID ')'                             \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'             \nrule 58: expression <- . STRING_LENGTH '(' expression ')'              \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'       \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'          \nrule 61: expression <- . IS_DEFINED '(' ID ')'                         \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'      \nrule 63: expression <- . ID                                            \nrule 64: expression <- . ID '[' expression ']'                         \nrule 65: expression <- . ID '?'                                        \nrule 66: expression <- . ID '[' expression ']' '?'                     \nrule 67: expression <- . expression '.' expression                     \nrule 68: expression <- . expression '|' '|' expression                 \nrule 69: expression <- . expression '&' '&' expression                 \nrule 70: expression <- . expression '=' '=' expression                 \nrule 71: expression <- . expression '!' '=' expression                 \nrule 72: expression <- . expression '<' expression                     \nrule 73: expression <- . expression '<' '=' expression                 \nrule 74: expression <- . expression '>' expression                     \nrule 75: expression <- . expression '>' '=' expression                 \nrule 76: expression <- . expression '+' expression                     \nrule 77: expression <- . expression '-' expression                     \nrule 78: expression <- . expression '*' expression                     \nrule 79: expression <- . expression '/' expression                     \nrule 80: expression <- . expression '%' expression                     \nrule 81: expression <- . '-' expression                                \nrule 82: expression <- . '!' expression                                \nrule 83: expression <- . '(' expression ')'                            \nrule 27: if_statement <- CODE_LINE IF '(' . expression ')' CODE_NEWLINE" },
-    { 14, ms_transition_table_+1032, "rule 67: expression <- expression . '.' expression                     \nrule 68: expression <- expression . '|' '|' expression                 \nrule 69: expression <- expression . '&' '&' expression                 \nrule 70: expression <- expression . '=' '=' expression                 \nrule 71: expression <- expression . '!' '=' expression                 \nrule 72: expression <- expression . '<' expression                     \nrule 73: expression <- expression . '<' '=' expression                 \nrule 74: expression <- expression . '>' expression                     \nrule 75: expression <- expression . '>' '=' expression                 \nrule 76: expression <- expression . '+' expression                     \nrule 77: expression <- expression . '-' expression                     \nrule 78: expression <- expression . '*' expression                     \nrule 79: expression <- expression . '/' expression                     \nrule 80: expression <- expression . '%' expression                     \nrule 27: if_statement <- CODE_LINE IF '(' expression . ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1046, "rule 27: if_statement <- CODE_LINE IF '(' expression ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1048, "rule 27: if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE ." },
-    { 2, ms_transition_table_+1049, "rule 38: define_scalar <- CODE_LINE DEFINE . '(' ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE DEFINE . '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1051, "rule 38: define_scalar <- CODE_LINE DEFINE '(' . ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE DEFINE '(' . ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1053, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID . ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE DEFINE '(' ID . '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1056, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1058, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE ." },
-    { 3, ms_transition_table_+1059, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' . ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1062, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' . ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1064, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1066, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE ." },
-    { 2, ms_transition_table_+1067, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL . ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1069, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' . ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1071, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1073, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE ." },
-    { 2, ms_transition_table_+1074, "rule 46: loop <- CODE_LINE LOOP . '(' ID ',' expression ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1076, "rule 46: loop <- CODE_LINE LOOP '(' . ID ',' expression ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1078, "rule 46: loop <- CODE_LINE LOOP '(' ID . ',' expression ')' CODE_NEWLINE" },
-    { 15, ms_transition_table_+1080, "rule 53: expression <- . STRING_LITERAL                                 \nrule 54: expression <- . INTEGER_LITERAL                                \nrule 55: expression <- . SIZEOF '(' ID ')'                              \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                 \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'              \nrule 58: expression <- . STRING_LENGTH '(' expression ')'               \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'        \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'           \nrule 61: expression <- . IS_DEFINED '(' ID ')'                          \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'       \nrule 63: expression <- . ID                                             \nrule 64: expression <- . ID '[' expression ']'                          \nrule 65: expression <- . ID '?'                                         \nrule 66: expression <- . ID '[' expression ']' '?'                      \nrule 67: expression <- . expression '.' expression                      \nrule 68: expression <- . expression '|' '|' expression                  \nrule 69: expression <- . expression '&' '&' expression                  \nrule 70: expression <- . expression '=' '=' expression                  \nrule 71: expression <- . expression '!' '=' expression                  \nrule 72: expression <- . expression '<' expression                      \nrule 73: expression <- . expression '<' '=' expression                  \nrule 74: expression <- . expression '>' expression                      \nrule 75: expression <- . expression '>' '=' expression                  \nrule 76: expression <- . expression '+' expression                      \nrule 77: expression <- . expression '-' expression                      \nrule 78: expression <- . expression '*' expression                      \nrule 79: expression <- . expression '/' expression                      \nrule 80: expression <- . expression '%' expression                      \nrule 81: expression <- . '-' expression                                 \nrule 82: expression <- . '!' expression                                 \nrule 83: expression <- . '(' expression ')'                             \nrule 46: loop <- CODE_LINE LOOP '(' ID ',' . expression ')' CODE_NEWLINE" },
-    { 14, ms_transition_table_+1095, "rule 67: expression <- expression . '.' expression                      \nrule 68: expression <- expression . '|' '|' expression                  \nrule 69: expression <- expression . '&' '&' expression                  \nrule 70: expression <- expression . '=' '=' expression                  \nrule 71: expression <- expression . '!' '=' expression                  \nrule 72: expression <- expression . '<' expression                      \nrule 73: expression <- expression . '<' '=' expression                  \nrule 74: expression <- expression . '>' expression                      \nrule 75: expression <- expression . '>' '=' expression                  \nrule 76: expression <- expression . '+' expression                      \nrule 77: expression <- expression . '-' expression                      \nrule 78: expression <- expression . '*' expression                      \nrule 79: expression <- expression . '/' expression                      \nrule 80: expression <- expression . '%' expression                      \nrule 46: loop <- CODE_LINE LOOP '(' ID ',' expression . ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1109, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1111, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE ." },
-    { 2, ms_transition_table_+1112, "rule 50: for_each <- CODE_LINE FOR_EACH . '(' ID ',' ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1114, "rule 50: for_each <- CODE_LINE FOR_EACH '(' . ID ',' ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1116, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID . ',' ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1118, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' . ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1120, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID . ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1122, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1124, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE ." },
-    { 2, ms_transition_table_+1125, "rule 10: code <- CODE_LINE code_body . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1127, "rule 10: code <- CODE_LINE code_body CODE_NEWLINE ." },
-    { 2, ms_transition_table_+1128, "rule 2: body <- body executable .     \nrule 3: body <- body executable . TEXT" },
-    { 1, ms_transition_table_+1130, "rule 3: body <- body executable TEXT ." },
-    { 1, ms_transition_table_+1131, "rule 4: executable <- code ." },
-    { 1, ms_transition_table_+1132, "rule 5: executable <- conditional_series ." },
-    { 3, ms_transition_table_+1133, "rule 0: body <- .                                                        \nrule 1: body <- . TEXT                                                   \nrule 2: body <- . body executable                                        \nrule 22: conditional_series <- if_statement . body conditional_series_end\nrule 3: body <- . body executable TEXT                                   " },
-    { 17, ms_transition_table_+1136, "rule 2: body <- body . executable                                                               \nrule 4: executable <- . code                                                                    \nrule 9: code <- . START_CODE code_body END_CODE                                                 \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE                                             \nrule 5: executable <- . conditional_series                                                      \nrule 22: conditional_series <- . if_statement body conditional_series_end                       \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE                            \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE                         \nrule 22: conditional_series <- if_statement body . conditional_series_end                       \nrule 23: conditional_series_end <- . end_if                                                     \nrule 32: end_if <- . START_CODE END_IF END_CODE                                                 \nrule 33: end_if <- . CODE_LINE END_IF CODE_NEWLINE                                              \nrule 24: conditional_series_end <- . else_statement body end_if                                 \nrule 28: else_statement <- . START_CODE ELSE END_CODE                                           \nrule 29: else_statement <- . CODE_LINE ELSE CODE_NEWLINE                                        \nrule 25: conditional_series_end <- . else_if_statement body conditional_series_end              \nrule 30: else_if_statement <- . START_CODE ELSE_IF '(' expression ')' END_CODE                  \nrule 31: else_if_statement <- . CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE               \nrule 6: executable <- . define body end_define                                                  \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 7: executable <- . loop body end_loop                                                      \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE                           \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 8: executable <- . for_each body end_for_each                                              \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE                           \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        \nrule 3: body <- body . executable TEXT                                                          " },
-    { 32, ms_transition_table_+1153, "rule 9: code <- START_CODE . code_body END_CODE                                              \nrule 11: code_body <- .                                                                      \nrule 12: code_body <- . expression                                                           \nrule 53: expression <- . STRING_LITERAL                                                      \nrule 54: expression <- . INTEGER_LITERAL                                                     \nrule 55: expression <- . SIZEOF '(' ID ')'                                                   \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                      \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                   \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                    \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                             \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                               \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                            \nrule 63: expression <- . ID                                                                  \nrule 64: expression <- . ID '[' expression ']'                                               \nrule 65: expression <- . ID '?'                                                              \nrule 66: expression <- . ID '[' expression ']' '?'                                           \nrule 67: expression <- . expression '.' expression                                           \nrule 68: expression <- . expression '|' '|' expression                                       \nrule 69: expression <- . expression '&' '&' expression                                       \nrule 70: expression <- . expression '=' '=' expression                                       \nrule 71: expression <- . expression '!' '=' expression                                       \nrule 72: expression <- . expression '<' expression                                           \nrule 73: expression <- . expression '<' '=' expression                                       \nrule 74: expression <- . expression '>' expression                                           \nrule 75: expression <- . expression '>' '=' expression                                       \nrule 76: expression <- . expression '+' expression                                           \nrule 77: expression <- . expression '-' expression                                           \nrule 78: expression <- . expression '*' expression                                           \nrule 79: expression <- . expression '/' expression                                           \nrule 80: expression <- . expression '%' expression                                           \nrule 81: expression <- . '-' expression                                                      \nrule 82: expression <- . '!' expression                                                      \nrule 83: expression <- . '(' expression ')'                                                  \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                            \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                  \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                             \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                               \nrule 17: code_body <- . INCLUDE '(' expression ')'                                           \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                   \nrule 19: code_body <- . WARNING '(' expression ')'                                           \nrule 20: code_body <- . ERROR '(' expression ')'                                             \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                       \nrule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE                         \nrule 32: end_if <- START_CODE . END_IF END_CODE                                              \nrule 28: else_statement <- START_CODE . ELSE END_CODE                                        \nrule 30: else_if_statement <- START_CODE . ELSE_IF '(' expression ')' END_CODE               \nrule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE\nrule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE                        \nrule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE                        " },
-    { 2, ms_transition_table_+1185, "rule 28: else_statement <- START_CODE ELSE . END_CODE" },
-    { 1, ms_transition_table_+1187, "rule 28: else_statement <- START_CODE ELSE END_CODE ." },
-    { 2, ms_transition_table_+1188, "rule 30: else_if_statement <- START_CODE ELSE_IF . '(' expression ')' END_CODE" },
-    { 15, ms_transition_table_+1190, "rule 53: expression <- . STRING_LITERAL                                       \nrule 54: expression <- . INTEGER_LITERAL                                      \nrule 55: expression <- . SIZEOF '(' ID ')'                                    \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                       \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                    \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                     \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'              \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                 \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'             \nrule 63: expression <- . ID                                                   \nrule 64: expression <- . ID '[' expression ']'                                \nrule 65: expression <- . ID '?'                                               \nrule 66: expression <- . ID '[' expression ']' '?'                            \nrule 67: expression <- . expression '.' expression                            \nrule 68: expression <- . expression '|' '|' expression                        \nrule 69: expression <- . expression '&' '&' expression                        \nrule 70: expression <- . expression '=' '=' expression                        \nrule 71: expression <- . expression '!' '=' expression                        \nrule 72: expression <- . expression '<' expression                            \nrule 73: expression <- . expression '<' '=' expression                        \nrule 74: expression <- . expression '>' expression                            \nrule 75: expression <- . expression '>' '=' expression                        \nrule 76: expression <- . expression '+' expression                            \nrule 77: expression <- . expression '-' expression                            \nrule 78: expression <- . expression '*' expression                            \nrule 79: expression <- . expression '/' expression                            \nrule 80: expression <- . expression '%' expression                            \nrule 81: expression <- . '-' expression                                       \nrule 82: expression <- . '!' expression                                       \nrule 83: expression <- . '(' expression ')'                                   \nrule 30: else_if_statement <- START_CODE ELSE_IF '(' . expression ')' END_CODE" },
-    { 14, ms_transition_table_+1205, "rule 67: expression <- expression . '.' expression                            \nrule 68: expression <- expression . '|' '|' expression                        \nrule 69: expression <- expression . '&' '&' expression                        \nrule 70: expression <- expression . '=' '=' expression                        \nrule 71: expression <- expression . '!' '=' expression                        \nrule 72: expression <- expression . '<' expression                            \nrule 73: expression <- expression . '<' '=' expression                        \nrule 74: expression <- expression . '>' expression                            \nrule 75: expression <- expression . '>' '=' expression                        \nrule 76: expression <- expression . '+' expression                            \nrule 77: expression <- expression . '-' expression                            \nrule 78: expression <- expression . '*' expression                            \nrule 79: expression <- expression . '/' expression                            \nrule 80: expression <- expression . '%' expression                            \nrule 30: else_if_statement <- START_CODE ELSE_IF '(' expression . ')' END_CODE" },
-    { 2, ms_transition_table_+1219, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression ')' . END_CODE" },
-    { 1, ms_transition_table_+1221, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE ." },
-    { 2, ms_transition_table_+1222, "rule 32: end_if <- START_CODE END_IF . END_CODE" },
-    { 1, ms_transition_table_+1224, "rule 32: end_if <- START_CODE END_IF END_CODE ." },
-    { 32, ms_transition_table_+1225, "rule 11: code_body <- .                                                                         \nrule 12: code_body <- . expression                                                              \nrule 53: expression <- . STRING_LITERAL                                                         \nrule 54: expression <- . INTEGER_LITERAL                                                        \nrule 55: expression <- . SIZEOF '(' ID ')'                                                      \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                         \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                      \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                       \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                                \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                   \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                                  \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                               \nrule 63: expression <- . ID                                                                     \nrule 64: expression <- . ID '[' expression ']'                                                  \nrule 65: expression <- . ID '?'                                                                 \nrule 66: expression <- . ID '[' expression ']' '?'                                              \nrule 67: expression <- . expression '.' expression                                              \nrule 68: expression <- . expression '|' '|' expression                                          \nrule 69: expression <- . expression '&' '&' expression                                          \nrule 70: expression <- . expression '=' '=' expression                                          \nrule 71: expression <- . expression '!' '=' expression                                          \nrule 72: expression <- . expression '<' expression                                              \nrule 73: expression <- . expression '<' '=' expression                                          \nrule 74: expression <- . expression '>' expression                                              \nrule 75: expression <- . expression '>' '=' expression                                          \nrule 76: expression <- . expression '+' expression                                              \nrule 77: expression <- . expression '-' expression                                              \nrule 78: expression <- . expression '*' expression                                              \nrule 79: expression <- . expression '/' expression                                              \nrule 80: expression <- . expression '%' expression                                              \nrule 81: expression <- . '-' expression                                                         \nrule 82: expression <- . '!' expression                                                         \nrule 83: expression <- . '(' expression ')'                                                     \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                               \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                     \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                                \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                                  \nrule 17: code_body <- . INCLUDE '(' expression ')'                                              \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                      \nrule 19: code_body <- . WARNING '(' expression ')'                                              \nrule 20: code_body <- . ERROR '(' expression ')'                                                \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                          \nrule 10: code <- CODE_LINE . code_body CODE_NEWLINE                                             \nrule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE                         \nrule 33: end_if <- CODE_LINE . END_IF CODE_NEWLINE                                              \nrule 29: else_statement <- CODE_LINE . ELSE CODE_NEWLINE                                        \nrule 31: else_if_statement <- CODE_LINE . ELSE_IF '(' expression ')' CODE_NEWLINE               \nrule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        " },
-    { 2, ms_transition_table_+1257, "rule 29: else_statement <- CODE_LINE ELSE . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1259, "rule 29: else_statement <- CODE_LINE ELSE CODE_NEWLINE ." },
-    { 2, ms_transition_table_+1260, "rule 31: else_if_statement <- CODE_LINE ELSE_IF . '(' expression ')' CODE_NEWLINE" },
-    { 15, ms_transition_table_+1262, "rule 53: expression <- . STRING_LITERAL                                          \nrule 54: expression <- . INTEGER_LITERAL                                         \nrule 55: expression <- . SIZEOF '(' ID ')'                                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                 \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                \nrule 63: expression <- . ID                                                      \nrule 64: expression <- . ID '[' expression ']'                                   \nrule 65: expression <- . ID '?'                                                  \nrule 66: expression <- . ID '[' expression ']' '?'                               \nrule 67: expression <- . expression '.' expression                               \nrule 68: expression <- . expression '|' '|' expression                           \nrule 69: expression <- . expression '&' '&' expression                           \nrule 70: expression <- . expression '=' '=' expression                           \nrule 71: expression <- . expression '!' '=' expression                           \nrule 72: expression <- . expression '<' expression                               \nrule 73: expression <- . expression '<' '=' expression                           \nrule 74: expression <- . expression '>' expression                               \nrule 75: expression <- . expression '>' '=' expression                           \nrule 76: expression <- . expression '+' expression                               \nrule 77: expression <- . expression '-' expression                               \nrule 78: expression <- . expression '*' expression                               \nrule 79: expression <- . expression '/' expression                               \nrule 80: expression <- . expression '%' expression                               \nrule 81: expression <- . '-' expression                                          \nrule 82: expression <- . '!' expression                                          \nrule 83: expression <- . '(' expression ')'                                      \nrule 31: else_if_statement <- CODE_LINE ELSE_IF '(' . expression ')' CODE_NEWLINE" },
-    { 14, ms_transition_table_+1277, "rule 67: expression <- expression . '.' expression                               \nrule 68: expression <- expression . '|' '|' expression                           \nrule 69: expression <- expression . '&' '&' expression                           \nrule 70: expression <- expression . '=' '=' expression                           \nrule 71: expression <- expression . '!' '=' expression                           \nrule 72: expression <- expression . '<' expression                               \nrule 73: expression <- expression . '<' '=' expression                           \nrule 74: expression <- expression . '>' expression                               \nrule 75: expression <- expression . '>' '=' expression                           \nrule 76: expression <- expression . '+' expression                               \nrule 77: expression <- expression . '-' expression                               \nrule 78: expression <- expression . '*' expression                               \nrule 79: expression <- expression . '/' expression                               \nrule 80: expression <- expression . '%' expression                               \nrule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression . ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1291, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1293, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE ." },
-    { 2, ms_transition_table_+1294, "rule 33: end_if <- CODE_LINE END_IF . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1296, "rule 33: end_if <- CODE_LINE END_IF CODE_NEWLINE ." },
-    { 1, ms_transition_table_+1297, "rule 22: conditional_series <- if_statement body conditional_series_end ." },
-    { 3, ms_transition_table_+1298, "rule 0: body <- .                                              \nrule 1: body <- . TEXT                                         \nrule 2: body <- . body executable                              \nrule 24: conditional_series_end <- else_statement . body end_if\nrule 3: body <- . body executable TEXT                         " },
-    { 14, ms_transition_table_+1301, "rule 2: body <- body . executable                                                               \nrule 4: executable <- . code                                                                    \nrule 9: code <- . START_CODE code_body END_CODE                                                 \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE                                             \nrule 5: executable <- . conditional_series                                                      \nrule 22: conditional_series <- . if_statement body conditional_series_end                       \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE                            \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE                         \nrule 32: end_if <- . START_CODE END_IF END_CODE                                                 \nrule 33: end_if <- . CODE_LINE END_IF CODE_NEWLINE                                              \nrule 24: conditional_series_end <- else_statement body . end_if                                 \nrule 6: executable <- . define body end_define                                                  \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 7: executable <- . loop body end_loop                                                      \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE                           \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 8: executable <- . for_each body end_for_each                                              \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE                           \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        \nrule 3: body <- body . executable TEXT                                                          " },
-    { 30, ms_transition_table_+1315, "rule 9: code <- START_CODE . code_body END_CODE                                              \nrule 11: code_body <- .                                                                      \nrule 12: code_body <- . expression                                                           \nrule 53: expression <- . STRING_LITERAL                                                      \nrule 54: expression <- . INTEGER_LITERAL                                                     \nrule 55: expression <- . SIZEOF '(' ID ')'                                                   \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                      \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                   \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                    \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                             \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                               \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                            \nrule 63: expression <- . ID                                                                  \nrule 64: expression <- . ID '[' expression ']'                                               \nrule 65: expression <- . ID '?'                                                              \nrule 66: expression <- . ID '[' expression ']' '?'                                           \nrule 67: expression <- . expression '.' expression                                           \nrule 68: expression <- . expression '|' '|' expression                                       \nrule 69: expression <- . expression '&' '&' expression                                       \nrule 70: expression <- . expression '=' '=' expression                                       \nrule 71: expression <- . expression '!' '=' expression                                       \nrule 72: expression <- . expression '<' expression                                           \nrule 73: expression <- . expression '<' '=' expression                                       \nrule 74: expression <- . expression '>' expression                                           \nrule 75: expression <- . expression '>' '=' expression                                       \nrule 76: expression <- . expression '+' expression                                           \nrule 77: expression <- . expression '-' expression                                           \nrule 78: expression <- . expression '*' expression                                           \nrule 79: expression <- . expression '/' expression                                           \nrule 80: expression <- . expression '%' expression                                           \nrule 81: expression <- . '-' expression                                                      \nrule 82: expression <- . '!' expression                                                      \nrule 83: expression <- . '(' expression ')'                                                  \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                            \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                  \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                             \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                               \nrule 17: code_body <- . INCLUDE '(' expression ')'                                           \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                   \nrule 19: code_body <- . WARNING '(' expression ')'                                           \nrule 20: code_body <- . ERROR '(' expression ')'                                             \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                       \nrule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE                         \nrule 32: end_if <- START_CODE . END_IF END_CODE                                              \nrule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE\nrule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE                        \nrule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE                        " },
-    { 30, ms_transition_table_+1345, "rule 11: code_body <- .                                                                         \nrule 12: code_body <- . expression                                                              \nrule 53: expression <- . STRING_LITERAL                                                         \nrule 54: expression <- . INTEGER_LITERAL                                                        \nrule 55: expression <- . SIZEOF '(' ID ')'                                                      \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                         \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                      \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                       \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                                \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                   \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                                  \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                               \nrule 63: expression <- . ID                                                                     \nrule 64: expression <- . ID '[' expression ']'                                                  \nrule 65: expression <- . ID '?'                                                                 \nrule 66: expression <- . ID '[' expression ']' '?'                                              \nrule 67: expression <- . expression '.' expression                                              \nrule 68: expression <- . expression '|' '|' expression                                          \nrule 69: expression <- . expression '&' '&' expression                                          \nrule 70: expression <- . expression '=' '=' expression                                          \nrule 71: expression <- . expression '!' '=' expression                                          \nrule 72: expression <- . expression '<' expression                                              \nrule 73: expression <- . expression '<' '=' expression                                          \nrule 74: expression <- . expression '>' expression                                              \nrule 75: expression <- . expression '>' '=' expression                                          \nrule 76: expression <- . expression '+' expression                                              \nrule 77: expression <- . expression '-' expression                                              \nrule 78: expression <- . expression '*' expression                                              \nrule 79: expression <- . expression '/' expression                                              \nrule 80: expression <- . expression '%' expression                                              \nrule 81: expression <- . '-' expression                                                         \nrule 82: expression <- . '!' expression                                                         \nrule 83: expression <- . '(' expression ')'                                                     \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                               \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                     \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                                \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                                  \nrule 17: code_body <- . INCLUDE '(' expression ')'                                              \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                      \nrule 19: code_body <- . WARNING '(' expression ')'                                              \nrule 20: code_body <- . ERROR '(' expression ')'                                                \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                          \nrule 10: code <- CODE_LINE . code_body CODE_NEWLINE                                             \nrule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE                         \nrule 33: end_if <- CODE_LINE . END_IF CODE_NEWLINE                                              \nrule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        " },
-    { 1, ms_transition_table_+1375, "rule 24: conditional_series_end <- else_statement body end_if ." },
-    { 3, ms_transition_table_+1376, "rule 0: body <- .                             \nrule 1: body <- . TEXT                        \nrule 2: body <- . body executable             \nrule 6: executable <- define . body end_define\nrule 3: body <- . body executable TEXT        " },
-    { 14, ms_transition_table_+1379, "rule 2: body <- body . executable                                                               \nrule 4: executable <- . code                                                                    \nrule 9: code <- . START_CODE code_body END_CODE                                                 \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE                                             \nrule 5: executable <- . conditional_series                                                      \nrule 22: conditional_series <- . if_statement body conditional_series_end                       \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE                            \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE                         \nrule 6: executable <- . define body end_define                                                  \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 6: executable <- define body . end_define                                                  \nrule 43: end_define <- . START_CODE END_DEFINE END_CODE                                         \nrule 44: end_define <- . CODE_LINE END_DEFINE CODE_NEWLINE                                      \nrule 7: executable <- . loop body end_loop                                                      \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE                           \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 8: executable <- . for_each body end_for_each                                              \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE                           \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        \nrule 3: body <- body . executable TEXT                                                          " },
-    { 30, ms_transition_table_+1393, "rule 9: code <- START_CODE . code_body END_CODE                                              \nrule 11: code_body <- .                                                                      \nrule 12: code_body <- . expression                                                           \nrule 53: expression <- . STRING_LITERAL                                                      \nrule 54: expression <- . INTEGER_LITERAL                                                     \nrule 55: expression <- . SIZEOF '(' ID ')'                                                   \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                      \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                   \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                    \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                             \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                               \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                            \nrule 63: expression <- . ID                                                                  \nrule 64: expression <- . ID '[' expression ']'                                               \nrule 65: expression <- . ID '?'                                                              \nrule 66: expression <- . ID '[' expression ']' '?'                                           \nrule 67: expression <- . expression '.' expression                                           \nrule 68: expression <- . expression '|' '|' expression                                       \nrule 69: expression <- . expression '&' '&' expression                                       \nrule 70: expression <- . expression '=' '=' expression                                       \nrule 71: expression <- . expression '!' '=' expression                                       \nrule 72: expression <- . expression '<' expression                                           \nrule 73: expression <- . expression '<' '=' expression                                       \nrule 74: expression <- . expression '>' expression                                           \nrule 75: expression <- . expression '>' '=' expression                                       \nrule 76: expression <- . expression '+' expression                                           \nrule 77: expression <- . expression '-' expression                                           \nrule 78: expression <- . expression '*' expression                                           \nrule 79: expression <- . expression '/' expression                                           \nrule 80: expression <- . expression '%' expression                                           \nrule 81: expression <- . '-' expression                                                      \nrule 82: expression <- . '!' expression                                                      \nrule 83: expression <- . '(' expression ')'                                                  \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                            \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                  \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                             \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                               \nrule 17: code_body <- . INCLUDE '(' expression ')'                                           \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                   \nrule 19: code_body <- . WARNING '(' expression ')'                                           \nrule 20: code_body <- . ERROR '(' expression ')'                                             \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                       \nrule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE                         \nrule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE\nrule 43: end_define <- START_CODE . END_DEFINE END_CODE                                      \nrule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE                        \nrule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE                        " },
-    { 2, ms_transition_table_+1423, "rule 43: end_define <- START_CODE END_DEFINE . END_CODE" },
-    { 1, ms_transition_table_+1425, "rule 43: end_define <- START_CODE END_DEFINE END_CODE ." },
-    { 30, ms_transition_table_+1426, "rule 11: code_body <- .                                                                         \nrule 12: code_body <- . expression                                                              \nrule 53: expression <- . STRING_LITERAL                                                         \nrule 54: expression <- . INTEGER_LITERAL                                                        \nrule 55: expression <- . SIZEOF '(' ID ')'                                                      \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                         \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                      \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                       \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                                \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                   \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                                  \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                               \nrule 63: expression <- . ID                                                                     \nrule 64: expression <- . ID '[' expression ']'                                                  \nrule 65: expression <- . ID '?'                                                                 \nrule 66: expression <- . ID '[' expression ']' '?'                                              \nrule 67: expression <- . expression '.' expression                                              \nrule 68: expression <- . expression '|' '|' expression                                          \nrule 69: expression <- . expression '&' '&' expression                                          \nrule 70: expression <- . expression '=' '=' expression                                          \nrule 71: expression <- . expression '!' '=' expression                                          \nrule 72: expression <- . expression '<' expression                                              \nrule 73: expression <- . expression '<' '=' expression                                          \nrule 74: expression <- . expression '>' expression                                              \nrule 75: expression <- . expression '>' '=' expression                                          \nrule 76: expression <- . expression '+' expression                                              \nrule 77: expression <- . expression '-' expression                                              \nrule 78: expression <- . expression '*' expression                                              \nrule 79: expression <- . expression '/' expression                                              \nrule 80: expression <- . expression '%' expression                                              \nrule 81: expression <- . '-' expression                                                         \nrule 82: expression <- . '!' expression                                                         \nrule 83: expression <- . '(' expression ')'                                                     \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                               \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                     \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                                \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                                  \nrule 17: code_body <- . INCLUDE '(' expression ')'                                              \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                      \nrule 19: code_body <- . WARNING '(' expression ')'                                              \nrule 20: code_body <- . ERROR '(' expression ')'                                                \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                          \nrule 10: code <- CODE_LINE . code_body CODE_NEWLINE                                             \nrule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE                         \nrule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 44: end_define <- CODE_LINE . END_DEFINE CODE_NEWLINE                                      \nrule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        " },
-    { 2, ms_transition_table_+1456, "rule 44: end_define <- CODE_LINE END_DEFINE . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1458, "rule 44: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE ." },
-    { 1, ms_transition_table_+1459, "rule 34: define <- define_scalar ." },
-    { 1, ms_transition_table_+1460, "rule 35: define <- define_array_element ." },
-    { 1, ms_transition_table_+1461, "rule 36: define <- define_map_element ." },
-    { 1, ms_transition_table_+1462, "rule 6: executable <- define body end_define ." },
-    { 3, ms_transition_table_+1463, "rule 0: body <- .                         \nrule 1: body <- . TEXT                    \nrule 2: body <- . body executable         \nrule 7: executable <- loop . body end_loop\nrule 3: body <- . body executable TEXT    " },
-    { 14, ms_transition_table_+1466, "rule 2: body <- body . executable                                                               \nrule 4: executable <- . code                                                                    \nrule 9: code <- . START_CODE code_body END_CODE                                                 \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE                                             \nrule 5: executable <- . conditional_series                                                      \nrule 22: conditional_series <- . if_statement body conditional_series_end                       \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE                            \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE                         \nrule 6: executable <- . define body end_define                                                  \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 7: executable <- . loop body end_loop                                                      \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE                           \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 7: executable <- loop body . end_loop                                                      \nrule 47: end_loop <- . START_CODE END_LOOP END_CODE                                             \nrule 48: end_loop <- . CODE_LINE END_LOOP CODE_NEWLINE                                          \nrule 8: executable <- . for_each body end_for_each                                              \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE                           \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        \nrule 3: body <- body . executable TEXT                                                          " },
-    { 30, ms_transition_table_+1480, "rule 9: code <- START_CODE . code_body END_CODE                                              \nrule 11: code_body <- .                                                                      \nrule 12: code_body <- . expression                                                           \nrule 53: expression <- . STRING_LITERAL                                                      \nrule 54: expression <- . INTEGER_LITERAL                                                     \nrule 55: expression <- . SIZEOF '(' ID ')'                                                   \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                      \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                   \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                    \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                             \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                               \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                            \nrule 63: expression <- . ID                                                                  \nrule 64: expression <- . ID '[' expression ']'                                               \nrule 65: expression <- . ID '?'                                                              \nrule 66: expression <- . ID '[' expression ']' '?'                                           \nrule 67: expression <- . expression '.' expression                                           \nrule 68: expression <- . expression '|' '|' expression                                       \nrule 69: expression <- . expression '&' '&' expression                                       \nrule 70: expression <- . expression '=' '=' expression                                       \nrule 71: expression <- . expression '!' '=' expression                                       \nrule 72: expression <- . expression '<' expression                                           \nrule 73: expression <- . expression '<' '=' expression                                       \nrule 74: expression <- . expression '>' expression                                           \nrule 75: expression <- . expression '>' '=' expression                                       \nrule 76: expression <- . expression '+' expression                                           \nrule 77: expression <- . expression '-' expression                                           \nrule 78: expression <- . expression '*' expression                                           \nrule 79: expression <- . expression '/' expression                                           \nrule 80: expression <- . expression '%' expression                                           \nrule 81: expression <- . '-' expression                                                      \nrule 82: expression <- . '!' expression                                                      \nrule 83: expression <- . '(' expression ')'                                                  \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                            \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                  \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                             \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                               \nrule 17: code_body <- . INCLUDE '(' expression ')'                                           \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                   \nrule 19: code_body <- . WARNING '(' expression ')'                                           \nrule 20: code_body <- . ERROR '(' expression ')'                                             \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                       \nrule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE                         \nrule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE\nrule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE                        \nrule 47: end_loop <- START_CODE . END_LOOP END_CODE                                          \nrule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE                        " },
-    { 2, ms_transition_table_+1510, "rule 47: end_loop <- START_CODE END_LOOP . END_CODE" },
-    { 1, ms_transition_table_+1512, "rule 47: end_loop <- START_CODE END_LOOP END_CODE ." },
-    { 30, ms_transition_table_+1513, "rule 11: code_body <- .                                                                         \nrule 12: code_body <- . expression                                                              \nrule 53: expression <- . STRING_LITERAL                                                         \nrule 54: expression <- . INTEGER_LITERAL                                                        \nrule 55: expression <- . SIZEOF '(' ID ')'                                                      \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                         \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                      \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                       \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                                \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                   \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                                  \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                               \nrule 63: expression <- . ID                                                                     \nrule 64: expression <- . ID '[' expression ']'                                                  \nrule 65: expression <- . ID '?'                                                                 \nrule 66: expression <- . ID '[' expression ']' '?'                                              \nrule 67: expression <- . expression '.' expression                                              \nrule 68: expression <- . expression '|' '|' expression                                          \nrule 69: expression <- . expression '&' '&' expression                                          \nrule 70: expression <- . expression '=' '=' expression                                          \nrule 71: expression <- . expression '!' '=' expression                                          \nrule 72: expression <- . expression '<' expression                                              \nrule 73: expression <- . expression '<' '=' expression                                          \nrule 74: expression <- . expression '>' expression                                              \nrule 75: expression <- . expression '>' '=' expression                                          \nrule 76: expression <- . expression '+' expression                                              \nrule 77: expression <- . expression '-' expression                                              \nrule 78: expression <- . expression '*' expression                                              \nrule 79: expression <- . expression '/' expression                                              \nrule 80: expression <- . expression '%' expression                                              \nrule 81: expression <- . '-' expression                                                         \nrule 82: expression <- . '!' expression                                                         \nrule 83: expression <- . '(' expression ')'                                                     \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                               \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                     \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                                \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                                  \nrule 17: code_body <- . INCLUDE '(' expression ')'                                              \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                      \nrule 19: code_body <- . WARNING '(' expression ')'                                              \nrule 20: code_body <- . ERROR '(' expression ')'                                                \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                          \nrule 10: code <- CODE_LINE . code_body CODE_NEWLINE                                             \nrule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE                         \nrule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 48: end_loop <- CODE_LINE . END_LOOP CODE_NEWLINE                                          \nrule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        " },
-    { 2, ms_transition_table_+1543, "rule 48: end_loop <- CODE_LINE END_LOOP . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1545, "rule 48: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE ." },
-    { 1, ms_transition_table_+1546, "rule 7: executable <- loop body end_loop ." },
-    { 3, ms_transition_table_+1547, "rule 0: body <- .                                 \nrule 1: body <- . TEXT                            \nrule 2: body <- . body executable                 \nrule 8: executable <- for_each . body end_for_each\nrule 3: body <- . body executable TEXT            " },
-    { 14, ms_transition_table_+1550, "rule 2: body <- body . executable                                                               \nrule 4: executable <- . code                                                                    \nrule 9: code <- . START_CODE code_body END_CODE                                                 \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE                                             \nrule 5: executable <- . conditional_series                                                      \nrule 22: conditional_series <- . if_statement body conditional_series_end                       \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE                            \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE                         \nrule 6: executable <- . define body end_define                                                  \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 7: executable <- . loop body end_loop                                                      \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE                           \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 8: executable <- . for_each body end_for_each                                              \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE                           \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        \nrule 8: executable <- for_each body . end_for_each                                              \nrule 51: end_for_each <- . START_CODE END_FOR_EACH END_CODE                                     \nrule 52: end_for_each <- . CODE_LINE END_FOR_EACH CODE_NEWLINE                                  \nrule 3: body <- body . executable TEXT                                                          " },
-    { 30, ms_transition_table_+1564, "rule 9: code <- START_CODE . code_body END_CODE                                              \nrule 11: code_body <- .                                                                      \nrule 12: code_body <- . expression                                                           \nrule 53: expression <- . STRING_LITERAL                                                      \nrule 54: expression <- . INTEGER_LITERAL                                                     \nrule 55: expression <- . SIZEOF '(' ID ')'                                                   \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                      \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                   \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                    \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                             \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                               \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                            \nrule 63: expression <- . ID                                                                  \nrule 64: expression <- . ID '[' expression ']'                                               \nrule 65: expression <- . ID '?'                                                              \nrule 66: expression <- . ID '[' expression ']' '?'                                           \nrule 67: expression <- . expression '.' expression                                           \nrule 68: expression <- . expression '|' '|' expression                                       \nrule 69: expression <- . expression '&' '&' expression                                       \nrule 70: expression <- . expression '=' '=' expression                                       \nrule 71: expression <- . expression '!' '=' expression                                       \nrule 72: expression <- . expression '<' expression                                           \nrule 73: expression <- . expression '<' '=' expression                                       \nrule 74: expression <- . expression '>' expression                                           \nrule 75: expression <- . expression '>' '=' expression                                       \nrule 76: expression <- . expression '+' expression                                           \nrule 77: expression <- . expression '-' expression                                           \nrule 78: expression <- . expression '*' expression                                           \nrule 79: expression <- . expression '/' expression                                           \nrule 80: expression <- . expression '%' expression                                           \nrule 81: expression <- . '-' expression                                                      \nrule 82: expression <- . '!' expression                                                      \nrule 83: expression <- . '(' expression ')'                                                  \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                            \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                  \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                             \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                               \nrule 17: code_body <- . INCLUDE '(' expression ')'                                           \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                   \nrule 19: code_body <- . WARNING '(' expression ')'                                           \nrule 20: code_body <- . ERROR '(' expression ')'                                             \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                       \nrule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE                         \nrule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE\nrule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE                        \nrule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE                        \nrule 51: end_for_each <- START_CODE . END_FOR_EACH END_CODE                                  " },
-    { 2, ms_transition_table_+1594, "rule 51: end_for_each <- START_CODE END_FOR_EACH . END_CODE" },
-    { 1, ms_transition_table_+1596, "rule 51: end_for_each <- START_CODE END_FOR_EACH END_CODE ." },
-    { 30, ms_transition_table_+1597, "rule 11: code_body <- .                                                                         \nrule 12: code_body <- . expression                                                              \nrule 53: expression <- . STRING_LITERAL                                                         \nrule 54: expression <- . INTEGER_LITERAL                                                        \nrule 55: expression <- . SIZEOF '(' ID ')'                                                      \nrule 56: expression <- . KEYWORD_INT '(' expression ')'                                         \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'                                      \nrule 58: expression <- . STRING_LENGTH '(' expression ')'                                       \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'                                \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'                                   \nrule 61: expression <- . IS_DEFINED '(' ID ')'                                                  \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'                               \nrule 63: expression <- . ID                                                                     \nrule 64: expression <- . ID '[' expression ']'                                                  \nrule 65: expression <- . ID '?'                                                                 \nrule 66: expression <- . ID '[' expression ']' '?'                                              \nrule 67: expression <- . expression '.' expression                                              \nrule 68: expression <- . expression '|' '|' expression                                          \nrule 69: expression <- . expression '&' '&' expression                                          \nrule 70: expression <- . expression '=' '=' expression                                          \nrule 71: expression <- . expression '!' '=' expression                                          \nrule 72: expression <- . expression '<' expression                                              \nrule 73: expression <- . expression '<' '=' expression                                          \nrule 74: expression <- . expression '>' expression                                              \nrule 75: expression <- . expression '>' '=' expression                                          \nrule 76: expression <- . expression '+' expression                                              \nrule 77: expression <- . expression '-' expression                                              \nrule 78: expression <- . expression '*' expression                                              \nrule 79: expression <- . expression '/' expression                                              \nrule 80: expression <- . expression '%' expression                                              \nrule 81: expression <- . '-' expression                                                         \nrule 82: expression <- . '!' expression                                                         \nrule 83: expression <- . '(' expression ')'                                                     \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                                               \nrule 14: code_body <- . UNDEFINE '(' ID ')'                                                     \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                                                \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                                                  \nrule 17: code_body <- . INCLUDE '(' expression ')'                                              \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'                                      \nrule 19: code_body <- . WARNING '(' expression ')'                                              \nrule 20: code_body <- . ERROR '(' expression ')'                                                \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'                                          \nrule 10: code <- CODE_LINE . code_body CODE_NEWLINE                                             \nrule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE                         \nrule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        \nrule 52: end_for_each <- CODE_LINE . END_FOR_EACH CODE_NEWLINE                                  " },
-    { 2, ms_transition_table_+1627, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1629, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE ." },
-    { 1, ms_transition_table_+1630, "rule 8: executable <- for_each body end_for_each ." },
-    { 3, ms_transition_table_+1631, "rule 0: body <- .                                                                 \nrule 1: body <- . TEXT                                                            \nrule 2: body <- . body executable                                                 \nrule 25: conditional_series_end <- else_if_statement . body conditional_series_end\nrule 3: body <- . body executable TEXT                                            " },
-    { 17, ms_transition_table_+1634, "rule 2: body <- body . executable                                                               \nrule 4: executable <- . code                                                                    \nrule 9: code <- . START_CODE code_body END_CODE                                                 \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE                                             \nrule 5: executable <- . conditional_series                                                      \nrule 22: conditional_series <- . if_statement body conditional_series_end                       \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE                            \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE                         \nrule 23: conditional_series_end <- . end_if                                                     \nrule 32: end_if <- . START_CODE END_IF END_CODE                                                 \nrule 33: end_if <- . CODE_LINE END_IF CODE_NEWLINE                                              \nrule 24: conditional_series_end <- . else_statement body end_if                                 \nrule 28: else_statement <- . START_CODE ELSE END_CODE                                           \nrule 29: else_statement <- . CODE_LINE ELSE CODE_NEWLINE                                        \nrule 25: conditional_series_end <- . else_if_statement body conditional_series_end              \nrule 30: else_if_statement <- . START_CODE ELSE_IF '(' expression ')' END_CODE                  \nrule 31: else_if_statement <- . CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE               \nrule 25: conditional_series_end <- else_if_statement body . conditional_series_end              \nrule 6: executable <- . define body end_define                                                  \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 7: executable <- . loop body end_loop                                                      \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE                           \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 8: executable <- . for_each body end_for_each                                              \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE                           \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        \nrule 3: body <- body . executable TEXT                                                          " },
-    { 1, ms_transition_table_+1651, "rule 25: conditional_series_end <- else_if_statement body conditional_series_end ." },
-    { 1, ms_transition_table_+1652, "rule 23: conditional_series_end <- end_if ." },
-    { 13, ms_transition_table_+1653, "START executable                                                                                \nrule 4: executable <- . code                                                                    \nrule 9: code <- . START_CODE code_body END_CODE                                                 \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE                                             \nrule 5: executable <- . conditional_series                                                      \nrule 22: conditional_series <- . if_statement body conditional_series_end                       \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE                            \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE                         \nrule 6: executable <- . define body end_define                                                  \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE\nrule 7: executable <- . loop body end_loop                                                      \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE                           \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE                        \nrule 8: executable <- . for_each body end_for_each                                              \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE                           \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE                        " },
-    { 1, ms_transition_table_+1666, "RETURN executable" },
-    { 4, ms_transition_table_+1667, "START code                                         \nrule 9: code <- . START_CODE code_body END_CODE    \nrule 10: code <- . CODE_LINE code_body CODE_NEWLINE" },
-    { 25, ms_transition_table_+1671, "rule 9: code <- START_CODE . code_body END_CODE                  \nrule 11: code_body <- .                                          \nrule 12: code_body <- . expression                               \nrule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                \nrule 14: code_body <- . UNDEFINE '(' ID ')'                      \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                 \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                   \nrule 17: code_body <- . INCLUDE '(' expression ')'               \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'       \nrule 19: code_body <- . WARNING '(' expression ')'               \nrule 20: code_body <- . ERROR '(' expression ')'                 \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'           " },
-    { 25, ms_transition_table_+1696, "rule 11: code_body <- .                                          \nrule 12: code_body <- . expression                               \nrule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                \nrule 14: code_body <- . UNDEFINE '(' ID ')'                      \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                 \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                   \nrule 17: code_body <- . INCLUDE '(' expression ')'               \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'       \nrule 19: code_body <- . WARNING '(' expression ')'               \nrule 20: code_body <- . ERROR '(' expression ')'                 \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'           \nrule 10: code <- CODE_LINE . code_body CODE_NEWLINE              " },
-    { 1, ms_transition_table_+1721, "RETURN code" },
-    { 25, ms_transition_table_+1722, "START code_body                                                  \nrule 11: code_body <- .                                          \nrule 12: code_body <- . expression                               \nrule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      \nrule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'                \nrule 14: code_body <- . UNDEFINE '(' ID ')'                      \nrule 15: code_body <- . DECLARE_ARRAY '(' ID ')'                 \nrule 16: code_body <- . DECLARE_MAP '(' ID ')'                   \nrule 17: code_body <- . INCLUDE '(' expression ')'               \nrule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'       \nrule 19: code_body <- . WARNING '(' expression ')'               \nrule 20: code_body <- . ERROR '(' expression ')'                 \nrule 21: code_body <- . FATAL_ERROR '(' expression ')'           " },
-    { 1, ms_transition_table_+1747, "RETURN code_body" },
-    { 5, ms_transition_table_+1748, "START conditional_series                                                 \nrule 22: conditional_series <- . if_statement body conditional_series_end\nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE     \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE  " },
-    { 2, ms_transition_table_+1753, "rule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE" },
-    { 2, ms_transition_table_+1755, "rule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1757, "RETURN conditional_series" },
-    { 7, ms_transition_table_+1758, "START conditional_series_end                                                      \nrule 23: conditional_series_end <- . end_if                                       \nrule 32: end_if <- . START_CODE END_IF END_CODE                                   \nrule 33: end_if <- . CODE_LINE END_IF CODE_NEWLINE                                \nrule 24: conditional_series_end <- . else_statement body end_if                   \nrule 28: else_statement <- . START_CODE ELSE END_CODE                             \nrule 29: else_statement <- . CODE_LINE ELSE CODE_NEWLINE                          \nrule 25: conditional_series_end <- . else_if_statement body conditional_series_end\nrule 30: else_if_statement <- . START_CODE ELSE_IF '(' expression ')' END_CODE    \nrule 31: else_if_statement <- . CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE " },
-    { 4, ms_transition_table_+1765, "rule 32: end_if <- START_CODE . END_IF END_CODE                               \nrule 28: else_statement <- START_CODE . ELSE END_CODE                         \nrule 30: else_if_statement <- START_CODE . ELSE_IF '(' expression ')' END_CODE" },
-    { 4, ms_transition_table_+1769, "rule 33: end_if <- CODE_LINE . END_IF CODE_NEWLINE                               \nrule 29: else_statement <- CODE_LINE . ELSE CODE_NEWLINE                         \nrule 31: else_if_statement <- CODE_LINE . ELSE_IF '(' expression ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1773, "RETURN conditional_series_end" },
-    { 4, ms_transition_table_+1774, "START if_statement                                                     \nrule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE   \nrule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1778, "RETURN if_statement" },
-    { 4, ms_transition_table_+1779, "START else_statement                                    \nrule 28: else_statement <- . START_CODE ELSE END_CODE   \nrule 29: else_statement <- . CODE_LINE ELSE CODE_NEWLINE" },
-    { 2, ms_transition_table_+1783, "rule 28: else_statement <- START_CODE . ELSE END_CODE" },
-    { 2, ms_transition_table_+1785, "rule 29: else_statement <- CODE_LINE . ELSE CODE_NEWLINE" },
-    { 1, ms_transition_table_+1787, "RETURN else_statement" },
-    { 4, ms_transition_table_+1788, "START else_if_statement                                                          \nrule 30: else_if_statement <- . START_CODE ELSE_IF '(' expression ')' END_CODE   \nrule 31: else_if_statement <- . CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1792, "rule 30: else_if_statement <- START_CODE . ELSE_IF '(' expression ')' END_CODE" },
-    { 2, ms_transition_table_+1794, "rule 31: else_if_statement <- CODE_LINE . ELSE_IF '(' expression ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1796, "RETURN else_if_statement" },
-    { 4, ms_transition_table_+1797, "START end_if                                      \nrule 32: end_if <- . START_CODE END_IF END_CODE   \nrule 33: end_if <- . CODE_LINE END_IF CODE_NEWLINE" },
-    { 2, ms_transition_table_+1801, "rule 32: end_if <- START_CODE . END_IF END_CODE" },
-    { 2, ms_transition_table_+1803, "rule 33: end_if <- CODE_LINE . END_IF CODE_NEWLINE" },
-    { 1, ms_transition_table_+1805, "RETURN end_if" },
-    { 7, ms_transition_table_+1806, "START define                                                                                    \nrule 34: define <- . define_scalar                                                              \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE                               \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 35: define <- . define_array_element                                                       \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE                \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 36: define <- . define_map_element                                                         \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1813, "rule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE                            \nrule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE             \nrule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1815, "rule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE                            \nrule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE             \nrule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1817, "RETURN define" },
-    { 4, ms_transition_table_+1818, "START define_scalar                                                 \nrule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE   \nrule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1822, "rule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE" },
-    { 2, ms_transition_table_+1824, "rule 37: define_scalar <- START_CODE DEFINE . '(' ID ')' END_CODE" },
-    { 2, ms_transition_table_+1826, "rule 37: define_scalar <- START_CODE DEFINE '(' . ID ')' END_CODE" },
-    { 2, ms_transition_table_+1828, "rule 37: define_scalar <- START_CODE DEFINE '(' ID . ')' END_CODE" },
-    { 2, ms_transition_table_+1830, "rule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1832, "rule 38: define_scalar <- CODE_LINE DEFINE . '(' ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1834, "rule 38: define_scalar <- CODE_LINE DEFINE '(' . ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1836, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID . ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1838, "RETURN define_scalar" },
-    { 4, ms_transition_table_+1839, "START define_array_element                                                         \nrule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE   \nrule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1843, "rule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1845, "rule 39: define_array_element <- START_CODE DEFINE . '(' ID '[' ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1847, "rule 39: define_array_element <- START_CODE DEFINE '(' . ID '[' ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1849, "rule 39: define_array_element <- START_CODE DEFINE '(' ID . '[' ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1851, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' . ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1853, "rule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1855, "rule 40: define_array_element <- CODE_LINE DEFINE . '(' ID '[' ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1857, "rule 40: define_array_element <- CODE_LINE DEFINE '(' . ID '[' ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1859, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID . '[' ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1861, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' . ']' ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1863, "RETURN define_array_element" },
-    { 4, ms_transition_table_+1864, "START define_map_element                                                                        \nrule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE   \nrule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1868, "rule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1870, "rule 41: define_map_element <- START_CODE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1872, "rule 41: define_map_element <- START_CODE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1874, "rule 41: define_map_element <- START_CODE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1876, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' END_CODE" },
-    { 2, ms_transition_table_+1878, "rule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1880, "rule 42: define_map_element <- CODE_LINE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1882, "rule 42: define_map_element <- CODE_LINE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1884, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1886, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1888, "RETURN define_map_element" },
-    { 4, ms_transition_table_+1889, "START end_define                                          \nrule 43: end_define <- . START_CODE END_DEFINE END_CODE   \nrule 44: end_define <- . CODE_LINE END_DEFINE CODE_NEWLINE" },
-    { 2, ms_transition_table_+1893, "rule 43: end_define <- START_CODE . END_DEFINE END_CODE" },
-    { 2, ms_transition_table_+1895, "rule 44: end_define <- CODE_LINE . END_DEFINE CODE_NEWLINE" },
-    { 1, ms_transition_table_+1897, "RETURN end_define" },
-    { 4, ms_transition_table_+1898, "START loop                                                              \nrule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE   \nrule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1902, "rule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE" },
-    { 2, ms_transition_table_+1904, "rule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1906, "RETURN loop" },
-    { 4, ms_transition_table_+1907, "START end_loop                                        \nrule 47: end_loop <- . START_CODE END_LOOP END_CODE   \nrule 48: end_loop <- . CODE_LINE END_LOOP CODE_NEWLINE" },
-    { 2, ms_transition_table_+1911, "rule 47: end_loop <- START_CODE . END_LOOP END_CODE" },
-    { 2, ms_transition_table_+1913, "rule 48: end_loop <- CODE_LINE . END_LOOP CODE_NEWLINE" },
-    { 1, ms_transition_table_+1915, "RETURN end_loop" },
-    { 4, ms_transition_table_+1916, "START for_each                                                          \nrule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE   \nrule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
-    { 2, ms_transition_table_+1920, "rule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE" },
-    { 2, ms_transition_table_+1922, "rule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
-    { 1, ms_transition_table_+1924, "RETURN for_each" },
-    { 4, ms_transition_table_+1925, "START end_for_each                                            \nrule 51: end_for_each <- . START_CODE END_FOR_EACH END_CODE   \nrule 52: end_for_each <- . CODE_LINE END_FOR_EACH CODE_NEWLINE" },
-    { 2, ms_transition_table_+1929, "rule 51: end_for_each <- START_CODE . END_FOR_EACH END_CODE" },
-    { 2, ms_transition_table_+1931, "rule 52: end_for_each <- CODE_LINE . END_FOR_EACH CODE_NEWLINE" },
-    { 1, ms_transition_table_+1933, "RETURN end_for_each" },
-    { 15, ms_transition_table_+1934, "START expression                                                 \nrule 53: expression <- . STRING_LITERAL                          \nrule 54: expression <- . INTEGER_LITERAL                         \nrule 55: expression <- . SIZEOF '(' ID ')'                       \nrule 56: expression <- . KEYWORD_INT '(' expression ')'          \nrule 57: expression <- . KEYWORD_STRING '(' expression ')'       \nrule 58: expression <- . STRING_LENGTH '(' expression ')'        \nrule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')' \nrule 60: expression <- . TO_STRING_LITERAL '(' expression ')'    \nrule 61: expression <- . IS_DEFINED '(' ID ')'                   \nrule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'\nrule 63: expression <- . ID                                      \nrule 64: expression <- . ID '[' expression ']'                   \nrule 65: expression <- . ID '?'                                  \nrule 66: expression <- . ID '[' expression ']' '?'               \nrule 67: expression <- . expression '.' expression               \nrule 68: expression <- . expression '|' '|' expression           \nrule 69: expression <- . expression '&' '&' expression           \nrule 70: expression <- . expression '=' '=' expression           \nrule 71: expression <- . expression '!' '=' expression           \nrule 72: expression <- . expression '<' expression               \nrule 73: expression <- . expression '<' '=' expression           \nrule 74: expression <- . expression '>' expression               \nrule 75: expression <- . expression '>' '=' expression           \nrule 76: expression <- . expression '+' expression               \nrule 77: expression <- . expression '-' expression               \nrule 78: expression <- . expression '*' expression               \nrule 79: expression <- . expression '/' expression               \nrule 80: expression <- . expression '%' expression               \nrule 81: expression <- . '-' expression                          \nrule 82: expression <- . '!' expression                          \nrule 83: expression <- . '(' expression ')'                      " },
-    { 13, ms_transition_table_+1949, "RETURN expression                                     \nrule 67: expression <- expression . '.' expression    \nrule 68: expression <- expression . '|' '|' expression\nrule 69: expression <- expression . '&' '&' expression\nrule 70: expression <- expression . '=' '=' expression\nrule 71: expression <- expression . '!' '=' expression\nrule 72: expression <- expression . '<' expression    \nrule 73: expression <- expression . '<' '=' expression\nrule 74: expression <- expression . '>' expression    \nrule 75: expression <- expression . '>' '=' expression\nrule 76: expression <- expression . '+' expression    \nrule 77: expression <- expression . '-' expression    \nrule 78: expression <- expression . '*' expression    \nrule 79: expression <- expression . '/' expression    \nrule 80: expression <- expression . '%' expression    " }
-};
-std::size_t const Parser::ms_state_count_ = sizeof(Parser::ms_state_table_) / sizeof(*Parser::ms_state_table_);
-
-Parser::Transition_ const Parser::ms_transition_table_[] =
-{
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+0 },
-    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+0 },
-    { Parser::Transition_::SHIFT, 2, 1, ms_lookahead_table_+1 },
-    { Parser::Transition_::REDUCE, 1, 0, ms_lookahead_table_+2 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+2 },
-    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+2 },
-    { Parser::Transition_::SHIFT, 154, 1, ms_lookahead_table_+3 },
-    { Parser::Transition_::SHIFT, 189, 1, ms_lookahead_table_+4 },
-    { Parser::Transition_::SHIFT, 191, 1, ms_lookahead_table_+5 },
-    { Parser::Transition_::SHIFT, 192, 1, ms_lookahead_table_+6 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+7 },
-    { Parser::Transition_::SHIFT, 221, 1, ms_lookahead_table_+8 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+9 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+10 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+11 },
-    { Parser::Transition_::SHIFT, 233, 1, ms_lookahead_table_+12 },
-    { Parser::Transition_::SHIFT, 242, 1, ms_lookahead_table_+13 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+14 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+14 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+15 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+16 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+17 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+18 },
-    { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+19 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+20 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+21 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+22 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+23 },
-    { Parser::Transition_::SHIFT, 118, 1, ms_lookahead_table_+24 },
-    { Parser::Transition_::SHIFT, 125, 1, ms_lookahead_table_+25 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+26 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+27 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+28 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+29 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+30 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+31 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+32 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+33 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+34 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+35 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+36 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+37 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+38 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+39 },
-    { Parser::Transition_::SHIFT, 152, 1, ms_lookahead_table_+40 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+41 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+42 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+42 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+43 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+44 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+45 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+46 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+47 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+48 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+49 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+50 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+51 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+52 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+53 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+54 },
-    { Parser::Transition_::SHIFT, 82, 1, ms_lookahead_table_+55 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+56 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+56 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+57 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+58 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+59 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+60 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+61 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+62 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+63 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+64 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+65 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+66 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+67 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+68 },
-    { Parser::Transition_::SHIFT, 80, 1, ms_lookahead_table_+69 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+70 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+70 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+71 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+72 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+73 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+74 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+75 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+76 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+77 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+78 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+79 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+80 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+81 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+82 },
-    { Parser::Transition_::SHIFT, 79, 1, ms_lookahead_table_+83 },
-    { Parser::Transition_::REDUCE, 63, 0, ms_lookahead_table_+84 },
-    { Parser::Transition_::SHIFT, 8, 1, ms_lookahead_table_+84 },
-    { Parser::Transition_::SHIFT, 9, 1, ms_lookahead_table_+85 },
-    { Parser::Transition_::REDUCE, 65, 0, ms_lookahead_table_+86 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+86 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+86 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+87 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+88 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+89 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+90 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+91 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+92 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+93 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+94 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+95 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+96 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+97 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+98 },
-    { Parser::Transition_::SHIFT, 76, 1, ms_lookahead_table_+99 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+100 },
-    { Parser::Transition_::SHIFT, 11, 1, ms_lookahead_table_+100 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+101 },
-    { Parser::Transition_::SHIFT, 12, 1, ms_lookahead_table_+101 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+102 },
-    { Parser::Transition_::SHIFT, 13, 1, ms_lookahead_table_+102 },
-    { Parser::Transition_::REDUCE, 55, 0, ms_lookahead_table_+103 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+103 },
-    { Parser::Transition_::SHIFT, 15, 1, ms_lookahead_table_+103 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+104 },
-    { Parser::Transition_::SHIFT, 16, 1, ms_lookahead_table_+104 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+105 },
-    { Parser::Transition_::SHIFT, 17, 1, ms_lookahead_table_+105 },
-    { Parser::Transition_::SHIFT, 18, 1, ms_lookahead_table_+106 },
-    { Parser::Transition_::REDUCE, 61, 0, ms_lookahead_table_+107 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+107 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+107 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+108 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+109 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+110 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+111 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+112 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+113 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+114 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+115 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+116 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+117 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+118 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+119 },
-    { Parser::Transition_::SHIFT, 73, 1, ms_lookahead_table_+120 },
-    { Parser::Transition_::REDUCE, 54, 0, ms_lookahead_table_+121 },
-    { Parser::Transition_::REDUCE, 53, 0, ms_lookahead_table_+121 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+121 },
-    { Parser::Transition_::SHIFT, 22, 1, ms_lookahead_table_+121 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+122 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+122 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+123 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+124 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+125 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+126 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+127 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+128 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+129 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+130 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+131 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+132 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+133 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+134 },
-    { Parser::Transition_::SHIFT, 71, 1, ms_lookahead_table_+135 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+136 },
-    { Parser::Transition_::SHIFT, 24, 1, ms_lookahead_table_+136 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+137 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+137 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+138 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+139 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+140 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+141 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+142 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+143 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+144 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+145 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+146 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+147 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+148 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+149 },
-    { Parser::Transition_::SHIFT, 69, 1, ms_lookahead_table_+150 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+151 },
-    { Parser::Transition_::SHIFT, 26, 1, ms_lookahead_table_+151 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+152 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+152 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+153 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+154 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+155 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+156 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+157 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+158 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+159 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+160 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+161 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+162 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+163 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+164 },
-    { Parser::Transition_::SHIFT, 67, 1, ms_lookahead_table_+165 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+166 },
-    { Parser::Transition_::SHIFT, 28, 1, ms_lookahead_table_+166 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+167 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+167 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+168 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+169 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+170 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+171 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+172 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+173 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+174 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+175 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+176 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+177 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+178 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+179 },
-    { Parser::Transition_::SHIFT, 65, 1, ms_lookahead_table_+180 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+181 },
-    { Parser::Transition_::SHIFT, 30, 1, ms_lookahead_table_+181 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+182 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+182 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+183 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+184 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+185 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+186 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+187 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+188 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+189 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+190 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+191 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+192 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+193 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+194 },
-    { Parser::Transition_::SHIFT, 31, 1, ms_lookahead_table_+195 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+196 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+196 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+197 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+198 },
-    { Parser::Transition_::SHIFT, 61, 1, ms_lookahead_table_+199 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+200 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+201 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+202 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+203 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+204 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+205 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+206 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+207 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+208 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+209 },
-    { Parser::Transition_::SHIFT, 33, 1, ms_lookahead_table_+209 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+210 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+210 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+211 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+212 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+213 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+214 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+215 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+216 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+217 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+218 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+219 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+220 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+221 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+222 },
-    { Parser::Transition_::SHIFT, 34, 1, ms_lookahead_table_+223 },
-    { Parser::Transition_::REDUCE, 71, 0, ms_lookahead_table_+224 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+224 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+225 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+226 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+227 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+228 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+229 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+230 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+231 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+232 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+232 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+233 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+234 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+235 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+236 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+237 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+238 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+239 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+240 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+241 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+242 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+243 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+244 },
-    { Parser::Transition_::SHIFT, 36, 1, ms_lookahead_table_+245 },
-    { Parser::Transition_::REDUCE, 80, 0, ms_lookahead_table_+246 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+246 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+246 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+247 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+248 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+249 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+250 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+251 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+252 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+253 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+254 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+255 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+256 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+257 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+258 },
-    { Parser::Transition_::SHIFT, 38, 1, ms_lookahead_table_+259 },
-    { Parser::Transition_::REDUCE, 78, 0, ms_lookahead_table_+260 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+260 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+260 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+261 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+262 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+263 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+264 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+265 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+266 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+267 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+268 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+269 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+270 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+271 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+272 },
-    { Parser::Transition_::SHIFT, 40, 1, ms_lookahead_table_+273 },
-    { Parser::Transition_::REDUCE, 76, 0, ms_lookahead_table_+274 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+274 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+275 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+276 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+277 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+277 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+278 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+279 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+280 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+281 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+282 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+283 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+284 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+285 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+286 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+287 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+288 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+289 },
-    { Parser::Transition_::SHIFT, 42, 1, ms_lookahead_table_+290 },
-    { Parser::Transition_::REDUCE, 79, 0, ms_lookahead_table_+291 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+291 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+291 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+292 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+293 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+294 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+295 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+296 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+297 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+298 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+299 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+300 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+301 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+302 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+303 },
-    { Parser::Transition_::SHIFT, 44, 1, ms_lookahead_table_+304 },
-    { Parser::Transition_::REDUCE, 77, 0, ms_lookahead_table_+305 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+305 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+306 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+307 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+308 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+308 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+309 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+310 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+311 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+312 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+313 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+314 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+315 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+316 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+317 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+318 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+319 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+320 },
-    { Parser::Transition_::SHIFT, 46, 1, ms_lookahead_table_+321 },
-    { Parser::Transition_::REDUCE, 67, 0, ms_lookahead_table_+322 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+322 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+323 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+324 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+325 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+326 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+327 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+327 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+328 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+329 },
-    { Parser::Transition_::SHIFT, 48, 1, ms_lookahead_table_+330 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+331 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+332 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+333 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+334 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+335 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+336 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+337 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+338 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+339 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+340 },
-    { Parser::Transition_::SHIFT, 50, 1, ms_lookahead_table_+341 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+342 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+342 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+343 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+344 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+345 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+346 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+347 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+348 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+349 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+350 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+351 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+352 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+353 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+354 },
-    { Parser::Transition_::SHIFT, 49, 1, ms_lookahead_table_+355 },
-    { Parser::Transition_::REDUCE, 73, 0, ms_lookahead_table_+356 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+356 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+357 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+358 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+359 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+360 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+361 },
-    { Parser::Transition_::REDUCE, 72, 0, ms_lookahead_table_+362 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+362 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+363 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+364 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+365 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+366 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+367 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+368 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+368 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+369 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+370 },
-    { Parser::Transition_::SHIFT, 52, 1, ms_lookahead_table_+371 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+372 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+373 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+374 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+375 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+376 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+377 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+378 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+379 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+380 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+381 },
-    { Parser::Transition_::SHIFT, 54, 1, ms_lookahead_table_+382 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+383 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+383 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+384 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+385 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+386 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+387 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+388 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+389 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+390 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+391 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+392 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+393 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+394 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+395 },
-    { Parser::Transition_::SHIFT, 53, 1, ms_lookahead_table_+396 },
-    { Parser::Transition_::REDUCE, 75, 0, ms_lookahead_table_+397 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+397 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+398 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+399 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+400 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+401 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+402 },
-    { Parser::Transition_::REDUCE, 74, 0, ms_lookahead_table_+403 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+403 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+404 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+405 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+406 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+407 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+408 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+409 },
-    { Parser::Transition_::SHIFT, 56, 1, ms_lookahead_table_+409 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+410 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+410 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+411 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+412 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+413 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+414 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+415 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+416 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+417 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+418 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+419 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+420 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+421 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+422 },
-    { Parser::Transition_::SHIFT, 57, 1, ms_lookahead_table_+423 },
-    { Parser::Transition_::REDUCE, 69, 0, ms_lookahead_table_+424 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+424 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+425 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+426 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+427 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+428 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+429 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+430 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+431 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+432 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+433 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+434 },
-    { Parser::Transition_::SHIFT, 59, 1, ms_lookahead_table_+434 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+435 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+435 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+436 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+437 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+438 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+439 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+440 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+441 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+442 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+443 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+444 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+445 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+446 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+447 },
-    { Parser::Transition_::SHIFT, 60, 1, ms_lookahead_table_+448 },
-    { Parser::Transition_::REDUCE, 70, 0, ms_lookahead_table_+449 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+449 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+450 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+451 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+452 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+453 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+454 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+455 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+456 },
-    { Parser::Transition_::REDUCE, 60, 0, ms_lookahead_table_+457 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+457 },
-    { Parser::Transition_::SHIFT, 63, 1, ms_lookahead_table_+457 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+458 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+458 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+459 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+460 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+461 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+462 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+463 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+464 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+465 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+466 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+467 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+468 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+469 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+470 },
-    { Parser::Transition_::SHIFT, 64, 1, ms_lookahead_table_+471 },
-    { Parser::Transition_::REDUCE, 68, 0, ms_lookahead_table_+472 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+472 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+473 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+474 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+475 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+476 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+477 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+478 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+479 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+480 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+481 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+482 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+483 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+483 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+484 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+485 },
-    { Parser::Transition_::SHIFT, 66, 1, ms_lookahead_table_+486 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+487 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+488 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+489 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+490 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+491 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+492 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+493 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+494 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+495 },
-    { Parser::Transition_::REDUCE, 59, 0, ms_lookahead_table_+496 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+496 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+496 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+497 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+498 },
-    { Parser::Transition_::SHIFT, 68, 1, ms_lookahead_table_+499 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+500 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+501 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+502 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+503 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+504 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+505 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+506 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+507 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+508 },
-    { Parser::Transition_::REDUCE, 58, 0, ms_lookahead_table_+509 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+509 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+509 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+510 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+511 },
-    { Parser::Transition_::SHIFT, 70, 1, ms_lookahead_table_+512 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+513 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+514 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+515 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+516 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+517 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+518 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+519 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+520 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+521 },
-    { Parser::Transition_::REDUCE, 57, 0, ms_lookahead_table_+522 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+522 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+522 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+523 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+524 },
-    { Parser::Transition_::SHIFT, 72, 1, ms_lookahead_table_+525 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+526 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+527 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+528 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+529 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+530 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+531 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+532 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+533 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+534 },
-    { Parser::Transition_::REDUCE, 56, 0, ms_lookahead_table_+535 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+535 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+535 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+536 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+537 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+538 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+539 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+540 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+541 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+542 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+543 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+544 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+545 },
-    { Parser::Transition_::SHIFT, 74, 1, ms_lookahead_table_+546 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+547 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+548 },
-    { Parser::Transition_::SHIFT, 75, 1, ms_lookahead_table_+548 },
-    { Parser::Transition_::REDUCE, 62, 0, ms_lookahead_table_+549 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+549 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+549 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+550 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+551 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+552 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+553 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+554 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+555 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+556 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+557 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+558 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+559 },
-    { Parser::Transition_::SHIFT, 77, 1, ms_lookahead_table_+560 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+561 },
-    { Parser::Transition_::REDUCE, 64, 0, ms_lookahead_table_+562 },
-    { Parser::Transition_::SHIFT, 78, 1, ms_lookahead_table_+562 },
-    { Parser::Transition_::REDUCE, 66, 0, ms_lookahead_table_+563 },
-    { Parser::Transition_::REDUCE, 81, 0, ms_lookahead_table_+563 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+563 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+563 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+564 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+565 },
-    { Parser::Transition_::SHIFT, 81, 1, ms_lookahead_table_+566 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+567 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+568 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+569 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+570 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+571 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+572 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+573 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+574 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+575 },
-    { Parser::Transition_::REDUCE, 83, 0, ms_lookahead_table_+576 },
-    { Parser::Transition_::REDUCE, 82, 0, ms_lookahead_table_+576 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+576 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+576 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+577 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+578 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+579 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+580 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+581 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+582 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+583 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+584 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+585 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+586 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+587 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+588 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+589 },
-    { Parser::Transition_::REDUCE, 12, 0, ms_lookahead_table_+590 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+590 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+591 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+592 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+593 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+594 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+595 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+596 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+597 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+598 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+599 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+600 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+601 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+602 },
-    { Parser::Transition_::SHIFT, 86, 1, ms_lookahead_table_+602 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+603 },
-    { Parser::Transition_::SHIFT, 87, 1, ms_lookahead_table_+603 },
-    { Parser::Transition_::REDUCE, 13, 0, ms_lookahead_table_+604 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+604 },
-    { Parser::Transition_::SHIFT, 89, 1, ms_lookahead_table_+604 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+605 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+605 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+606 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+607 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+608 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+609 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+610 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+611 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+612 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+613 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+614 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+615 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+616 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+617 },
-    { Parser::Transition_::SHIFT, 90, 1, ms_lookahead_table_+618 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+619 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+619 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+620 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+621 },
-    { Parser::Transition_::SHIFT, 91, 1, ms_lookahead_table_+622 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+623 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+624 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+625 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+626 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+627 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+628 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+629 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+630 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+631 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+632 },
-    { Parser::Transition_::SHIFT, 92, 1, ms_lookahead_table_+632 },
-    { Parser::Transition_::REDUCE, 26, 0, ms_lookahead_table_+633 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+633 },
-    { Parser::Transition_::SHIFT, 94, 1, ms_lookahead_table_+633 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+634 },
-    { Parser::Transition_::SHIFT, 95, 1, ms_lookahead_table_+634 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+635 },
-    { Parser::Transition_::SHIFT, 96, 1, ms_lookahead_table_+635 },
-    { Parser::Transition_::REDUCE, 14, 0, ms_lookahead_table_+636 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+636 },
-    { Parser::Transition_::SHIFT, 98, 1, ms_lookahead_table_+636 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+637 },
-    { Parser::Transition_::SHIFT, 99, 1, ms_lookahead_table_+637 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+638 },
-    { Parser::Transition_::SHIFT, 100, 1, ms_lookahead_table_+638 },
-    { Parser::Transition_::REDUCE, 15, 0, ms_lookahead_table_+639 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+639 },
-    { Parser::Transition_::SHIFT, 102, 1, ms_lookahead_table_+639 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+640 },
-    { Parser::Transition_::SHIFT, 103, 1, ms_lookahead_table_+640 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+641 },
-    { Parser::Transition_::SHIFT, 104, 1, ms_lookahead_table_+641 },
-    { Parser::Transition_::REDUCE, 16, 0, ms_lookahead_table_+642 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+642 },
-    { Parser::Transition_::SHIFT, 106, 1, ms_lookahead_table_+642 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+643 },
-    { Parser::Transition_::SHIFT, 107, 1, ms_lookahead_table_+643 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+644 },
-    { Parser::Transition_::SHIFT, 108, 1, ms_lookahead_table_+644 },
-    { Parser::Transition_::SHIFT, 110, 1, ms_lookahead_table_+645 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+646 },
-    { Parser::Transition_::SHIFT, 109, 1, ms_lookahead_table_+646 },
-    { Parser::Transition_::REDUCE, 37, 0, ms_lookahead_table_+647 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+647 },
-    { Parser::Transition_::SHIFT, 111, 1, ms_lookahead_table_+647 },
-    { Parser::Transition_::SHIFT, 114, 1, ms_lookahead_table_+648 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+649 },
-    { Parser::Transition_::SHIFT, 112, 1, ms_lookahead_table_+649 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+650 },
-    { Parser::Transition_::SHIFT, 113, 1, ms_lookahead_table_+650 },
-    { Parser::Transition_::REDUCE, 39, 0, ms_lookahead_table_+651 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+651 },
-    { Parser::Transition_::SHIFT, 115, 1, ms_lookahead_table_+651 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+652 },
-    { Parser::Transition_::SHIFT, 116, 1, ms_lookahead_table_+652 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+653 },
-    { Parser::Transition_::SHIFT, 117, 1, ms_lookahead_table_+653 },
-    { Parser::Transition_::REDUCE, 41, 0, ms_lookahead_table_+654 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+654 },
-    { Parser::Transition_::SHIFT, 119, 1, ms_lookahead_table_+654 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+655 },
-    { Parser::Transition_::SHIFT, 120, 1, ms_lookahead_table_+655 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+656 },
-    { Parser::Transition_::SHIFT, 121, 1, ms_lookahead_table_+656 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+657 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+657 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+658 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+659 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+660 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+661 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+662 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+663 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+664 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+665 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+666 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+667 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+668 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+669 },
-    { Parser::Transition_::SHIFT, 122, 1, ms_lookahead_table_+670 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+671 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+671 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+672 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+673 },
-    { Parser::Transition_::SHIFT, 123, 1, ms_lookahead_table_+674 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+675 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+676 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+677 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+678 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+679 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+680 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+681 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+682 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+683 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+684 },
-    { Parser::Transition_::SHIFT, 124, 1, ms_lookahead_table_+684 },
-    { Parser::Transition_::REDUCE, 45, 0, ms_lookahead_table_+685 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+685 },
-    { Parser::Transition_::SHIFT, 126, 1, ms_lookahead_table_+685 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+686 },
-    { Parser::Transition_::SHIFT, 127, 1, ms_lookahead_table_+686 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+687 },
-    { Parser::Transition_::SHIFT, 128, 1, ms_lookahead_table_+687 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+688 },
-    { Parser::Transition_::SHIFT, 129, 1, ms_lookahead_table_+688 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+689 },
-    { Parser::Transition_::SHIFT, 130, 1, ms_lookahead_table_+689 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+690 },
-    { Parser::Transition_::SHIFT, 131, 1, ms_lookahead_table_+690 },
-    { Parser::Transition_::REDUCE, 49, 0, ms_lookahead_table_+691 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+691 },
-    { Parser::Transition_::SHIFT, 133, 1, ms_lookahead_table_+691 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+692 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+692 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+693 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+694 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+695 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+696 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+697 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+698 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+699 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+700 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+701 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+702 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+703 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+704 },
-    { Parser::Transition_::SHIFT, 134, 1, ms_lookahead_table_+705 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+706 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+706 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+707 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+708 },
-    { Parser::Transition_::SHIFT, 135, 1, ms_lookahead_table_+709 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+710 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+711 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+712 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+713 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+714 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+715 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+716 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+717 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+718 },
-    { Parser::Transition_::REDUCE, 17, 0, ms_lookahead_table_+719 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+719 },
-    { Parser::Transition_::SHIFT, 137, 1, ms_lookahead_table_+719 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+720 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+720 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+721 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+722 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+723 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+724 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+725 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+726 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+727 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+728 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+729 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+730 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+731 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+732 },
-    { Parser::Transition_::SHIFT, 138, 1, ms_lookahead_table_+733 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+734 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+734 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+735 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+736 },
-    { Parser::Transition_::SHIFT, 139, 1, ms_lookahead_table_+737 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+738 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+739 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+740 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+741 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+742 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+743 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+744 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+745 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+746 },
-    { Parser::Transition_::REDUCE, 18, 0, ms_lookahead_table_+747 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+747 },
-    { Parser::Transition_::SHIFT, 141, 1, ms_lookahead_table_+747 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+748 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+748 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+749 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+750 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+751 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+752 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+753 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+754 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+755 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+756 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+757 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+758 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+759 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+760 },
-    { Parser::Transition_::SHIFT, 142, 1, ms_lookahead_table_+761 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+762 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+762 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+763 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+764 },
-    { Parser::Transition_::SHIFT, 143, 1, ms_lookahead_table_+765 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+766 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+767 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+768 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+769 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+770 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+771 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+772 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+773 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+774 },
-    { Parser::Transition_::REDUCE, 19, 0, ms_lookahead_table_+775 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+775 },
-    { Parser::Transition_::SHIFT, 145, 1, ms_lookahead_table_+775 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+776 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+776 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+777 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+778 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+779 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+780 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+781 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+782 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+783 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+784 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+785 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+786 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+787 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+788 },
-    { Parser::Transition_::SHIFT, 146, 1, ms_lookahead_table_+789 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+790 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+790 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+791 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+792 },
-    { Parser::Transition_::SHIFT, 147, 1, ms_lookahead_table_+793 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+794 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+795 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+796 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+797 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+798 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+799 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+800 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+801 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+802 },
-    { Parser::Transition_::REDUCE, 20, 0, ms_lookahead_table_+803 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+803 },
-    { Parser::Transition_::SHIFT, 149, 1, ms_lookahead_table_+803 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+804 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+804 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+805 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+806 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+807 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+808 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+809 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+810 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+811 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+812 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+813 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+814 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+815 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+816 },
-    { Parser::Transition_::SHIFT, 150, 1, ms_lookahead_table_+817 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+818 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+818 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+819 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+820 },
-    { Parser::Transition_::SHIFT, 151, 1, ms_lookahead_table_+821 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+822 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+823 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+824 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+825 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+826 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+827 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+828 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+829 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+830 },
-    { Parser::Transition_::REDUCE, 21, 0, ms_lookahead_table_+831 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+831 },
-    { Parser::Transition_::SHIFT, 153, 1, ms_lookahead_table_+831 },
-    { Parser::Transition_::REDUCE, 9, 0, ms_lookahead_table_+832 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+832 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+832 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+833 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+834 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+835 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+836 },
-    { Parser::Transition_::SHIFT, 155, 1, ms_lookahead_table_+837 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+838 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+839 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+840 },
-    { Parser::Transition_::SHIFT, 160, 1, ms_lookahead_table_+841 },
-    { Parser::Transition_::SHIFT, 173, 1, ms_lookahead_table_+842 },
-    { Parser::Transition_::SHIFT, 180, 1, ms_lookahead_table_+843 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+844 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+845 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+846 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+847 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+848 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+849 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+850 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+851 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+852 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+853 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+854 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+855 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+856 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+857 },
-    { Parser::Transition_::SHIFT, 187, 1, ms_lookahead_table_+858 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+859 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+860 },
-    { Parser::Transition_::SHIFT, 156, 1, ms_lookahead_table_+860 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+861 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+861 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+862 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+863 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+864 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+865 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+866 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+867 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+868 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+869 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+870 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+871 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+872 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+873 },
-    { Parser::Transition_::SHIFT, 157, 1, ms_lookahead_table_+874 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+875 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+875 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+876 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+877 },
-    { Parser::Transition_::SHIFT, 158, 1, ms_lookahead_table_+878 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+879 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+880 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+881 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+882 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+883 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+884 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+885 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+886 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+887 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+888 },
-    { Parser::Transition_::SHIFT, 159, 1, ms_lookahead_table_+888 },
-    { Parser::Transition_::REDUCE, 27, 0, ms_lookahead_table_+889 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+889 },
-    { Parser::Transition_::SHIFT, 161, 1, ms_lookahead_table_+889 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+890 },
-    { Parser::Transition_::SHIFT, 162, 1, ms_lookahead_table_+890 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+891 },
-    { Parser::Transition_::SHIFT, 163, 1, ms_lookahead_table_+891 },
-    { Parser::Transition_::SHIFT, 165, 1, ms_lookahead_table_+892 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+893 },
-    { Parser::Transition_::SHIFT, 164, 1, ms_lookahead_table_+893 },
-    { Parser::Transition_::REDUCE, 38, 0, ms_lookahead_table_+894 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+894 },
-    { Parser::Transition_::SHIFT, 166, 1, ms_lookahead_table_+894 },
-    { Parser::Transition_::SHIFT, 169, 1, ms_lookahead_table_+895 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+896 },
-    { Parser::Transition_::SHIFT, 167, 1, ms_lookahead_table_+896 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+897 },
-    { Parser::Transition_::SHIFT, 168, 1, ms_lookahead_table_+897 },
-    { Parser::Transition_::REDUCE, 40, 0, ms_lookahead_table_+898 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+898 },
-    { Parser::Transition_::SHIFT, 170, 1, ms_lookahead_table_+898 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+899 },
-    { Parser::Transition_::SHIFT, 171, 1, ms_lookahead_table_+899 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+900 },
-    { Parser::Transition_::SHIFT, 172, 1, ms_lookahead_table_+900 },
-    { Parser::Transition_::REDUCE, 42, 0, ms_lookahead_table_+901 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+901 },
-    { Parser::Transition_::SHIFT, 174, 1, ms_lookahead_table_+901 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+902 },
-    { Parser::Transition_::SHIFT, 175, 1, ms_lookahead_table_+902 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+903 },
-    { Parser::Transition_::SHIFT, 176, 1, ms_lookahead_table_+903 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+904 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+904 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+905 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+906 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+907 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+908 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+909 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+910 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+911 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+912 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+913 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+914 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+915 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+916 },
-    { Parser::Transition_::SHIFT, 177, 1, ms_lookahead_table_+917 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+918 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+918 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+919 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+920 },
-    { Parser::Transition_::SHIFT, 178, 1, ms_lookahead_table_+921 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+922 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+923 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+924 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+925 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+926 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+927 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+928 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+929 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+930 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+931 },
-    { Parser::Transition_::SHIFT, 179, 1, ms_lookahead_table_+931 },
-    { Parser::Transition_::REDUCE, 46, 0, ms_lookahead_table_+932 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+932 },
-    { Parser::Transition_::SHIFT, 181, 1, ms_lookahead_table_+932 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+933 },
-    { Parser::Transition_::SHIFT, 182, 1, ms_lookahead_table_+933 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+934 },
-    { Parser::Transition_::SHIFT, 183, 1, ms_lookahead_table_+934 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+935 },
-    { Parser::Transition_::SHIFT, 184, 1, ms_lookahead_table_+935 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+936 },
-    { Parser::Transition_::SHIFT, 185, 1, ms_lookahead_table_+936 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+937 },
-    { Parser::Transition_::SHIFT, 186, 1, ms_lookahead_table_+937 },
-    { Parser::Transition_::REDUCE, 50, 0, ms_lookahead_table_+938 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+938 },
-    { Parser::Transition_::SHIFT, 188, 1, ms_lookahead_table_+938 },
-    { Parser::Transition_::REDUCE, 10, 0, ms_lookahead_table_+939 },
-    { Parser::Transition_::REDUCE, 2, 0, ms_lookahead_table_+939 },
-    { Parser::Transition_::SHIFT, 190, 1, ms_lookahead_table_+939 },
-    { Parser::Transition_::REDUCE, 3, 0, ms_lookahead_table_+940 },
-    { Parser::Transition_::REDUCE, 4, 0, ms_lookahead_table_+940 },
-    { Parser::Transition_::REDUCE, 5, 0, ms_lookahead_table_+940 },
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+940 },
-    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+940 },
-    { Parser::Transition_::SHIFT, 194, 1, ms_lookahead_table_+941 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+942 },
-    { Parser::Transition_::SHIFT, 195, 1, ms_lookahead_table_+942 },
-    { Parser::Transition_::SHIFT, 205, 1, ms_lookahead_table_+943 },
-    { Parser::Transition_::SHIFT, 189, 1, ms_lookahead_table_+944 },
-    { Parser::Transition_::SHIFT, 191, 1, ms_lookahead_table_+945 },
-    { Parser::Transition_::SHIFT, 192, 1, ms_lookahead_table_+946 },
-    { Parser::Transition_::SHIFT, 215, 1, ms_lookahead_table_+947 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+948 },
-    { Parser::Transition_::SHIFT, 216, 1, ms_lookahead_table_+949 },
-    { Parser::Transition_::SHIFT, 251, 1, ms_lookahead_table_+950 },
-    { Parser::Transition_::SHIFT, 254, 1, ms_lookahead_table_+951 },
-    { Parser::Transition_::SHIFT, 221, 1, ms_lookahead_table_+952 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+953 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+954 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+955 },
-    { Parser::Transition_::SHIFT, 233, 1, ms_lookahead_table_+956 },
-    { Parser::Transition_::SHIFT, 242, 1, ms_lookahead_table_+957 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+958 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+958 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+959 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+960 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+961 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+962 },
-    { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+963 },
-    { Parser::Transition_::SHIFT, 196, 1, ms_lookahead_table_+964 },
-    { Parser::Transition_::SHIFT, 198, 1, ms_lookahead_table_+965 },
-    { Parser::Transition_::SHIFT, 203, 1, ms_lookahead_table_+966 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+967 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+968 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+969 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+970 },
-    { Parser::Transition_::SHIFT, 118, 1, ms_lookahead_table_+971 },
-    { Parser::Transition_::SHIFT, 125, 1, ms_lookahead_table_+972 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+973 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+974 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+975 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+976 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+977 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+978 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+979 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+980 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+981 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+982 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+983 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+984 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+985 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+986 },
-    { Parser::Transition_::SHIFT, 152, 1, ms_lookahead_table_+987 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+988 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+989 },
-    { Parser::Transition_::SHIFT, 197, 1, ms_lookahead_table_+989 },
-    { Parser::Transition_::REDUCE, 28, 0, ms_lookahead_table_+990 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+990 },
-    { Parser::Transition_::SHIFT, 199, 1, ms_lookahead_table_+990 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+991 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+991 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+992 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+993 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+994 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+995 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+996 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+997 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+998 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+999 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1000 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1001 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1002 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1003 },
-    { Parser::Transition_::SHIFT, 200, 1, ms_lookahead_table_+1004 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1005 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+1005 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+1006 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+1007 },
-    { Parser::Transition_::SHIFT, 201, 1, ms_lookahead_table_+1008 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+1009 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+1010 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+1011 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+1012 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+1013 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+1014 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+1015 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+1016 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+1017 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1018 },
-    { Parser::Transition_::SHIFT, 202, 1, ms_lookahead_table_+1018 },
-    { Parser::Transition_::REDUCE, 30, 0, ms_lookahead_table_+1019 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1019 },
-    { Parser::Transition_::SHIFT, 204, 1, ms_lookahead_table_+1019 },
-    { Parser::Transition_::REDUCE, 32, 0, ms_lookahead_table_+1020 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1020 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1020 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1021 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1022 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1023 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1024 },
-    { Parser::Transition_::SHIFT, 155, 1, ms_lookahead_table_+1025 },
-    { Parser::Transition_::SHIFT, 206, 1, ms_lookahead_table_+1026 },
-    { Parser::Transition_::SHIFT, 208, 1, ms_lookahead_table_+1027 },
-    { Parser::Transition_::SHIFT, 213, 1, ms_lookahead_table_+1028 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1029 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1030 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1031 },
-    { Parser::Transition_::SHIFT, 160, 1, ms_lookahead_table_+1032 },
-    { Parser::Transition_::SHIFT, 173, 1, ms_lookahead_table_+1033 },
-    { Parser::Transition_::SHIFT, 180, 1, ms_lookahead_table_+1034 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1035 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1036 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1037 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1038 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1039 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1040 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1041 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1042 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1043 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1044 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1045 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1046 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1047 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1048 },
-    { Parser::Transition_::SHIFT, 187, 1, ms_lookahead_table_+1049 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1050 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1051 },
-    { Parser::Transition_::SHIFT, 207, 1, ms_lookahead_table_+1051 },
-    { Parser::Transition_::REDUCE, 29, 0, ms_lookahead_table_+1052 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1052 },
-    { Parser::Transition_::SHIFT, 209, 1, ms_lookahead_table_+1052 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1053 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1053 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1054 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1055 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1056 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1057 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1058 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1059 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1060 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1061 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1062 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1063 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1064 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1065 },
-    { Parser::Transition_::SHIFT, 210, 1, ms_lookahead_table_+1066 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1067 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+1067 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+1068 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+1069 },
-    { Parser::Transition_::SHIFT, 211, 1, ms_lookahead_table_+1070 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+1071 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+1072 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+1073 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+1074 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+1075 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+1076 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+1077 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+1078 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+1079 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1080 },
-    { Parser::Transition_::SHIFT, 212, 1, ms_lookahead_table_+1080 },
-    { Parser::Transition_::REDUCE, 31, 0, ms_lookahead_table_+1081 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1081 },
-    { Parser::Transition_::SHIFT, 214, 1, ms_lookahead_table_+1081 },
-    { Parser::Transition_::REDUCE, 33, 0, ms_lookahead_table_+1082 },
-    { Parser::Transition_::REDUCE, 22, 0, ms_lookahead_table_+1082 },
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+1082 },
-    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+1082 },
-    { Parser::Transition_::SHIFT, 217, 1, ms_lookahead_table_+1083 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1084 },
-    { Parser::Transition_::SHIFT, 218, 1, ms_lookahead_table_+1084 },
-    { Parser::Transition_::SHIFT, 219, 1, ms_lookahead_table_+1085 },
-    { Parser::Transition_::SHIFT, 189, 1, ms_lookahead_table_+1086 },
-    { Parser::Transition_::SHIFT, 191, 1, ms_lookahead_table_+1087 },
-    { Parser::Transition_::SHIFT, 192, 1, ms_lookahead_table_+1088 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+1089 },
-    { Parser::Transition_::SHIFT, 220, 1, ms_lookahead_table_+1090 },
-    { Parser::Transition_::SHIFT, 221, 1, ms_lookahead_table_+1091 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+1092 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+1093 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+1094 },
-    { Parser::Transition_::SHIFT, 233, 1, ms_lookahead_table_+1095 },
-    { Parser::Transition_::SHIFT, 242, 1, ms_lookahead_table_+1096 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1097 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1097 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1098 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1099 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1100 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1101 },
-    { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+1102 },
-    { Parser::Transition_::SHIFT, 203, 1, ms_lookahead_table_+1103 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1104 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1105 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1106 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+1107 },
-    { Parser::Transition_::SHIFT, 118, 1, ms_lookahead_table_+1108 },
-    { Parser::Transition_::SHIFT, 125, 1, ms_lookahead_table_+1109 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1110 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1111 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1112 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1113 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1114 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1115 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1116 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1117 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1118 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1119 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1120 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1121 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1122 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1123 },
-    { Parser::Transition_::SHIFT, 152, 1, ms_lookahead_table_+1124 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1125 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1126 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1126 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1127 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1128 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1129 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1130 },
-    { Parser::Transition_::SHIFT, 155, 1, ms_lookahead_table_+1131 },
-    { Parser::Transition_::SHIFT, 213, 1, ms_lookahead_table_+1132 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1133 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1134 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1135 },
-    { Parser::Transition_::SHIFT, 160, 1, ms_lookahead_table_+1136 },
-    { Parser::Transition_::SHIFT, 173, 1, ms_lookahead_table_+1137 },
-    { Parser::Transition_::SHIFT, 180, 1, ms_lookahead_table_+1138 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1139 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1140 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1141 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1142 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1143 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1144 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1145 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1146 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1147 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1148 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1149 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1150 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1151 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1152 },
-    { Parser::Transition_::SHIFT, 187, 1, ms_lookahead_table_+1153 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1154 },
-    { Parser::Transition_::REDUCE, 24, 0, ms_lookahead_table_+1155 },
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+1155 },
-    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+1155 },
-    { Parser::Transition_::SHIFT, 222, 1, ms_lookahead_table_+1156 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1157 },
-    { Parser::Transition_::SHIFT, 223, 1, ms_lookahead_table_+1157 },
-    { Parser::Transition_::SHIFT, 226, 1, ms_lookahead_table_+1158 },
-    { Parser::Transition_::SHIFT, 189, 1, ms_lookahead_table_+1159 },
-    { Parser::Transition_::SHIFT, 191, 1, ms_lookahead_table_+1160 },
-    { Parser::Transition_::SHIFT, 192, 1, ms_lookahead_table_+1161 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+1162 },
-    { Parser::Transition_::SHIFT, 221, 1, ms_lookahead_table_+1163 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+1164 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+1165 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+1166 },
-    { Parser::Transition_::SHIFT, 232, 1, ms_lookahead_table_+1167 },
-    { Parser::Transition_::SHIFT, 233, 1, ms_lookahead_table_+1168 },
-    { Parser::Transition_::SHIFT, 242, 1, ms_lookahead_table_+1169 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1170 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1170 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1171 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1172 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1173 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1174 },
-    { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+1175 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1176 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1177 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1178 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+1179 },
-    { Parser::Transition_::SHIFT, 224, 1, ms_lookahead_table_+1180 },
-    { Parser::Transition_::SHIFT, 118, 1, ms_lookahead_table_+1181 },
-    { Parser::Transition_::SHIFT, 125, 1, ms_lookahead_table_+1182 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1183 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1184 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1185 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1186 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1187 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1188 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1189 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1190 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1191 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1192 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1193 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1194 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1195 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1196 },
-    { Parser::Transition_::SHIFT, 152, 1, ms_lookahead_table_+1197 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1198 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1199 },
-    { Parser::Transition_::SHIFT, 225, 1, ms_lookahead_table_+1199 },
-    { Parser::Transition_::REDUCE, 43, 0, ms_lookahead_table_+1200 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1200 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1200 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1201 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1202 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1203 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1204 },
-    { Parser::Transition_::SHIFT, 155, 1, ms_lookahead_table_+1205 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1206 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1207 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1208 },
-    { Parser::Transition_::SHIFT, 160, 1, ms_lookahead_table_+1209 },
-    { Parser::Transition_::SHIFT, 227, 1, ms_lookahead_table_+1210 },
-    { Parser::Transition_::SHIFT, 173, 1, ms_lookahead_table_+1211 },
-    { Parser::Transition_::SHIFT, 180, 1, ms_lookahead_table_+1212 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1213 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1214 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1215 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1216 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1217 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1218 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1219 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1220 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1221 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1222 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1223 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1224 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1225 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1226 },
-    { Parser::Transition_::SHIFT, 187, 1, ms_lookahead_table_+1227 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1228 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1229 },
-    { Parser::Transition_::SHIFT, 228, 1, ms_lookahead_table_+1229 },
-    { Parser::Transition_::REDUCE, 44, 0, ms_lookahead_table_+1230 },
-    { Parser::Transition_::REDUCE, 34, 0, ms_lookahead_table_+1230 },
-    { Parser::Transition_::REDUCE, 35, 0, ms_lookahead_table_+1230 },
-    { Parser::Transition_::REDUCE, 36, 0, ms_lookahead_table_+1230 },
-    { Parser::Transition_::REDUCE, 6, 0, ms_lookahead_table_+1230 },
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+1230 },
-    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+1230 },
-    { Parser::Transition_::SHIFT, 234, 1, ms_lookahead_table_+1231 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1232 },
-    { Parser::Transition_::SHIFT, 235, 1, ms_lookahead_table_+1232 },
-    { Parser::Transition_::SHIFT, 238, 1, ms_lookahead_table_+1233 },
-    { Parser::Transition_::SHIFT, 189, 1, ms_lookahead_table_+1234 },
-    { Parser::Transition_::SHIFT, 191, 1, ms_lookahead_table_+1235 },
-    { Parser::Transition_::SHIFT, 192, 1, ms_lookahead_table_+1236 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+1237 },
-    { Parser::Transition_::SHIFT, 221, 1, ms_lookahead_table_+1238 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+1239 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+1240 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+1241 },
-    { Parser::Transition_::SHIFT, 233, 1, ms_lookahead_table_+1242 },
-    { Parser::Transition_::SHIFT, 241, 1, ms_lookahead_table_+1243 },
-    { Parser::Transition_::SHIFT, 242, 1, ms_lookahead_table_+1244 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1245 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1245 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1246 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1247 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1248 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1249 },
-    { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+1250 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1251 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1252 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1253 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+1254 },
-    { Parser::Transition_::SHIFT, 118, 1, ms_lookahead_table_+1255 },
-    { Parser::Transition_::SHIFT, 236, 1, ms_lookahead_table_+1256 },
-    { Parser::Transition_::SHIFT, 125, 1, ms_lookahead_table_+1257 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1258 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1259 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1260 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1261 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1262 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1263 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1264 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1265 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1266 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1267 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1268 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1269 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1270 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1271 },
-    { Parser::Transition_::SHIFT, 152, 1, ms_lookahead_table_+1272 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1273 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1274 },
-    { Parser::Transition_::SHIFT, 237, 1, ms_lookahead_table_+1274 },
-    { Parser::Transition_::REDUCE, 47, 0, ms_lookahead_table_+1275 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1275 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1275 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1276 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1277 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1278 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1279 },
-    { Parser::Transition_::SHIFT, 155, 1, ms_lookahead_table_+1280 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1281 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1282 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1283 },
-    { Parser::Transition_::SHIFT, 160, 1, ms_lookahead_table_+1284 },
-    { Parser::Transition_::SHIFT, 173, 1, ms_lookahead_table_+1285 },
-    { Parser::Transition_::SHIFT, 239, 1, ms_lookahead_table_+1286 },
-    { Parser::Transition_::SHIFT, 180, 1, ms_lookahead_table_+1287 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1288 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1289 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1290 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1291 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1292 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1293 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1294 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1295 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1296 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1297 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1298 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1299 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1300 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1301 },
-    { Parser::Transition_::SHIFT, 187, 1, ms_lookahead_table_+1302 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1303 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1304 },
-    { Parser::Transition_::SHIFT, 240, 1, ms_lookahead_table_+1304 },
-    { Parser::Transition_::REDUCE, 48, 0, ms_lookahead_table_+1305 },
-    { Parser::Transition_::REDUCE, 7, 0, ms_lookahead_table_+1305 },
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+1305 },
-    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+1305 },
-    { Parser::Transition_::SHIFT, 243, 1, ms_lookahead_table_+1306 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1307 },
-    { Parser::Transition_::SHIFT, 244, 1, ms_lookahead_table_+1307 },
-    { Parser::Transition_::SHIFT, 247, 1, ms_lookahead_table_+1308 },
-    { Parser::Transition_::SHIFT, 189, 1, ms_lookahead_table_+1309 },
-    { Parser::Transition_::SHIFT, 191, 1, ms_lookahead_table_+1310 },
-    { Parser::Transition_::SHIFT, 192, 1, ms_lookahead_table_+1311 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+1312 },
-    { Parser::Transition_::SHIFT, 221, 1, ms_lookahead_table_+1313 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+1314 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+1315 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+1316 },
-    { Parser::Transition_::SHIFT, 233, 1, ms_lookahead_table_+1317 },
-    { Parser::Transition_::SHIFT, 242, 1, ms_lookahead_table_+1318 },
-    { Parser::Transition_::SHIFT, 250, 1, ms_lookahead_table_+1319 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1320 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1320 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1321 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1322 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1323 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1324 },
-    { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+1325 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1326 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1327 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1328 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+1329 },
-    { Parser::Transition_::SHIFT, 118, 1, ms_lookahead_table_+1330 },
-    { Parser::Transition_::SHIFT, 125, 1, ms_lookahead_table_+1331 },
-    { Parser::Transition_::SHIFT, 245, 1, ms_lookahead_table_+1332 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1333 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1334 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1335 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1336 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1337 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1338 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1339 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1340 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1341 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1342 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1343 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1344 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1345 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1346 },
-    { Parser::Transition_::SHIFT, 152, 1, ms_lookahead_table_+1347 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1348 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1349 },
-    { Parser::Transition_::SHIFT, 246, 1, ms_lookahead_table_+1349 },
-    { Parser::Transition_::REDUCE, 51, 0, ms_lookahead_table_+1350 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1350 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1350 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1351 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1352 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1353 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1354 },
-    { Parser::Transition_::SHIFT, 155, 1, ms_lookahead_table_+1355 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1356 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1357 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1358 },
-    { Parser::Transition_::SHIFT, 160, 1, ms_lookahead_table_+1359 },
-    { Parser::Transition_::SHIFT, 173, 1, ms_lookahead_table_+1360 },
-    { Parser::Transition_::SHIFT, 180, 1, ms_lookahead_table_+1361 },
-    { Parser::Transition_::SHIFT, 248, 1, ms_lookahead_table_+1362 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1363 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1364 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1365 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1366 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1367 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1368 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1369 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1370 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1371 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1372 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1373 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1374 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1375 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1376 },
-    { Parser::Transition_::SHIFT, 187, 1, ms_lookahead_table_+1377 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1378 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1379 },
-    { Parser::Transition_::SHIFT, 249, 1, ms_lookahead_table_+1379 },
-    { Parser::Transition_::REDUCE, 52, 0, ms_lookahead_table_+1380 },
-    { Parser::Transition_::REDUCE, 8, 0, ms_lookahead_table_+1380 },
-    { Parser::Transition_::REDUCE, 0, 0, ms_lookahead_table_+1380 },
-    { Parser::Transition_::SHIFT, 1, 1, ms_lookahead_table_+1380 },
-    { Parser::Transition_::SHIFT, 252, 1, ms_lookahead_table_+1381 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1382 },
-    { Parser::Transition_::SHIFT, 195, 1, ms_lookahead_table_+1382 },
-    { Parser::Transition_::SHIFT, 205, 1, ms_lookahead_table_+1383 },
-    { Parser::Transition_::SHIFT, 189, 1, ms_lookahead_table_+1384 },
-    { Parser::Transition_::SHIFT, 191, 1, ms_lookahead_table_+1385 },
-    { Parser::Transition_::SHIFT, 192, 1, ms_lookahead_table_+1386 },
-    { Parser::Transition_::SHIFT, 253, 1, ms_lookahead_table_+1387 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+1388 },
-    { Parser::Transition_::SHIFT, 216, 1, ms_lookahead_table_+1389 },
-    { Parser::Transition_::SHIFT, 251, 1, ms_lookahead_table_+1390 },
-    { Parser::Transition_::SHIFT, 254, 1, ms_lookahead_table_+1391 },
-    { Parser::Transition_::SHIFT, 221, 1, ms_lookahead_table_+1392 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+1393 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+1394 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+1395 },
-    { Parser::Transition_::SHIFT, 233, 1, ms_lookahead_table_+1396 },
-    { Parser::Transition_::SHIFT, 242, 1, ms_lookahead_table_+1397 },
-    { Parser::Transition_::REDUCE, 25, 0, ms_lookahead_table_+1398 },
-    { Parser::Transition_::REDUCE, 23, 0, ms_lookahead_table_+1398 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1398 },
-    { Parser::Transition_::SHIFT, 3, 1, ms_lookahead_table_+1398 },
-    { Parser::Transition_::SHIFT, 154, 1, ms_lookahead_table_+1399 },
-    { Parser::Transition_::SHIFT, 256, 1, ms_lookahead_table_+1400 },
-    { Parser::Transition_::SHIFT, 191, 1, ms_lookahead_table_+1401 },
-    { Parser::Transition_::SHIFT, 192, 1, ms_lookahead_table_+1402 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+1403 },
-    { Parser::Transition_::SHIFT, 221, 1, ms_lookahead_table_+1404 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+1405 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+1406 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+1407 },
-    { Parser::Transition_::SHIFT, 233, 1, ms_lookahead_table_+1408 },
-    { Parser::Transition_::SHIFT, 242, 1, ms_lookahead_table_+1409 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1410 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1410 },
-    { Parser::Transition_::SHIFT, 258, 1, ms_lookahead_table_+1410 },
-    { Parser::Transition_::SHIFT, 259, 1, ms_lookahead_table_+1411 },
-    { Parser::Transition_::SHIFT, 260, 1, ms_lookahead_table_+1412 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1413 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1413 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1414 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1415 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1416 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1417 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1418 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1419 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1420 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1421 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1422 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1423 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1424 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1425 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1426 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1427 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1428 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1429 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1430 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1431 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1432 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1433 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1434 },
-    { Parser::Transition_::SHIFT, 152, 1, ms_lookahead_table_+1435 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1436 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1437 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1437 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1438 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1439 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1440 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1441 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1442 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1443 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1444 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1445 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1446 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1447 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1448 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1449 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1450 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1451 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1452 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1453 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1454 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1455 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1456 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1457 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1458 },
-    { Parser::Transition_::SHIFT, 187, 1, ms_lookahead_table_+1459 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1460 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1461 },
-    { Parser::Transition_::REDUCE, 11, 0, ms_lookahead_table_+1461 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1461 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1462 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1463 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1464 },
-    { Parser::Transition_::SHIFT, 85, 1, ms_lookahead_table_+1465 },
-    { Parser::Transition_::SHIFT, 93, 1, ms_lookahead_table_+1466 },
-    { Parser::Transition_::SHIFT, 97, 1, ms_lookahead_table_+1467 },
-    { Parser::Transition_::SHIFT, 101, 1, ms_lookahead_table_+1468 },
-    { Parser::Transition_::SHIFT, 132, 1, ms_lookahead_table_+1469 },
-    { Parser::Transition_::SHIFT, 136, 1, ms_lookahead_table_+1470 },
-    { Parser::Transition_::SHIFT, 140, 1, ms_lookahead_table_+1471 },
-    { Parser::Transition_::SHIFT, 144, 1, ms_lookahead_table_+1472 },
-    { Parser::Transition_::SHIFT, 148, 1, ms_lookahead_table_+1473 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1474 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1475 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1476 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1477 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1478 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1479 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1480 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1481 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1482 },
-    { Parser::Transition_::SHIFT, 262, 1, ms_lookahead_table_+1483 },
-    { Parser::Transition_::SHIFT, 84, 1, ms_lookahead_table_+1484 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1485 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1485 },
-    { Parser::Transition_::SHIFT, 264, 1, ms_lookahead_table_+1485 },
-    { Parser::Transition_::SHIFT, 265, 1, ms_lookahead_table_+1486 },
-    { Parser::Transition_::SHIFT, 266, 1, ms_lookahead_table_+1487 },
-    { Parser::Transition_::SHIFT, 193, 1, ms_lookahead_table_+1488 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1489 },
-    { Parser::Transition_::SHIFT, 88, 1, ms_lookahead_table_+1489 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1490 },
-    { Parser::Transition_::SHIFT, 155, 1, ms_lookahead_table_+1490 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1491 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1491 },
-    { Parser::Transition_::SHIFT, 268, 1, ms_lookahead_table_+1491 },
-    { Parser::Transition_::SHIFT, 269, 1, ms_lookahead_table_+1492 },
-    { Parser::Transition_::SHIFT, 270, 1, ms_lookahead_table_+1493 },
-    { Parser::Transition_::SHIFT, 216, 1, ms_lookahead_table_+1494 },
-    { Parser::Transition_::SHIFT, 251, 1, ms_lookahead_table_+1495 },
-    { Parser::Transition_::SHIFT, 254, 1, ms_lookahead_table_+1496 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1497 },
-    { Parser::Transition_::SHIFT, 196, 1, ms_lookahead_table_+1497 },
-    { Parser::Transition_::SHIFT, 198, 1, ms_lookahead_table_+1498 },
-    { Parser::Transition_::SHIFT, 203, 1, ms_lookahead_table_+1499 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1500 },
-    { Parser::Transition_::SHIFT, 206, 1, ms_lookahead_table_+1500 },
-    { Parser::Transition_::SHIFT, 208, 1, ms_lookahead_table_+1501 },
-    { Parser::Transition_::SHIFT, 213, 1, ms_lookahead_table_+1502 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1503 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1503 },
-    { Parser::Transition_::SHIFT, 264, 1, ms_lookahead_table_+1503 },
-    { Parser::Transition_::SHIFT, 265, 1, ms_lookahead_table_+1504 },
-    { Parser::Transition_::SHIFT, 272, 1, ms_lookahead_table_+1505 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1506 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1506 },
-    { Parser::Transition_::SHIFT, 274, 1, ms_lookahead_table_+1506 },
-    { Parser::Transition_::SHIFT, 275, 1, ms_lookahead_table_+1507 },
-    { Parser::Transition_::SHIFT, 276, 1, ms_lookahead_table_+1508 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1509 },
-    { Parser::Transition_::SHIFT, 196, 1, ms_lookahead_table_+1509 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1510 },
-    { Parser::Transition_::SHIFT, 206, 1, ms_lookahead_table_+1510 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1511 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1511 },
-    { Parser::Transition_::SHIFT, 278, 1, ms_lookahead_table_+1511 },
-    { Parser::Transition_::SHIFT, 279, 1, ms_lookahead_table_+1512 },
-    { Parser::Transition_::SHIFT, 280, 1, ms_lookahead_table_+1513 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1514 },
-    { Parser::Transition_::SHIFT, 198, 1, ms_lookahead_table_+1514 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1515 },
-    { Parser::Transition_::SHIFT, 208, 1, ms_lookahead_table_+1515 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1516 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1516 },
-    { Parser::Transition_::SHIFT, 282, 1, ms_lookahead_table_+1516 },
-    { Parser::Transition_::SHIFT, 283, 1, ms_lookahead_table_+1517 },
-    { Parser::Transition_::SHIFT, 284, 1, ms_lookahead_table_+1518 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1519 },
-    { Parser::Transition_::SHIFT, 203, 1, ms_lookahead_table_+1519 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1520 },
-    { Parser::Transition_::SHIFT, 213, 1, ms_lookahead_table_+1520 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1521 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1521 },
-    { Parser::Transition_::SHIFT, 286, 1, ms_lookahead_table_+1521 },
-    { Parser::Transition_::SHIFT, 287, 1, ms_lookahead_table_+1522 },
-    { Parser::Transition_::SHIFT, 288, 1, ms_lookahead_table_+1523 },
-    { Parser::Transition_::SHIFT, 229, 1, ms_lookahead_table_+1524 },
-    { Parser::Transition_::SHIFT, 230, 1, ms_lookahead_table_+1525 },
-    { Parser::Transition_::SHIFT, 231, 1, ms_lookahead_table_+1526 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1527 },
-    { Parser::Transition_::SHIFT, 105, 1, ms_lookahead_table_+1527 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1528 },
-    { Parser::Transition_::SHIFT, 160, 1, ms_lookahead_table_+1528 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1529 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1529 },
-    { Parser::Transition_::SHIFT, 290, 1, ms_lookahead_table_+1529 },
-    { Parser::Transition_::SHIFT, 294, 1, ms_lookahead_table_+1530 },
-    { Parser::Transition_::SHIFT, 298, 1, ms_lookahead_table_+1531 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1532 },
-    { Parser::Transition_::SHIFT, 291, 1, ms_lookahead_table_+1532 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1533 },
-    { Parser::Transition_::SHIFT, 292, 1, ms_lookahead_table_+1533 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1534 },
-    { Parser::Transition_::SHIFT, 293, 1, ms_lookahead_table_+1534 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1535 },
-    { Parser::Transition_::SHIFT, 108, 1, ms_lookahead_table_+1535 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1536 },
-    { Parser::Transition_::SHIFT, 295, 1, ms_lookahead_table_+1536 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1537 },
-    { Parser::Transition_::SHIFT, 296, 1, ms_lookahead_table_+1537 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1538 },
-    { Parser::Transition_::SHIFT, 297, 1, ms_lookahead_table_+1538 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1539 },
-    { Parser::Transition_::SHIFT, 163, 1, ms_lookahead_table_+1539 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1540 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1540 },
-    { Parser::Transition_::SHIFT, 300, 1, ms_lookahead_table_+1540 },
-    { Parser::Transition_::SHIFT, 305, 1, ms_lookahead_table_+1541 },
-    { Parser::Transition_::SHIFT, 310, 1, ms_lookahead_table_+1542 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1543 },
-    { Parser::Transition_::SHIFT, 301, 1, ms_lookahead_table_+1543 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1544 },
-    { Parser::Transition_::SHIFT, 302, 1, ms_lookahead_table_+1544 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1545 },
-    { Parser::Transition_::SHIFT, 303, 1, ms_lookahead_table_+1545 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1546 },
-    { Parser::Transition_::SHIFT, 304, 1, ms_lookahead_table_+1546 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1547 },
-    { Parser::Transition_::SHIFT, 111, 1, ms_lookahead_table_+1547 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1548 },
-    { Parser::Transition_::SHIFT, 306, 1, ms_lookahead_table_+1548 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1549 },
-    { Parser::Transition_::SHIFT, 307, 1, ms_lookahead_table_+1549 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1550 },
-    { Parser::Transition_::SHIFT, 308, 1, ms_lookahead_table_+1550 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1551 },
-    { Parser::Transition_::SHIFT, 309, 1, ms_lookahead_table_+1551 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1552 },
-    { Parser::Transition_::SHIFT, 166, 1, ms_lookahead_table_+1552 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1553 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1553 },
-    { Parser::Transition_::SHIFT, 312, 1, ms_lookahead_table_+1553 },
-    { Parser::Transition_::SHIFT, 317, 1, ms_lookahead_table_+1554 },
-    { Parser::Transition_::SHIFT, 322, 1, ms_lookahead_table_+1555 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1556 },
-    { Parser::Transition_::SHIFT, 313, 1, ms_lookahead_table_+1556 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1557 },
-    { Parser::Transition_::SHIFT, 314, 1, ms_lookahead_table_+1557 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1558 },
-    { Parser::Transition_::SHIFT, 315, 1, ms_lookahead_table_+1558 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1559 },
-    { Parser::Transition_::SHIFT, 316, 1, ms_lookahead_table_+1559 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1560 },
-    { Parser::Transition_::SHIFT, 114, 1, ms_lookahead_table_+1560 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1561 },
-    { Parser::Transition_::SHIFT, 318, 1, ms_lookahead_table_+1561 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1562 },
-    { Parser::Transition_::SHIFT, 319, 1, ms_lookahead_table_+1562 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1563 },
-    { Parser::Transition_::SHIFT, 320, 1, ms_lookahead_table_+1563 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1564 },
-    { Parser::Transition_::SHIFT, 321, 1, ms_lookahead_table_+1564 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1565 },
-    { Parser::Transition_::SHIFT, 169, 1, ms_lookahead_table_+1565 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1566 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1566 },
-    { Parser::Transition_::SHIFT, 324, 1, ms_lookahead_table_+1566 },
-    { Parser::Transition_::SHIFT, 325, 1, ms_lookahead_table_+1567 },
-    { Parser::Transition_::SHIFT, 326, 1, ms_lookahead_table_+1568 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1569 },
-    { Parser::Transition_::SHIFT, 224, 1, ms_lookahead_table_+1569 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1570 },
-    { Parser::Transition_::SHIFT, 227, 1, ms_lookahead_table_+1570 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1571 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1571 },
-    { Parser::Transition_::SHIFT, 328, 1, ms_lookahead_table_+1571 },
-    { Parser::Transition_::SHIFT, 329, 1, ms_lookahead_table_+1572 },
-    { Parser::Transition_::SHIFT, 330, 1, ms_lookahead_table_+1573 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1574 },
-    { Parser::Transition_::SHIFT, 118, 1, ms_lookahead_table_+1574 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1575 },
-    { Parser::Transition_::SHIFT, 173, 1, ms_lookahead_table_+1575 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1576 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1576 },
-    { Parser::Transition_::SHIFT, 332, 1, ms_lookahead_table_+1576 },
-    { Parser::Transition_::SHIFT, 333, 1, ms_lookahead_table_+1577 },
-    { Parser::Transition_::SHIFT, 334, 1, ms_lookahead_table_+1578 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1579 },
-    { Parser::Transition_::SHIFT, 236, 1, ms_lookahead_table_+1579 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1580 },
-    { Parser::Transition_::SHIFT, 239, 1, ms_lookahead_table_+1580 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1581 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1581 },
-    { Parser::Transition_::SHIFT, 336, 1, ms_lookahead_table_+1581 },
-    { Parser::Transition_::SHIFT, 337, 1, ms_lookahead_table_+1582 },
-    { Parser::Transition_::SHIFT, 338, 1, ms_lookahead_table_+1583 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1584 },
-    { Parser::Transition_::SHIFT, 125, 1, ms_lookahead_table_+1584 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1585 },
-    { Parser::Transition_::SHIFT, 180, 1, ms_lookahead_table_+1585 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1586 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1586 },
-    { Parser::Transition_::SHIFT, 340, 1, ms_lookahead_table_+1586 },
-    { Parser::Transition_::SHIFT, 341, 1, ms_lookahead_table_+1587 },
-    { Parser::Transition_::SHIFT, 342, 1, ms_lookahead_table_+1588 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1589 },
-    { Parser::Transition_::SHIFT, 245, 1, ms_lookahead_table_+1589 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1590 },
-    { Parser::Transition_::SHIFT, 248, 1, ms_lookahead_table_+1590 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1591 },
-    { Parser::Transition_::ERROR_PANIC, 0, 0, ms_lookahead_table_+1591 },
-    { Parser::Transition_::SHIFT, 4, 1, ms_lookahead_table_+1591 },
-    { Parser::Transition_::SHIFT, 5, 1, ms_lookahead_table_+1592 },
-    { Parser::Transition_::SHIFT, 6, 1, ms_lookahead_table_+1593 },
-    { Parser::Transition_::SHIFT, 7, 1, ms_lookahead_table_+1594 },
-    { Parser::Transition_::SHIFT, 10, 1, ms_lookahead_table_+1595 },
-    { Parser::Transition_::SHIFT, 14, 1, ms_lookahead_table_+1596 },
-    { Parser::Transition_::SHIFT, 19, 1, ms_lookahead_table_+1597 },
-    { Parser::Transition_::SHIFT, 20, 1, ms_lookahead_table_+1598 },
-    { Parser::Transition_::SHIFT, 21, 1, ms_lookahead_table_+1599 },
-    { Parser::Transition_::SHIFT, 23, 1, ms_lookahead_table_+1600 },
-    { Parser::Transition_::SHIFT, 25, 1, ms_lookahead_table_+1601 },
-    { Parser::Transition_::SHIFT, 27, 1, ms_lookahead_table_+1602 },
-    { Parser::Transition_::SHIFT, 29, 1, ms_lookahead_table_+1603 },
-    { Parser::Transition_::SHIFT, 344, 1, ms_lookahead_table_+1604 },
-    { Parser::Transition_::RETURN, 0, 0, ms_lookahead_table_+1605 },
-    { Parser::Transition_::SHIFT, 32, 1, ms_lookahead_table_+1605 },
-    { Parser::Transition_::SHIFT, 35, 1, ms_lookahead_table_+1606 },
-    { Parser::Transition_::SHIFT, 55, 1, ms_lookahead_table_+1607 },
-    { Parser::Transition_::SHIFT, 37, 1, ms_lookahead_table_+1608 },
-    { Parser::Transition_::SHIFT, 39, 1, ms_lookahead_table_+1609 },
-    { Parser::Transition_::SHIFT, 43, 1, ms_lookahead_table_+1610 },
-    { Parser::Transition_::SHIFT, 45, 1, ms_lookahead_table_+1611 },
-    { Parser::Transition_::SHIFT, 41, 1, ms_lookahead_table_+1612 },
-    { Parser::Transition_::SHIFT, 47, 1, ms_lookahead_table_+1613 },
-    { Parser::Transition_::SHIFT, 58, 1, ms_lookahead_table_+1614 },
-    { Parser::Transition_::SHIFT, 51, 1, ms_lookahead_table_+1615 },
-    { Parser::Transition_::SHIFT, 62, 1, ms_lookahead_table_+1616 }
-};
-std::size_t const Parser::ms_transition_count_ = sizeof(Parser::ms_transition_table_) / sizeof(*Parser::ms_transition_table_);
-
-Parser::Token::Id const Parser::ms_lookahead_table_[] =
-{
-    Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '?',
-    '[',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    '[',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '=',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '%',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '>',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '%',
-    '*',
-    '/',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '%',
-    '*',
-    '/',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '%',
-    '*',
-    '+',
-    '-',
-    '/',
-    '!',
-    '(',
-    '-',
-    '=',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '%',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '%',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '!',
-    '(',
-    '-',
-    '=',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '%',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '%',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '&',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '=',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '%',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '>',
-    '|',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '!',
-    '%',
-    '&',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    ']',
-    '|',
-    ')',
-    '!',
-    '%',
-    '&',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    ']',
-    '|',
-    '?',
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '(',
-    ')',
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    Parser::Terminal::END_CODE,
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    '[',
-    Parser::Terminal::END_CODE,
-    ']',
-    Parser::Terminal::STRING_LITERAL,
-    ')',
-    Parser::Terminal::END_CODE,
-    ']',
-    ')',
-    Parser::Terminal::END_CODE,
-    '(',
-    Parser::Terminal::ID,
-    ',',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    Parser::Terminal::END_CODE,
-    '(',
-    Parser::Terminal::ID,
-    ',',
-    Parser::Terminal::ID,
-    ')',
-    Parser::Terminal::END_CODE,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    Parser::Terminal::END_CODE,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    Parser::Terminal::CODE_NEWLINE,
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    '[',
-    Parser::Terminal::CODE_NEWLINE,
-    ']',
-    Parser::Terminal::STRING_LITERAL,
-    ')',
-    Parser::Terminal::CODE_NEWLINE,
-    ']',
-    ')',
-    Parser::Terminal::CODE_NEWLINE,
-    '(',
-    Parser::Terminal::ID,
-    ',',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    Parser::Terminal::CODE_NEWLINE,
-    '(',
-    Parser::Terminal::ID,
-    ',',
-    Parser::Terminal::ID,
-    ')',
-    Parser::Terminal::CODE_NEWLINE,
-    Parser::Terminal::CODE_NEWLINE,
-    Parser::Terminal::TEXT,
-    Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::conditional_series_end,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::else_statement,
-    Parser::Nonterminal_::else_if_statement,
-    Parser::Nonterminal_::end_if,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::ELSE,
-    Parser::Terminal::ELSE_IF,
-    Parser::Terminal::END_IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::END_CODE,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    Parser::Terminal::END_CODE,
-    Parser::Terminal::END_CODE,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::ELSE,
-    Parser::Terminal::ELSE_IF,
-    Parser::Terminal::END_IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::CODE_NEWLINE,
-    '(',
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    ')',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|',
-    Parser::Terminal::CODE_NEWLINE,
-    Parser::Terminal::CODE_NEWLINE,
-    Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::end_if,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::END_IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::END_IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::end_define,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::END_DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::END_CODE,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::END_DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::CODE_NEWLINE,
-    Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::end_loop,
-    Parser::Nonterminal_::for_each,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::END_LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::END_CODE,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::END_LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::CODE_NEWLINE,
-    Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
-    Parser::Nonterminal_::end_for_each,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::END_FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::END_CODE,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::IF,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::END_FOR_EACH,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::CODE_NEWLINE,
-    Parser::Terminal::TEXT,
-    Parser::Nonterminal_::body,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::conditional_series_end,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::else_statement,
-    Parser::Nonterminal_::else_if_statement,
-    Parser::Nonterminal_::end_if,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::executable,
-    Parser::Nonterminal_::code,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Nonterminal_::loop,
-    Parser::Nonterminal_::for_each,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::code,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::DUMP_SYMBOL_TABLE,
-    Parser::Terminal::UNDEFINE,
-    Parser::Terminal::DECLARE_ARRAY,
-    Parser::Terminal::DECLARE_MAP,
-    Parser::Terminal::INCLUDE,
-    Parser::Terminal::SANDBOX_INCLUDE,
-    Parser::Terminal::WARNING,
-    Parser::Terminal::ERROR,
-    Parser::Terminal::FATAL_ERROR,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::code_body,
-    Parser::Nonterminal_::expression,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::conditional_series,
-    Parser::Nonterminal_::if_statement,
-    Parser::Terminal::IF,
-    Parser::Terminal::IF,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::conditional_series_end,
-    Parser::Nonterminal_::else_statement,
-    Parser::Nonterminal_::else_if_statement,
-    Parser::Nonterminal_::end_if,
-    Parser::Terminal::ELSE,
-    Parser::Terminal::ELSE_IF,
-    Parser::Terminal::END_IF,
-    Parser::Terminal::ELSE,
-    Parser::Terminal::ELSE_IF,
-    Parser::Terminal::END_IF,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::if_statement,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::else_statement,
-    Parser::Terminal::ELSE,
-    Parser::Terminal::ELSE,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::else_if_statement,
-    Parser::Terminal::ELSE_IF,
-    Parser::Terminal::ELSE_IF,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::end_if,
-    Parser::Terminal::END_IF,
-    Parser::Terminal::END_IF,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::define,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::DEFINE,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::define_scalar,
-    Parser::Terminal::DEFINE,
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    Parser::Terminal::DEFINE,
-    '(',
-    Parser::Terminal::ID,
-    ')',
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::define_array_element,
-    Parser::Terminal::DEFINE,
-    '(',
-    Parser::Terminal::ID,
-    '[',
-    ']',
-    Parser::Terminal::DEFINE,
-    '(',
-    Parser::Terminal::ID,
-    '[',
-    ']',
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::define_map_element,
-    Parser::Terminal::DEFINE,
-    '(',
-    Parser::Terminal::ID,
-    '[',
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::DEFINE,
-    '(',
-    Parser::Terminal::ID,
-    '[',
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::end_define,
-    Parser::Terminal::END_DEFINE,
-    Parser::Terminal::END_DEFINE,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::loop,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::LOOP,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::end_loop,
-    Parser::Terminal::END_LOOP,
-    Parser::Terminal::END_LOOP,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::for_each,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::FOR_EACH,
-    Parser::Terminal::START_CODE,
-    Parser::Terminal::CODE_LINE,
-    Parser::Nonterminal_::end_for_each,
-    Parser::Terminal::END_FOR_EACH,
-    Parser::Terminal::END_FOR_EACH,
-    '!',
-    '(',
-    '-',
-    Parser::Terminal::ID,
-    Parser::Terminal::SIZEOF,
-    Parser::Terminal::IS_DEFINED,
-    Parser::Terminal::INTEGER_LITERAL,
-    Parser::Terminal::STRING_LITERAL,
-    Parser::Terminal::KEYWORD_INT,
-    Parser::Terminal::KEYWORD_STRING,
-    Parser::Terminal::STRING_LENGTH,
-    Parser::Terminal::TO_CHARACTER_LITERAL,
-    Parser::Terminal::TO_STRING_LITERAL,
-    Parser::Nonterminal_::expression,
-    '!',
-    '%',
-    '&',
-    '*',
-    '+',
-    '-',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '|'
-};
-std::size_t const Parser::ms_lookahead_count_ = sizeof(Parser::ms_lookahead_table_) / sizeof(*Parser::ms_lookahead_table_);
+std::size_t const Parser::ms_parser_return_code_string_count_ = sizeof(Parser::ms_parser_return_code_string_table_) / sizeof(*Parser::ms_parser_return_code_string_table_);
 
 char const *const Parser::ms_token_name_table_[] =
 {
@@ -5982,12 +483,4918 @@ char const *const Parser::ms_token_name_table_[] =
 };
 std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
 
+void Parser::ThrowAwayToken_ (Token const &token_) throw()
+{
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 492 "barf_preprocessor_parser.cpp"
+ << "Executing throw-away-token actions on token " << token_ << '\n')
+    ThrowAwayTokenData_(token_.m_data);
+}
+
+void Parser::ThrowAwayTokenData_ (Ast::Base * const &token_data) throw()
+{
+
+#line 137 "barf_preprocessor_parser.trison"
+
+    delete token_data;
+
+#line 504 "barf_preprocessor_parser.cpp"
+}
+
+Parser::Token Parser::Scan_ () throw()
+{
+    TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 512 "barf_preprocessor_parser.cpp"
+ << "Executing scan actions to retrieve next token...\n")
+
+
+#line 140 "barf_preprocessor_parser.trison"
+
+    assert(m_scanner != NULL);
+    return m_scanner->Scan();
+
+#line 521 "barf_preprocessor_parser.cpp"
+
+    TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from scan_actions code block\n")
+    assert(false && "no value returned from scan_actions code block");
+}
+
+void Parser::RunNonassocErrorActions_ (Token const &lookahead)
+{
+}
+
+template <typename T>
+std::ostream &operator << (std::ostream &out, std::set<T> const &s)
+{
+    out << "{ ";
+    for (typename std::set<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
+        out << *it << ", ";
+    out << '}';
+    return out;
+}
+
+template <typename T>
+std::ostream &operator << (std::ostream &out, std::vector<T> const &s)
+{
+    out << "[ ";
+    for (typename std::vector<T>::const_iterator it = s.begin(), it_end = s.end(); it != it_end; ++it)
+        out << *it << ", ";
+    out << ']';
+    return out;
+}
+
+std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name nonterminal)
+{
+    switch (nonterminal)
+    {
+        case Nonterminal::body: return 0;
+        case Nonterminal::code: return 14;
+        case Nonterminal::code_body: return 20;
+        case Nonterminal::conditional_series: return 215;
+        case Nonterminal::conditional_series_end: return 239;
+        case Nonterminal::define: return 293;
+        case Nonterminal::define_array_element: return 317;
+        case Nonterminal::define_map_element: return 340;
+        case Nonterminal::define_scalar: return 298;
+        case Nonterminal::else_if_statement: return 272;
+        case Nonterminal::else_statement: return 257;
+        case Nonterminal::end_define: return 365;
+        case Nonterminal::end_for_each: return 437;
+        case Nonterminal::end_if: return 244;
+        case Nonterminal::end_loop: return 401;
+        case Nonterminal::executable: return 9;
+        case Nonterminal::expression: return 26;
+        case Nonterminal::for_each: return 414;
+        case Nonterminal::if_statement: return 220;
+        case Nonterminal::loop: return 378;
+        default: assert(false && "invalid nonterminal"); return 0;
+    }
+}
+
+bool Parser::HasEncounteredErrorState () const
+{
+    return (m_realized_state_ == NULL) ? false : m_realized_state_->HasEncounteredErrorState();
+}
+
+std::int64_t Parser::MaxAllowableLookaheadCount () const
+{
+    return m_max_allowable_lookahead_count;
+}
+
+std::size_t Parser::MaxRealizedLookaheadCount () const
+{
+    return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadCount();
+}
+
+std::int64_t Parser::MaxAllowableParseTreeDepth () const
+{
+    return m_max_allowable_parse_tree_depth;
+}
+
+std::uint32_t Parser::MaxRealizedParseTreeDepth () const
+{
+    return (m_hypothetical_state_ == NULL) ? 0 : m_hypothetical_state_->m_max_realized_parse_tree_depth;
+}
+
+void Parser::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count)
+{
+    m_max_allowable_lookahead_count = max_allowable_lookahead_count;
+}
+
+void Parser::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth)
+{
+    m_max_allowable_parse_tree_depth = max_allowable_parse_tree_depth;
+}
+
+Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
+{
+    assert(return_token != NULL && "the return-token pointer must be non-NULL");
+
+    TRISON_CPP_DEBUG_CODE_(DSF_START_END_PARSE, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 621 "barf_preprocessor_parser.cpp"
+ << "Starting parse\n")
+
+    ParserReturnCode parser_return_code_ = PRC_INTERNAL_ERROR;
+    *return_token = NULL;
+
+
+    std::uint32_t start_state_index = NonterminalStartStateIndex_(nonterminal_to_parse);
+
+    if (m_realized_state_ != NULL) // This happens when parsing again, not from scratch.
+    {
+        assert(m_hypothetical_state_ == NULL);
+        // Note that this resets the error state.
+        m_realized_state_->Reinitialize(start_state_index);
+        // Delete this entirely to be initialized anew, since it has no state that
+        // carries over between parses.
+        delete m_hypothetical_state_;
+        m_hypothetical_state_ = NULL;
+    }
+    else // This happens when parsing for the first time.
+        m_realized_state_ = new RealizedState_(start_state_index);
+
+    m_hypothetical_state_ = new HypotheticalState_(start_state_index);
+
+    TRISON_CPP_DEBUG_CODE_(DSF_STACK_AND_LOOKAHEADS,
+        *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 649 "barf_preprocessor_parser.cpp"
+ << "<stack> . <lookaheads>: ";
+        m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
+        *DebugSpewStream() << '\n';
+    )
+
+    bool should_return = false;
+    std::size_t iteration_index = 0;
+    while (!should_return)
+    {
+        TRISON_CPP_DEBUG_CODE_(
+            DSF_ITERATION_COUNT,
+            *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 664 "barf_preprocessor_parser.cpp"
+ << "\n";
+            *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 669 "barf_preprocessor_parser.cpp"
+ << "---------- ITERATION " << iteration_index << " --------------\n";
+            PrintParserStatus_(*DebugSpewStream());
+            *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 675 "barf_preprocessor_parser.cpp"
+ << '\n';
+        )
+
+        if (m_realized_state_->HasExceededMaxAllowableLookaheadCount(m_max_allowable_lookahead_count))
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 684 "barf_preprocessor_parser.cpp"
+ << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
+            break;
+        }
+
+        if (m_hypothetical_state_->HasExceededMaxAllowableParseTreeDepth(m_max_allowable_parse_tree_depth))
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 695 "barf_preprocessor_parser.cpp"
+ << "Parse tree depth (" << m_hypothetical_state_->ParseTreeDepth() << ") has exceeded max allowable parse tree depth (" << m_max_allowable_parse_tree_depth << "); modify this limit using the default_max_allowable_parse_tree_depth directive (see trison.cpp.targetspec), or using the SetMaxAllowableParseTreeDepth method.  Returning with error.\n")
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH;
+            break;
+        }
+
+        if (m_hypothetical_state_->m_root->HasTrunkChild())
+            ExecuteAndRemoveTrunkActions_(should_return, parser_return_code_, return_token);
+        else
+            ContinueNPDAParse_(should_return);
+
+        TRISON_CPP_DEBUG_CODE_(DSF_ITERATION_COUNT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 709 "barf_preprocessor_parser.cpp"
+ << '\n')
+        ++iteration_index;
+    }
+
+    TRISON_CPP_DEBUG_CODE_(
+        DSF_ITERATION_COUNT,
+        *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 719 "barf_preprocessor_parser.cpp"
+ << "\n";
+        *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 724 "barf_preprocessor_parser.cpp"
+ << "---------- RETURNING --------------\n";
+        PrintParserStatus_(*DebugSpewStream());
+        *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 730 "barf_preprocessor_parser.cpp"
+ << '\n';
+    )
+
+    assert(std::size_t(parser_return_code_) < ms_parser_return_code_string_count_ && "this should never happen");
+    TRISON_CPP_DEBUG_CODE_(
+        DSF_START_END_PARSE,
+        *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 740 "barf_preprocessor_parser.cpp"
+ << "Parse() is returning " << ms_parser_return_code_string_table_[parser_return_code_] << '\n';
+    )
+
+    return parser_return_code_;
+}
+
+void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code_, Ast::Base * *&return_token)
+{
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 752 "barf_preprocessor_parser.cpp"
+ << "Parse stack tree has trunk; executing trunk actions.\n")
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 757 "barf_preprocessor_parser.cpp"
+ << '\n')
+
+    if (m_hypothetical_state_->m_root->HasTrunkChild())
+    {
+        // The trunk_child is popped and then will die by the end of this function.
+        // Using std::unique_ptr for exception safety -- if an exception is thrown within
+        // this function, then trunk_child still needs to be deleted.
+        std::unique_ptr<ParseTreeNode_> trunk_child(m_hypothetical_state_->m_root->PopTrunkChild());
+        assert(trunk_child->m_parent_node == NULL);
+        assert(trunk_child->m_child_nodes.empty());
+
+        bool destroy_and_recreate_parse_tree = false;
+
+        switch (trunk_child->m_spec.m_type)
+        {
+            case ParseTreeNode_::RETURN: {
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 777 "barf_preprocessor_parser.cpp"
+ << "Executing trunk action RETURN.\n")
+                assert(m_realized_state_->TokenStack().size() == 2);
+                parser_return_code_ = PRC_SUCCESS;
+                // This doesn't change the structure of the stack but does take ownership of the top stack token.
+                // This must be done so that the return token isn't destroyed with the parser.
+                m_realized_state_->StealTokenStackTop(return_token);
+                should_return = true;
+                break;
+            }
+            case ParseTreeNode_::REDUCE: {
+                // Execute the appropriate rule on the top tokens in the stack
+                std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 793 "barf_preprocessor_parser.cpp"
+ << "Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
+                Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
+                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
+                m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
+                // This is done essentially so that m_realized_lookahead_cursor can be reset.
+                destroy_and_recreate_parse_tree = true;
+                break;
+            }
+            case ParseTreeNode_::SHIFT: {
+                std::uint32_t const &shifted_token_id = trunk_child->m_spec.m_single_data;
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 807 "barf_preprocessor_parser.cpp"
+ << "Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
+                m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
+                break;
+            }
+            case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 816 "barf_preprocessor_parser.cpp"
+ << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
+                m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
+                break;
+            }
+            case ParseTreeNode_::DISCARD_LOOKAHEAD: {
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 825 "barf_preprocessor_parser.cpp"
+ << "Executing trunk action DISCARD_LOOKAHEAD.\n")
+                m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
+                break;
+            }
+            case ParseTreeNode_::POP_STACK: {
+                std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 835 "barf_preprocessor_parser.cpp"
+ << "Executing trunk action POP_STACK " << pop_count << ".\n")
+
+                // This one is tricky to implement within RealizedState_ alone, mainly because
+                // of the ThrowAwayToken_ call.
+                if (m_realized_state_->TokenStack().size() > pop_count)
+                {
+                    for (std::uint32_t i = 0; i < pop_count; ++i)
+                    {
+                        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
+                        ThrowAwayToken_(m_realized_state_->PopStack());
+                    }
+                }
+                else
+                {
+                    // We're popping more than the whole stack, which is an error
+                    parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
+                    should_return = true;
+                }
+
+                // Because POP_STACK involves popping the stack, the parse tree should be destroyed and
+                // recreated (from the branches in the top of the realized state stack).  This is somewhat
+                // draconian and non-optimal, but simple and effective.
+                destroy_and_recreate_parse_tree = true;
+                // TODO: Because HPS branches are blocked right after POP_STACK, maybe don't bother adding any
+                // additional children below POP_STACK nodes (i.e. one HPS child of POP_STACK is sufficient to
+                // keep it alive probably).  This would reduce the number of memory operations.
+                break;
+            }
+
+            default:
+                assert(false && "this should not happen");
+                break;
+        }
+
+        TRISON_CPP_DEBUG_CODE_(DSF_STACK_AND_LOOKAHEADS,
+            *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 874 "barf_preprocessor_parser.cpp"
+ << "<stack> . <lookaheads>: ";
+            m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
+            *DebugSpewStream() << '\n';
+        )
+
+        if (destroy_and_recreate_parse_tree)
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 885 "barf_preprocessor_parser.cpp"
+ << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
+            m_hypothetical_state_->DestroyParseTree();
+            CreateParseTreeFromRealizedState_();
+        }
+    }
+}
+
+void Parser::ContinueNPDAParse_ (bool &should_return)
+{
+    // If there are no non-blocked hps-es, then the parse should stop.  If any non-blocked hps-es
+    // are processed, then this flag will be set to false.
+    should_return = true;
+
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 902 "barf_preprocessor_parser.cpp"
+ << "Parse stack tree does not have trunk; continuing parse.\n")
+
+    // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
+    {
+        ParseTreeNode_ *shift  = NULL;
+        ParseTreeNode_ *reduce = NULL;
+        // TODO: Move this handling into its own function
+        // NOTE: This only works at the root.  If that were to change, then various things
+        // would need to scan over only the HPSes that are contained within the relevant subtree.
+        bool has_shift_reduce_conflict = m_hypothetical_state_->m_root->HasShiftReduceConflict(shift, reduce);
+        bool has_shift_reduce_conflict_and_should_resolve = false;
+        if (has_shift_reduce_conflict)
+        {
+            // Should not do anything unless the shift and reduce branches have the same
+            // m_realized_lookahead_cursor (e.g. a REDUCE action will start out with
+            // m_realized_lookahead_cursor == 0, while a SHIFT action will start out with
+            // m_realized_lookahead_cursor == 1, but the REDUCE action branch needs to be
+            // allowed to catch up before having any chance at the SHIFT/REDUCE conflict
+            // being resolvable).
+            if (m_hypothetical_state_->MinAndMaxRealizedLookaheadCursorsAreEqual())
+                has_shift_reduce_conflict_and_should_resolve = true;
+            else
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 929 "barf_preprocessor_parser.cpp"
+ << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
+            }
+        }
+
+        if (has_shift_reduce_conflict_and_should_resolve)
+        {
+            assert(shift != NULL);
+            assert(reduce != NULL);
+            ParseTreeNode_::PrecedenceLevelRange shift_precedence_level_range = shift->ComputePrecedenceLevelRange(1);
+            ParseTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
+            assert(reduce_precedence_level_range.first == reduce_precedence_level_range.second);
+
+            TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 945 "barf_preprocessor_parser.cpp"
+ << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
+
+            // 6 possibilities (the higher lines indicate higher precedence level.  same line
+            // indicates equality).  there is always exactly one reduce hps, and at least
+            // one shift hps.
+            //
+            // note that if a shift and a reduce have the same precedence level, then they also
+            // have the same associativity.
+            //
+            // 1.     shift        2.     shift        3.
+            //        shift               shift
+            // reduce              reduce shift        reduce shift
+            //
+            // 4.                  5.                  6.
+            //                                                shift
+            // reduce shift        reduce              reduce shift
+            //        shift               shift               shift
+            //        shift               shift
+            //
+            // cases 1 and 5 can be trivially resolved -- by pruning the reduce
+            // and by pruning the shift respectively.
+            //
+            // case 2 can only be resolved if the associativity of the reduction rule
+            // is RIGHT, in which case the reduce is pruned.  otherwise no resolution
+            // can be reached at this point.
+            //
+            // case 3 may be trivially resolved via rule associativity (LEFT causes the
+            // shift to be pruned, RIGHT causes the reduce to be pruned, and NONASSOC
+            // should cause an error).
+            //
+            // case 4 can only be resolved if the associativity of the reduction rule
+            // is LEFT, in which case the shift is pruned.  otherwise no resolution
+            // can be reached at this point.
+            //
+            // case 6 can not be resolved at this point.
+
+            bool conflict_resolved = false;
+
+            // Case 1
+            if (reduce_precedence_level_range.second < shift_precedence_level_range.first)
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 990 "barf_preprocessor_parser.cpp"
+ << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
+                // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
+                m_hypothetical_state_->DeleteBranch(reduce);
+                reduce = NULL;
+                conflict_resolved = true;
+            }
+            // Case 2
+            else if (reduce_precedence_level_range.first == shift_precedence_level_range.first &&
+                     shift_precedence_level_range.first < shift_precedence_level_range.second)
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1004 "barf_preprocessor_parser.cpp"
+ << "        Case 2; REDUCE <= SHIFT;\n")
+                Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
+                Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
+                if (reduction_rule_precedence.m_associativity == Grammar_::ASSOC_RIGHT)
+                {
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1013 "barf_preprocessor_parser.cpp"
+ << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
+                    m_hypothetical_state_->DeleteBranch(reduce);
+                    reduce = NULL;
+                    conflict_resolved = true;
+                }
+                else
+                {
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1024 "barf_preprocessor_parser.cpp"
+ << "        Can't resolve conflict at this time.\n")
+                }
+            }
+            // Case 3
+            else if (reduce_precedence_level_range.second == shift_precedence_level_range.first &&
+                     shift_precedence_level_range.first == shift_precedence_level_range.second)
+            {
+                Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
+                Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1037 "barf_preprocessor_parser.cpp"
+ << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity: " <<
+ Grammar_::ms_associativity_string_table_[reduction_rule_precedence.m_associativity] << '\n')
+                switch (reduction_rule_precedence.m_associativity)
+                {
+                    case Grammar_::ASSOC_LEFT:
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1046 "barf_preprocessor_parser.cpp"
+ << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
+                        m_hypothetical_state_->DeleteBranch(shift);
+                        shift = NULL;
+                        conflict_resolved = true;
+                        break;
+
+                    case Grammar_::ASSOC_NONASSOC:
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1057 "barf_preprocessor_parser.cpp"
+ << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
+                        // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
+                        // action to initiate error panic.  This works only because the shift and reduce nodes
+                        // are children of the parse tree root.
+                        assert(shift->m_parent_node == m_hypothetical_state_->m_root);
+                        assert(reduce->m_parent_node == m_hypothetical_state_->m_root);
+
+                        // Lookahead_(0) is the token that would be SHIFT'ed.
+                        RunNonassocErrorActions_(Lookahead_(0));
+
+                        m_hypothetical_state_->DeleteBranch(shift);
+                        m_hypothetical_state_->DeleteBranch(reduce);
+                        // Just verify that the HPS queue has been totally nullified by the above actions.
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            assert(*hps_it == NULL);
+                        }
+                        m_hypothetical_state_->m_hps_queue.clear();
+                        assert(m_hypothetical_state_->m_new_hps_queue.empty());
+                        assert(m_hypothetical_state_->m_root->m_child_nodes.empty());
+
+                        // Create fresh HPSes at the root from the realized state.
+                        CreateParseTreeFromRealizedState_();
+                        // TODO: This operation could be optimized due to the fact that each HPS will
+                        // take exactly one action; INSERT_LOOKAHEAD_ERROR.  But for now, just do the
+                        // easy thing.
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            ParseTreeNode_ *hps = *hps_it;
+                            assert(hps != NULL);
+                            ParseTreeNode_ *new_hps = TakeHypotheticalActionOnHPS_(*hps, ParseTreeNode_::INSERT_LOOKAHEAD_ERROR, ParseTreeNode_::UNUSED_DATA);
+                            m_hypothetical_state_->m_new_hps_queue.push_back(new_hps);
+                            // Note that DeleteBranch only nullifies elements in m_hps_queue, it doesn't
+                            // alter the container itself.
+                            m_hypothetical_state_->DeleteBranch(hps);
+                        }
+                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                        {
+                            assert(*hps_it == NULL);
+                        }
+                        m_hypothetical_state_->m_hps_queue.clear();
+
+                        // Now that all the INSERT_LOOKAHEAD_ERROR HPSes have been created and put into
+                        // m_new_hps_queue, the existing HPSes have been deleted, and the processing later
+                        // in this function (see `if (conflict_resolved)` block) is expecting the HPSes to
+                        // be in m_hps_queue, swap the queues.
+                        assert(m_hypothetical_state_->m_hps_queue.empty());
+                        assert(!m_hypothetical_state_->m_new_hps_queue.empty());
+                        std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+
+                        // Mark the conflict as resolved.
+                        conflict_resolved = true;
+                        break;
+
+                    case Grammar_::ASSOC_RIGHT:
+                        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1116 "barf_preprocessor_parser.cpp"
+ << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
+                        m_hypothetical_state_->DeleteBranch(reduce);
+                        reduce = NULL;
+                        conflict_resolved = true;
+                        break;
+
+                    default:
+                        assert(false && "this should never happen");
+                        break;
+                }
+            }
+            // Case 4
+            else if (reduce_precedence_level_range.second == shift_precedence_level_range.second &&
+                     shift_precedence_level_range.first < shift_precedence_level_range.second)
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1135 "barf_preprocessor_parser.cpp"
+ << "        Case 4; REDUCE >= SHIFT;\n")
+                Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
+                Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
+                if (reduction_rule_precedence.m_associativity == Grammar_::ASSOC_LEFT)
+                {
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1144 "barf_preprocessor_parser.cpp"
+ << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
+                    m_hypothetical_state_->DeleteBranch(shift);
+                    shift = NULL;
+                    conflict_resolved = true;
+                }
+                else
+                {
+                    TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1155 "barf_preprocessor_parser.cpp"
+ << "        Can't resolve conflict at this time.\n")
+                }
+            }
+            // Case 5
+            else if (reduce_precedence_level_range.first > shift_precedence_level_range.second)
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1165 "barf_preprocessor_parser.cpp"
+ << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
+                m_hypothetical_state_->DeleteBranch(shift);
+                shift = NULL;
+                conflict_resolved = true;
+            }
+            // Case 6
+            else {
+                TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1176 "barf_preprocessor_parser.cpp"
+ << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
+                assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
+                assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
+            }
+
+            if (conflict_resolved)
+            {
+                should_return = false;
+
+                assert(m_hypothetical_state_->m_new_hps_queue.empty());
+                // Take new hps-es and clear old ones.
+                for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+                {
+                    ParseTreeNode_ *hps = *hps_it;
+                    if (hps != NULL)
+                        m_hypothetical_state_->m_new_hps_queue.push_back(hps);
+                }
+                m_hypothetical_state_->m_hps_queue.clear();
+                std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+                assert(m_hypothetical_state_->m_new_hps_queue.empty());
+                // TODO: Break this large function up into smaller logical units
+                return;
+            }
+        }
+    }
+
+    // Compute the minimum of all hps-es' m_realized_lookahead_cursor values, in order
+    // to determine which ones have processed the lowest number of lookaheads.  This is
+    // done so that one hps doesn't get way ahead of the others.
+    std::uint32_t min_realized_lookahead_cursor;
+    m_hypothetical_state_->ComputeMinAndMaxRealizedLookaheadCursors(&min_realized_lookahead_cursor, NULL);
+
+    // Process transitions in order of their SortedTypeIndex.  Only process HPSes that are at min_realized_lookahead_cursor.
+    assert(m_hypothetical_state_->m_new_hps_queue.empty()); // This is the starting condition
+    for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
+    {
+        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1216 "barf_preprocessor_parser.cpp"
+ << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
+
+        if (!m_hypothetical_state_->m_new_hps_queue.empty())
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1224 "barf_preprocessor_parser.cpp"
+ << "        Early-out based on sorted type index.\n")
+            break;
+        }
+
+        // Process non-blocked hps-es.
+        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+        {
+            // Skip nullified HPS nodes.
+            if (*hps_it == NULL)
+                continue;
+
+            ParseTreeNode_ &hps = **hps_it;
+
+            assert(hps.m_spec.m_type == ParseTreeNode_::HPS);
+            TRISON_CPP_DEBUG_CODE_(
+                DSF_TRANSITION_PROCESSING,
+                *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1244 "barf_preprocessor_parser.cpp"
+ << "        Processing ";
+                hps.Print(*DebugSpewStream(), this, DebugSpewPrefix(), 0, true);
+            )
+
+            // If a hps is blocked, then save it for the next parse iteration but don't do anything with it.
+            if (hps.IsBlockedHPS())
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1255 "barf_preprocessor_parser.cpp"
+ << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
+                m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
+                *hps_it = NULL;
+                continue;
+            }
+
+            // If a hps' m_realized_lookahead_cursor is greater than min_realized_lookahead_cursor, then
+            // save it for the next parse iteration but don't do anything with it.
+            if (hps.m_realized_lookahead_cursor > min_realized_lookahead_cursor)
+            {
+                TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1269 "barf_preprocessor_parser.cpp"
+ << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
+                m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
+                *hps_it = NULL;
+                continue;
+            }
+
+            // This hps isn't blocked, so indicate that the parse should continue.
+            should_return = false;
+
+            std::uint32_t hps_state_index = hps.m_hypothetical_head.StatePtr()->Data();
+
+            // Retrieve all transitions whose SortedTypeIndex is current_sorted_type_index.
+            Npda_::TransitionVector_ const &non_epsilon_transitions = Npda_::NonEpsilonTransitionsOfState_(hps_state_index, current_sorted_type_index);
+            // Exercise all valid transitions whose SortedTypeIndex is current_sorted_type_index.
+            for (Npda_::TransitionVector_::const_iterator transition_it = non_epsilon_transitions.begin(), transition_it_end = non_epsilon_transitions.end(); transition_it != transition_it_end; ++transition_it)
+            {
+                Npda_::Transition_ const &transition = *transition_it;
+                assert(transition.m_type >= Npda_::Transition_::RETURN);
+                assert(transition.m_type <= Npda_::Transition_::POP_STACK);
+                assert(Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) == current_sorted_type_index);
+
+/*
+                TRISON_CPP_DEBUG_CODE_(
+                    DSF_TRANSITION_PROCESSING,
+                    *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1297 "barf_preprocessor_parser.cpp"
+ << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
+                    if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
+                        *DebugSpewStream() << "<N/A>";
+                    else
+                        *DebugSpewStream() << transition.m_data_index;
+                    *DebugSpewStream() << " and sorted type index " << Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) << '\n';
+                )
+*/
+
+                ParseTreeNode_ *resulting_hps = NULL;
+                // If it's a default transition, there's no need to access the lookahead (except in
+                // a certain case).
+                if (transition.m_token_index == Nonterminal::none_)
+                {
+                    // Logic regarding empty reduction rules -- if this transition is REDUCE for an empty reduction rule
+                    // and the lookahead is the nonterminal for that REDUCE action, then don't reduce, since that
+                    // would produce an infinite loop.  There is a case where it's not necessary to access the lookahead:
+                    // if this HPS is the child of a REDUCE action for the same nonterminal, then we know the lookahead
+                    // is that nonterminal, so it's not necessary to check the lookahead (we don't want to access the
+                    // lookahead unnecessarily).  But it's not an if-and-only-if condition; we could have just REDUCE'd
+                    // that nonterminal but the HPS has no parent because the trunk action was executed and then popped,
+                    // meaning that the parent of this HPS would be the parse tree root.
+                    bool take_action = true;
+                    assert(hps.m_parent_node != NULL);
+                    if (transition.m_type == Npda_::Transition_::REDUCE)
+                    {
+                        Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[transition.m_data_index];
+                        bool is_empty_reduction_rule = rule.m_token_count == 0;
+                        bool just_reduced_this_nonterminal = hps.m_parent_node->m_spec.m_type == ParseTreeNode_::REDUCE && hps.m_parent_node->m_spec.m_single_data == rule.m_reduction_nonterminal_token_id;
+                        // The fancy logical construction here is to avoid accessing the lookahead unless necessary
+                        // (and technically this is not optimal, since really when executing the trunk actions,
+                        // the information of "parent is REDUCE and the reduction rule nonterminal is this one"
+                        // is lost in the current implementation.
+                        if (is_empty_reduction_rule &&
+                            (just_reduced_this_nonterminal ||
+                             rule.m_reduction_nonterminal_token_id == hps.LookaheadTokenId(*this))) // lookahead is this nonterminal
+                        {
+                            TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1338 "barf_preprocessor_parser.cpp"
+ << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
+                            take_action = false;
+                        }
+                    }
+
+                    if (take_action)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1349 "barf_preprocessor_parser.cpp"
+ << "            Exercising transition without accessing lookahead... ")
+                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
+                    }
+                }
+                // Otherwise, the lookahead must be accessed.
+                else
+                {
+                    Token::Id lookahead_token_id = hps.LookaheadTokenId(*this);
+                    if (transition.m_token_index == lookahead_token_id)
+                    {
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1364 "barf_preprocessor_parser.cpp"
+ << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
+                        resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
+                        TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
+                    }
+                }
+                if (resulting_hps != NULL)
+                    m_hypothetical_state_->m_new_hps_queue.push_back(resulting_hps);
+            }
+        }
+    }
+
+    // Take new hps-es and clear old ones.
+    assert(!m_hypothetical_state_->m_new_hps_queue.empty());
+    TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1381 "barf_preprocessor_parser.cpp"
+ << "    Removing defunct HPSes...\n")
+    for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        ParseTreeNode_ *hps = *hps_it;
+        if (hps != NULL)
+        {
+            TRISON_CPP_DEBUG_CODE_(
+                DSF_HPS_REMOVE_DEFUNCT,
+                hps->Print(*DebugSpewStream(), this, DebugSpewPrefix(), 2);
+            )
+            m_hypothetical_state_->DeleteBranch(hps);
+        }
+    }
+    m_hypothetical_state_->m_hps_queue.clear();
+    std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+    assert(m_hypothetical_state_->m_new_hps_queue.empty());
+}
+
+Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack) throw()
+{
+    assert(rule_index_ < Grammar_::ms_rule_count_);
+    switch (rule_index_)
+    {
+        default:
+            assert(false && "this should never happen");
+            return NULL;
+
+        case 0:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 193 "barf_preprocessor_parser.trison"
+
+        return new Body();
+    
+#line 1417 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 1:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Text * text(Dsc<Text *>(token_stack[token_stack.size()-1].m_data));
+
+#line 198 "barf_preprocessor_parser.trison"
+
+        Body *body = new Body();
+        body->Append(text);
+        return body;
+    
+#line 1432 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 2:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
+            ExecutableAst * executable(Dsc<ExecutableAst *>(token_stack[token_stack.size()-1].m_data));
+
+#line 205 "barf_preprocessor_parser.trison"
+
+        if (executable != NULL)
+            body->Append(executable);
+        return body;
+    
+#line 1448 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 3:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Body * body(Dsc<Body *>(token_stack[token_stack.size()-3].m_data));
+            ExecutableAst * executable(Dsc<ExecutableAst *>(token_stack[token_stack.size()-2].m_data));
+            Text * text(Dsc<Text *>(token_stack[token_stack.size()-1].m_data));
+
+#line 212 "barf_preprocessor_parser.trison"
+
+        if (executable != NULL)
+            body->Append(executable);
+        body->Append(text);
+        return body;
+    
+#line 1466 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 4:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            ExecutableAst * code(Dsc<ExecutableAst *>(token_stack[token_stack.size()-1].m_data));
+
+#line 223 "barf_preprocessor_parser.trison"
+
+        return code;
+    
+#line 1479 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 5:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Conditional * conditional(Dsc<Conditional *>(token_stack[token_stack.size()-1].m_data));
+
+#line 228 "barf_preprocessor_parser.trison"
+
+        return conditional;
+    
+#line 1492 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 6:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Define * define(Dsc<Define *>(token_stack[token_stack.size()-3].m_data));
+            Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
+
+#line 233 "barf_preprocessor_parser.trison"
+
+        define->SetBody(body);
+        return define;
+    
+#line 1507 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 7:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Loop * loop(Dsc<Loop *>(token_stack[token_stack.size()-3].m_data));
+            Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
+
+#line 239 "barf_preprocessor_parser.trison"
+
+        loop->SetBody(body);
+        return loop;
+    
+#line 1522 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 8:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            ForEach * for_each(Dsc<ForEach *>(token_stack[token_stack.size()-3].m_data));
+            Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
+
+#line 245 "barf_preprocessor_parser.trison"
+
+        for_each->SetBody(body);
+        return for_each;
+    
+#line 1537 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 9:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            ExecutableAst * code_body(Dsc<ExecutableAst *>(token_stack[token_stack.size()-2].m_data));
+
+#line 253 "barf_preprocessor_parser.trison"
+ return code_body; 
+#line 1548 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 10:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            ExecutableAst * code_body(Dsc<ExecutableAst *>(token_stack[token_stack.size()-2].m_data));
+
+#line 255 "barf_preprocessor_parser.trison"
+ return code_body; 
+#line 1559 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 11:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 261 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1569 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 12:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 264 "barf_preprocessor_parser.trison"
+ return expression; 
+#line 1580 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 13:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 267 "barf_preprocessor_parser.trison"
+ return new DumpSymbolTable(); 
+#line 1590 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 14:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
+
+#line 270 "barf_preprocessor_parser.trison"
+ return new Undefine(id); 
+#line 1601 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 15:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
+
+#line 273 "barf_preprocessor_parser.trison"
+ return new DeclareArray(id); 
+#line 1612 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 16:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
+
+#line 276 "barf_preprocessor_parser.trison"
+ return new DeclareMap(id); 
+#line 1623 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 17:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * include_filename_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 279 "barf_preprocessor_parser.trison"
+ return new Include(include_filename_expression, false); 
+#line 1634 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 18:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * include_filename_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 282 "barf_preprocessor_parser.trison"
+ return new Include(include_filename_expression, true); 
+#line 1645 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 19:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * message_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 285 "barf_preprocessor_parser.trison"
+ return new Message(message_expression, Message::WARNING); 
+#line 1656 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 20:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * message_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 288 "barf_preprocessor_parser.trison"
+ return new Message(message_expression, Message::ERROR); 
+#line 1667 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 21:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * message_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 291 "barf_preprocessor_parser.trison"
+ return new Message(message_expression, Message::FATAL_ERROR); 
+#line 1678 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 22:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Conditional * conditional(Dsc<Conditional *>(token_stack[token_stack.size()-3].m_data));
+            Body * if_body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
+            Body * else_body(Dsc<Body *>(token_stack[token_stack.size()-1].m_data));
+
+#line 297 "barf_preprocessor_parser.trison"
+
+        conditional->SetIfBody(if_body);
+        conditional->SetElseBody(else_body);
+        return conditional;
+    
+#line 1695 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 23:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 306 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1705 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 24:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Body * body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
+
+#line 308 "barf_preprocessor_parser.trison"
+ return body; 
+#line 1716 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 25:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Conditional * conditional(Dsc<Conditional *>(token_stack[token_stack.size()-3].m_data));
+            Body * if_body(Dsc<Body *>(token_stack[token_stack.size()-2].m_data));
+            Body * else_body(Dsc<Body *>(token_stack[token_stack.size()-1].m_data));
+
+#line 311 "barf_preprocessor_parser.trison"
+
+        conditional->SetIfBody(if_body);
+        conditional->SetElseBody(else_body);
+        Body *body = new Body();
+        body->Append(conditional);
+        return body;
+    
+#line 1735 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 26:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+
+#line 323 "barf_preprocessor_parser.trison"
+ return new Conditional(expression); 
+#line 1746 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 27:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+
+#line 326 "barf_preprocessor_parser.trison"
+ return new Conditional(expression); 
+#line 1757 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 28:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 331 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1767 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 29:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 333 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1777 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 30:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+
+#line 339 "barf_preprocessor_parser.trison"
+ return new Conditional(expression); 
+#line 1788 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 31:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+
+#line 342 "barf_preprocessor_parser.trison"
+ return new Conditional(expression); 
+#line 1799 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 32:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 347 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1809 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 33:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 349 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1819 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 34:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Define * define(Dsc<Define *>(token_stack[token_stack.size()-1].m_data));
+
+#line 354 "barf_preprocessor_parser.trison"
+ return define; 
+#line 1830 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 35:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Define * define(Dsc<Define *>(token_stack[token_stack.size()-1].m_data));
+
+#line 356 "barf_preprocessor_parser.trison"
+ return define; 
+#line 1841 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 36:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Define * define(Dsc<Define *>(token_stack[token_stack.size()-1].m_data));
+
+#line 358 "barf_preprocessor_parser.trison"
+ return define; 
+#line 1852 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 37:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
+
+#line 364 "barf_preprocessor_parser.trison"
+ return new Define(id); 
+#line 1863 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 38:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
+
+#line 367 "barf_preprocessor_parser.trison"
+ return new Define(id); 
+#line 1874 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 39:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
+
+#line 373 "barf_preprocessor_parser.trison"
+ return new DefineArrayElement(id); 
+#line 1885 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 40:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
+
+#line 376 "barf_preprocessor_parser.trison"
+ return new DefineArrayElement(id); 
+#line 1896 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 41:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-6].m_data));
+            Text * key(Dsc<Text *>(token_stack[token_stack.size()-4].m_data));
+
+#line 382 "barf_preprocessor_parser.trison"
+ return new DefineMapElement(id, key); 
+#line 1908 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 42:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-6].m_data));
+            Text * key(Dsc<Text *>(token_stack[token_stack.size()-4].m_data));
+
+#line 385 "barf_preprocessor_parser.trison"
+ return new DefineMapElement(id, key); 
+#line 1920 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 43:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 390 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1930 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 44:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 392 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1940 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 45:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * iterator_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
+            Expression * iteration_count_expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+
+#line 398 "barf_preprocessor_parser.trison"
+ return new Loop(iterator_id, iteration_count_expression); 
+#line 1952 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 46:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * iterator_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
+            Expression * iteration_count_expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+
+#line 401 "barf_preprocessor_parser.trison"
+ return new Loop(iterator_id, iteration_count_expression); 
+#line 1964 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 47:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 406 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1974 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 48:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 408 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 1984 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 49:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * key_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
+            Ast::Id * map_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
+
+#line 414 "barf_preprocessor_parser.trison"
+ return new ForEach(key_id, map_id); 
+#line 1996 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 50:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * key_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
+            Ast::Id * map_id(Dsc<Ast::Id *>(token_stack[token_stack.size()-3].m_data));
+
+#line 417 "barf_preprocessor_parser.trison"
+ return new ForEach(key_id, map_id); 
+#line 2008 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 51:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 422 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 2018 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 52:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+
+#line 424 "barf_preprocessor_parser.trison"
+ return NULL; 
+#line 2028 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 53:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Text * str(Dsc<Text *>(token_stack[token_stack.size()-1].m_data));
+
+#line 430 "barf_preprocessor_parser.trison"
+ return str; 
+#line 2039 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 54:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Integer * integer(Dsc<Integer *>(token_stack[token_stack.size()-1].m_data));
+
+#line 433 "barf_preprocessor_parser.trison"
+ return integer; 
+#line 2050 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 55:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
+
+#line 436 "barf_preprocessor_parser.trison"
+ return new Sizeof(id); 
+#line 2061 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 56:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 439 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::INT_CAST, expression); 
+#line 2072 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 57:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 442 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::STRING_CAST, expression); 
+#line 2083 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 58:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 445 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::STRING_LENGTH, expression); 
+#line 2094 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 59:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * character_index_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 448 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::TO_CHARACTER_LITERAL, character_index_expression); 
+#line 2105 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 60:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * string_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 451 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::TO_STRING_LITERAL, string_expression); 
+#line 2116 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 61:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
+
+#line 454 "barf_preprocessor_parser.trison"
+ return new IsDefined(id, NULL); 
+#line 2127 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 62:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
+            Expression * element_index_expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+
+#line 457 "barf_preprocessor_parser.trison"
+ return new IsDefined(id, element_index_expression); 
+#line 2139 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 63:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-1].m_data));
+
+#line 460 "barf_preprocessor_parser.trison"
+ return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
+#line 2150 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 64:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-4].m_data));
+            Expression * element_index_expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 463 "barf_preprocessor_parser.trison"
+ return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); 
+#line 2162 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 65:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-2].m_data));
+
+#line 466 "barf_preprocessor_parser.trison"
+ return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
+#line 2173 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 66:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Ast::Id * id(Dsc<Ast::Id *>(token_stack[token_stack.size()-5].m_data));
+            Expression * element_index_expression(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+
+#line 469 "barf_preprocessor_parser.trison"
+ return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); 
+#line 2185 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 67:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 472 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::CONCATENATE, right); 
+#line 2197 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 68:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 475 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::LOGICAL_OR, right); 
+#line 2209 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 69:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 478 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::LOGICAL_AND, right); 
+#line 2221 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 70:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 481 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::EQUAL, right); 
+#line 2233 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 71:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 484 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::NOT_EQUAL, right); 
+#line 2245 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 72:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 487 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::LESS_THAN, right); 
+#line 2257 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 73:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 490 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::LESS_THAN_OR_EQUAL, right); 
+#line 2269 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 74:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 493 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::GREATER_THAN, right); 
+#line 2281 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 75:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-4].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 496 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::GREATER_THAN_OR_EQUAL, right); 
+#line 2293 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 76:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 499 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::PLUS, right); 
+#line 2305 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 77:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 502 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::MINUS, right); 
+#line 2317 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 78:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 505 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::MULTIPLY, right); 
+#line 2329 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 79:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 508 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::DIVIDE, right); 
+#line 2341 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 80:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * left(Dsc<Expression *>(token_stack[token_stack.size()-3].m_data));
+            Expression * right(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 511 "barf_preprocessor_parser.trison"
+ return new Operation(left, Operation::REMAINDER, right); 
+#line 2353 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 81:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 514 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::NEGATIVE, expression); 
+#line 2364 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 82:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-1].m_data));
+
+#line 517 "barf_preprocessor_parser.trison"
+ return new Operation(Operation::LOGICAL_NOT, expression); 
+#line 2375 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+        case 83:
+        {
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            Expression * expression(Dsc<Expression *>(token_stack[token_stack.size()-2].m_data));
+
+#line 520 "barf_preprocessor_parser.trison"
+ return expression; 
+#line 2386 "barf_preprocessor_parser.cpp"
+            break;
+        }
+
+    }
+
+    TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from reduction rule code block; rule " << rule_index_ << ": " << Grammar_::ms_rule_table_[rule_index_].m_description << '\n')
+    assert(false && "no value returned from reduction rule code block");
+    return NULL;
+}
+
+void Parser::PrintParserStatus_ (std::ostream &out) const
+{
+    assert(m_hypothetical_state_->m_root != NULL);
+
+    // TODO: Print full stack (this is quite a lot)
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2405 "barf_preprocessor_parser.cpp"
+ << "Realized state branch node stacks are (each listed bottom to top):\n";
+    for (BranchVector_::const_iterator it = m_realized_state_->BranchVectorStack().back().begin(),
+                                       it_end = m_realized_state_->BranchVectorStack().back().end();
+         it != it_end;
+         ++it)
+    {
+        Branch_ const &branch = *it;
+        out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2416 "barf_preprocessor_parser.cpp"
+ << "    (";
+        branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
+        out << ")\n";
+    }
+
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2425 "barf_preprocessor_parser.cpp"
+ << "Max realized lookahead count (so far) is:\n";
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2430 "barf_preprocessor_parser.cpp"
+ << "    " << m_realized_state_->MaxRealizedLookaheadCount();
+    if (m_max_allowable_lookahead_count >= 0)
+        out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
+    else
+        out << " (allowable lookahead count is unlimited)\n";
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2439 "barf_preprocessor_parser.cpp"
+ << "Max realized parse tree depth (so far) is:\n";
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2444 "barf_preprocessor_parser.cpp"
+ << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
+    if (m_max_allowable_parse_tree_depth >= 0)
+        out << " (max allowable parse tree depth is " << m_max_allowable_parse_tree_depth << ")\n";
+    else
+        out << " (allowable parse tree depth is unlimited)\n";
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2453 "barf_preprocessor_parser.cpp"
+ << "Has-encountered-error-state (so far) is:\n";
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2458 "barf_preprocessor_parser.cpp"
+ << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2463 "barf_preprocessor_parser.cpp"
+ << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2468 "barf_preprocessor_parser.cpp"
+ << "    ";
+    for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
+                                     it_end = m_realized_state_->TokenStack().end();
+         it != it_end;
+         ++it)
+    {
+        Token const &token = *it;
+        out << token << ' ';
+    }
+    out << ". ";
+    for (TokenQueue_::const_iterator it = m_realized_state_->LookaheadQueue().begin(),
+                                     it_end = m_realized_state_->LookaheadQueue().end();
+         it != it_end;
+         ++it)
+    {
+        Token const &token = *it;
+        out << token << ' ';
+    }
+    out << '\n';
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2491 "barf_preprocessor_parser.cpp"
+ << '\n';
+
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2497 "barf_preprocessor_parser.cpp"
+ << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
+    m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2503 "barf_preprocessor_parser.cpp"
+ << '\n';
+
+    out << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2509 "barf_preprocessor_parser.cpp"
+ << "HPS queue:\n";
+    for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
+    {
+        ParseTreeNode_ *hps = *it;
+        assert(hps != NULL);
+        hps->Print(out, this, DebugSpewPrefix(), 1);
+    }
+}
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::RealizedState_
+// ////////////////////////////////////////////////////////////////////////////
+
+Parser::RealizedState_::RealizedState_ (Npda_::StateIndex_ initial_state)
+    :   m_max_realized_lookahead_count(0)
+    ,   m_has_encountered_error_state(false)
+{
+    Initialize(initial_state);
+}
+
+void Parser::RealizedState_::PushBackLookahead (Token const &lookahead, HPSQueue_ const &hps_queue)
+{
+    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
+    // this RealizedState_ method will be responsible for handling some HypotheticalState_
+    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
+    // be factored out.
+
+    m_lookahead_queue.push_back(lookahead);
+    UpdateMaxRealizedLookaheadCount();
+}
+
+Parser::Token Parser::RealizedState_::PopStack ()
+{
+    assert(!m_token_stack.empty());
+
+    Token popped_token(m_token_stack.back());
+    m_token_stack.pop_back();
+
+    assert(!m_branch_vector_stack.empty());
+    m_branch_vector_stack.pop_back();
+
+    assert(m_branch_vector_stack.size() == m_token_stack.size());
+
+    return popped_token;
+}
+
+Parser::Token Parser::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
+{
+    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
+    // this RealizedState_ method will be responsible for handling some HypotheticalState_
+    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
+    // be factored out.
+
+    assert(!m_lookahead_queue.empty());
+    // Because the contents of m_lookahead_queue are changing, and each hps's
+    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
+    for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        ParseTreeNode_ &hps = **hps_it;
+        --hps.m_realized_lookahead_cursor;
+    }
+    Token retval(m_lookahead_queue.back());
+    m_lookahead_queue.pop_front();
+    return retval;
+}
+
+void Parser::RealizedState_::StealTokenStackTop (Ast::Base * *&return_token)
+{
+    assert(return_token != NULL);
+    assert(!m_token_stack.empty());
+    *return_token = m_token_stack.back().m_data;
+    // Assign the token default so that the actual return token isn't destroyed when the parser is destroyed.
+    m_token_stack.back().m_data = NULL;
+}
+
+// void Parser::RealizedState_::ExecuteAction (Npda_::Transition_::Type action, ActionData_ action_data)
+// {
+// }
+
+void Parser::RealizedState_::ExecuteActionReduce (Grammar_::Rule_ const &rule, Token::Data const &reduced_nonterminal_token_data, HPSQueue_ &hps_queue)
+{
+    for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
+        PopStack();
+    // Push the reduced nonterminal token data onto the front of the lookahead queue
+    PushFrontLookahead(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data), hps_queue);
+}
+
+void Parser::RealizedState_::ExecuteActionShift (BranchVector_ const &shifted_branch_vector, HPSQueue_ &hps_queue)
+{
+    // Ensure that each of the branch nodes in the shifted vector are actually children of
+    // the current set of branch nodes.
+    assert(!m_branch_vector_stack.empty());
+    // Ensure that the stack is actually consistent with regard to the parent/child relationships.
+    for (BranchVector_::const_iterator it = shifted_branch_vector.begin(), it_end = shifted_branch_vector.end(); it != it_end; ++it)
+    {
+        // Note that m_branch_vector_stack.back() is the top of the branch vector stack.
+        assert(std::any_of(m_branch_vector_stack.back().begin(), m_branch_vector_stack.back().end(), [it](Branch_ const &stack_top_branch){ return stack_top_branch == it->Parent(); }));
+    }
+    // Ensure that there's actually a lookahead.
+    assert(!m_lookahead_queue.empty());
+
+    // Push onto the branch node stack.
+    m_branch_vector_stack.push_back(shifted_branch_vector);
+    // Push the token onto the stack.
+    m_token_stack.push_back(m_lookahead_queue.front());
+    // Pop the shifted lookahead from the queue
+    PopFrontLookahead(hps_queue);
+}
+
+void Parser::RealizedState_::ExecuteActionInsertLookaheadError (HPSQueue_ &hps_queue)
+{
+    PushFrontLookahead(Token(Terminal::ERROR_), hps_queue);
+    SetHasEncounteredErrorState();
+}
+
+void Parser::RealizedState_::ExecuteActionDiscardLookahead (HPSQueue_ &hps_queue)
+{
+    assert(!m_lookahead_queue.empty());
+    PopFrontLookahead(hps_queue);
+}
+
+void Parser::RealizedState_::PrintStackAndLookaheads (std::ostream &out) const
+{
+    for (TokenStack_::const_iterator it = TokenStack().begin(), it_end = TokenStack().end(); it != it_end; ++it)
+    {
+        Token const &token = *it;
+        out << token << ' ';
+    }
+    out << '.';
+    for (TokenQueue_::const_iterator it = LookaheadQueue().begin(), it_end = LookaheadQueue().end(); it != it_end; ++it)
+    {
+        Token const &token = *it;
+        out << ' ' << token;
+    }
+}
+
+void Parser::RealizedState_::ClearStack ()
+{
+    m_branch_vector_stack.clear();
+    m_token_stack.clear();
+}
+
+void Parser::RealizedState_::Reinitialize (Npda_::StateIndex_ initial_state)
+{
+    // Clear the stack(s) and reset the error state.
+    ClearStack();
+    m_has_encountered_error_state = false;
+    // But preserve m_lookahead_queue and m_max_realized_lookahead_count.
+
+    Initialize(initial_state);
+}
+
+void Parser::RealizedState_::Initialize (Npda_::StateIndex_ initial_state)
+{
+    assert(m_branch_vector_stack.empty());
+    assert(m_token_stack.empty());
+
+    BranchVector_ initial_branch_vector;
+    // The Nonterminal::none_ is just a dummy Token::Id to go along with initial_state.
+    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_)));
+    // TODO: This probably should be emplace_back
+    m_branch_vector_stack.push_back(initial_branch_vector);
+
+    // Put a dummy token in to correspond with the start state.
+    m_token_stack.push_back(Token(Nonterminal::none_));
+}
+
+void Parser::RealizedState_::PushFrontLookahead (Token const &lookahead, HPSQueue_ &hps_queue)
+{
+    // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
+    // this RealizedState_ method will be responsible for handling some HypotheticalState_
+    // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
+    // be factored out.
+
+    m_lookahead_queue.push_front(lookahead);
+    // Because the contents of m_lookahead_queue_ are changing, and each hps's
+    // m_realized_lookahead_cursor is an index into that queue, each must be updated.
+    for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        ParseTreeNode_ &hps = **hps_it;
+        ++hps.m_realized_lookahead_cursor;
+    }
+    UpdateMaxRealizedLookaheadCount();
+}
+
+void Parser::RealizedState_::UpdateMaxRealizedLookaheadCount ()
+{
+    // Subtract the number of parser-generated tokens from the length of m_lookahead_queue.
+    std::size_t parser_generated_token_count = 0;
+    for ( ; parser_generated_token_count < m_lookahead_queue.size(); ++parser_generated_token_count)
+    {
+        Token const &lookahead = m_lookahead_queue[parser_generated_token_count];
+        if (IsScannerGeneratedTokenId(lookahead.m_id))
+            break;
+    }
+    m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, m_lookahead_queue.size() - parser_generated_token_count);
+}
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::HypotheticalState_
+// ////////////////////////////////////////////////////////////////////////////
+
+Parser::HypotheticalState_::HypotheticalState_ (std::uint32_t initial_state)
+{
+    m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
+
+    ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
+    hps->m_hypothetical_head        = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
+
+    m_root->AddChild(hps);
+    m_hps_queue.push_back(hps);
+    m_max_realized_parse_tree_depth = 0;
+}
+
+Parser::HypotheticalState_::~HypotheticalState_ ()
+{
+    m_hps_queue.clear();
+    m_new_hps_queue.clear();
+
+    delete m_root;
+    m_root = NULL;
+}
+
+bool Parser::HypotheticalState_::MinAndMaxRealizedLookaheadCursorsAreEqual () const
+{
+    std::uint32_t min;
+    std::uint32_t max;
+    ComputeMinAndMaxRealizedLookaheadCursors(&min, &max);
+    return min == max;
+}
+
+bool Parser::HypotheticalState_::HasExceededMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth) const
+{
+    // If the limit is negative, then excess is not possible.
+    return max_allowable_parse_tree_depth >= 0 && std::int64_t(ParseTreeDepth()) > max_allowable_parse_tree_depth;
+}
+
+void Parser::HypotheticalState_::DeleteBranch (ParseTreeNode_ *branch_node)
+{
+    assert(!branch_node->IsRoot());
+
+    // Find the most root-ward ancestor that is an only child that isn't the root node.
+    ParseTreeNode_ *branch_root = branch_node->BranchRoot();
+    assert(branch_root != NULL);
+    assert(!branch_root->IsRoot());
+    assert(branch_root->HasParent());
+
+    branch_root->RemoveFromParent();
+    branch_node->NullifyHPSNodeDescendantsInHPSQueue(m_hps_queue);
+    delete branch_root;
+}
+
+void Parser::HypotheticalState_::DestroyParseTree ()
+{
+    assert(m_new_hps_queue.empty());
+    // Clear all HPSes, which represent the leaf nodes of the parse tree.
+    m_hps_queue.clear();
+    // Delete the parse tree root, which deletes all nodes.
+    delete m_root;
+    // At this point, the parse tree has been destroyed.  Create a new root node.
+    m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
+}
+
+void Parser::HypotheticalState_::ComputeMinAndMaxRealizedLookaheadCursors (std::uint32_t *min, std::uint32_t *max) const
+{
+    if (min != NULL)
+        *min = std::numeric_limits<std::uint32_t>::max();
+    if (max != NULL)
+        *max = std::numeric_limits<std::uint32_t>::min();
+
+    for (HPSQueue_::const_iterator hps_it = m_hps_queue.begin(), hps_it_end = m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        // Skip nullified HPS nodes.
+        if (*hps_it == NULL)
+            continue;
+
+        ParseTreeNode_ const &hps = **hps_it;
+        if (min != NULL && hps.m_realized_lookahead_cursor < *min)
+            *min = hps.m_realized_lookahead_cursor;
+        if (max != NULL && hps.m_realized_lookahead_cursor > *max)
+            *max = hps.m_realized_lookahead_cursor;
+    }
+}
+
+std::uint32_t Parser::HypotheticalState_::ParseTreeDepth () const
+{
+    std::uint32_t parse_tree_depth = 0;
+
+    for (HPSQueue_::const_iterator hps_it = m_hps_queue.begin(), hps_it_end = m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
+    {
+        // Skip nullified HPS nodes.
+        if (*hps_it == NULL)
+            continue;
+
+        ParseTreeNode_ const &hps = **hps_it;
+        std::uint32_t branch_depth = hps.m_depth - m_root->m_depth;
+        if (branch_depth > parse_tree_depth)
+            parse_tree_depth = branch_depth;
+    }
+
+    // Update m_max_realized_parse_tree_depth
+    if (parse_tree_depth > m_max_realized_parse_tree_depth)
+        m_max_realized_parse_tree_depth = parse_tree_depth;
+
+    return parse_tree_depth;
+}
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::ParseTreeNode_
+// ////////////////////////////////////////////////////////////////////////////
+
+char const *Parser::ParseTreeNode_::AsString (Type type)
+{
+    static char const *const LOOKUP_TABLE[COUNT_] =
+    {
+        "ROOT",
+        "RETURN",
+        "REDUCE",
+        "SHIFT",
+        "INSERT_LOOKAHEAD_ERROR",
+        "DISCARD_LOOKAHEAD",
+        "POP_STACK",
+        "HPS"
+    };
+    assert(std::uint32_t(type) < COUNT_);
+    return LOOKUP_TABLE[std::uint32_t(type)];
+}
+
+bool Parser::ParseTreeNode_::ParseTreeNodeOrder::operator () (Parser::ParseTreeNode_ const *lhs, Parser::ParseTreeNode_ const *rhs) const
+{
+    assert(lhs != NULL);
+    assert(rhs != NULL);
+    assert(lhs->m_spec.m_type == rhs->m_spec.m_type); // ParseTreeNodeSet should contain only nodes of the same type.
+    // for HPS, their contents must be compared.
+    if (lhs->m_spec.m_type == HPS)
+    {
+        assert(lhs->m_child_nodes.empty());
+        assert(rhs->m_child_nodes.empty());
+        // hps-es are equal if their m_realized_lookahead_cursor and m_hypothetical_lookahead_token_id_queue members are.
+        if (lhs->m_realized_lookahead_cursor != rhs->m_realized_lookahead_cursor)
+            return lhs->m_realized_lookahead_cursor < rhs->m_realized_lookahead_cursor;
+        else if (lhs->m_hypothetical_head.StatePtr() != rhs->m_hypothetical_head.StatePtr())
+            return lhs->m_hypothetical_head.StatePtr() < rhs->m_hypothetical_head.StatePtr();
+        else
+            return std::lexicographical_compare(
+                lhs->m_hypothetical_lookahead_token_id_queue.begin(), lhs->m_hypothetical_lookahead_token_id_queue.end(),
+                rhs->m_hypothetical_lookahead_token_id_queue.begin(), rhs->m_hypothetical_lookahead_token_id_queue.end(),
+                CompareTokenId_
+            );
+    }
+    // For REDUCE, their contents must be compared.
+    else if (lhs->m_spec.m_type == REDUCE)
+    {
+        // m_single_data contains the reduction rule index.
+        Grammar_::Rule_ const &lhs_rule = Grammar_::ms_rule_table_[lhs->m_spec.m_single_data];
+        Grammar_::Rule_ const &rhs_rule = Grammar_::ms_rule_table_[rhs->m_spec.m_single_data];
+        // Sort first by rule precedence, then by rule index (lower has higher priority).
+        if (Grammar_::ms_precedence_table_[lhs_rule.m_precedence_index].m_level != Grammar_::ms_precedence_table_[rhs_rule.m_precedence_index].m_level)
+            return Grammar_::ms_precedence_table_[lhs_rule.m_precedence_index].m_level > Grammar_::ms_precedence_table_[rhs_rule.m_precedence_index].m_level;
+        else // Sort based on rule index.
+            return lhs->m_spec.m_single_data < rhs->m_spec.m_single_data;
+    }
+    // Otherwise just use pointer value.
+    else
+        return lhs < rhs;
+}
+
+Parser::ParseTreeNode_::~ParseTreeNode_ ()
+{
+    // TODO: figure out if stack element tokens should be thrown away
+    // TODO: figure out if local lookahead queue tokens should be thrown away
+    // TODO: are they actually uninitialized (default value)?
+    for (ChildMap::iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
+    {
+        ParseTreeNodeSet &child_node_set = it->second;
+        for (ParseTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        {
+            ParseTreeNode_ *child = *child_it;
+            assert(child != NULL);
+            assert(child->m_parent_node == this);
+            delete child;
+        }
+        child_node_set.clear(); // not strictly necessary, but is cleaner.
+    }
+}
+
+bool Parser::ParseTreeNode_::HasTrunkChild () const
+{
+    if (m_spec.m_type != ROOT || m_child_nodes.size() != 1)
+        return false;
+    ParseTreeNodeSet const &single_type_child_node_set = m_child_nodes.begin()->second;
+    if (single_type_child_node_set.size() != 1)
+        return false;
+    ParseTreeNode_ *single_child = *single_type_child_node_set.begin();
+    assert(single_child != NULL);
+    assert(single_child->m_spec.m_type != ROOT);
+    return single_child->m_spec.m_type != HPS;
+}
+
+Parser::ParseTreeNode_ *Parser::ParseTreeNode_::PopTrunkChild ()
+{
+    assert(HasTrunkChild());
+    ParseTreeNode_ *trunk_child = *m_child_nodes.begin()->second.begin();
+    assert(trunk_child != NULL);
+    assert(trunk_child->m_parent_node == this);
+    // Reassign the children of the trunk child to this node (root).
+    m_child_nodes = trunk_child->m_child_nodes;
+    trunk_child->m_child_nodes.clear();
+    // Set the reassigned child nodes' parent to be this node (root).
+    for (ChildMap::iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
+    {
+        ParseTreeNodeSet &child_node_set = child_map_it->second;
+        for (ParseTreeNodeSet::iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        {
+            ParseTreeNode_ *child = *child_it;
+            assert(child != NULL);
+            child->m_parent_node = this;
+        }
+    }
+    trunk_child->m_parent_node = NULL;
+    return trunk_child;
+}
+
+bool Parser::ParseTreeNode_::HasExactlyOneChild () const
+{
+    return m_child_nodes.size() == 1 && m_child_nodes.begin()->second.size() == 1;
+}
+
+Parser::ParseTreeNode_ *Parser::ParseTreeNode_::BranchRoot ()
+{
+    assert(!IsRoot());
+    assert(HasParent());
+    ParseTreeNode_ *node = this;
+    while (node->HasParent() && !node->m_parent_node->IsRoot() && node->m_parent_node->HasExactlyOneChild())
+    {
+        node = node->m_parent_node;
+        assert(node->m_spec.m_type != HPS);
+    }
+    return node;
+}
+
+Parser::Token::Id Parser::ParseTreeNode_::LookaheadTokenId (Parser &parser) const
+{
+    if (m_hypothetical_lookahead_token_id_queue.empty())
+        return parser.Lookahead_(m_realized_lookahead_cursor).m_id;
+    else
+        return m_hypothetical_lookahead_token_id_queue.front();
+}
+
+bool Parser::ParseTreeNode_::IsBlockedHPS () const
+{
+    assert(m_spec.m_type == HPS);
+    if (m_parent_node == NULL)
+        return false;
+    switch (m_parent_node->m_spec.m_type)
+    {
+        // Nothing can happen after returning, so this has to be blocking.
+        case RETURN:
+        case POP_STACK: return true;
+
+        default:        return false;
+    }
+}
+
+Parser::ParseTreeNode_::PrecedenceLevelRange Parser::ParseTreeNode_::ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const
+{
+    if (m_spec.m_type == HPS)
+    {
+        // Need to look back at the rule of the (current_child_depth-1)th ancestor of this node in order
+        // to get the correct rule precedence, because that's where the conflict occurred.
+
+        assert(current_child_depth >= 2);
+        // These asserts are equivalent to checking that the stack depth is at least 2.
+        assert(bool(m_hypothetical_head.StatePtr()));
+        assert(bool(m_hypothetical_head.StatePtr()->HasParent()));
+
+        // Thinking of m_hypothetical_head.StatePtr() as the top of the state stack, we want to get the
+        // (current_child_depth-1)th element from the top.
+        BranchStatePtr_ child_branch_node_ptr = m_hypothetical_head.StatePtr();
+        for (std::uint32_t i = 0; i < current_child_depth-2; ++i)
+        {
+            // This assert checks that the stack depth is sufficient.
+            assert(child_branch_node_ptr->HasParent());
+            child_branch_node_ptr = child_branch_node_ptr->Parent();
+        }
+        std::uint32_t state_index = child_branch_node_ptr->Data();
+
+        assert(state_index < Npda_::ms_state_count_);
+        Npda_::State_ const &state = Npda_::ms_state_table_[state_index];
+        // If there's an associated rule, then use the precedence from that.
+        if (state.m_associated_rule_index < Grammar_::ms_rule_count_)
+        {
+            Grammar_::Rule_ const &associated_rule = Grammar_::ms_rule_table_[state.m_associated_rule_index];
+            assert(associated_rule.m_precedence_index < Grammar_::ms_precedence_count_);
+            Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
+            return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+        }
+        // Otherwise (e.g. a RETURN state), return default precedence.
+        else
+        {
+            Grammar_::Precedence_ const &default_precedence = Grammar_::ms_precedence_table_[0]; // 0 is default precedence.
+            return PrecedenceLevelRange(default_precedence.m_level, default_precedence.m_level);
+        }
+    }
+    else if (m_spec.m_type == REDUCE)
+    {
+        std::uint32_t reduction_rule_index = m_spec.m_single_data;
+        Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduction_rule_index];
+        assert(reduction_rule.m_precedence_index < Grammar_::ms_precedence_count_);
+        Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
+        return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+    }
+    else if (m_spec.m_type == SHIFT)
+    {
+        PrecedenceLevelRange retval(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::min());
+        assert(!m_child_nodes.empty());
+        // The range is the smallest range encompassing the range of each child node.
+        for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
+        {
+            ParseTreeNodeSet const &child_node_set = child_map_it->second;
+            for (ParseTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+            {
+                assert(*child_it != NULL);
+                ParseTreeNode_ const &child = **child_it;
+                PrecedenceLevelRange child_precedence_level_range(child.ComputePrecedenceLevelRange(current_child_depth+1));
+                retval.first = std::min(retval.first, child_precedence_level_range.first);
+                retval.second = std::max(retval.second, child_precedence_level_range.second);
+            }
+        }
+        assert(retval.first <= retval.second);
+        return retval;
+    }
+    else
+    {
+        // TODO: Probably need to do something to determine if this can't happen or prevent it.
+        assert(false);
+        return PrecedenceLevelRange(0, 0);
+    }
+}
+
+bool Parser::ParseTreeNode_::HasShiftReduceConflict (ParseTreeNode_ *&shift, ParseTreeNode_ *&reduce)
+{
+    ChildMap::iterator shift_children_it = m_child_nodes.find(Spec(SHIFT));
+    ChildMap::iterator reduce_children_it = m_child_nodes.find(Spec(REDUCE));
+    if (shift_children_it == m_child_nodes.end() || reduce_children_it == m_child_nodes.end())
+        return false;
+
+    ParseTreeNodeSet &shift_children = shift_children_it->second;
+    ParseTreeNodeSet &reduce_children = reduce_children_it->second;
+    assert(shift_children.size() == 1);
+    assert(reduce_children.size() == 1);
+
+    shift = *shift_children.begin();
+    reduce = *reduce_children.begin();
+    return true;
+}
+
+void Parser::ParseTreeNode_::AddChild (ParseTreeNode_ *child)
+{
+    assert(child != NULL);
+    assert(child->m_parent_node == NULL);
+    assert(child->m_spec.m_type != ROOT);
+
+    m_child_nodes[child->m_spec].insert(child);
+    child->m_parent_node = this;
+    child->m_depth = m_depth + 1; // Always +1 relative to parent.
+
+    // If this node is SHIFT and the child is HPS, then add the child's NPDA state to this node's
+    // m_child_branch_vector.  This is the only situation in which m_child_branch_vector is added to.
+    if (m_spec.m_type == SHIFT && child->m_spec.m_type == HPS)
+    {
+        assert(bool(child->m_hypothetical_head.StatePtr()));
+        assert(std::none_of(m_child_branch_vector.begin(), m_child_branch_vector.end(), [child](Branch_ const &node_state){ return node_state.StatePtr() == child->m_hypothetical_head.StatePtr(); }) && "child branch node should not already be in the set");
+        m_child_branch_vector.push_back(child->m_hypothetical_head);
+    }
+}
+
+void Parser::ParseTreeNode_::RemoveChild (ParseTreeNode_ *child)
+{
+    assert(child != NULL);
+    assert(child->m_parent_node == this);
+    assert(HasChildrenHavingSpec(child->m_spec));
+    assert(m_child_nodes[child->m_spec].find(child) != m_child_nodes[child->m_spec].end());
+    m_child_nodes[child->m_spec].erase(child);
+    if (m_child_nodes[child->m_spec].empty())
+        m_child_nodes.erase(child->m_spec);
+    child->m_parent_node = NULL;
+    child->m_depth = 0; // Reset.
+
+    // If there are no children and this isn't the root node, remove it from its parent.
+    if (m_child_nodes.empty() && m_parent_node != NULL)
+        RemoveFromParent();
+}
+
+void Parser::ParseTreeNode_::RemoveFromParent ()
+{
+    assert(m_parent_node != NULL);
+    m_parent_node->RemoveChild(this);
+}
+
+void Parser::ParseTreeNode_::NullifyHPSNodeDescendantsInHPSQueue (HPSQueue_ &hps_queue) const
+{
+    if (m_spec.m_type == HPS)
+    {
+        // NOTE: This is a linear search, which is not as efficient as a different way of handling this.
+        HPSQueue_::iterator it = std::find(hps_queue.begin(), hps_queue.end(), this);
+        if (it != hps_queue.end())
+            *it = NULL;
+    }
+    for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
+    {
+        ParseTreeNodeSet const &child_node_set = child_map_it->second;
+        for (ParseTreeNodeSet::const_iterator child_it = child_node_set.begin(), child_it_end = child_node_set.end(); child_it != child_it_end; ++child_it)
+        {
+            assert(*child_it != NULL);
+            ParseTreeNode_ const &child = **child_it;
+            child.NullifyHPSNodeDescendantsInHPSQueue(hps_queue);
+        }
+    }
+}
+
+Parser::ParseTreeNode_ *Parser::ParseTreeNode_::CloneLeafNode () const
+{
+    ParseTreeNode_ *retval = new ParseTreeNode_(m_spec);
+    CloneLeafNodeInto(*retval);
+    return retval;
+}
+
+void Parser::ParseTreeNode_::CloneLeafNodeInto (Parser::ParseTreeNode_ &orphan_target) const
+{
+    assert(orphan_target.m_parent_node == NULL);
+    assert(m_child_nodes.empty());
+    orphan_target.m_spec                                    = m_spec;
+    orphan_target.m_hypothetical_head                       = m_hypothetical_head;
+    orphan_target.m_hypothetical_lookahead_token_id_queue   = m_hypothetical_lookahead_token_id_queue;
+    orphan_target.m_realized_lookahead_cursor               = m_realized_lookahead_cursor;
+}
+
+void Parser::ParseTreeNode_::Print (std::ostream &out, Parser const *parser, std::string const &prefix, std::uint32_t indent_level, bool suppress_initial_prefix) const
+{
+    if (!suppress_initial_prefix)
+    {
+        out << prefix;
+        for (std::uint32_t i = 0; i < indent_level; ++i)
+            out << "    ";
+    }
+    out << AsString(m_spec.m_type) << ' ' << this << " (depth = " << m_depth << ')';
+    if (m_spec.m_type == HPS)
+    {
+        out << (IsBlockedHPS() ? " (    blocked," : " (non-blocked,");
+        out << " m_realized_lookahead_cursor = " << m_realized_lookahead_cursor << ')';
+    }
+    switch (m_spec.m_type)
+    {
+        case REDUCE:    out << " rule " << m_spec.m_single_data << "; " << Grammar_::ms_rule_table_[m_spec.m_single_data].m_description;  break;
+        //case SHIFT:     out << " to (?) state " << m_spec.m_single_data << "; " << Npda_::ms_state_table_[m_spec.m_single_data].m_description; break;
+        case SHIFT:     out << ' ' << Token(m_spec.m_single_data); break;
+        case POP_STACK: out << ' ' << m_spec.m_single_data << " time(s)";                                                       break;
+        default:                                                                                                                break;
+    }
+    if (bool(m_hypothetical_head.StatePtr()))
+        out << ' ' << Npda_::ms_state_table_[m_hypothetical_head.StatePtr()->Data()].m_description << ' ';
+    if (m_spec.m_type == HPS)
+    {
+        assert(bool(m_hypothetical_head.StatePtr()));
+        assert(bool(m_hypothetical_head.TokenIdPtr()));
+
+        out << "    (";
+        m_hypothetical_head.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
+        out << "); ";
+
+        m_hypothetical_head.TokenIdPtr()->PrintRootToLeaf(out, TokenName_);
+        out << " . ";
+        for (std::size_t i = 0; i < m_hypothetical_lookahead_token_id_queue.size(); ++i)
+            out << ms_token_name_table_[m_hypothetical_lookahead_token_id_queue[i]] << ' ';
+        out << ", ";
+        if (parser != NULL)
+            for (std::size_t i = m_realized_lookahead_cursor; i < parser->m_realized_state_->LookaheadQueue().size(); ++i)
+                out << ms_token_name_table_[parser->m_realized_state_->LookaheadQueue()[i].m_id] << ' ';
+        else
+            out << "<realized-lookaheads-not-printed>";
+    }
+    out << '\n';
+
+    // Print children recursively with higher indent level
+    for (ChildMap::const_iterator it = m_child_nodes.begin(), it_end = m_child_nodes.end(); it != it_end; ++it)
+    {
+        ParseTreeNodeSet const &child_node_set = it->second;
+        for (ParseTreeNodeSet::const_iterator set_it = child_node_set.begin(), set_it_end = child_node_set.end(); set_it != set_it_end; ++set_it)
+            (*set_it)->Print(out, parser, prefix, indent_level+1);
+    }
+}
+
+// ////////////////////////////////////////////////////////////////////////////
+// End of Parser::ParseTreeNode_
+// ////////////////////////////////////////////////////////////////////////////
+
+Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index) throw()
+{
+    while (index >= m_realized_state_->LookaheadQueue().size())
+    {
+        // This does not require updating the hps-es' m_realized_lookahead_cursor.
+        m_realized_state_->PushBackLookahead(Scan_(), m_hypothetical_state_->m_hps_queue);
+
+        TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 3217 "barf_preprocessor_parser.cpp"
+ << "Retrieved token " << m_realized_state_->LookaheadQueue().back() << " from scan actions; pushing token onto back of lookahead queue\n")
+    }
+    return m_realized_state_->LookaheadQueue()[index];
+}
+
+Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ const &hps, ParseTreeNode_::Type action_type, std::uint32_t action_data)
+{
+    // TODO: replace individual arguments action_type, action_data with ParseTreeNode_::Spec and just modify that struct below where it needs it.
+    assert(hps.m_spec.m_type == ParseTreeNode_::HPS && "Only a HPS type node can take an action");
+    assert(hps.m_parent_node != NULL);
+
+    ParseTreeNode_ *new_hps = NULL;
+
+    switch (action_type)
+    {
+        case ParseTreeNode_::ROOT: {
+            assert(false && "ParseTreeNode_::ROOT is an invalid action type.");
+            break;
+        }
+        case ParseTreeNode_::RETURN: {
+            new_hps = hps.CloneLeafNode();
+            break;
+        }
+        case ParseTreeNode_::REDUCE: {
+            // Execute the appropriate rule on the top tokens in the stack
+            std::uint32_t const &rule_index = action_data;
+            Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
+
+            // Avoid creating the new hps altogether if it won't be added due to a REDUCE/REDUCE conflict.
+            ParseTreeNode_ *existing_reduce_action_node = NULL;
+            ParseTreeNode_ *reduce_hps = NULL;
+            ParseTreeNode_::Spec action_spec(action_type, action_data);
+            if (hps.m_parent_node->HasChildrenHavingSpec(action_spec)) // Check for an existing REDUCE action
+            {
+                // This may or may not be a conflict.  Need to determine that.
+
+                ParseTreeNode_::ParseTreeNodeSet &reduce_node_set = hps.m_parent_node->ChildrenHavingSpec(action_spec);
+                assert(reduce_node_set.size() == 1);
+                existing_reduce_action_node = *reduce_node_set.begin();
+                assert(existing_reduce_action_node != NULL);
+                assert(existing_reduce_action_node->m_spec.m_type == ParseTreeNode_::REDUCE);
+
+                // If the hypothetical action is identical to the existing one, then there's no problem,
+                // just add it as a child to the existing one.
+                if (existing_reduce_action_node->m_spec.m_single_data == rule_index)
+                {
+                    new_hps = hps.CloneLeafNode();
+                    reduce_hps = new_hps;
+                }
+                // Otherwise this is a REDUCE/REDUCE conflict
+                else
+                {
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 3273 "barf_preprocessor_parser.cpp"
+ << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
+
+                    // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
+                    // (replacement instead of creating a new one and deleting the old is an optimization which also
+                    // avoids an annoying traversal through m_hypothetical_state_->m_hps_queue).
+                    // NOTE: This depends on the fact that a REDUCE node has exactly one HPS child,
+                    // which is what these three asserts check.  TODO: maybe make abstractions for these sorts of checks.
+                    assert(existing_reduce_action_node->m_child_nodes.size() == 1);
+                    assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
+                    assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseTreeNode_::HPS);
+                    if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
+                    {
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.\n")
+
+                        reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
+                        assert(reduce_hps != NULL);
+
+                        // Remove the nodes from the ParseTreeNode_ tree.
+                        assert(existing_reduce_action_node != NULL);
+                        existing_reduce_action_node->RemoveFromParent();
+                        reduce_hps->RemoveFromParent();
+                        // Modify the nodes.
+                        existing_reduce_action_node->m_spec = action_spec; // Replace with the winning reduction rule Spec.
+                        hps.CloneLeafNodeInto(*reduce_hps); // NOTE: This modifies the existing hps, so no update of m_hypothetical_state_->m_hps_queue is necessary.
+                        // Re-add them to the ParseTreeNode_ tree.
+                        existing_reduce_action_node->AddChild(reduce_hps);
+                        hps.m_parent_node->AddChild(existing_reduce_action_node);
+                    }
+                    else
+                    {
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of existing hps.\n")
+                    }
+                }
+            }
+            else
+            {
+                new_hps = hps.CloneLeafNode();
+                reduce_hps = new_hps;
+            }
+
+            if (reduce_hps != NULL)
+            {
+                // Pop those stack tokens.
+                for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
+                {
+                    assert(reduce_hps->m_hypothetical_head.HasParent());
+                    reduce_hps->m_hypothetical_head = reduce_hps->m_hypothetical_head.Parent();
+                }
+                // Push the reduced nonterminal token data onto the front of the lookahead queue
+                reduce_hps->m_hypothetical_lookahead_token_id_queue.push_front(rule.m_reduction_nonterminal_token_id);
+            }
+
+            break;
+        }
+        case ParseTreeNode_::SHIFT: {
+            // Move the front of the lookahead queue to the top of the stack, assigning the appropriate state index.
+            std::uint32_t const &state_index = action_data;
+            // TODO: probably make "Shift" method for ParseTreeNode_ to do all this bookkeeping and parallel LookaheadTokenId tracking.
+            new_hps = hps.CloneLeafNode();
+            Token::Id lookahead_token_id = new_hps->LookaheadTokenId(*this);
+            // Create a new Branch_ and link it to the parent node's.
+            new_hps->m_hypothetical_head = Branch_(BranchState_::CreateWithParent(hps.m_hypothetical_head.StatePtr(), state_index), BranchTokenId_::CreateWithParent(hps.m_hypothetical_head.TokenIdPtr(), lookahead_token_id));
+            assert(new_hps->m_hypothetical_head.HasParent());
+            assert(new_hps->m_hypothetical_head.Parent() == hps.m_hypothetical_head);
+
+            // Store the lookahead token id in action_data so it can printed.
+            action_data = std::uint32_t(lookahead_token_id);
+            if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
+                ++new_hps->m_realized_lookahead_cursor;
+            else
+                new_hps->m_hypothetical_lookahead_token_id_queue.pop_front();
+            break;
+        }
+        case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+            new_hps = hps.CloneLeafNode();
+            new_hps->m_hypothetical_lookahead_token_id_queue.push_front(Terminal::ERROR_);
+            break;
+        }
+        case ParseTreeNode_::DISCARD_LOOKAHEAD: {
+            new_hps = hps.CloneLeafNode();
+            if (new_hps->m_hypothetical_lookahead_token_id_queue.empty())
+                ++new_hps->m_realized_lookahead_cursor;
+            else
+                new_hps->m_hypothetical_lookahead_token_id_queue.pop_front();
+            break;
+        }
+        case ParseTreeNode_::POP_STACK: {
+            // TODO: make separate action nodes for each pop, instead of using action data,
+            // since for example two branches may agree on popping at least once, even if
+            // one of them is killed later.
+            std::uint32_t const &pop_count = action_data;
+            // Check if there are actually enough stack elements to pop successfully.
+            // If not, then don't create an HPS, and break early.
+            if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
+            {
+                new_hps = NULL;
+                break;
+            }
+
+            new_hps = hps.CloneLeafNode();
+            for (std::uint32_t i = 0; i < pop_count; ++i)
+            {
+                assert(new_hps->m_hypothetical_head.HasParent());
+                new_hps->m_hypothetical_head = new_hps->m_hypothetical_head.Parent();
+            }
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
+            break;
+        }
+        case ParseTreeNode_::HPS: {
+            assert(false && "ParseTreeNode_::HPS is an invalid action type.");
+            break;
+        }
+        default: {
+            assert(false && "invalid ParseTreeNode_::Type");
+            break;
+        }
+    }
+
+    if (new_hps != NULL)
+    {
+        assert(new_hps->m_parent_node == NULL);
+
+        ParseTreeNode_ *action_node = NULL;
+
+        // Ensure the action node exists, creating it if necessary.
+        ParseTreeNode_::Spec action_spec(action_type, action_data);
+        if (hps.m_parent_node->HasChildrenHavingSpec(action_spec))
+        {
+            ParseTreeNode_::ParseTreeNodeSet &children_of_action_type = hps.m_parent_node->ChildrenHavingSpec(action_spec);
+            assert(children_of_action_type.size() == 1);
+            action_node = *children_of_action_type.begin();
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "using existing action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
+
+            // If the new hps already exists (can only happen as a child of POP_STACK), then don't add it.
+            if (action_type == ParseTreeNode_::POP_STACK && action_node->HasChildrenHavingSpec(new_hps->m_spec))
+            {
+                ParseTreeNode_::ParseTreeNodeSet const &child_hps_set = action_node->ChildrenHavingSpec(new_hps->m_spec);
+                if (child_hps_set.find(new_hps) != child_hps_set.end())
+                {
+                    TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "not adding duplicate HPS as child of POP_STACK node... ")
+                    delete new_hps;
+                    new_hps = NULL;
+                }
+            }
+        }
+        else
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating new action node of type " << ParseTreeNode_::AsString(action_spec.m_type) << "... ")
+            action_node = new ParseTreeNode_(action_spec);
+            TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "(action_node = " << action_node << ") ")
+            hps.m_parent_node->AddChild(action_node);
+        }
+
+        if (new_hps != NULL)
+            action_node->AddChild(new_hps);
+    }
+
+    return new_hps;
+}
+
+void Parser::CreateParseTreeFromRealizedState_ ()
+{
+    BranchVector_ const &reconstruct_branch_vector = m_realized_state_->BranchVectorStack().back();
+
+    // Add HPS nodes for each branch in the top of the realized state stack.
+    assert(!reconstruct_branch_vector.empty());
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 3443 "barf_preprocessor_parser.cpp"
+ << "        Reconstructing branches:\n")
+    for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
+    {
+        Branch_ const &reconstruct_branch = *it;
+        TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 3451 "barf_preprocessor_parser.cpp"
+ << "            " << reconstruct_branch.StatePtr() << '\n')
+
+        ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
+        hps->m_hypothetical_head        = reconstruct_branch;
+
+        m_hypothetical_state_->m_root->AddChild(hps);
+        m_hypothetical_state_->m_hps_queue.push_back(hps);
+    }
+}
+
+void Parser::ClearStack_ ()
+{
+    if (m_realized_state_ != NULL)
+    {
+        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
+        while (!m_realized_state_->TokenStack().empty())
+            ThrowAwayToken_(m_realized_state_->PopStack());
+    }
+
+    delete m_hypothetical_state_;
+    m_hypothetical_state_ = NULL;
+}
+
+void Parser::CleanUpAllInternals_ ()
+{
+    if (m_realized_state_ != NULL)
+    {
+        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
+        while (!m_realized_state_->TokenStack().empty())
+            ThrowAwayToken_(m_realized_state_->PopStack());
+
+        while (!m_realized_state_->LookaheadQueue().empty())
+            ThrowAwayToken_(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+
+        // Note that this implicitly resets the error state (since that's tracked by m_realized_state_).
+        delete m_realized_state_;
+        m_realized_state_ = NULL;
+    }
+
+    delete m_hypothetical_state_;
+    m_hypothetical_state_ = NULL;
+}
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::Grammar_
+// ////////////////////////////////////////////////////////////////////////////
+
+bool Parser::Grammar_::CompareRuleByPrecedence_ (std::uint32_t lhs_rule_index, std::uint32_t rhs_rule_index)
+{
+    if (ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level != ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level)
+        return ms_precedence_table_[ms_rule_table_[lhs_rule_index].m_precedence_index].m_level > ms_precedence_table_[ms_rule_table_[rhs_rule_index].m_precedence_index].m_level;
+    else
+        return lhs_rule_index < rhs_rule_index;
+}
+
+// These values are prescribed within trison and can't be changed.
+char const *const Parser::Grammar_::ms_associativity_string_table_[] =
+{
+    "%left",
+    "%nonassoc",
+    "%right",
+};
+
+std::size_t const Parser::Grammar_::ms_associativity_count_ = sizeof(Parser::Grammar_::ms_associativity_string_table_) / sizeof(*Parser::Grammar_::ms_associativity_string_table_);
+
+Parser::Grammar_::Precedence_ const Parser::Grammar_::ms_precedence_table_[] =
+{
+    { 0, Parser::Grammar_::Associativity(0), "DEFAULT_" },
+    { 1, Parser::Grammar_::Associativity(0), "LOGICAL_OR" },
+    { 2, Parser::Grammar_::Associativity(0), "LOGICAL_AND" },
+    { 3, Parser::Grammar_::Associativity(0), "EQUALITY" },
+    { 4, Parser::Grammar_::Associativity(0), "COMPARISON" },
+    { 5, Parser::Grammar_::Associativity(0), "CONCATENATION" },
+    { 6, Parser::Grammar_::Associativity(0), "ADDITION" },
+    { 7, Parser::Grammar_::Associativity(0), "MULTIPLICATION" },
+    { 8, Parser::Grammar_::Associativity(2), "UNARY" }
+};
+
+std::size_t const Parser::Grammar_::ms_precedence_count_ = sizeof(Parser::Grammar_::ms_precedence_table_) / sizeof(*Parser::Grammar_::ms_precedence_table_);
+
+Parser::Grammar_::Rule_ const Parser::Grammar_::ms_rule_table_[] =
+{
+    { Parser::Nonterminal::body, 0, 0, "body <-" },
+    { Parser::Nonterminal::body, 1, 0, "body <- TEXT" },
+    { Parser::Nonterminal::body, 2, 0, "body <- body executable" },
+    { Parser::Nonterminal::body, 3, 0, "body <- body executable TEXT" },
+    { Parser::Nonterminal::executable, 1, 0, "executable <- code" },
+    { Parser::Nonterminal::executable, 1, 0, "executable <- conditional_series" },
+    { Parser::Nonterminal::executable, 3, 0, "executable <- define body end_define" },
+    { Parser::Nonterminal::executable, 3, 0, "executable <- loop body end_loop" },
+    { Parser::Nonterminal::executable, 3, 0, "executable <- for_each body end_for_each" },
+    { Parser::Nonterminal::code, 3, 0, "code <- START_CODE code_body END_CODE" },
+    { Parser::Nonterminal::code, 3, 0, "code <- CODE_LINE code_body CODE_NEWLINE" },
+    { Parser::Nonterminal::code_body, 0, 0, "code_body <-" },
+    { Parser::Nonterminal::code_body, 1, 0, "code_body <- expression" },
+    { Parser::Nonterminal::code_body, 3, 0, "code_body <- DUMP_SYMBOL_TABLE '(' ')'" },
+    { Parser::Nonterminal::code_body, 4, 0, "code_body <- UNDEFINE '(' ID ')'" },
+    { Parser::Nonterminal::code_body, 4, 0, "code_body <- DECLARE_ARRAY '(' ID ')'" },
+    { Parser::Nonterminal::code_body, 4, 0, "code_body <- DECLARE_MAP '(' ID ')'" },
+    { Parser::Nonterminal::code_body, 4, 0, "code_body <- INCLUDE '(' expression ')'" },
+    { Parser::Nonterminal::code_body, 4, 0, "code_body <- SANDBOX_INCLUDE '(' expression ')'" },
+    { Parser::Nonterminal::code_body, 4, 0, "code_body <- WARNING '(' expression ')'" },
+    { Parser::Nonterminal::code_body, 4, 0, "code_body <- ERROR '(' expression ')'" },
+    { Parser::Nonterminal::code_body, 4, 0, "code_body <- FATAL_ERROR '(' expression ')'" },
+    { Parser::Nonterminal::conditional_series, 3, 0, "conditional_series <- if_statement body conditional_series_end" },
+    { Parser::Nonterminal::conditional_series_end, 1, 0, "conditional_series_end <- end_if" },
+    { Parser::Nonterminal::conditional_series_end, 3, 0, "conditional_series_end <- else_statement body end_if" },
+    { Parser::Nonterminal::conditional_series_end, 3, 0, "conditional_series_end <- else_if_statement body conditional_series_end" },
+    { Parser::Nonterminal::if_statement, 6, 0, "if_statement <- START_CODE IF '(' expression ')' END_CODE" },
+    { Parser::Nonterminal::if_statement, 6, 0, "if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::else_statement, 3, 0, "else_statement <- START_CODE ELSE END_CODE" },
+    { Parser::Nonterminal::else_statement, 3, 0, "else_statement <- CODE_LINE ELSE CODE_NEWLINE" },
+    { Parser::Nonterminal::else_if_statement, 6, 0, "else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE" },
+    { Parser::Nonterminal::else_if_statement, 6, 0, "else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::end_if, 3, 0, "end_if <- START_CODE END_IF END_CODE" },
+    { Parser::Nonterminal::end_if, 3, 0, "end_if <- CODE_LINE END_IF CODE_NEWLINE" },
+    { Parser::Nonterminal::define, 1, 0, "define <- define_scalar" },
+    { Parser::Nonterminal::define, 1, 0, "define <- define_array_element" },
+    { Parser::Nonterminal::define, 1, 0, "define <- define_map_element" },
+    { Parser::Nonterminal::define_scalar, 6, 0, "define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE" },
+    { Parser::Nonterminal::define_scalar, 6, 0, "define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::define_array_element, 8, 0, "define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE" },
+    { Parser::Nonterminal::define_array_element, 8, 0, "define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::define_map_element, 9, 0, "define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { Parser::Nonterminal::define_map_element, 9, 0, "define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::end_define, 3, 0, "end_define <- START_CODE END_DEFINE END_CODE" },
+    { Parser::Nonterminal::end_define, 3, 0, "end_define <- CODE_LINE END_DEFINE CODE_NEWLINE" },
+    { Parser::Nonterminal::loop, 8, 0, "loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE" },
+    { Parser::Nonterminal::loop, 8, 0, "loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::end_loop, 3, 0, "end_loop <- START_CODE END_LOOP END_CODE" },
+    { Parser::Nonterminal::end_loop, 3, 0, "end_loop <- CODE_LINE END_LOOP CODE_NEWLINE" },
+    { Parser::Nonterminal::for_each, 8, 0, "for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE" },
+    { Parser::Nonterminal::for_each, 8, 0, "for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
+    { Parser::Nonterminal::end_for_each, 3, 0, "end_for_each <- START_CODE END_FOR_EACH END_CODE" },
+    { Parser::Nonterminal::end_for_each, 3, 0, "end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE" },
+    { Parser::Nonterminal::expression, 1, 0, "expression <- STRING_LITERAL" },
+    { Parser::Nonterminal::expression, 1, 0, "expression <- INTEGER_LITERAL" },
+    { Parser::Nonterminal::expression, 4, 0, "expression <- SIZEOF '(' ID ')'" },
+    { Parser::Nonterminal::expression, 4, 0, "expression <- KEYWORD_INT '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, 0, "expression <- KEYWORD_STRING '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, 0, "expression <- STRING_LENGTH '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, 0, "expression <- TO_CHARACTER_LITERAL '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, 0, "expression <- TO_STRING_LITERAL '(' expression ')'" },
+    { Parser::Nonterminal::expression, 4, 0, "expression <- IS_DEFINED '(' ID ')'" },
+    { Parser::Nonterminal::expression, 7, 0, "expression <- IS_DEFINED '(' ID '[' expression ']' ')'" },
+    { Parser::Nonterminal::expression, 1, 0, "expression <- ID" },
+    { Parser::Nonterminal::expression, 4, 0, "expression <- ID '[' expression ']'" },
+    { Parser::Nonterminal::expression, 2, 0, "expression <- ID '?'" },
+    { Parser::Nonterminal::expression, 5, 0, "expression <- ID '[' expression ']' '?'" },
+    { Parser::Nonterminal::expression, 3, 5, "expression <- expression '.' expression" },
+    { Parser::Nonterminal::expression, 4, 1, "expression <- expression '|' '|' expression" },
+    { Parser::Nonterminal::expression, 4, 2, "expression <- expression '&' '&' expression" },
+    { Parser::Nonterminal::expression, 4, 3, "expression <- expression '=' '=' expression" },
+    { Parser::Nonterminal::expression, 4, 3, "expression <- expression '!' '=' expression" },
+    { Parser::Nonterminal::expression, 3, 4, "expression <- expression '<' expression" },
+    { Parser::Nonterminal::expression, 4, 4, "expression <- expression '<' '=' expression" },
+    { Parser::Nonterminal::expression, 3, 4, "expression <- expression '>' expression" },
+    { Parser::Nonterminal::expression, 4, 4, "expression <- expression '>' '=' expression" },
+    { Parser::Nonterminal::expression, 3, 6, "expression <- expression '+' expression" },
+    { Parser::Nonterminal::expression, 3, 6, "expression <- expression '-' expression" },
+    { Parser::Nonterminal::expression, 3, 7, "expression <- expression '*' expression" },
+    { Parser::Nonterminal::expression, 3, 7, "expression <- expression '/' expression" },
+    { Parser::Nonterminal::expression, 3, 7, "expression <- expression '%' expression" },
+    { Parser::Nonterminal::expression, 2, 8, "expression <- '-' expression" },
+    { Parser::Nonterminal::expression, 2, 8, "expression <- '!' expression" },
+    { Parser::Nonterminal::expression, 3, 0, "expression <- '(' expression ')'" }
+};
+std::size_t const Parser::Grammar_::ms_rule_count_ = sizeof(Parser::Grammar_::ms_rule_table_) / sizeof(*Parser::Grammar_::ms_rule_table_);
+
+// ////////////////////////////////////////////////////////////////////////////
+// Parser::Npda_
+// ////////////////////////////////////////////////////////////////////////////
+
+Parser::Npda_::StateIndexVector_ const &Parser::Npda_::EpsilonClosureOfState_ (StateIndex_ state_index)
+{
+    // Memoize this function, because it will be called so many times and is somewhat intensive.
+    typedef std::map<StateIndex_,StateIndexVector_> LookupTable;
+    static LookupTable s_lookup_table;
+
+    LookupTable::iterator find_it = s_lookup_table.find(state_index);
+    if (find_it != s_lookup_table.end())
+        return find_it->second;
+
+    // Compute the epsilon closure as a set
+    StateIndexSet_ epsilon_closure_set;
+    ComputeEpsilonClosureOfState_(state_index, epsilon_closure_set);
+
+    // Copy the states in the set into the memoized vector.
+//    std::cerr << "EpsilonClosureOfState_(" << state_index << "):"; // HIPPO
+    StateIndexVector_ &epsilon_closure = s_lookup_table[state_index];
+    epsilon_closure.reserve(epsilon_closure_set.size());
+    for (StateIndexSet_::const_iterator it = epsilon_closure_set.begin(), it_end = epsilon_closure_set.end(); it != it_end; ++it)
+    {
+//        std::cerr << ' ' << *it; // HIPPO
+        epsilon_closure.push_back(*it);
+    }
+//    std::cerr << ";\n"; // HIPPO
+    // Return the memoized value.
+    return epsilon_closure;
+}
+
+void Parser::Npda_::ComputeEpsilonClosureOfState_ (StateIndex_ state_index, StateIndexSet_ &epsilon_closure)
+{
+    // NOTE: The working definition of epsilon closure in this implementation used to only include
+    // states that had non-epsilon transitions, but has been changed to include all epsilon-reachable
+    // states, including those having no non-epsilon transitions.
+
+    // This implementation allows epsilon cycles.
+
+    // If this state has already been visited, there's no reason to continue.
+    if (epsilon_closure.find(state_index) != epsilon_closure.end())
+        return;
+    // Otherwise, mark it as visited.  This also prevents infinite recursion.
+    else
+        epsilon_closure.insert(state_index);
+
+    // This set collects the epsilon closure with no duplicates
+    State_ const &state = ms_state_table_[state_index];
+    for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count;
+         transition != transition_end;
+         ++transition)
+    {
+        if (transition->m_type == Transition_::EPSILON)
+            ComputeEpsilonClosureOfState_(transition->m_data_index, epsilon_closure);
+    }
+}
+
+Parser::Npda_::TransitionVector_ const &Parser::Npda_::NonEpsilonTransitionsOfState_ (StateIndex_ state_index, std::uint32_t sorted_type_index)
+{
+    assert(0 <= sorted_type_index && sorted_type_index <= 3);
+
+    // Memoize this function, because it will be called so many times and is somewhat intensive.
+    typedef std::pair<StateIndex_,std::uint32_t> KeyType;
+    typedef std::map<KeyType,TransitionVector_> LookupTable;
+    static LookupTable s_lookup_table;
+
+    KeyType key(state_index, sorted_type_index);
+    LookupTable::iterator it = s_lookup_table.find(key);
+    if (it != s_lookup_table.end())
+        return it->second;
+
+    // TODO: probably don't need to memoize epsilon closures because non-epsilon transitions is memoized.
+    TransitionSet_ non_epsilon_transition_set;
+    StateIndexVector_ const &epsilon_closure = EpsilonClosureOfState_(state_index);
+    for (StateIndexVector_::const_iterator it = epsilon_closure.begin(), it_end = epsilon_closure.end(); it != it_end; ++it)
+    {
+        State_ const &state = ms_state_table_[*it];
+        for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count; transition != transition_end; ++transition)
+        {
+            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(Transition_::Type(transition->m_type));
+            if (transition->m_type != Transition_::EPSILON && transition_sorted_type_index == sorted_type_index)
+                non_epsilon_transition_set.insert(*transition);
+        }
+    }
+
+    TransitionVector_ &non_epsilon_transitions = s_lookup_table[key];
+    non_epsilon_transitions.reserve(non_epsilon_transition_set.size());
+    for (TransitionSet_::const_iterator it = non_epsilon_transition_set.begin(), it_end = non_epsilon_transition_set.end(); it != it_end; ++it)
+        non_epsilon_transitions.push_back(*it);
+    return non_epsilon_transitions;
+}
+
+Parser::Npda_::State_ const Parser::Npda_::ms_state_table_[] =
+{
+    { 2, ms_transition_table_+0, 84, "START body" },
+    { 1, ms_transition_table_+2, 84, "RETURN body" },
+    { 4, ms_transition_table_+3, 84, "head of: body" },
+    { 1, ms_transition_table_+7, 0, "rule 0: body <- ." },
+    { 3, ms_transition_table_+8, 1, "rule 1: body <- . TEXT" },
+    { 1, ms_transition_table_+11, 1, "rule 1: body <- TEXT ." },
+    { 3, ms_transition_table_+12, 2, "rule 2: body <- . body executable" },
+    { 4, ms_transition_table_+15, 2, "rule 2: body <- body . executable" },
+    { 1, ms_transition_table_+19, 2, "rule 2: body <- body executable ." },
+    { 2, ms_transition_table_+20, 84, "START executable" },
+    { 1, ms_transition_table_+22, 84, "RETURN executable" },
+    { 5, ms_transition_table_+23, 84, "head of: executable" },
+    { 4, ms_transition_table_+28, 4, "rule 4: executable <- . code" },
+    { 1, ms_transition_table_+32, 4, "rule 4: executable <- code ." },
+    { 2, ms_transition_table_+33, 84, "START code" },
+    { 1, ms_transition_table_+35, 84, "RETURN code" },
+    { 2, ms_transition_table_+36, 84, "head of: code" },
+    { 3, ms_transition_table_+38, 9, "rule 9: code <- . START_CODE code_body END_CODE" },
+    { 4, ms_transition_table_+41, 9, "rule 9: code <- START_CODE . code_body END_CODE" },
+    { 3, ms_transition_table_+45, 9, "rule 9: code <- START_CODE code_body . END_CODE" },
+    { 2, ms_transition_table_+48, 84, "START code_body" },
+    { 1, ms_transition_table_+50, 84, "RETURN code_body" },
+    { 11, ms_transition_table_+51, 84, "head of: code_body" },
+    { 1, ms_transition_table_+62, 11, "rule 11: code_body <- ." },
+    { 4, ms_transition_table_+63, 12, "rule 12: code_body <- . expression" },
+    { 1, ms_transition_table_+67, 12, "rule 12: code_body <- expression ." },
+    { 2, ms_transition_table_+68, 84, "START expression" },
+    { 1, ms_transition_table_+70, 84, "RETURN expression" },
+    { 31, ms_transition_table_+71, 84, "head of: expression" },
+    { 3, ms_transition_table_+102, 53, "rule 53: expression <- . STRING_LITERAL" },
+    { 1, ms_transition_table_+105, 53, "rule 53: expression <- STRING_LITERAL ." },
+    { 3, ms_transition_table_+106, 54, "rule 54: expression <- . INTEGER_LITERAL" },
+    { 1, ms_transition_table_+109, 54, "rule 54: expression <- INTEGER_LITERAL ." },
+    { 3, ms_transition_table_+110, 55, "rule 55: expression <- . SIZEOF '(' ID ')'" },
+    { 3, ms_transition_table_+113, 55, "rule 55: expression <- SIZEOF . '(' ID ')'" },
+    { 3, ms_transition_table_+116, 55, "rule 55: expression <- SIZEOF '(' . ID ')'" },
+    { 3, ms_transition_table_+119, 55, "rule 55: expression <- SIZEOF '(' ID . ')'" },
+    { 1, ms_transition_table_+122, 55, "rule 55: expression <- SIZEOF '(' ID ')' ." },
+    { 3, ms_transition_table_+123, 56, "rule 56: expression <- . KEYWORD_INT '(' expression ')'" },
+    { 3, ms_transition_table_+126, 56, "rule 56: expression <- KEYWORD_INT . '(' expression ')'" },
+    { 4, ms_transition_table_+129, 56, "rule 56: expression <- KEYWORD_INT '(' . expression ')'" },
+    { 3, ms_transition_table_+133, 56, "rule 56: expression <- KEYWORD_INT '(' expression . ')'" },
+    { 1, ms_transition_table_+136, 56, "rule 56: expression <- KEYWORD_INT '(' expression ')' ." },
+    { 3, ms_transition_table_+137, 57, "rule 57: expression <- . KEYWORD_STRING '(' expression ')'" },
+    { 3, ms_transition_table_+140, 57, "rule 57: expression <- KEYWORD_STRING . '(' expression ')'" },
+    { 4, ms_transition_table_+143, 57, "rule 57: expression <- KEYWORD_STRING '(' . expression ')'" },
+    { 3, ms_transition_table_+147, 57, "rule 57: expression <- KEYWORD_STRING '(' expression . ')'" },
+    { 1, ms_transition_table_+150, 57, "rule 57: expression <- KEYWORD_STRING '(' expression ')' ." },
+    { 3, ms_transition_table_+151, 58, "rule 58: expression <- . STRING_LENGTH '(' expression ')'" },
+    { 3, ms_transition_table_+154, 58, "rule 58: expression <- STRING_LENGTH . '(' expression ')'" },
+    { 4, ms_transition_table_+157, 58, "rule 58: expression <- STRING_LENGTH '(' . expression ')'" },
+    { 3, ms_transition_table_+161, 58, "rule 58: expression <- STRING_LENGTH '(' expression . ')'" },
+    { 1, ms_transition_table_+164, 58, "rule 58: expression <- STRING_LENGTH '(' expression ')' ." },
+    { 3, ms_transition_table_+165, 59, "rule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'" },
+    { 3, ms_transition_table_+168, 59, "rule 59: expression <- TO_CHARACTER_LITERAL . '(' expression ')'" },
+    { 4, ms_transition_table_+171, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' . expression ')'" },
+    { 3, ms_transition_table_+175, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' expression . ')'" },
+    { 1, ms_transition_table_+178, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' expression ')' ." },
+    { 3, ms_transition_table_+179, 60, "rule 60: expression <- . TO_STRING_LITERAL '(' expression ')'" },
+    { 3, ms_transition_table_+182, 60, "rule 60: expression <- TO_STRING_LITERAL . '(' expression ')'" },
+    { 4, ms_transition_table_+185, 60, "rule 60: expression <- TO_STRING_LITERAL '(' . expression ')'" },
+    { 3, ms_transition_table_+189, 60, "rule 60: expression <- TO_STRING_LITERAL '(' expression . ')'" },
+    { 1, ms_transition_table_+192, 60, "rule 60: expression <- TO_STRING_LITERAL '(' expression ')' ." },
+    { 3, ms_transition_table_+193, 61, "rule 61: expression <- . IS_DEFINED '(' ID ')'" },
+    { 3, ms_transition_table_+196, 61, "rule 61: expression <- IS_DEFINED . '(' ID ')'" },
+    { 3, ms_transition_table_+199, 61, "rule 61: expression <- IS_DEFINED '(' . ID ')'" },
+    { 3, ms_transition_table_+202, 61, "rule 61: expression <- IS_DEFINED '(' ID . ')'" },
+    { 1, ms_transition_table_+205, 61, "rule 61: expression <- IS_DEFINED '(' ID ')' ." },
+    { 3, ms_transition_table_+206, 62, "rule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'" },
+    { 3, ms_transition_table_+209, 62, "rule 62: expression <- IS_DEFINED . '(' ID '[' expression ']' ')'" },
+    { 3, ms_transition_table_+212, 62, "rule 62: expression <- IS_DEFINED '(' . ID '[' expression ']' ')'" },
+    { 3, ms_transition_table_+215, 62, "rule 62: expression <- IS_DEFINED '(' ID . '[' expression ']' ')'" },
+    { 4, ms_transition_table_+218, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' . expression ']' ')'" },
+    { 3, ms_transition_table_+222, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression . ']' ')'" },
+    { 3, ms_transition_table_+225, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression ']' . ')'" },
+    { 1, ms_transition_table_+228, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression ']' ')' ." },
+    { 3, ms_transition_table_+229, 63, "rule 63: expression <- . ID" },
+    { 1, ms_transition_table_+232, 63, "rule 63: expression <- ID ." },
+    { 3, ms_transition_table_+233, 64, "rule 64: expression <- . ID '[' expression ']'" },
+    { 3, ms_transition_table_+236, 64, "rule 64: expression <- ID . '[' expression ']'" },
+    { 4, ms_transition_table_+239, 64, "rule 64: expression <- ID '[' . expression ']'" },
+    { 3, ms_transition_table_+243, 64, "rule 64: expression <- ID '[' expression . ']'" },
+    { 1, ms_transition_table_+246, 64, "rule 64: expression <- ID '[' expression ']' ." },
+    { 3, ms_transition_table_+247, 65, "rule 65: expression <- . ID '?'" },
+    { 3, ms_transition_table_+250, 65, "rule 65: expression <- ID . '?'" },
+    { 1, ms_transition_table_+253, 65, "rule 65: expression <- ID '?' ." },
+    { 3, ms_transition_table_+254, 66, "rule 66: expression <- . ID '[' expression ']' '?'" },
+    { 3, ms_transition_table_+257, 66, "rule 66: expression <- ID . '[' expression ']' '?'" },
+    { 4, ms_transition_table_+260, 66, "rule 66: expression <- ID '[' . expression ']' '?'" },
+    { 3, ms_transition_table_+264, 66, "rule 66: expression <- ID '[' expression . ']' '?'" },
+    { 3, ms_transition_table_+267, 66, "rule 66: expression <- ID '[' expression ']' . '?'" },
+    { 1, ms_transition_table_+270, 66, "rule 66: expression <- ID '[' expression ']' '?' ." },
+    { 3, ms_transition_table_+271, 67, "rule 67: expression <- . expression '.' expression" },
+    { 3, ms_transition_table_+274, 67, "rule 67: expression <- expression . '.' expression" },
+    { 4, ms_transition_table_+277, 67, "rule 67: expression <- expression '.' . expression" },
+    { 1, ms_transition_table_+281, 67, "rule 67: expression <- expression '.' expression ." },
+    { 3, ms_transition_table_+282, 68, "rule 68: expression <- . expression '|' '|' expression" },
+    { 3, ms_transition_table_+285, 68, "rule 68: expression <- expression . '|' '|' expression" },
+    { 3, ms_transition_table_+288, 68, "rule 68: expression <- expression '|' . '|' expression" },
+    { 4, ms_transition_table_+291, 68, "rule 68: expression <- expression '|' '|' . expression" },
+    { 1, ms_transition_table_+295, 68, "rule 68: expression <- expression '|' '|' expression ." },
+    { 3, ms_transition_table_+296, 69, "rule 69: expression <- . expression '&' '&' expression" },
+    { 3, ms_transition_table_+299, 69, "rule 69: expression <- expression . '&' '&' expression" },
+    { 3, ms_transition_table_+302, 69, "rule 69: expression <- expression '&' . '&' expression" },
+    { 4, ms_transition_table_+305, 69, "rule 69: expression <- expression '&' '&' . expression" },
+    { 1, ms_transition_table_+309, 69, "rule 69: expression <- expression '&' '&' expression ." },
+    { 3, ms_transition_table_+310, 70, "rule 70: expression <- . expression '=' '=' expression" },
+    { 3, ms_transition_table_+313, 70, "rule 70: expression <- expression . '=' '=' expression" },
+    { 3, ms_transition_table_+316, 70, "rule 70: expression <- expression '=' . '=' expression" },
+    { 4, ms_transition_table_+319, 70, "rule 70: expression <- expression '=' '=' . expression" },
+    { 1, ms_transition_table_+323, 70, "rule 70: expression <- expression '=' '=' expression ." },
+    { 3, ms_transition_table_+324, 71, "rule 71: expression <- . expression '!' '=' expression" },
+    { 3, ms_transition_table_+327, 71, "rule 71: expression <- expression . '!' '=' expression" },
+    { 3, ms_transition_table_+330, 71, "rule 71: expression <- expression '!' . '=' expression" },
+    { 4, ms_transition_table_+333, 71, "rule 71: expression <- expression '!' '=' . expression" },
+    { 1, ms_transition_table_+337, 71, "rule 71: expression <- expression '!' '=' expression ." },
+    { 3, ms_transition_table_+338, 72, "rule 72: expression <- . expression '<' expression" },
+    { 3, ms_transition_table_+341, 72, "rule 72: expression <- expression . '<' expression" },
+    { 4, ms_transition_table_+344, 72, "rule 72: expression <- expression '<' . expression" },
+    { 1, ms_transition_table_+348, 72, "rule 72: expression <- expression '<' expression ." },
+    { 3, ms_transition_table_+349, 73, "rule 73: expression <- . expression '<' '=' expression" },
+    { 3, ms_transition_table_+352, 73, "rule 73: expression <- expression . '<' '=' expression" },
+    { 3, ms_transition_table_+355, 73, "rule 73: expression <- expression '<' . '=' expression" },
+    { 4, ms_transition_table_+358, 73, "rule 73: expression <- expression '<' '=' . expression" },
+    { 1, ms_transition_table_+362, 73, "rule 73: expression <- expression '<' '=' expression ." },
+    { 3, ms_transition_table_+363, 74, "rule 74: expression <- . expression '>' expression" },
+    { 3, ms_transition_table_+366, 74, "rule 74: expression <- expression . '>' expression" },
+    { 4, ms_transition_table_+369, 74, "rule 74: expression <- expression '>' . expression" },
+    { 1, ms_transition_table_+373, 74, "rule 74: expression <- expression '>' expression ." },
+    { 3, ms_transition_table_+374, 75, "rule 75: expression <- . expression '>' '=' expression" },
+    { 3, ms_transition_table_+377, 75, "rule 75: expression <- expression . '>' '=' expression" },
+    { 3, ms_transition_table_+380, 75, "rule 75: expression <- expression '>' . '=' expression" },
+    { 4, ms_transition_table_+383, 75, "rule 75: expression <- expression '>' '=' . expression" },
+    { 1, ms_transition_table_+387, 75, "rule 75: expression <- expression '>' '=' expression ." },
+    { 3, ms_transition_table_+388, 76, "rule 76: expression <- . expression '+' expression" },
+    { 3, ms_transition_table_+391, 76, "rule 76: expression <- expression . '+' expression" },
+    { 4, ms_transition_table_+394, 76, "rule 76: expression <- expression '+' . expression" },
+    { 1, ms_transition_table_+398, 76, "rule 76: expression <- expression '+' expression ." },
+    { 3, ms_transition_table_+399, 77, "rule 77: expression <- . expression '-' expression" },
+    { 3, ms_transition_table_+402, 77, "rule 77: expression <- expression . '-' expression" },
+    { 4, ms_transition_table_+405, 77, "rule 77: expression <- expression '-' . expression" },
+    { 1, ms_transition_table_+409, 77, "rule 77: expression <- expression '-' expression ." },
+    { 3, ms_transition_table_+410, 78, "rule 78: expression <- . expression '*' expression" },
+    { 3, ms_transition_table_+413, 78, "rule 78: expression <- expression . '*' expression" },
+    { 4, ms_transition_table_+416, 78, "rule 78: expression <- expression '*' . expression" },
+    { 1, ms_transition_table_+420, 78, "rule 78: expression <- expression '*' expression ." },
+    { 3, ms_transition_table_+421, 79, "rule 79: expression <- . expression '/' expression" },
+    { 3, ms_transition_table_+424, 79, "rule 79: expression <- expression . '/' expression" },
+    { 4, ms_transition_table_+427, 79, "rule 79: expression <- expression '/' . expression" },
+    { 1, ms_transition_table_+431, 79, "rule 79: expression <- expression '/' expression ." },
+    { 3, ms_transition_table_+432, 80, "rule 80: expression <- . expression '%' expression" },
+    { 3, ms_transition_table_+435, 80, "rule 80: expression <- expression . '%' expression" },
+    { 4, ms_transition_table_+438, 80, "rule 80: expression <- expression '%' . expression" },
+    { 1, ms_transition_table_+442, 80, "rule 80: expression <- expression '%' expression ." },
+    { 3, ms_transition_table_+443, 81, "rule 81: expression <- . '-' expression" },
+    { 4, ms_transition_table_+446, 81, "rule 81: expression <- '-' . expression" },
+    { 1, ms_transition_table_+450, 81, "rule 81: expression <- '-' expression ." },
+    { 3, ms_transition_table_+451, 82, "rule 82: expression <- . '!' expression" },
+    { 4, ms_transition_table_+454, 82, "rule 82: expression <- '!' . expression" },
+    { 1, ms_transition_table_+458, 82, "rule 82: expression <- '!' expression ." },
+    { 3, ms_transition_table_+459, 83, "rule 83: expression <- . '(' expression ')'" },
+    { 4, ms_transition_table_+462, 83, "rule 83: expression <- '(' . expression ')'" },
+    { 3, ms_transition_table_+466, 83, "rule 83: expression <- '(' expression . ')'" },
+    { 1, ms_transition_table_+469, 83, "rule 83: expression <- '(' expression ')' ." },
+    { 3, ms_transition_table_+470, 13, "rule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'" },
+    { 3, ms_transition_table_+473, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE . '(' ')'" },
+    { 3, ms_transition_table_+476, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE '(' . ')'" },
+    { 1, ms_transition_table_+479, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE '(' ')' ." },
+    { 3, ms_transition_table_+480, 14, "rule 14: code_body <- . UNDEFINE '(' ID ')'" },
+    { 3, ms_transition_table_+483, 14, "rule 14: code_body <- UNDEFINE . '(' ID ')'" },
+    { 3, ms_transition_table_+486, 14, "rule 14: code_body <- UNDEFINE '(' . ID ')'" },
+    { 3, ms_transition_table_+489, 14, "rule 14: code_body <- UNDEFINE '(' ID . ')'" },
+    { 1, ms_transition_table_+492, 14, "rule 14: code_body <- UNDEFINE '(' ID ')' ." },
+    { 3, ms_transition_table_+493, 15, "rule 15: code_body <- . DECLARE_ARRAY '(' ID ')'" },
+    { 3, ms_transition_table_+496, 15, "rule 15: code_body <- DECLARE_ARRAY . '(' ID ')'" },
+    { 3, ms_transition_table_+499, 15, "rule 15: code_body <- DECLARE_ARRAY '(' . ID ')'" },
+    { 3, ms_transition_table_+502, 15, "rule 15: code_body <- DECLARE_ARRAY '(' ID . ')'" },
+    { 1, ms_transition_table_+505, 15, "rule 15: code_body <- DECLARE_ARRAY '(' ID ')' ." },
+    { 3, ms_transition_table_+506, 16, "rule 16: code_body <- . DECLARE_MAP '(' ID ')'" },
+    { 3, ms_transition_table_+509, 16, "rule 16: code_body <- DECLARE_MAP . '(' ID ')'" },
+    { 3, ms_transition_table_+512, 16, "rule 16: code_body <- DECLARE_MAP '(' . ID ')'" },
+    { 3, ms_transition_table_+515, 16, "rule 16: code_body <- DECLARE_MAP '(' ID . ')'" },
+    { 1, ms_transition_table_+518, 16, "rule 16: code_body <- DECLARE_MAP '(' ID ')' ." },
+    { 3, ms_transition_table_+519, 17, "rule 17: code_body <- . INCLUDE '(' expression ')'" },
+    { 3, ms_transition_table_+522, 17, "rule 17: code_body <- INCLUDE . '(' expression ')'" },
+    { 4, ms_transition_table_+525, 17, "rule 17: code_body <- INCLUDE '(' . expression ')'" },
+    { 3, ms_transition_table_+529, 17, "rule 17: code_body <- INCLUDE '(' expression . ')'" },
+    { 1, ms_transition_table_+532, 17, "rule 17: code_body <- INCLUDE '(' expression ')' ." },
+    { 3, ms_transition_table_+533, 18, "rule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'" },
+    { 3, ms_transition_table_+536, 18, "rule 18: code_body <- SANDBOX_INCLUDE . '(' expression ')'" },
+    { 4, ms_transition_table_+539, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' . expression ')'" },
+    { 3, ms_transition_table_+543, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' expression . ')'" },
+    { 1, ms_transition_table_+546, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' expression ')' ." },
+    { 3, ms_transition_table_+547, 19, "rule 19: code_body <- . WARNING '(' expression ')'" },
+    { 3, ms_transition_table_+550, 19, "rule 19: code_body <- WARNING . '(' expression ')'" },
+    { 4, ms_transition_table_+553, 19, "rule 19: code_body <- WARNING '(' . expression ')'" },
+    { 3, ms_transition_table_+557, 19, "rule 19: code_body <- WARNING '(' expression . ')'" },
+    { 1, ms_transition_table_+560, 19, "rule 19: code_body <- WARNING '(' expression ')' ." },
+    { 3, ms_transition_table_+561, 20, "rule 20: code_body <- . ERROR '(' expression ')'" },
+    { 3, ms_transition_table_+564, 20, "rule 20: code_body <- ERROR . '(' expression ')'" },
+    { 4, ms_transition_table_+567, 20, "rule 20: code_body <- ERROR '(' . expression ')'" },
+    { 3, ms_transition_table_+571, 20, "rule 20: code_body <- ERROR '(' expression . ')'" },
+    { 1, ms_transition_table_+574, 20, "rule 20: code_body <- ERROR '(' expression ')' ." },
+    { 3, ms_transition_table_+575, 21, "rule 21: code_body <- . FATAL_ERROR '(' expression ')'" },
+    { 3, ms_transition_table_+578, 21, "rule 21: code_body <- FATAL_ERROR . '(' expression ')'" },
+    { 4, ms_transition_table_+581, 21, "rule 21: code_body <- FATAL_ERROR '(' . expression ')'" },
+    { 3, ms_transition_table_+585, 21, "rule 21: code_body <- FATAL_ERROR '(' expression . ')'" },
+    { 1, ms_transition_table_+588, 21, "rule 21: code_body <- FATAL_ERROR '(' expression ')' ." },
+    { 1, ms_transition_table_+589, 9, "rule 9: code <- START_CODE code_body END_CODE ." },
+    { 3, ms_transition_table_+590, 10, "rule 10: code <- . CODE_LINE code_body CODE_NEWLINE" },
+    { 4, ms_transition_table_+593, 10, "rule 10: code <- CODE_LINE . code_body CODE_NEWLINE" },
+    { 3, ms_transition_table_+597, 10, "rule 10: code <- CODE_LINE code_body . CODE_NEWLINE" },
+    { 1, ms_transition_table_+600, 10, "rule 10: code <- CODE_LINE code_body CODE_NEWLINE ." },
+    { 4, ms_transition_table_+601, 5, "rule 5: executable <- . conditional_series" },
+    { 1, ms_transition_table_+605, 5, "rule 5: executable <- conditional_series ." },
+    { 2, ms_transition_table_+606, 84, "START conditional_series" },
+    { 1, ms_transition_table_+608, 84, "RETURN conditional_series" },
+    { 1, ms_transition_table_+609, 84, "head of: conditional_series" },
+    { 4, ms_transition_table_+610, 22, "rule 22: conditional_series <- . if_statement body conditional_series_end" },
+    { 4, ms_transition_table_+614, 22, "rule 22: conditional_series <- if_statement . body conditional_series_end" },
+    { 2, ms_transition_table_+618, 84, "START if_statement" },
+    { 1, ms_transition_table_+620, 84, "RETURN if_statement" },
+    { 2, ms_transition_table_+621, 84, "head of: if_statement" },
+    { 3, ms_transition_table_+623, 26, "rule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE" },
+    { 3, ms_transition_table_+626, 26, "rule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE" },
+    { 3, ms_transition_table_+629, 26, "rule 26: if_statement <- START_CODE IF . '(' expression ')' END_CODE" },
+    { 4, ms_transition_table_+632, 26, "rule 26: if_statement <- START_CODE IF '(' . expression ')' END_CODE" },
+    { 3, ms_transition_table_+636, 26, "rule 26: if_statement <- START_CODE IF '(' expression . ')' END_CODE" },
+    { 3, ms_transition_table_+639, 26, "rule 26: if_statement <- START_CODE IF '(' expression ')' . END_CODE" },
+    { 1, ms_transition_table_+642, 26, "rule 26: if_statement <- START_CODE IF '(' expression ')' END_CODE ." },
+    { 3, ms_transition_table_+643, 27, "rule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+646, 27, "rule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+649, 27, "rule 27: if_statement <- CODE_LINE IF . '(' expression ')' CODE_NEWLINE" },
+    { 4, ms_transition_table_+652, 27, "rule 27: if_statement <- CODE_LINE IF '(' . expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+656, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+659, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+662, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+663, 22, "rule 22: conditional_series <- if_statement body . conditional_series_end" },
+    { 1, ms_transition_table_+667, 22, "rule 22: conditional_series <- if_statement body conditional_series_end ." },
+    { 2, ms_transition_table_+668, 84, "START conditional_series_end" },
+    { 1, ms_transition_table_+670, 84, "RETURN conditional_series_end" },
+    { 3, ms_transition_table_+671, 84, "head of: conditional_series_end" },
+    { 4, ms_transition_table_+674, 23, "rule 23: conditional_series_end <- . end_if" },
+    { 1, ms_transition_table_+678, 23, "rule 23: conditional_series_end <- end_if ." },
+    { 2, ms_transition_table_+679, 84, "START end_if" },
+    { 1, ms_transition_table_+681, 84, "RETURN end_if" },
+    { 2, ms_transition_table_+682, 84, "head of: end_if" },
+    { 3, ms_transition_table_+684, 32, "rule 32: end_if <- . START_CODE END_IF END_CODE" },
+    { 3, ms_transition_table_+687, 32, "rule 32: end_if <- START_CODE . END_IF END_CODE" },
+    { 3, ms_transition_table_+690, 32, "rule 32: end_if <- START_CODE END_IF . END_CODE" },
+    { 1, ms_transition_table_+693, 32, "rule 32: end_if <- START_CODE END_IF END_CODE ." },
+    { 3, ms_transition_table_+694, 33, "rule 33: end_if <- . CODE_LINE END_IF CODE_NEWLINE" },
+    { 3, ms_transition_table_+697, 33, "rule 33: end_if <- CODE_LINE . END_IF CODE_NEWLINE" },
+    { 3, ms_transition_table_+700, 33, "rule 33: end_if <- CODE_LINE END_IF . CODE_NEWLINE" },
+    { 1, ms_transition_table_+703, 33, "rule 33: end_if <- CODE_LINE END_IF CODE_NEWLINE ." },
+    { 4, ms_transition_table_+704, 24, "rule 24: conditional_series_end <- . else_statement body end_if" },
+    { 4, ms_transition_table_+708, 24, "rule 24: conditional_series_end <- else_statement . body end_if" },
+    { 2, ms_transition_table_+712, 84, "START else_statement" },
+    { 1, ms_transition_table_+714, 84, "RETURN else_statement" },
+    { 2, ms_transition_table_+715, 84, "head of: else_statement" },
+    { 3, ms_transition_table_+717, 28, "rule 28: else_statement <- . START_CODE ELSE END_CODE" },
+    { 3, ms_transition_table_+720, 28, "rule 28: else_statement <- START_CODE . ELSE END_CODE" },
+    { 3, ms_transition_table_+723, 28, "rule 28: else_statement <- START_CODE ELSE . END_CODE" },
+    { 1, ms_transition_table_+726, 28, "rule 28: else_statement <- START_CODE ELSE END_CODE ." },
+    { 3, ms_transition_table_+727, 29, "rule 29: else_statement <- . CODE_LINE ELSE CODE_NEWLINE" },
+    { 3, ms_transition_table_+730, 29, "rule 29: else_statement <- CODE_LINE . ELSE CODE_NEWLINE" },
+    { 3, ms_transition_table_+733, 29, "rule 29: else_statement <- CODE_LINE ELSE . CODE_NEWLINE" },
+    { 1, ms_transition_table_+736, 29, "rule 29: else_statement <- CODE_LINE ELSE CODE_NEWLINE ." },
+    { 4, ms_transition_table_+737, 24, "rule 24: conditional_series_end <- else_statement body . end_if" },
+    { 1, ms_transition_table_+741, 24, "rule 24: conditional_series_end <- else_statement body end_if ." },
+    { 4, ms_transition_table_+742, 25, "rule 25: conditional_series_end <- . else_if_statement body conditional_series_end" },
+    { 4, ms_transition_table_+746, 25, "rule 25: conditional_series_end <- else_if_statement . body conditional_series_end" },
+    { 2, ms_transition_table_+750, 84, "START else_if_statement" },
+    { 1, ms_transition_table_+752, 84, "RETURN else_if_statement" },
+    { 2, ms_transition_table_+753, 84, "head of: else_if_statement" },
+    { 3, ms_transition_table_+755, 30, "rule 30: else_if_statement <- . START_CODE ELSE_IF '(' expression ')' END_CODE" },
+    { 3, ms_transition_table_+758, 30, "rule 30: else_if_statement <- START_CODE . ELSE_IF '(' expression ')' END_CODE" },
+    { 3, ms_transition_table_+761, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF . '(' expression ')' END_CODE" },
+    { 4, ms_transition_table_+764, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' . expression ')' END_CODE" },
+    { 3, ms_transition_table_+768, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression . ')' END_CODE" },
+    { 3, ms_transition_table_+771, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression ')' . END_CODE" },
+    { 1, ms_transition_table_+774, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE ." },
+    { 3, ms_transition_table_+775, 31, "rule 31: else_if_statement <- . CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+778, 31, "rule 31: else_if_statement <- CODE_LINE . ELSE_IF '(' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+781, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF . '(' expression ')' CODE_NEWLINE" },
+    { 4, ms_transition_table_+784, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' . expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+788, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+791, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+794, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+795, 25, "rule 25: conditional_series_end <- else_if_statement body . conditional_series_end" },
+    { 1, ms_transition_table_+799, 25, "rule 25: conditional_series_end <- else_if_statement body conditional_series_end ." },
+    { 4, ms_transition_table_+800, 6, "rule 6: executable <- . define body end_define" },
+    { 4, ms_transition_table_+804, 6, "rule 6: executable <- define . body end_define" },
+    { 2, ms_transition_table_+808, 84, "START define" },
+    { 1, ms_transition_table_+810, 84, "RETURN define" },
+    { 3, ms_transition_table_+811, 84, "head of: define" },
+    { 4, ms_transition_table_+814, 34, "rule 34: define <- . define_scalar" },
+    { 1, ms_transition_table_+818, 34, "rule 34: define <- define_scalar ." },
+    { 2, ms_transition_table_+819, 84, "START define_scalar" },
+    { 1, ms_transition_table_+821, 84, "RETURN define_scalar" },
+    { 2, ms_transition_table_+822, 84, "head of: define_scalar" },
+    { 3, ms_transition_table_+824, 37, "rule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE" },
+    { 3, ms_transition_table_+827, 37, "rule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE" },
+    { 3, ms_transition_table_+830, 37, "rule 37: define_scalar <- START_CODE DEFINE . '(' ID ')' END_CODE" },
+    { 3, ms_transition_table_+833, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' . ID ')' END_CODE" },
+    { 3, ms_transition_table_+836, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID . ')' END_CODE" },
+    { 3, ms_transition_table_+839, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' . END_CODE" },
+    { 1, ms_transition_table_+842, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE ." },
+    { 3, ms_transition_table_+843, 38, "rule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+846, 38, "rule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+849, 38, "rule 38: define_scalar <- CODE_LINE DEFINE . '(' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+852, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' . ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+855, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+858, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+861, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+862, 35, "rule 35: define <- . define_array_element" },
+    { 1, ms_transition_table_+866, 35, "rule 35: define <- define_array_element ." },
+    { 2, ms_transition_table_+867, 84, "START define_array_element" },
+    { 1, ms_transition_table_+869, 84, "RETURN define_array_element" },
+    { 2, ms_transition_table_+870, 84, "head of: define_array_element" },
+    { 3, ms_transition_table_+872, 39, "rule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+875, 39, "rule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+878, 39, "rule 39: define_array_element <- START_CODE DEFINE . '(' ID '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+881, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' . ID '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+884, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID . '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+887, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' . ']' ')' END_CODE" },
+    { 3, ms_transition_table_+890, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' . ')' END_CODE" },
+    { 3, ms_transition_table_+893, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' . END_CODE" },
+    { 1, ms_transition_table_+896, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE ." },
+    { 3, ms_transition_table_+897, 40, "rule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+900, 40, "rule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+903, 40, "rule 40: define_array_element <- CODE_LINE DEFINE . '(' ID '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+906, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' . ID '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+909, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID . '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+912, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' . ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+915, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+918, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+921, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+922, 36, "rule 36: define <- . define_map_element" },
+    { 1, ms_transition_table_+926, 36, "rule 36: define <- define_map_element ." },
+    { 2, ms_transition_table_+927, 84, "START define_map_element" },
+    { 1, ms_transition_table_+929, 84, "RETURN define_map_element" },
+    { 2, ms_transition_table_+930, 84, "head of: define_map_element" },
+    { 3, ms_transition_table_+932, 41, "rule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+935, 41, "rule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+938, 41, "rule 41: define_map_element <- START_CODE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+941, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+944, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+947, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+950, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL . ']' ')' END_CODE" },
+    { 3, ms_transition_table_+953, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' . ')' END_CODE" },
+    { 3, ms_transition_table_+956, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' . END_CODE" },
+    { 1, ms_transition_table_+959, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE ." },
+    { 3, ms_transition_table_+960, 42, "rule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+963, 42, "rule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+966, 42, "rule 42: define_map_element <- CODE_LINE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+969, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+972, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+975, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+978, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL . ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+981, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+984, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+987, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+988, 6, "rule 6: executable <- define body . end_define" },
+    { 1, ms_transition_table_+992, 6, "rule 6: executable <- define body end_define ." },
+    { 2, ms_transition_table_+993, 84, "START end_define" },
+    { 1, ms_transition_table_+995, 84, "RETURN end_define" },
+    { 2, ms_transition_table_+996, 84, "head of: end_define" },
+    { 3, ms_transition_table_+998, 43, "rule 43: end_define <- . START_CODE END_DEFINE END_CODE" },
+    { 3, ms_transition_table_+1001, 43, "rule 43: end_define <- START_CODE . END_DEFINE END_CODE" },
+    { 3, ms_transition_table_+1004, 43, "rule 43: end_define <- START_CODE END_DEFINE . END_CODE" },
+    { 1, ms_transition_table_+1007, 43, "rule 43: end_define <- START_CODE END_DEFINE END_CODE ." },
+    { 3, ms_transition_table_+1008, 44, "rule 44: end_define <- . CODE_LINE END_DEFINE CODE_NEWLINE" },
+    { 3, ms_transition_table_+1011, 44, "rule 44: end_define <- CODE_LINE . END_DEFINE CODE_NEWLINE" },
+    { 3, ms_transition_table_+1014, 44, "rule 44: end_define <- CODE_LINE END_DEFINE . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1017, 44, "rule 44: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE ." },
+    { 4, ms_transition_table_+1018, 7, "rule 7: executable <- . loop body end_loop" },
+    { 4, ms_transition_table_+1022, 7, "rule 7: executable <- loop . body end_loop" },
+    { 2, ms_transition_table_+1026, 84, "START loop" },
+    { 1, ms_transition_table_+1028, 84, "RETURN loop" },
+    { 2, ms_transition_table_+1029, 84, "head of: loop" },
+    { 3, ms_transition_table_+1031, 45, "rule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE" },
+    { 3, ms_transition_table_+1034, 45, "rule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE" },
+    { 3, ms_transition_table_+1037, 45, "rule 45: loop <- START_CODE LOOP . '(' ID ',' expression ')' END_CODE" },
+    { 3, ms_transition_table_+1040, 45, "rule 45: loop <- START_CODE LOOP '(' . ID ',' expression ')' END_CODE" },
+    { 3, ms_transition_table_+1043, 45, "rule 45: loop <- START_CODE LOOP '(' ID . ',' expression ')' END_CODE" },
+    { 4, ms_transition_table_+1046, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' . expression ')' END_CODE" },
+    { 3, ms_transition_table_+1050, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression . ')' END_CODE" },
+    { 3, ms_transition_table_+1053, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' . END_CODE" },
+    { 1, ms_transition_table_+1056, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE ." },
+    { 3, ms_transition_table_+1057, 46, "rule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1060, 46, "rule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1063, 46, "rule 46: loop <- CODE_LINE LOOP . '(' ID ',' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1066, 46, "rule 46: loop <- CODE_LINE LOOP '(' . ID ',' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1069, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID . ',' expression ')' CODE_NEWLINE" },
+    { 4, ms_transition_table_+1072, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' . expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1076, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1079, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1082, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+1083, 7, "rule 7: executable <- loop body . end_loop" },
+    { 1, ms_transition_table_+1087, 7, "rule 7: executable <- loop body end_loop ." },
+    { 2, ms_transition_table_+1088, 84, "START end_loop" },
+    { 1, ms_transition_table_+1090, 84, "RETURN end_loop" },
+    { 2, ms_transition_table_+1091, 84, "head of: end_loop" },
+    { 3, ms_transition_table_+1093, 47, "rule 47: end_loop <- . START_CODE END_LOOP END_CODE" },
+    { 3, ms_transition_table_+1096, 47, "rule 47: end_loop <- START_CODE . END_LOOP END_CODE" },
+    { 3, ms_transition_table_+1099, 47, "rule 47: end_loop <- START_CODE END_LOOP . END_CODE" },
+    { 1, ms_transition_table_+1102, 47, "rule 47: end_loop <- START_CODE END_LOOP END_CODE ." },
+    { 3, ms_transition_table_+1103, 48, "rule 48: end_loop <- . CODE_LINE END_LOOP CODE_NEWLINE" },
+    { 3, ms_transition_table_+1106, 48, "rule 48: end_loop <- CODE_LINE . END_LOOP CODE_NEWLINE" },
+    { 3, ms_transition_table_+1109, 48, "rule 48: end_loop <- CODE_LINE END_LOOP . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1112, 48, "rule 48: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE ." },
+    { 4, ms_transition_table_+1113, 8, "rule 8: executable <- . for_each body end_for_each" },
+    { 4, ms_transition_table_+1117, 8, "rule 8: executable <- for_each . body end_for_each" },
+    { 2, ms_transition_table_+1121, 84, "START for_each" },
+    { 1, ms_transition_table_+1123, 84, "RETURN for_each" },
+    { 2, ms_transition_table_+1124, 84, "head of: for_each" },
+    { 3, ms_transition_table_+1126, 49, "rule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1129, 49, "rule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1132, 49, "rule 49: for_each <- START_CODE FOR_EACH . '(' ID ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1135, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' . ID ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1138, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID . ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1141, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' . ID ')' END_CODE" },
+    { 3, ms_transition_table_+1144, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID . ')' END_CODE" },
+    { 3, ms_transition_table_+1147, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' . END_CODE" },
+    { 1, ms_transition_table_+1150, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE ." },
+    { 3, ms_transition_table_+1151, 50, "rule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1154, 50, "rule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1157, 50, "rule 50: for_each <- CODE_LINE FOR_EACH . '(' ID ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1160, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' . ID ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1163, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID . ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1166, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' . ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1169, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1172, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1175, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+1176, 8, "rule 8: executable <- for_each body . end_for_each" },
+    { 1, ms_transition_table_+1180, 8, "rule 8: executable <- for_each body end_for_each ." },
+    { 2, ms_transition_table_+1181, 84, "START end_for_each" },
+    { 1, ms_transition_table_+1183, 84, "RETURN end_for_each" },
+    { 2, ms_transition_table_+1184, 84, "head of: end_for_each" },
+    { 3, ms_transition_table_+1186, 51, "rule 51: end_for_each <- . START_CODE END_FOR_EACH END_CODE" },
+    { 3, ms_transition_table_+1189, 51, "rule 51: end_for_each <- START_CODE . END_FOR_EACH END_CODE" },
+    { 3, ms_transition_table_+1192, 51, "rule 51: end_for_each <- START_CODE END_FOR_EACH . END_CODE" },
+    { 1, ms_transition_table_+1195, 51, "rule 51: end_for_each <- START_CODE END_FOR_EACH END_CODE ." },
+    { 3, ms_transition_table_+1196, 52, "rule 52: end_for_each <- . CODE_LINE END_FOR_EACH CODE_NEWLINE" },
+    { 3, ms_transition_table_+1199, 52, "rule 52: end_for_each <- CODE_LINE . END_FOR_EACH CODE_NEWLINE" },
+    { 3, ms_transition_table_+1202, 52, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1205, 52, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE ." },
+    { 3, ms_transition_table_+1206, 3, "rule 3: body <- . body executable TEXT" },
+    { 4, ms_transition_table_+1209, 3, "rule 3: body <- body . executable TEXT" },
+    { 3, ms_transition_table_+1213, 3, "rule 3: body <- body executable . TEXT" },
+    { 1, ms_transition_table_+1216, 3, "rule 3: body <- body executable TEXT ." }
+};
+std::size_t const Parser::Npda_::ms_state_count_ = sizeof(Parser::Npda_::ms_state_table_) / sizeof(*Parser::Npda_::ms_state_table_);
+
+Parser::Npda_::Transition_ const Parser::Npda_::ms_transition_table_[] =
+{
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(4) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(6) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(448) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(0) },
+    { Parser::Npda_::Transition_::SHIFT, 258, std::uint32_t(5) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(8) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(10) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(213) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(291) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(376) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(412) },
+    { Parser::Npda_::Transition_::SHIFT, 295, std::uint32_t(13) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(16) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(4) },
+    { Parser::Npda_::Transition_::SHIFT, 295, std::uint32_t(15) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(16) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(17) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(209) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(18) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(19) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(208) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(21) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(23) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(24) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(164) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(168) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(173) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(178) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(183) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(188) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(193) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(198) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(203) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(25) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(27) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(31) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(33) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(38) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(43) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(48) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(53) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(58) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(63) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(68) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(76) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(78) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(83) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(86) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(92) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(96) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(101) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(106) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(111) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(116) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(120) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(125) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(129) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(134) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(138) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(142) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(146) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(150) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(154) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(157) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(160) },
+    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(30) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(53) },
+    { Parser::Npda_::Transition_::SHIFT, 285, std::uint32_t(32) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(54) },
+    { Parser::Npda_::Transition_::SHIFT, 283, std::uint32_t(34) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(35) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(36) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(37) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(55) },
+    { Parser::Npda_::Transition_::SHIFT, 287, std::uint32_t(39) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(40) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(41) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(42) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(56) },
+    { Parser::Npda_::Transition_::SHIFT, 288, std::uint32_t(44) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(45) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(46) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(47) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(57) },
+    { Parser::Npda_::Transition_::SHIFT, 289, std::uint32_t(49) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(50) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(51) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(52) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(58) },
+    { Parser::Npda_::Transition_::SHIFT, 290, std::uint32_t(54) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(55) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(56) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(57) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(59) },
+    { Parser::Npda_::Transition_::SHIFT, 291, std::uint32_t(59) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(60) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(61) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(62) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(60) },
+    { Parser::Npda_::Transition_::SHIFT, 284, std::uint32_t(64) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(65) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(66) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(67) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(61) },
+    { Parser::Npda_::Transition_::SHIFT, 284, std::uint32_t(69) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(70) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(71) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(72) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(73) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(74) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(75) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(62) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(77) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(63) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(79) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(80) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(81) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(82) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(64) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(84) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 63, std::uint32_t(85) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(65) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(87) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(88) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(89) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(90) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 63, std::uint32_t(91) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(66) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(93) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 46, std::uint32_t(94) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(95) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(67) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(97) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 124, std::uint32_t(98) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 124, std::uint32_t(99) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(100) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(68) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(102) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 38, std::uint32_t(103) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 38, std::uint32_t(104) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(105) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(69) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(107) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(108) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(109) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(110) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(70) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(112) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 33, std::uint32_t(113) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(114) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(115) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(71) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(117) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 60, std::uint32_t(118) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(119) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(72) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(121) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 60, std::uint32_t(122) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(123) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(124) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(73) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(126) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 62, std::uint32_t(127) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(128) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(74) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(130) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 62, std::uint32_t(131) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(132) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(133) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(75) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(135) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(136) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(137) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(76) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(139) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 45, std::uint32_t(140) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(141) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(77) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(143) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 42, std::uint32_t(144) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(145) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(78) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(147) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 47, std::uint32_t(148) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(149) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(79) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(151) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 37, std::uint32_t(152) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(153) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(80) },
+    { Parser::Npda_::Transition_::SHIFT, 45, std::uint32_t(155) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(156) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(81) },
+    { Parser::Npda_::Transition_::SHIFT, 33, std::uint32_t(158) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(159) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(82) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(161) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(162) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(163) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(83) },
+    { Parser::Npda_::Transition_::SHIFT, 264, std::uint32_t(165) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(166) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(167) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(13) },
+    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(169) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(170) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(171) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(172) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(14) },
+    { Parser::Npda_::Transition_::SHIFT, 270, std::uint32_t(174) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(175) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(176) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(177) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(15) },
+    { Parser::Npda_::Transition_::SHIFT, 271, std::uint32_t(179) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(180) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(181) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(182) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(16) },
+    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(184) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(185) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(186) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(187) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(17) },
+    { Parser::Npda_::Transition_::SHIFT, 279, std::uint32_t(189) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(190) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(191) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(192) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(18) },
+    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(194) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(195) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(196) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(197) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(19) },
+    { Parser::Npda_::Transition_::SHIFT, 281, std::uint32_t(199) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(200) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(201) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(202) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(20) },
+    { Parser::Npda_::Transition_::SHIFT, 282, std::uint32_t(204) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(205) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(206) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(207) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(21) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(9) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(210) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(211) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(212) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(10) },
+    { Parser::Npda_::Transition_::SHIFT, 297, std::uint32_t(214) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(217) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(5) },
+    { Parser::Npda_::Transition_::SHIFT, 297, std::uint32_t(216) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(217) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(218) },
+    { Parser::Npda_::Transition_::SHIFT, 299, std::uint32_t(219) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(222) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(237) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 299, std::uint32_t(221) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(222) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(223) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(230) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(224) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 265, std::uint32_t(225) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(226) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(227) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(228) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(229) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(26) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(231) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 265, std::uint32_t(232) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(233) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(234) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(235) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(236) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(27) },
+    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(238) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(241) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(240) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(241) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(242) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(255) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(270) },
+    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(243) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(246) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(23) },
+    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(245) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(246) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(247) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(251) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(248) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 268, std::uint32_t(249) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(250) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(32) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(252) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 268, std::uint32_t(253) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(254) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(33) },
+    { Parser::Npda_::Transition_::SHIFT, 300, std::uint32_t(256) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(259) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(268) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 300, std::uint32_t(258) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(259) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(260) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(264) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(261) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 266, std::uint32_t(262) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(263) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(265) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 266, std::uint32_t(266) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(267) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(269) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(246) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(24) },
+    { Parser::Npda_::Transition_::SHIFT, 301, std::uint32_t(271) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(274) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(289) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 301, std::uint32_t(273) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(274) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(275) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(282) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(276) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 267, std::uint32_t(277) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(278) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(279) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(280) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(281) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(30) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(283) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 267, std::uint32_t(284) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(285) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(286) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(287) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(288) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(31) },
+    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(290) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(241) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(25) },
+    { Parser::Npda_::Transition_::SHIFT, 303, std::uint32_t(292) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(295) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(363) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 303, std::uint32_t(294) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(295) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(296) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(315) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(338) },
+    { Parser::Npda_::Transition_::SHIFT, 304, std::uint32_t(297) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(300) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(34) },
+    { Parser::Npda_::Transition_::SHIFT, 304, std::uint32_t(299) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(300) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(301) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(308) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(302) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(303) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(304) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(305) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(306) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(307) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(37) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(309) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(310) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(311) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(312) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(313) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(314) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(38) },
+    { Parser::Npda_::Transition_::SHIFT, 305, std::uint32_t(316) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(319) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(35) },
+    { Parser::Npda_::Transition_::SHIFT, 305, std::uint32_t(318) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(319) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(320) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(329) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(321) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(322) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(323) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(324) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(325) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(326) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(327) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(328) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(39) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(330) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(331) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(332) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(333) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(334) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(335) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(336) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(337) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(40) },
+    { Parser::Npda_::Transition_::SHIFT, 306, std::uint32_t(339) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(342) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(36) },
+    { Parser::Npda_::Transition_::SHIFT, 306, std::uint32_t(341) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(342) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(343) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(353) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(344) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(345) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(346) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(347) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(348) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(349) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(350) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(351) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(352) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(41) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(354) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(355) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(356) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(357) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(358) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(359) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(360) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(361) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(362) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(42) },
+    { Parser::Npda_::Transition_::SHIFT, 307, std::uint32_t(364) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(367) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(6) },
+    { Parser::Npda_::Transition_::SHIFT, 307, std::uint32_t(366) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(367) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(368) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(372) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(369) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 273, std::uint32_t(370) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(371) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(43) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(373) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 273, std::uint32_t(374) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(375) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(44) },
+    { Parser::Npda_::Transition_::SHIFT, 308, std::uint32_t(377) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(380) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(399) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 308, std::uint32_t(379) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(380) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(381) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(390) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(382) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(383) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(384) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(385) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(386) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(387) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(388) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(389) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(45) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(391) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(392) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(393) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(394) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(395) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(396) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(397) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(398) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(46) },
+    { Parser::Npda_::Transition_::SHIFT, 309, std::uint32_t(400) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(403) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::SHIFT, 309, std::uint32_t(402) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(403) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(404) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(408) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(405) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(406) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(407) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(47) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(409) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(410) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(411) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(48) },
+    { Parser::Npda_::Transition_::SHIFT, 310, std::uint32_t(413) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(416) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(435) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 310, std::uint32_t(415) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(416) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(417) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(426) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(418) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(419) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(420) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(421) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(422) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(423) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(424) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(425) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(49) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(427) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(428) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(429) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(430) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(431) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(432) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(433) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(434) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(50) },
+    { Parser::Npda_::Transition_::SHIFT, 311, std::uint32_t(436) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(439) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(8) },
+    { Parser::Npda_::Transition_::SHIFT, 311, std::uint32_t(438) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(439) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(440) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(444) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(441) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(442) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(443) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(51) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(445) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(446) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(447) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(52) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(449) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(450) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::SHIFT, 258, std::uint32_t(451) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(3) }
+};
+std::size_t const Parser::Npda_::ms_transition_count_ = sizeof(Parser::Npda_::ms_transition_table_) / sizeof(*Parser::Npda_::ms_transition_table_);
+
 // ///////////////////////////////////////////////////////////////////////
 // end of internal trison-generated parser guts
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 81 "barf_preprocessor_parser.trison"
+#line 82 "barf_preprocessor_parser.trison"
 
 FiLoc const &Parser::GetFiLoc () const
 {
@@ -5995,14 +5402,19 @@ FiLoc const &Parser::GetFiLoc () const
     return m_scanner->GetFiLoc();
 }
 
-bool Parser::ScannerDebugSpew () const
+bool Parser::ScannerDebugSpewIsEnabled () const
 {
-    return m_scanner->DebugSpew();
+    return m_scanner->DebugSpewIsEnabled();
 }
 
-void Parser::ScannerDebugSpew (bool debug_spew)
+std::ostream *Parser::ScannerDebugSpewStream ()
 {
-    m_scanner->DebugSpew(debug_spew);
+    return m_scanner->DebugSpewStream();
+}
+
+void Parser::SetScannerDebugSpewStream (std::ostream *debug_spew_stream)
+{
+    m_scanner->SetDebugSpewStream(debug_spew_stream);
 }
 
 bool Parser::OpenFile (string const &input_filename)
@@ -6033,4 +5445,4 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 6037 "barf_preprocessor_parser.cpp"
+#line 5449 "barf_preprocessor_parser.cpp"

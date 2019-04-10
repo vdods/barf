@@ -14,6 +14,7 @@
 %target.cpp.header_filename "reflex_parser.hpp"
 %target.cpp.implementation_filename "reflex_parser.cpp"
 
+%target.cpp.default_max_allowable_lookahead_count "1"
 
 %target.cpp.top_of_header_file %{
 #if !defined(REFLEX_PARSER_HPP_)
@@ -53,8 +54,9 @@ namespace Reflex {
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
     CommonLang::TargetMap *StealTargetMap ();
 
-    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
-    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+    bool ScannerDebugSpewIsEnabled () const { return m_scanner.DebugSpewIsEnabled(); }
+    std::ostream *ScannerDebugSpewStream () { return m_scanner.DebugSpewStream(); }
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream) { m_scanner.SetDebugSpewStream(debug_spew_stream); }
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -64,7 +66,11 @@ private:
 
     CommonLang::Scanner m_scanner;
     CommonLang::TargetMap *m_target_map;
+    // The regex macro map in a member var, so that the reduction rule handler for
+    // the state machine rules can use it.
     Regex::RegularExpressionMap *m_regex_macro_map;
+    // This is a member var because THERE CAN BE ONLY ONE.
+    StartWithStateMachineDirective *m_start_with_state_machine_directive;
 }
 %target.cpp.bottom_of_header_file%{
 } // end of namespace Reflex
@@ -83,14 +89,22 @@ private:
 namespace Reflex {
 %}
 %target.cpp.constructor_actions {
+    // TODO: Should this stuff go in reset_for_new_input_actions?  If so, then these should all be initialized to NULL.
     m_target_map = new CommonLang::TargetMap();
-    m_regex_macro_map = NULL;
+    m_regex_macro_map = new Regex::RegularExpressionMap();
+    m_start_with_state_machine_directive = NULL;
 }
 %target.cpp.destructor_actions {
     // if the target map wasn't stolen by the user of this parser,
     // then make sure to delete it.
     delete m_target_map;
     m_target_map = NULL;
+
+    delete m_regex_macro_map;
+    m_regex_macro_map = NULL;
+
+    delete m_start_with_state_machine_directive;
+    m_start_with_state_machine_directive = NULL;
 }
 %target.cpp.top_of_parse_method_actions %{
     EmitExecutionMessage("starting reflex parser");
@@ -202,7 +216,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %target.cpp.generate_debug_spew_code
 %target.cpp.debug_spew_prefix {"Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
-%target.cpp.dont_generate_timestamps
 
 
 %terminal BAD_TOKEN
@@ -223,67 +236,142 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 %terminal '.' ':' '|' ';'
 
 
+%prec.left %default
+
+
 %default_parse_nonterminal root
 
 %%
 
-/* ***************************************************************************
-/* root rule
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// root rule
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal root %type.cpp "PrimarySource *"
 :
-    at_least_zero_newlines
-    targets_directive
-    target_directives
-    macro_directives:regular_expression_map
-    start_with_state_machine_directive:start_with_state_machine_directive
+    preamble_directives
     END_PREAMBLE:throwaway
-    state_machines:state_machine_map
+    state_machines:state_machine_map // This includes %end
     %target.cpp {
         assert(m_target_map != NULL);
+
+        if (m_start_with_state_machine_directive == NULL)
+            EmitError("missing %start_with_state_machine directive", throwaway->GetFiLoc());
 
         // set the TargetMap's primary source path
         m_target_map->SetSourcePath(m_scanner.InputName());
         // make sure the %start_with_state_machine directive value specifies a real state machine
-        if (start_with_state_machine_directive != NULL &&
-            state_machine_map->Element(start_with_state_machine_directive->m_state_machine_id->GetText()) == NULL)
+        if (m_start_with_state_machine_directive != NULL &&
+            state_machine_map->Element(m_start_with_state_machine_directive->m_state_machine_id->GetText()) == NULL)
         {
             EmitError(
-                "undeclared state \"" + start_with_state_machine_directive->m_state_machine_id->GetText() + "\"",
-                start_with_state_machine_directive->GetFiLoc());
+                "undeclared state \"" + m_start_with_state_machine_directive->m_state_machine_id->GetText() + "\"",
+                m_start_with_state_machine_directive->GetFiLoc()
+            );
         }
 
         PrimarySource *primary_source =
             new PrimarySource(
-                regular_expression_map,
-                start_with_state_machine_directive,
+                m_regex_macro_map,
+                m_start_with_state_machine_directive,
                 throwaway->GetFiLoc(),
                 state_machine_map);
+
+        // Nullify m_regex_macro_map and m_start_with_state_machine_directive so they're not
+        // deleted upon parser destruction.
+        m_regex_macro_map = NULL;
+        m_start_with_state_machine_directive = NULL;
+
         delete throwaway;
         return primary_source;
     }
 ;
 
-/* ***************************************************************************
-/* targets directive rules
-/* **************************************************************************/
+%nonterminal preamble_directives
+:
+    preamble_directives preamble_directive %target.cpp {
+        return NULL;
+    }
+|
+    %empty
+    %target.cpp {
+        return NULL;
+    }
+;
+
+%nonterminal preamble_directive
+:
+    targets_directive at_least_one_newline
+    %target.cpp {
+        // The logic is already handled by the targets_directive (and subordinate) nonterminal reduction rule handlers.
+        return NULL;
+    }
+|
+    target_directive:target_directive at_least_one_newline
+    %target.cpp {
+        assert(target_directive != NULL);
+        assert(m_target_map != NULL);
+        if (target_directive != NULL)
+            m_target_map->SetTargetDirective(target_directive);
+        return NULL;
+    }
+|
+    macro_directive:macro at_least_one_newline
+    %target.cpp {
+        assert(m_regex_macro_map != NULL);
+
+        if (macro != NULL)
+        {
+            m_regex_macro_map->Add(macro->m_macro_id->GetText(), macro->m_macro_regex);
+            // macro is just a vehicle for m_macro_id and m_macro_regex, but can be thrown away now.
+            macro->m_macro_id = NULL;
+            macro->m_macro_regex = NULL;
+            delete macro;
+        }
+
+        return NULL;
+    }
+|
+    start_with_state_machine_directive:start_with_state_machine_directive at_least_one_newline
+    %target.cpp {
+        if (m_start_with_state_machine_directive != NULL)
+        {
+            EmitError("%start_with_state_machine already defined (previous definition at "+m_start_with_state_machine_directive->GetFiLoc().AsString()+')', start_with_state_machine_directive->GetFiLoc());
+            delete start_with_state_machine_directive;
+        }
+        else
+            m_start_with_state_machine_directive = start_with_state_machine_directive;
+        return NULL;
+    }
+|
+    at_least_one_newline
+    %target.cpp {
+        return NULL;
+    }
+|
+    %error[%end|NEWLINE] at_least_one_newline
+    %target.cpp {
+        EmitError("parse error in preamble directives", m_scanner.GetFiLoc());
+        return NULL;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// targets directive rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal targets_directive
 :
-    DIRECTIVE_TARGETS:throwaway target_ids at_least_one_newline
+    DIRECTIVE_TARGETS:throwaway target_ids
     %target.cpp {
         delete throwaway;
         return NULL;
     }
 |
-    // empty reduction rule
+    DIRECTIVE_TARGETS:throwaway %error[%end|NEWLINE]
     %target.cpp {
-        return NULL;
-    }
-|
-    DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
-    %target.cpp {
+        assert(m_target_map != NULL);
+
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         return NULL;
     }
@@ -293,8 +381,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 :
     target_ids ID:target_id
     %target.cpp {
-        assert(m_target_map != NULL);
-        // if the given target doesn't exist in the target map, add it.
         if (m_target_map->Element(target_id->GetText()) == NULL)
         {
             CommonLang::Target *target = new CommonLang::Target(target_id->GetText());
@@ -303,37 +389,22 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         // otherwise delete the target_id since we don't need it
         else
         {
-            delete target_id;
+            EmitError("target \"" + target_id->GetText() + "\" already present");
         }
-        return NULL;
+        delete target_id;
+        return m_target_map;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         assert(m_target_map != NULL);
-        return NULL;
+        return m_target_map;
     }
 ;
 
-/* ***************************************************************************
-/* target directive rules
-/* **************************************************************************/
-
-%nonterminal target_directives
-:
-    target_directives target_directive:target_directive at_least_one_newline
-    %target.cpp {
-        assert(m_target_map != NULL);
-        m_target_map->SetTargetDirective(target_directive);
-        return NULL;
-    }
-|
-    // empty reduction rule
-    %target.cpp {
-        assert(m_target_map != NULL);
-        return NULL;
-    }
-;
+// ///////////////////////////////////////////////////////////////////////////
+// target directive rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal target_directive %type.cpp "CommonLang::TargetDirective *"
 :
@@ -343,7 +414,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     }
 |
-    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive
+    %target.cpp {
+        delete throwaway;
+        return new CommonLang::TargetDirective(target_id, target_directive, NULL);
+    }
+|
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -352,7 +429,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -360,7 +437,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway %error
+    DIRECTIVE_TARGET:throwaway %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -374,78 +451,75 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |   STRING_LITERAL:value        %target.cpp { return value; }
 |   STRICT_CODE_BLOCK:value     %target.cpp { return value; }
 |   DUMB_CODE_BLOCK:value       %target.cpp { return value; }
-|   /* empty reduction rule */  %target.cpp { return NULL; }
 ;
 
-/* ***************************************************************************
-/* macro directive rules
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// macro directive rules
+// ///////////////////////////////////////////////////////////////////////////
 
-%nonterminal macro_directives %type.cpp "Regex::RegularExpressionMap *"
+%nonterminal macro_directive %type.cpp "Macro *"
 :
-    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id REGEX:macro_regex_string at_least_one_newline
+    DIRECTIVE_MACRO:throwaway ID:macro_id REGEX:macro_regex_string
     %target.cpp {
+        FiLoc throwaway_filoc(throwaway->GetFiLoc());
+        delete throwaway;
+
         Regex::Parser parser;
-        parser.ScannerDebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER));
-        parser.DebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER));
+        if (GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER))
+            parser.SetScannerDebugSpewStream(&std::cerr);
+        if (GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER))
+            parser.SetDebugSpewStream(&std::cerr);
         istringstream in(macro_regex_string->GetText());
         parser.OpenUsingStream(&in, "%macro " + macro_regex_string->GetText(), false);
         try {
             Regex::RegularExpression *regex = NULL;
-            if (parser.Parse(&regex, regular_expression_map) == Regex::Parser::PRC_SUCCESS)
+            if (parser.Parse(&regex, m_regex_macro_map) == Regex::Parser::PRC_SUCCESS)
             {
                 if (GetOptions().IsVerbose(OptionsBase::V_REGEX_AST))
                     regex->TopLevelPrint(cerr);
-                regular_expression_map->Add(macro_id->GetText(), regex);
+                // Return a new Macro object upon success.
+                return new Macro(macro_id, regex);
             }
             else
-                EmitError("parse error in regular expression (" + macro_regex_string->GetText() + ")", throwaway->GetFiLoc());
+                EmitError("parse error in regular expression (" + macro_regex_string->GetText() + ")", throwaway_filoc);
         } catch (string const &exception) {
-            EmitError(exception + " in regular expression (" + macro_regex_string->GetText() + ")", throwaway->GetFiLoc());
+            EmitError(exception + " in regular expression (" + macro_regex_string->GetText() + ")", throwaway_filoc);
         }
-        delete throwaway;
-        delete macro_id;
-        delete macro_regex_string;
-        return regular_expression_map;
+        // Return NULL upon error.
+        return NULL;
     }
 |
-    // empty reduction rule
-    %target.cpp {
-        // we save the regex macro map in a member var, so that the reduction
-        // rule handler for the state machine rules can use it.
-        m_regex_macro_map = new Regex::RegularExpressionMap();
-        return m_regex_macro_map;
-    }
-|
-    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway ID:macro_id %error at_least_one_newline
+    DIRECTIVE_MACRO:throwaway ID:macro_id %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in directive %macro " + macro_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
         delete macro_id;
-        return regular_expression_map;
+        // Return NULL upon error.
+        return NULL;
     }
 |
-    macro_directives:regular_expression_map DIRECTIVE_MACRO:throwaway %error at_least_one_newline
+    DIRECTIVE_MACRO:throwaway %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in directive %macro", throwaway->GetFiLoc());
         delete throwaway;
-        return regular_expression_map;
+        // Return NULL upon error.
+        return NULL;
     }
 ;
 
-/* ***************************************************************************
-/* start directive rule
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// start directive rule
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal start_with_state_machine_directive %type.cpp "StartWithStateMachineDirective *"
 :
-    DIRECTIVE_START_IN_STATE_MACHINE:throwaway ID:state_machine_id at_least_one_newline
+    DIRECTIVE_START_IN_STATE_MACHINE:throwaway ID:state_machine_id
     %target.cpp {
         delete throwaway;
         return new StartWithStateMachineDirective(state_machine_id);
     }
 |
-    DIRECTIVE_START_IN_STATE_MACHINE:throwaway %error at_least_one_newline
+    DIRECTIVE_START_IN_STATE_MACHINE:throwaway %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in directive %start_with_state_machine", throwaway->GetFiLoc());
         delete throwaway;
@@ -453,28 +527,46 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-/* ***************************************************************************
-/* state machine rules
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// state machine rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal state_machines %type.cpp "StateMachineMap *"
 :
-    state_machines:state_machine_map state_machine:state_machine
+    nonempty_state_machines:state_machine_map %end
     %target.cpp {
-        if (state_machine != NULL)
-            state_machine_map->Add(state_machine->m_state_machine_id->GetText(), state_machine);
+        assert(state_machine_map != NULL);
         return state_machine_map;
     }
 |
-    // empty reduction rule
+    %end
     %target.cpp {
         return new StateMachineMap();
     }
 ;
 
+%nonterminal nonempty_state_machines %type.cpp "StateMachineMap *"
+:
+    nonempty_state_machines:state_machine_map state_machine:state_machine
+    %target.cpp {
+        assert(state_machine_map != NULL);
+        if (state_machine != NULL)
+            state_machine_map->Add(state_machine->m_state_machine_id->GetText(), state_machine);
+        return state_machine_map;
+    }
+|
+    state_machine:state_machine
+    %target.cpp {
+        StateMachineMap *state_machine_map = new StateMachineMap();
+        if (state_machine != NULL)
+            state_machine_map->Add(state_machine->m_state_machine_id->GetText(), state_machine);
+        return state_machine_map;
+    }
+;
+
 %nonterminal state_machine %type.cpp "StateMachine *"
 :
-    DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' state_machine_rules:rule_list ';'
+    DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags_then_colon:mode_flags state_machine_rules_then_semicolon:rule_list
     %target.cpp {
         StateMachine *state_machine = new StateMachine(state_machine_id, rule_list, mode_flags->Value());
         delete throwaway;
@@ -482,59 +574,80 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return state_machine;
     }
 |
-    DIRECTIVE_STATE_MACHINE:throwaway ID:state_machine_id state_machine_mode_flags:mode_flags ':' %error ';'
-    %target.cpp {
-        EmitError("parse error in state machine rule list", throwaway->GetFiLoc());
-        StateMachine *state_machine = new StateMachine(state_machine_id, new RuleList(), mode_flags->Value());
-        delete throwaway;
-        delete mode_flags;
-        return state_machine;
-    }
-|
-    DIRECTIVE_STATE_MACHINE:throwaway %error ':' state_machine_rules:rule_list ';'
+    DIRECTIVE_STATE_MACHINE:throwaway %error[%end|':'] state_machine_mode_flags_then_colon:mode_flags state_machine_rules_then_semicolon:rule_list ';'
     %target.cpp {
         EmitError("parse error in state machine id", throwaway->GetFiLoc());
         delete throwaway;
+        delete mode_flags;
         delete rule_list;
         return NULL;
     }
 ;
 
+%nonterminal state_machine_mode_flags_then_colon %type.cpp "Ast::UnsignedInteger *"
+:
+    state_machine_mode_flags:mode_flags ':'
+    %target.cpp {
+        return mode_flags;
+    }
+|
+    %error[%end|':'] ':'
+    %target.cpp {
+        EmitError("parse error in state machine mode flags", m_scanner.GetFiLoc());
+        return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
+    }
+;
+
 %nonterminal state_machine_mode_flags %type.cpp "Ast::UnsignedInteger *"
 :
-    state_machine_mode_flags:mode_flags DIRECTIVE_CASE_INSENSITIVE:throwaway
+    state_machine_mode_flags:mode_flags state_machine_mode_flag:mode_flag
     %target.cpp {
-        if (mode_flags->Value() & StateMachine::MF_CASE_INSENSITIVE)
-            EmitWarning("duplicate %case_insensitive", throwaway->GetFiLoc());
-        mode_flags->SetValue(mode_flags->Value() | StateMachine::MF_CASE_INSENSITIVE);
-        delete throwaway;
+        if (mode_flags->Value() & mode_flags->Value())
+            EmitWarning("duplicate state machine mode flag", mode_flag->GetFiLoc());
+        mode_flags->SetValue(mode_flags->Value() | mode_flag->Value());
+        delete mode_flag;
         return mode_flags;
     }
 |
-    state_machine_mode_flags:mode_flags DIRECTIVE_UNGREEDY:throwaway
-    %target.cpp {
-        if (mode_flags->Value() & StateMachine::MF_UNGREEDY)
-            EmitWarning("duplicate %ungreedy", throwaway->GetFiLoc());
-        mode_flags->SetValue(mode_flags->Value() | StateMachine::MF_UNGREEDY);
-        delete throwaway;
-        return mode_flags;
-    }
-|
-    // empty reduction rule
+    %empty
     %target.cpp {
         return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
     }
 ;
 
-%nonterminal state_machine_rules %type.cpp "RuleList *"
+%nonterminal state_machine_mode_flag %type.cpp "Ast::UnsignedInteger *"
 :
-    rule_list:rule_list
+    DIRECTIVE_CASE_INSENSITIVE:throwaway
+    %target.cpp {
+        Ast::UnsignedInteger *mode_flag = new Ast::UnsignedInteger(StateMachine::MF_CASE_INSENSITIVE, throwaway->GetFiLoc());
+        delete throwaway;
+        return mode_flag;
+    }
+|
+    DIRECTIVE_UNGREEDY:throwaway
+    %target.cpp {
+        Ast::UnsignedInteger *mode_flag = new Ast::UnsignedInteger(StateMachine::MF_UNGREEDY, throwaway->GetFiLoc());
+        delete throwaway;
+        return mode_flag;
+    }
+|
+    %error[%end|DIRECTIVE_CASE_INSENSITIVE|DIRECTIVE_UNGREEDY|':']
+    %target.cpp {
+        EmitError("parse error in state machine mode flag", m_scanner.GetFiLoc());
+        return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
+    }
+;
+
+%nonterminal state_machine_rules_then_semicolon %type.cpp "RuleList *"
+:
+    rule_list:rule_list ';'
     %target.cpp {
         return rule_list;
     }
 |
-    // empty reduction rule
+    %error[%end|';'] ';'
     %target.cpp {
+        EmitError("parse error in state machine rule list", m_scanner.GetFiLoc());
         return new RuleList();
     }
 ;
@@ -565,8 +678,10 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         Regex::RegularExpression *regex = NULL;
         {
             Regex::Parser parser;
-            parser.ScannerDebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER));
-            parser.DebugSpew(GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER));
+            if (GetOptions().IsVerbose(OptionsBase::V_REGEX_SCANNER))
+                parser.SetScannerDebugSpewStream(&std::cerr);
+            if (GetOptions().IsVerbose(OptionsBase::V_REGEX_PARSER))
+                parser.SetDebugSpewStream(&std::cerr);
             istringstream in(regex_string->GetText());
             parser.OpenUsingStream(&in, regex_string->GetText(), false);
             try {
@@ -629,7 +744,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_handler_map;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         return new CommonLang::RuleHandlerMap();
     }
@@ -648,7 +763,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
-    DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
+    DIRECTIVE_TARGET:throwaway %error[%end|DUMB_CODE_BLOCK|STRICT_CODE_BLOCK] any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -657,7 +772,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway %error
+    DIRECTIVE_TARGET:throwaway %error[%end|'|'|';']
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
@@ -665,7 +780,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    %error any_type_of_code_block:code_block
+    %error[%end|DUMB_CODE_BLOCK|STRICT_CODE_BLOCK] any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
@@ -674,22 +789,15 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-/* ***************************************************************************
-/* misc rules
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// misc rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal any_type_of_code_block %type.cpp "Ast::CodeBlock *"
 :
     DUMB_CODE_BLOCK:dumb_code_block %target.cpp { return dumb_code_block; }
 |
     STRICT_CODE_BLOCK:strict_code_block %target.cpp { return strict_code_block; }
-;
-
-%nonterminal at_least_zero_newlines
-:
-    at_least_zero_newlines NEWLINE %target.cpp { return NULL; }
-|
-    /* empty reduction rule */ %target.cpp { return NULL; }
 ;
 
 %nonterminal at_least_one_newline

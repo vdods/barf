@@ -1,0 +1,1681 @@
+design notes for trison error handling via state machine:
+
+// ///////////////////////////////////////////////////////////////////////////
+// design notes for trison error handling via state machine:
+// ///////////////////////////////////////////////////////////////////////////
+
+-   trison should disallow a reduction rule from having two %error terminals in a row
+-   if return, reduce, or shift can't be done (including shifting a lookahead of ERROR_ pursuant
+    to some parser rules), then this is a parse error.
+    *   if
+        ERROR_ has just been shifted (can be inferred from the current state, i.e. the top of the state stack)
+        and
+        the first lookahead token is not END_ (END_ can never be absorbed by ERROR_),
+    *   then the first lookahead token should be thrown away; this can be thought of as the ERROR_ absorbing the lookahead.
+    *   otherwise if
+        the first lookahead token is ERROR_
+        then pop the stack (throwing away the top stack token); this can be thought of as the pre-existing error
+        panic pop sequence where the ERROR_ absorbs the stack tokens until it reaches a state which accepts ERROR_.
+    *   otherwise ERROR_ should be inserted into the front of the lookahead queue.
+-   this requires adding new parser actions, in addition to RETURN, REDUCE, SHIFT:
+    *   DISCARD_LOOKAHEAD  - discard the first lookahead (and throw away token) (but don't alter the parser state stack).
+    *   INSERT_LOOKAHEAD X - insert token X before the lookahead queue (maybe should be INSERT_ERROR_LOOKAHEAD, 
+                             since that's all that it'll ever be used for)
+    *   POP_STATE_STACK    - pop the top of the state stack (and throw away token)
+-   the above requires that:
+    *   if ERROR_ has just been shifted, then END_ should have a transition of
+        ~   POP_STATE_STACK
+    *   if ERROR_ has just been shifted, and there isn't a valid reduce rule, then the default action should be
+        ~   DISCARD_LOOKAHEAD
+        but does this screw up rules like `exp <- '(' %error`, where the %error should be able to suck up as many
+        tokens as it needs?  One clear way `exp <- '(' %error` would reduce is if it encountered END_, because
+        the error token couldn't absorb END_.  Having this rule read the rest of the file would make sense, because
+        it could be used to mean there's no matching ')'.  %error should mostly be used to look for a stop-gap
+        delimiter, such as ')', or '}', or ';', etc. in a rule like `exp <- '(' %error ')'`.  Perhaps the default
+        action of DISCARD_LOOKAHEAD could supercede any reduce rules, and a rule like `exp <- '(' %error` could
+        only be reduced by an explicit lookahead of END_.  Then a rule like `exp <- '(' %error` would be used
+        as a last resort, and should have the lowest priority.
+-   here's an idea: require that once END_ has been returned by the scanner, it's always returned by the scanner.
+    e.g. the input
+        "4+5"
+    would return the token sequence
+        INTEGER_LITERAL(4) '+' INTEGER_LITERAL(5) END_ END_ END_ END_ END_ ...
+    then disallow %error from being the last token in a rule; one would have to explicitly use %end after %error.
+    there would still need to be some restriction where ERROR_ can't absorb END_.
+-   NOTE: In the NPDA, it's not necessary to store the [DPDA] state [set] in the global stack, since the branches
+    already store this information.
+-   IDEA: Memoize the DPDA while running the NPDA, and even cache the memoization to disk so that it can be
+    loaded up again.  this would effectively turn the NPDA into a DPDA as it ran.  this should also be an option,
+    because the cache could potentially be quite large (certain operations are exponential in the worst case, but
+    those are likely for unrealistic grammars).
+
+TODO
+-   Prove theorem: it's only possible to have a REDUCE/DISCARD_LOOKAHEAD conflict in NPDA if ERROR_ was just shifted
+    and END_ is the lookahead token.
+    In this case, for simplicity, 
+
+IMPORTANT NOTE
+-   The conversion of NPDA to DPDA depends on the definition of a DPDA state.  In particular, a DPDA state could be
+    one of the following:
+    *   The set of the tops of the current branches' NPDA state stacks.  NOTE that this doesn't depend on any
+        "hidden" NPDA states, only the tops of the state stacks.
+    *   The set of the top portions of the current branches' NPDA state stacks, where the depth to take is specified.
+        NOTE that this DOES depend on "hidden" NPDA states, and is therefore a strictly more powerful definition.
+    Likely the depth-specified top portions of NPDA state stacks would allow a strictly larger class of grammars
+    be parsed by a DPDA.  For example, if a SHIFT/REDUCE conflict depends on later REDUCE/POP_STACK actions to
+    be resolved, as opposed to only depending on SHIFT actions.
+-   If it's decided to have DPDA states be defined in the more powerful way, then the number of REDUCE/POP_STACK
+    actions must be counted to determine what depth from the top of the current branch state stacks must be recorded.
+    Note that the depth can be different for different DPDA state definitions (e.g. if it's not necessary to
+    REDUCE multiple times to resolve a conflict).
+-   EVEN BETTER: A more refined observation is that there can be REDUCE/POP_STACK actions needed to resolve a conflict
+    as long as they don't depend on anything but the lookaheads and the top NPDA state(s).  For example,
+
+        ROOT (corresponding to DPDA state {a, b})
+            BRANCH with state stack (x, a)
+            BRANCH with state stack (b)
+
+
+        ROOT (corresponding to DPDA state {x, y})
+            REDUCE (x)
+                BRANCH with state stack (x) (blocked because further actions depend on states "deeper" than a)
+            SHIFT (b p)
+                REDUCE (b) (say consuming one token)
+                    SHIFT (b q)
+-   Other observation: In realistic settings, probably SHIFT/REDUCE conflicts only need to be handled at the
+    root of the parse tree.  A case in which SHIFT/REDUCE conflicts would need to be handled recursively is
+    if e.g. the "binary operator" in conflicting rules itself required a SHIFT/REDUCE conflict resolution.
+-   Note that some of these previous considerations mostly concern NPDA -> DPDA conversion.  A grammar may have
+    unbounded lookahead, in which case only NPDA can parse it, and probably I should implement "full"
+    SHIFT/REDUCE conflict resolution, not just one-level resolution.
+
+
+example grammar
+
+%prec.left ADD
+%prec.left MUL
+%prec.right POW
+
+%nonterminal expr
+:
+    INTEGER_LITERAL                   // rule 0
+|   expr '+' expr %prec ADD           // rule 1
+|   expr '*' expr %prec MUL           // rule 2
+|   expr '^' expr %prec POW           // rule 3
+|   '(' expr ')'                      // rule 4
+|   '(' %error ')'                    // rule 5
+|   '(' %error %end                   // rule 6
+|   %error ')'                        // rule 7
+|   %error %end                       // rule 8
+;
+
+state 0
+    START expr
+    rule 0: expr <- . INTEGER_LITERAL
+    rule 1: expr <- . expr '+' expr
+    rule 2: expr <- . expr '*' expr
+    rule 3: expr <- . expr '^' expr
+    rule 4: expr <- . '(' expr ')'
+    rule 5: expr <- . '(' %error ')'
+    rule 6: expr <- . '(' %error %end
+
+   *Default action  : INSERT_LOOKAHEAD ERROR_
+    INTEGER_LITERAL : SHIFT INTEGER_LITERAL then push state 1
+    '('             : SHIFT '(' then push state 2
+    expr            : SHIFT expr then push state 7
+    ERROR_          : POP_STATE_STACK
+
+state 1
+    rule 0: expr <- INTEGER_LITERAL .
+
+   *Default action  : REDUCE rule 0
+
+state 2
+    rule 0: expr <- . INTEGER_LITERAL
+    rule 1: expr <- . expr '+' expr
+    rule 2: expr <- . expr '*' expr
+    rule 3: expr <- . expr '^' expr
+    rule 4: expr <- . '(' expr ')'
+    rule 4: expr <- '(' . expr ')'
+    rule 5: expr <- . '(' %error ')'
+    rule 5: expr <- '(' . %error ')'
+    rule 6: expr <- . '(' %error
+    rule 6: expr <- '(' . %error
+
+   *Default action  : INSERT_LOOKAHEAD ERROR_
+    INTEGER_LITERAL : shift INTEGER_LITERAL then push state 1
+    ERROR_          : SHIFT ERROR_ then push state 3
+    expr            : SHIFT expr then push state 5
+
+state 3                               -- ERROR_ has just been shifted
+    rule 5: expr <- '(' %error . ')'
+    rule 6: expr <- '(' %error .
+
+   *Default action  : DISCARD_LOOKAHEAD
+    ')'             : SHIFT ')' then push state 4
+    END_            : REDUCE rule 6
+
+state 4
+    rule 5: expr <- '(' %error ')' .
+
+   *Default action  : REDUCE rule 5
+
+state 5
+    rule 1: expr <- expr . '+' expr
+    rule 2: expr <- expr . '*' expr
+    rule 3: expr <- expr . '^' expr
+    rule 4: expr <- '(' expr . ')'
+
+   *Default action  : INSERT_LOOKAHEAD ERROR_
+    '+'             : SHIFT '+' then push state 8
+    '*'             : SHIFT '*' then push state 9
+    '^'             : SHIFT '^' then push state 10
+    ')'             : SHIFT ')' then push state 6
+    ERROR_          : POP_STATE_STACK
+
+
+state 6
+    rule 4: expr <- '(' expr ')' .
+
+   *Default action  : REDUCE rule 4
+
+state 7
+    rule 1: expr <- expr . '+' expr
+    rule 2: expr <- expr . '*' expr
+    rule 3: expr <- expr . '^' expr
+
+   *Default action  : TODO
+    '+'             : SHIFT '+' then push state 8
+    '*'             : SHIFT '*' then push state 9
+    '^'             : SHIFT '^' then push state 10
+
+state 8
+    rule 0: expr <- . INTEGER_LITERAL
+    rule 1: expr <- . expr '+' expr
+    rule 1: expr <- expr '+' . expr
+    rule 2: expr <- . expr '*' expr
+    rule 3: expr <- . expr '^' expr
+    rule 4: expr <- . '(' expr ')'
+    rule 5: expr <- . '(' %error ')'
+    rule 6: expr <- . '(' %error
+
+
+action-generating logic; has to do with if there is %error before or after the cursor.
+
+if (ERROR_ has just been shifted) {                 // then we want to discard unusable lookahead tokens
+    if (can reduce) {                               // i.e. %error occurs last in some rule e.g. rule A <- i j k %error .
+        END_            : REDUCE rule A             // because %error can't absorb END_
+    } otherwise {
+        END_            : POP_STATE_STACK 2         // this may result in an empty stack, but we have to pop past the state on
+                                                    // the stack that accepts %error.
+    }
+    Default action      : DISCARD_LOOKAHEAD         // but %error can absorb anything besides END_
+} otherwise {
+    if (can reduce) {                               // i.e. %error does not occur last in any rule e.g. rule B <- p q %error r .
+        Default action  : REDUCE rule B             // there could be several rules that are reducable; resolve based on precedence.
+    } otherwise {
+        Default action  : INSERT_LOOKAHEAD ERROR_   // initiate error panic
+    }
+}
+
+The above nested if-statement could be refactored as
+
+if (can reduce) {
+    if (ERROR_ has just been shifted) {
+        END_            : REDUCE                    // the only way to reduce a rule ending with %error is by seeing END_.
+        default         : DISCARD_LOOKAHEAD         // throw away everything until END_
+        NOTE: maybe it should reduce by default, in case it's possible to use enclosing nonterminal's ending terminal to end %error.
+        for now, just do the END_ option, so that a nonterminal that ends with %error can only be reduced upon END_.
+    } otherwise {
+        default         : REDUCE                    // normal operation
+    }
+} otherwise {
+    if (ERROR_ has just been shifted) {
+        END_            : POP_STATE_STACK 2         // popping only once would cause an infinite loop because ERROR_ can't accept END_
+        default         : DISCARD_LOOKAHEAD         // throw away everything until a real token is shifted
+    } otherwise {
+        default         : INSERT_LOOKAHEAD ERROR_   // if we can't reduce, then the default action is to initiate error panic.
+    }
+}
+
+if (ERROR_ occurs as acceptable next token) {
+    ERROR_ : SHIFT ERROR_ then push state X
+} otherwise {
+    ERROR_ : POP_STATE_STACK 1
+}
+
+finally, add all the other normal shift rules, inluding ones that may generate actions for END_ lookahead.  note that
+consecutive %error tokens can't occur in a reduction rule.
+
+another example grammar
+
+%prec.left ADD
+
+%nonterminal statement
+:
+    expr ';'            // rule 0
+;
+
+%nonterminal expr
+:
+    INTEGER_LITERAL     // rule 1
+|   '(' expr ')'        // rule 2
+|   expr '+' expr       // rule 3
+|   '(' %error ')'      // rule 4
+|   '(' %error          // rule 5
+|   %error              // rule 6
+;
+
+state 0 (0,0 1,0 2,0 3,0 4,0 5,0 6,0)
+    START statement
+    rule 0,0 : statement <- . expr ';'
+    rule 1,0 : expr <- . INTEGER_LITERAL
+    rule 2,0 : expr <- . '(' expr ')'
+    rule 3,0 : expr <- . expr '+' expr
+    rule 4,0 : expr <- . '(' %error ')'
+    rule 5,0 : expr <- . '(' %error
+    rule 6,0 : expr <- . %error
+
+    ERROR_ has not just been shifted
+    ERROR_ could now be shifted
+
+    Default action  : INSERT_LOOKAHEAD ERROR_
+    ERROR_          : SHIFT ERROR_ then push state 1 (6,1)
+    INTEGER_LITERAL : SHIFT INTEGER_LITERAL then push state 2 (1,1)
+    '('             : SHIFT '(' then push state 3 (2,1 4,1 5,1)
+    expr            : SHIFT expr then push state 4 (0,1 3,1)
+
+state 1 (6,1)
+    rule 6,1 : expr <- %error .
+
+    ERROR_ has just been shifted
+    ERROR_ could not now be shifted
+
+    Default action  : DISCARD_LOOKAHEAD
+    END_            : REDUCE rule 6
+    // really want this to occur
+    ';'
+
+state 2 (1,1)
+
+state 3 (2,1 4,1 5,1)
+
+state 4 (0,1 3,1)
+
+
+-----------
+
+NPDA:
+
+rule 0,0 : statement <- . expr ';'
+rule 1,0 : expr <- . INTEGER_LITERAL
+rule 2,0 : expr <- . '(' expr ')'
+rule 3,0 : expr <- . expr '+' expr
+rule 4,0 : expr <- . '(' %error ')'
+rule 5,0 : expr <- . '(' %error
+rule 6,0 : expr <- . %error
+
+input is "-;a"
+
+(0,0)                                                                       . '-' ';' 'a' END_
+    INSERT_LOOKAHEAD ERROR_ -> (0,0)                                        . ERROR_ '-' ';' 'a' END_           *
+        SHIFT ERROR_ -> (0,0 6,1)                                           ERROR_ . '-' ';' 'a' END_
+            REDUCE rule 6 -> (0,0)                                          . expr '-' ';' 'a' END_
+                SHIFT expr -> (0,0 0,1)                                     expr . '-' ';' 'a' END_
+                    INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)                    expr . ERROR_ '-' ';' 'a' END_
+                        POP_STATE_STACK -> (0,0)                            . ERROR_ '-' ';' 'a' END_           inf. loop; identical to *; kill branch
+                SHIFT expr -> (0,0 3,1)                                     expr . '-' ';' 'a' END_
+                    INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)                    expr . ERROR '-' ';' 'a' END_
+                        POP_STATE_STACK -> (0,0)                            . ERROR '-' ';' 'a' END_            inf. loop; identical to *; kill branch
+            DISCARD_LOOKAHEAD '-' -> (0,0 6,1)                              ERROR_ . ';' 'a' END_
+                REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+                    SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+                        SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                    SHIFT expr -> (0,0 3,1)                                 expr . ';' 'a' END_
+                        INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)                expr . ERROR_ ';' 'a' END_
+                DISCARD_LOOKAHEAD ';' -> (0,0 6,1)                          ERROR_ . 'a' END_
+                    REDUCE rule 6 -> (0,0)                                  . expr 'a' END_
+                        SHIFT expr -> (0,0 0,1)                             expr . 'a' END_
+                            INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)            expr . ERROR_ 'a' END_
+                        SHIFT expr -> (0,0 3,1)                             expr . 'a' END_
+                            INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)            expr . ERROR_ 'a' END_
+                    DISCARD_LOOKAHEAD 'a' -> (0,0 6,1)                      ERROR_ . END_
+                        REDUCE rule 6 -> (0,0)                              . expr END_
+                            SHIFT expr -> (0,0 0,1)                         expr . END_
+                            SHIFT expr -> (0,0 3,1)                         expr . END_
+
+(0,0)                                                                       . '-' ';' 'a' END_
+    INSERT_LOOKAHEAD ERROR_ -> (0,0)                                        . ERROR_ '-' ';' 'a' END_
+        SHIFT ERROR_ -> (0,0 6,1)                                           ERROR_ . '-' ';' 'a' END_
+            DISCARD_LOOKAHEAD '-' -> (0,0 6,1)                              ERROR_ . ';' 'a' END_
+                REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+                    SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+                        SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                    SHIFT expr -> (0,0 3,1)                                 expr . ';' 'a' END_
+                        INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)                expr . ERROR_ ';' 'a' END_
+                DISCARD_LOOKAHEAD ';' -> (0,0 6,1)                          ERROR_ . 'a' END_
+                    REDUCE rule 6 -> (0,0)                                  . expr 'a' END_
+                        SHIFT expr -> (0,0 0,1)                             expr . 'a' END_
+                            INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)            expr . ERROR_ 'a' END_
+                        SHIFT expr -> (0,0 3,1)                             expr . 'a' END_
+                            INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)            expr . ERROR_ 'a' END_
+                    DISCARD_LOOKAHEAD 'a' -> (0,0 6,1)                      ERROR_ . END_
+                        REDUCE rule 6 -> (0,0)                              . expr END_
+                            SHIFT expr -> (0,0 0,1)                         expr . END_
+                            SHIFT expr -> (0,0 3,1)                         expr . END_
+
+execute and discard trunk
+    INSERT_LOOKAHEAD ERROR_
+    SHIFT ERROR_
+    DISCARD_LOOKAHEAD '-'
+
+(0,0 6,1)                                                       ERROR_ . ';' 'a' END_           *
+    REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+        SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+            SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                REDUCE rule 0 -> (0,0)                          . statement 'a' END_
+                    RETURN_LOOKAHEAD statement
+        SHIFT expr -> (0,0 3,1)                                 expr . ';' 'a' END_
+            INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)                expr . ERROR_ ';' 'a' END_
+                POP_STATE_STACK -> (0,0)                        . ERROR_ ';' 'a' END_
+                    SHIFT ERROR_ -> (0,0 6,1)                   ERROR_ . ';' 'a' END_           inf. loop; identical to *; kill branch
+    DISCARD_LOOKAHEAD ';' -> (0,0 6,1)                          ERROR_ . 'a' END_               **
+        REDUCE rule 6 -> (0,0)                                  . expr 'a' END_
+            SHIFT expr -> (0,0 0,1)                             expr . 'a' END_
+                INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)            expr . ERROR_ 'a' END_          <- it looked at 'a' at this point, thereby becoming LR(2) (though if the outcome was the same for all values of the second lookahead, then it's really LR(1))
+                    POP_STATE_STACK -> (0,0)                    . ERROR_ 'a' END_
+                        SHIFT ERROR_ -> (0,0 6,1)               ERROR_ . 'a' END_               inf. loop; identical to **; kill branch
+            SHIFT expr -> (0,0 3,1)                             expr . 'a' END_
+                INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)            expr . ERROR_ 'a' END_
+                    POP_STATE_STACK -> (0,0)                    . ERROR_ 'a' END_
+                        SHIFT ERROR_ -> (0,0 6,1)               ERROR_ . 'a' END_               inf. loop; identical to **; kill branch
+        DISCARD_LOOKAHEAD 'a' -> (0,0 6,1)                      ERROR_ . END_
+            REDUCE rule 6 -> (0,0)                              . expr END_
+                SHIFT expr -> (0,0 0,1)                         expr . END_
+                SHIFT expr -> (0,0 3,1)                         expr . END_
+
+(0,0 6,1)                                                       ERROR_ . ';' 'a' END_
+    REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+        SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+            SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                REDUCE rule 0 -> (0,0)                          . statement 'a' END_
+                    RETURN_LOOKAHEAD statement
+    DISCARD_LOOKAHEAD ';' -> (0,0 6,1)                          ERROR_ . 'a' END_
+        DISCARD_LOOKAHEAD 'a' -> (0,0 6,1)                      ERROR_ . END_                   *
+            REDUCE rule 6 -> (0,0)                              . expr END_
+                SHIFT expr -> (0,0 0,1)                         expr . END_
+                    INSERT_LOOKAHEAD ERROR_ -> (0,0 0,1)        expr . ERROR_ END_
+                        POP_STATE_STACK -> (0,0)                . ERROR_ END_
+                            SHIFT ERROR_ -> (0,0 6,1)           ERROR_ . END_                   inf. loop; identical to *; kill branch
+                SHIFT expr -> (0,0 3,1)                         expr . END_
+                    INSERT_LOOKAHEAD ERROR_ -> (0,0 3,1)        expr . ERROR_ END_
+                        POP_STATE_STACK -> (0,0)                . ERROR_ END_
+                            SHIFT ERROR_ -> (0,0 6,1)           ERROR_ . END_                   inf. loop; identical to *; kill branch
+
+(0,0 6,1)                                                       ERROR_ . ';' 'a' END_
+    REDUCE rule 6 -> (0,0)                                      . expr ';' 'a' END_
+        SHIFT expr -> (0,0 0,1)                                 expr . ';' 'a' END_
+            SHIFT ';' -> (0,0 0,1 0,2)                          expr ';' . 'a' END_
+                REDUCE rule 0 -> (0,0)                          . statement 'a' END_
+                    RETURN_LOOKAHEAD statement
+
+execute and discard trunk
+    REDUCE rule 6
+    SHIFT expr
+    SHIFT ';'
+    REDUCE rule 0
+    RETURN_LOOKAHEAD statement
+
+complete log of actions:
+    INSERT_LOOKAHEAD ERROR_
+    SHIFT ERROR_
+    DISCARD_LOOKAHEAD '-'
+    REDUCE rule 6 : expr <- %error
+    SHIFT expr
+    SHIFT ';'
+    REDUCE rule 0 : statement <- expr ';'
+    RETURN_LOOKAHEAD statement
+
+
+----------
+
+%prec.left ADD
+%prec.left MUL
+
+start.e (has epsilon transitions to each e reduction rule)
+rule 0 : e <- I
+rule 1 : e <- e + e %prec ADD
+rule 2 : e <- e * e %prec MUL
+rule 3 : e <- ( e )
+rule 4 : e <- ( %error )
+
+NPDA state machine:
+
+parse.e
+    epsilon : go to state start.e
+    e       : shift (e), then push state return.e
+
+return.e
+    default : return top of stack
+
+start.e
+    epsilon : go to state 0,0
+    epsilon : go to state 1,0
+    epsilon : go to state 2,0
+    epsilon : go to state 3,0
+    epsilon : go to state 4,0
+
+0,0
+    I       : shift (I), then push state 0,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+0,1
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 0
+
+1,0
+    epsilon : go to state start.e
+    e       : shift (e), then push state 1,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+1,1
+    +       : shift (+), then push state 1,2
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+1,2
+    epsilon : go to state start.e
+    e       : shift (e), then push state 1,3
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+1,3
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 1
+
+2,0
+    epsilon : go to state start.e
+    e       : shift (e), then push state 2,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+2,1
+    *       : shift (+), then push state 2,2
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+2,2
+    epsilon : go to state start.e
+    e       : shift (e), then push state 2,3
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+2,3
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 2
+
+3,0
+    (       : shift ('('), then push state 3,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+3,1
+    epsilon : go to state start.e
+    e       : shift (e), then push state 3,2
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+3,2
+    )       : shift (')'), then push state 3,3
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+3,3
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 3
+
+4,0
+    (       : shift ('('), then push state 4,1
+    ERROR_  : pop state stack
+    default : insert lookahead ERROR_
+
+4,1
+    ERROR_  : shift (ERROR_), then push state 4,2
+    default : insert lookahead ERROR_
+
+4,2
+    )       : shift (')'), then push state 4,3
+    ERROR_  : pop state stack
+    default : throw away lookahead
+
+4,3
+    ERROR_  : pop state stack               <-- not sure if this is necessary; it may be unreachable if the lookahead is ERROR_
+    default : reduce rule 4
+
+
+test
+
+input is "e+e*e"
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        (start.e 1,1) (start.e 2,1)                                                 e . + e * e
+
+At this point, the trunk is SHIFT, so assign:
+    in state epsilon_closure_of(start.e), lookahead sequence "e" results in SHIFT, then PUSH epsilon_closure_of((1,1) (2,1))
+prune the trunk and continue
+
+TODO: Figure out if pruning the trunk and continuing is reasonable, in case error handling needs to happen.  Probably any time a pop
+is encountered in the trunk, it should stop there; the resulting state is not explicitly known, but that's ok.
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            (start.e 1,1 1,2)                                                       e + . e * e
+        INSERT_LOOKAHEAD ERROR_                                                     e . ERROR_ + e * e
+            (start.e 2,1)                                                           e . ERROR_ + e * e
+
+At this point, there is a conflict between SHIFT (+) and INSERT_LOOKAHEAD ERROR_, which should ideally resolve in favor of SHIFT.  Probably should make the action INSERT_LOOKAHEAD_ERROR_, and make it have the lowest priority, only surviving if there are no competing actions (such as SHIFT).
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                (start.e 1,1 1,2 1,1)                                               e + e . * e
+                (start.e 1,1 1,2 1,3)                                               e + e . * e
+                (start.e 1,1 1,2 2,1)                                               e + e . * e
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                INSERT_LOOKAHEAD_ERROR_                                             e + e . ERROR_ * e
+                    (start.e 1,1 1,2 1,1)                                           e + e . ERROR_ * e
+                REDUCE rule 3                                                       . e * e
+                    (start.e)                                                       . e * e
+                SHIFT (*)                                                           e + e * . e
+                    (start.e 1,1 1,2 2,1 2,2)                                       e + e * . e
+
+At this point, INSERT_LOOKAHEAD_ERROR_ dies because it's automatically outcompeted by any other action, leaving a shift/reduce conflict.
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                REDUCE rule 3                                                       . e * e
+                    (start.e)                                                       . e * e
+                SHIFT (*)                                                           e + e * . e
+                    (start.e 1,1 1,2 2,1 2,2)                                       e + e * . e
+
+At this point, the shift/reduce conflict is resolved by precedence in favor of SHIFT.
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                SHIFT (*)                                                           e + e * . e
+                    (start.e 1,1 1,2 2,1 2,2)                                       e + e * . e
+
+(start.e)                                                                           . e + e * e
+    SHIFT (e)                                                                       e . + e * e
+        SHIFT (+)                                                                   e + . e * e
+            SHIFT (e)                                                               e + e . * e
+                SHIFT (*)                                                           e + e * . e
+                    SHIFT (e)                                                       e + e * e .
+                        REDUCE rule 2                                               e + . e
+                            SHIFT (e)                                               e + e .
+                                REDUCE rule 1                                       . e
+                                    (start.e)                                       . e
+
+If the starting state was parse.e (as was added later), then the action now would be RETURN_LOOKAHEAD.
+
+
+
+Actions:
+
+SHIFT (then push state X)
+REDUCE (rule Y)
+DISCARD_LOOKAHEAD           -- maybe should have precedence lower than all shift, but equal to all reduce (though this defies a linear order).
+                               on the other hand, having DISCARD_LOOKAHEAD be higher than all reduce would be simple, and implement the
+                               situation where the input "-;" produces a DISCARD_LOOKAHEAD/REDUCE conflict that doesn't result in the
+                               error panic in expression ending by the statement's ';' token.  this is probably simpler.  but because
+                               it's possible to have a SHIFT have lower precedence than REDUCE, this would violate the DISCARD_LOOKAHEAD
+                               having precedence lower than all SHIFT.
+POP_STATE_STACK (Z times)   -- this only happens when ERROR_ is the lookahead and there's no rule to accept ERROR_
+RETURN_TOP_OF_STACK         -- must have low precedence, but higher than INSERT_LOOKAHEAD_ERROR
+INSERT_LOOKAHEAD_ERROR      -- must have low precedence, probably lowest of all
+
+Idea: Each class doesn't need to have a uniform relative precedence (in fact, shift and reduce are a counterexample),
+but rather a conflict can be described as having a graph which doesn't have a maximal element.  For example, having a cycle
+    SHIFT <- DISCARD_LOOKAHEAD <-> REDUCE <- SHIFT
+Conflict resolution would then be deleting arrows in the graph such that there becomes a unique maximal element.
+
+-----------
+
+Another try with a different formatting scheme, where ^ indicates lookahead knowledge cursor
+
+input is "e+e*e"
+
+ROOT -> (parse.e)                                                           . ^ e + e * e
+    SHIFT (e) -> (parse.e return.e) (parse.e 1,1) (parse.e 2,1)             e . ^ + e * e
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (return.e) (1,1) (2,1)                                              e . ^ + e * e
+    RETURN_TOP_OF_STACK -> (return.e)                                       e . ^ + e * e
+    SHIFT (+) -> (1,1 1,2)                                                  e + . ^ e * e
+    INSERT_LOOKAHEAD_ERROR -> (2,1 2,2)                                     e . ^ ERROR_ + e * e
+
+At this point, INSERT_LOOKAHEAD_ERROR should probably lose to SHIFT and RETURN_TOP_OF_STACK.
+RETURN_TOP_OF_STACK should lose to SHIFT, since RETURN_TOP_OF_STACK could be considered a REDUCE action in a way, which
+should have low priority.
+
+ROOT -> (return.e) (1,1) (2,1)                                              e . ^ + e * e
+    SHIFT (+) -> (1,1 1,2)                                                  e + . ^ e * e
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (1,2)                                                               e + . ^ e * e
+    SHIFT (e) -> (1,2 1,3) (1,2 1,1) (1,2 2,1)                              e + e . ^ * e
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (1,3) (1,1) (2,1)                                                   e + e . ^ * e
+    REDUCE rule 1 -> (x)                                                    . e ^ * e
+    SHIFT (*) -> (2,1 2,2)                                                  e + e * . ^ e
+
+Because rule 2 has higher precedence than rule 1, the REDUCE loses.
+
+ROOT -> (1,3) (1,1) (2,1)                                                   e + e . ^ * e
+    SHIFT (*) -> (2,1 2,2)                                                  e + e * . ^ e
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (2,2)                                                               e + e * . ^ e
+    SHIFT (e) -> (2,2 2,3)                                                  e + e * e . ^
+
+Prune the trunk -- the action is SHIFT -- start again
+
+ROOT -> (2,3)                                                               e + e * e . ^
+    REDUCE rule 2 -> (x)                                                    e + . e ^
+
+2018.07.06 --------------------------------------------------------------------
+
+There are certain cases where considering a REDUCE branch to be "blocked" is preventing
+the parser from finding the correct parse.  An example:
+
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): ---------- ITERATION 39 --------------
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Realized state stack (bottom to top) is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 163 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 167 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 26 30 33 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 37 54 60 64 68 72 76 80 84 88 92 96 100 104 108 112 122 131 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Max realized lookahead count (so far) is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     1
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Has-encountered-error-state (so far) is :
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     false
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Realized stack tokens then realized lookahead queue is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     function_definition_type_expression '{' expression . '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): ROOT
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     REDUCE rule 46; statement <- expression
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (    blocked) rule 57: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     SHIFT
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (non-blocked) rule 27: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (non-blocked) rule 28: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (non-blocked) rule 29: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): HPS queue:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (    blocked) rule 57: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (non-blocked) rule 27: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (non-blocked) rule 28: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (non-blocked) rule 29: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression '(' .
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Parse stack tree does not have trunk; continuing parse.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [DEFAULT_, DEFAULT_], SHIFT precedence level range: [DEFAULT_, DEFAULT_]
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         Case 3; REDUCE == SHIFT; rule 46 associativity index: 0
+pruning left-associative SHIFT and continuing.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): ---------- ITERATION 40 --------------
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Realized state stack (bottom to top) is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 163 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 167 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 26 30 33 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     ( 37 54 60 64 68 72 76 80 84 88 92 96 100 104 108 112 122 131 )
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Max realized lookahead count (so far) is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     1
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Has-encountered-error-state (so far) is :
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     false
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Realized stack tokens then realized lookahead queue is:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     function_definition_type_expression '{' expression . '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): ROOT
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     REDUCE rule 46; statement <- expression
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):         HPS (    blocked) rule 57: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): HPS queue:
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     HPS (    blocked) rule 57: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Parse stack tree has trunk; executing trunk actions.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     Executing trunk action REDUCE rule 46.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">): Executing reduction rule 46
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):     Destroying and recreating parse tree based on top element of realized stack.
+Parser (<string-input "(n:Integer64)->Boolean { f(x)\ng(y) }">):
+
+In this case, it prefers to REDUCE the expression to a statement within the statement list, instead of following the REDUCE branch,
+consuming the available lookaheads (and no more) and finding that there is no correct parse.  So probably the concept of "blocked"
+branch should be changed into one where it's only blocked if it has run out of known lookaheads to parse.  All branches perhaps
+should walk in lockstep regarding the number of lookaheads they've processed.  In this case, it would look something like
+
+Iteration N ---------------
+
+ROOT
+    REDUCE: statement <- expression
+        HPS: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement '('
+    SHIFT: '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
+
+Iteration N+1 -------------
+
+ROOT
+    REDUCE: statement <- expression
+        SHIFT: statement
+            HPS: statement_list <- statement .     (26); statement . '('
+    SHIFT '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
+
+Iteration N+2 -------------
+
+ROOT
+    REDUCE: statement <- expression
+        SHIFT: statement
+            REDUCE: statement_list <- statement
+                HPS: bracketed_statement_list <- '{' . statement_list '}'     (26); . statement_list '('
+    SHIFT '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
+
+Iteration N+3 -------------
+
+ROOT
+    REDUCE: statement <- expression
+        SHIFT: statement
+            REDUCE: statement_list <- statement
+                SHIFT: statement_list
+                    HPS: bracketed_statement_list <- '{' statement_list . '}'     (26); statement_list . '('   <-- no matching lookahead; branch gets killed
+    SHIFT '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
+
+Iteration N+3 -------------
+
+ROOT
+    SHIFT '('
+        HPS: parenthesized_parameter_list <- '(' . nonempty_parameter_list ')'     (26 131 137); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ')'     (26 131 155); expression '(' .
+        HPS: parenthesized_parameter_list <- '(' . ERROR_ ')'     (26 131 158); expression
+
+execute SHIFT '('
+
+However, this violates the principle that the real parse action taken should only depend on the top of the NPDA state stack(s).
+For example, in a POP_STACK or REDUCE, the NPDA state stack for that branch is popped, and then the action depends on "hidden"
+states -- states below the top of the NPDA state stack(s).  The set of the NPDA states on top of each stack is what defines
+a DPDA state.  Though this is not the only possible definition, it could be defined to include some substack of each stack
+which includes the top element.
+
+2018.07.12 ----------------------------
+
+-   It probably makes sense to add a %lookahead[...] directive for use especially (or only?)
+    as the last thing in a reduction rule.  This would probably make it easier to design parsers
+    that avoid shift/reduce conflicts, and would allow more grammars to be viable (e.g. grammars
+    that have empty reduction rules in various things).  In the above example, the problem could
+    probably be resolved if there was a %lookahead['}'|STATEMENT_DELIMITER|%end] or something
+    like that.
+-   Perhaps other avenues to explore are the following.
+    1.  Given a branched parse (say with the SHIFT/REDUCE conflict described above), all branches
+        should continue at least until they exhaust all of the number of lookaheads that the
+        "furthest ahead" branch (in the sense that it has looked at the most lookaheads) has looked
+        at.  In the above example, the SHIFT branch(es) have looked at 1 lookahead, so the REDUCE
+        branch should be allowed to continue until it has exhausted the use of 1 lookahead.
+
+        Otherwise, the parser can't truly claim to have used the lookahead token(s) fully.  It
+        should derive the maximal information out of each new token.
+
+        NOTE: If this is done, then because REDUCE actions are no longer blocked, it follows that
+        the DPDA states will actually be sets of sub-stacks of the NPDA states.  Here, "sub-stack"
+        means a contiguous subsequence of stack elements which includes the top element.  While
+        this is not inherently problematic, it does complicate the model for what a DPDA state is
+        (it currently/used to be the set of NPDA states comprising the top of all the branches'
+        NPDA state stacks).
+
+    2.  Pre-specify the number of lookaheads allowed before a conflict is resolved or an error
+        is produced.  This idea would need to be fleshed out more to be fully well-defined.
+
+2018.07.14 ----------------------------
+
+-   Performed an experiment to explore the feasibility of option 1 from above, and it did in fact
+    solve the problem.  Now need to implement the step-in-time of all parallel HPS branches, so
+    that SHIFT-going branches don't get ahead of REDUCE-going branches in terms of consumed lookaheads.
+
+2018.07.17 ----------------------------
+
+-   Need to figure out if it's sufficient to store only the top-of-stack elements from each HPS in
+    m_npda_state_set, or if more of the stack is necessary.  Probably it is sufficient, because the
+    deeper stack elements are stored in the m_npda_state_set of m_npda_.m_realized_stack_.
+-   Probably should do as much processing as possible with 0 lookaheads right after adding a REDUCE
+    branch.  Or maybe any branch type.  This falls under the principle of having the parser use
+    each piece of information maximally before requesting more information.
+
+    Implementation notes for processing HPSes in lock-step:
+    -   Should run all branches maximally with 0 lookaheads, then 1 lookahead, then 2 lookaheads,
+        etc.  The termination condition for this loop is any of the following:
+        -   The parse tree has a trunk (which can then be executed)
+        -   The max number of lookaheads has been reached
+    -   Different possibilities for structuring the iterations:
+        -   In each iteration, run each branch maximally for the current number of lookaheads,
+            which increases by at most 1 per iteration.  This is depth-first, which probably
+            means it's easier to implement.
+        -   In each iteration, run each branch for 0 or 1 action(s) if the current number of
+            lookaheads hasn't been exceeded.  This is breadth-first, which probably means it's
+            harder to implement.  This is probably clearer from a debug-spew perspective,
+            though might not be the optimal choice for the implementation itself.
+    -   If there's a specified bound on the lookaheads, then the conflict resolutions could in
+        theory be deferred until the max lookaheads are reached, at which point there may be more
+        information and the conflict could potentially resolve itself.  If there's no bound on
+        the lookaheads, it's not clear that conflict resolution is necessarily always possible
+        without enforcing the conflict resolution via the standard rules (i.e. as implemented in
+        existing versions of trison).  Perhaps this just depends on the grammar.
+-   Idea for a different implementation of NPDA:
+    -   Define a general framework for nondeterministic algorithm which must eventually choose
+        one of possibly many options at each step.  The algorithm should be completely recursive,
+        instead of how the current NPDA implementation is with a "realized" portion and a
+        "hypothetical" portion.  Each recursion is hypothetical with respect to its source.
+        Thus all the conflict resolution can happen within each recursion without any additional
+        or special logic.
+    -   For each choice, define a precedence ordering in order to resolve branches.
+    -   Also define how long branches should be allowed to proceed without resolving conflicts.
+        With such a limit, each recursion would reduce that limit by one.
+    -   A SortedTypeIndex-like property should be used to prevent exploring every single branch
+        at every stage, but rather have a strict precedence of branches to try first until
+        they're ruled out, then proceed to the next precedence, etc.  Otherwise the ubiquitous
+        error handling transitions will be explored every single time and cause the algorithm
+        to always run in exponential time.
+    -   Should a nested hypothetical action be allowed to be an error, even though the real
+        action choice is not an error?  Or should the SortedTypeIndex-like ordering apply to
+        the entire recursion?  Probably it should apply to the whole recursion.
+    -   Random notes
+
+        There should be a global lookahead queue.
+
+        The algorithm will be a tree of what will be denoted as RecursionParserState nodes,
+        abbreviated as RPS.
+
+        RPS must be
+        -   Set of NPDA-state-stacks which represent all valid trajectories leading up to this state.
+            And actually, each NPDA-state-stack should probably be represented as the following:
+            -   Head of this NPDA-state-stack.  This is needed to know which transitions are possible.
+            -   Pointer to body of this NPDA-state-stack (which is necessarily owned by the parent RPS node).
+                This is needed to process REDUCE actions.
+            -   Pointer to the parent RPS node (though this only needs to be stored by the RPS node, not
+                each NPDA-state-stack.  This is needed to enable POP_STACK to function, since once the
+                stack is popped, it has to re-collect the previous RPS, essentially restoring everything
+                it forgot since then by taking a specific trajectory.  A POP_STACK action would continue
+                by essentially making a copy of the parent RPS (OR, is a copy even necessary?  Just have
+                it point to the parent) -- interestingly, this would make the copy's parent node the parent
+                of the original that was copied, and not the node that has a POP_STACK in its actions map.
+                In this way, there are 2 tree structures that are interacting.
+        -   Token associated with the head of the NPDA-state-stacks (it should be the same token if there
+            are multiple RPS nodes per action).
+        -   Local lookahead queue (that goes before the global lookahead queue) for this node.
+            QUESTION: Is it possible to split this data structure up as the RPS does with other stuff?
+        -   Cursor into the global lookahead queue representing the next token for this node.
+        -   Map from unique actions to the RPS node that has carried out that action.
+
+        RPS algorithm must be, given a particular RPS node
+        -   Parse :
+                (max_lookaheads_to_process:uint, max_sorted_type_index:SortedTypeIndex) ->
+                (success:bool, TrunkActionList, ResultingState:RPS)
+            Maybe return some sort of code instead of a "success" bool, where the code indicates
+            possibilities like "no resolution", "parse has unique resolution", "general parse error",
+            "internal error", "parser returned", etc.  Maybe return lowest successful SortedTypeIndex?
+            Perhaps also have a no-return version of this.
+
+            The parse algorithm will have all branches process all allowed lookaheads, allowing only
+            actions of the given SortedTypeIndex.  If it succeeded (the condition for which has yet
+            to be defined, but is vaguely defined as "some valid action resulted"), then it returns
+            success, the list of trunk actions (the sequence of unique descendant actions), and the
+            RPS that results after those actions.
+
+            The parse algorithm is defined recursively:
+            -   Base case is where max_lookaheads_to_process is 0, in which case it computes all
+                actions which can be accomplished without consuming any of the global lookahead
+                queue (though any local queue it has is totally fair game to consume).
+            -   Recursive case calls Parse(max_lookaheads_to_process-1, max_sorted_type_index).
+                If there are any conflicts and max_lookaheads_to_process is equal to the pre-specified
+                lookahead bound, then it performs conflict resolution.
+
+                Or actually the sequence of calls should be
+                Parse(n, 0) for 0 <= n <= max_allowable_lookahead_count
+                Parse(max_allowable_lookahead_count, k) for 0 <= k <= max_sorted_type_index
+
+            Processing more lookaheads should happen before processing a higher SortedTypeIndex,
+            since using up allowable lookaheads is preferable to triggering an error.
+
+            Probably there should be some stored values for the highest max_lookaheads_to_process
+            and max_sorted_type_index that have been processed by this RPS node.
+
+-   If REDUCE actions are to be non-blocking, then it follows that the stack data model, where
+    there's a "realized" part and a branch-specific "hypothetical" part of the stack has to be
+    changed, and in particular, each branch has to have a cursor for where its branch-specific
+    hypothetical stack starts, because a REDUCE action can pop its whole branch-specific stack
+    and further, so it has to be able to dig down into the realized stack.  NOTE: This observation
+    might actually just be due to a bug in the "destroy_and_recreate_parse_tree" functionality.
+    The "destroy_and_recreate_parse_tree" functionality loses some information regarding the
+    earlier part of the stack.  The bug occurs when the HPS-specific stack is empty, even though
+    it should contain at least part of the realized stack.
+-   There is a bug in the REDUCE/REDUCE conflict resolution in NPDA target; if there are two
+    HPSes (which in particular have different state stacks) that can both produce a
+    "REDUCE rule N" action for the same rule N, then that shouldn't cause a REDUCE/REDUCE
+    conflict, but rather the resulting HPSes should both appear under the "REDUCE rule N"
+    branch action.
+-   It looks like the current formulation of the realized state stack (a stack of sets of
+    NPDA states) can only be valid if it's assumed that the HPSes never drop any information
+    e.g. through destroy_and_recreate_parse_tree, because there's not enough information
+    present in the current formulation of the realized state stack to correctly recreate
+    the parse tree.
+-   The realized state stack should really be a stack of sets of NPDA-state-stacks, thereby
+    capturing each full possible path encountered in the past.  For example:
+
+    For input "(foo+)", where "expression <- '(' %error ')'" is a rule,
+
+    Iteration 0:
+        {(38)}                                  <-- Bottom of stack, which remembers the overall starting state
+
+    SHIFT '('
+
+    Iteration 1:
+        {(38)}                                  <-- Bottom of stack, which remembers the overall starting state
+        {(38 42) (38 46) (38 172) (38 211)}     <-- Remembers the overall state after one action
+
+    SHIFT IDENTIFIER
+
+    Iteration 2:
+        {(38)}                                  <-- Bottom of stack
+        {(38 42) (38 46) (38 172) (38 211)}
+        {(38 42 50) (38 172 178)}               <-- Remembers the overall state after two actions
+
+    REDUCE expression <- IDENTIFIER
+
+    Iteration 3:
+        {(38)}                                  <-- Bottom of stack
+        {(38 42) (38 46) (38 172) (38 211)}     <-- This is the following rules:
+            state 42 : rule 2: expression <- '(' . expression ')'
+            state 46 : rule 3: expression <- '(' . ERROR_ ')'
+            state 172: rule 34: function_definition_type_expression <- '(' . declaration_expression ')' MAPS_TO type_expression
+            state 211: rule 35: function_definition_type_expression <- '(' . ERROR_ ')' MAPS_TO type_expression
+
+    Could also probably accomplish this by leaving the HPSes in the parse tree instead
+    of purging them after transitions.  This way, if REDUCE or POP_STACK happens, there's
+    no need to destroy and recreate the parse tree, but rather to use the HPSes that were
+    at the appropriate parse tree node.  These "left-behind" HPSes would not be kept in the
+    current HPS queue.  As the parse tree trunk actions are executed, the "left-behind" HPSes
+    would need to be put in the "realized state stack", whose form needing to change is the
+    motivation behind this modification.
+
+2018.09.01 ----------------------------
+
+-   In several different possible NPDA implementations, the following data structure would be
+    useful:  A reference-counted linked-list-stored state stack.  This is because of the branching
+    structure of the parse.  Currently, if there are HPSes with NPDA state stacks
+
+        bottom to top
+
+        (38 42)
+        (38 46)
+        (38 172)
+        (38 211)
+
+    then there can be realized state stack
+
+        bottom (38)
+        top    (42 46 172 211)
+
+    where in the second, the commonality is collapsed together, but this loses some
+    structure that's necessary for recovering from errors.
+
+    Instead, use a data structure that looks like
+
+        struct NpdaState {
+            NpdaStateIndex state;
+            std::shared_ptr<NpdaState> parent;
+        }
+
+    and then each NpdaState is the head of its own stack, and way less copying of state stacks
+    has to be done.  Then the realized state stack becomes a queue of "realized HPSes" that prints
+    out exactly as the first thing that had 4 lines of 2 state indices each.
+
+    Storing the whole HPS state stacks instead of the collapsed one, while allowing for a
+    more complicated set of possible parses (depending on not just the set of the tops of the
+    HPS state stacks), it would allow for a correct "destroy and recreate parse tree" step after
+    actions that pop the realized state stack.
+
+-   TODO: Need to test some grammars having lookahead requirement greater than 1.
+-   TODO: Verify that the parser can advance itself without consuming lookaheads when no lookaheads
+    are actually necessary (probably should look up some LALR(0) grammars).
+
+2018.09.06 ----------------------------
+
+-   It looks like it makes sense to made separate, encapsulated RealizedState and
+    HypotheticalState (not to be confused with HPS which is really a "hypothetical branch")
+    classes in order to simplify the implementation of the trison NPDA target.
+
+    the HypotheticalState depends on the RealizedState in that it has a cursor into
+    the realized lookahead queue, and if the ref-counted pointer based stack implementation is
+    used, then it would have pointers into the state stacks of RealizedState.
+
+    RealizedState
+    -   Branch set (each branch is a stack of NPDA states, and all stacks have the same size).
+        Perhaps though this could still be a queue, and use logic to guarantee no duplicates.
+    -   New branch set (maybe -- to lessen memory allocation)
+    -   Token stack (this stack has the same size as all the branch stacks)
+    -   Thus there is a well defined "stack size" for the RealizedState
+    -   Lookahead [token] queue
+    -   Max realized lookahead queue size (tracks the bound on the lookahead for the LALR(k) quantification)
+    -   Has encountered error state (boolean)
+
+    HypotheticalState
+    -   Parse tree (a pointer to the root node)
+    -   HPS queue
+    -   New HPS queue (for use in storing new HPSes and purging old ones, and to lessen memory allocation)
+
+    Essentially the parse proceeds by building the HypotheticalState's parse tree, and once it has
+    a "trunk action", that trunk action is executed by the RealizedState.  This is looped until the
+    parse ends for whatever reason.
+
+    In an algorithm that produces a DPDA, a DPDA state would correspond to one of the following.
+    1)  The set of top states in RealizedState's branch set (each branch being a state stack)
+    2)  A set of substacks of RealizedState's branch set (each branch being a state stack, and a substack
+        sharing the top element with its superior stack), where the particular substack is decided based
+        on which elements of the stack were used in making the parse decision.
+    Almost certainly 2 comprises a larger set of grammars than 1, but 1 would be easier to generate
+    DPDAs for.
+
+    The ref-counted pointer based stack (equivalent to singly-linked list) could also be used for
+    the lookahead [token] queues, though this would potentially make the lookahead count logic harder,
+    since there's no constant-time way to compute the size of a linked list without caching it.
+
+-   Implemented a prototype for SharedLinkedListElement in cppplayground.
+
+2019.02.16 ----------------------------
+
+-   Note that RealizedState is all state associated with real actions taken.
+-   Note that HypotheticalState is all state that is not RealizedState (it's the collection
+    of all branches etc).
+-   TODO: Should probably rename ParseStackTreeNode_ to something else like BranchNode, and rename
+    HPS (Hypothetical Parser State) to something like HYPOTHETICAL_STATE_LEAF_NODE.
+-   Design notes for refactor, specifically the RealizedState and HypotheticalState
+    abstractions.
+    -   TODO: Consider making a Grammar_ subclass of the parser class, which would hold all the
+        abstract grammatical data and would have the epsilon closure functions.
+
+        FOR NOW, just make the parser class a friend of RealizedState_, and allow it to use the
+        ms_rule_table_, etc members, as well as the Scan_ action.
+
+    -   TODO: Use the DebugSpewStream method of Parser in order to print debug spew messages
+        from other stuff, because there are certain methods/pieces of code in Parser which
+        really belong in RealizedState_ or HypotheticalState_
+
+    -   TODO: Continue with refactoring m_npda_state_set and m_stack in ParseStackTreeNode_;
+        make m_stack just a std::shared_ptr<BranchElement>, and make m_npda_state_set a BranchSet
+        (and think about if the BranchElement and BranchSet names are appropriate).
+        TODO: Think about if BranchElement should be renamed to BranchNode (or maybe the
+        std::shared_ptr<> version of this should be), and if BranchSet should be named something
+        like BranchNodeSet.
+
+    -   The m_token_id member of HypotheticalBranchNodeData_ is only used for printing, not
+        the actual mechanics of parsing.  There is a discrepancy between HypotheticalBranchNodeData_
+        and the type of the RealizedState_ branch nodes, which makes it hard/impossible to have
+        SharedLinkedListElements between the two.  Maybe store the m_token_id of
+        HypotheticalBranchNodeData_ separately.  This way, because m_token_id is only used in
+        debug spew, it can be compiled out entirely if debug spew is not enabled in the parser.
+
+2019.02.20 ----------------------------
+
+-   NPDA cpp target is working, including error handling, though more testing is needed.
+-   TODO
+    -   For sure:
+        x   Clean up target
+            x   Get rid of Npda_
+            x   Create a Grammar_ struct which houses all the grammar structures and data
+            x   Ensure stack and lookahead tokens are cleaned up upon parser destruction
+            x   Change /* */ style doxygen comments to use /// style
+            x   Check if `friend struct ParseStackTreeNode_;` is necessary
+        x   Hook up m_branch_node_token_id_ptr (have to store this in parallel with m_branch_node_ptr_set_stack
+            in RealizedState_, but in a way where the pairs of BranchNodePtr_ and BranchNodeTokenIdPtr_ are kept).
+            Hook up the equivalent of ThrowAwayRealizedStateStackElement_ (really just take care of the printing).
+        x   Collapse ParseStackTreeNode_::Print and ParseStackTreeNode_::PrintBasic into one, it's dumb to
+            have two almost identical functions.
+        x   Rename SharedLinkedListElement to something like TreeNode and then remove all methods that
+            aren't used.
+        x   Create a better way to print out the TreeNode based stacks.
+        x   Handle %target.cpp.enable_scan_actions_exceptions and %target.cpp.enable_reduction_rule_exceptions
+        x   Fix steel parser to work with updated trison.
+        x   Handle the fact that case 3 of shift/reduce conflict is commented out (probably uncomment it
+            and see if it's still valid).
+        x   Run valgrind to ensure that there are no memory leaks (it appears that there probably are)
+            NOTE: RealizedState_ doesn't apparently clean up properly (it doesn't execute throw-away actions
+            on its token stack or lookahead queue)
+        x   Implement %nonassoc error handling
+        x   See if it's possible to fix the infinite loop for rules like
+
+                %nonterminal list
+                :
+                    list list_item
+                |
+                    // empty reduction rule
+                ;
+
+            where it reduces using the empty rule first, pushing `list` onto front of lookahead queue,
+            then doesn't shift, but rather reduces using the empty rule again.  This could be resolved
+            by making a lookahead of `list` force a SHIFT and not allow a REDUCE (this may be incompatible
+            with the existing logic of "default" actions, and may require the %lookahead refactor).
+        x   Run against all BARF parsers and ensure they still work.
+        x   Rename ParseStackTreeNode_ to ParseTreeNode_
+        x   Fix the bug in realized lookahead count in trison.cpp.npda target (detailed below) (NOTE:
+            need an actual repro case -- only saw this once and the error has been fixed in that case
+            through something else).
+        x   Test against grammars that actually require multiple lookaheads (e.g. w/ operators @, @@, @@@)
+            and verify that the max realized lookahead count is as expected (currently there is a bug such
+            that it's not).
+        x   Make reflex use the SetDebugSpewStream paradigm like trison does.
+        x   Test with generate_debug_spew_code disabled
+        x   Invert dont_generate_timestamps targetspec directive (in reflex and trison) to generate_timestamps,
+            since most of the time a timestamp isn't desired.
+        x   Test with other parser directives enabled/disabled
+        x   Change over to cmake (to replicate all the various rules for making test parsers and diffing them
+            will be the tricky part)
+            x   Implement real versioning (see PACKAGE_VERSION macro used in trison_options.cpp and others)
+            x   Have `make clean` not delete any generated scanner or parser sources, and make a separate target for that.
+            x   Make clean* targets.
+            x   Make install rules.
+            x   Make dot-graph-generating targets.
+            x   Auto detect installed reflex/trison and use as stable binaries.
+    -   REALLY nice to have
+        x   Implement %default precedence, so that it's possible to make precedences lower than the default
+            (without having to explicitly assign a precedence to all rules).  This is relatively easy to
+            implement.
+        x   Make a more terse debug spew output which is more useful for non-barf developers to debug
+            their grammars/parsers.  Use bit flags to be able to enable/disable each group of output
+            separately, and then provide a few predefined "common profiles" for output.
+            -   Mainly curtail excessive spew
+            -   Minimal output would be something like
+                -   Parser starting
+                -   Actions executed (including throw away actions, nonassoc error actions)
+                -   Parser returning
+            -   Intermediate useful output should be something like
+                -   Parser starting
+                -   Iteration number
+                -   Parse tree
+                -   Actions executed
+                -   Presence of SHIFT/REDUCE conflicts
+                -   RETURN or error handling
+            -   Debug spew flags
+                -   Start/end parse
+                -   Iteration count
+                -   Actions (TODO: debug spew for destructor actions -- generally make a printout for all actions)
+                -   Shift/reduce conflicts
+                -   Reduce/reduce conflicts
+                -   Processing transitions (determining if a hypothetical transition should be made)
+                -   Exercising transitions (actually making a hypothetical transition)
+                -   Removing defunct HPSes
+                -   Programmer errors (e.g. no return statement in reduction rule handler)
+                -   Realized lookahead queue activity
+                -   HPS node creation/deletion specific messages
+                -   Parse tree messages (has trunk; reconstructing branches)
+        x   Implement max parse tree depth constraint (figure out how this error should be handled).
+            Perhaps instead (or in addition) make a maximum number of HPS nodes, so that the effect is
+            being able to prevent exponential memory usage.  Though the problem here is that there could
+            be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
+    -   Nice to have
+        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
+        -   Have each tool have commands which determine all source files (i.e. dependencies) and all
+            files that will be output.  This will make it easier to determine input/outputs in e.g. cmake.
+            This might be more trouble than it's worth, since the codespec files can include arbitrary
+            files which can depend on decisions made based on the input.  So essentially the only way
+            to implement this is to do a "dry run" and see which files are read/included, and which
+            files would be written to.
+        -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
+            This should probably have to do with the output directory option of reflex/trison.
+            NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
+            so defer for later.
+        -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
+            specifiers to everything that should not throw.
+        -   C++ modernization (use at least C++11; see what which standard is supported by each compiler and
+            use the highest standard that's reasonable)
+            -   Use std::unique_ptr
+            -   Use std::array for static storage of state/transition/etc tables.
+            -   Use range-based for loops
+            -   Use strong enums
+            -   Are there strong typedefs which don't automatically cast to the underlying type?
+            -   Probably use unique_ptr to formalize ownership and simplify pointer management,
+                especially for the logic surrounding ParseStackTreeNode_, e.g. in RemoveBranchIfNotTrunk
+        -   Add a without_line_directives directive to targetspec.
+        x   Make an enum for rule associativity and a string table for it.
+        -   CMake stuff
+            x   Make force* targets.  Make doxygen-doc-generating targets.
+            -   Make targets for building the examples (probably need to clean up the examples)
+            x   Get the distribution packaging working
+        x   Factor parallel branch_node_ptr and branch_node_token_id_ptr structures and logic into single structure
+            (though actually if generate_debug_spew is disabled, then having this structure wouldn't be ideal.
+        -   See if there's a non-mutex-using version of std::shared_ptr (there's no need for it to be thread safe).
+            Useful references:
+            -   https://stackoverflow.com/questions/15129263/is-there-a-non-atomic-equivalent-of-stdshared-ptr-and-why-isnt-there-one-in/15141844#15141844
+            -   https://www.boost.org/doc/libs/1_65_0/libs/smart_ptr/doc/html/smart_ptr.html#local_shared_ptr
+            -   https://stackoverflow.com/questions/35470061/linking-pthread-disables-lock-free-shared-ptr-implementation
+        -   See if REDUCE can be made not destroy_and_recreate_parse_tree by recomputing each subordinate
+            HPS's realized lookahead cursor using the sequence of ancestors.
+    -   Low priority nice-to-have
+        -   Terminal::ERROR_ should probably be turned into Nonterminal::error_, since an error is sort of
+            a reduction of other tokens.
+        -   Figure out how to print the full state of RealizedState_ (if that's even a good idea)
+        -   Allow SHIFT/REDUCE cases 1 and 5 to be resolved before equalizing max lookahead cursor.
+            Actually more cases than that could be resolved conditionally based on associativity:
+            cases 2, 3, 4.  This may be more involved than expected, and may not be worth it.  It's
+            not causing a problem currently.
+        -   Implement infinite loop detection (maybe as an option?)
+
+2018.02.23 ----------------------------
+
+-   Create a %lookahead directive that can be used at the end of a rule (and maybe in the middle)
+    where the rule can't reduce (or shift, respectively) unless the lookahead condition is satisfied.
+    It would be something like
+
+        possibly_empty_list <- possibly_empty_list ',' thing
+        possibly_empty_list <- thing
+        // This would be assuming that possibly_empty_list is always followed by ')' or %end
+        possibly_empty_list <- %lookahead[')'|%end]
+
+    And maybe add a negation operator also, something like
+
+        %lookahead[^(%end|',')]
+
+    Could then add an implicit %lookahead[^N] for any nonterminal N reduction rule, so that e.g.
+    the rule
+
+        N <- // empty reduction rule
+
+    doesn't enter an infinite loop where it just keeps reducing the empty string to N over and
+    over, filling up the lookahead queue.  This may need to come with the constraint that a
+    nonterminal which accepts `empty` can't be repeated in a rule (though maybe not, and maybe
+    it's better left up to the programmer, instead of adding an implicit %lookahead[^N]).
+
+    If this is to be a thing, then there should be general syntax for specifying subsets of
+    tokens, through "or" (using existing symbol '|'), "and" (using symbol '&'), and "not"
+    (using symbol '^'), and parens to indicate associativity in those expressions.  This
+    should apply to the bracketed expression following %error as well.
+
+    Would an efficient implementation of this require adding a negation operation to the
+    transition specification in the NPDA state DAG?
+
+    First pass would just to be to add the negation operator, so that the empty reduction
+    rule case can be implemented and tested.
+
+    Would it make sense to name the directive something like
+
+        %noconsume_lookahead
+        %require_lookahead
+        %with_lookahead
+
+    and/or somehow make it obvious that it doesn't actually consume a token (though it may
+    cause a token to be read into the lookahead queue), especially if it occurs in the middle
+    of a rule.
+
+    Examples
+
+        state 123:
+            rule 456: N <- A B C .
+
+            default:REDUCE rule 456
+
+    If this rule became `N <- A B C %lookahead[^K]`, then the state would look like (with a denoting
+    the modified state/rule):
+
+        state 123a:
+            rule 456a: N <- A B C . %lookahead[^K]
+
+            K:INSERT_LOOKAHEAD_ERROR
+            default:REDUCE rule 456
+            ERROR_:POP_STACK 1
+
+    Thus if the string `K` were encountered at some state that has an epsilon closure including
+    state 123a (and a state that accepts token K normally), then because INSERT_LOOKAHEAD_ERROR
+    has a lower priority than normal acceptance of a token, state 123a would not accept K, and
+    the state that does accept K would win.
+
+    Need to determine if this causes problems with complicated lookahead specs
+
+    -   `rule 123 : N <- A B C . %lookahead[^K|L]` : would require that the lookahead is not K or is L
+        (kind of a dumb requirement unless K is a nonterminal that could begin with L?).  Its
+        transitions would be
+
+            K:INSERT_LOOKAHEAD_ERROR
+            L:REDUCE rule 123
+            default(^K):REDUCE rule 123
+            ERROR_:POP_STACK 1 // exists because there is an INSERT_LOOKAHEAD_ERROR
+
+        Strictly speaking, because ^K includes L and the L transition is the same as the default
+        transition, there's no reason to have an explicit transition for L (it would be subsumed
+        by the default transition).
+
+    -   `rule 123 : N <- A B C %lookahead
+
+    Alternate idea, which may or may not simplify things: Phrase %lookahead transitions as
+    conditional epsilon transitions, so that
+
+        rule 123 : N <- A B C %lookahead[K]
+
+    would become
+
+        rule 123,0 : N <- . A B C %lookahead[K]
+        rule 123,1 : N <- A . B C %lookahead[K]
+        rule 123,2 : N <- A B . C %lookahead[K]
+        rule 123,3 : N <- A B C . %lookahead[K]
+        rule 123,4 : N <- A B C %lookahead[K] .
+
+    and then there's no fancy logic that has to be added to the REDUCE actions.  This would probably
+    make it automatic to have mid-rule %lookahead directives, such as
+
+        rule 789 : X <- '(' %lookahead[^'('] expr ')' // if you wanted to avoid X reducing from e.g. ((3))
+
+    would becomes
+
+        rule 789,0 : X <- . '(' %lookahead[^'('] expr ')'
+        rule 789,1 : X <- '(' . %lookahead[^'('] expr ')' // this would have a conditional epsilon transition
+        rule 789,2 : X <- '(' %lookahead[^'('] . expr ')'
+        rule 789,3 : X <- '(' %lookahead[^'('] expr . ')'
+        rule 789,4 : X <- '(' %lookahead[^'('] expr ')' .
+
+    Unfortunately, adding conditional epsilon transitions would add a parameter to the memoization of
+    epsilon closures, potentially multiplying the number of memoized items by the number of tokens.
+    Though that's probably ok, because there are 2 memoized functions, each currently having a single
+    state index as their parameter.  This would make the memoized value bound S*T, where S and T are
+    the number of states and the number of tokens respectively, which is probably reasonable.
+
+    That, or the logic regarding epsilon transitions would need to change somewhat.
+
+    Let "token filter" denote a subset of tokens which specifies the filter for %lookahead (or the
+    negation of the filter for %error, which should be changed so that %error specifies the filter
+    directly).  The space of token filters has size 2^T, where T is the number of tokens.  Because
+    T is usually going to be at least around 300 (all chars 0-255, then user-defined tokens starting
+    at 256), it's not really reasonable to represent these subsets directly (e.g. as a bitsets)
+
+    What is needed: an efficient way to represent these token filters along with an efficient way
+    to decide if a token is a member of that filter.  The most common filters are going to be of
+    the form [K] or [^K] for some token K.  These are easy.  The next most common will have the
+    form [K|L] or [^(K|L)] for some token K and L.  These are slightly less easy, but still doable.
+    Need a general scheme.
+
+    In terms of the NPDA graph, the easiest way to proceed would be to just add a single conditional
+    epsilon transition for eah element in the filter.  Though this would suffer when the filter has
+    the form [^K] and therefore contains almost all tokens.  Thus the conditional epsilons have to
+    be formed in terms of this efficient token filter representation.
+
+    One thing to note is that the syntax used to specify the token filter is going to correspond
+    closely with the complexity of the filter itself.  I.e. simple filters have simple syntax, such
+    as [K] and [^K] and [^K&^L].  DeMorgan's laws can be used to express any filter as [T1|T2|...|Tn]
+    or [^(T1|T2|...|Tn)] where the presence or non-presence of ^ is chosen to minimize n.
+
+    Call [T1|...|Tn] a "positive filter in canonical form" and call [^(T1|...|Tn)] a
+    "negative filter in canonical form".
+
+    On the other hand, it's not infeasible to have a fixed-size state transition table, which
+    specifies a constant-time lookup for each token, parameterized by the state index, call it
+    L(s), where s is the state index.  This would have the form
+
+        L(s) :
+            T1 -> action for T1
+            T2 -> action for T2
+            ...
+            Tn -> action for Tn
+
+            E1,...,Ek // list of [unconditional] epsilon transitions; each of E1,...,Ek is the
+            target state index.
+
+    Note that there is a sentinal token value "NONE" (i.e. Nonterminal::none_ which is equal to zero)
+    that can't be used for transitions, and is a special value in relevant logic.
+
+    for all tokens, and then instead of performing complex logic to determine which action to
+    do, you just look up the token and perform the action if appropriate.  Because the epsilon
+    transitions don't correspond to a token, and there can be arbitrarily many of them, they
+    would need to be specified separately from the lookup table as a list.  There would be a
+    new "conditional epsilon" action, which would be used in the epsilon closure logic.
+
+    Let the epsilon closure, parameterized by (current_state, lookahead_token), be denoted as
+    EC(s,t), where s and t are the current state and lookahead token, and would be a union of
+    the following:
+    -   EC(Ej,t) for each Ej in L(s) (i.e. epsilon closure of each [unconditional] epsilon transition)
+    -   EC(L(s)(t),t) (i.e. epsilon closure of conditional epsilon transition) if t != NONE
+
+    IDEA: Allow assignment of variable to a %lookahead directive, and it will be that token ID
+    (or maybe just the token itself?) in the rule reduction handler, so you can make logic based
+    on which lookahead it is.  e.g.
+
+    %nonterminal blah
+    :
+        A:a B:b C:c %lookahead[K|L]:lookahead_token_id %target.cpp {
+            // :lookahead_token_id is a declared and initialized variable of type Token::Id
+            // and its value is the token ID of the lookahead, which in this case is going
+            // to be K or L.
+            <do something with lookahead_token_id>
+        }
+    ;
+
+    This is a rather large refactor, and while is worth doing, it should be done after finishing
+    an MVP of this pda refactor effort.
+
+2018.03.02 ----------------------------
+
+-   There is a shift/reduce conflict that can happen in the following situation.  When the
+    start nonterminal can accept an empty rule from its start state, e.g.
+
+        root <- zero_or_more_things %end
+
+    then right after root is reduced and the parse continues, there will be a shift/reduce
+    conflict of the form
+
+        REDUCE zero_or_more_things <- // empty reduction rule
+            SHIFT zero_or_more_things
+                ...
+        SHIFT root
+            RETURN root
+
+    In this case, it needs to know not to reduce anymore, since it's already consumed %end and
+    ... actually, it looks like there's a bug in the m_realized_lookahead_cursor logic.
+    This bug is resolved (perhaps non-optimally, but who cares) by using
+    destroy_and_recreate_parse_tree for executing REDUCE actions.
+
+-   There is another use case in the trison parser which motivates the need for the %lookahead
+    feature.  In particular,
+
+        %nonterminal rule_specification %type.cpp "Rule *"
+        :
+            rule_token_list rule_precedence_directive
+        ;
+
+        %nonterminal rule_token_list %type.cpp "RuleTokenList *"
+        :
+            rule_token_list rule_token
+        |
+            // empty reduction rule
+        ;
+
+        %nonterminal rule_precedence_directive %type.cpp "Ast::Id *"
+        :
+            DIRECTIVE_PREC ID
+        |
+            // empty reduction rule
+        ;
+
+    where it would be valid for both rule_token_list and rule_precedence_directive to be empty, but
+    the current trison.cpp.npda implementation is having trouble with that situation (it enters an
+    infinite loop where after reducing rule_specification from an empty reduction for rule_token_list
+    and rule_precedence_directive, it reduces an empty rule_token_list and rule_precedence_directive
+    again, looping forever:
+
+        ROOT 0x55eb6192a560
+            REDUCE 0x55eb6192e060 rule 60; rule_precedence_directive <-
+                SHIFT 0x55eb61926940 rule_precedence_directive
+                    REDUCE 0x55eb6192c870 rule 37; rule_specification <- rule_token_list rule_precedence_directive
+                        REDUCE 0x55eb6192ebe0 rule 45; rule_token_list <-
+                            SHIFT 0x55eb619141f0 rule_token_list
+                                REDUCE 0x55eb6192e800 rule 60; rule_precedence_directive <-
+                                    SHIFT 0x55eb6192f850 rule_precedence_directive
+                                        REDUCE 0x55eb6192f330 rule 37; rule_specification <- rule_token_list rule_precedence_directive
+                                            REDUCE 0x55eb6192dcb0 rule 45; rule_token_list <-
+                                                SHIFT 0x55eb6192fa10 rule_token_list
+                                                    ...
+
+    This could be fixed by having
+
+        %nonterminal rule_token_list %type.cpp "RuleTokenList *"
+        :
+            rule_token_list rule_token
+        |
+            %lookahead[^rule_token_list & ^rule_specification]
+        ;
+
+        %nonterminal rule_precedence_directive %type.cpp "Ast::Id *"
+        :
+            DIRECTIVE_PREC ID
+        |
+            %lookahead[^rule_precedence_directive]
+        ;
+
+    or probably even less stuff in the %lookahead directives.
+
+    Note that this situation represents mutually recursive rules that, because they have empty reduction
+    rules, can enter an infinite loop during parse.
+
+-   BUG: There is a bug in the calculation of max realized lookaheads where if ERROR_ is pushed onto the
+    front of the realized lookaheads, then that count is artificially inflated by 1.  This should not
+    increase the number of realized lookaheads, since the ERROR_ token was artificially generated.
+
+    Thinking about how the max realized lookahead count is computed (the implementation of which currently
+    uses the HPS queue), it shouldn't depend on the HPS queue, but rather only the realized lookaheads
+    (subject to the adjustment given above).  Maybe even just subtracting the number of leading ERROR_
+    tokens and nonterminals from the queue length would do it.
+
+-   Implementing a max parse tree depth would be a good idea for preventing infinite loop and memory
+    hogging, as well as making it easier to debug such conditions.
+-   There are 2 cases in SHIFT/REDUCE conflict resolution that could be handled before equalizing the
+    min/max realized lookahead cursors.  Cases 1 and 5, since they involve no overlap in the precedence
+    of the SHIFT or REDUCE rules, and can therefore be resolved immediately.
+-   Is there any way to resolve the problem with having REDUCE actions not destroy and recreate the
+    parse tree?  The problem was that the lookahead cursor was not set properly to account that the
+    reduced nonterminal appeared on the realized lookahead queue.  But this is tricky if the executed
+    reduce action is followed by other actions that change its hypothetical lookahead queue.
+    It seems like probably this destroy_and_recreate_parse_tree for REDUCE actions is slowing down
+    the parses tremendously (there are a TON more memory operations per REDUCE action, and REDUCE is
+    a very common operation).
+
+2018.03.11 ----------------------------
+
+-   There's a bug in the .- delimiter printout when there's a REDUCE involved (and maybe other cases).
+    Probably need to track some sort of cursor into the stack (in addition to the existing lookahead
+    cursor).  Keep a "realized token stack cursor" (which in this case would have the same type as
+    m_branch_node_ptr), which can be passed into TreeNode_::PrintRootToLeaf to indicate where to put
+    the .- delimiter.  Do the same with m_branch_node_token_id_ptr.
+
+    This is probably only needed for when debug spew is enabled, but need to make sure.
+
+-   There is a possibly useful distinction to be made in the "max realized lookahead count" logic.
+
+    In particular, because parser-generated lookaheads (as opposed to scanner-generated lookaheads)
+    can be pushed onto the front of the realized lookahead queue, there is a distinction between
+    the types of lookaheads (scanner-generated and non-scanner-generated).  Thus a concept of
+    "max realized scanner-generated lookahead count" can be defined, which would be the max achieved
+    number of contiguous scanner-generated lookaheads starting at the tail of the lookahead queue
+    (probably there will never be a case where the scanner-generated lookaheads will be interspersed
+    with parser-generated lookaheads).
+
+    Hypothesis: the lookahead queue always has the form
+
+        <parser-generated-lookaheads> <scanner-generated-lookaheads>
+
+    where each of those segments may be empty.  Parser-generated lookaheads are:
+    -   All nonterminals
+    -   The ERROR_ terminal
+
+    The hypothetical parser state is used to decide what action to take based on lookaheads, and
+    not all of the current lookaheads will necessarily be used to make that decision.
+
+        |-------- decision lookahead count, in this case m+1 ------------------------------------------|
+        <parser-generated-lookahead-1> ... <parser-generated-lookahead-m> <scanner-generated-lookhead-1> ... <scanner-generated-lookhead-n>
+
+    A further sub-distinction is how far into <scanner-generated-lookaheads> does the decision lookhead
+    count go?  In the above case, it's 1.  This concept may or may not be useful, since the number k
+    for an LALR(k) grammar is the upper bound on the number of lookaheads it needs to make a decision.
+
+-   For generating a DPDA from an NPDA, since now the NPDA can make decisions based on elements deeper
+    in the state stack than the top element, each DPDA state is no longer just a subset of NPDA states,
+    but rather a subset of NPDA state [sub]stacks (where "substack" here means a portion of a stack
+    where the substack shares the same head as the containing stack).  There is a natural partial order
+    on the space of subsets of NPDA state [sub]stacks, and therefore the DPDA state behavior naturally
+    has a hierarchical state machine structure (i.e. a hierarchy of states, where the "child states"
+    are special cases of their parents, and there is a fallthrough to the parent if there is no transition
+    match for that state).
+
+2018.03.12 ----------------------------
+
+-   Tracking the first realized ancestor of m_hypothetical_head is difficult, and is only used
+    for debug spew printout, so forget it.
+
+2018.04.06 ----------------------------
+
+-   Finished a feature set which could be considered the complete BARF 2.0.  Updated Danny's
+    steel repo to work against the latest version of BARF.
+-   What TODOs should perhaps go into the BARF 2.0 release?
+    -   Nice to have
+        -   Add a without_line_directives directive to targetspec.
+        -   Have each tool have commands which determine all source files (i.e. dependencies) and all
+            files that will be output.  This will make it easier to determine input/outputs in e.g. cmake.
+            This might be more trouble than it's worth, since the codespec files can include arbitrary
+            files which can depend on decisions made based on the input.  So essentially the only way
+            to implement this is to do a "dry run" and see which files are read/included, and which
+            files would be written to.
+        -   CMake stuff
+            x   Make force* targets.
+            x   Make doxygen-doc-generating targets.
+            -   Make doxygen docs actually render correctly (e.g. table of contents is wrong)
+            -   Make targets for building the examples (probably need to clean up the examples)
+            x   Get the distribution packaging working (CPack?)
+        -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
+            specifiers to everything that should not throw.
+        -   Clean up example apps dir structure (should probably just have a single example)
+        x   Make an up-to-date README.md with basic installation and usage instructions.
+    -   Low priority nice-to-have
+        -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
+            This should probably have to do with the output directory option of reflex/trison.
+            NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
+            so defer for later.
+        x   Make an enum for rule associativity and a string table for it.
+
+2018.04.09 ----------------------------
+
+-   Finalizing BARF 2.0 release
+    -   Examples
+        -   Condense down calculator example (there are currently 3 different ones)
+            -   app/example/calculator  dates back to 2006 - 2008
+            -   dev/calc                dates back to 2016 - 2017
+            -   test/*                  dates back to 2017
+        -   Is dumblang viable?  It looks pretty not working.  Doesn't even use cmake.
+            git blame says it dates back to 2008.  Delete this?
+        x   Add documentation for these in the README.md.  Mention that other examples
+            are given in the barf codebase itself.

@@ -27,6 +27,7 @@ namespace Barf {
 namespace Ast {
 
 class Base;
+struct Id;
 struct IdMap;
 class IntegerMap;
 
@@ -53,8 +54,9 @@ struct TerminalMap;
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
     CommonLang::TargetMap *StealTargetMap ();
 
-    bool ScannerDebugSpew () const { return m_scanner.DebugSpew(); }
-    void ScannerDebugSpew (bool debug_spew) { m_scanner.DebugSpew(debug_spew); }
+    bool ScannerDebugSpewIsEnabled () const { return m_scanner.DebugSpewIsEnabled(); }
+    std::ostream *ScannerDebugSpewStream () { return m_scanner.DebugSpewStream(); }
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream) { m_scanner.SetDebugSpewStream(debug_spew_stream); }
 
     bool OpenFile (string const &input_filename);
     void OpenString (string const &input_string, string const &input_name, bool use_line_numbers = false);
@@ -69,6 +71,7 @@ private:
     Uint32 m_token_index;
     PrecedenceList *m_precedence_list;
     PrecedenceMap *m_precedence_map;
+    Ast::Id *m_default_parse_nonterminal_id;
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 }
@@ -96,13 +99,39 @@ namespace Trison {
     m_target_map = NULL;
 }
 %target.cpp.top_of_parse_method_actions %{
-    m_terminal_list = NULL;
-    m_terminal_map = NULL;
-    m_token_index = 0;
-    m_precedence_list = NULL;
-    m_precedence_map = NULL;
+    m_default_parse_nonterminal_id = NULL;
     m_nonterminal_list = NULL;
     m_rule_count = 0;
+
+    // initialize m_terminal_map and m_terminal_list and populate the special,
+    // pre-defined terminals.
+    {
+        m_terminal_list = new TerminalList();
+        m_terminal_map = new TerminalMap();
+
+        Ast::Id *id;
+        Trison::Terminal *terminal;
+
+        // create and add the special END_ and ERROR_ terminals (with
+        // token_index 0x100 and 0x101 respectively.
+        m_token_index = 0x100;
+
+        id = new Ast::Id("END_", FiLoc::ms_invalid);
+        terminal = new Trison::Terminal(id, m_token_index++);
+        terminal->SetAssignedTypeMap(new TypeMap()); // default type
+        m_terminal_list->Append(terminal);
+        m_terminal_map->Add(terminal->GetText(), terminal);
+
+        id = new Ast::Id("ERROR_", FiLoc::ms_invalid);
+        terminal = new Trison::Terminal(id, m_token_index++);
+        terminal->SetAssignedTypeMap(new TypeMap()); // default type
+        m_terminal_list->Append(terminal);
+        m_terminal_map->Add(terminal->GetText(), terminal);
+    }
+
+    m_precedence_list = new PrecedenceList();
+    m_precedence_map = new PrecedenceMap();
+
     EmitExecutionMessage("starting trison parser");
 %}
 %target.cpp.bottom_of_parse_method_actions %{
@@ -163,7 +192,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         case CommonLang::Scanner::Token::BAD_END_OF_FILE:                     return Token(Terminal::END_, lookahead_token_data);
         case CommonLang::Scanner::Token::BAD_TOKEN:                           return Token(Terminal::BAD_TOKEN, lookahead_token_data);
         case CommonLang::Scanner::Token::CHAR_LITERAL:                        return Token(Terminal::CHAR_LITERAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:                   return Token(Terminal::DIRECTIVE_DEFAULT, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL: return Token(Terminal::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL, lookahead_token_data);
+        case CommonLang::Scanner::Token::DIRECTIVE_EMPTY:                     return Token(Terminal::DIRECTIVE_EMPTY, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_END:                       return Token(Terminal::DIRECTIVE_END, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:                     return Token(Terminal::DIRECTIVE_ERROR, lookahead_token_data);
         case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:               return Token(Terminal::DIRECTIVE_NONTERMINAL, lookahead_token_data);
@@ -184,7 +215,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_OPTIONAL_DIRECTIVE:
         case CommonLang::Scanner::Token::DIRECTIVE_ADD_REQUIRED_DIRECTIVE:
         case CommonLang::Scanner::Token::DIRECTIVE_CASE_INSENSITIVE:
-        case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT:
         case CommonLang::Scanner::Token::DIRECTIVE_DUMB_CODE_BLOCK:
         case CommonLang::Scanner::Token::DIRECTIVE_ID:
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
@@ -212,12 +242,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %target.cpp.generate_debug_spew_code
 %target.cpp.debug_spew_prefix {"Trison::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"}
-%target.cpp.dont_generate_timestamps
 
 
 %terminal BAD_TOKEN
 %terminal CHAR_LITERAL %type.cpp "Ast::Char *"
+%terminal DIRECTIVE_DEFAULT %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_DEFAULT_PARSE_NONTERMINAL %type.cpp "Ast::ThrowAway *"
+%terminal DIRECTIVE_EMPTY %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_END %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_ERROR %type.cpp "Ast::ThrowAway *"
 %terminal DIRECTIVE_NONTERMINAL %type.cpp "Ast::ThrowAway *"
@@ -232,81 +263,214 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 %terminal NEWLINE
 %terminal STRICT_CODE_BLOCK %type.cpp "Ast::StrictCodeBlock *"
 %terminal STRING_LITERAL %type.cpp "Ast::String *"
-%terminal '.' ':' ';' '|'
+%terminal '.' ':' ';' '|' '[' ']'
+
+
+%prec.left %default
+
 
 %default_parse_nonterminal root
 
 %%
 
-/* ***************************************************************************
-/* root rule
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// root rule
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal root %type.cpp "PrimarySource *"
 :
-    at_least_zero_newlines
-    targets_directive
-    target_directives
-    terminal_directives:terminal_map
-    precedence_directives:precedence_map
-    start_directive:default_parse_nonterminal_id
-    END_PREAMBLE:throwaway
-    nonterminals:nonterminal_map
+    preamble:throwaway nonterminals:nonterminal_map %end
     %target.cpp {
-        assert(m_target_map != NULL);
-        assert(m_terminal_list != NULL);
-        assert(m_terminal_map != NULL);
-        assert(terminal_map == m_terminal_map);
-        assert(m_precedence_list != NULL);
-        assert(precedence_map != NULL);
-        assert(m_precedence_map == precedence_map);
+        assert(nonterminal_map != NULL);
         assert(m_nonterminal_list != NULL);
+        assert(m_default_parse_nonterminal_id != NULL);
 
-        // set the TargetMap's primary source path
-        m_target_map->SetSourcePath(m_scanner.InputName());
+        if (m_default_parse_nonterminal_id == NULL)
+        {
+            // just use a dummy value -- this error condition has already been EmitError-handled
+            // in the reduction rule handler for preamble.
+            m_default_parse_nonterminal_id = new Ast::Id(m_nonterminal_list->Element(0)->GetText(), throwaway->GetFiLoc());
+            assert(nonterminal_map->Element(m_default_parse_nonterminal_id->GetText()) != NULL);
+        }
+
         // make sure the %default_parse_nonterminal directive value specifies a real nonterminal
-        if (default_parse_nonterminal_id != NULL &&
-            nonterminal_map->Element(default_parse_nonterminal_id->GetText()) == NULL)
+        if (nonterminal_map->Element(m_default_parse_nonterminal_id->GetText()) == NULL)
         {
             EmitError(
-                "undeclared nonterminal \"" + default_parse_nonterminal_id->GetText() + "\"",
-                default_parse_nonterminal_id->GetFiLoc());
+                "undeclared nonterminal \"" + m_default_parse_nonterminal_id->GetText() + "\"",
+                m_default_parse_nonterminal_id->GetFiLoc());
         }
 
         PrimarySource *primary_source =
             new PrimarySource(
                 m_terminal_list,
-                terminal_map,
-                precedence_map,
+                m_terminal_map,
+                m_precedence_map,
                 m_precedence_list,
-                default_parse_nonterminal_id->GetText(),
+                m_default_parse_nonterminal_id->GetText(),
                 throwaway->GetFiLoc(),
                 m_nonterminal_list,
                 nonterminal_map);
         delete throwaway;
-        delete default_parse_nonterminal_id;
         return primary_source;
     }
 ;
 
-/* ***************************************************************************
-/* targets directive rules
-/* **************************************************************************/
+%nonterminal preamble %type.cpp "Ast::ThrowAway *"
+:
+    preamble_directives END_PREAMBLE:throwaway
+    %target.cpp {
+        assert(m_target_map != NULL);
+        assert(m_terminal_list != NULL);
+        assert(m_terminal_map != NULL);
+        assert(m_precedence_list != NULL);
+        assert(m_precedence_map != NULL);
+
+        // set the TargetMap's primary source path
+        m_target_map->SetSourcePath(m_scanner.InputName());
+
+        // validate the %default_parse_nonterminal directive value.
+        if (m_default_parse_nonterminal_id == NULL)
+            EmitError("missing %default_parse_nonterminal directive; must specify a valid nonterminal", throwaway->GetFiLoc());
+
+        // validate that m_precedence_map has an entry for "DEFAULT_".  this has to be done
+        // here so that the precedences are ready to be used in the nonterminal reduction rules.
+        Precedence *default_precedence = m_precedence_map->Element("DEFAULT_");
+        if (default_precedence == NULL)
+            EmitError("preamble is missing %default precedence directive; suggested reasonable default: %prec.left %default", throwaway->GetFiLoc());
+        else
+        {
+            // Shift all the m_precedence_level values such that default_precedence has level 0.
+            for (PrecedenceList::iterator it = m_precedence_list->begin(), it_end = m_precedence_list->end(); it != it_end; ++it)
+            {
+                Precedence *precedence = *it;
+                assert(precedence != NULL);
+                precedence->m_precedence_level -= default_precedence->m_precedence_level;
+            }
+            // Because default_precedence was in the list, its level should now be at zero.
+            assert(default_precedence->m_precedence_level == 0);
+        }
+
+        return throwaway;
+    }
+;
+
+%nonterminal preamble_directives
+:
+    preamble_directives preamble_directive
+    %target.cpp {
+        return NULL;
+    }
+|
+    %empty
+    %target.cpp {
+        return NULL;
+    }
+;
+
+%nonterminal preamble_directive
+:
+    targets_directive at_least_one_newline
+    %target.cpp {
+        // The logic is already handled by targets_directive
+        assert(m_target_map != NULL);
+        return NULL;
+    }
+|
+    target_directive:target_directive at_least_one_newline
+    %target.cpp {
+        assert(target_directive != NULL);
+        assert(m_target_map != NULL);
+        if (target_directive != NULL)
+            m_target_map->SetTargetDirective(target_directive);
+        return NULL;
+    }
+|
+    DIRECTIVE_TERMINAL:throwaway terminals:terminal_list type_spec:assigned_type_map at_least_one_newline
+    %target.cpp {
+        assert(m_terminal_list != NULL);
+        assert(m_terminal_map != NULL);
+        assert(terminal_list != NULL);
+        assert(assigned_type_map != NULL);
+        for (TerminalList::iterator it = terminal_list->begin(),
+                                    it_end = terminal_list->end();
+             it != it_end;
+             ++it)
+        {
+            Trison::Terminal *terminal = *it;
+            assert(terminal != NULL);
+            terminal->SetAssignedTypeMap(assigned_type_map);
+            m_terminal_list->Append(terminal);
+            m_terminal_map->Add(terminal->GetText(), terminal);
+        }
+        terminal_list->clear();
+        delete throwaway;
+        delete terminal_list;
+        return NULL;
+    }
+|
+    precedence_directive at_least_one_newline
+    %target.cpp {
+        // Already handled by precedence_directive reduction rule.
+        return NULL;
+    }
+|
+    DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:throwaway ID:id at_least_one_newline
+    %target.cpp {
+        if (m_default_parse_nonterminal_id != NULL)
+        {
+            EmitError(FORMAT("duplicate %default_parse_nonterminal directive; previously specified at " << m_default_parse_nonterminal_id->GetFiLoc()), throwaway->GetFiLoc());
+            delete id;
+        }
+        else
+            m_default_parse_nonterminal_id = id;
+
+        assert(m_default_parse_nonterminal_id != NULL);
+        delete throwaway;
+        return NULL;
+    }
+|
+    DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:throwaway %error[%end|NEWLINE] at_least_one_newline
+    %target.cpp {
+        if (m_default_parse_nonterminal_id != NULL)
+            EmitError(FORMAT("duplicate %default_parse_nonterminal directive; previously specified at " << m_default_parse_nonterminal_id->GetFiLoc()), throwaway->GetFiLoc());
+
+        EmitError("parse error in %default_parse_nonterminal directive", throwaway->GetFiLoc());
+        delete throwaway;
+        return NULL;
+    }
+|
+    at_least_one_newline
+    %target.cpp {
+        return NULL;
+    }
+|
+    %error[%end|NEWLINE] at_least_one_newline
+    %target.cpp {
+        EmitError("parse error in preamble directives", m_scanner.GetFiLoc());
+        return NULL;
+    }
+|
+    %error[%end|END_PREAMBLE]
+    %target.cpp {
+        EmitError("parse error in preamble directives", m_scanner.GetFiLoc());
+        return NULL;
+    }
+;
+
+// ///////////////////////////////////////////////////////////////////////////
+// targets directive rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal targets_directive
 :
-    DIRECTIVE_TARGETS:throwaway target_ids at_least_one_newline
+    DIRECTIVE_TARGETS:throwaway target_ids
     %target.cpp {
         delete throwaway;
         return NULL;
     }
 |
-    // empty reduction rule
-    %target.cpp {
-        return NULL;
-    }
-|
-    DIRECTIVE_TARGETS:throwaway %error at_least_one_newline
+    DIRECTIVE_TARGETS:throwaway %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         return NULL;
@@ -332,32 +496,16 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         assert(m_target_map != NULL);
         return NULL;
     }
 ;
 
-/* ***************************************************************************
-/* target directive rules
-/* **************************************************************************/
-
-%nonterminal target_directives
-:
-    target_directives target_directive:target_directive at_least_one_newline
-    %target.cpp {
-        assert(m_target_map != NULL);
-        m_target_map->SetTargetDirective(target_directive);
-        return NULL;
-    }
-|
-    // empty reduction rule
-    %target.cpp {
-        assert(m_target_map != NULL);
-        return NULL;
-    }
-;
+// ///////////////////////////////////////////////////////////////////////////
+// target directive rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal target_directive %type.cpp "CommonLang::TargetDirective *"
 :
@@ -367,7 +515,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     }
 |
-    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -376,7 +524,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -384,7 +532,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway %error
+    DIRECTIVE_TARGET:throwaway %error[%end|NEWLINE]
     %target.cpp {
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -398,74 +546,12 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |   STRING_LITERAL:value        %target.cpp { return value; }
 |   STRICT_CODE_BLOCK:value     %target.cpp { return value; }
 |   DUMB_CODE_BLOCK:value       %target.cpp { return value; }
-|   /* empty reduction rule */  %target.cpp { return NULL; }
+|   %empty                      %target.cpp { return NULL; }
 ;
 
-/* ***************************************************************************
-/* terminal directive rules
-/* **************************************************************************/
-
-%nonterminal terminal_directives %type.cpp "TerminalMap *"
-:
-    terminal_directives:terminal_map terminal_directive
-    %target.cpp {
-        assert(terminal_map == m_terminal_map);
-        return terminal_map;
-    }
-|
-    // empty reduction rule
-    %target.cpp {
-        m_terminal_list = new TerminalList();
-        m_terminal_map = new TerminalMap();
-
-        Ast::Id *id;
-        Trison::Terminal *terminal;
-
-        // create and add the special END_ and ERROR_ terminals (with
-        // token_index 0x100 and 0x101 respectively.
-        assert(m_token_index == 0 && "must go from 0 to 0x100, all terminals, then all nonterminals");
-        m_token_index = 0x100;
-
-        id = new Ast::Id("END_", FiLoc::ms_invalid);
-        terminal = new Trison::Terminal(id, m_token_index++);
-        terminal->SetAssignedTypeMap(new TypeMap()); // default type
-        m_terminal_list->Append(terminal);
-        m_terminal_map->Add(terminal->GetText(), terminal);
-
-        id = new Ast::Id("ERROR_", FiLoc::ms_invalid);
-        terminal = new Trison::Terminal(id, m_token_index++);
-        terminal->SetAssignedTypeMap(new TypeMap()); // default type
-        m_terminal_list->Append(terminal);
-        m_terminal_map->Add(terminal->GetText(), terminal);
-
-        return m_terminal_map;
-    }
-;
-
-%nonterminal terminal_directive
-:
-    DIRECTIVE_TERMINAL:throwaway terminals:terminal_list type_spec:assigned_type_map at_least_one_newline
-    %target.cpp {
-        assert(m_terminal_map != NULL);
-        assert(terminal_list != NULL);
-        assert(assigned_type_map != NULL);
-        for (TerminalList::iterator it = terminal_list->begin(),
-                                    it_end = terminal_list->end();
-             it != it_end;
-             ++it)
-        {
-            Trison::Terminal *terminal = *it;
-            assert(terminal != NULL);
-            terminal->SetAssignedTypeMap(assigned_type_map);
-            m_terminal_list->Append(terminal);
-            m_terminal_map->Add(terminal->GetText(), terminal);
-        }
-        terminal_list->clear();
-        delete throwaway;
-        delete terminal_list;
-        return NULL;
-    }
-;
+// ///////////////////////////////////////////////////////////////////////////
+// terminal directive rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal terminals %type.cpp "TerminalList *"
 :
@@ -485,53 +571,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-/* ***************************************************************************
-/* precedence directive rules
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// precedence directive rules
+// ///////////////////////////////////////////////////////////////////////////
 
-%nonterminal precedence_directives %type.cpp "PrecedenceMap *"
+%nonterminal precedence_directive
 :
-    precedence_directives:precedence_map precedence_directive
-    %target.cpp {
-        assert(precedence_map != NULL);
-        assert(m_precedence_map == precedence_map);
-        assert(m_precedence_list != NULL);
-        return precedence_map;
-    }
-|
-    // empty reduction rule
-    %target.cpp {
-        assert(m_precedence_list == NULL);
-        assert(m_precedence_map == NULL);
-        Precedence *precedence = new Precedence("DEFAULT_", A_LEFT, FiLoc::ms_invalid, 0);
-        m_precedence_list = new PrecedenceList();
-        m_precedence_list->Append(precedence);
-        m_precedence_map = new PrecedenceMap();
-        m_precedence_map->Add("DEFAULT_", precedence);
-        return m_precedence_map;
-    }
-;
-
-%nonterminal precedence_directive %type.cpp "PrecedenceMap *"
-:
-    DIRECTIVE_PREC:throwaway ID:id at_least_one_newline
-    %target.cpp {
-        assert(m_precedence_list != NULL);
-        assert(m_precedence_map != NULL);
-        Precedence *precedence =
-            new Precedence(
-                id->GetText(),
-                A_NONASSOC,
-                id->GetFiLoc(),
-                m_precedence_map->size());
-        m_precedence_list->Append(precedence);
-        m_precedence_map->Add(precedence->m_precedence_id, precedence);
-        delete throwaway;
-        delete id;
-        return m_precedence_map;
-    }
-|
-    DIRECTIVE_PREC:throwaway '.' ID:associativity_id ID:id at_least_one_newline
+    DIRECTIVE_PREC:throwaway '.' ID:associativity_id ID:id
     %target.cpp {
         assert(m_precedence_list != NULL);
         assert(m_precedence_map != NULL);
@@ -552,31 +598,49 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 id->GetText(),
                 associativity,
                 id->GetFiLoc(),
-                m_precedence_map->size());
+                m_precedence_map->size(), // precedence_index
+                m_precedence_map->size()); // precedence_level (to be offset by level of default precedence later)
         m_precedence_list->Append(precedence);
         m_precedence_map->Add(precedence->m_precedence_id, precedence);
         delete throwaway;
         delete id;
-        return m_precedence_map;
+        return NULL;
     }
-;
-
-/* ***************************************************************************
-/* start directive rule
-/* **************************************************************************/
-
-%nonterminal start_directive %type.cpp "Ast::Id *"
-:
-    DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:throwaway ID:id at_least_one_newline
+|
+    DIRECTIVE_PREC:throwaway0 '.' ID:associativity_id DIRECTIVE_DEFAULT:throwaway1
     %target.cpp {
-        delete throwaway;
-        return id;
+        assert(m_precedence_list != NULL);
+        assert(m_precedence_map != NULL);
+        assert(associativity_id != NULL);
+
+        Associativity associativity = A_LEFT;
+        if (associativity_id->GetText() == "left")
+            associativity = A_LEFT;
+        else if (associativity_id->GetText() == "nonassoc")
+            associativity = A_NONASSOC;
+        else if (associativity_id->GetText() == "right")
+            associativity = A_RIGHT;
+        else
+            EmitError("invalid associativity specifier \"" + associativity_id->GetText() + "\"", associativity_id->GetFiLoc());
+
+        Precedence *precedence =
+            new Precedence(
+                "DEFAULT_",
+                associativity,
+                throwaway1->GetFiLoc(),
+                m_precedence_map->size(), // precedence_index
+                m_precedence_map->size()); // precedence_level (to be offset by level of default precedence later)
+        m_precedence_list->Append(precedence);
+        m_precedence_map->Add(precedence->m_precedence_id, precedence);
+        delete throwaway0;
+        delete throwaway1;
+        return NULL;
     }
 ;
 
-/* ***************************************************************************
-/* nonterminal rules
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// nonterminal rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal nonterminals %type.cpp "NonterminalMap *"
 :
@@ -592,14 +656,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return nonterminal_map;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         assert(m_nonterminal_list == NULL);
         m_nonterminal_list = new NonterminalList();
         NonterminalMap *nonterminal_map = new NonterminalMap();
 
         // add the special "none_" nonterminal with token_index 0 and empty rule list
-        Nonterminal *nonterminal = new Nonterminal("none_", 0, FiLoc::ms_invalid);
+        Trison::Nonterminal *nonterminal = new Trison::Nonterminal("none_", 0, FiLoc::ms_invalid);
         nonterminal->SetRuleList(new RuleList());
         nonterminal_map->Add(nonterminal->GetText(), nonterminal);
         m_nonterminal_list->Append(nonterminal);
@@ -608,7 +672,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-%nonterminal nonterminal %type.cpp "Nonterminal *"
+%nonterminal nonterminal %type.cpp "Trison::Nonterminal *"
 :
     nonterminal_specification:nonterminal ':' rules:rule_list ';'
     %target.cpp {
@@ -619,14 +683,14 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return nonterminal;
     }
 |
-    %error ';'
+    %error[%end] ';'
     %target.cpp {
-        EmitError("syntax error in nonterminal definition", GetFiLoc());
+        EmitError("parse error in nonterminal definition", GetFiLoc());
         return NULL;
     }
 ;
 
-%nonterminal nonterminal_specification %type.cpp "Nonterminal *"
+%nonterminal nonterminal_specification %type.cpp "Trison::Nonterminal *"
 :
     DIRECTIVE_NONTERMINAL:throwaway ID:id type_spec:assigned_type_map
     %target.cpp {
@@ -636,8 +700,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(assigned_type_map != NULL);
         if (m_terminal_map->Element(id->GetText()) != NULL)
             EmitError("id collision with terminal " + id->GetText(), id->GetFiLoc());
-        Nonterminal *nonterminal =
-            new Nonterminal(
+        Trison::Nonterminal *nonterminal =
+            new Trison::Nonterminal(
                 id->GetText(),
                 m_token_index++,
                 id->GetFiLoc(),
@@ -647,27 +711,27 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return nonterminal;
     }
 |
-    DIRECTIVE_NONTERMINAL:throwaway %error
+    DIRECTIVE_NONTERMINAL:throwaway %error[%end]
     %target.cpp {
         assert(throwaway != NULL);
-        EmitError("syntax error while parsing nonterminal specification", throwaway->GetFiLoc());
+        EmitError("parse error while parsing nonterminal specification", throwaway->GetFiLoc());
         delete throwaway;
         return NULL;
     }
 |
-    DIRECTIVE_NONTERMINAL:throwaway ID:id %error
+    DIRECTIVE_NONTERMINAL:throwaway ID:id %error[%end]
     %target.cpp {
         assert(id != NULL);
-        EmitError("syntax error in %nonterminal directive", id->GetFiLoc());
+        EmitError("parse error in %nonterminal directive", id->GetFiLoc());
         delete throwaway;
         delete id;
         return NULL;
     }
 ;
 
-/* ***************************************************************************
-/* rule rules
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// rule rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal rules %type.cpp "RuleList *"
 :
@@ -682,6 +746,12 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         RuleList *rule_list = new RuleList();
         rule_list->Append(rule);
         return rule_list;
+    }
+|
+    %error[%end|'|'|';']
+    %target.cpp {
+        EmitError("parse error in rule (note that an empty reduction rule must be specified by the %empty directive)", GetFiLoc());
+        return new RuleList();
     }
 ;
 
@@ -722,7 +792,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_handler_map;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         return new CommonLang::RuleHandlerMap();
     }
@@ -741,7 +811,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
-    DIRECTIVE_TARGET:throwaway %error any_type_of_code_block:code_block
+    DIRECTIVE_TARGET:throwaway %error[%end] any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -750,7 +820,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway %error
+    DIRECTIVE_TARGET:throwaway %error[%end]
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
@@ -758,7 +828,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    %error any_type_of_code_block:code_block
+    %error[%end] any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
@@ -769,15 +839,32 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal rule_token_list %type.cpp "RuleTokenList *"
 :
-    rule_token_list:rule_token_list rule_token:rule_token
+    nonempty_rule_token_list:rule_token_list
+    %target.cpp {
+        return rule_token_list;
+    }
+|
+    // An empty reduction rule must be specified using the %empty directive.
+    DIRECTIVE_EMPTY:throwaway
+    %target.cpp {
+        delete throwaway;
+        return new RuleTokenList();
+    }
+;
+
+%nonterminal nonempty_rule_token_list %type.cpp "RuleTokenList *"
+:
+    nonempty_rule_token_list:rule_token_list rule_token:rule_token
     %target.cpp {
         rule_token_list->Append(rule_token);
         return rule_token_list;
     }
 |
-    // empty reduction rule
+    rule_token:rule_token
     %target.cpp {
-        return new RuleTokenList();
+        RuleTokenList *rule_token_list = new RuleTokenList();
+        rule_token_list->Append(rule_token);
+        return rule_token_list;
     }
 ;
 
@@ -819,18 +906,112 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_token;
     }
 |
-    DIRECTIVE_ERROR:throwaway ':' ID:assigned_id
+    DIRECTIVE_ERROR:throwaway ID:assigned_id
     %target.cpp {
+        EmitError("%error terminal must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+        // This is the minimal necessary token, although the EmitError call should prevent trison
+        // from proceeding to parser generation.
+        RuleTokenList *lookaheads = new RuleTokenList();
+        lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
+
         EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
-        delete throwaway;
         delete assigned_id;
-        return NULL;
+
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        delete throwaway;
+        return rule_token_error_until_lookahead;
     }
 |
     DIRECTIVE_ERROR:throwaway
     %target.cpp {
-        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
+        // This is the minimal necessary token, although the EmitError call should prevent trison
+        // from proceeding to parser generation.
+        RuleTokenList *lookaheads = new RuleTokenList();
+        lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
+
+        EmitError("%error terminal must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
+        return rule_token_error_until_lookahead;
+    }
+|
+
+    DIRECTIVE_ERROR:throwaway bracketed_lookahead_terminal_list:lookaheads ':' ID:assigned_id
+    %target.cpp {
+        EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
+        delete assigned_id;
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        delete throwaway;
+        return rule_token_error_until_lookahead;
+    }
+|
+    DIRECTIVE_ERROR:throwaway bracketed_lookahead_terminal_list:lookaheads
+    %target.cpp {
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        delete throwaway;
+        return rule_token_error_until_lookahead;
+    }
+;
+
+%nonterminal bracketed_lookahead_terminal_list %type.cpp "RuleTokenList *"
+:
+    '[' lookahead_terminal_list:lookaheads ']'
+    %target.cpp {
+        assert(lookaheads != NULL);
+        assert(lookaheads->size() > 0);
+        FiLoc filoc(lookaheads->Element(0)->GetFiLoc());
+
+        // Verify that the lookaheads include %end
+        bool has_end_terminal = false;
+        for (RuleTokenList::const_iterator it = lookaheads->begin(), it_end = lookaheads->end(); it != it_end; ++it)
+        {
+            assert(*it != NULL);
+            RuleToken const &rule_token = **it;
+            if (rule_token.m_token_id == "END_")
+                has_end_terminal = true;
+        }
+
+        if (!has_end_terminal)
+            EmitError("%error terminal lookaheads must include %end (e.g. %error[%end|';'])", filoc);
+
+        return lookaheads;
+    }
+;
+
+%nonterminal lookahead_terminal_list %type.cpp "RuleTokenList *"
+:
+    lookahead_terminal_list:lookaheads '|' lookahead_terminal:lookahead_terminal
+    %target.cpp {
+        lookaheads->Append(lookahead_terminal);
+        return lookaheads;
+    }
+|
+    lookahead_terminal:lookahead_terminal
+    %target.cpp {
+        RuleTokenList *lookaheads = new RuleTokenList();
+        lookaheads->Append(lookahead_terminal);
+        return lookaheads;
+    }
+;
+
+%nonterminal lookahead_terminal %type.cpp "RuleToken *"
+:
+    DIRECTIVE_END:throwaway
+    %target.cpp {
+        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
+        delete throwaway;
+        return rule_token;
+    }
+|
+    token_id:token_id
+    %target.cpp {
+        assert(token_id != NULL && "If this fails, it's ok, I just wasn't sure that the condition was necessary");
+        RuleToken *rule_token =
+            token_id != NULL ?
+            new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
+            NULL;
+        delete token_id;
         return rule_token;
     }
 ;
@@ -843,21 +1024,21 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return id;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         return NULL;
     }
 ;
 
-/* ***************************************************************************
-/* misc rules
-/* **************************************************************************/
+// ///////////////////////////////////////////////////////////////////////////
+// misc rules
+// ///////////////////////////////////////////////////////////////////////////
 
 %nonterminal at_least_zero_newlines
 :
     at_least_zero_newlines NEWLINE %target.cpp { return NULL; }
 |
-    /* empty reduction rule */ %target.cpp { return NULL; }
+    %empty %target.cpp { return NULL; }
 ;
 
 %nonterminal at_least_one_newline
@@ -915,7 +1096,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return type_map;
     }
 |
-    // empty reduction rule
+    %empty
     %target.cpp {
         return new TypeMap();
     }

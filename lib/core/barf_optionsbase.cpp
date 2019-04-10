@@ -19,7 +19,7 @@ namespace Barf {
 
 string const &OptionsBase::HowtoReportError () const
 {
-    static string const s_howto_report_error("please make a bug report, containing exact reproduction instructions, in the tracker system at http://sourceforge.net/projects/barf/");
+    static string const s_howto_report_error("please make a bug report containing exact reproduction instructions at http://github.com/vdods/barf/");
     return s_howto_report_error;
 }
 
@@ -62,6 +62,11 @@ void OptionsBase::AssertOnError_Disable ()
     m_assert_on_error = false;
 }
 #endif
+
+void OptionsBase::ClearSearchPath ()
+{
+    m_search_path_entry.clear();
+}
 
 void OptionsBase::IncludeSearchPath (string const &search_path)
 {
@@ -156,15 +161,15 @@ void OptionsBase::Parse (int argc, char const *const *argv)
 
 void OptionsBase::AddDefaultSearchPathEntries ()
 {
-#if defined(BARFDATADIR)
-    // add "BARFDATADIR/targets" (i.e. the installed targets data)
+#if defined(HARDCODED_BARF_TARGETS_DIR)
+    // add "HARDCODED_BARF_TARGETS_DIR" (i.e. the installed targets data)
     // as the lowest-priority targets search path.
-    if (!string(BARFDATADIR).empty())
-        m_search_path_entry.push_back(SearchPathEntry(BARFDATADIR DIRECTORY_SLASH_STRING "targets", "location of installed targets directory", IGNORE_FAILURE));
-#endif // defined(BARFDATADIR)
+    if (!string(HARDCODED_BARF_TARGETS_DIR).empty())
+        m_search_path_entry.push_back(SearchPathEntry(HARDCODED_BARF_TARGETS_DIR, "location of installed targets directory", IGNORE_FAILURE));
+#endif // defined(HARDCODED_BARF_TARGETS_DIR)
 
-    // if the BARF_TARGETS_SEARCH_PATH environment variable is set,
-    // add it as the lowest-priority targets search path.
+    // if the BARF_TARGETS_SEARCH_PATH environment variable is set, add it (as higher
+    // priority than HARDCODED_BARF_TARGETS_DIR, if present).
     char const *search_path = getenv("BARF_TARGETS_SEARCH_PATH");
     if (search_path != NULL)
         m_search_path_entry.push_back(SearchPathEntry(search_path, "set by BARF_TARGETS_SEARCH_PATH environment variable", ABORT_ON_FAILURE));

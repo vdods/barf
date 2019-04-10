@@ -305,7 +305,7 @@ void ReplaceAllInString (
     while ((match = string_to_replace_in->find(replace_this, pos)) != string::npos)
     {
         string_to_replace_in->replace(match, replace_this.length(), replacement);
-        pos += replacement.length();
+        pos = match + replacement.length();
     }
 }
 

@@ -42,6 +42,7 @@ namespace Reflex {
 enum
 {
     AST_PRIMARY_SOURCE = CommonLang::AST_START_CUSTOM_TYPES_HERE_,
+    AST_MACRO,
     AST_RULE,
     AST_RULE_LIST,
     AST_START_DIRECTIVE,
@@ -52,6 +53,29 @@ enum
 };
 
 string const &AstTypeString (AstType ast_type);
+
+struct Macro : public Ast::Base
+{
+    Ast::Id const *m_macro_id;
+    Regex::RegularExpression *m_macro_regex;
+
+    Macro (Ast::Id const *macro_id, Regex::RegularExpression *macro_regex)
+        :
+        Ast::Base(macro_id->GetFiLoc(), AST_MACRO),
+        m_macro_id(macro_id),
+        m_macro_regex(macro_regex)
+    {
+        assert(m_macro_id != NULL);
+        assert(m_macro_regex != NULL);
+    }
+    virtual ~Macro ()
+    {
+        delete m_macro_id;
+        delete m_macro_regex;
+    }
+
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+}; // end of struct Macro
 
 struct StartWithStateMachineDirective : public Ast::Directive
 {

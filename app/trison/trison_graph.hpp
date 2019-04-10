@@ -22,13 +22,16 @@ namespace Trison {
 // TT_RETURN, and TT_REDUCE come before TT_SHIFT, so that they appear before
 // TT_SHIFT, because the default transition must come first (and a transition
 // is TT_ERROR_PANIC, TT_RETURN, or TT_REDUCE if and only if it is a default
-// transition).
+// transition).  NOTE (2019.02.27) not sure if this comment still applies.
 enum
 {
     TT_ERROR_PANIC = 0,
     TT_RETURN,
     TT_REDUCE,
     TT_SHIFT,
+    TT_INSERT_LOOKAHEAD_ERROR,
+    TT_DISCARD_LOOKAHEAD,
+    TT_POP_STACK,
     TT_EPSILON,
 
     TT_COUNT
@@ -40,9 +43,15 @@ string const &TransitionTypeString (TransitionType transition_type);
 // NPDA transitions
 // ///////////////////////////////////////////////////////////////////////////
 
-Graph::Transition NpdaReduceTransition (Uint32 reduction_rule_index);
-Graph::Transition NpdaReturnTransition (string const &nonterminal_name, Uint32 nonterminal_token_index);
-Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &token_label, Uint32 target_index);
+// use a transition_token_id of 0 to indicate "default" transition (this
+// should be the same as the token id of the "none_" nonterminal).
+
+Graph::Transition NpdaReduceTransition (Uint32 transition_token_id, string const &transition_label, Uint32 reduction_rule_index);
+Graph::Transition NpdaReturnTransition (Uint32 transition_token_id, string const &transition_label);
+Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &transition_label, Uint32 target_index);
+Graph::Transition NpdaInsertLookaheadErrorTransition (Uint32 transition_token_id, string const &transition_label);
+Graph::Transition NpdaDiscardLookaheadTransition (Uint32 transition_token_id, string const &transition_label);
+Graph::Transition NpdaPopStackTransition (Uint32 transition_token_id, string const &transition_label, Uint32 pop_count);
 Graph::Transition NpdaEpsilonTransition (Uint32 target_index);
 
 // ///////////////////////////////////////////////////////////////////////////

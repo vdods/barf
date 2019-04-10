@@ -48,11 +48,23 @@ int main (int argc, char **argv)
             BppOptions().PrintHelpMessage(cerr);
             return 0;
         }
+        else if (BppOptions().GetPrintSearchPathRequest() == Bpp::Options::PSPR_SHORT)
+        {
+            cout << BppOptions().GetSearchPath().AsString("\n") << endl;
+            return 0;
+        }
+        else if (BppOptions().GetPrintSearchPathRequest() == Bpp::Options::PSPR_VERBOSE)
+        {
+            cout << BppOptions().GetSearchPath().AsVerboseString("\n") << endl;
+            return 0;
+        }
 
         EmitExecutionMessage("beginning execution");
         Preprocessor::Parser parser;
-        parser.ScannerDebugSpew(BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER));
-        parser.DebugSpew(BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER));
+        if (BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_SCANNER))
+            parser.SetScannerDebugSpewStream(&std::cerr);
+        if (BppOptions().IsVerbose(Bpp::Options::V_PRIMARY_SOURCE_PARSER))
+            parser.SetDebugSpewStream(&std::cerr);
 
         if (BppOptions().InputFilename() == "-" || BppOptions().InputFilename().empty())
         {
