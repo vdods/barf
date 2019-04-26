@@ -13,6 +13,26 @@ This suite contains programs to supplant the useful, but dated, tools `bison`
     using data-driven specifications.  Currently "only" provides a cpp target
     which is an NPDA parser (General LR parser).
 
+## Release Notes
+
+This lists versions 2 and later only.
+
+-   `2.1.0` : Addition of `default_max_allowable_lookahead_queue_size` to `trison.cpp` target,
+    which provides a tool for preventing infinite loops due to insufficient error-handling rules
+    in a grammar.
+-   `2.0.0` : Long-awaited release of BARF 2.0!  Mainly involves major improvements to `trison`.
+    In particular, trison.cpp target was refactored to be more robust (though it currently only
+    uses an NPDA implementation).
+
+### Earlier Releases
+
+While the first version of `trison` came about in 2006, official packages were only
+created in 2010.  `reflex` is more or less the same as back then, but `trison` has
+improved drastically over time.
+
+-   `0.9.20101002` : http://thedods.com/victor/barf-0.9.20101002.tar.bz2
+-   `0.9.20100116` : http://thedods.com/victor/barf-0.9.20100116.tar.bz2
+
 ## Building and Installing
 
 From the project root, create a build directory (e.g. `build`), run `cmake` from
