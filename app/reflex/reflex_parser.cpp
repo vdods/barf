@@ -30,6 +30,7 @@ namespace Reflex {
 Parser::Parser ()
 {
     m_max_allowable_lookahead_count = 1;
+    m_max_allowable_lookahead_queue_size = 2;
     m_max_allowable_parse_tree_depth = 64;
     m_realized_state_ = NULL;
     m_hypothetical_state_ = NULL;
@@ -44,7 +45,7 @@ Parser::Parser ()
     m_regex_macro_map = new Regex::RegularExpressionMap();
     m_start_with_state_machine_directive = NULL;
 
-#line 48 "reflex_parser.cpp"
+#line 49 "reflex_parser.cpp"
 }
 
 Parser::~Parser ()
@@ -54,7 +55,7 @@ Parser::~Parser ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 58 "reflex_parser.cpp"
+#line 59 "reflex_parser.cpp"
  << "Executing destructor actions\n")
 
 
@@ -71,7 +72,7 @@ Parser::~Parser ()
     delete m_start_with_state_machine_directive;
     m_start_with_state_machine_directive = NULL;
 
-#line 75 "reflex_parser.cpp"
+#line 76 "reflex_parser.cpp"
 }
 
 bool Parser::IsAtEndOfInput ()
@@ -85,7 +86,7 @@ std::string Parser::DebugSpewPrefix () const
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 89 "reflex_parser.cpp"
+#line 90 "reflex_parser.cpp"
 ;
     return out.str();
 }
@@ -95,7 +96,7 @@ void Parser::ResetForNewInput ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 99 "reflex_parser.cpp"
+#line 100 "reflex_parser.cpp"
  << "Executing reset-for-new-input actions\n")
 
     // Perform all the internal cleanup needed.
@@ -106,7 +107,7 @@ void Parser::ResetForNewInput ()
 
     m_scanner.ResetForNewInput();
 
-#line 110 "reflex_parser.cpp"
+#line 111 "reflex_parser.cpp"
 }
 
 Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
@@ -116,7 +117,7 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::
 
     EmitExecutionMessage("starting reflex parser");
 
-#line 120 "reflex_parser.cpp"
+#line 121 "reflex_parser.cpp"
 
     ParserReturnCode const parse_return_code = Parse_(return_token, nonterminal_to_parse);
 
@@ -126,7 +127,7 @@ Parser::ParserReturnCode Parser::Parse (Ast::Base * *return_token, Nonterminal::
     if (parse_return_code == PRC_SUCCESS)
         EmitExecutionMessage("reflex parse was successful");
 
-#line 130 "reflex_parser.cpp"
+#line 131 "reflex_parser.cpp"
 
     return parse_return_code;
 }
@@ -141,7 +142,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
     stream << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 145 "reflex_parser.cpp"
+#line 146 "reflex_parser.cpp"
  << "    ";
     while (*string != '\0')
     {
@@ -149,7 +150,7 @@ void Parser::PrintIndented_ (std::ostream &stream, char const *string) const
             stream << '\n' << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 153 "reflex_parser.cpp"
+#line 154 "reflex_parser.cpp"
  << "    ";
         else
             stream << *string;
@@ -180,6 +181,7 @@ char const *const Parser::ms_parser_return_code_string_table_[] =
     "PRC_SUCCESS",
     "PRC_UNHANDLED_PARSE_ERROR",
     "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE",
     "PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH",
     "PRC_INTERNAL_ERROR",
 };
@@ -490,7 +492,7 @@ void Parser::ThrowAwayToken_ (Token const &token_) throw()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 494 "reflex_parser.cpp"
+#line 496 "reflex_parser.cpp"
  << "Executing throw-away-token actions on token " << token_ << '\n')
     ThrowAwayTokenData_(token_.m_data);
 }
@@ -502,7 +504,7 @@ void Parser::ThrowAwayTokenData_ (Ast::Base * const &token_data) throw()
 
     delete token_data;
 
-#line 506 "reflex_parser.cpp"
+#line 508 "reflex_parser.cpp"
 }
 
 Parser::Token Parser::Scan_ () throw()
@@ -510,7 +512,7 @@ Parser::Token Parser::Scan_ () throw()
     TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 514 "reflex_parser.cpp"
+#line 516 "reflex_parser.cpp"
  << "Executing scan actions to retrieve next token...\n")
 
 
@@ -568,7 +570,7 @@ Parser::Token Parser::Scan_ () throw()
             return Token(Terminal::BAD_TOKEN);
     }
 
-#line 572 "reflex_parser.cpp"
+#line 574 "reflex_parser.cpp"
 
     TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from scan_actions code block\n")
     assert(false && "no value returned from scan_actions code block");
@@ -643,6 +645,16 @@ std::size_t Parser::MaxRealizedLookaheadCount () const
     return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadCount();
 }
 
+std::int64_t Parser::MaxAllowableLookaheadQueueSize () const
+{
+    return m_max_allowable_lookahead_queue_size;
+}
+
+std::size_t Parser::MaxRealizedLookaheadQueueSize () const
+{
+    return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadQueueSize();
+}
+
 std::int64_t Parser::MaxAllowableParseTreeDepth () const
 {
     return m_max_allowable_parse_tree_depth;
@@ -670,7 +682,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
     TRISON_CPP_DEBUG_CODE_(DSF_START_END_PARSE, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 674 "reflex_parser.cpp"
+#line 686 "reflex_parser.cpp"
  << "Starting parse\n")
 
     ParserReturnCode parser_return_code_ = PRC_INTERNAL_ERROR;
@@ -698,7 +710,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 702 "reflex_parser.cpp"
+#line 714 "reflex_parser.cpp"
  << "<stack> . <lookaheads>: ";
         m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
         *DebugSpewStream() << '\n';
@@ -713,18 +725,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 717 "reflex_parser.cpp"
+#line 729 "reflex_parser.cpp"
  << "\n";
             *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 722 "reflex_parser.cpp"
+#line 734 "reflex_parser.cpp"
  << "---------- ITERATION " << iteration_index << " --------------\n";
             PrintParserStatus_(*DebugSpewStream());
             *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 728 "reflex_parser.cpp"
+#line 740 "reflex_parser.cpp"
  << '\n';
         )
 
@@ -733,9 +745,20 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 737 "reflex_parser.cpp"
+#line 749 "reflex_parser.cpp"
  << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
+            break;
+        }
+
+        if (m_realized_state_->HasExceededMaxAllowableLookaheadQueueSize(m_max_allowable_lookahead_queue_size))
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
+#line 218 "reflex_parser.trison"
+"Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 760 "reflex_parser.cpp"
+ << "Max realized lookahead queue size (" << m_realized_state_->MaxRealizedLookaheadQueueSize() << ") has exceeded max allowable lookahead queue size (" << m_max_allowable_lookahead_queue_size << "); modify this limit using the default_max_allowable_lookahead_queue_size directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadQueueSize method.  Returning with error.\n")
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE;
             break;
         }
 
@@ -744,7 +767,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 748 "reflex_parser.cpp"
+#line 771 "reflex_parser.cpp"
  << "Parse tree depth (" << m_hypothetical_state_->ParseTreeDepth() << ") has exceeded max allowable parse tree depth (" << m_max_allowable_parse_tree_depth << "); modify this limit using the default_max_allowable_parse_tree_depth directive (see trison.cpp.targetspec), or using the SetMaxAllowableParseTreeDepth method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH;
             break;
@@ -758,7 +781,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         TRISON_CPP_DEBUG_CODE_(DSF_ITERATION_COUNT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 762 "reflex_parser.cpp"
+#line 785 "reflex_parser.cpp"
  << '\n')
         ++iteration_index;
     }
@@ -768,18 +791,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 772 "reflex_parser.cpp"
+#line 795 "reflex_parser.cpp"
  << "\n";
         *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 777 "reflex_parser.cpp"
+#line 800 "reflex_parser.cpp"
  << "---------- RETURNING --------------\n";
         PrintParserStatus_(*DebugSpewStream());
         *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 783 "reflex_parser.cpp"
+#line 806 "reflex_parser.cpp"
  << '\n';
     )
 
@@ -789,7 +812,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 793 "reflex_parser.cpp"
+#line 816 "reflex_parser.cpp"
  << "Parse() is returning " << ms_parser_return_code_string_table_[parser_return_code_] << '\n';
     )
 
@@ -801,12 +824,12 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 805 "reflex_parser.cpp"
+#line 828 "reflex_parser.cpp"
  << "Parse stack tree has trunk; executing trunk actions.\n")
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 810 "reflex_parser.cpp"
+#line 833 "reflex_parser.cpp"
  << '\n')
 
     if (m_hypothetical_state_->m_root->HasTrunkChild())
@@ -826,7 +849,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 830 "reflex_parser.cpp"
+#line 853 "reflex_parser.cpp"
  << "Executing trunk action RETURN.\n")
                 assert(m_realized_state_->TokenStack().size() == 2);
                 parser_return_code_ = PRC_SUCCESS;
@@ -842,7 +865,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 846 "reflex_parser.cpp"
+#line 869 "reflex_parser.cpp"
  << "Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
@@ -856,7 +879,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 860 "reflex_parser.cpp"
+#line 883 "reflex_parser.cpp"
  << "Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
                 m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
                 break;
@@ -865,7 +888,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 869 "reflex_parser.cpp"
+#line 892 "reflex_parser.cpp"
  << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
                 m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
@@ -874,7 +897,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 878 "reflex_parser.cpp"
+#line 901 "reflex_parser.cpp"
  << "Executing trunk action DISCARD_LOOKAHEAD.\n")
                 m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
@@ -884,7 +907,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 888 "reflex_parser.cpp"
+#line 911 "reflex_parser.cpp"
  << "Executing trunk action POP_STACK " << pop_count << ".\n")
 
                 // This one is tricky to implement within RealizedState_ alone, mainly because
@@ -923,7 +946,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 927 "reflex_parser.cpp"
+#line 950 "reflex_parser.cpp"
  << "<stack> . <lookaheads>: ";
             m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
             *DebugSpewStream() << '\n';
@@ -934,7 +957,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 938 "reflex_parser.cpp"
+#line 961 "reflex_parser.cpp"
  << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
             m_hypothetical_state_->DestroyParseTree();
             CreateParseTreeFromRealizedState_();
@@ -951,7 +974,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 955 "reflex_parser.cpp"
+#line 978 "reflex_parser.cpp"
  << "Parse stack tree does not have trunk; continuing parse.\n")
 
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
@@ -978,7 +1001,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 982 "reflex_parser.cpp"
+#line 1005 "reflex_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
             }
         }
@@ -994,7 +1017,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 998 "reflex_parser.cpp"
+#line 1021 "reflex_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
@@ -1039,7 +1062,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1043 "reflex_parser.cpp"
+#line 1066 "reflex_parser.cpp"
  << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
                 // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
                 m_hypothetical_state_->DeleteBranch(reduce);
@@ -1053,7 +1076,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1057 "reflex_parser.cpp"
+#line 1080 "reflex_parser.cpp"
  << "        Case 2; REDUCE <= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1062,7 +1085,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1066 "reflex_parser.cpp"
+#line 1089 "reflex_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
@@ -1073,7 +1096,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1077 "reflex_parser.cpp"
+#line 1100 "reflex_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -1086,7 +1109,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1090 "reflex_parser.cpp"
+#line 1113 "reflex_parser.cpp"
  << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity: " <<
  Grammar_::ms_associativity_string_table_[reduction_rule_precedence.m_associativity] << '\n')
                 switch (reduction_rule_precedence.m_associativity)
@@ -1095,7 +1118,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1099 "reflex_parser.cpp"
+#line 1122 "reflex_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
@@ -1106,7 +1129,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1110 "reflex_parser.cpp"
+#line 1133 "reflex_parser.cpp"
  << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
                         // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
                         // action to initiate error panic.  This works only because the shift and reduce nodes
@@ -1165,7 +1188,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1169 "reflex_parser.cpp"
+#line 1192 "reflex_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
@@ -1184,7 +1207,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1188 "reflex_parser.cpp"
+#line 1211 "reflex_parser.cpp"
  << "        Case 4; REDUCE >= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1193,7 +1216,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1197 "reflex_parser.cpp"
+#line 1220 "reflex_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
@@ -1204,7 +1227,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1208 "reflex_parser.cpp"
+#line 1231 "reflex_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -1214,7 +1237,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1218 "reflex_parser.cpp"
+#line 1241 "reflex_parser.cpp"
  << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
                 m_hypothetical_state_->DeleteBranch(shift);
                 shift = NULL;
@@ -1225,7 +1248,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1229 "reflex_parser.cpp"
+#line 1252 "reflex_parser.cpp"
  << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
                 assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
                 assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
@@ -1265,7 +1288,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1269 "reflex_parser.cpp"
+#line 1292 "reflex_parser.cpp"
  << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
         if (!m_hypothetical_state_->m_new_hps_queue.empty())
@@ -1273,7 +1296,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1277 "reflex_parser.cpp"
+#line 1300 "reflex_parser.cpp"
  << "        Early-out based on sorted type index.\n")
             break;
         }
@@ -1293,7 +1316,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1297 "reflex_parser.cpp"
+#line 1320 "reflex_parser.cpp"
  << "        Processing ";
                 hps.Print(*DebugSpewStream(), this, DebugSpewPrefix(), 0, true);
             )
@@ -1304,7 +1327,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1308 "reflex_parser.cpp"
+#line 1331 "reflex_parser.cpp"
  << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1318,7 +1341,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1322 "reflex_parser.cpp"
+#line 1345 "reflex_parser.cpp"
  << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1346,7 +1369,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1350 "reflex_parser.cpp"
+#line 1373 "reflex_parser.cpp"
  << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
                     if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
@@ -1387,7 +1410,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1391 "reflex_parser.cpp"
+#line 1414 "reflex_parser.cpp"
  << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
                             take_action = false;
                         }
@@ -1398,7 +1421,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1402 "reflex_parser.cpp"
+#line 1425 "reflex_parser.cpp"
  << "            Exercising transition without accessing lookahead... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1413,7 +1436,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1417 "reflex_parser.cpp"
+#line 1440 "reflex_parser.cpp"
  << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1430,7 +1453,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1434 "reflex_parser.cpp"
+#line 1457 "reflex_parser.cpp"
  << "    Removing defunct HPSes...\n")
     for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
@@ -1498,7 +1521,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return primary_source;
     
-#line 1502 "reflex_parser.cpp"
+#line 1525 "reflex_parser.cpp"
             break;
         }
 
@@ -1510,7 +1533,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return NULL;
     
-#line 1514 "reflex_parser.cpp"
+#line 1537 "reflex_parser.cpp"
             break;
         }
 
@@ -1522,7 +1545,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return NULL;
     
-#line 1526 "reflex_parser.cpp"
+#line 1549 "reflex_parser.cpp"
             break;
         }
 
@@ -1535,7 +1558,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         // The logic is already handled by the targets_directive (and subordinate) nonterminal reduction rule handlers.
         return NULL;
     
-#line 1539 "reflex_parser.cpp"
+#line 1562 "reflex_parser.cpp"
             break;
         }
 
@@ -1552,7 +1575,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             m_target_map->SetTargetDirective(target_directive);
         return NULL;
     
-#line 1556 "reflex_parser.cpp"
+#line 1579 "reflex_parser.cpp"
             break;
         }
 
@@ -1576,7 +1599,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return NULL;
     
-#line 1580 "reflex_parser.cpp"
+#line 1603 "reflex_parser.cpp"
             break;
         }
 
@@ -1596,7 +1619,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             m_start_with_state_machine_directive = start_with_state_machine_directive;
         return NULL;
     
-#line 1600 "reflex_parser.cpp"
+#line 1623 "reflex_parser.cpp"
             break;
         }
 
@@ -1608,7 +1631,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return NULL;
     
-#line 1612 "reflex_parser.cpp"
+#line 1635 "reflex_parser.cpp"
             break;
         }
 
@@ -1621,7 +1644,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         EmitError("parse error in preamble directives", m_scanner.GetFiLoc());
         return NULL;
     
-#line 1625 "reflex_parser.cpp"
+#line 1648 "reflex_parser.cpp"
             break;
         }
 
@@ -1635,7 +1658,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return NULL;
     
-#line 1639 "reflex_parser.cpp"
+#line 1662 "reflex_parser.cpp"
             break;
         }
 
@@ -1651,7 +1674,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         return NULL;
     
-#line 1655 "reflex_parser.cpp"
+#line 1678 "reflex_parser.cpp"
             break;
         }
 
@@ -1675,7 +1698,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete target_id;
         return m_target_map;
     
-#line 1679 "reflex_parser.cpp"
+#line 1702 "reflex_parser.cpp"
             break;
         }
 
@@ -1688,7 +1711,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         assert(m_target_map != NULL);
         return m_target_map;
     
-#line 1692 "reflex_parser.cpp"
+#line 1715 "reflex_parser.cpp"
             break;
         }
 
@@ -1705,7 +1728,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     
-#line 1709 "reflex_parser.cpp"
+#line 1732 "reflex_parser.cpp"
             break;
         }
 
@@ -1721,7 +1744,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new CommonLang::TargetDirective(target_id, target_directive, NULL);
     
-#line 1725 "reflex_parser.cpp"
+#line 1748 "reflex_parser.cpp"
             break;
         }
 
@@ -1740,7 +1763,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete target_directive;
         return NULL;
     
-#line 1744 "reflex_parser.cpp"
+#line 1767 "reflex_parser.cpp"
             break;
         }
 
@@ -1757,7 +1780,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete target_id;
         return NULL;
     
-#line 1761 "reflex_parser.cpp"
+#line 1784 "reflex_parser.cpp"
             break;
         }
 
@@ -1772,7 +1795,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return NULL;
     
-#line 1776 "reflex_parser.cpp"
+#line 1799 "reflex_parser.cpp"
             break;
         }
 
@@ -1783,7 +1806,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 450 "reflex_parser.trison"
  return value; 
-#line 1787 "reflex_parser.cpp"
+#line 1810 "reflex_parser.cpp"
             break;
         }
 
@@ -1794,7 +1817,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 451 "reflex_parser.trison"
  return value; 
-#line 1798 "reflex_parser.cpp"
+#line 1821 "reflex_parser.cpp"
             break;
         }
 
@@ -1805,7 +1828,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 452 "reflex_parser.trison"
  return value; 
-#line 1809 "reflex_parser.cpp"
+#line 1832 "reflex_parser.cpp"
             break;
         }
 
@@ -1816,7 +1839,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 453 "reflex_parser.trison"
  return value; 
-#line 1820 "reflex_parser.cpp"
+#line 1843 "reflex_parser.cpp"
             break;
         }
 
@@ -1856,7 +1879,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         // Return NULL upon error.
         return NULL;
     
-#line 1860 "reflex_parser.cpp"
+#line 1883 "reflex_parser.cpp"
             break;
         }
 
@@ -1874,7 +1897,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         // Return NULL upon error.
         return NULL;
     
-#line 1878 "reflex_parser.cpp"
+#line 1901 "reflex_parser.cpp"
             break;
         }
 
@@ -1890,7 +1913,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         // Return NULL upon error.
         return NULL;
     
-#line 1894 "reflex_parser.cpp"
+#line 1917 "reflex_parser.cpp"
             break;
         }
 
@@ -1905,7 +1928,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new StartWithStateMachineDirective(state_machine_id);
     
-#line 1909 "reflex_parser.cpp"
+#line 1932 "reflex_parser.cpp"
             break;
         }
 
@@ -1920,7 +1943,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return NULL;
     
-#line 1924 "reflex_parser.cpp"
+#line 1947 "reflex_parser.cpp"
             break;
         }
 
@@ -1934,7 +1957,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         assert(state_machine_map != NULL);
         return state_machine_map;
     
-#line 1938 "reflex_parser.cpp"
+#line 1961 "reflex_parser.cpp"
             break;
         }
 
@@ -1946,7 +1969,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return new StateMachineMap();
     
-#line 1950 "reflex_parser.cpp"
+#line 1973 "reflex_parser.cpp"
             break;
         }
 
@@ -1963,7 +1986,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             state_machine_map->Add(state_machine->m_state_machine_id->GetText(), state_machine);
         return state_machine_map;
     
-#line 1967 "reflex_parser.cpp"
+#line 1990 "reflex_parser.cpp"
             break;
         }
 
@@ -1979,7 +2002,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             state_machine_map->Add(state_machine->m_state_machine_id->GetText(), state_machine);
         return state_machine_map;
     
-#line 1983 "reflex_parser.cpp"
+#line 2006 "reflex_parser.cpp"
             break;
         }
 
@@ -1998,7 +2021,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete mode_flags;
         return state_machine;
     
-#line 2002 "reflex_parser.cpp"
+#line 2025 "reflex_parser.cpp"
             break;
         }
 
@@ -2017,7 +2040,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete rule_list;
         return NULL;
     
-#line 2021 "reflex_parser.cpp"
+#line 2044 "reflex_parser.cpp"
             break;
         }
 
@@ -2030,7 +2053,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return mode_flags;
     
-#line 2034 "reflex_parser.cpp"
+#line 2057 "reflex_parser.cpp"
             break;
         }
 
@@ -2043,7 +2066,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         EmitError("parse error in state machine mode flags", m_scanner.GetFiLoc());
         return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
     
-#line 2047 "reflex_parser.cpp"
+#line 2070 "reflex_parser.cpp"
             break;
         }
 
@@ -2061,7 +2084,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete mode_flag;
         return mode_flags;
     
-#line 2065 "reflex_parser.cpp"
+#line 2088 "reflex_parser.cpp"
             break;
         }
 
@@ -2073,7 +2096,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
     
-#line 2077 "reflex_parser.cpp"
+#line 2100 "reflex_parser.cpp"
             break;
         }
 
@@ -2088,7 +2111,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return mode_flag;
     
-#line 2092 "reflex_parser.cpp"
+#line 2115 "reflex_parser.cpp"
             break;
         }
 
@@ -2103,7 +2126,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return mode_flag;
     
-#line 2107 "reflex_parser.cpp"
+#line 2130 "reflex_parser.cpp"
             break;
         }
 
@@ -2116,7 +2139,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         EmitError("parse error in state machine mode flag", m_scanner.GetFiLoc());
         return new Ast::UnsignedInteger(StateMachine::MF_NONE, FiLoc::ms_invalid);
     
-#line 2120 "reflex_parser.cpp"
+#line 2143 "reflex_parser.cpp"
             break;
         }
 
@@ -2129,7 +2152,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return rule_list;
     
-#line 2133 "reflex_parser.cpp"
+#line 2156 "reflex_parser.cpp"
             break;
         }
 
@@ -2142,7 +2165,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         EmitError("parse error in state machine rule list", m_scanner.GetFiLoc());
         return new RuleList();
     
-#line 2146 "reflex_parser.cpp"
+#line 2169 "reflex_parser.cpp"
             break;
         }
 
@@ -2157,7 +2180,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         rule_list->Append(rule);
         return rule_list;
     
-#line 2161 "reflex_parser.cpp"
+#line 2184 "reflex_parser.cpp"
             break;
         }
 
@@ -2172,7 +2195,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         rule_list->Append(rule);
         return rule_list;
     
-#line 2176 "reflex_parser.cpp"
+#line 2199 "reflex_parser.cpp"
             break;
         }
 
@@ -2245,7 +2268,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete regex_string;
         return rule;
     
-#line 2249 "reflex_parser.cpp"
+#line 2272 "reflex_parser.cpp"
             break;
         }
 
@@ -2261,7 +2284,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             rule_handler_map->Add(rule_handler->m_target_id->GetText(), rule_handler);
         return rule_handler_map;
     
-#line 2265 "reflex_parser.cpp"
+#line 2288 "reflex_parser.cpp"
             break;
         }
 
@@ -2273,7 +2296,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return new CommonLang::RuleHandlerMap();
     
-#line 2277 "reflex_parser.cpp"
+#line 2300 "reflex_parser.cpp"
             break;
         }
 
@@ -2294,7 +2317,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
                 target_id->GetFiLoc());
         return new CommonLang::RuleHandler(target_id, code_block);
     
-#line 2298 "reflex_parser.cpp"
+#line 2321 "reflex_parser.cpp"
             break;
         }
 
@@ -2312,7 +2335,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete code_block;
         return NULL;
     
-#line 2316 "reflex_parser.cpp"
+#line 2339 "reflex_parser.cpp"
             break;
         }
 
@@ -2328,7 +2351,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return NULL;
     
-#line 2332 "reflex_parser.cpp"
+#line 2355 "reflex_parser.cpp"
             break;
         }
 
@@ -2344,7 +2367,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete code_block;
         return NULL;
     
-#line 2348 "reflex_parser.cpp"
+#line 2371 "reflex_parser.cpp"
             break;
         }
 
@@ -2355,7 +2378,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 798 "reflex_parser.trison"
  return dumb_code_block; 
-#line 2359 "reflex_parser.cpp"
+#line 2382 "reflex_parser.cpp"
             break;
         }
 
@@ -2366,7 +2389,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 800 "reflex_parser.trison"
  return strict_code_block; 
-#line 2370 "reflex_parser.cpp"
+#line 2393 "reflex_parser.cpp"
             break;
         }
 
@@ -2376,7 +2399,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 805 "reflex_parser.trison"
  return NULL; 
-#line 2380 "reflex_parser.cpp"
+#line 2403 "reflex_parser.cpp"
             break;
         }
 
@@ -2386,7 +2409,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 807 "reflex_parser.trison"
  return NULL; 
-#line 2390 "reflex_parser.cpp"
+#line 2413 "reflex_parser.cpp"
             break;
         }
 
@@ -2405,7 +2428,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2409 "reflex_parser.cpp"
+#line 2432 "reflex_parser.cpp"
  << "Realized state branch node stacks are (each listed bottom to top):\n";
     for (BranchVector_::const_iterator it = m_realized_state_->BranchVectorStack().back().begin(),
                                        it_end = m_realized_state_->BranchVectorStack().back().end();
@@ -2416,7 +2439,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
         out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2420 "reflex_parser.cpp"
+#line 2443 "reflex_parser.cpp"
  << "    (";
         branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
         out << ")\n";
@@ -2425,12 +2448,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2429 "reflex_parser.cpp"
+#line 2452 "reflex_parser.cpp"
  << "Max realized lookahead count (so far) is:\n";
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2434 "reflex_parser.cpp"
+#line 2457 "reflex_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadCount();
     if (m_max_allowable_lookahead_count >= 0)
         out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
@@ -2439,12 +2462,26 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2443 "reflex_parser.cpp"
+#line 2466 "reflex_parser.cpp"
+ << "Max realized lookahead queue size (so far) is:\n";
+    out << 
+#line 218 "reflex_parser.trison"
+"Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2471 "reflex_parser.cpp"
+ << "    " << m_realized_state_->MaxRealizedLookaheadQueueSize();
+    if (m_max_allowable_lookahead_queue_size >= 0)
+        out << " (max allowable lookahead queue size is " << m_max_allowable_lookahead_queue_size << ")\n";
+    else
+        out << " (allowable lookahead queue size is unlimited)\n";
+    out << 
+#line 218 "reflex_parser.trison"
+"Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 2480 "reflex_parser.cpp"
  << "Max realized parse tree depth (so far) is:\n";
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2448 "reflex_parser.cpp"
+#line 2485 "reflex_parser.cpp"
  << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
     if (m_max_allowable_parse_tree_depth >= 0)
         out << " (max allowable parse tree depth is " << m_max_allowable_parse_tree_depth << ")\n";
@@ -2453,22 +2490,22 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2457 "reflex_parser.cpp"
+#line 2494 "reflex_parser.cpp"
  << "Has-encountered-error-state (so far) is:\n";
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2462 "reflex_parser.cpp"
+#line 2499 "reflex_parser.cpp"
  << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2467 "reflex_parser.cpp"
+#line 2504 "reflex_parser.cpp"
  << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2472 "reflex_parser.cpp"
+#line 2509 "reflex_parser.cpp"
  << "    ";
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
@@ -2491,25 +2528,25 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2495 "reflex_parser.cpp"
+#line 2532 "reflex_parser.cpp"
  << '\n';
 
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2501 "reflex_parser.cpp"
+#line 2538 "reflex_parser.cpp"
  << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2507 "reflex_parser.cpp"
+#line 2544 "reflex_parser.cpp"
  << '\n';
 
     out << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2513 "reflex_parser.cpp"
+#line 2550 "reflex_parser.cpp"
  << "HPS queue:\n";
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
@@ -2525,6 +2562,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
 
 Parser::RealizedState_::RealizedState_ (Npda_::StateIndex_ initial_state)
     :   m_max_realized_lookahead_count(0)
+    ,   m_max_realized_lookahead_queue_size(0)
     ,   m_has_encountered_error_state(false)
 {
     Initialize(initial_state);
@@ -2657,7 +2695,7 @@ void Parser::RealizedState_::Reinitialize (Npda_::StateIndex_ initial_state)
     // Clear the stack(s) and reset the error state.
     ClearStack();
     m_has_encountered_error_state = false;
-    // But preserve m_lookahead_queue and m_max_realized_lookahead_count.
+    // But preserve m_lookahead_queue, m_max_realized_lookahead_count, and m_max_realized_lookahead_queue_size
 
     Initialize(initial_state);
 }
@@ -2706,6 +2744,8 @@ void Parser::RealizedState_::UpdateMaxRealizedLookaheadCount ()
             break;
     }
     m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, m_lookahead_queue.size() - parser_generated_token_count);
+
+    m_max_realized_lookahead_queue_size = std::max(m_max_realized_lookahead_queue_size, m_lookahead_queue.size());
 }
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -3217,7 +3257,7 @@ Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index) throw()
         TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3221 "reflex_parser.cpp"
+#line 3261 "reflex_parser.cpp"
  << "Retrieved token " << m_realized_state_->LookaheadQueue().back() << " from scan actions; pushing token onto back of lookahead queue\n")
     }
     return m_realized_state_->LookaheadQueue()[index];
@@ -3273,7 +3313,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                     TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3277 "reflex_parser.cpp"
+#line 3317 "reflex_parser.cpp"
  << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
 
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
@@ -3443,7 +3483,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3447 "reflex_parser.cpp"
+#line 3487 "reflex_parser.cpp"
  << "        Reconstructing branches:\n")
     for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
@@ -3451,7 +3491,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
         TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 218 "reflex_parser.trison"
 "Reflex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3455 "reflex_parser.cpp"
+#line 3495 "reflex_parser.cpp"
  << "            " << reconstruct_branch.StatePtr() << '\n')
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
@@ -4515,4 +4555,4 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 } // end of namespace Reflex
 
-#line 4519 "reflex_parser.cpp"
+#line 4559 "reflex_parser.cpp"

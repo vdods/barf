@@ -37,6 +37,7 @@
 <|end_if
 {
     m_max_allowable_lookahead_count = <{default_max_allowable_lookahead_count};
+    m_max_allowable_lookahead_queue_size = <{default_max_allowable_lookahead_queue_size};
     m_max_allowable_parse_tree_depth = <{default_max_allowable_parse_tree_depth};
     m_realized_state_ = NULL;
     m_hypothetical_state_ = NULL;
@@ -163,6 +164,7 @@ char const *const <{class_name}::ms_parser_return_code_string_table_[] =
     "PRC_SUCCESS",
     "PRC_UNHANDLED_PARSE_ERROR",
     "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE",
     "PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH",
     "PRC_INTERNAL_ERROR",
 };

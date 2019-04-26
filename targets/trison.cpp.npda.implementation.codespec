@@ -46,6 +46,16 @@ std::size_t <{class_name}::MaxRealizedLookaheadCount () const
     return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadCount();
 }
 
+std::int64_t <{class_name}::MaxAllowableLookaheadQueueSize () const
+{
+    return m_max_allowable_lookahead_queue_size;
+}
+
+std::size_t <{class_name}::MaxRealizedLookaheadQueueSize () const
+{
+    return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadQueueSize();
+}
+
 std::int64_t <{class_name}::MaxAllowableParseTreeDepth () const
 {
     return m_max_allowable_parse_tree_depth;
@@ -134,6 +144,15 @@ void <{class_name}::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_pa
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << <{debug_spew_prefix} << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
 <|          end_if
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
+            break;
+        }
+
+        if (m_realized_state_->HasExceededMaxAllowableLookaheadQueueSize(m_max_allowable_lookahead_queue_size))
+        {
+<|          if(is_defined(generate_debug_spew_code))
+            TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << <{debug_spew_prefix} << "Max realized lookahead queue size (" << m_realized_state_->MaxRealizedLookaheadQueueSize() << ") has exceeded max allowable lookahead queue size (" << m_max_allowable_lookahead_queue_size << "); modify this limit using the default_max_allowable_lookahead_queue_size directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadQueueSize method.  Returning with error.\n")
+<|          end_if
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE;
             break;
         }
 
@@ -845,6 +864,12 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
         out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
     else
         out << " (allowable lookahead count is unlimited)\n";
+    out << <{debug_spew_prefix} << "Max realized lookahead queue size (so far) is:\n";
+    out << <{debug_spew_prefix} << "    " << m_realized_state_->MaxRealizedLookaheadQueueSize();
+    if (m_max_allowable_lookahead_queue_size >= 0)
+        out << " (max allowable lookahead queue size is " << m_max_allowable_lookahead_queue_size << ")\n";
+    else
+        out << " (allowable lookahead queue size is unlimited)\n";
     out << <{debug_spew_prefix} << "Max realized parse tree depth (so far) is:\n";
     out << <{debug_spew_prefix} << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
     if (m_max_allowable_parse_tree_depth >= 0)
@@ -895,6 +920,7 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
 
 <{class_name}::RealizedState_::RealizedState_ (Npda_::StateIndex_ initial_state)
     :   m_max_realized_lookahead_count(0)
+    ,   m_max_realized_lookahead_queue_size(0)
     ,   m_has_encountered_error_state(false)
 {
     Initialize(initial_state);
@@ -1027,7 +1053,7 @@ void <{class_name}::RealizedState_::Reinitialize (Npda_::StateIndex_ initial_sta
     // Clear the stack(s) and reset the error state.
     ClearStack();
     m_has_encountered_error_state = false;
-    // But preserve m_lookahead_queue and m_max_realized_lookahead_count.
+    // But preserve m_lookahead_queue, m_max_realized_lookahead_count, and m_max_realized_lookahead_queue_size
 
     Initialize(initial_state);
 }
@@ -1080,6 +1106,8 @@ void <{class_name}::RealizedState_::UpdateMaxRealizedLookaheadCount ()
             break;
     }
     m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, m_lookahead_queue.size() - parser_generated_token_count);
+
+    m_max_realized_lookahead_queue_size = std::max(m_max_realized_lookahead_queue_size, m_lookahead_queue.size());
 }
 
 // ////////////////////////////////////////////////////////////////////////////

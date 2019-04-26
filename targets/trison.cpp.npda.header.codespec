@@ -183,7 +183,9 @@ private:
         TokenQueue_ const & LookaheadQueue                      () const { return m_lookahead_queue; }
 
         std::size_t         MaxRealizedLookaheadCount           () const { return m_max_realized_lookahead_count; }
+        std::size_t         MaxRealizedLookaheadQueueSize       () const { return m_max_realized_lookahead_queue_size; }
         bool                HasExceededMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count) const { return max_allowable_lookahead_count >= 0 && m_max_realized_lookahead_count > std::size_t(max_allowable_lookahead_count); }
+        bool                HasExceededMaxAllowableLookaheadQueueSize (std::int64_t max_allowable_lookahead_queue_size) const { return max_allowable_lookahead_queue_size >= 0 && m_max_realized_lookahead_queue_size > std::size_t(max_allowable_lookahead_queue_size); }
         bool                HasEncounteredErrorState            () const { return m_has_encountered_error_state; }
 
         // This is used during the hypothetical branch processing for when more lookaheads are needed in the queue.
@@ -234,6 +236,7 @@ private:
         // This is related to k in the LALR(k) quantity of the grammar, though it's only what's been realized
         // during the parse, not the theoretical bound (if it even exists).
         std::size_t         m_max_realized_lookahead_count;
+        std::size_t         m_max_realized_lookahead_queue_size;
         // TODO: Maybe make this into the number of times error recovery has been entered.
         bool                m_has_encountered_error_state;
     }; // end of struct <{class_name}::RealizedState_

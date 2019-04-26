@@ -58,6 +58,10 @@ public:
         /// Indicates that the parse was halted because the number of realized
         /// lookaheads exceeded the max allowable lookahead count (NPDA target only).
         PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT,
+        /// Indicates that the parse was halted because the realized size of the
+        /// lookahead queue exceeded the max allowable lookahead queue size (NPDA
+        /// target only).
+        PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE,
         /// Indicates that the parse was halted because the depth of the parse tree
         /// exceeded the max allowable parse tree depth (NPDA target only).
         PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH,
@@ -183,10 +187,22 @@ public:
     /// documented in trison.cpp.targetspec.  A negative value means that there is
     /// no limit.
     std::int64_t MaxAllowableLookaheadCount () const;
-    /// Returns the maximum number of lookaheads used in any parser decision so far
-    /// (this is not the theoretical maximum for the grammar/npda, it's the maximum
-    /// only for the states the parser has actually encountered).
+    /// Returns the maximum number of lookaheads (not including %error tokens) used in
+    /// any parser decision so far (this is not the theoretical maximum for the
+    /// grammar/npda, it's the maximum only for the states the parser has actually
+    /// encountered).
     std::size_t MaxRealizedLookaheadCount () const;
+    /// Returns the highest value that MaxRealizedLookaheadQueueSize may be before the
+    /// PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE error is generated.  The default
+    /// is set by the default_max_allowable_lookahead_queue_size directive, which is
+    /// documented in trison.cpp.targetspec.  A negative value means that there is
+    /// no limit.
+    std::int64_t MaxAllowableLookaheadQueueSize () const;
+    /// Returns the maximum size of the lookahead queue (including %error tokens) used
+    /// in any parser decision so far (this is not the theoretical maximum for the
+    /// grammar/npda, it's the maximum only for the states the parser has actually
+    /// encountered).
+    std::size_t MaxRealizedLookaheadQueueSize () const;
     /// Returns the maximum parse tree depth that may occur before the
     /// PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH error is generated.  The default
     /// is set by the default_max_allowable_parse_tree_depth directive, which is
@@ -326,6 +342,7 @@ private:
     // ///////////////////////////////////////////////////////////////////////
 
     std::int64_t m_max_allowable_lookahead_count;
+    std::int64_t m_max_allowable_lookahead_queue_size;
     std::int64_t m_max_allowable_parse_tree_depth;
 
 <|  if(is_defined(generate_debug_spew_code))

@@ -30,12 +30,20 @@
 // ///////////////////////////////////////////////////////////////////////////
 
 // If a nonnegative integer is specified, then that is the maximum number of
-// lookaheads that the NPDA will allow before triggering an error.  The
-// default is 1, which is a reasonable default for most practical cases.
-// 0 is valid (but probably not useful).  Any negative value means there is
-// no limit.  If the limit is hit, the parser will return with error right
-// away.
+// lookaheads (not including %error tokens) that the NPDA will allow before
+// triggering an error.  The default is 1, which is a reasonable default for
+// most practical cases.  0 is valid (but probably not useful).  Any negative
+// value means there is no limit.  If the limit is hit, the parser will return
+// with error right away.
 %add_optional_directive default_max_allowable_lookahead_count %string           %default "1"
+// If a nonnegative integer is specified, then that is the maximum number of
+// lookaheads (including %error tokens) that the NPDA will allow before
+// triggering an error.  The default is 2 (which is 1 more than the default
+// value for default_max_allowable_lookahead_count), which is a reasonable
+// default for most practical cases.  0 is valid (but probably not useful).
+// Any negative value means there is no limit.  If the limit is hit, the
+// parser will return with error right away.
+%add_optional_directive default_max_allowable_lookahead_queue_size %string      %default "2"
 // If a nonnegative integer is specified, then that is the maximum parse tree
 // node depth that the NPDA will allow within the phase of parsing where it
 // is determining which real action to take.  Any negative value means there
