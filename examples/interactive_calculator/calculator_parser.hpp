@@ -56,6 +56,10 @@ public:
         /// Indicates that the parse was halted because the number of realized
         /// lookaheads exceeded the max allowable lookahead count (NPDA target only).
         PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT,
+        /// Indicates that the parse was halted because the realized size of the
+        /// lookahead queue exceeded the max allowable lookahead queue size (NPDA
+        /// target only).
+        PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE,
         /// Indicates that the parse was halted because the depth of the parse tree
         /// exceeded the max allowable parse tree depth (NPDA target only).
         PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH,
@@ -167,10 +171,22 @@ public:
     /// documented in trison.cpp.targetspec.  A negative value means that there is
     /// no limit.
     std::int64_t MaxAllowableLookaheadCount () const;
-    /// Returns the maximum number of lookaheads used in any parser decision so far
-    /// (this is not the theoretical maximum for the grammar/npda, it's the maximum
-    /// only for the states the parser has actually encountered).
+    /// Returns the maximum number of lookaheads (not including %error tokens) used in
+    /// any parser decision so far (this is not the theoretical maximum for the
+    /// grammar/npda, it's the maximum only for the states the parser has actually
+    /// encountered).
     std::size_t MaxRealizedLookaheadCount () const;
+    /// Returns the highest value that MaxRealizedLookaheadQueueSize may be before the
+    /// PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE error is generated.  The default
+    /// is set by the default_max_allowable_lookahead_queue_size directive, which is
+    /// documented in trison.cpp.targetspec.  A negative value means that there is
+    /// no limit.
+    std::int64_t MaxAllowableLookaheadQueueSize () const;
+    /// Returns the maximum size of the lookahead queue (including %error tokens) used
+    /// in any parser decision so far (this is not the theoretical maximum for the
+    /// grammar/npda, it's the maximum only for the states the parser has actually
+    /// encountered).
+    std::size_t MaxRealizedLookaheadQueueSize () const;
     /// Returns the maximum parse tree depth that may occur before the
     /// PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH error is generated.  The default
     /// is set by the default_max_allowable_parse_tree_depth directive, which is
@@ -185,6 +201,9 @@ public:
     /// Sets the maximum allowable lookahead count.  The initial value is given by
     /// the default_max_allowable_lookahead_count directive defined in trison.cpp.targetspec.
     void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
+    /// Sets the maximum allowable lookahead queue size.  The initial value is given by
+    /// the default_max_allowable_lookahead_queue_size directive defined in trison.cpp.targetspec.
+    void SetMaxAllowableLookaheadQueueSize (std::int64_t max_allowable_lookahead_queue_size);
     /// Sets the maximum allowable parse tree depth.  The initial value is given by
     /// the default_max_allowable_parse_tree_depth directive defined in trison.cpp.targetspec.
     void SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth);
@@ -296,7 +315,7 @@ private:
     double m_modulus;
     bool m_should_print_result;
 
-#line 300 "calculator_parser.hpp"
+#line 319 "calculator_parser.hpp"
 
 
 private:
@@ -306,6 +325,7 @@ private:
     // ///////////////////////////////////////////////////////////////////////
 
     std::int64_t m_max_allowable_lookahead_count;
+    std::int64_t m_max_allowable_lookahead_queue_size;
     std::int64_t m_max_allowable_parse_tree_depth;
 
     // debug spew methods
@@ -632,7 +652,9 @@ private:
         TokenQueue_ const & LookaheadQueue                      () const { return m_lookahead_queue; }
 
         std::size_t         MaxRealizedLookaheadCount           () const { return m_max_realized_lookahead_count; }
+        std::size_t         MaxRealizedLookaheadQueueSize       () const { return m_max_realized_lookahead_queue_size; }
         bool                HasExceededMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count) const { return max_allowable_lookahead_count >= 0 && m_max_realized_lookahead_count > std::size_t(max_allowable_lookahead_count); }
+        bool                HasExceededMaxAllowableLookaheadQueueSize (std::int64_t max_allowable_lookahead_queue_size) const { return max_allowable_lookahead_queue_size >= 0 && m_max_realized_lookahead_queue_size > std::size_t(max_allowable_lookahead_queue_size); }
         bool                HasEncounteredErrorState            () const { return m_has_encountered_error_state; }
 
         // This is used during the hypothetical branch processing for when more lookaheads are needed in the queue.
@@ -683,6 +705,7 @@ private:
         // This is related to k in the LALR(k) quantity of the grammar, though it's only what's been realized
         // during the parse, not the theoretical bound (if it even exists).
         std::size_t         m_max_realized_lookahead_count;
+        std::size_t         m_max_realized_lookahead_queue_size;
         // TODO: Maybe make this into the number of times error recovery has been entered.
         bool                m_has_encountered_error_state;
     }; // end of struct Parser::RealizedState_
@@ -894,4 +917,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(CALCULATOR_PARSER_HPP_)
 
-#line 898 "calculator_parser.hpp"
+#line 921 "calculator_parser.hpp"

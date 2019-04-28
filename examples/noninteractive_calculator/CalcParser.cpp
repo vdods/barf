@@ -35,6 +35,7 @@ std::shared_ptr<BaseOperator> base_operator (Args_&&... args)
 CalcParser::CalcParser ()
 {
     m_max_allowable_lookahead_count = 1;
+    m_max_allowable_lookahead_queue_size = 2;
     m_max_allowable_parse_tree_depth = 64;
     m_realized_state_ = NULL;
     m_hypothetical_state_ = NULL;
@@ -47,7 +48,7 @@ CalcParser::CalcParser ()
     m_scanner = new Scanner();
     m_scanner->DebugSpew(true);
 
-#line 51 "CalcParser.cpp"
+#line 52 "CalcParser.cpp"
 }
 
 CalcParser::~CalcParser ()
@@ -62,7 +63,7 @@ CalcParser::~CalcParser ()
     delete m_scanner;
     m_scanner = NULL;
 
-#line 66 "CalcParser.cpp"
+#line 67 "CalcParser.cpp"
 }
 
 bool CalcParser::IsAtEndOfInput ()
@@ -89,7 +90,7 @@ void CalcParser::ResetForNewInput ()
 
     // m_recoverable_error_encountered = false;
 
-#line 93 "CalcParser.cpp"
+#line 94 "CalcParser.cpp"
 }
 
 CalcParser::ParserReturnCode CalcParser::Parse (std::shared_ptr<Ast::Base> *return_token, Nonterminal::Name nonterminal_to_parse)
@@ -138,6 +139,7 @@ char const *const CalcParser::ms_parser_return_code_string_table_[] =
     "PRC_SUCCESS",
     "PRC_UNHANDLED_PARSE_ERROR",
     "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT",
+    "PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE",
     "PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH",
     "PRC_INTERNAL_ERROR",
 };
@@ -422,7 +424,7 @@ void CalcParser::ThrowAwayTokenData_ (std::shared_ptr<Ast::Base> const &token_da
 
 #line 106 "CalcParser.trison"
  
-#line 426 "CalcParser.cpp"
+#line 428 "CalcParser.cpp"
 }
 
 CalcParser::Token CalcParser::Scan_ () throw()
@@ -457,7 +459,7 @@ CalcParser::Token CalcParser::Scan_ () throw()
             return Token(Terminal::Name(scanner_token_id), nullptr);
     }
 
-#line 461 "CalcParser.cpp"
+#line 463 "CalcParser.cpp"
 
     TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from scan_actions code block\n")
     assert(false && "no value returned from scan_actions code block");
@@ -513,6 +515,16 @@ std::size_t CalcParser::MaxRealizedLookaheadCount () const
     return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadCount();
 }
 
+std::int64_t CalcParser::MaxAllowableLookaheadQueueSize () const
+{
+    return m_max_allowable_lookahead_queue_size;
+}
+
+std::size_t CalcParser::MaxRealizedLookaheadQueueSize () const
+{
+    return (m_realized_state_ == NULL) ? 0 : m_realized_state_->MaxRealizedLookaheadQueueSize();
+}
+
 std::int64_t CalcParser::MaxAllowableParseTreeDepth () const
 {
     return m_max_allowable_parse_tree_depth;
@@ -526,6 +538,11 @@ std::uint32_t CalcParser::MaxRealizedParseTreeDepth () const
 void CalcParser::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count)
 {
     m_max_allowable_lookahead_count = max_allowable_lookahead_count;
+}
+
+void CalcParser::SetMaxAllowableLookaheadQueueSize (std::int64_t max_allowable_lookahead_queue_size)
+{
+    m_max_allowable_lookahead_queue_size = max_allowable_lookahead_queue_size;
 }
 
 void CalcParser::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth)
@@ -582,6 +599,13 @@ CalcParser::ParserReturnCode CalcParser::Parse_ (std::shared_ptr<Ast::Base> *ret
         {
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << "CalcParser: " << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
+            break;
+        }
+
+        if (m_realized_state_->HasExceededMaxAllowableLookaheadQueueSize(m_max_allowable_lookahead_queue_size))
+        {
+            TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << "CalcParser: " << "Max realized lookahead queue size (" << m_realized_state_->MaxRealizedLookaheadQueueSize() << ") has exceeded max allowable lookahead queue size (" << m_max_allowable_lookahead_queue_size << "); modify this limit using the default_max_allowable_lookahead_queue_size directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadQueueSize method.  Returning with error.\n")
+            parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE;
             break;
         }
 
@@ -1146,7 +1170,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "stmt_then_end <- stmt %end\n";
         return st;
     
-#line 1150 "CalcParser.cpp"
+#line 1174 "CalcParser.cpp"
             break;
         }
 
@@ -1159,7 +1183,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "stmt_then_end <- %error[%end] %end\n";
         return Ast::error_dummy("stmt_then_end <- %error[%end] %end");
     
-#line 1163 "CalcParser.cpp"
+#line 1187 "CalcParser.cpp"
             break;
         }
 
@@ -1173,7 +1197,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "stmt <- expr ';'\n";
         return ex;
     
-#line 1177 "CalcParser.cpp"
+#line 1201 "CalcParser.cpp"
             break;
         }
 
@@ -1186,7 +1210,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "stmt <- %error ';'\n";
         return Ast::error_dummy("stmt <- %error ';'");
     
-#line 1190 "CalcParser.cpp"
+#line 1214 "CalcParser.cpp"
             break;
         }
 
@@ -1200,7 +1224,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- '(' expr ')'\n";
         return e;
     
-#line 1204 "CalcParser.cpp"
+#line 1228 "CalcParser.cpp"
             break;
         }
 
@@ -1213,7 +1237,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- '(' %error[')'] ')'\n";
         return Ast::error_dummy("expr <- '(' %error[')'] ')'");
     
-#line 1217 "CalcParser.cpp"
+#line 1241 "CalcParser.cpp"
             break;
         }
 
@@ -1226,7 +1250,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- '(' %error[%end | ';']\n";
         return Ast::error_dummy("expr <- '(' %error[%end | ';']");
     
-#line 1230 "CalcParser.cpp"
+#line 1254 "CalcParser.cpp"
             break;
         }
 
@@ -1240,7 +1264,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- NUM(" << num << ")\n";
         return num;
     
-#line 1244 "CalcParser.cpp"
+#line 1268 "CalcParser.cpp"
             break;
         }
 
@@ -1255,7 +1279,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
         return base_operator("+", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1259 "CalcParser.cpp"
+#line 1283 "CalcParser.cpp"
             break;
         }
 
@@ -1270,7 +1294,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("++++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1274 "CalcParser.cpp"
+#line 1298 "CalcParser.cpp"
             break;
         }
 
@@ -1285,7 +1309,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("+++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1289 "CalcParser.cpp"
+#line 1313 "CalcParser.cpp"
             break;
         }
 
@@ -1300,7 +1324,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
         return base_operator("++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1304 "CalcParser.cpp"
+#line 1328 "CalcParser.cpp"
             break;
         }
 
@@ -1315,7 +1339,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
         return base_operator("*", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1319 "CalcParser.cpp"
+#line 1343 "CalcParser.cpp"
             break;
         }
 
@@ -1330,7 +1354,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
         return base_operator("?", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1334 "CalcParser.cpp"
+#line 1358 "CalcParser.cpp"
             break;
         }
 
@@ -1344,7 +1368,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- '-' expr(" << op << ")\n";
         return base_operator("-", BaseOperator::ChildNodes{op});
     
-#line 1348 "CalcParser.cpp"
+#line 1372 "CalcParser.cpp"
             break;
         }
 
@@ -1359,7 +1383,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
         return base_operator("^", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1363 "CalcParser.cpp"
+#line 1387 "CalcParser.cpp"
             break;
         }
 
@@ -1393,6 +1417,12 @@ void CalcParser::PrintParserStatus_ (std::ostream &out) const
         out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
     else
         out << " (allowable lookahead count is unlimited)\n";
+    out << "CalcParser: " << "Max realized lookahead queue size (so far) is:\n";
+    out << "CalcParser: " << "    " << m_realized_state_->MaxRealizedLookaheadQueueSize();
+    if (m_max_allowable_lookahead_queue_size >= 0)
+        out << " (max allowable lookahead queue size is " << m_max_allowable_lookahead_queue_size << ")\n";
+    else
+        out << " (allowable lookahead queue size is unlimited)\n";
     out << "CalcParser: " << "Max realized parse tree depth (so far) is:\n";
     out << "CalcParser: " << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
     if (m_max_allowable_parse_tree_depth >= 0)
@@ -1442,6 +1472,7 @@ void CalcParser::PrintParserStatus_ (std::ostream &out) const
 
 CalcParser::RealizedState_::RealizedState_ (Npda_::StateIndex_ initial_state)
     :   m_max_realized_lookahead_count(0)
+    ,   m_max_realized_lookahead_queue_size(0)
     ,   m_has_encountered_error_state(false)
 {
     Initialize(initial_state);
@@ -1574,7 +1605,7 @@ void CalcParser::RealizedState_::Reinitialize (Npda_::StateIndex_ initial_state)
     // Clear the stack(s) and reset the error state.
     ClearStack();
     m_has_encountered_error_state = false;
-    // But preserve m_lookahead_queue and m_max_realized_lookahead_count.
+    // But preserve m_lookahead_queue, m_max_realized_lookahead_count, and m_max_realized_lookahead_queue_size
 
     Initialize(initial_state);
 }
@@ -1623,6 +1654,8 @@ void CalcParser::RealizedState_::UpdateMaxRealizedLookaheadCount ()
             break;
     }
     m_max_realized_lookahead_count = std::max(m_max_realized_lookahead_count, m_lookahead_queue.size() - parser_generated_token_count);
+
+    m_max_realized_lookahead_queue_size = std::max(m_max_realized_lookahead_queue_size, m_lookahead_queue.size());
 }
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -2844,4 +2877,4 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     m_scanner->DebugSpew(debug_spew);
 }
 
-#line 2848 "CalcParser.cpp"
+#line 2881 "CalcParser.cpp"
