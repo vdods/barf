@@ -223,6 +223,9 @@ public:
     /// Sets the maximum allowable lookahead count.  The initial value is given by
     /// the default_max_allowable_lookahead_count directive defined in trison.cpp.targetspec.
     void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
+    /// Sets the maximum allowable lookahead queue size.  The initial value is given by
+    /// the default_max_allowable_lookahead_queue_size directive defined in trison.cpp.targetspec.
+    void SetMaxAllowableLookaheadQueueSize (std::int64_t max_allowable_lookahead_queue_size);
     /// Sets the maximum allowable parse tree depth.  The initial value is given by
     /// the default_max_allowable_parse_tree_depth directive defined in trison.cpp.targetspec.
     void SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth);
@@ -338,7 +341,7 @@ private:
     AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 
-#line 342 "barf_targetspec_parser.hpp"
+#line 345 "barf_targetspec_parser.hpp"
 
 
 private:
@@ -941,4 +944,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 945 "barf_targetspec_parser.hpp"
+#line 948 "barf_targetspec_parser.hpp"

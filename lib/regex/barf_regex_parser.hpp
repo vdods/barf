@@ -221,6 +221,9 @@ public:
     /// Sets the maximum allowable lookahead count.  The initial value is given by
     /// the default_max_allowable_lookahead_count directive defined in trison.cpp.targetspec.
     void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
+    /// Sets the maximum allowable lookahead queue size.  The initial value is given by
+    /// the default_max_allowable_lookahead_queue_size directive defined in trison.cpp.targetspec.
+    void SetMaxAllowableLookaheadQueueSize (std::int64_t max_allowable_lookahead_queue_size);
     /// Sets the maximum allowable parse tree depth.  The initial value is given by
     /// the default_max_allowable_parse_tree_depth directive defined in trison.cpp.targetspec.
     void SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth);
@@ -323,7 +326,7 @@ private:
     // job; parsing of hex chars, e.g. \xA7)
     bool m_active_backslash;
 
-#line 327 "barf_regex_parser.hpp"
+#line 330 "barf_regex_parser.hpp"
 
 
 private:
@@ -957,4 +960,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 961 "barf_regex_parser.hpp"
+#line 964 "barf_regex_parser.hpp"

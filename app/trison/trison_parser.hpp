@@ -263,6 +263,9 @@ public:
     /// Sets the maximum allowable lookahead count.  The initial value is given by
     /// the default_max_allowable_lookahead_count directive defined in trison.cpp.targetspec.
     void SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lookahead_count);
+    /// Sets the maximum allowable lookahead queue size.  The initial value is given by
+    /// the default_max_allowable_lookahead_queue_size directive defined in trison.cpp.targetspec.
+    void SetMaxAllowableLookaheadQueueSize (std::int64_t max_allowable_lookahead_queue_size);
     /// Sets the maximum allowable parse tree depth.  The initial value is given by
     /// the default_max_allowable_parse_tree_depth directive defined in trison.cpp.targetspec.
     void SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth);
@@ -388,7 +391,7 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 392 "trison_parser.hpp"
+#line 395 "trison_parser.hpp"
 
 
 private:
@@ -990,4 +993,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 994 "trison_parser.hpp"
+#line 997 "trison_parser.hpp"
