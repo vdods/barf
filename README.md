@@ -15,8 +15,14 @@ This suite contains programs to supplant the useful, but dated, tools `bison`
 
 ## Release Notes
 
-This lists versions 2 and later only.
+This lists versions 2 and later only.  Note that BARF follows non-strict semantic versioning;
+in particular, the major revision number certainly indicates backward-incompatible changes, and
+while the minor revision number usually indicates backward-compatible changes, there may be
+minor incompabilities.  The patch revision number indicates bugfixes and minor changes.
 
+-   `2.2.0` : Added a method to the `trison.cpp` target related to the
+    `default_max_allowable_lookahead_queue_size` directive that should have been there in
+    version `2.1.0`.  This constitutes a minor revision because a new API method was added.
 -   `2.1.0` : Addition of `default_max_allowable_lookahead_queue_size` to `trison.cpp` target,
     which provides a tool for preventing infinite loops due to insufficient error-handling rules
     in a grammar.
