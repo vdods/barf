@@ -71,6 +71,11 @@ void <{class_name}::SetMaxAllowableLookaheadCount (std::int64_t max_allowable_lo
     m_max_allowable_lookahead_count = max_allowable_lookahead_count;
 }
 
+void <{class_name}::SetMaxAllowableLookaheadQueueSize (std::int64_t max_allowable_lookahead_queue_size)
+{
+    m_max_allowable_lookahead_queue_size = max_allowable_lookahead_queue_size;
+}
+
 void <{class_name}::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tree_depth)
 {
     m_max_allowable_parse_tree_depth = max_allowable_parse_tree_depth;
