@@ -192,6 +192,7 @@ private:
         void                PushBackLookahead                   (Token const &lookahead, HPSQueue_ const &hps_queue);
 
         Token               PopStack                            ();
+        void                ReplaceTokenStackTopWith            (Token const &replacement);
         Token               PopFrontLookahead                   (HPSQueue_ &hps_queue);
 
         void                StealTokenStackTop                  (<{token_data_type} *&return_token);
@@ -218,9 +219,13 @@ private:
 
         void                Initialize                          (Npda_::StateIndex_ initial_state);
 
+    public:
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
+    private:
         void                UpdateMaxRealizedLookaheadCount     ();
+    public:
         void                SetHasEncounteredErrorState         () { m_has_encountered_error_state = true; }
+    private:
 
         static bool         IsScannerGeneratedTokenId           (Token::Id token_id)
         {

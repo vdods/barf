@@ -195,7 +195,39 @@ void <{class_name}::ThrowAwayToken_ (Token const &token_) throw()
 
 void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) throw()
 {
-<|throw_away_token_actions?
+<|  throw_away_token_actions?
+}
+
+<{class_name}::Token::Data <{class_name}::InsertLookaheadErrorActions_ (Token const &noconsume_lookahead_token)
+{
+<|  if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing insert-lookahead-error actions on lookahead token " << ms_token_name_table_[noconsume_lookahead_token.m_id] << '\n')
+<|  end_if
+<|  insert_lookahead_error_actions?
+}
+
+<{class_name}::Token::Data <{class_name}::DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token)
+{
+<|  if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing discard-lookahead actions on stack top error token " << ms_token_name_table_[consume_stack_top_error_token.m_id] << " and lookahead token " << ms_token_name_table_[consume_lookahead_token.m_id] << '\n')
+<|  end_if
+<|  discard_lookahead_actions?
+}
+
+<{class_name}::Token::Data <{class_name}::PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token)
+{
+<|  if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing pop-stack-1 actions on stack top token " << ms_token_name_table_[consume_stack_top_tokens[0].m_id] << " and lookahead token " << ms_token_name_table_[consume_lookahead_token.m_id] << '\n')
+<|  end_if
+<|  pop_stack_1_actions?
+}
+
+<{class_name}::Token::Data <{class_name}::PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
+{
+<|  if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing pop-stack-2 actions on stack top tokens [" << ms_token_name_table_[consume_stack_top_tokens[0].m_id] << ", " << ms_token_name_table_[consume_stack_top_tokens[1].m_id] << "] and lookahead token " << ms_token_name_table_[noconsume_lookahead_token.m_id] << '\n')
+<|  end_if
+<|  pop_stack_2_actions?
 }
 
 <{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}

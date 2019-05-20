@@ -366,6 +366,10 @@ private:
     ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token const &token) throw();
     void ThrowAwayTokenData_ (<{token_data_type} const &token_data) throw();
+    Token::Data InsertLookaheadErrorActions_ (Token const &noconsume_lookahead_token);
+    Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
+    Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
+    Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
     void ResetForNewInput_ () throw();
     Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};
     void RunNonassocErrorActions_ (Token const &lookahead);

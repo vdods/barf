@@ -1751,7 +1751,7 @@ which includes the top element.
 
             Result: <realized-stack-tokens> <%error> . <rest-of-lookaheads>
                                             ^~~~~~~^
-                                            output from handler code
+                                            output from handler code (old stack top is replaced)
 
         -   POP_STACK 1 -- this can only happen when the lookahead is %error (and in
             this case, the top of the realized stack is not %error); it should have
@@ -1765,7 +1765,7 @@ which includes the top element.
 
             Result: <realized-stack-tokens> . <%error> <rest-of-lookaheads>
                                               ^~~~~~~^
-                                              output from handler code
+                                              output from handler code (old lookahead is replaced)
 
         -   POP_STACK 2 -- this can only happen when the lookahead is %end; it should
             have access to the 2 tokens about to be popped and the lookahead %end token,
@@ -1780,10 +1780,23 @@ which includes the top element.
                                               ^~~~~~~^
                                               output from handler code
 
+        NOTE: The semantics for POP_STACK 1 and POP_STACK 2 are different; the handler
+        code is expected to consume (e.g. delete, aggregate, etc) all inputs for
+        POP_STACK 1, and is expected to only consume the popped stack tokens for
+        POP_STACK 2 (and only read from the lookahead).
+
+        TODO: If any of the insert_lookahead_error_actions or related are not defined, then
+        call throw_away_token_actions instead.
+
         Idea: Could combine INSERT_LOOKAHEAD_ERROR and POP_STACK (if the above behavior
         is accepted) into POP_STACK_AND_INSERT_LOOKAHEAD_ERROR, with a pop count of
         0 (equivalent to INSERT_LOOKAHEAD_ERROR), or 1, or 2.  Maybe name this a shorter
         name like POP_STACK_AND_INSERT_ERROR.
+
+        TODO: Don't combine POP_STACK and INSERT_LOOKAHEAD_ERROR (but perhaps rename
+        POP_STACK into POP_STACK_AND_INSERT_ERROR), just define a single handler code
+        block for both, where the number of stack tokens is 0 for INSERT_LOOKAHEAD_ERROR
+        and is 1 or 2 for POP_STACK_AND_INSERT_ERROR.
 
     -   %nonassoc error handling should also produce a token which will be the %error
         token in the resulting error.  Perhaps it should also somehow have access to the

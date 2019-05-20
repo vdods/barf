@@ -908,17 +908,15 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_ERROR:throwaway ID:assigned_id
     %target.cpp {
-        EmitError("%error terminal must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+        EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
         // This is the minimal necessary token, although the EmitError call should prevent trison
         // from proceeding to parser generation.
         RuleTokenList *lookaheads = new RuleTokenList();
         lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
 
-        EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
-        delete assigned_id;
-
-        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
         delete throwaway;
+        delete assigned_id;
         return rule_token_error_until_lookahead;
     }
 |
@@ -929,7 +927,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         RuleTokenList *lookaheads = new RuleTokenList();
         lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
 
-        EmitError("%error terminal must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+        EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
 
         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
@@ -939,10 +937,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
     DIRECTIVE_ERROR:throwaway bracketed_lookahead_terminal_list:lookaheads ':' ID:assigned_id
     %target.cpp {
-        EmitError("%error terminal can't have an assigned id", throwaway->GetFiLoc());
-        delete assigned_id;
-        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
         delete throwaway;
+        delete assigned_id;
         return rule_token_error_until_lookahead;
     }
 |
@@ -973,7 +970,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         }
 
         if (!has_end_terminal)
-            EmitError("%error terminal lookaheads must include %end (e.g. %error[%end|';'])", filoc);
+            EmitError("%error directive lookaheads must include %end (e.g. %error[%end|';'])", filoc);
 
         return lookaheads;
     }

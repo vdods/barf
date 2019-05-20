@@ -274,34 +274,130 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 break;
             }
             case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+                // INSERT_LOOKAHEAD_ERROR -- this should have access to the lookahead that
+                // caused the error to be generated, and it should return a token that will
+                // be used as the %error token.
+                //
+                // Start:  <realized-stack-tokens> . <lookahead>
+                //                                 ^~~~~~~~~~^
+                //                                 input to handler code
+                //
+                // Result: <realized-stack-tokens> . <%error> <lookahead>
+                //                                 ^~~~~~~^
+                //                                 output from handler code
+
 <|              if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
 <|              end_if
-                m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
+                Token lookahead = Lookahead_(0);
+<|              if(is_defined(generate_debug_spew_code))
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "HIPPO 2 lookahead retrieved from Lookahead_(0) for INSERT_LOOKAHEAD_ERROR action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+<|              end_if
+                Token resulting_error_token(Terminal::ERROR_, InsertLookaheadErrorActions_(lookahead));
+                m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                m_realized_state_->SetHasEncounteredErrorState();
+                //m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::DISCARD_LOOKAHEAD: {
+                // DISCARD_LOOKAHEAD -- this can only happen if the top of the realized stack
+                // is %error; it should have access to the %error token and the lookahead
+                // token, and it should return a token that will be used as the resulting
+                // %error token (e.g. combining the file locations of the two input tokens).
+                //
+                // Start:  <realized-stack-tokens> <%error> . <lookahead0> <rest-of-lookaheads>
+                //                                 ^~~~~~~~~~~~~~~~~~~~~~^
+                //                                 inputs to handler code
+                //
+                // Result: <realized-stack-tokens> <%error> . <rest-of-lookaheads>
+                //                                 ^~~~~~~^
+                //                                 output from handler code (old stack top is replaced)
+
 <|              if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action DISCARD_LOOKAHEAD.\n")
 <|              end_if
-                m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
+                Token stack_top_error_token = m_realized_state_->TokenStack().back();
+                assert(stack_top_error_token.m_id == Terminal::ERROR_);
+                Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+                Token resulting_error_token = Token(Terminal::ERROR_, DiscardLookaheadActions_(stack_top_error_token, lookahead));
+                m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                //m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::POP_STACK: {
+                // POP_STACK 1 -- this can only happen when the lookahead is %error (and in
+                // this case, the top of the realized stack is not %error); it should have
+                // access to the token about to be popped and the lookahead %error token, and
+                // it should return a token that will be used as the resulting %error token
+                // (e.g. combining the file locations of the two input tokens).
+                //
+                // Start:  <realized-stack-tokens> <token0> . <%error> <rest-of-lookaheads>
+                //                                 ^~~~~~~~~~~~~~~~~~^
+                //                                 inputs to handler code
+                //
+                // Result: <realized-stack-tokens> . <%error> <rest-of-lookaheads>
+                //                                 ^~~~~~~^
+                //                                 output from handler code
+                //
+                // POP_STACK 2 -- this can only happen when the lookahead is %end; it should
+                // have access to the 2 tokens about to be popped and the lookahead %end token,
+                // and it should return a token that will be used as the resulting %error token
+                // (e.g. combining the file locations of the three input tokens).
+                //
+                // Start:  <realized-stack-tokens> <token1> <token0> . <%end>
+                //                                 ^~~~~~~~~~~~~~~~~~~~~~~~~^
+                //                                 inputs to handler code
+                //
+                // Result: <realized-stack-tokens> . <%error> <%end>
+                //                                 ^~~~~~~^
+                //                                 output from handler code
+                //
+                // NOTE: The semantics for POP_STACK 1 and POP_STACK 2 are different; the handler
+                // code is expected to consume (e.g. delete, aggregate, etc) all inputs for
+                // POP_STACK 1, and is expected to only consume the popped stack tokens for
+                // POP_STACK 2 (and only read from the lookahead).
+
                 std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
 <|              if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action POP_STACK " << pop_count << ".\n")
 <|              end_if
+                assert(pop_count == 1 || pop_count == 2);
 
                 // This one is tricky to implement within RealizedState_ alone, mainly because
                 // of the ThrowAwayToken_ call.
                 if (m_realized_state_->TokenStack().size() > pop_count)
                 {
+                    std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                     for (std::uint32_t i = 0; i < pop_count; ++i)
                     {
                         // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
-                        ThrowAwayToken_(m_realized_state_->PopStack());
+                        popped_tokens[pop_count-1-i] = m_realized_state_->PopStack();
+                        //ThrowAwayToken_(m_realized_state_->PopStack());
                     }
+                    assert(popped_tokens.size() == pop_count);
+<|                  if(is_defined(generate_debug_spew_code))
+                    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+<|                  end_if
+
+                    Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+                    //Token lookahead(Lookahead_(0));
+<|                  if(is_defined(generate_debug_spew_code))
+                    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+<|                  end_if
+                    Token resulting_error_token(Terminal::ERROR_);
+                    if (pop_count == 1)
+                    {
+                        assert(lookahead.m_id == Terminal::ERROR_);
+                        resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
+                        //Token popped_lookahead_token = m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue);
+                        //assert(popped_lookahead_token.m_id == lookahead.m_id);
+                    }
+                    else
+                    {
+                        assert(lookahead.m_id == Terminal::END_);
+                        resulting_error_token.m_data = PopStack2Actions_(popped_tokens, lookahead);
+                    }
+                    m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
                 }
                 else
                 {
@@ -913,8 +1009,9 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
         ParseTreeNode_ *hps = *it;
-        assert(hps != NULL);
-        hps->Print(out, this, DebugSpewPrefix(), 1);
+        //assert(hps != NULL);
+        if (hps != NULL)
+            hps->Print(out, this, DebugSpewPrefix(), 1);
     }
 }
 
@@ -957,6 +1054,14 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
     return popped_token;
 }
 
+void <{class_name}::RealizedState_::ReplaceTokenStackTopWith (Token const &replacement)
+{
+    assert(!m_token_stack.empty());
+//    m_token_stack.back() = replacement;
+    m_token_stack.pop_back();
+    m_token_stack.push_back(replacement);
+}
+
 <{class_name}::Token <{class_name}::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
 {
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
@@ -970,9 +1075,10 @@ void <{class_name}::RealizedState_::PushBackLookahead (Token const &lookahead, H
     for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
         ParseTreeNode_ &hps = **hps_it;
-        --hps.m_realized_lookahead_cursor;
+        if (hps.m_realized_lookahead_cursor > 0);
+            --hps.m_realized_lookahead_cursor;
     }
-    Token retval(m_lookahead_queue.back());
+    Token retval(m_lookahead_queue.front());
     m_lookahead_queue.pop_front();
     return retval;
 }
@@ -1686,6 +1792,14 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                 assert(existing_reduce_action_node != NULL);
                 assert(existing_reduce_action_node->m_spec.m_type == ParseTreeNode_::REDUCE);
 
+                if (true)
+                {
+                    // TEMP
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "\n\nHIPPO existing_reduce_action_node child nodes:\n\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, PrintParserStatus_(*DebugSpewStream()))
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "\n\n")
+                }
+
                 // If the hypothetical action is identical to the existing one, then there's no problem,
                 // just add it as a child to the existing one.
                 if (existing_reduce_action_node->m_spec.m_single_data == rule_index)
@@ -1711,7 +1825,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                     if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
                     {
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.")
 
 <|                      end_if
                         reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
@@ -1731,11 +1845,12 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                     else
                     {
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of existing hps.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of existing hps.")
 <|                      else
                         // Resolving in favor of existing HPS.
 <|                      end_if
                     }
+                    assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
                 }
             }
             else
@@ -1799,6 +1914,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
             // since for example two branches may agree on popping at least once, even if
             // one of them is killed later.
             std::uint32_t const &pop_count = action_data;
+            assert(pop_count == 1 || pop_count == 2);
             // Check if there are actually enough stack elements to pop successfully.
             // If not, then don't create an HPS, and break early.
             if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
@@ -1813,6 +1929,8 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                 assert(new_hps->m_hypothetical_head.HasParent());
                 new_hps->m_hypothetical_head = new_hps->m_hypothetical_head.Parent();
             }
+            if (pop_count == 2)
+                new_hps->m_hypothetical_lookahead_token_id_queue.push_front(Terminal::ERROR_);
 <|          if(is_defined(generate_debug_spew_code))
             TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
 <|          end_if

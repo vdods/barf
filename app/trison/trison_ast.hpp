@@ -140,9 +140,9 @@ struct RuleTokenErrorUntilLookahead : public RuleToken
 {
     RuleTokenList const *m_lookaheads;
 
-    RuleTokenErrorUntilLookahead (FiLoc const &filoc, RuleTokenList const *lookaheads)
+    RuleTokenErrorUntilLookahead (FiLoc const &filoc, RuleTokenList const *lookaheads, string const &assigned_id = g_empty_string)
         :
-        RuleToken("ERROR_", filoc, g_empty_string, AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD),
+        RuleToken("ERROR_", filoc, assigned_id, AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD),
         m_lookaheads(lookaheads)
     {
         assert(m_lookaheads != NULL);
