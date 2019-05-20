@@ -386,6 +386,10 @@ private:
     ParserReturnCode Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token const &token) throw();
     void ThrowAwayTokenData_ (Ast::Base * const &token_data) throw();
+    Token::Data InsertLookaheadErrorActions_ (Token const &noconsume_lookahead_token);
+    Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
+    Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
+    Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
     void ResetForNewInput_ () throw();
     Token Scan_ ();
     void RunNonassocErrorActions_ (Token const &lookahead);
@@ -703,6 +707,7 @@ private:
         void                PushBackLookahead                   (Token const &lookahead, HPSQueue_ const &hps_queue);
 
         Token               PopStack                            ();
+        void                ReplaceTokenStackTopWith            (Token const &replacement);
         Token               PopFrontLookahead                   (HPSQueue_ &hps_queue);
 
         void                StealTokenStackTop                  (Ast::Base * *&return_token);
@@ -729,9 +734,13 @@ private:
 
         void                Initialize                          (Npda_::StateIndex_ initial_state);
 
+    public:
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
+    private:
         void                UpdateMaxRealizedLookaheadCount     ();
+    public:
         void                SetHasEncounteredErrorState         () { m_has_encountered_error_state = true; }
+    private:
 
         static bool         IsScannerGeneratedTokenId           (Token::Id token_id)
         {
@@ -960,4 +969,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 964 "barf_regex_parser.hpp"
+#line 973 "barf_regex_parser.hpp"

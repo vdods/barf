@@ -283,8 +283,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 //                                 input to handler code
                 //
                 // Result: <realized-stack-tokens> . <%error> <lookahead>
-                //                                 ^~~~~~~^
-                //                                 output from handler code
+                //                                   ^~~~~~~^
+                //                                   output from handler code
 
 <|              if(is_defined(generate_debug_spew_code))
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
