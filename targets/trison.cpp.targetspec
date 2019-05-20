@@ -189,13 +189,50 @@
 // should be operated upon.  For example, if you use a dynamically allocated
 // AST node class for token_data_type, you would want to "delete token_data;".
 %add_optional_directive throw_away_token_actions            %strict_code_block
-
-// TODO: document these
+// Error handling begins (after all other non-error actions are exhausted) by
+// inserting an error lookahead.  Optionally specify this code block to generate
+// that error token data.  The input is
+//     `Token const &noconsume_lookahead_token`
+// (which can be used e.g. to extract file location info from), and the code
+// must return a Token::Data value that will be used in the inserted error token.
+//
+// If not specified, then a default implementation which returns token_data_default
+// will be generated.
 %add_optional_directive insert_lookahead_error_actions      %strict_code_block
+// During error handling, if the top of the token stack is %error and there is
+// no valid actions to take, the lookahead can be discarded (think of it as
+// the %error token consuming the lookahead).  Optionally specify this code
+// block to handle this case.  The input is
+//    `Token const &consume_stack_top_error_token, Token const &consume_lookahead_token`
+// and the code must return a Token::Data value that will be used in the resulting
+// error token (which replaces the %error token that was on top of the stack before;
+// i.e. consume_stack_top_error_token).
+//
+// If not specified, then a default implementation involving throw_away_token_actions
+// will be generated.
 %add_optional_directive discard_lookahead_actions           %strict_code_block
+// During error handling, if the lookahead is %error but there is no rule that
+// can shift %error, then the stack will be popped once.  Optionally specify this
+// code block to handle this case.  The input is
+//     `std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token`
+// where consume_stack_top_tokens has size 1, and the code must return a Token::Data
+// that will be used in the resulting error token (which replaces the %error
+// lookahead token; i.e. consume_lookahead_token).
+//
+// If not specified, then a default implementation involving throw_away_token_actions
+// will be generated.
 %add_optional_directive pop_stack_1_actions                 %strict_code_block
+// During error handling, if the lookahead is %end but there is no rule that
+// can shift %end, then the stack will be popped twice.  Optionally specify this
+// code block to handle this case.  The input is
+//     `std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token`
+// where consume_stack_top_tokens has size 2, and the code must return a Token::Data
+// that will be used in the resulting error token (which is pushed onto the front
+// of the lookahead queue).
+//
+// If not specified, then a default implementation involving throw_away_token_actions
+// will be generated.
 %add_optional_directive pop_stack_2_actions                 %strict_code_block
-
 // This is the code that is executed to return whatever the next lookahead
 // token is.  If your parser uses a lexical scanner for input, here is where
 // you would call its "Scan" method.  You must return a class_name::Token
