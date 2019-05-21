@@ -355,7 +355,7 @@ void GenerateNpdaSymbols (PrimarySource const &primary_source, Graph const &npda
     // INSERT_LOOKAHEAD_ERROR=4, DISCARD_LOOKAHEAD=5, POP_STACK=6, EPSILON=7.
     //
     // _npda_transition_type_name[_npda_transition_count] -- gives the text name
-    // of the transition type.  valid values are "RETURN", "REDUCE", "SHIFT",
+    // of the transition type.  valid values are "RETURN", "ABORT", "REDUCE", "SHIFT",
     // "INSERT_LOOKAHEAD_ERROR", "DISCARD_LOOKAHEAD", "POP_STACK", "EPSILON".
     //
     // _npda_transition_token_index[_npda_transition_count] gives the numeric value of the

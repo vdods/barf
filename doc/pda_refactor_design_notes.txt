@@ -1806,3 +1806,44 @@ which includes the top element.
 
         TODO: Figure out exactly which tokens will be available to the nonassoc error
         handling code.
+
+    -   If %lookahead feature is ever implemented, it could be used in particular to
+        address the following problem.
+
+            statement_list <- statement_list statement
+            statement_list <- %empty
+            statement <- <stuff> ';'
+            statement <- %error ';'
+
+        Illustrating the steps a parser goes through
+
+            (1) statement_list . %error %end
+
+            SHIFT %error
+
+            (2) statement_list %error . %end (since statement nonterminal accepts `%error ';'`)
+
+            POP_STACK 2 (since lookahead is %end)
+
+            (3) . %error %end
+
+            REDUCE statement_list <- %empty
+
+            (4) statement_list . %error %end
+
+            and this puts us back at (1), and therefore is an infinite loop.
+
+        Thus if the empty rule was changed to
+
+            statement_list <- %empty %lookahead[^%error]
+
+        it could avoid the loop, and instead of reducing statement_list from nothing, it would
+        have to continue:
+
+            POP_STACK 1
+
+            (5) . %error %end
+
+            POP_STACK 1 (because there's no way to shift %error)
+
+        and at this point, the stack would be exhausted, so it would return "unhandled parse error".

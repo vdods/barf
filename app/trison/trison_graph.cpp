@@ -20,6 +20,7 @@ string const &TransitionTypeString (TransitionType transition_type)
     {
         "ERROR_PANIC",
         "RETURN",
+        "ABORT",
         "REDUCE",
         "SHIFT",
         "INSERT_LOOKAHEAD_ERROR",
@@ -46,6 +47,14 @@ Graph::Transition NpdaReduceTransition (Uint32 transition_token_id, string const
 Graph::Transition NpdaReturnTransition (Uint32 transition_token_id, string const &transition_label)
 {
     Graph::Transition transition(TT_RETURN, 2, Graph::Transition::ms_no_target_index, transition_label + ":RETURN", Graph::Color::ms_blue);
+    transition.SetData(0, transition_token_id);
+    transition.SetData(1, Uint32(-1)); // unused
+    return transition;
+}
+
+Graph::Transition NpdaAbortTransition (Uint32 transition_token_id, string const &transition_label)
+{
+    Graph::Transition transition(TT_ABORT, 2, Graph::Transition::ms_no_target_index, transition_label + ":ABORT", Graph::Color::ms_red);
     transition.SetData(0, transition_token_id);
     transition.SetData(1, Uint32(-1)); // unused
     return transition;

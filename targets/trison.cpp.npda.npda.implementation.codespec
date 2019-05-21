@@ -54,7 +54,7 @@ void <{class_name}::Npda_::ComputeEpsilonClosureOfState_ (StateIndex_ state_inde
 
 <{class_name}::Npda_::TransitionVector_ const &<{class_name}::Npda_::NonEpsilonTransitionsOfState_ (StateIndex_ state_index, std::uint32_t sorted_type_index)
 {
-    assert(0 <= sorted_type_index && sorted_type_index <= 3);
+    assert(Transition_::Order::MIN_SORTED_TYPE_INDEX <= sorted_type_index && sorted_type_index <= Transition_::Order::MAX_SORTED_TYPE_INDEX);
 
     // Memoize this function, because it will be called so many times and is somewhat intensive.
     typedef std::pair<StateIndex_,std::uint32_t> KeyType;
@@ -74,7 +74,7 @@ void <{class_name}::Npda_::ComputeEpsilonClosureOfState_ (StateIndex_ state_inde
         State_ const &state = ms_state_table_[*it];
         for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count; transition != transition_end; ++transition)
         {
-            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(Transition_::Type(transition->m_type));
+            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(*transition);
             if (transition->m_type != Transition_::EPSILON && transition_sorted_type_index == sorted_type_index)
                 non_epsilon_transition_set.insert(*transition);
         }

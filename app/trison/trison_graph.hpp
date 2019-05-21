@@ -18,15 +18,12 @@
 namespace Trison {
 
 // Barf::TransitionType values.  The order of these is critical to the order
-// in Barf::Graph::Transition::Order.  We require that TT_ERROR_PANIC,
-// TT_RETURN, and TT_REDUCE come before TT_SHIFT, so that they appear before
-// TT_SHIFT, because the default transition must come first (and a transition
-// is TT_ERROR_PANIC, TT_RETURN, or TT_REDUCE if and only if it is a default
-// transition).  NOTE (2019.02.27) not sure if this comment still applies.
+// in Barf::Graph::Transition::Order.
 enum
 {
     TT_ERROR_PANIC = 0,
-    TT_RETURN,
+    TT_RETURN,                  // Parser should return with success
+    TT_ABORT,                   // Parser should return with "unhandled parse error"
     TT_REDUCE,
     TT_SHIFT,
     TT_INSERT_LOOKAHEAD_ERROR,
@@ -48,6 +45,7 @@ string const &TransitionTypeString (TransitionType transition_type);
 
 Graph::Transition NpdaReduceTransition (Uint32 transition_token_id, string const &transition_label, Uint32 reduction_rule_index);
 Graph::Transition NpdaReturnTransition (Uint32 transition_token_id, string const &transition_label);
+Graph::Transition NpdaAbortTransition (Uint32 transition_token_id, string const &transition_label);
 Graph::Transition NpdaShiftTransition (Uint32 transition_token_id, string const &transition_label, Uint32 target_index);
 Graph::Transition NpdaInsertLookaheadErrorTransition (Uint32 transition_token_id, string const &transition_label);
 Graph::Transition NpdaDiscardLookaheadTransition (Uint32 transition_token_id, string const &transition_label);

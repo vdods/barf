@@ -248,7 +248,7 @@ private:
 
     struct HypotheticalState_
     {
-        HypotheticalState_      (std::uint32_t initial_state);
+        HypotheticalState_      (Branch_ const &initial_branch);
         ~HypotheticalState_     ();
 
         // The min and max realized lookahead cursors being equal across all HPSes indicates that
@@ -296,7 +296,7 @@ private:
         // Note: HPS stands for "Hypothetical Parser State", which represents one of possibly many
         // ways the non-deterministic parser can parse the input.
         // TODO: probably order this so that the Spec::Order gives an obvious way to do error handling action last
-        enum Type { ROOT = 0, RETURN, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, HPS, COUNT_ };
+        enum Type { ROOT = 0, RETURN, ABORT, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, HPS, COUNT_ };
         static std::uint32_t const UNUSED_DATA = std::uint32_t(-1);
 
         struct Spec

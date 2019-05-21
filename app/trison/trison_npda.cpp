@@ -366,6 +366,12 @@ void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph)
     assert(npda_graph.NodeCount() == 0 && "must start with an empty graph");
 
     GraphContext graph_context(primary_source, npda_graph);
+
+    // First generate the fallback state which results in the TT_ABORT action.
+    Uint32 graph_fallback_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("FALLBACK", Graph::Color(0xFFA793), false, false));
+    assert(graph_fallback_state == 0);
+    graph_context.m_npda_graph.AddTransition(graph_fallback_state, NpdaAbortTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+
     for (NonterminalList::const_iterator it = primary_source.m_nonterminal_list->begin(), it_end = primary_source.m_nonterminal_list->end();
          it != it_end;
          ++it)
