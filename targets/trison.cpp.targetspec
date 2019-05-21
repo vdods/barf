@@ -183,12 +183,35 @@
 // directive.  The custom_token_data_type_cast must have the same semantics as
 // static_cast (e.g. dynamic_cast, or make your own special cast function).
 %add_optional_directive custom_token_data_type_cast         %string             %default "static_cast"
+
+// ///////////////////////////////////////////////////////////////////////////
+// Basic error token handling
+// ///////////////////////////////////////////////////////////////////////////
+
 // During error handling and cleanup, token data is "thrown away", and this
 // directive specifies the code to execute in order to "throw away" said data.
 // The token_data variable, of type specified by token_data_type, is what
 // should be operated upon.  For example, if you use a dynamically allocated
 // AST node class for token_data_type, you would want to "delete token_data;".
 %add_optional_directive throw_away_token_actions            %strict_code_block
+// This specifies code to be executed in the event that a SHIFT/REDUCE conflict
+// invoving a %nonassoc-precedence rule is encountered.  The variable
+// "lookahead" (which has type `Token const &`) is defined for use in this
+// code.  The lookahead var corresponds to the token that would have been
+// shifted had this conflict been resolved in favor of the SHIFT action.
+// E.g. in "x == y != z", where there are the following nonassoc rules having
+// the same precedence:
+//
+//     expr <- expr == expr
+//     expr <- expr != expr
+//
+// the "!=" token would be the lookahead.that is available to this code block.
+%add_optional_directive nonassoc_error_actions              %strict_code_block
+
+// ///////////////////////////////////////////////////////////////////////////
+// Advanced error token handling
+// ///////////////////////////////////////////////////////////////////////////
+
 // Error handling begins (after all other non-error actions are exhausted) by
 // inserting an error lookahead.  Optionally specify this code block to generate
 // that error token data.  The input is
@@ -233,6 +256,11 @@
 // If not specified, then a default implementation involving throw_away_token_actions
 // will be generated.
 %add_optional_directive pop_stack_2_actions                 %strict_code_block
+
+// ///////////////////////////////////////////////////////////////////////////
+// Input actions
+// ///////////////////////////////////////////////////////////////////////////
+
 // This is the code that is executed to return whatever the next lookahead
 // token is.  If your parser uses a lexical scanner for input, here is where
 // you would call its "Scan" method.  You must return a class_name::Token
@@ -244,19 +272,6 @@
 // to start parsing from a new source.  This code is executed in addition to
 // various internal state-machine-related initialization that is required.
 %add_optional_directive reset_for_new_input_actions         %strict_code_block
-// This specifies code to be executed in the event that a SHIFT/REDUCE conflict
-// invoving a %nonassoc-precedence rule is encountered.  The variable
-// "lookahead" (which has type `Token const &`) is defined for use in this
-// code.  The lookahead var corresponds to the token that would have been
-// shifted had this conflict been resolved in favor of the SHIFT action.
-// E.g. in "x == y != z", where there are the following nonassoc rules having
-// the same precedence:
-//
-//     expr <- expr == expr
-//     expr <- expr != expr
-//
-// the "!=" token would be the lookahead.that is available to this code block.
-%add_optional_directive nonassoc_error_actions              %strict_code_block
 
 // ///////////////////////////////////////////////////////////////////////////
 // Miscellaneous directives
