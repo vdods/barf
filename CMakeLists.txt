@@ -348,7 +348,6 @@ install(
     FILES                                       # Important files
         LICENSE
         README.md
-        TODO
         barf-config.cmake                       # barf-config.cmake is how find_package(barf) works.
     DESTINATION lib/barf                        # This is relative to CMAKE_INSTALL_PREFIX
 )
