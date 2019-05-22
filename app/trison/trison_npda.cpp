@@ -286,15 +286,16 @@ void GenerateNpda (
 
         if (previous_token_was_error)
         {
-            // TODO: Check that non-rule-ending error tokens are %error_until_lookahead[%end]
-//             assert(previous_error_until_lookaheads != NULL);
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element("END_")->m_token_index, "END_", 2));
-//             for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-//                                                lookahead_it_end = previous_error_until_lookaheads->end();
-//                  lookahead_it != lookahead_it_end;
-//                  ++lookahead_it)
-//             {
-//             }
+            assert(previous_error_until_lookaheads != NULL);
+            for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
+                                               lookahead_it_end = previous_error_until_lookaheads->end();
+                 lookahead_it != lookahead_it_end;
+                 ++lookahead_it)
+            {
+                assert(*lookahead_it != NULL);
+                RuleToken const &lookahead = **lookahead_it;
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, 2));
+            }
             graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
         }
         else
