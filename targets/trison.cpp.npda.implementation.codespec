@@ -120,7 +120,6 @@ void <{class_name}::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_pa
     assert(m_realized_state_->BranchVectorStack().size() == 2);
     assert(m_realized_state_->BranchVectorStack().back().size() == 1);
 
-    //m_hypothetical_state_ = new HypotheticalState_(start_state_index);
     m_hypothetical_state_ = new HypotheticalState_(m_realized_state_->BranchVectorStack().back()[0]);
 
 <|  if(is_defined(generate_debug_spew_code))
@@ -361,8 +360,8 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 //                                 ^~~~~~~~~~~~~~~~~~~~~~~~~^
                 //                                 inputs to handler code
                 //
-                // Result: <realized-stack-tokens> . <%error> <%end>
-                //                                   ^~~~~~~^
+                // Result: <realized-stack-tokens> . <%end>
+                //                                   ^~~~~^
                 //                                   output from handler code
                 //
                 // NOTE: The semantics for POP_STACK 1 and POP_STACK 2 are different; the handler
@@ -375,48 +374,99 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action POP_STACK " << pop_count << ".\n")
 <|              end_if
                 assert(pop_count == 1 || pop_count == 2);
+                assert(m_realized_state_->TokenStack().size() > pop_count);
 
-                // This one is tricky to implement within RealizedState_ alone, mainly because
-                // of the ThrowAwayToken_ call.
-                if (m_realized_state_->TokenStack().size() > pop_count)
+                if (pop_count == 1)
                 {
-                    std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                    for (std::uint32_t i = 0; i < pop_count; ++i)
-                    {
-                        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
-                        popped_tokens[pop_count-1-i] = m_realized_state_->PopStack();
-                        //ThrowAwayToken_(m_realized_state_->PopStack());
-                    }
+                    std::vector<Token> popped_tokens{m_realized_state_->PopStack()};
                     assert(popped_tokens.size() == pop_count);
 <|                  if(is_defined(generate_debug_spew_code))
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 <|                  end_if
 
                     Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
-                    //Token lookahead(Lookahead_(0));
 <|                  if(is_defined(generate_debug_spew_code))
-                    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
 <|                  end_if
                     Token resulting_error_token(Terminal::ERROR_);
-                    if (pop_count == 1)
-                    {
-                        assert(lookahead.m_id == Terminal::ERROR_);
-                        resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
-                        //Token popped_lookahead_token = m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue);
-                        //assert(popped_lookahead_token.m_id == lookahead.m_id);
-                    }
-                    else
-                    {
-                        assert(lookahead.m_id == Terminal::END_);
-                        resulting_error_token.m_data = PopStack2Actions_(popped_tokens, lookahead);
-                    }
+
+                    assert(lookahead.m_id == Terminal::ERROR_);
+                    resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
                     m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
                 }
                 else
                 {
-                    // We're popping more than the whole stack, which is an error
-                    parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
-                    should_return = true;
+                    assert(pop_count == 2);
+
+                    if (true)
+                    {
+                        // plain ol' pop stack 2 times -- this is the old behavior, except that the
+                        // return Token::Data value from PopStack2Actions_ will be used to replace
+                        // the %end token's data.  NOTE: The replacement is commented out currently.
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->PopStack();
+                        assert(popped_tokens.size() == pop_count);
+<|                      if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+<|                      end_if
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+<|                      if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+<|                      end_if
+                        PopStack2Actions_(popped_tokens, lookahead);
+                        //Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        //m_realized_state_->PushFrontLookahead(resulting_end_token, m_hypothetical_state_->m_hps_queue);
+                    }
+                    else if (false)
+                    {
+                        // pop stack 2 times and push resulting error token onto stack -- this is new behavior
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        assert(popped_tokens.size() == pop_count);
+<|                      if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+<|                      end_if
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+<|                      if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+<|                      end_if
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                    }
+                    else
+                    {
+                        // TEMP: pop 3 times
+
+                        // pop stack 2 times and push resulting error token onto stack -- this is new behavior
+
+                        std::uint32_t pop_count = 3; // shadowing earlier one
+                        assert(m_realized_state_->TokenStack().size() >= pop_count);
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[2] = m_realized_state_->PopStack();
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        assert(popped_tokens.size() == pop_count);
+<|                      if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+<|                      end_if
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+<|                      if(is_defined(generate_debug_spew_code))
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+<|                      end_if
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                    }
                 }
 
                 // Because POP_STACK involves popping the stack, the parse tree should be destroyed and

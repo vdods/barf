@@ -576,26 +576,26 @@ std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name non
 {
     switch (nonterminal)
     {
-        case Nonterminal::body: return 0;
-        case Nonterminal::code: return 14;
-        case Nonterminal::code_body: return 20;
-        case Nonterminal::conditional_series: return 215;
-        case Nonterminal::conditional_series_end: return 239;
-        case Nonterminal::define: return 293;
-        case Nonterminal::define_array_element: return 317;
-        case Nonterminal::define_map_element: return 340;
-        case Nonterminal::define_scalar: return 298;
-        case Nonterminal::else_if_statement: return 272;
-        case Nonterminal::else_statement: return 257;
-        case Nonterminal::end_define: return 365;
-        case Nonterminal::end_for_each: return 437;
-        case Nonterminal::end_if: return 244;
-        case Nonterminal::end_loop: return 401;
-        case Nonterminal::executable: return 9;
-        case Nonterminal::expression: return 26;
-        case Nonterminal::for_each: return 414;
-        case Nonterminal::if_statement: return 220;
-        case Nonterminal::loop: return 378;
+        case Nonterminal::body: return 1;
+        case Nonterminal::code: return 15;
+        case Nonterminal::code_body: return 21;
+        case Nonterminal::conditional_series: return 216;
+        case Nonterminal::conditional_series_end: return 240;
+        case Nonterminal::define: return 294;
+        case Nonterminal::define_array_element: return 318;
+        case Nonterminal::define_map_element: return 341;
+        case Nonterminal::define_scalar: return 299;
+        case Nonterminal::else_if_statement: return 273;
+        case Nonterminal::else_statement: return 258;
+        case Nonterminal::end_define: return 366;
+        case Nonterminal::end_for_each: return 438;
+        case Nonterminal::end_if: return 245;
+        case Nonterminal::end_loop: return 402;
+        case Nonterminal::executable: return 10;
+        case Nonterminal::expression: return 27;
+        case Nonterminal::for_each: return 415;
+        case Nonterminal::if_statement: return 221;
+        case Nonterminal::loop: return 379;
         default: assert(false && "invalid nonterminal"); return 0;
     }
 }
@@ -679,13 +679,16 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
     else // This happens when parsing for the first time.
         m_realized_state_ = new RealizedState_(start_state_index);
 
-    m_hypothetical_state_ = new HypotheticalState_(start_state_index);
+    assert(m_realized_state_->BranchVectorStack().size() == 2);
+    assert(m_realized_state_->BranchVectorStack().back().size() == 1);
+
+    m_hypothetical_state_ = new HypotheticalState_(m_realized_state_->BranchVectorStack().back()[0]);
 
     TRISON_CPP_DEBUG_CODE_(DSF_STACK_AND_LOOKAHEADS,
         *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 689 "barf_preprocessor_parser.cpp"
+#line 692 "barf_preprocessor_parser.cpp"
  << "<stack> . <lookaheads>: ";
         m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
         *DebugSpewStream() << '\n';
@@ -700,18 +703,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 704 "barf_preprocessor_parser.cpp"
+#line 707 "barf_preprocessor_parser.cpp"
  << "\n";
             *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 709 "barf_preprocessor_parser.cpp"
+#line 712 "barf_preprocessor_parser.cpp"
  << "---------- ITERATION " << iteration_index << " --------------\n";
             PrintParserStatus_(*DebugSpewStream());
             *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 715 "barf_preprocessor_parser.cpp"
+#line 718 "barf_preprocessor_parser.cpp"
  << '\n';
         )
 
@@ -720,7 +723,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 724 "barf_preprocessor_parser.cpp"
+#line 727 "barf_preprocessor_parser.cpp"
  << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
             break;
@@ -731,7 +734,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 735 "barf_preprocessor_parser.cpp"
+#line 738 "barf_preprocessor_parser.cpp"
  << "Max realized lookahead queue size (" << m_realized_state_->MaxRealizedLookaheadQueueSize() << ") has exceeded max allowable lookahead queue size (" << m_max_allowable_lookahead_queue_size << "); modify this limit using the default_max_allowable_lookahead_queue_size directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadQueueSize method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE;
             break;
@@ -742,7 +745,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 746 "barf_preprocessor_parser.cpp"
+#line 749 "barf_preprocessor_parser.cpp"
  << "Parse tree depth (" << m_hypothetical_state_->ParseTreeDepth() << ") has exceeded max allowable parse tree depth (" << m_max_allowable_parse_tree_depth << "); modify this limit using the default_max_allowable_parse_tree_depth directive (see trison.cpp.targetspec), or using the SetMaxAllowableParseTreeDepth method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH;
             break;
@@ -756,7 +759,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         TRISON_CPP_DEBUG_CODE_(DSF_ITERATION_COUNT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 760 "barf_preprocessor_parser.cpp"
+#line 763 "barf_preprocessor_parser.cpp"
  << '\n')
         ++iteration_index;
     }
@@ -766,18 +769,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 770 "barf_preprocessor_parser.cpp"
+#line 773 "barf_preprocessor_parser.cpp"
  << "\n";
         *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 775 "barf_preprocessor_parser.cpp"
+#line 778 "barf_preprocessor_parser.cpp"
  << "---------- RETURNING --------------\n";
         PrintParserStatus_(*DebugSpewStream());
         *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 781 "barf_preprocessor_parser.cpp"
+#line 784 "barf_preprocessor_parser.cpp"
  << '\n';
     )
 
@@ -787,7 +790,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 791 "barf_preprocessor_parser.cpp"
+#line 794 "barf_preprocessor_parser.cpp"
  << "Parse() is returning " << ms_parser_return_code_string_table_[parser_return_code_] << '\n';
     )
 
@@ -799,12 +802,12 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 803 "barf_preprocessor_parser.cpp"
+#line 806 "barf_preprocessor_parser.cpp"
  << "Parse stack tree has trunk; executing trunk actions.\n")
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 808 "barf_preprocessor_parser.cpp"
+#line 811 "barf_preprocessor_parser.cpp"
  << '\n')
 
     if (m_hypothetical_state_->m_root->HasTrunkChild())
@@ -824,13 +827,24 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 828 "barf_preprocessor_parser.cpp"
+#line 831 "barf_preprocessor_parser.cpp"
  << "Executing trunk action RETURN.\n")
-                assert(m_realized_state_->TokenStack().size() == 2);
+                // assert(m_realized_state_->TokenStack().size() == 2); // TODO: change to 3 HIPPO
                 parser_return_code_ = PRC_SUCCESS;
                 // This doesn't change the structure of the stack but does take ownership of the top stack token.
                 // This must be done so that the return token isn't destroyed with the parser.
                 m_realized_state_->StealTokenStackTop(return_token);
+                should_return = true;
+                break;
+            }
+            case ParseTreeNode_::ABORT: {
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 845 "barf_preprocessor_parser.cpp"
+ << "Executing trunk action ABORT.\n")
+                assert(m_realized_state_->TokenStack().size() == 1);
+                parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
                 should_return = true;
                 break;
             }
@@ -840,7 +854,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 844 "barf_preprocessor_parser.cpp"
+#line 858 "barf_preprocessor_parser.cpp"
  << "Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
@@ -854,7 +868,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 858 "barf_preprocessor_parser.cpp"
+#line 872 "barf_preprocessor_parser.cpp"
  << "Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
                 m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
                 break;
@@ -869,19 +883,19 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 //                                 input to handler code
                 //
                 // Result: <realized-stack-tokens> . <%error> <lookahead>
-                //                                 ^~~~~~~^
-                //                                 output from handler code
+                //                                   ^~~~~~~^
+                //                                   output from handler code
 
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 879 "barf_preprocessor_parser.cpp"
+#line 893 "barf_preprocessor_parser.cpp"
  << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
                 Token lookahead = Lookahead_(0);
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 885 "barf_preprocessor_parser.cpp"
+#line 899 "barf_preprocessor_parser.cpp"
  << "HIPPO 2 lookahead retrieved from Lookahead_(0) for INSERT_LOOKAHEAD_ERROR action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                 Token resulting_error_token(Terminal::ERROR_, InsertLookaheadErrorActions_(lookahead));
                 m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
@@ -906,7 +920,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 910 "barf_preprocessor_parser.cpp"
+#line 924 "barf_preprocessor_parser.cpp"
  << "Executing trunk action DISCARD_LOOKAHEAD.\n")
                 Token stack_top_error_token = m_realized_state_->TokenStack().back();
                 assert(stack_top_error_token.m_id == Terminal::ERROR_);
@@ -928,8 +942,8 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 //                                 inputs to handler code
                 //
                 // Result: <realized-stack-tokens> . <%error> <rest-of-lookaheads>
-                //                                 ^~~~~~~^
-                //                                 output from handler code
+                //                                   ^~~~~~~^
+                //                                   output from handler code
                 //
                 // POP_STACK 2 -- this can only happen when the lookahead is %end; it should
                 // have access to the 2 tokens about to be popped and the lookahead %end token,
@@ -940,9 +954,9 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 //                                 ^~~~~~~~~~~~~~~~~~~~~~~~~^
                 //                                 inputs to handler code
                 //
-                // Result: <realized-stack-tokens> . <%error> <%end>
-                //                                 ^~~~~~~^
-                //                                 output from handler code
+                // Result: <realized-stack-tokens> . <%end>
+                //                                   ^~~~~^
+                //                                   output from handler code
                 //
                 // NOTE: The semantics for POP_STACK 1 and POP_STACK 2 are different; the handler
                 // code is expected to consume (e.g. delete, aggregate, etc) all inputs for
@@ -953,55 +967,118 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 957 "barf_preprocessor_parser.cpp"
+#line 971 "barf_preprocessor_parser.cpp"
  << "Executing trunk action POP_STACK " << pop_count << ".\n")
                 assert(pop_count == 1 || pop_count == 2);
+                assert(m_realized_state_->TokenStack().size() > pop_count);
 
-                // This one is tricky to implement within RealizedState_ alone, mainly because
-                // of the ThrowAwayToken_ call.
-                if (m_realized_state_->TokenStack().size() > pop_count)
+                if (pop_count == 1)
                 {
-                    std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                    for (std::uint32_t i = 0; i < pop_count; ++i)
-                    {
-                        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
-                        popped_tokens[pop_count-1-i] = m_realized_state_->PopStack();
-                        //ThrowAwayToken_(m_realized_state_->PopStack());
-                    }
+                    std::vector<Token> popped_tokens{m_realized_state_->PopStack()};
                     assert(popped_tokens.size() == pop_count);
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 976 "barf_preprocessor_parser.cpp"
+#line 983 "barf_preprocessor_parser.cpp"
  << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
                     Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
-                    //Token lookahead(Lookahead_(0));
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 984 "barf_preprocessor_parser.cpp"
- << "lookahead for POP_STACK action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+#line 990 "barf_preprocessor_parser.cpp"
+ << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                     Token resulting_error_token(Terminal::ERROR_);
-                    if (pop_count == 1)
-                    {
-                        assert(lookahead.m_id == Terminal::ERROR_);
-                        resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
-                        //Token popped_lookahead_token = m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue);
-                        //assert(popped_lookahead_token.m_id == lookahead.m_id);
-                    }
-                    else
-                    {
-                        assert(lookahead.m_id == Terminal::END_);
-                        resulting_error_token.m_data = PopStack2Actions_(popped_tokens, lookahead);
-                    }
+
+                    assert(lookahead.m_id == Terminal::ERROR_);
+                    resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
                     m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
                 }
                 else
                 {
-                    // We're popping more than the whole stack, which is an error
-                    parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
-                    should_return = true;
+                    assert(pop_count == 2);
+
+                    if (true)
+                    {
+                        // plain ol' pop stack 2 times -- this is the old behavior, except that the
+                        // return Token::Data value from PopStack2Actions_ will be used to replace
+                        // the %end token's data.  NOTE: The replacement is commented out currently.
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->PopStack();
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1015 "barf_preprocessor_parser.cpp"
+ << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1023 "barf_preprocessor_parser.cpp"
+ << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        PopStack2Actions_(popped_tokens, lookahead);
+                        //Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        //m_realized_state_->PushFrontLookahead(resulting_end_token, m_hypothetical_state_->m_hps_queue);
+                    }
+                    else if (false)
+                    {
+                        // pop stack 2 times and push resulting error token onto stack -- this is new behavior
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1040 "barf_preprocessor_parser.cpp"
+ << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1048 "barf_preprocessor_parser.cpp"
+ << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                    }
+                    else
+                    {
+                        // TEMP: pop 3 times
+
+                        // pop stack 2 times and push resulting error token onto stack -- this is new behavior
+
+                        std::uint32_t pop_count = 3; // shadowing earlier one
+                        assert(m_realized_state_->TokenStack().size() >= pop_count);
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[2] = m_realized_state_->PopStack();
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1070 "barf_preprocessor_parser.cpp"
+ << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 147 "barf_preprocessor_parser.trison"
+"Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1078 "barf_preprocessor_parser.cpp"
+ << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                    }
                 }
 
                 // Because POP_STACK involves popping the stack, the parse tree should be destroyed and
@@ -1023,7 +1100,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1027 "barf_preprocessor_parser.cpp"
+#line 1104 "barf_preprocessor_parser.cpp"
  << "<stack> . <lookaheads>: ";
             m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
             *DebugSpewStream() << '\n';
@@ -1034,7 +1111,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1038 "barf_preprocessor_parser.cpp"
+#line 1115 "barf_preprocessor_parser.cpp"
  << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
             m_hypothetical_state_->DestroyParseTree();
             CreateParseTreeFromRealizedState_();
@@ -1051,7 +1128,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1055 "barf_preprocessor_parser.cpp"
+#line 1132 "barf_preprocessor_parser.cpp"
  << "Parse stack tree does not have trunk; continuing parse.\n")
 
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
@@ -1078,7 +1155,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1082 "barf_preprocessor_parser.cpp"
+#line 1159 "barf_preprocessor_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
             }
         }
@@ -1094,7 +1171,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1098 "barf_preprocessor_parser.cpp"
+#line 1175 "barf_preprocessor_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
@@ -1139,7 +1216,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1143 "barf_preprocessor_parser.cpp"
+#line 1220 "barf_preprocessor_parser.cpp"
  << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
                 // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
                 m_hypothetical_state_->DeleteBranch(reduce);
@@ -1153,7 +1230,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1157 "barf_preprocessor_parser.cpp"
+#line 1234 "barf_preprocessor_parser.cpp"
  << "        Case 2; REDUCE <= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1162,7 +1239,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1166 "barf_preprocessor_parser.cpp"
+#line 1243 "barf_preprocessor_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
@@ -1173,7 +1250,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1177 "barf_preprocessor_parser.cpp"
+#line 1254 "barf_preprocessor_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -1186,7 +1263,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1190 "barf_preprocessor_parser.cpp"
+#line 1267 "barf_preprocessor_parser.cpp"
  << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity: " <<
  Grammar_::ms_associativity_string_table_[reduction_rule_precedence.m_associativity] << '\n')
                 switch (reduction_rule_precedence.m_associativity)
@@ -1195,7 +1272,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1199 "barf_preprocessor_parser.cpp"
+#line 1276 "barf_preprocessor_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
@@ -1206,7 +1283,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1210 "barf_preprocessor_parser.cpp"
+#line 1287 "barf_preprocessor_parser.cpp"
  << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
                         // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
                         // action to initiate error panic.  This works only because the shift and reduce nodes
@@ -1265,7 +1342,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1269 "barf_preprocessor_parser.cpp"
+#line 1346 "barf_preprocessor_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
@@ -1284,7 +1361,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1288 "barf_preprocessor_parser.cpp"
+#line 1365 "barf_preprocessor_parser.cpp"
  << "        Case 4; REDUCE >= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1293,7 +1370,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1297 "barf_preprocessor_parser.cpp"
+#line 1374 "barf_preprocessor_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
@@ -1304,7 +1381,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1308 "barf_preprocessor_parser.cpp"
+#line 1385 "barf_preprocessor_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -1314,7 +1391,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1318 "barf_preprocessor_parser.cpp"
+#line 1395 "barf_preprocessor_parser.cpp"
  << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
                 m_hypothetical_state_->DeleteBranch(shift);
                 shift = NULL;
@@ -1325,7 +1402,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1329 "barf_preprocessor_parser.cpp"
+#line 1406 "barf_preprocessor_parser.cpp"
  << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
                 assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
                 assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
@@ -1360,12 +1437,12 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
 
     // Process transitions in order of their SortedTypeIndex.  Only process HPSes that are at min_realized_lookahead_cursor.
     assert(m_hypothetical_state_->m_new_hps_queue.empty()); // This is the starting condition
-    for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
+    for (std::uint32_t current_sorted_type_index = Npda_::Transition_::Order::MIN_SORTED_TYPE_INDEX; current_sorted_type_index <= Npda_::Transition_::Order::MAX_SORTED_TYPE_INDEX; ++current_sorted_type_index)
     {
         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1369 "barf_preprocessor_parser.cpp"
+#line 1446 "barf_preprocessor_parser.cpp"
  << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
         if (!m_hypothetical_state_->m_new_hps_queue.empty())
@@ -1373,7 +1450,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1377 "barf_preprocessor_parser.cpp"
+#line 1454 "barf_preprocessor_parser.cpp"
  << "        Early-out based on sorted type index.\n")
             break;
         }
@@ -1393,7 +1470,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1397 "barf_preprocessor_parser.cpp"
+#line 1474 "barf_preprocessor_parser.cpp"
  << "        Processing ";
                 hps.Print(*DebugSpewStream(), this, DebugSpewPrefix(), 0, true);
             )
@@ -1404,7 +1481,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1408 "barf_preprocessor_parser.cpp"
+#line 1485 "barf_preprocessor_parser.cpp"
  << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1418,7 +1495,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1422 "barf_preprocessor_parser.cpp"
+#line 1499 "barf_preprocessor_parser.cpp"
  << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1438,23 +1515,23 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 Npda_::Transition_ const &transition = *transition_it;
                 assert(transition.m_type >= Npda_::Transition_::RETURN);
                 assert(transition.m_type <= Npda_::Transition_::POP_STACK);
-                assert(Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) == current_sorted_type_index);
+                assert(Npda_::Transition_::Order::SortedTypeIndex(transition) == current_sorted_type_index);
 
-/*
+
                 TRISON_CPP_DEBUG_CODE_(
                     DSF_TRANSITION_PROCESSING,
                     *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1450 "barf_preprocessor_parser.cpp"
+#line 1527 "barf_preprocessor_parser.cpp"
  << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
                     if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
                     else
                         *DebugSpewStream() << transition.m_data_index;
-                    *DebugSpewStream() << " and sorted type index " << Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) << '\n';
+                    *DebugSpewStream() << " and sorted type index " << Npda_::Transition_::Order::SortedTypeIndex(transition) << '\n';
                 )
-*/
+
 
                 ParseTreeNode_ *resulting_hps = NULL;
                 // If it's a default transition, there's no need to access the lookahead (except in
@@ -1487,7 +1564,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1491 "barf_preprocessor_parser.cpp"
+#line 1568 "barf_preprocessor_parser.cpp"
  << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
                             take_action = false;
                         }
@@ -1498,7 +1575,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1502 "barf_preprocessor_parser.cpp"
+#line 1579 "barf_preprocessor_parser.cpp"
  << "            Exercising transition without accessing lookahead... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1513,7 +1590,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1517 "barf_preprocessor_parser.cpp"
+#line 1594 "barf_preprocessor_parser.cpp"
  << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1530,7 +1607,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1534 "barf_preprocessor_parser.cpp"
+#line 1611 "barf_preprocessor_parser.cpp"
  << "    Removing defunct HPSes...\n")
     for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
@@ -1566,7 +1643,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return new Body();
     
-#line 1570 "barf_preprocessor_parser.cpp"
+#line 1647 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1581,7 +1658,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         body->Append(text);
         return body;
     
-#line 1585 "barf_preprocessor_parser.cpp"
+#line 1662 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1597,7 +1674,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             body->Append(executable);
         return body;
     
-#line 1601 "barf_preprocessor_parser.cpp"
+#line 1678 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1615,7 +1692,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         body->Append(text);
         return body;
     
-#line 1619 "barf_preprocessor_parser.cpp"
+#line 1696 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1628,7 +1705,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return code;
     
-#line 1632 "barf_preprocessor_parser.cpp"
+#line 1709 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1641,7 +1718,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return conditional;
     
-#line 1645 "barf_preprocessor_parser.cpp"
+#line 1722 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1656,7 +1733,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         define->SetBody(body);
         return define;
     
-#line 1660 "barf_preprocessor_parser.cpp"
+#line 1737 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1671,7 +1748,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         loop->SetBody(body);
         return loop;
     
-#line 1675 "barf_preprocessor_parser.cpp"
+#line 1752 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1686,7 +1763,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         for_each->SetBody(body);
         return for_each;
     
-#line 1690 "barf_preprocessor_parser.cpp"
+#line 1767 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1697,7 +1774,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 253 "barf_preprocessor_parser.trison"
  return code_body; 
-#line 1701 "barf_preprocessor_parser.cpp"
+#line 1778 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1708,7 +1785,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 255 "barf_preprocessor_parser.trison"
  return code_body; 
-#line 1712 "barf_preprocessor_parser.cpp"
+#line 1789 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1718,7 +1795,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 261 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1722 "barf_preprocessor_parser.cpp"
+#line 1799 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1729,7 +1806,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 264 "barf_preprocessor_parser.trison"
  return expression; 
-#line 1733 "barf_preprocessor_parser.cpp"
+#line 1810 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1739,7 +1816,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 267 "barf_preprocessor_parser.trison"
  return new DumpSymbolTable(); 
-#line 1743 "barf_preprocessor_parser.cpp"
+#line 1820 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1750,7 +1827,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 270 "barf_preprocessor_parser.trison"
  return new Undefine(id); 
-#line 1754 "barf_preprocessor_parser.cpp"
+#line 1831 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1761,7 +1838,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 273 "barf_preprocessor_parser.trison"
  return new DeclareArray(id); 
-#line 1765 "barf_preprocessor_parser.cpp"
+#line 1842 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1772,7 +1849,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 276 "barf_preprocessor_parser.trison"
  return new DeclareMap(id); 
-#line 1776 "barf_preprocessor_parser.cpp"
+#line 1853 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1783,7 +1860,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 279 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, false); 
-#line 1787 "barf_preprocessor_parser.cpp"
+#line 1864 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1794,7 +1871,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 282 "barf_preprocessor_parser.trison"
  return new Include(include_filename_expression, true); 
-#line 1798 "barf_preprocessor_parser.cpp"
+#line 1875 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1805,7 +1882,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 285 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::WARNING); 
-#line 1809 "barf_preprocessor_parser.cpp"
+#line 1886 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1816,7 +1893,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 288 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::ERROR); 
-#line 1820 "barf_preprocessor_parser.cpp"
+#line 1897 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1827,7 +1904,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 291 "barf_preprocessor_parser.trison"
  return new Message(message_expression, Message::FATAL_ERROR); 
-#line 1831 "barf_preprocessor_parser.cpp"
+#line 1908 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1844,7 +1921,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         conditional->SetElseBody(else_body);
         return conditional;
     
-#line 1848 "barf_preprocessor_parser.cpp"
+#line 1925 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1854,7 +1931,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 306 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1858 "barf_preprocessor_parser.cpp"
+#line 1935 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1865,7 +1942,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 308 "barf_preprocessor_parser.trison"
  return body; 
-#line 1869 "barf_preprocessor_parser.cpp"
+#line 1946 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1884,7 +1961,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         body->Append(conditional);
         return body;
     
-#line 1888 "barf_preprocessor_parser.cpp"
+#line 1965 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1895,7 +1972,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 323 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 1899 "barf_preprocessor_parser.cpp"
+#line 1976 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1906,7 +1983,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 326 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 1910 "barf_preprocessor_parser.cpp"
+#line 1987 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1916,7 +1993,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 331 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1920 "barf_preprocessor_parser.cpp"
+#line 1997 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1926,7 +2003,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 333 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1930 "barf_preprocessor_parser.cpp"
+#line 2007 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1937,7 +2014,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 339 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 1941 "barf_preprocessor_parser.cpp"
+#line 2018 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1948,7 +2025,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 342 "barf_preprocessor_parser.trison"
  return new Conditional(expression); 
-#line 1952 "barf_preprocessor_parser.cpp"
+#line 2029 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1958,7 +2035,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 347 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1962 "barf_preprocessor_parser.cpp"
+#line 2039 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1968,7 +2045,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 349 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 1972 "barf_preprocessor_parser.cpp"
+#line 2049 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1979,7 +2056,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 354 "barf_preprocessor_parser.trison"
  return define; 
-#line 1983 "barf_preprocessor_parser.cpp"
+#line 2060 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -1990,7 +2067,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 356 "barf_preprocessor_parser.trison"
  return define; 
-#line 1994 "barf_preprocessor_parser.cpp"
+#line 2071 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2001,7 +2078,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 358 "barf_preprocessor_parser.trison"
  return define; 
-#line 2005 "barf_preprocessor_parser.cpp"
+#line 2082 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2012,7 +2089,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 364 "barf_preprocessor_parser.trison"
  return new Define(id); 
-#line 2016 "barf_preprocessor_parser.cpp"
+#line 2093 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2023,7 +2100,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 367 "barf_preprocessor_parser.trison"
  return new Define(id); 
-#line 2027 "barf_preprocessor_parser.cpp"
+#line 2104 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2034,7 +2111,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 373 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
-#line 2038 "barf_preprocessor_parser.cpp"
+#line 2115 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2045,7 +2122,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 376 "barf_preprocessor_parser.trison"
  return new DefineArrayElement(id); 
-#line 2049 "barf_preprocessor_parser.cpp"
+#line 2126 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2057,7 +2134,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 382 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
-#line 2061 "barf_preprocessor_parser.cpp"
+#line 2138 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2069,7 +2146,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 385 "barf_preprocessor_parser.trison"
  return new DefineMapElement(id, key); 
-#line 2073 "barf_preprocessor_parser.cpp"
+#line 2150 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2079,7 +2156,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 390 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 2083 "barf_preprocessor_parser.cpp"
+#line 2160 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2089,7 +2166,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 392 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 2093 "barf_preprocessor_parser.cpp"
+#line 2170 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2101,7 +2178,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 398 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
-#line 2105 "barf_preprocessor_parser.cpp"
+#line 2182 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2113,7 +2190,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 401 "barf_preprocessor_parser.trison"
  return new Loop(iterator_id, iteration_count_expression); 
-#line 2117 "barf_preprocessor_parser.cpp"
+#line 2194 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2123,7 +2200,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 406 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 2127 "barf_preprocessor_parser.cpp"
+#line 2204 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2133,7 +2210,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 408 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 2137 "barf_preprocessor_parser.cpp"
+#line 2214 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2145,7 +2222,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 414 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
-#line 2149 "barf_preprocessor_parser.cpp"
+#line 2226 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2157,7 +2234,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 417 "barf_preprocessor_parser.trison"
  return new ForEach(key_id, map_id); 
-#line 2161 "barf_preprocessor_parser.cpp"
+#line 2238 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2167,7 +2244,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 422 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 2171 "barf_preprocessor_parser.cpp"
+#line 2248 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2177,7 +2254,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 424 "barf_preprocessor_parser.trison"
  return NULL; 
-#line 2181 "barf_preprocessor_parser.cpp"
+#line 2258 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2188,7 +2265,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 430 "barf_preprocessor_parser.trison"
  return str; 
-#line 2192 "barf_preprocessor_parser.cpp"
+#line 2269 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2199,7 +2276,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 433 "barf_preprocessor_parser.trison"
  return integer; 
-#line 2203 "barf_preprocessor_parser.cpp"
+#line 2280 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2210,7 +2287,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 436 "barf_preprocessor_parser.trison"
  return new Sizeof(id); 
-#line 2214 "barf_preprocessor_parser.cpp"
+#line 2291 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2221,7 +2298,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 439 "barf_preprocessor_parser.trison"
  return new Operation(Operation::INT_CAST, expression); 
-#line 2225 "barf_preprocessor_parser.cpp"
+#line 2302 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2232,7 +2309,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 442 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_CAST, expression); 
-#line 2236 "barf_preprocessor_parser.cpp"
+#line 2313 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2243,7 +2320,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 445 "barf_preprocessor_parser.trison"
  return new Operation(Operation::STRING_LENGTH, expression); 
-#line 2247 "barf_preprocessor_parser.cpp"
+#line 2324 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2254,7 +2331,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 448 "barf_preprocessor_parser.trison"
  return new Operation(Operation::TO_CHARACTER_LITERAL, character_index_expression); 
-#line 2258 "barf_preprocessor_parser.cpp"
+#line 2335 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2265,7 +2342,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 451 "barf_preprocessor_parser.trison"
  return new Operation(Operation::TO_STRING_LITERAL, string_expression); 
-#line 2269 "barf_preprocessor_parser.cpp"
+#line 2346 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2276,7 +2353,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 454 "barf_preprocessor_parser.trison"
  return new IsDefined(id, NULL); 
-#line 2280 "barf_preprocessor_parser.cpp"
+#line 2357 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2288,7 +2365,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 457 "barf_preprocessor_parser.trison"
  return new IsDefined(id, element_index_expression); 
-#line 2292 "barf_preprocessor_parser.cpp"
+#line 2369 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2299,7 +2376,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 460 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_ALWAYS); 
-#line 2303 "barf_preprocessor_parser.cpp"
+#line 2380 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2311,7 +2388,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 463 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_ALWAYS); 
-#line 2315 "barf_preprocessor_parser.cpp"
+#line 2392 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2322,7 +2399,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 466 "barf_preprocessor_parser.trison"
  return new Dereference(id, NULL, DEREFERENCE_IFF_DEFINED); 
-#line 2326 "barf_preprocessor_parser.cpp"
+#line 2403 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2334,7 +2411,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 469 "barf_preprocessor_parser.trison"
  return new Dereference(id, element_index_expression, DEREFERENCE_IFF_DEFINED); 
-#line 2338 "barf_preprocessor_parser.cpp"
+#line 2415 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2346,7 +2423,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 472 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::CONCATENATE, right); 
-#line 2350 "barf_preprocessor_parser.cpp"
+#line 2427 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2358,7 +2435,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 475 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_OR, right); 
-#line 2362 "barf_preprocessor_parser.cpp"
+#line 2439 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2370,7 +2447,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 478 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LOGICAL_AND, right); 
-#line 2374 "barf_preprocessor_parser.cpp"
+#line 2451 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2382,7 +2459,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 481 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::EQUAL, right); 
-#line 2386 "barf_preprocessor_parser.cpp"
+#line 2463 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2394,7 +2471,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 484 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::NOT_EQUAL, right); 
-#line 2398 "barf_preprocessor_parser.cpp"
+#line 2475 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2406,7 +2483,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 487 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN, right); 
-#line 2410 "barf_preprocessor_parser.cpp"
+#line 2487 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2418,7 +2495,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 490 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::LESS_THAN_OR_EQUAL, right); 
-#line 2422 "barf_preprocessor_parser.cpp"
+#line 2499 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2430,7 +2507,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 493 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN, right); 
-#line 2434 "barf_preprocessor_parser.cpp"
+#line 2511 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2442,7 +2519,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 496 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::GREATER_THAN_OR_EQUAL, right); 
-#line 2446 "barf_preprocessor_parser.cpp"
+#line 2523 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2454,7 +2531,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 499 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::PLUS, right); 
-#line 2458 "barf_preprocessor_parser.cpp"
+#line 2535 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2466,7 +2543,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 502 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MINUS, right); 
-#line 2470 "barf_preprocessor_parser.cpp"
+#line 2547 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2478,7 +2555,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 505 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::MULTIPLY, right); 
-#line 2482 "barf_preprocessor_parser.cpp"
+#line 2559 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2490,7 +2567,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 508 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::DIVIDE, right); 
-#line 2494 "barf_preprocessor_parser.cpp"
+#line 2571 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2502,7 +2579,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 511 "barf_preprocessor_parser.trison"
  return new Operation(left, Operation::REMAINDER, right); 
-#line 2506 "barf_preprocessor_parser.cpp"
+#line 2583 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2513,7 +2590,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 514 "barf_preprocessor_parser.trison"
  return new Operation(Operation::NEGATIVE, expression); 
-#line 2517 "barf_preprocessor_parser.cpp"
+#line 2594 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2524,7 +2601,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 517 "barf_preprocessor_parser.trison"
  return new Operation(Operation::LOGICAL_NOT, expression); 
-#line 2528 "barf_preprocessor_parser.cpp"
+#line 2605 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2535,7 +2612,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 520 "barf_preprocessor_parser.trison"
  return expression; 
-#line 2539 "barf_preprocessor_parser.cpp"
+#line 2616 "barf_preprocessor_parser.cpp"
             break;
         }
 
@@ -2554,7 +2631,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2558 "barf_preprocessor_parser.cpp"
+#line 2635 "barf_preprocessor_parser.cpp"
  << "Realized state branch node stacks are (each listed bottom to top):\n";
     for (BranchVector_::const_iterator it = m_realized_state_->BranchVectorStack().back().begin(),
                                        it_end = m_realized_state_->BranchVectorStack().back().end();
@@ -2565,7 +2642,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
         out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2569 "barf_preprocessor_parser.cpp"
+#line 2646 "barf_preprocessor_parser.cpp"
  << "    (";
         branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
         out << ")\n";
@@ -2574,12 +2651,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2578 "barf_preprocessor_parser.cpp"
+#line 2655 "barf_preprocessor_parser.cpp"
  << "Max realized lookahead count (so far) is:\n";
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2583 "barf_preprocessor_parser.cpp"
+#line 2660 "barf_preprocessor_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadCount();
     if (m_max_allowable_lookahead_count >= 0)
         out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
@@ -2588,12 +2665,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2592 "barf_preprocessor_parser.cpp"
+#line 2669 "barf_preprocessor_parser.cpp"
  << "Max realized lookahead queue size (so far) is:\n";
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2597 "barf_preprocessor_parser.cpp"
+#line 2674 "barf_preprocessor_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadQueueSize();
     if (m_max_allowable_lookahead_queue_size >= 0)
         out << " (max allowable lookahead queue size is " << m_max_allowable_lookahead_queue_size << ")\n";
@@ -2602,12 +2679,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2606 "barf_preprocessor_parser.cpp"
+#line 2683 "barf_preprocessor_parser.cpp"
  << "Max realized parse tree depth (so far) is:\n";
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2611 "barf_preprocessor_parser.cpp"
+#line 2688 "barf_preprocessor_parser.cpp"
  << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
     if (m_max_allowable_parse_tree_depth >= 0)
         out << " (max allowable parse tree depth is " << m_max_allowable_parse_tree_depth << ")\n";
@@ -2616,22 +2693,22 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2620 "barf_preprocessor_parser.cpp"
+#line 2697 "barf_preprocessor_parser.cpp"
  << "Has-encountered-error-state (so far) is:\n";
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2625 "barf_preprocessor_parser.cpp"
+#line 2702 "barf_preprocessor_parser.cpp"
  << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2630 "barf_preprocessor_parser.cpp"
+#line 2707 "barf_preprocessor_parser.cpp"
  << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2635 "barf_preprocessor_parser.cpp"
+#line 2712 "barf_preprocessor_parser.cpp"
  << "    ";
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
@@ -2654,25 +2731,25 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2658 "barf_preprocessor_parser.cpp"
+#line 2735 "barf_preprocessor_parser.cpp"
  << '\n';
 
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2664 "barf_preprocessor_parser.cpp"
+#line 2741 "barf_preprocessor_parser.cpp"
  << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2670 "barf_preprocessor_parser.cpp"
+#line 2747 "barf_preprocessor_parser.cpp"
  << '\n';
 
     out << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2676 "barf_preprocessor_parser.cpp"
+#line 2753 "barf_preprocessor_parser.cpp"
  << "HPS queue:\n";
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
@@ -2841,14 +2918,38 @@ void Parser::RealizedState_::Initialize (Npda_::StateIndex_ initial_state)
     assert(m_branch_vector_stack.empty());
     assert(m_token_stack.empty());
 
+    BranchVector_ fallback_branch_vector;
+    // State 0 is the fallback state which always results in action ABORT.
+    BranchStatePtr_ fallback_state_ptr = BranchState_::CreateOrphan(0);
+    // The Nonterminal::none_ is just a dummy Token::Id to go along with fallback_state_ptr.
+    BranchTokenIdPtr_ fallback_token_id_ptr = BranchTokenId_::CreateOrphan(Nonterminal::none_);
+    fallback_branch_vector.emplace_back(Branch_(fallback_state_ptr, fallback_token_id_ptr));
+    // TODO: This probably should be emplace_back
+    m_branch_vector_stack.push_back(fallback_branch_vector);
+
+    // Put a dummy token in to correspond with the fallback state.
+    m_token_stack.push_back(Token(Nonterminal::none_));
+
+    assert(m_branch_vector_stack.size() == m_token_stack.size());
+
     BranchVector_ initial_branch_vector;
     // The Nonterminal::none_ is just a dummy Token::Id to go along with initial_state.
-    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_)));
+    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateWithParent(fallback_state_ptr, initial_state), BranchTokenId_::CreateWithParent(fallback_token_id_ptr, Nonterminal::none_)));
     // TODO: This probably should be emplace_back
     m_branch_vector_stack.push_back(initial_branch_vector);
 
     // Put a dummy token in to correspond with the start state.
     m_token_stack.push_back(Token(Nonterminal::none_));
+
+    assert(m_branch_vector_stack.size() == m_token_stack.size());
+
+    // Ensure the parent/child relationships actually hold within m_branch_vector_stack.
+    assert(m_branch_vector_stack.size() == 2);
+    // Ensure that the stack is actually consistent with regard to the parent/child relationships.
+    for (BranchVector_::const_iterator it = m_branch_vector_stack[1].begin(), it_end = m_branch_vector_stack[1].end(); it != it_end; ++it)
+    {
+        assert(std::any_of(m_branch_vector_stack[0].begin(), m_branch_vector_stack[0].end(), [it](Branch_ const &branch){ return branch == it->Parent(); }));
+    }
 }
 
 void Parser::RealizedState_::PushFrontLookahead (Token const &lookahead, HPSQueue_ &hps_queue)
@@ -2888,12 +2989,12 @@ void Parser::RealizedState_::UpdateMaxRealizedLookaheadCount ()
 // Parser::HypotheticalState_
 // ////////////////////////////////////////////////////////////////////////////
 
-Parser::HypotheticalState_::HypotheticalState_ (std::uint32_t initial_state)
+Parser::HypotheticalState_::HypotheticalState_ (Branch_ const &initial_branch)
 {
     m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
 
     ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
-    hps->m_hypothetical_head        = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
+    hps->m_hypothetical_head        = initial_branch;
 
     m_root->AddChild(hps);
     m_hps_queue.push_back(hps);
@@ -3003,6 +3104,7 @@ char const *Parser::ParseTreeNode_::AsString (Type type)
     {
         "ROOT",
         "RETURN",
+        "ABORT",
         "REDUCE",
         "SHIFT",
         "INSERT_LOOKAHEAD_ERROR",
@@ -3144,6 +3246,7 @@ bool Parser::ParseTreeNode_::IsBlockedHPS () const
     {
         // Nothing can happen after returning, so this has to be blocking.
         case RETURN:
+        case ABORT:
         case POP_STACK: return true;
 
         default:        return false;
@@ -3183,7 +3286,7 @@ Parser::ParseTreeNode_::PrecedenceLevelRange Parser::ParseTreeNode_::ComputePrec
             Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
             return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
         }
-        // Otherwise (e.g. a RETURN state), return default precedence.
+        // Otherwise (e.g. a RETURN or ABORT state), return default precedence.
         else
         {
             Grammar_::Precedence_ const &default_precedence = Grammar_::ms_precedence_table_[0]; // 0 is default precedence.
@@ -3393,7 +3496,7 @@ Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index) throw()
         TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3397 "barf_preprocessor_parser.cpp"
+#line 3500 "barf_preprocessor_parser.cpp"
  << "Retrieved token " << m_realized_state_->LookaheadQueue().back() << " from scan actions; pushing token onto back of lookahead queue\n")
     }
     return m_realized_state_->LookaheadQueue()[index];
@@ -3414,6 +3517,10 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
             break;
         }
         case ParseTreeNode_::RETURN: {
+            new_hps = hps.CloneLeafNode();
+            break;
+        }
+        case ParseTreeNode_::ABORT: {
             new_hps = hps.CloneLeafNode();
             break;
         }
@@ -3457,7 +3564,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                     TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3461 "barf_preprocessor_parser.cpp"
+#line 3568 "barf_preprocessor_parser.cpp"
  << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
 
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
@@ -3551,13 +3658,14 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
             // one of them is killed later.
             std::uint32_t const &pop_count = action_data;
             assert(pop_count == 1 || pop_count == 2);
-            // Check if there are actually enough stack elements to pop successfully.
-            // If not, then don't create an HPS, and break early.
-            if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
-            {
-                new_hps = NULL;
-                break;
-            }
+            assert(pop_count < hps.m_hypothetical_head.StatePtr()->BranchLength());
+            // // Check if there are actually enough stack elements to pop successfully.
+            // // If not, then don't create an HPS, and break early.
+            // if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
+            // {
+            //     new_hps = NULL;
+            //     break;
+            // }
 
             new_hps = hps.CloneLeafNode();
             for (std::uint32_t i = 0; i < pop_count; ++i)
@@ -3631,7 +3739,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3635 "barf_preprocessor_parser.cpp"
+#line 3743 "barf_preprocessor_parser.cpp"
  << "        Reconstructing branches:\n")
     for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
@@ -3639,7 +3747,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
         TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 147 "barf_preprocessor_parser.trison"
 "Preprocessor::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3643 "barf_preprocessor_parser.cpp"
+#line 3751 "barf_preprocessor_parser.cpp"
  << "            " << reconstruct_branch.StatePtr() << '\n')
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
@@ -3869,7 +3977,7 @@ void Parser::Npda_::ComputeEpsilonClosureOfState_ (StateIndex_ state_index, Stat
 
 Parser::Npda_::TransitionVector_ const &Parser::Npda_::NonEpsilonTransitionsOfState_ (StateIndex_ state_index, std::uint32_t sorted_type_index)
 {
-    assert(0 <= sorted_type_index && sorted_type_index <= 3);
+    assert(Transition_::Order::MIN_SORTED_TYPE_INDEX <= sorted_type_index && sorted_type_index <= Transition_::Order::MAX_SORTED_TYPE_INDEX);
 
     // Memoize this function, because it will be called so many times and is somewhat intensive.
     typedef std::pair<StateIndex_,std::uint32_t> KeyType;
@@ -3889,7 +3997,7 @@ Parser::Npda_::TransitionVector_ const &Parser::Npda_::NonEpsilonTransitionsOfSt
         State_ const &state = ms_state_table_[*it];
         for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count; transition != transition_end; ++transition)
         {
-            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(Transition_::Type(transition->m_type));
+            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(*transition);
             if (transition->m_type != Transition_::EPSILON && transition_sorted_type_index == sorted_type_index)
                 non_epsilon_transition_set.insert(*transition);
         }
@@ -3904,1677 +4012,1679 @@ Parser::Npda_::TransitionVector_ const &Parser::Npda_::NonEpsilonTransitionsOfSt
 
 Parser::Npda_::State_ const Parser::Npda_::ms_state_table_[] =
 {
-    { 2, ms_transition_table_+0, 84, "START body" },
-    { 1, ms_transition_table_+2, 84, "RETURN body" },
-    { 4, ms_transition_table_+3, 84, "head of: body" },
-    { 1, ms_transition_table_+7, 0, "rule 0: body <- ." },
-    { 3, ms_transition_table_+8, 1, "rule 1: body <- . TEXT" },
-    { 1, ms_transition_table_+11, 1, "rule 1: body <- TEXT ." },
-    { 3, ms_transition_table_+12, 2, "rule 2: body <- . body executable" },
-    { 4, ms_transition_table_+15, 2, "rule 2: body <- body . executable" },
-    { 1, ms_transition_table_+19, 2, "rule 2: body <- body executable ." },
-    { 2, ms_transition_table_+20, 84, "START executable" },
-    { 1, ms_transition_table_+22, 84, "RETURN executable" },
-    { 5, ms_transition_table_+23, 84, "head of: executable" },
-    { 4, ms_transition_table_+28, 4, "rule 4: executable <- . code" },
-    { 1, ms_transition_table_+32, 4, "rule 4: executable <- code ." },
-    { 2, ms_transition_table_+33, 84, "START code" },
-    { 1, ms_transition_table_+35, 84, "RETURN code" },
-    { 2, ms_transition_table_+36, 84, "head of: code" },
-    { 3, ms_transition_table_+38, 9, "rule 9: code <- . START_CODE code_body END_CODE" },
-    { 4, ms_transition_table_+41, 9, "rule 9: code <- START_CODE . code_body END_CODE" },
-    { 3, ms_transition_table_+45, 9, "rule 9: code <- START_CODE code_body . END_CODE" },
-    { 2, ms_transition_table_+48, 84, "START code_body" },
-    { 1, ms_transition_table_+50, 84, "RETURN code_body" },
-    { 11, ms_transition_table_+51, 84, "head of: code_body" },
-    { 1, ms_transition_table_+62, 11, "rule 11: code_body <- ." },
-    { 4, ms_transition_table_+63, 12, "rule 12: code_body <- . expression" },
-    { 1, ms_transition_table_+67, 12, "rule 12: code_body <- expression ." },
-    { 2, ms_transition_table_+68, 84, "START expression" },
-    { 1, ms_transition_table_+70, 84, "RETURN expression" },
-    { 31, ms_transition_table_+71, 84, "head of: expression" },
-    { 3, ms_transition_table_+102, 53, "rule 53: expression <- . STRING_LITERAL" },
-    { 1, ms_transition_table_+105, 53, "rule 53: expression <- STRING_LITERAL ." },
-    { 3, ms_transition_table_+106, 54, "rule 54: expression <- . INTEGER_LITERAL" },
-    { 1, ms_transition_table_+109, 54, "rule 54: expression <- INTEGER_LITERAL ." },
-    { 3, ms_transition_table_+110, 55, "rule 55: expression <- . SIZEOF '(' ID ')'" },
-    { 3, ms_transition_table_+113, 55, "rule 55: expression <- SIZEOF . '(' ID ')'" },
-    { 3, ms_transition_table_+116, 55, "rule 55: expression <- SIZEOF '(' . ID ')'" },
-    { 3, ms_transition_table_+119, 55, "rule 55: expression <- SIZEOF '(' ID . ')'" },
-    { 1, ms_transition_table_+122, 55, "rule 55: expression <- SIZEOF '(' ID ')' ." },
-    { 3, ms_transition_table_+123, 56, "rule 56: expression <- . KEYWORD_INT '(' expression ')'" },
-    { 3, ms_transition_table_+126, 56, "rule 56: expression <- KEYWORD_INT . '(' expression ')'" },
-    { 4, ms_transition_table_+129, 56, "rule 56: expression <- KEYWORD_INT '(' . expression ')'" },
-    { 3, ms_transition_table_+133, 56, "rule 56: expression <- KEYWORD_INT '(' expression . ')'" },
-    { 1, ms_transition_table_+136, 56, "rule 56: expression <- KEYWORD_INT '(' expression ')' ." },
-    { 3, ms_transition_table_+137, 57, "rule 57: expression <- . KEYWORD_STRING '(' expression ')'" },
-    { 3, ms_transition_table_+140, 57, "rule 57: expression <- KEYWORD_STRING . '(' expression ')'" },
-    { 4, ms_transition_table_+143, 57, "rule 57: expression <- KEYWORD_STRING '(' . expression ')'" },
-    { 3, ms_transition_table_+147, 57, "rule 57: expression <- KEYWORD_STRING '(' expression . ')'" },
-    { 1, ms_transition_table_+150, 57, "rule 57: expression <- KEYWORD_STRING '(' expression ')' ." },
-    { 3, ms_transition_table_+151, 58, "rule 58: expression <- . STRING_LENGTH '(' expression ')'" },
-    { 3, ms_transition_table_+154, 58, "rule 58: expression <- STRING_LENGTH . '(' expression ')'" },
-    { 4, ms_transition_table_+157, 58, "rule 58: expression <- STRING_LENGTH '(' . expression ')'" },
-    { 3, ms_transition_table_+161, 58, "rule 58: expression <- STRING_LENGTH '(' expression . ')'" },
-    { 1, ms_transition_table_+164, 58, "rule 58: expression <- STRING_LENGTH '(' expression ')' ." },
-    { 3, ms_transition_table_+165, 59, "rule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'" },
-    { 3, ms_transition_table_+168, 59, "rule 59: expression <- TO_CHARACTER_LITERAL . '(' expression ')'" },
-    { 4, ms_transition_table_+171, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' . expression ')'" },
-    { 3, ms_transition_table_+175, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' expression . ')'" },
-    { 1, ms_transition_table_+178, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' expression ')' ." },
-    { 3, ms_transition_table_+179, 60, "rule 60: expression <- . TO_STRING_LITERAL '(' expression ')'" },
-    { 3, ms_transition_table_+182, 60, "rule 60: expression <- TO_STRING_LITERAL . '(' expression ')'" },
-    { 4, ms_transition_table_+185, 60, "rule 60: expression <- TO_STRING_LITERAL '(' . expression ')'" },
-    { 3, ms_transition_table_+189, 60, "rule 60: expression <- TO_STRING_LITERAL '(' expression . ')'" },
-    { 1, ms_transition_table_+192, 60, "rule 60: expression <- TO_STRING_LITERAL '(' expression ')' ." },
-    { 3, ms_transition_table_+193, 61, "rule 61: expression <- . IS_DEFINED '(' ID ')'" },
-    { 3, ms_transition_table_+196, 61, "rule 61: expression <- IS_DEFINED . '(' ID ')'" },
-    { 3, ms_transition_table_+199, 61, "rule 61: expression <- IS_DEFINED '(' . ID ')'" },
-    { 3, ms_transition_table_+202, 61, "rule 61: expression <- IS_DEFINED '(' ID . ')'" },
-    { 1, ms_transition_table_+205, 61, "rule 61: expression <- IS_DEFINED '(' ID ')' ." },
-    { 3, ms_transition_table_+206, 62, "rule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'" },
-    { 3, ms_transition_table_+209, 62, "rule 62: expression <- IS_DEFINED . '(' ID '[' expression ']' ')'" },
-    { 3, ms_transition_table_+212, 62, "rule 62: expression <- IS_DEFINED '(' . ID '[' expression ']' ')'" },
-    { 3, ms_transition_table_+215, 62, "rule 62: expression <- IS_DEFINED '(' ID . '[' expression ']' ')'" },
-    { 4, ms_transition_table_+218, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' . expression ']' ')'" },
-    { 3, ms_transition_table_+222, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression . ']' ')'" },
-    { 3, ms_transition_table_+225, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression ']' . ')'" },
-    { 1, ms_transition_table_+228, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression ']' ')' ." },
-    { 3, ms_transition_table_+229, 63, "rule 63: expression <- . ID" },
-    { 1, ms_transition_table_+232, 63, "rule 63: expression <- ID ." },
-    { 3, ms_transition_table_+233, 64, "rule 64: expression <- . ID '[' expression ']'" },
-    { 3, ms_transition_table_+236, 64, "rule 64: expression <- ID . '[' expression ']'" },
-    { 4, ms_transition_table_+239, 64, "rule 64: expression <- ID '[' . expression ']'" },
-    { 3, ms_transition_table_+243, 64, "rule 64: expression <- ID '[' expression . ']'" },
-    { 1, ms_transition_table_+246, 64, "rule 64: expression <- ID '[' expression ']' ." },
-    { 3, ms_transition_table_+247, 65, "rule 65: expression <- . ID '?'" },
-    { 3, ms_transition_table_+250, 65, "rule 65: expression <- ID . '?'" },
-    { 1, ms_transition_table_+253, 65, "rule 65: expression <- ID '?' ." },
-    { 3, ms_transition_table_+254, 66, "rule 66: expression <- . ID '[' expression ']' '?'" },
-    { 3, ms_transition_table_+257, 66, "rule 66: expression <- ID . '[' expression ']' '?'" },
-    { 4, ms_transition_table_+260, 66, "rule 66: expression <- ID '[' . expression ']' '?'" },
-    { 3, ms_transition_table_+264, 66, "rule 66: expression <- ID '[' expression . ']' '?'" },
-    { 3, ms_transition_table_+267, 66, "rule 66: expression <- ID '[' expression ']' . '?'" },
-    { 1, ms_transition_table_+270, 66, "rule 66: expression <- ID '[' expression ']' '?' ." },
-    { 3, ms_transition_table_+271, 67, "rule 67: expression <- . expression '.' expression" },
-    { 3, ms_transition_table_+274, 67, "rule 67: expression <- expression . '.' expression" },
-    { 4, ms_transition_table_+277, 67, "rule 67: expression <- expression '.' . expression" },
-    { 1, ms_transition_table_+281, 67, "rule 67: expression <- expression '.' expression ." },
-    { 3, ms_transition_table_+282, 68, "rule 68: expression <- . expression '|' '|' expression" },
-    { 3, ms_transition_table_+285, 68, "rule 68: expression <- expression . '|' '|' expression" },
-    { 3, ms_transition_table_+288, 68, "rule 68: expression <- expression '|' . '|' expression" },
-    { 4, ms_transition_table_+291, 68, "rule 68: expression <- expression '|' '|' . expression" },
-    { 1, ms_transition_table_+295, 68, "rule 68: expression <- expression '|' '|' expression ." },
-    { 3, ms_transition_table_+296, 69, "rule 69: expression <- . expression '&' '&' expression" },
-    { 3, ms_transition_table_+299, 69, "rule 69: expression <- expression . '&' '&' expression" },
-    { 3, ms_transition_table_+302, 69, "rule 69: expression <- expression '&' . '&' expression" },
-    { 4, ms_transition_table_+305, 69, "rule 69: expression <- expression '&' '&' . expression" },
-    { 1, ms_transition_table_+309, 69, "rule 69: expression <- expression '&' '&' expression ." },
-    { 3, ms_transition_table_+310, 70, "rule 70: expression <- . expression '=' '=' expression" },
-    { 3, ms_transition_table_+313, 70, "rule 70: expression <- expression . '=' '=' expression" },
-    { 3, ms_transition_table_+316, 70, "rule 70: expression <- expression '=' . '=' expression" },
-    { 4, ms_transition_table_+319, 70, "rule 70: expression <- expression '=' '=' . expression" },
-    { 1, ms_transition_table_+323, 70, "rule 70: expression <- expression '=' '=' expression ." },
-    { 3, ms_transition_table_+324, 71, "rule 71: expression <- . expression '!' '=' expression" },
-    { 3, ms_transition_table_+327, 71, "rule 71: expression <- expression . '!' '=' expression" },
-    { 3, ms_transition_table_+330, 71, "rule 71: expression <- expression '!' . '=' expression" },
-    { 4, ms_transition_table_+333, 71, "rule 71: expression <- expression '!' '=' . expression" },
-    { 1, ms_transition_table_+337, 71, "rule 71: expression <- expression '!' '=' expression ." },
-    { 3, ms_transition_table_+338, 72, "rule 72: expression <- . expression '<' expression" },
-    { 3, ms_transition_table_+341, 72, "rule 72: expression <- expression . '<' expression" },
-    { 4, ms_transition_table_+344, 72, "rule 72: expression <- expression '<' . expression" },
-    { 1, ms_transition_table_+348, 72, "rule 72: expression <- expression '<' expression ." },
-    { 3, ms_transition_table_+349, 73, "rule 73: expression <- . expression '<' '=' expression" },
-    { 3, ms_transition_table_+352, 73, "rule 73: expression <- expression . '<' '=' expression" },
-    { 3, ms_transition_table_+355, 73, "rule 73: expression <- expression '<' . '=' expression" },
-    { 4, ms_transition_table_+358, 73, "rule 73: expression <- expression '<' '=' . expression" },
-    { 1, ms_transition_table_+362, 73, "rule 73: expression <- expression '<' '=' expression ." },
-    { 3, ms_transition_table_+363, 74, "rule 74: expression <- . expression '>' expression" },
-    { 3, ms_transition_table_+366, 74, "rule 74: expression <- expression . '>' expression" },
-    { 4, ms_transition_table_+369, 74, "rule 74: expression <- expression '>' . expression" },
-    { 1, ms_transition_table_+373, 74, "rule 74: expression <- expression '>' expression ." },
-    { 3, ms_transition_table_+374, 75, "rule 75: expression <- . expression '>' '=' expression" },
-    { 3, ms_transition_table_+377, 75, "rule 75: expression <- expression . '>' '=' expression" },
-    { 3, ms_transition_table_+380, 75, "rule 75: expression <- expression '>' . '=' expression" },
-    { 4, ms_transition_table_+383, 75, "rule 75: expression <- expression '>' '=' . expression" },
-    { 1, ms_transition_table_+387, 75, "rule 75: expression <- expression '>' '=' expression ." },
-    { 3, ms_transition_table_+388, 76, "rule 76: expression <- . expression '+' expression" },
-    { 3, ms_transition_table_+391, 76, "rule 76: expression <- expression . '+' expression" },
-    { 4, ms_transition_table_+394, 76, "rule 76: expression <- expression '+' . expression" },
-    { 1, ms_transition_table_+398, 76, "rule 76: expression <- expression '+' expression ." },
-    { 3, ms_transition_table_+399, 77, "rule 77: expression <- . expression '-' expression" },
-    { 3, ms_transition_table_+402, 77, "rule 77: expression <- expression . '-' expression" },
-    { 4, ms_transition_table_+405, 77, "rule 77: expression <- expression '-' . expression" },
-    { 1, ms_transition_table_+409, 77, "rule 77: expression <- expression '-' expression ." },
-    { 3, ms_transition_table_+410, 78, "rule 78: expression <- . expression '*' expression" },
-    { 3, ms_transition_table_+413, 78, "rule 78: expression <- expression . '*' expression" },
-    { 4, ms_transition_table_+416, 78, "rule 78: expression <- expression '*' . expression" },
-    { 1, ms_transition_table_+420, 78, "rule 78: expression <- expression '*' expression ." },
-    { 3, ms_transition_table_+421, 79, "rule 79: expression <- . expression '/' expression" },
-    { 3, ms_transition_table_+424, 79, "rule 79: expression <- expression . '/' expression" },
-    { 4, ms_transition_table_+427, 79, "rule 79: expression <- expression '/' . expression" },
-    { 1, ms_transition_table_+431, 79, "rule 79: expression <- expression '/' expression ." },
-    { 3, ms_transition_table_+432, 80, "rule 80: expression <- . expression '%' expression" },
-    { 3, ms_transition_table_+435, 80, "rule 80: expression <- expression . '%' expression" },
-    { 4, ms_transition_table_+438, 80, "rule 80: expression <- expression '%' . expression" },
-    { 1, ms_transition_table_+442, 80, "rule 80: expression <- expression '%' expression ." },
-    { 3, ms_transition_table_+443, 81, "rule 81: expression <- . '-' expression" },
-    { 4, ms_transition_table_+446, 81, "rule 81: expression <- '-' . expression" },
-    { 1, ms_transition_table_+450, 81, "rule 81: expression <- '-' expression ." },
-    { 3, ms_transition_table_+451, 82, "rule 82: expression <- . '!' expression" },
-    { 4, ms_transition_table_+454, 82, "rule 82: expression <- '!' . expression" },
-    { 1, ms_transition_table_+458, 82, "rule 82: expression <- '!' expression ." },
-    { 3, ms_transition_table_+459, 83, "rule 83: expression <- . '(' expression ')'" },
-    { 4, ms_transition_table_+462, 83, "rule 83: expression <- '(' . expression ')'" },
-    { 3, ms_transition_table_+466, 83, "rule 83: expression <- '(' expression . ')'" },
-    { 1, ms_transition_table_+469, 83, "rule 83: expression <- '(' expression ')' ." },
-    { 3, ms_transition_table_+470, 13, "rule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'" },
-    { 3, ms_transition_table_+473, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE . '(' ')'" },
-    { 3, ms_transition_table_+476, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE '(' . ')'" },
-    { 1, ms_transition_table_+479, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE '(' ')' ." },
-    { 3, ms_transition_table_+480, 14, "rule 14: code_body <- . UNDEFINE '(' ID ')'" },
-    { 3, ms_transition_table_+483, 14, "rule 14: code_body <- UNDEFINE . '(' ID ')'" },
-    { 3, ms_transition_table_+486, 14, "rule 14: code_body <- UNDEFINE '(' . ID ')'" },
-    { 3, ms_transition_table_+489, 14, "rule 14: code_body <- UNDEFINE '(' ID . ')'" },
-    { 1, ms_transition_table_+492, 14, "rule 14: code_body <- UNDEFINE '(' ID ')' ." },
-    { 3, ms_transition_table_+493, 15, "rule 15: code_body <- . DECLARE_ARRAY '(' ID ')'" },
-    { 3, ms_transition_table_+496, 15, "rule 15: code_body <- DECLARE_ARRAY . '(' ID ')'" },
-    { 3, ms_transition_table_+499, 15, "rule 15: code_body <- DECLARE_ARRAY '(' . ID ')'" },
-    { 3, ms_transition_table_+502, 15, "rule 15: code_body <- DECLARE_ARRAY '(' ID . ')'" },
-    { 1, ms_transition_table_+505, 15, "rule 15: code_body <- DECLARE_ARRAY '(' ID ')' ." },
-    { 3, ms_transition_table_+506, 16, "rule 16: code_body <- . DECLARE_MAP '(' ID ')'" },
-    { 3, ms_transition_table_+509, 16, "rule 16: code_body <- DECLARE_MAP . '(' ID ')'" },
-    { 3, ms_transition_table_+512, 16, "rule 16: code_body <- DECLARE_MAP '(' . ID ')'" },
-    { 3, ms_transition_table_+515, 16, "rule 16: code_body <- DECLARE_MAP '(' ID . ')'" },
-    { 1, ms_transition_table_+518, 16, "rule 16: code_body <- DECLARE_MAP '(' ID ')' ." },
-    { 3, ms_transition_table_+519, 17, "rule 17: code_body <- . INCLUDE '(' expression ')'" },
-    { 3, ms_transition_table_+522, 17, "rule 17: code_body <- INCLUDE . '(' expression ')'" },
-    { 4, ms_transition_table_+525, 17, "rule 17: code_body <- INCLUDE '(' . expression ')'" },
-    { 3, ms_transition_table_+529, 17, "rule 17: code_body <- INCLUDE '(' expression . ')'" },
-    { 1, ms_transition_table_+532, 17, "rule 17: code_body <- INCLUDE '(' expression ')' ." },
-    { 3, ms_transition_table_+533, 18, "rule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'" },
-    { 3, ms_transition_table_+536, 18, "rule 18: code_body <- SANDBOX_INCLUDE . '(' expression ')'" },
-    { 4, ms_transition_table_+539, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' . expression ')'" },
-    { 3, ms_transition_table_+543, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' expression . ')'" },
-    { 1, ms_transition_table_+546, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' expression ')' ." },
-    { 3, ms_transition_table_+547, 19, "rule 19: code_body <- . WARNING '(' expression ')'" },
-    { 3, ms_transition_table_+550, 19, "rule 19: code_body <- WARNING . '(' expression ')'" },
-    { 4, ms_transition_table_+553, 19, "rule 19: code_body <- WARNING '(' . expression ')'" },
-    { 3, ms_transition_table_+557, 19, "rule 19: code_body <- WARNING '(' expression . ')'" },
-    { 1, ms_transition_table_+560, 19, "rule 19: code_body <- WARNING '(' expression ')' ." },
-    { 3, ms_transition_table_+561, 20, "rule 20: code_body <- . ERROR '(' expression ')'" },
-    { 3, ms_transition_table_+564, 20, "rule 20: code_body <- ERROR . '(' expression ')'" },
-    { 4, ms_transition_table_+567, 20, "rule 20: code_body <- ERROR '(' . expression ')'" },
-    { 3, ms_transition_table_+571, 20, "rule 20: code_body <- ERROR '(' expression . ')'" },
-    { 1, ms_transition_table_+574, 20, "rule 20: code_body <- ERROR '(' expression ')' ." },
-    { 3, ms_transition_table_+575, 21, "rule 21: code_body <- . FATAL_ERROR '(' expression ')'" },
-    { 3, ms_transition_table_+578, 21, "rule 21: code_body <- FATAL_ERROR . '(' expression ')'" },
-    { 4, ms_transition_table_+581, 21, "rule 21: code_body <- FATAL_ERROR '(' . expression ')'" },
-    { 3, ms_transition_table_+585, 21, "rule 21: code_body <- FATAL_ERROR '(' expression . ')'" },
-    { 1, ms_transition_table_+588, 21, "rule 21: code_body <- FATAL_ERROR '(' expression ')' ." },
-    { 1, ms_transition_table_+589, 9, "rule 9: code <- START_CODE code_body END_CODE ." },
-    { 3, ms_transition_table_+590, 10, "rule 10: code <- . CODE_LINE code_body CODE_NEWLINE" },
-    { 4, ms_transition_table_+593, 10, "rule 10: code <- CODE_LINE . code_body CODE_NEWLINE" },
-    { 3, ms_transition_table_+597, 10, "rule 10: code <- CODE_LINE code_body . CODE_NEWLINE" },
-    { 1, ms_transition_table_+600, 10, "rule 10: code <- CODE_LINE code_body CODE_NEWLINE ." },
-    { 4, ms_transition_table_+601, 5, "rule 5: executable <- . conditional_series" },
-    { 1, ms_transition_table_+605, 5, "rule 5: executable <- conditional_series ." },
-    { 2, ms_transition_table_+606, 84, "START conditional_series" },
-    { 1, ms_transition_table_+608, 84, "RETURN conditional_series" },
-    { 1, ms_transition_table_+609, 84, "head of: conditional_series" },
-    { 4, ms_transition_table_+610, 22, "rule 22: conditional_series <- . if_statement body conditional_series_end" },
-    { 4, ms_transition_table_+614, 22, "rule 22: conditional_series <- if_statement . body conditional_series_end" },
-    { 2, ms_transition_table_+618, 84, "START if_statement" },
-    { 1, ms_transition_table_+620, 84, "RETURN if_statement" },
-    { 2, ms_transition_table_+621, 84, "head of: if_statement" },
-    { 3, ms_transition_table_+623, 26, "rule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE" },
-    { 3, ms_transition_table_+626, 26, "rule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE" },
-    { 3, ms_transition_table_+629, 26, "rule 26: if_statement <- START_CODE IF . '(' expression ')' END_CODE" },
-    { 4, ms_transition_table_+632, 26, "rule 26: if_statement <- START_CODE IF '(' . expression ')' END_CODE" },
-    { 3, ms_transition_table_+636, 26, "rule 26: if_statement <- START_CODE IF '(' expression . ')' END_CODE" },
-    { 3, ms_transition_table_+639, 26, "rule 26: if_statement <- START_CODE IF '(' expression ')' . END_CODE" },
-    { 1, ms_transition_table_+642, 26, "rule 26: if_statement <- START_CODE IF '(' expression ')' END_CODE ." },
-    { 3, ms_transition_table_+643, 27, "rule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+646, 27, "rule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+649, 27, "rule 27: if_statement <- CODE_LINE IF . '(' expression ')' CODE_NEWLINE" },
-    { 4, ms_transition_table_+652, 27, "rule 27: if_statement <- CODE_LINE IF '(' . expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+656, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression . ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+659, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+662, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE ." },
-    { 4, ms_transition_table_+663, 22, "rule 22: conditional_series <- if_statement body . conditional_series_end" },
-    { 1, ms_transition_table_+667, 22, "rule 22: conditional_series <- if_statement body conditional_series_end ." },
-    { 2, ms_transition_table_+668, 84, "START conditional_series_end" },
-    { 1, ms_transition_table_+670, 84, "RETURN conditional_series_end" },
-    { 3, ms_transition_table_+671, 84, "head of: conditional_series_end" },
-    { 4, ms_transition_table_+674, 23, "rule 23: conditional_series_end <- . end_if" },
-    { 1, ms_transition_table_+678, 23, "rule 23: conditional_series_end <- end_if ." },
-    { 2, ms_transition_table_+679, 84, "START end_if" },
-    { 1, ms_transition_table_+681, 84, "RETURN end_if" },
-    { 2, ms_transition_table_+682, 84, "head of: end_if" },
-    { 3, ms_transition_table_+684, 32, "rule 32: end_if <- . START_CODE END_IF END_CODE" },
-    { 3, ms_transition_table_+687, 32, "rule 32: end_if <- START_CODE . END_IF END_CODE" },
-    { 3, ms_transition_table_+690, 32, "rule 32: end_if <- START_CODE END_IF . END_CODE" },
-    { 1, ms_transition_table_+693, 32, "rule 32: end_if <- START_CODE END_IF END_CODE ." },
-    { 3, ms_transition_table_+694, 33, "rule 33: end_if <- . CODE_LINE END_IF CODE_NEWLINE" },
-    { 3, ms_transition_table_+697, 33, "rule 33: end_if <- CODE_LINE . END_IF CODE_NEWLINE" },
-    { 3, ms_transition_table_+700, 33, "rule 33: end_if <- CODE_LINE END_IF . CODE_NEWLINE" },
-    { 1, ms_transition_table_+703, 33, "rule 33: end_if <- CODE_LINE END_IF CODE_NEWLINE ." },
-    { 4, ms_transition_table_+704, 24, "rule 24: conditional_series_end <- . else_statement body end_if" },
-    { 4, ms_transition_table_+708, 24, "rule 24: conditional_series_end <- else_statement . body end_if" },
-    { 2, ms_transition_table_+712, 84, "START else_statement" },
-    { 1, ms_transition_table_+714, 84, "RETURN else_statement" },
-    { 2, ms_transition_table_+715, 84, "head of: else_statement" },
-    { 3, ms_transition_table_+717, 28, "rule 28: else_statement <- . START_CODE ELSE END_CODE" },
-    { 3, ms_transition_table_+720, 28, "rule 28: else_statement <- START_CODE . ELSE END_CODE" },
-    { 3, ms_transition_table_+723, 28, "rule 28: else_statement <- START_CODE ELSE . END_CODE" },
-    { 1, ms_transition_table_+726, 28, "rule 28: else_statement <- START_CODE ELSE END_CODE ." },
-    { 3, ms_transition_table_+727, 29, "rule 29: else_statement <- . CODE_LINE ELSE CODE_NEWLINE" },
-    { 3, ms_transition_table_+730, 29, "rule 29: else_statement <- CODE_LINE . ELSE CODE_NEWLINE" },
-    { 3, ms_transition_table_+733, 29, "rule 29: else_statement <- CODE_LINE ELSE . CODE_NEWLINE" },
-    { 1, ms_transition_table_+736, 29, "rule 29: else_statement <- CODE_LINE ELSE CODE_NEWLINE ." },
-    { 4, ms_transition_table_+737, 24, "rule 24: conditional_series_end <- else_statement body . end_if" },
-    { 1, ms_transition_table_+741, 24, "rule 24: conditional_series_end <- else_statement body end_if ." },
-    { 4, ms_transition_table_+742, 25, "rule 25: conditional_series_end <- . else_if_statement body conditional_series_end" },
-    { 4, ms_transition_table_+746, 25, "rule 25: conditional_series_end <- else_if_statement . body conditional_series_end" },
-    { 2, ms_transition_table_+750, 84, "START else_if_statement" },
-    { 1, ms_transition_table_+752, 84, "RETURN else_if_statement" },
-    { 2, ms_transition_table_+753, 84, "head of: else_if_statement" },
-    { 3, ms_transition_table_+755, 30, "rule 30: else_if_statement <- . START_CODE ELSE_IF '(' expression ')' END_CODE" },
-    { 3, ms_transition_table_+758, 30, "rule 30: else_if_statement <- START_CODE . ELSE_IF '(' expression ')' END_CODE" },
-    { 3, ms_transition_table_+761, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF . '(' expression ')' END_CODE" },
-    { 4, ms_transition_table_+764, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' . expression ')' END_CODE" },
-    { 3, ms_transition_table_+768, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression . ')' END_CODE" },
-    { 3, ms_transition_table_+771, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression ')' . END_CODE" },
-    { 1, ms_transition_table_+774, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE ." },
-    { 3, ms_transition_table_+775, 31, "rule 31: else_if_statement <- . CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+778, 31, "rule 31: else_if_statement <- CODE_LINE . ELSE_IF '(' expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+781, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF . '(' expression ')' CODE_NEWLINE" },
-    { 4, ms_transition_table_+784, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' . expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+788, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression . ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+791, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+794, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE ." },
-    { 4, ms_transition_table_+795, 25, "rule 25: conditional_series_end <- else_if_statement body . conditional_series_end" },
-    { 1, ms_transition_table_+799, 25, "rule 25: conditional_series_end <- else_if_statement body conditional_series_end ." },
-    { 4, ms_transition_table_+800, 6, "rule 6: executable <- . define body end_define" },
-    { 4, ms_transition_table_+804, 6, "rule 6: executable <- define . body end_define" },
-    { 2, ms_transition_table_+808, 84, "START define" },
-    { 1, ms_transition_table_+810, 84, "RETURN define" },
-    { 3, ms_transition_table_+811, 84, "head of: define" },
-    { 4, ms_transition_table_+814, 34, "rule 34: define <- . define_scalar" },
-    { 1, ms_transition_table_+818, 34, "rule 34: define <- define_scalar ." },
-    { 2, ms_transition_table_+819, 84, "START define_scalar" },
-    { 1, ms_transition_table_+821, 84, "RETURN define_scalar" },
-    { 2, ms_transition_table_+822, 84, "head of: define_scalar" },
-    { 3, ms_transition_table_+824, 37, "rule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE" },
-    { 3, ms_transition_table_+827, 37, "rule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE" },
-    { 3, ms_transition_table_+830, 37, "rule 37: define_scalar <- START_CODE DEFINE . '(' ID ')' END_CODE" },
-    { 3, ms_transition_table_+833, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' . ID ')' END_CODE" },
-    { 3, ms_transition_table_+836, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID . ')' END_CODE" },
-    { 3, ms_transition_table_+839, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' . END_CODE" },
-    { 1, ms_transition_table_+842, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE ." },
-    { 3, ms_transition_table_+843, 38, "rule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+846, 38, "rule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+849, 38, "rule 38: define_scalar <- CODE_LINE DEFINE . '(' ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+852, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' . ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+855, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID . ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+858, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+861, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE ." },
-    { 4, ms_transition_table_+862, 35, "rule 35: define <- . define_array_element" },
-    { 1, ms_transition_table_+866, 35, "rule 35: define <- define_array_element ." },
-    { 2, ms_transition_table_+867, 84, "START define_array_element" },
-    { 1, ms_transition_table_+869, 84, "RETURN define_array_element" },
-    { 2, ms_transition_table_+870, 84, "head of: define_array_element" },
-    { 3, ms_transition_table_+872, 39, "rule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE" },
-    { 3, ms_transition_table_+875, 39, "rule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE" },
-    { 3, ms_transition_table_+878, 39, "rule 39: define_array_element <- START_CODE DEFINE . '(' ID '[' ']' ')' END_CODE" },
-    { 3, ms_transition_table_+881, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' . ID '[' ']' ')' END_CODE" },
-    { 3, ms_transition_table_+884, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID . '[' ']' ')' END_CODE" },
-    { 3, ms_transition_table_+887, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' . ']' ')' END_CODE" },
-    { 3, ms_transition_table_+890, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' . ')' END_CODE" },
-    { 3, ms_transition_table_+893, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' . END_CODE" },
-    { 1, ms_transition_table_+896, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE ." },
-    { 3, ms_transition_table_+897, 40, "rule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+900, 40, "rule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+903, 40, "rule 40: define_array_element <- CODE_LINE DEFINE . '(' ID '[' ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+906, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' . ID '[' ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+909, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID . '[' ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+912, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' . ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+915, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' . ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+918, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+921, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE ." },
-    { 4, ms_transition_table_+922, 36, "rule 36: define <- . define_map_element" },
-    { 1, ms_transition_table_+926, 36, "rule 36: define <- define_map_element ." },
-    { 2, ms_transition_table_+927, 84, "START define_map_element" },
-    { 1, ms_transition_table_+929, 84, "RETURN define_map_element" },
-    { 2, ms_transition_table_+930, 84, "head of: define_map_element" },
-    { 3, ms_transition_table_+932, 41, "rule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 3, ms_transition_table_+935, 41, "rule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 3, ms_transition_table_+938, 41, "rule 41: define_map_element <- START_CODE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 3, ms_transition_table_+941, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 3, ms_transition_table_+944, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' END_CODE" },
-    { 3, ms_transition_table_+947, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' END_CODE" },
-    { 3, ms_transition_table_+950, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL . ']' ')' END_CODE" },
-    { 3, ms_transition_table_+953, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' . ')' END_CODE" },
-    { 3, ms_transition_table_+956, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' . END_CODE" },
-    { 1, ms_transition_table_+959, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE ." },
-    { 3, ms_transition_table_+960, 42, "rule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+963, 42, "rule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+966, 42, "rule 42: define_map_element <- CODE_LINE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+969, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+972, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+975, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+978, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL . ']' ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+981, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' . ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+984, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+987, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE ." },
-    { 4, ms_transition_table_+988, 6, "rule 6: executable <- define body . end_define" },
-    { 1, ms_transition_table_+992, 6, "rule 6: executable <- define body end_define ." },
-    { 2, ms_transition_table_+993, 84, "START end_define" },
-    { 1, ms_transition_table_+995, 84, "RETURN end_define" },
-    { 2, ms_transition_table_+996, 84, "head of: end_define" },
-    { 3, ms_transition_table_+998, 43, "rule 43: end_define <- . START_CODE END_DEFINE END_CODE" },
-    { 3, ms_transition_table_+1001, 43, "rule 43: end_define <- START_CODE . END_DEFINE END_CODE" },
-    { 3, ms_transition_table_+1004, 43, "rule 43: end_define <- START_CODE END_DEFINE . END_CODE" },
-    { 1, ms_transition_table_+1007, 43, "rule 43: end_define <- START_CODE END_DEFINE END_CODE ." },
-    { 3, ms_transition_table_+1008, 44, "rule 44: end_define <- . CODE_LINE END_DEFINE CODE_NEWLINE" },
-    { 3, ms_transition_table_+1011, 44, "rule 44: end_define <- CODE_LINE . END_DEFINE CODE_NEWLINE" },
-    { 3, ms_transition_table_+1014, 44, "rule 44: end_define <- CODE_LINE END_DEFINE . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1017, 44, "rule 44: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE ." },
-    { 4, ms_transition_table_+1018, 7, "rule 7: executable <- . loop body end_loop" },
-    { 4, ms_transition_table_+1022, 7, "rule 7: executable <- loop . body end_loop" },
-    { 2, ms_transition_table_+1026, 84, "START loop" },
-    { 1, ms_transition_table_+1028, 84, "RETURN loop" },
-    { 2, ms_transition_table_+1029, 84, "head of: loop" },
-    { 3, ms_transition_table_+1031, 45, "rule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE" },
-    { 3, ms_transition_table_+1034, 45, "rule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE" },
-    { 3, ms_transition_table_+1037, 45, "rule 45: loop <- START_CODE LOOP . '(' ID ',' expression ')' END_CODE" },
-    { 3, ms_transition_table_+1040, 45, "rule 45: loop <- START_CODE LOOP '(' . ID ',' expression ')' END_CODE" },
-    { 3, ms_transition_table_+1043, 45, "rule 45: loop <- START_CODE LOOP '(' ID . ',' expression ')' END_CODE" },
-    { 4, ms_transition_table_+1046, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' . expression ')' END_CODE" },
-    { 3, ms_transition_table_+1050, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression . ')' END_CODE" },
-    { 3, ms_transition_table_+1053, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' . END_CODE" },
-    { 1, ms_transition_table_+1056, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE ." },
-    { 3, ms_transition_table_+1057, 46, "rule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1060, 46, "rule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1063, 46, "rule 46: loop <- CODE_LINE LOOP . '(' ID ',' expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1066, 46, "rule 46: loop <- CODE_LINE LOOP '(' . ID ',' expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1069, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID . ',' expression ')' CODE_NEWLINE" },
-    { 4, ms_transition_table_+1072, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' . expression ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1076, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression . ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1079, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1082, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE ." },
-    { 4, ms_transition_table_+1083, 7, "rule 7: executable <- loop body . end_loop" },
-    { 1, ms_transition_table_+1087, 7, "rule 7: executable <- loop body end_loop ." },
-    { 2, ms_transition_table_+1088, 84, "START end_loop" },
-    { 1, ms_transition_table_+1090, 84, "RETURN end_loop" },
-    { 2, ms_transition_table_+1091, 84, "head of: end_loop" },
-    { 3, ms_transition_table_+1093, 47, "rule 47: end_loop <- . START_CODE END_LOOP END_CODE" },
-    { 3, ms_transition_table_+1096, 47, "rule 47: end_loop <- START_CODE . END_LOOP END_CODE" },
-    { 3, ms_transition_table_+1099, 47, "rule 47: end_loop <- START_CODE END_LOOP . END_CODE" },
-    { 1, ms_transition_table_+1102, 47, "rule 47: end_loop <- START_CODE END_LOOP END_CODE ." },
-    { 3, ms_transition_table_+1103, 48, "rule 48: end_loop <- . CODE_LINE END_LOOP CODE_NEWLINE" },
-    { 3, ms_transition_table_+1106, 48, "rule 48: end_loop <- CODE_LINE . END_LOOP CODE_NEWLINE" },
-    { 3, ms_transition_table_+1109, 48, "rule 48: end_loop <- CODE_LINE END_LOOP . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1112, 48, "rule 48: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE ." },
-    { 4, ms_transition_table_+1113, 8, "rule 8: executable <- . for_each body end_for_each" },
-    { 4, ms_transition_table_+1117, 8, "rule 8: executable <- for_each . body end_for_each" },
-    { 2, ms_transition_table_+1121, 84, "START for_each" },
-    { 1, ms_transition_table_+1123, 84, "RETURN for_each" },
-    { 2, ms_transition_table_+1124, 84, "head of: for_each" },
-    { 3, ms_transition_table_+1126, 49, "rule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE" },
-    { 3, ms_transition_table_+1129, 49, "rule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE" },
-    { 3, ms_transition_table_+1132, 49, "rule 49: for_each <- START_CODE FOR_EACH . '(' ID ',' ID ')' END_CODE" },
-    { 3, ms_transition_table_+1135, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' . ID ',' ID ')' END_CODE" },
-    { 3, ms_transition_table_+1138, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID . ',' ID ')' END_CODE" },
-    { 3, ms_transition_table_+1141, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' . ID ')' END_CODE" },
-    { 3, ms_transition_table_+1144, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID . ')' END_CODE" },
-    { 3, ms_transition_table_+1147, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' . END_CODE" },
-    { 1, ms_transition_table_+1150, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE ." },
-    { 3, ms_transition_table_+1151, 50, "rule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1154, 50, "rule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1157, 50, "rule 50: for_each <- CODE_LINE FOR_EACH . '(' ID ',' ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1160, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' . ID ',' ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1163, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID . ',' ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1166, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' . ID ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1169, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID . ')' CODE_NEWLINE" },
-    { 3, ms_transition_table_+1172, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1175, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE ." },
-    { 4, ms_transition_table_+1176, 8, "rule 8: executable <- for_each body . end_for_each" },
-    { 1, ms_transition_table_+1180, 8, "rule 8: executable <- for_each body end_for_each ." },
-    { 2, ms_transition_table_+1181, 84, "START end_for_each" },
-    { 1, ms_transition_table_+1183, 84, "RETURN end_for_each" },
-    { 2, ms_transition_table_+1184, 84, "head of: end_for_each" },
-    { 3, ms_transition_table_+1186, 51, "rule 51: end_for_each <- . START_CODE END_FOR_EACH END_CODE" },
-    { 3, ms_transition_table_+1189, 51, "rule 51: end_for_each <- START_CODE . END_FOR_EACH END_CODE" },
-    { 3, ms_transition_table_+1192, 51, "rule 51: end_for_each <- START_CODE END_FOR_EACH . END_CODE" },
-    { 1, ms_transition_table_+1195, 51, "rule 51: end_for_each <- START_CODE END_FOR_EACH END_CODE ." },
-    { 3, ms_transition_table_+1196, 52, "rule 52: end_for_each <- . CODE_LINE END_FOR_EACH CODE_NEWLINE" },
-    { 3, ms_transition_table_+1199, 52, "rule 52: end_for_each <- CODE_LINE . END_FOR_EACH CODE_NEWLINE" },
-    { 3, ms_transition_table_+1202, 52, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH . CODE_NEWLINE" },
-    { 1, ms_transition_table_+1205, 52, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE ." },
-    { 3, ms_transition_table_+1206, 3, "rule 3: body <- . body executable TEXT" },
-    { 4, ms_transition_table_+1209, 3, "rule 3: body <- body . executable TEXT" },
-    { 3, ms_transition_table_+1213, 3, "rule 3: body <- body executable . TEXT" },
-    { 1, ms_transition_table_+1216, 3, "rule 3: body <- body executable TEXT ." }
+    { 1, ms_transition_table_+0, 84, "FALLBACK" },
+    { 2, ms_transition_table_+1, 84, "START body" },
+    { 1, ms_transition_table_+3, 84, "RETURN body" },
+    { 4, ms_transition_table_+4, 84, "head of: body" },
+    { 1, ms_transition_table_+8, 0, "rule 0: body <- ." },
+    { 3, ms_transition_table_+9, 1, "rule 1: body <- . TEXT" },
+    { 1, ms_transition_table_+12, 1, "rule 1: body <- TEXT ." },
+    { 3, ms_transition_table_+13, 2, "rule 2: body <- . body executable" },
+    { 4, ms_transition_table_+16, 2, "rule 2: body <- body . executable" },
+    { 1, ms_transition_table_+20, 2, "rule 2: body <- body executable ." },
+    { 2, ms_transition_table_+21, 84, "START executable" },
+    { 1, ms_transition_table_+23, 84, "RETURN executable" },
+    { 5, ms_transition_table_+24, 84, "head of: executable" },
+    { 4, ms_transition_table_+29, 4, "rule 4: executable <- . code" },
+    { 1, ms_transition_table_+33, 4, "rule 4: executable <- code ." },
+    { 2, ms_transition_table_+34, 84, "START code" },
+    { 1, ms_transition_table_+36, 84, "RETURN code" },
+    { 2, ms_transition_table_+37, 84, "head of: code" },
+    { 3, ms_transition_table_+39, 9, "rule 9: code <- . START_CODE code_body END_CODE" },
+    { 4, ms_transition_table_+42, 9, "rule 9: code <- START_CODE . code_body END_CODE" },
+    { 3, ms_transition_table_+46, 9, "rule 9: code <- START_CODE code_body . END_CODE" },
+    { 2, ms_transition_table_+49, 84, "START code_body" },
+    { 1, ms_transition_table_+51, 84, "RETURN code_body" },
+    { 11, ms_transition_table_+52, 84, "head of: code_body" },
+    { 1, ms_transition_table_+63, 11, "rule 11: code_body <- ." },
+    { 4, ms_transition_table_+64, 12, "rule 12: code_body <- . expression" },
+    { 1, ms_transition_table_+68, 12, "rule 12: code_body <- expression ." },
+    { 2, ms_transition_table_+69, 84, "START expression" },
+    { 1, ms_transition_table_+71, 84, "RETURN expression" },
+    { 31, ms_transition_table_+72, 84, "head of: expression" },
+    { 3, ms_transition_table_+103, 53, "rule 53: expression <- . STRING_LITERAL" },
+    { 1, ms_transition_table_+106, 53, "rule 53: expression <- STRING_LITERAL ." },
+    { 3, ms_transition_table_+107, 54, "rule 54: expression <- . INTEGER_LITERAL" },
+    { 1, ms_transition_table_+110, 54, "rule 54: expression <- INTEGER_LITERAL ." },
+    { 3, ms_transition_table_+111, 55, "rule 55: expression <- . SIZEOF '(' ID ')'" },
+    { 3, ms_transition_table_+114, 55, "rule 55: expression <- SIZEOF . '(' ID ')'" },
+    { 3, ms_transition_table_+117, 55, "rule 55: expression <- SIZEOF '(' . ID ')'" },
+    { 3, ms_transition_table_+120, 55, "rule 55: expression <- SIZEOF '(' ID . ')'" },
+    { 1, ms_transition_table_+123, 55, "rule 55: expression <- SIZEOF '(' ID ')' ." },
+    { 3, ms_transition_table_+124, 56, "rule 56: expression <- . KEYWORD_INT '(' expression ')'" },
+    { 3, ms_transition_table_+127, 56, "rule 56: expression <- KEYWORD_INT . '(' expression ')'" },
+    { 4, ms_transition_table_+130, 56, "rule 56: expression <- KEYWORD_INT '(' . expression ')'" },
+    { 3, ms_transition_table_+134, 56, "rule 56: expression <- KEYWORD_INT '(' expression . ')'" },
+    { 1, ms_transition_table_+137, 56, "rule 56: expression <- KEYWORD_INT '(' expression ')' ." },
+    { 3, ms_transition_table_+138, 57, "rule 57: expression <- . KEYWORD_STRING '(' expression ')'" },
+    { 3, ms_transition_table_+141, 57, "rule 57: expression <- KEYWORD_STRING . '(' expression ')'" },
+    { 4, ms_transition_table_+144, 57, "rule 57: expression <- KEYWORD_STRING '(' . expression ')'" },
+    { 3, ms_transition_table_+148, 57, "rule 57: expression <- KEYWORD_STRING '(' expression . ')'" },
+    { 1, ms_transition_table_+151, 57, "rule 57: expression <- KEYWORD_STRING '(' expression ')' ." },
+    { 3, ms_transition_table_+152, 58, "rule 58: expression <- . STRING_LENGTH '(' expression ')'" },
+    { 3, ms_transition_table_+155, 58, "rule 58: expression <- STRING_LENGTH . '(' expression ')'" },
+    { 4, ms_transition_table_+158, 58, "rule 58: expression <- STRING_LENGTH '(' . expression ')'" },
+    { 3, ms_transition_table_+162, 58, "rule 58: expression <- STRING_LENGTH '(' expression . ')'" },
+    { 1, ms_transition_table_+165, 58, "rule 58: expression <- STRING_LENGTH '(' expression ')' ." },
+    { 3, ms_transition_table_+166, 59, "rule 59: expression <- . TO_CHARACTER_LITERAL '(' expression ')'" },
+    { 3, ms_transition_table_+169, 59, "rule 59: expression <- TO_CHARACTER_LITERAL . '(' expression ')'" },
+    { 4, ms_transition_table_+172, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' . expression ')'" },
+    { 3, ms_transition_table_+176, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' expression . ')'" },
+    { 1, ms_transition_table_+179, 59, "rule 59: expression <- TO_CHARACTER_LITERAL '(' expression ')' ." },
+    { 3, ms_transition_table_+180, 60, "rule 60: expression <- . TO_STRING_LITERAL '(' expression ')'" },
+    { 3, ms_transition_table_+183, 60, "rule 60: expression <- TO_STRING_LITERAL . '(' expression ')'" },
+    { 4, ms_transition_table_+186, 60, "rule 60: expression <- TO_STRING_LITERAL '(' . expression ')'" },
+    { 3, ms_transition_table_+190, 60, "rule 60: expression <- TO_STRING_LITERAL '(' expression . ')'" },
+    { 1, ms_transition_table_+193, 60, "rule 60: expression <- TO_STRING_LITERAL '(' expression ')' ." },
+    { 3, ms_transition_table_+194, 61, "rule 61: expression <- . IS_DEFINED '(' ID ')'" },
+    { 3, ms_transition_table_+197, 61, "rule 61: expression <- IS_DEFINED . '(' ID ')'" },
+    { 3, ms_transition_table_+200, 61, "rule 61: expression <- IS_DEFINED '(' . ID ')'" },
+    { 3, ms_transition_table_+203, 61, "rule 61: expression <- IS_DEFINED '(' ID . ')'" },
+    { 1, ms_transition_table_+206, 61, "rule 61: expression <- IS_DEFINED '(' ID ')' ." },
+    { 3, ms_transition_table_+207, 62, "rule 62: expression <- . IS_DEFINED '(' ID '[' expression ']' ')'" },
+    { 3, ms_transition_table_+210, 62, "rule 62: expression <- IS_DEFINED . '(' ID '[' expression ']' ')'" },
+    { 3, ms_transition_table_+213, 62, "rule 62: expression <- IS_DEFINED '(' . ID '[' expression ']' ')'" },
+    { 3, ms_transition_table_+216, 62, "rule 62: expression <- IS_DEFINED '(' ID . '[' expression ']' ')'" },
+    { 4, ms_transition_table_+219, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' . expression ']' ')'" },
+    { 3, ms_transition_table_+223, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression . ']' ')'" },
+    { 3, ms_transition_table_+226, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression ']' . ')'" },
+    { 1, ms_transition_table_+229, 62, "rule 62: expression <- IS_DEFINED '(' ID '[' expression ']' ')' ." },
+    { 3, ms_transition_table_+230, 63, "rule 63: expression <- . ID" },
+    { 1, ms_transition_table_+233, 63, "rule 63: expression <- ID ." },
+    { 3, ms_transition_table_+234, 64, "rule 64: expression <- . ID '[' expression ']'" },
+    { 3, ms_transition_table_+237, 64, "rule 64: expression <- ID . '[' expression ']'" },
+    { 4, ms_transition_table_+240, 64, "rule 64: expression <- ID '[' . expression ']'" },
+    { 3, ms_transition_table_+244, 64, "rule 64: expression <- ID '[' expression . ']'" },
+    { 1, ms_transition_table_+247, 64, "rule 64: expression <- ID '[' expression ']' ." },
+    { 3, ms_transition_table_+248, 65, "rule 65: expression <- . ID '?'" },
+    { 3, ms_transition_table_+251, 65, "rule 65: expression <- ID . '?'" },
+    { 1, ms_transition_table_+254, 65, "rule 65: expression <- ID '?' ." },
+    { 3, ms_transition_table_+255, 66, "rule 66: expression <- . ID '[' expression ']' '?'" },
+    { 3, ms_transition_table_+258, 66, "rule 66: expression <- ID . '[' expression ']' '?'" },
+    { 4, ms_transition_table_+261, 66, "rule 66: expression <- ID '[' . expression ']' '?'" },
+    { 3, ms_transition_table_+265, 66, "rule 66: expression <- ID '[' expression . ']' '?'" },
+    { 3, ms_transition_table_+268, 66, "rule 66: expression <- ID '[' expression ']' . '?'" },
+    { 1, ms_transition_table_+271, 66, "rule 66: expression <- ID '[' expression ']' '?' ." },
+    { 3, ms_transition_table_+272, 67, "rule 67: expression <- . expression '.' expression" },
+    { 3, ms_transition_table_+275, 67, "rule 67: expression <- expression . '.' expression" },
+    { 4, ms_transition_table_+278, 67, "rule 67: expression <- expression '.' . expression" },
+    { 1, ms_transition_table_+282, 67, "rule 67: expression <- expression '.' expression ." },
+    { 3, ms_transition_table_+283, 68, "rule 68: expression <- . expression '|' '|' expression" },
+    { 3, ms_transition_table_+286, 68, "rule 68: expression <- expression . '|' '|' expression" },
+    { 3, ms_transition_table_+289, 68, "rule 68: expression <- expression '|' . '|' expression" },
+    { 4, ms_transition_table_+292, 68, "rule 68: expression <- expression '|' '|' . expression" },
+    { 1, ms_transition_table_+296, 68, "rule 68: expression <- expression '|' '|' expression ." },
+    { 3, ms_transition_table_+297, 69, "rule 69: expression <- . expression '&' '&' expression" },
+    { 3, ms_transition_table_+300, 69, "rule 69: expression <- expression . '&' '&' expression" },
+    { 3, ms_transition_table_+303, 69, "rule 69: expression <- expression '&' . '&' expression" },
+    { 4, ms_transition_table_+306, 69, "rule 69: expression <- expression '&' '&' . expression" },
+    { 1, ms_transition_table_+310, 69, "rule 69: expression <- expression '&' '&' expression ." },
+    { 3, ms_transition_table_+311, 70, "rule 70: expression <- . expression '=' '=' expression" },
+    { 3, ms_transition_table_+314, 70, "rule 70: expression <- expression . '=' '=' expression" },
+    { 3, ms_transition_table_+317, 70, "rule 70: expression <- expression '=' . '=' expression" },
+    { 4, ms_transition_table_+320, 70, "rule 70: expression <- expression '=' '=' . expression" },
+    { 1, ms_transition_table_+324, 70, "rule 70: expression <- expression '=' '=' expression ." },
+    { 3, ms_transition_table_+325, 71, "rule 71: expression <- . expression '!' '=' expression" },
+    { 3, ms_transition_table_+328, 71, "rule 71: expression <- expression . '!' '=' expression" },
+    { 3, ms_transition_table_+331, 71, "rule 71: expression <- expression '!' . '=' expression" },
+    { 4, ms_transition_table_+334, 71, "rule 71: expression <- expression '!' '=' . expression" },
+    { 1, ms_transition_table_+338, 71, "rule 71: expression <- expression '!' '=' expression ." },
+    { 3, ms_transition_table_+339, 72, "rule 72: expression <- . expression '<' expression" },
+    { 3, ms_transition_table_+342, 72, "rule 72: expression <- expression . '<' expression" },
+    { 4, ms_transition_table_+345, 72, "rule 72: expression <- expression '<' . expression" },
+    { 1, ms_transition_table_+349, 72, "rule 72: expression <- expression '<' expression ." },
+    { 3, ms_transition_table_+350, 73, "rule 73: expression <- . expression '<' '=' expression" },
+    { 3, ms_transition_table_+353, 73, "rule 73: expression <- expression . '<' '=' expression" },
+    { 3, ms_transition_table_+356, 73, "rule 73: expression <- expression '<' . '=' expression" },
+    { 4, ms_transition_table_+359, 73, "rule 73: expression <- expression '<' '=' . expression" },
+    { 1, ms_transition_table_+363, 73, "rule 73: expression <- expression '<' '=' expression ." },
+    { 3, ms_transition_table_+364, 74, "rule 74: expression <- . expression '>' expression" },
+    { 3, ms_transition_table_+367, 74, "rule 74: expression <- expression . '>' expression" },
+    { 4, ms_transition_table_+370, 74, "rule 74: expression <- expression '>' . expression" },
+    { 1, ms_transition_table_+374, 74, "rule 74: expression <- expression '>' expression ." },
+    { 3, ms_transition_table_+375, 75, "rule 75: expression <- . expression '>' '=' expression" },
+    { 3, ms_transition_table_+378, 75, "rule 75: expression <- expression . '>' '=' expression" },
+    { 3, ms_transition_table_+381, 75, "rule 75: expression <- expression '>' . '=' expression" },
+    { 4, ms_transition_table_+384, 75, "rule 75: expression <- expression '>' '=' . expression" },
+    { 1, ms_transition_table_+388, 75, "rule 75: expression <- expression '>' '=' expression ." },
+    { 3, ms_transition_table_+389, 76, "rule 76: expression <- . expression '+' expression" },
+    { 3, ms_transition_table_+392, 76, "rule 76: expression <- expression . '+' expression" },
+    { 4, ms_transition_table_+395, 76, "rule 76: expression <- expression '+' . expression" },
+    { 1, ms_transition_table_+399, 76, "rule 76: expression <- expression '+' expression ." },
+    { 3, ms_transition_table_+400, 77, "rule 77: expression <- . expression '-' expression" },
+    { 3, ms_transition_table_+403, 77, "rule 77: expression <- expression . '-' expression" },
+    { 4, ms_transition_table_+406, 77, "rule 77: expression <- expression '-' . expression" },
+    { 1, ms_transition_table_+410, 77, "rule 77: expression <- expression '-' expression ." },
+    { 3, ms_transition_table_+411, 78, "rule 78: expression <- . expression '*' expression" },
+    { 3, ms_transition_table_+414, 78, "rule 78: expression <- expression . '*' expression" },
+    { 4, ms_transition_table_+417, 78, "rule 78: expression <- expression '*' . expression" },
+    { 1, ms_transition_table_+421, 78, "rule 78: expression <- expression '*' expression ." },
+    { 3, ms_transition_table_+422, 79, "rule 79: expression <- . expression '/' expression" },
+    { 3, ms_transition_table_+425, 79, "rule 79: expression <- expression . '/' expression" },
+    { 4, ms_transition_table_+428, 79, "rule 79: expression <- expression '/' . expression" },
+    { 1, ms_transition_table_+432, 79, "rule 79: expression <- expression '/' expression ." },
+    { 3, ms_transition_table_+433, 80, "rule 80: expression <- . expression '%' expression" },
+    { 3, ms_transition_table_+436, 80, "rule 80: expression <- expression . '%' expression" },
+    { 4, ms_transition_table_+439, 80, "rule 80: expression <- expression '%' . expression" },
+    { 1, ms_transition_table_+443, 80, "rule 80: expression <- expression '%' expression ." },
+    { 3, ms_transition_table_+444, 81, "rule 81: expression <- . '-' expression" },
+    { 4, ms_transition_table_+447, 81, "rule 81: expression <- '-' . expression" },
+    { 1, ms_transition_table_+451, 81, "rule 81: expression <- '-' expression ." },
+    { 3, ms_transition_table_+452, 82, "rule 82: expression <- . '!' expression" },
+    { 4, ms_transition_table_+455, 82, "rule 82: expression <- '!' . expression" },
+    { 1, ms_transition_table_+459, 82, "rule 82: expression <- '!' expression ." },
+    { 3, ms_transition_table_+460, 83, "rule 83: expression <- . '(' expression ')'" },
+    { 4, ms_transition_table_+463, 83, "rule 83: expression <- '(' . expression ')'" },
+    { 3, ms_transition_table_+467, 83, "rule 83: expression <- '(' expression . ')'" },
+    { 1, ms_transition_table_+470, 83, "rule 83: expression <- '(' expression ')' ." },
+    { 3, ms_transition_table_+471, 13, "rule 13: code_body <- . DUMP_SYMBOL_TABLE '(' ')'" },
+    { 3, ms_transition_table_+474, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE . '(' ')'" },
+    { 3, ms_transition_table_+477, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE '(' . ')'" },
+    { 1, ms_transition_table_+480, 13, "rule 13: code_body <- DUMP_SYMBOL_TABLE '(' ')' ." },
+    { 3, ms_transition_table_+481, 14, "rule 14: code_body <- . UNDEFINE '(' ID ')'" },
+    { 3, ms_transition_table_+484, 14, "rule 14: code_body <- UNDEFINE . '(' ID ')'" },
+    { 3, ms_transition_table_+487, 14, "rule 14: code_body <- UNDEFINE '(' . ID ')'" },
+    { 3, ms_transition_table_+490, 14, "rule 14: code_body <- UNDEFINE '(' ID . ')'" },
+    { 1, ms_transition_table_+493, 14, "rule 14: code_body <- UNDEFINE '(' ID ')' ." },
+    { 3, ms_transition_table_+494, 15, "rule 15: code_body <- . DECLARE_ARRAY '(' ID ')'" },
+    { 3, ms_transition_table_+497, 15, "rule 15: code_body <- DECLARE_ARRAY . '(' ID ')'" },
+    { 3, ms_transition_table_+500, 15, "rule 15: code_body <- DECLARE_ARRAY '(' . ID ')'" },
+    { 3, ms_transition_table_+503, 15, "rule 15: code_body <- DECLARE_ARRAY '(' ID . ')'" },
+    { 1, ms_transition_table_+506, 15, "rule 15: code_body <- DECLARE_ARRAY '(' ID ')' ." },
+    { 3, ms_transition_table_+507, 16, "rule 16: code_body <- . DECLARE_MAP '(' ID ')'" },
+    { 3, ms_transition_table_+510, 16, "rule 16: code_body <- DECLARE_MAP . '(' ID ')'" },
+    { 3, ms_transition_table_+513, 16, "rule 16: code_body <- DECLARE_MAP '(' . ID ')'" },
+    { 3, ms_transition_table_+516, 16, "rule 16: code_body <- DECLARE_MAP '(' ID . ')'" },
+    { 1, ms_transition_table_+519, 16, "rule 16: code_body <- DECLARE_MAP '(' ID ')' ." },
+    { 3, ms_transition_table_+520, 17, "rule 17: code_body <- . INCLUDE '(' expression ')'" },
+    { 3, ms_transition_table_+523, 17, "rule 17: code_body <- INCLUDE . '(' expression ')'" },
+    { 4, ms_transition_table_+526, 17, "rule 17: code_body <- INCLUDE '(' . expression ')'" },
+    { 3, ms_transition_table_+530, 17, "rule 17: code_body <- INCLUDE '(' expression . ')'" },
+    { 1, ms_transition_table_+533, 17, "rule 17: code_body <- INCLUDE '(' expression ')' ." },
+    { 3, ms_transition_table_+534, 18, "rule 18: code_body <- . SANDBOX_INCLUDE '(' expression ')'" },
+    { 3, ms_transition_table_+537, 18, "rule 18: code_body <- SANDBOX_INCLUDE . '(' expression ')'" },
+    { 4, ms_transition_table_+540, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' . expression ')'" },
+    { 3, ms_transition_table_+544, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' expression . ')'" },
+    { 1, ms_transition_table_+547, 18, "rule 18: code_body <- SANDBOX_INCLUDE '(' expression ')' ." },
+    { 3, ms_transition_table_+548, 19, "rule 19: code_body <- . WARNING '(' expression ')'" },
+    { 3, ms_transition_table_+551, 19, "rule 19: code_body <- WARNING . '(' expression ')'" },
+    { 4, ms_transition_table_+554, 19, "rule 19: code_body <- WARNING '(' . expression ')'" },
+    { 3, ms_transition_table_+558, 19, "rule 19: code_body <- WARNING '(' expression . ')'" },
+    { 1, ms_transition_table_+561, 19, "rule 19: code_body <- WARNING '(' expression ')' ." },
+    { 3, ms_transition_table_+562, 20, "rule 20: code_body <- . ERROR '(' expression ')'" },
+    { 3, ms_transition_table_+565, 20, "rule 20: code_body <- ERROR . '(' expression ')'" },
+    { 4, ms_transition_table_+568, 20, "rule 20: code_body <- ERROR '(' . expression ')'" },
+    { 3, ms_transition_table_+572, 20, "rule 20: code_body <- ERROR '(' expression . ')'" },
+    { 1, ms_transition_table_+575, 20, "rule 20: code_body <- ERROR '(' expression ')' ." },
+    { 3, ms_transition_table_+576, 21, "rule 21: code_body <- . FATAL_ERROR '(' expression ')'" },
+    { 3, ms_transition_table_+579, 21, "rule 21: code_body <- FATAL_ERROR . '(' expression ')'" },
+    { 4, ms_transition_table_+582, 21, "rule 21: code_body <- FATAL_ERROR '(' . expression ')'" },
+    { 3, ms_transition_table_+586, 21, "rule 21: code_body <- FATAL_ERROR '(' expression . ')'" },
+    { 1, ms_transition_table_+589, 21, "rule 21: code_body <- FATAL_ERROR '(' expression ')' ." },
+    { 1, ms_transition_table_+590, 9, "rule 9: code <- START_CODE code_body END_CODE ." },
+    { 3, ms_transition_table_+591, 10, "rule 10: code <- . CODE_LINE code_body CODE_NEWLINE" },
+    { 4, ms_transition_table_+594, 10, "rule 10: code <- CODE_LINE . code_body CODE_NEWLINE" },
+    { 3, ms_transition_table_+598, 10, "rule 10: code <- CODE_LINE code_body . CODE_NEWLINE" },
+    { 1, ms_transition_table_+601, 10, "rule 10: code <- CODE_LINE code_body CODE_NEWLINE ." },
+    { 4, ms_transition_table_+602, 5, "rule 5: executable <- . conditional_series" },
+    { 1, ms_transition_table_+606, 5, "rule 5: executable <- conditional_series ." },
+    { 2, ms_transition_table_+607, 84, "START conditional_series" },
+    { 1, ms_transition_table_+609, 84, "RETURN conditional_series" },
+    { 1, ms_transition_table_+610, 84, "head of: conditional_series" },
+    { 4, ms_transition_table_+611, 22, "rule 22: conditional_series <- . if_statement body conditional_series_end" },
+    { 4, ms_transition_table_+615, 22, "rule 22: conditional_series <- if_statement . body conditional_series_end" },
+    { 2, ms_transition_table_+619, 84, "START if_statement" },
+    { 1, ms_transition_table_+621, 84, "RETURN if_statement" },
+    { 2, ms_transition_table_+622, 84, "head of: if_statement" },
+    { 3, ms_transition_table_+624, 26, "rule 26: if_statement <- . START_CODE IF '(' expression ')' END_CODE" },
+    { 3, ms_transition_table_+627, 26, "rule 26: if_statement <- START_CODE . IF '(' expression ')' END_CODE" },
+    { 3, ms_transition_table_+630, 26, "rule 26: if_statement <- START_CODE IF . '(' expression ')' END_CODE" },
+    { 4, ms_transition_table_+633, 26, "rule 26: if_statement <- START_CODE IF '(' . expression ')' END_CODE" },
+    { 3, ms_transition_table_+637, 26, "rule 26: if_statement <- START_CODE IF '(' expression . ')' END_CODE" },
+    { 3, ms_transition_table_+640, 26, "rule 26: if_statement <- START_CODE IF '(' expression ')' . END_CODE" },
+    { 1, ms_transition_table_+643, 26, "rule 26: if_statement <- START_CODE IF '(' expression ')' END_CODE ." },
+    { 3, ms_transition_table_+644, 27, "rule 27: if_statement <- . CODE_LINE IF '(' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+647, 27, "rule 27: if_statement <- CODE_LINE . IF '(' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+650, 27, "rule 27: if_statement <- CODE_LINE IF . '(' expression ')' CODE_NEWLINE" },
+    { 4, ms_transition_table_+653, 27, "rule 27: if_statement <- CODE_LINE IF '(' . expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+657, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+660, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+663, 27, "rule 27: if_statement <- CODE_LINE IF '(' expression ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+664, 22, "rule 22: conditional_series <- if_statement body . conditional_series_end" },
+    { 1, ms_transition_table_+668, 22, "rule 22: conditional_series <- if_statement body conditional_series_end ." },
+    { 2, ms_transition_table_+669, 84, "START conditional_series_end" },
+    { 1, ms_transition_table_+671, 84, "RETURN conditional_series_end" },
+    { 3, ms_transition_table_+672, 84, "head of: conditional_series_end" },
+    { 4, ms_transition_table_+675, 23, "rule 23: conditional_series_end <- . end_if" },
+    { 1, ms_transition_table_+679, 23, "rule 23: conditional_series_end <- end_if ." },
+    { 2, ms_transition_table_+680, 84, "START end_if" },
+    { 1, ms_transition_table_+682, 84, "RETURN end_if" },
+    { 2, ms_transition_table_+683, 84, "head of: end_if" },
+    { 3, ms_transition_table_+685, 32, "rule 32: end_if <- . START_CODE END_IF END_CODE" },
+    { 3, ms_transition_table_+688, 32, "rule 32: end_if <- START_CODE . END_IF END_CODE" },
+    { 3, ms_transition_table_+691, 32, "rule 32: end_if <- START_CODE END_IF . END_CODE" },
+    { 1, ms_transition_table_+694, 32, "rule 32: end_if <- START_CODE END_IF END_CODE ." },
+    { 3, ms_transition_table_+695, 33, "rule 33: end_if <- . CODE_LINE END_IF CODE_NEWLINE" },
+    { 3, ms_transition_table_+698, 33, "rule 33: end_if <- CODE_LINE . END_IF CODE_NEWLINE" },
+    { 3, ms_transition_table_+701, 33, "rule 33: end_if <- CODE_LINE END_IF . CODE_NEWLINE" },
+    { 1, ms_transition_table_+704, 33, "rule 33: end_if <- CODE_LINE END_IF CODE_NEWLINE ." },
+    { 4, ms_transition_table_+705, 24, "rule 24: conditional_series_end <- . else_statement body end_if" },
+    { 4, ms_transition_table_+709, 24, "rule 24: conditional_series_end <- else_statement . body end_if" },
+    { 2, ms_transition_table_+713, 84, "START else_statement" },
+    { 1, ms_transition_table_+715, 84, "RETURN else_statement" },
+    { 2, ms_transition_table_+716, 84, "head of: else_statement" },
+    { 3, ms_transition_table_+718, 28, "rule 28: else_statement <- . START_CODE ELSE END_CODE" },
+    { 3, ms_transition_table_+721, 28, "rule 28: else_statement <- START_CODE . ELSE END_CODE" },
+    { 3, ms_transition_table_+724, 28, "rule 28: else_statement <- START_CODE ELSE . END_CODE" },
+    { 1, ms_transition_table_+727, 28, "rule 28: else_statement <- START_CODE ELSE END_CODE ." },
+    { 3, ms_transition_table_+728, 29, "rule 29: else_statement <- . CODE_LINE ELSE CODE_NEWLINE" },
+    { 3, ms_transition_table_+731, 29, "rule 29: else_statement <- CODE_LINE . ELSE CODE_NEWLINE" },
+    { 3, ms_transition_table_+734, 29, "rule 29: else_statement <- CODE_LINE ELSE . CODE_NEWLINE" },
+    { 1, ms_transition_table_+737, 29, "rule 29: else_statement <- CODE_LINE ELSE CODE_NEWLINE ." },
+    { 4, ms_transition_table_+738, 24, "rule 24: conditional_series_end <- else_statement body . end_if" },
+    { 1, ms_transition_table_+742, 24, "rule 24: conditional_series_end <- else_statement body end_if ." },
+    { 4, ms_transition_table_+743, 25, "rule 25: conditional_series_end <- . else_if_statement body conditional_series_end" },
+    { 4, ms_transition_table_+747, 25, "rule 25: conditional_series_end <- else_if_statement . body conditional_series_end" },
+    { 2, ms_transition_table_+751, 84, "START else_if_statement" },
+    { 1, ms_transition_table_+753, 84, "RETURN else_if_statement" },
+    { 2, ms_transition_table_+754, 84, "head of: else_if_statement" },
+    { 3, ms_transition_table_+756, 30, "rule 30: else_if_statement <- . START_CODE ELSE_IF '(' expression ')' END_CODE" },
+    { 3, ms_transition_table_+759, 30, "rule 30: else_if_statement <- START_CODE . ELSE_IF '(' expression ')' END_CODE" },
+    { 3, ms_transition_table_+762, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF . '(' expression ')' END_CODE" },
+    { 4, ms_transition_table_+765, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' . expression ')' END_CODE" },
+    { 3, ms_transition_table_+769, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression . ')' END_CODE" },
+    { 3, ms_transition_table_+772, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression ')' . END_CODE" },
+    { 1, ms_transition_table_+775, 30, "rule 30: else_if_statement <- START_CODE ELSE_IF '(' expression ')' END_CODE ." },
+    { 3, ms_transition_table_+776, 31, "rule 31: else_if_statement <- . CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+779, 31, "rule 31: else_if_statement <- CODE_LINE . ELSE_IF '(' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+782, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF . '(' expression ')' CODE_NEWLINE" },
+    { 4, ms_transition_table_+785, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' . expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+789, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+792, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+795, 31, "rule 31: else_if_statement <- CODE_LINE ELSE_IF '(' expression ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+796, 25, "rule 25: conditional_series_end <- else_if_statement body . conditional_series_end" },
+    { 1, ms_transition_table_+800, 25, "rule 25: conditional_series_end <- else_if_statement body conditional_series_end ." },
+    { 4, ms_transition_table_+801, 6, "rule 6: executable <- . define body end_define" },
+    { 4, ms_transition_table_+805, 6, "rule 6: executable <- define . body end_define" },
+    { 2, ms_transition_table_+809, 84, "START define" },
+    { 1, ms_transition_table_+811, 84, "RETURN define" },
+    { 3, ms_transition_table_+812, 84, "head of: define" },
+    { 4, ms_transition_table_+815, 34, "rule 34: define <- . define_scalar" },
+    { 1, ms_transition_table_+819, 34, "rule 34: define <- define_scalar ." },
+    { 2, ms_transition_table_+820, 84, "START define_scalar" },
+    { 1, ms_transition_table_+822, 84, "RETURN define_scalar" },
+    { 2, ms_transition_table_+823, 84, "head of: define_scalar" },
+    { 3, ms_transition_table_+825, 37, "rule 37: define_scalar <- . START_CODE DEFINE '(' ID ')' END_CODE" },
+    { 3, ms_transition_table_+828, 37, "rule 37: define_scalar <- START_CODE . DEFINE '(' ID ')' END_CODE" },
+    { 3, ms_transition_table_+831, 37, "rule 37: define_scalar <- START_CODE DEFINE . '(' ID ')' END_CODE" },
+    { 3, ms_transition_table_+834, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' . ID ')' END_CODE" },
+    { 3, ms_transition_table_+837, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID . ')' END_CODE" },
+    { 3, ms_transition_table_+840, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' . END_CODE" },
+    { 1, ms_transition_table_+843, 37, "rule 37: define_scalar <- START_CODE DEFINE '(' ID ')' END_CODE ." },
+    { 3, ms_transition_table_+844, 38, "rule 38: define_scalar <- . CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+847, 38, "rule 38: define_scalar <- CODE_LINE . DEFINE '(' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+850, 38, "rule 38: define_scalar <- CODE_LINE DEFINE . '(' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+853, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' . ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+856, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+859, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+862, 38, "rule 38: define_scalar <- CODE_LINE DEFINE '(' ID ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+863, 35, "rule 35: define <- . define_array_element" },
+    { 1, ms_transition_table_+867, 35, "rule 35: define <- define_array_element ." },
+    { 2, ms_transition_table_+868, 84, "START define_array_element" },
+    { 1, ms_transition_table_+870, 84, "RETURN define_array_element" },
+    { 2, ms_transition_table_+871, 84, "head of: define_array_element" },
+    { 3, ms_transition_table_+873, 39, "rule 39: define_array_element <- . START_CODE DEFINE '(' ID '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+876, 39, "rule 39: define_array_element <- START_CODE . DEFINE '(' ID '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+879, 39, "rule 39: define_array_element <- START_CODE DEFINE . '(' ID '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+882, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' . ID '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+885, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID . '[' ']' ')' END_CODE" },
+    { 3, ms_transition_table_+888, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' . ']' ')' END_CODE" },
+    { 3, ms_transition_table_+891, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' . ')' END_CODE" },
+    { 3, ms_transition_table_+894, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' . END_CODE" },
+    { 1, ms_transition_table_+897, 39, "rule 39: define_array_element <- START_CODE DEFINE '(' ID '[' ']' ')' END_CODE ." },
+    { 3, ms_transition_table_+898, 40, "rule 40: define_array_element <- . CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+901, 40, "rule 40: define_array_element <- CODE_LINE . DEFINE '(' ID '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+904, 40, "rule 40: define_array_element <- CODE_LINE DEFINE . '(' ID '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+907, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' . ID '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+910, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID . '[' ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+913, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' . ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+916, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+919, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+922, 40, "rule 40: define_array_element <- CODE_LINE DEFINE '(' ID '[' ']' ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+923, 36, "rule 36: define <- . define_map_element" },
+    { 1, ms_transition_table_+927, 36, "rule 36: define <- define_map_element ." },
+    { 2, ms_transition_table_+928, 84, "START define_map_element" },
+    { 1, ms_transition_table_+930, 84, "RETURN define_map_element" },
+    { 2, ms_transition_table_+931, 84, "head of: define_map_element" },
+    { 3, ms_transition_table_+933, 41, "rule 41: define_map_element <- . START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+936, 41, "rule 41: define_map_element <- START_CODE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+939, 41, "rule 41: define_map_element <- START_CODE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+942, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+945, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+948, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' END_CODE" },
+    { 3, ms_transition_table_+951, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL . ']' ')' END_CODE" },
+    { 3, ms_transition_table_+954, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' . ')' END_CODE" },
+    { 3, ms_transition_table_+957, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' . END_CODE" },
+    { 1, ms_transition_table_+960, 41, "rule 41: define_map_element <- START_CODE DEFINE '(' ID '[' STRING_LITERAL ']' ')' END_CODE ." },
+    { 3, ms_transition_table_+961, 42, "rule 42: define_map_element <- . CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+964, 42, "rule 42: define_map_element <- CODE_LINE . DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+967, 42, "rule 42: define_map_element <- CODE_LINE DEFINE . '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+970, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' . ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+973, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID . '[' STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+976, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' . STRING_LITERAL ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+979, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL . ']' ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+982, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+985, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+988, 42, "rule 42: define_map_element <- CODE_LINE DEFINE '(' ID '[' STRING_LITERAL ']' ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+989, 6, "rule 6: executable <- define body . end_define" },
+    { 1, ms_transition_table_+993, 6, "rule 6: executable <- define body end_define ." },
+    { 2, ms_transition_table_+994, 84, "START end_define" },
+    { 1, ms_transition_table_+996, 84, "RETURN end_define" },
+    { 2, ms_transition_table_+997, 84, "head of: end_define" },
+    { 3, ms_transition_table_+999, 43, "rule 43: end_define <- . START_CODE END_DEFINE END_CODE" },
+    { 3, ms_transition_table_+1002, 43, "rule 43: end_define <- START_CODE . END_DEFINE END_CODE" },
+    { 3, ms_transition_table_+1005, 43, "rule 43: end_define <- START_CODE END_DEFINE . END_CODE" },
+    { 1, ms_transition_table_+1008, 43, "rule 43: end_define <- START_CODE END_DEFINE END_CODE ." },
+    { 3, ms_transition_table_+1009, 44, "rule 44: end_define <- . CODE_LINE END_DEFINE CODE_NEWLINE" },
+    { 3, ms_transition_table_+1012, 44, "rule 44: end_define <- CODE_LINE . END_DEFINE CODE_NEWLINE" },
+    { 3, ms_transition_table_+1015, 44, "rule 44: end_define <- CODE_LINE END_DEFINE . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1018, 44, "rule 44: end_define <- CODE_LINE END_DEFINE CODE_NEWLINE ." },
+    { 4, ms_transition_table_+1019, 7, "rule 7: executable <- . loop body end_loop" },
+    { 4, ms_transition_table_+1023, 7, "rule 7: executable <- loop . body end_loop" },
+    { 2, ms_transition_table_+1027, 84, "START loop" },
+    { 1, ms_transition_table_+1029, 84, "RETURN loop" },
+    { 2, ms_transition_table_+1030, 84, "head of: loop" },
+    { 3, ms_transition_table_+1032, 45, "rule 45: loop <- . START_CODE LOOP '(' ID ',' expression ')' END_CODE" },
+    { 3, ms_transition_table_+1035, 45, "rule 45: loop <- START_CODE . LOOP '(' ID ',' expression ')' END_CODE" },
+    { 3, ms_transition_table_+1038, 45, "rule 45: loop <- START_CODE LOOP . '(' ID ',' expression ')' END_CODE" },
+    { 3, ms_transition_table_+1041, 45, "rule 45: loop <- START_CODE LOOP '(' . ID ',' expression ')' END_CODE" },
+    { 3, ms_transition_table_+1044, 45, "rule 45: loop <- START_CODE LOOP '(' ID . ',' expression ')' END_CODE" },
+    { 4, ms_transition_table_+1047, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' . expression ')' END_CODE" },
+    { 3, ms_transition_table_+1051, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression . ')' END_CODE" },
+    { 3, ms_transition_table_+1054, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' . END_CODE" },
+    { 1, ms_transition_table_+1057, 45, "rule 45: loop <- START_CODE LOOP '(' ID ',' expression ')' END_CODE ." },
+    { 3, ms_transition_table_+1058, 46, "rule 46: loop <- . CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1061, 46, "rule 46: loop <- CODE_LINE . LOOP '(' ID ',' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1064, 46, "rule 46: loop <- CODE_LINE LOOP . '(' ID ',' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1067, 46, "rule 46: loop <- CODE_LINE LOOP '(' . ID ',' expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1070, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID . ',' expression ')' CODE_NEWLINE" },
+    { 4, ms_transition_table_+1073, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' . expression ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1077, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1080, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1083, 46, "rule 46: loop <- CODE_LINE LOOP '(' ID ',' expression ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+1084, 7, "rule 7: executable <- loop body . end_loop" },
+    { 1, ms_transition_table_+1088, 7, "rule 7: executable <- loop body end_loop ." },
+    { 2, ms_transition_table_+1089, 84, "START end_loop" },
+    { 1, ms_transition_table_+1091, 84, "RETURN end_loop" },
+    { 2, ms_transition_table_+1092, 84, "head of: end_loop" },
+    { 3, ms_transition_table_+1094, 47, "rule 47: end_loop <- . START_CODE END_LOOP END_CODE" },
+    { 3, ms_transition_table_+1097, 47, "rule 47: end_loop <- START_CODE . END_LOOP END_CODE" },
+    { 3, ms_transition_table_+1100, 47, "rule 47: end_loop <- START_CODE END_LOOP . END_CODE" },
+    { 1, ms_transition_table_+1103, 47, "rule 47: end_loop <- START_CODE END_LOOP END_CODE ." },
+    { 3, ms_transition_table_+1104, 48, "rule 48: end_loop <- . CODE_LINE END_LOOP CODE_NEWLINE" },
+    { 3, ms_transition_table_+1107, 48, "rule 48: end_loop <- CODE_LINE . END_LOOP CODE_NEWLINE" },
+    { 3, ms_transition_table_+1110, 48, "rule 48: end_loop <- CODE_LINE END_LOOP . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1113, 48, "rule 48: end_loop <- CODE_LINE END_LOOP CODE_NEWLINE ." },
+    { 4, ms_transition_table_+1114, 8, "rule 8: executable <- . for_each body end_for_each" },
+    { 4, ms_transition_table_+1118, 8, "rule 8: executable <- for_each . body end_for_each" },
+    { 2, ms_transition_table_+1122, 84, "START for_each" },
+    { 1, ms_transition_table_+1124, 84, "RETURN for_each" },
+    { 2, ms_transition_table_+1125, 84, "head of: for_each" },
+    { 3, ms_transition_table_+1127, 49, "rule 49: for_each <- . START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1130, 49, "rule 49: for_each <- START_CODE . FOR_EACH '(' ID ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1133, 49, "rule 49: for_each <- START_CODE FOR_EACH . '(' ID ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1136, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' . ID ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1139, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID . ',' ID ')' END_CODE" },
+    { 3, ms_transition_table_+1142, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' . ID ')' END_CODE" },
+    { 3, ms_transition_table_+1145, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID . ')' END_CODE" },
+    { 3, ms_transition_table_+1148, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' . END_CODE" },
+    { 1, ms_transition_table_+1151, 49, "rule 49: for_each <- START_CODE FOR_EACH '(' ID ',' ID ')' END_CODE ." },
+    { 3, ms_transition_table_+1152, 50, "rule 50: for_each <- . CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1155, 50, "rule 50: for_each <- CODE_LINE . FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1158, 50, "rule 50: for_each <- CODE_LINE FOR_EACH . '(' ID ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1161, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' . ID ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1164, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID . ',' ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1167, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' . ID ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1170, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID . ')' CODE_NEWLINE" },
+    { 3, ms_transition_table_+1173, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1176, 50, "rule 50: for_each <- CODE_LINE FOR_EACH '(' ID ',' ID ')' CODE_NEWLINE ." },
+    { 4, ms_transition_table_+1177, 8, "rule 8: executable <- for_each body . end_for_each" },
+    { 1, ms_transition_table_+1181, 8, "rule 8: executable <- for_each body end_for_each ." },
+    { 2, ms_transition_table_+1182, 84, "START end_for_each" },
+    { 1, ms_transition_table_+1184, 84, "RETURN end_for_each" },
+    { 2, ms_transition_table_+1185, 84, "head of: end_for_each" },
+    { 3, ms_transition_table_+1187, 51, "rule 51: end_for_each <- . START_CODE END_FOR_EACH END_CODE" },
+    { 3, ms_transition_table_+1190, 51, "rule 51: end_for_each <- START_CODE . END_FOR_EACH END_CODE" },
+    { 3, ms_transition_table_+1193, 51, "rule 51: end_for_each <- START_CODE END_FOR_EACH . END_CODE" },
+    { 1, ms_transition_table_+1196, 51, "rule 51: end_for_each <- START_CODE END_FOR_EACH END_CODE ." },
+    { 3, ms_transition_table_+1197, 52, "rule 52: end_for_each <- . CODE_LINE END_FOR_EACH CODE_NEWLINE" },
+    { 3, ms_transition_table_+1200, 52, "rule 52: end_for_each <- CODE_LINE . END_FOR_EACH CODE_NEWLINE" },
+    { 3, ms_transition_table_+1203, 52, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH . CODE_NEWLINE" },
+    { 1, ms_transition_table_+1206, 52, "rule 52: end_for_each <- CODE_LINE END_FOR_EACH CODE_NEWLINE ." },
+    { 3, ms_transition_table_+1207, 3, "rule 3: body <- . body executable TEXT" },
+    { 4, ms_transition_table_+1210, 3, "rule 3: body <- body . executable TEXT" },
+    { 3, ms_transition_table_+1214, 3, "rule 3: body <- body executable . TEXT" },
+    { 1, ms_transition_table_+1217, 3, "rule 3: body <- body executable TEXT ." }
 };
 std::size_t const Parser::Npda_::ms_state_count_ = sizeof(Parser::Npda_::ms_state_table_) / sizeof(*Parser::Npda_::ms_state_table_);
 
 Parser::Npda_::Transition_ const Parser::Npda_::ms_transition_table_[] =
 {
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::ABORT, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(2) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(4) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(6) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(448) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(5) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(449) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(0) },
-    { Parser::Npda_::Transition_::SHIFT, 258, std::uint32_t(5) },
+    { Parser::Npda_::Transition_::SHIFT, 258, std::uint32_t(6) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(8) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(8) },
+    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(9) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(11) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(10) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(11) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(213) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(291) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(376) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(412) },
-    { Parser::Npda_::Transition_::SHIFT, 295, std::uint32_t(13) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(2) },
+    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(214) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(292) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(377) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(413) },
+    { Parser::Npda_::Transition_::SHIFT, 295, std::uint32_t(14) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(16) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(4) },
-    { Parser::Npda_::Transition_::SHIFT, 295, std::uint32_t(15) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(16) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(17) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(209) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(18) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(19) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(22) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(208) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(21) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(4) },
+    { Parser::Npda_::Transition_::SHIFT, 295, std::uint32_t(16) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(17) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(18) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(210) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(19) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(20) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(23) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(24) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(164) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(168) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(173) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(178) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(183) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(188) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(193) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(198) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(203) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(11) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(25) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(209) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(12) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(27) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(23) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(24) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(25) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(165) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(169) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(174) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(179) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(184) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(189) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(194) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(199) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(204) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(26) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(31) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(33) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(38) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(43) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(48) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(53) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(58) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(63) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(68) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(76) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(78) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(83) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(86) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(92) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(96) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(101) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(106) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(111) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(116) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(120) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(125) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(129) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(134) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(138) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(142) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(146) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(150) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(154) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(157) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(160) },
-    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(30) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(30) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(32) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(34) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(39) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(44) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(49) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(54) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(59) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(64) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(69) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(77) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(79) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(84) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(87) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(93) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(97) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(102) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(107) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(112) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(117) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(121) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(126) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(130) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(135) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(139) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(143) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(147) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(151) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(155) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(158) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(161) },
+    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(31) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(53) },
-    { Parser::Npda_::Transition_::SHIFT, 285, std::uint32_t(32) },
+    { Parser::Npda_::Transition_::SHIFT, 285, std::uint32_t(33) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(54) },
-    { Parser::Npda_::Transition_::SHIFT, 283, std::uint32_t(34) },
+    { Parser::Npda_::Transition_::SHIFT, 283, std::uint32_t(35) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(35) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(36) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(36) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(37) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(37) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(38) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(55) },
-    { Parser::Npda_::Transition_::SHIFT, 287, std::uint32_t(39) },
+    { Parser::Npda_::Transition_::SHIFT, 287, std::uint32_t(40) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(40) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(41) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(41) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(42) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(42) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(43) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(56) },
-    { Parser::Npda_::Transition_::SHIFT, 288, std::uint32_t(44) },
+    { Parser::Npda_::Transition_::SHIFT, 288, std::uint32_t(45) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(45) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(46) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(46) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(47) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(47) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(48) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(57) },
-    { Parser::Npda_::Transition_::SHIFT, 289, std::uint32_t(49) },
+    { Parser::Npda_::Transition_::SHIFT, 289, std::uint32_t(50) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(50) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(51) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(51) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(52) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(52) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(53) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(58) },
-    { Parser::Npda_::Transition_::SHIFT, 290, std::uint32_t(54) },
+    { Parser::Npda_::Transition_::SHIFT, 290, std::uint32_t(55) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(55) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(56) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(56) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(57) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(57) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(58) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(59) },
-    { Parser::Npda_::Transition_::SHIFT, 291, std::uint32_t(59) },
+    { Parser::Npda_::Transition_::SHIFT, 291, std::uint32_t(60) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(60) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(61) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(61) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(62) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(62) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(63) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(60) },
-    { Parser::Npda_::Transition_::SHIFT, 284, std::uint32_t(64) },
+    { Parser::Npda_::Transition_::SHIFT, 284, std::uint32_t(65) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(65) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(66) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(66) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(67) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(67) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(68) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(61) },
-    { Parser::Npda_::Transition_::SHIFT, 284, std::uint32_t(69) },
+    { Parser::Npda_::Transition_::SHIFT, 284, std::uint32_t(70) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(70) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(71) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(71) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(72) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(72) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(73) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(73) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(74) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(74) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(75) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(75) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(76) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(62) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(77) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(78) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(63) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(79) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(80) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(80) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(81) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(81) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(82) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(82) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(83) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(64) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(84) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(85) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 63, std::uint32_t(85) },
+    { Parser::Npda_::Transition_::SHIFT, 63, std::uint32_t(86) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(65) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(87) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(88) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(88) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(89) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(89) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(90) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(90) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(91) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 63, std::uint32_t(91) },
+    { Parser::Npda_::Transition_::SHIFT, 63, std::uint32_t(92) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(66) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(93) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(94) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 46, std::uint32_t(94) },
+    { Parser::Npda_::Transition_::SHIFT, 46, std::uint32_t(95) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(95) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(96) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(67) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(97) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 124, std::uint32_t(98) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(98) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::SHIFT, 124, std::uint32_t(99) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(100) },
+    { Parser::Npda_::Transition_::SHIFT, 124, std::uint32_t(100) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(101) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(68) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(102) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 38, std::uint32_t(103) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(103) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::SHIFT, 38, std::uint32_t(104) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(105) },
+    { Parser::Npda_::Transition_::SHIFT, 38, std::uint32_t(105) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(106) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(69) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(107) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(108) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(108) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(109) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(110) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(110) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(111) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(70) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(112) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(113) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 33, std::uint32_t(113) },
+    { Parser::Npda_::Transition_::SHIFT, 33, std::uint32_t(114) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(114) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(115) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(115) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(116) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(71) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(117) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(118) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 60, std::uint32_t(118) },
+    { Parser::Npda_::Transition_::SHIFT, 60, std::uint32_t(119) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(119) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(120) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(72) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(121) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(122) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 60, std::uint32_t(122) },
+    { Parser::Npda_::Transition_::SHIFT, 60, std::uint32_t(123) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(123) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(124) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(124) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(125) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(73) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(126) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(127) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 62, std::uint32_t(127) },
+    { Parser::Npda_::Transition_::SHIFT, 62, std::uint32_t(128) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(128) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(129) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(74) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(130) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(131) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 62, std::uint32_t(131) },
+    { Parser::Npda_::Transition_::SHIFT, 62, std::uint32_t(132) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(132) },
+    { Parser::Npda_::Transition_::SHIFT, 61, std::uint32_t(133) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(133) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(134) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(75) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(135) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(136) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(136) },
+    { Parser::Npda_::Transition_::SHIFT, 43, std::uint32_t(137) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(137) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(138) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(76) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(139) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(140) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 45, std::uint32_t(140) },
+    { Parser::Npda_::Transition_::SHIFT, 45, std::uint32_t(141) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(141) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(142) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(77) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(143) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(144) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 42, std::uint32_t(144) },
+    { Parser::Npda_::Transition_::SHIFT, 42, std::uint32_t(145) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(145) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(146) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(78) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(147) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(148) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 47, std::uint32_t(148) },
+    { Parser::Npda_::Transition_::SHIFT, 47, std::uint32_t(149) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(149) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(150) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(79) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(151) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(152) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 37, std::uint32_t(152) },
+    { Parser::Npda_::Transition_::SHIFT, 37, std::uint32_t(153) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(153) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(154) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(80) },
-    { Parser::Npda_::Transition_::SHIFT, 45, std::uint32_t(155) },
+    { Parser::Npda_::Transition_::SHIFT, 45, std::uint32_t(156) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(156) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(157) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(81) },
-    { Parser::Npda_::Transition_::SHIFT, 33, std::uint32_t(158) },
+    { Parser::Npda_::Transition_::SHIFT, 33, std::uint32_t(159) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(159) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(160) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(82) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(161) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(162) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(162) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(163) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(163) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(164) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(83) },
-    { Parser::Npda_::Transition_::SHIFT, 264, std::uint32_t(165) },
+    { Parser::Npda_::Transition_::SHIFT, 264, std::uint32_t(166) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(166) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(167) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(167) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(168) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(13) },
-    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(169) },
+    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(170) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(170) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(171) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(171) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(172) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(172) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(173) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(14) },
-    { Parser::Npda_::Transition_::SHIFT, 270, std::uint32_t(174) },
+    { Parser::Npda_::Transition_::SHIFT, 270, std::uint32_t(175) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(175) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(176) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(176) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(177) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(177) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(178) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(15) },
-    { Parser::Npda_::Transition_::SHIFT, 271, std::uint32_t(179) },
+    { Parser::Npda_::Transition_::SHIFT, 271, std::uint32_t(180) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(180) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(181) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(181) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(182) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(182) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(183) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(16) },
-    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(184) },
+    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(185) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(185) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(186) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(186) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(187) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(187) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(188) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(17) },
-    { Parser::Npda_::Transition_::SHIFT, 279, std::uint32_t(189) },
+    { Parser::Npda_::Transition_::SHIFT, 279, std::uint32_t(190) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(190) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(191) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(191) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(192) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(192) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(193) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(18) },
-    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(194) },
+    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(195) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(195) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(196) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(196) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(197) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(197) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(198) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(19) },
-    { Parser::Npda_::Transition_::SHIFT, 281, std::uint32_t(199) },
+    { Parser::Npda_::Transition_::SHIFT, 281, std::uint32_t(200) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(200) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(201) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(201) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(202) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(202) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(203) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(20) },
-    { Parser::Npda_::Transition_::SHIFT, 282, std::uint32_t(204) },
+    { Parser::Npda_::Transition_::SHIFT, 282, std::uint32_t(205) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(205) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(206) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(206) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(207) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(207) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(208) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(21) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(9) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(210) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(211) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(211) },
+    { Parser::Npda_::Transition_::SHIFT, 296, std::uint32_t(212) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(22) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(212) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(23) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(213) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(10) },
-    { Parser::Npda_::Transition_::SHIFT, 297, std::uint32_t(214) },
+    { Parser::Npda_::Transition_::SHIFT, 297, std::uint32_t(215) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(217) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(5) },
-    { Parser::Npda_::Transition_::SHIFT, 297, std::uint32_t(216) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(217) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(218) },
-    { Parser::Npda_::Transition_::SHIFT, 299, std::uint32_t(219) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(222) },
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(237) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::SHIFT, 299, std::uint32_t(221) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(222) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(5) },
+    { Parser::Npda_::Transition_::SHIFT, 297, std::uint32_t(217) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(218) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(219) },
+    { Parser::Npda_::Transition_::SHIFT, 299, std::uint32_t(220) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(223) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(230) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(224) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(238) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 265, std::uint32_t(225) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::SHIFT, 299, std::uint32_t(222) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(223) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(224) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(231) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(225) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(226) },
+    { Parser::Npda_::Transition_::SHIFT, 265, std::uint32_t(226) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(227) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(227) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(228) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(228) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(229) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(229) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(230) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(26) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(231) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(232) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 265, std::uint32_t(232) },
+    { Parser::Npda_::Transition_::SHIFT, 265, std::uint32_t(233) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(233) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(234) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(234) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(235) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(235) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(236) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(236) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(237) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(27) },
-    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(238) },
+    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(239) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(241) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(22) },
-    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(240) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(241) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(242) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(255) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(270) },
-    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(243) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(246) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(23) },
-    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(245) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(246) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(241) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(242) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(243) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(256) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(271) },
+    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(244) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(247) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(251) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(248) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(23) },
+    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(246) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(247) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(248) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(252) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(249) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 268, std::uint32_t(249) },
+    { Parser::Npda_::Transition_::SHIFT, 268, std::uint32_t(250) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(250) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(251) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(32) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(252) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(253) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 268, std::uint32_t(253) },
+    { Parser::Npda_::Transition_::SHIFT, 268, std::uint32_t(254) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(254) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(255) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(33) },
-    { Parser::Npda_::Transition_::SHIFT, 300, std::uint32_t(256) },
+    { Parser::Npda_::Transition_::SHIFT, 300, std::uint32_t(257) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(259) },
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(268) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::SHIFT, 300, std::uint32_t(258) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(259) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(260) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(264) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(261) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(269) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 266, std::uint32_t(262) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::SHIFT, 300, std::uint32_t(259) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(260) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(261) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(265) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(262) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(263) },
+    { Parser::Npda_::Transition_::SHIFT, 266, std::uint32_t(263) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(264) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(265) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(266) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 266, std::uint32_t(266) },
+    { Parser::Npda_::Transition_::SHIFT, 266, std::uint32_t(267) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(267) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(268) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(29) },
-    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(269) },
+    { Parser::Npda_::Transition_::SHIFT, 302, std::uint32_t(270) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(246) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(247) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(24) },
-    { Parser::Npda_::Transition_::SHIFT, 301, std::uint32_t(271) },
+    { Parser::Npda_::Transition_::SHIFT, 301, std::uint32_t(272) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(274) },
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(289) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::SHIFT, 301, std::uint32_t(273) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(274) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(275) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(282) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(276) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(290) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 267, std::uint32_t(277) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::SHIFT, 301, std::uint32_t(274) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(275) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(276) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(283) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(277) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(278) },
+    { Parser::Npda_::Transition_::SHIFT, 267, std::uint32_t(278) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(279) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(279) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(280) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(280) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(281) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(281) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(282) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(30) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(283) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(284) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 267, std::uint32_t(284) },
+    { Parser::Npda_::Transition_::SHIFT, 267, std::uint32_t(285) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(285) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(286) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(286) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(287) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(287) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(288) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(288) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(289) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(31) },
-    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(290) },
+    { Parser::Npda_::Transition_::SHIFT, 298, std::uint32_t(291) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(241) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(242) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(25) },
-    { Parser::Npda_::Transition_::SHIFT, 303, std::uint32_t(292) },
+    { Parser::Npda_::Transition_::SHIFT, 303, std::uint32_t(293) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(295) },
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(363) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::SHIFT, 303, std::uint32_t(294) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(295) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(296) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(315) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(338) },
-    { Parser::Npda_::Transition_::SHIFT, 304, std::uint32_t(297) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(364) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(300) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(34) },
-    { Parser::Npda_::Transition_::SHIFT, 304, std::uint32_t(299) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(300) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::SHIFT, 303, std::uint32_t(295) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(296) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(297) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(316) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(339) },
+    { Parser::Npda_::Transition_::SHIFT, 304, std::uint32_t(298) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(301) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(308) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(302) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(34) },
+    { Parser::Npda_::Transition_::SHIFT, 304, std::uint32_t(300) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(301) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(302) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(309) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(303) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(303) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(304) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(304) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(305) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(305) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(306) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(306) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(307) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(307) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(308) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(37) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(309) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(310) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(310) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(311) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(311) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(312) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(312) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(313) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(313) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(314) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(314) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(315) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(38) },
-    { Parser::Npda_::Transition_::SHIFT, 305, std::uint32_t(316) },
+    { Parser::Npda_::Transition_::SHIFT, 305, std::uint32_t(317) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(319) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(35) },
-    { Parser::Npda_::Transition_::SHIFT, 305, std::uint32_t(318) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(319) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(320) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(329) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(321) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(35) },
+    { Parser::Npda_::Transition_::SHIFT, 305, std::uint32_t(319) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(320) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(321) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(330) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(322) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(322) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(323) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(323) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(324) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(324) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(325) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(325) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(326) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(326) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(327) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(327) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(328) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(328) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(329) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(39) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(330) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(331) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(331) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(332) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(332) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(333) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(333) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(334) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(334) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(335) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(335) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(336) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(336) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(337) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(337) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(338) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(40) },
-    { Parser::Npda_::Transition_::SHIFT, 306, std::uint32_t(339) },
+    { Parser::Npda_::Transition_::SHIFT, 306, std::uint32_t(340) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(342) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(36) },
-    { Parser::Npda_::Transition_::SHIFT, 306, std::uint32_t(341) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(342) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(343) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(353) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(344) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(36) },
+    { Parser::Npda_::Transition_::SHIFT, 306, std::uint32_t(342) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(343) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(344) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(354) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(345) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(345) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(346) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(346) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(347) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(347) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(348) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(348) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(349) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(349) },
+    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(350) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(350) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(351) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(351) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(352) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(352) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(353) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(41) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(354) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(355) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(355) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(356) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(356) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(357) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(357) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(358) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(358) },
+    { Parser::Npda_::Transition_::SHIFT, 91, std::uint32_t(359) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(359) },
+    { Parser::Npda_::Transition_::SHIFT, 286, std::uint32_t(360) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(360) },
+    { Parser::Npda_::Transition_::SHIFT, 93, std::uint32_t(361) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(361) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(362) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(362) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(363) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(42) },
-    { Parser::Npda_::Transition_::SHIFT, 307, std::uint32_t(364) },
+    { Parser::Npda_::Transition_::SHIFT, 307, std::uint32_t(365) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(367) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(6) },
-    { Parser::Npda_::Transition_::SHIFT, 307, std::uint32_t(366) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(367) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(368) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(372) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(369) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(6) },
+    { Parser::Npda_::Transition_::SHIFT, 307, std::uint32_t(367) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(368) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(369) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(373) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(370) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 273, std::uint32_t(370) },
+    { Parser::Npda_::Transition_::SHIFT, 273, std::uint32_t(371) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(371) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(372) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(43) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(373) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(374) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 273, std::uint32_t(374) },
+    { Parser::Npda_::Transition_::SHIFT, 273, std::uint32_t(375) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(375) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(376) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(44) },
-    { Parser::Npda_::Transition_::SHIFT, 308, std::uint32_t(377) },
+    { Parser::Npda_::Transition_::SHIFT, 308, std::uint32_t(378) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(380) },
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(399) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::SHIFT, 308, std::uint32_t(379) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(380) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(381) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(390) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(382) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(400) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(383) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::SHIFT, 308, std::uint32_t(380) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(381) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(382) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(391) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(383) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(384) },
+    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(384) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(385) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(385) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(386) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(386) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(387) },
+    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(387) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(388) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(388) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(389) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(389) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(390) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(45) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(391) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(392) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(392) },
+    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(393) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(393) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(394) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(394) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(395) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(395) },
+    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(396) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(396) },
+    { Parser::Npda_::Transition_::SHIFT, 312, std::uint32_t(397) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(397) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(398) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(398) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(399) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(46) },
-    { Parser::Npda_::Transition_::SHIFT, 309, std::uint32_t(400) },
+    { Parser::Npda_::Transition_::SHIFT, 309, std::uint32_t(401) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(403) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(7) },
-    { Parser::Npda_::Transition_::SHIFT, 309, std::uint32_t(402) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(403) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(404) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(408) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(405) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::SHIFT, 309, std::uint32_t(403) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(404) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(405) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(409) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(406) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(406) },
+    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(407) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(407) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(408) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(47) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(409) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(410) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(410) },
+    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(411) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(411) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(412) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(48) },
-    { Parser::Npda_::Transition_::SHIFT, 310, std::uint32_t(413) },
+    { Parser::Npda_::Transition_::SHIFT, 310, std::uint32_t(414) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(416) },
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(435) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::SHIFT, 310, std::uint32_t(415) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(416) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(417) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(426) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(418) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(436) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(419) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
+    { Parser::Npda_::Transition_::SHIFT, 310, std::uint32_t(416) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(417) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(418) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(427) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(419) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(420) },
+    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(420) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(421) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(421) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(422) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(422) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(423) },
+    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(423) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(424) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(424) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(425) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(425) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(426) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(49) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(427) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(428) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(428) },
+    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(429) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(429) },
+    { Parser::Npda_::Transition_::SHIFT, 40, std::uint32_t(430) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(430) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(431) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(431) },
+    { Parser::Npda_::Transition_::SHIFT, 44, std::uint32_t(432) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(432) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(433) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(433) },
+    { Parser::Npda_::Transition_::SHIFT, 41, std::uint32_t(434) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(434) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(435) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(50) },
-    { Parser::Npda_::Transition_::SHIFT, 311, std::uint32_t(436) },
+    { Parser::Npda_::Transition_::SHIFT, 311, std::uint32_t(437) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(439) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(8) },
-    { Parser::Npda_::Transition_::SHIFT, 311, std::uint32_t(438) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(439) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(440) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(444) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(441) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(8) },
+    { Parser::Npda_::Transition_::SHIFT, 311, std::uint32_t(439) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(440) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(441) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(445) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(442) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(442) },
+    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(443) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(443) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(444) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(51) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(445) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(446) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(446) },
+    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(447) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(447) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(448) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(52) },
-    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(449) },
+    { Parser::Npda_::Transition_::SHIFT, 293, std::uint32_t(450) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(450) },
+    { Parser::Npda_::Transition_::SHIFT, 294, std::uint32_t(451) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(11) },
-    { Parser::Npda_::Transition_::SHIFT, 258, std::uint32_t(451) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { Parser::Npda_::Transition_::SHIFT, 258, std::uint32_t(452) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(3) }
@@ -5637,4 +5747,4 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 5641 "barf_preprocessor_parser.cpp"
+#line 5751 "barf_preprocessor_parser.cpp"

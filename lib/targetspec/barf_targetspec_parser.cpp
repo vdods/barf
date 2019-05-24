@@ -572,14 +572,14 @@ std::uint32_t Parser::NonterminalStartStateIndex_ (Parser::Nonterminal::Name non
 {
     switch (nonterminal)
     {
-        case Nonterminal::add_codespec: return 16;
-        case Nonterminal::add_directive: return 34;
-        case Nonterminal::at_least_one_newline: return 24;
-        case Nonterminal::default_value: return 59;
-        case Nonterminal::directive: return 11;
-        case Nonterminal::directives: return 5;
-        case Nonterminal::param_spec: return 41;
-        case Nonterminal::root: return 0;
+        case Nonterminal::add_codespec: return 17;
+        case Nonterminal::add_directive: return 35;
+        case Nonterminal::at_least_one_newline: return 25;
+        case Nonterminal::default_value: return 60;
+        case Nonterminal::directive: return 12;
+        case Nonterminal::directives: return 6;
+        case Nonterminal::param_spec: return 42;
+        case Nonterminal::root: return 1;
         default: assert(false && "invalid nonterminal"); return 0;
     }
 }
@@ -663,13 +663,16 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
     else // This happens when parsing for the first time.
         m_realized_state_ = new RealizedState_(start_state_index);
 
-    m_hypothetical_state_ = new HypotheticalState_(start_state_index);
+    assert(m_realized_state_->BranchVectorStack().size() == 2);
+    assert(m_realized_state_->BranchVectorStack().back().size() == 1);
+
+    m_hypothetical_state_ = new HypotheticalState_(m_realized_state_->BranchVectorStack().back()[0]);
 
     TRISON_CPP_DEBUG_CODE_(DSF_STACK_AND_LOOKAHEADS,
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 673 "barf_targetspec_parser.cpp"
+#line 676 "barf_targetspec_parser.cpp"
  << "<stack> . <lookaheads>: ";
         m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
         *DebugSpewStream() << '\n';
@@ -684,18 +687,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 688 "barf_targetspec_parser.cpp"
+#line 691 "barf_targetspec_parser.cpp"
  << "\n";
             *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 693 "barf_targetspec_parser.cpp"
+#line 696 "barf_targetspec_parser.cpp"
  << "---------- ITERATION " << iteration_index << " --------------\n";
             PrintParserStatus_(*DebugSpewStream());
             *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 699 "barf_targetspec_parser.cpp"
+#line 702 "barf_targetspec_parser.cpp"
  << '\n';
         )
 
@@ -704,7 +707,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 708 "barf_targetspec_parser.cpp"
+#line 711 "barf_targetspec_parser.cpp"
  << "Max realized lookahead count (" << m_realized_state_->MaxRealizedLookaheadCount() << ") has exceeded max allowable lookahead token count (" << m_max_allowable_lookahead_count << "); modify this limit using the default_max_allowable_lookahead_count directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadCount method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_COUNT;
             break;
@@ -715,7 +718,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 719 "barf_targetspec_parser.cpp"
+#line 722 "barf_targetspec_parser.cpp"
  << "Max realized lookahead queue size (" << m_realized_state_->MaxRealizedLookaheadQueueSize() << ") has exceeded max allowable lookahead queue size (" << m_max_allowable_lookahead_queue_size << "); modify this limit using the default_max_allowable_lookahead_queue_size directive (see trison.cpp.targetspec), or using the SetMaxAllowableLookaheadQueueSize method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_LOOKAHEAD_QUEUE_SIZE;
             break;
@@ -726,7 +729,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
             TRISON_CPP_DEBUG_CODE_(DSF_LIMIT_EXCEEDED, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 730 "barf_targetspec_parser.cpp"
+#line 733 "barf_targetspec_parser.cpp"
  << "Parse tree depth (" << m_hypothetical_state_->ParseTreeDepth() << ") has exceeded max allowable parse tree depth (" << m_max_allowable_parse_tree_depth << "); modify this limit using the default_max_allowable_parse_tree_depth directive (see trison.cpp.targetspec), or using the SetMaxAllowableParseTreeDepth method.  Returning with error.\n")
             parser_return_code_ = PRC_EXCEEDED_MAX_ALLOWABLE_PARSE_TREE_DEPTH;
             break;
@@ -740,7 +743,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         TRISON_CPP_DEBUG_CODE_(DSF_ITERATION_COUNT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 744 "barf_targetspec_parser.cpp"
+#line 747 "barf_targetspec_parser.cpp"
  << '\n')
         ++iteration_index;
     }
@@ -750,18 +753,18 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 754 "barf_targetspec_parser.cpp"
+#line 757 "barf_targetspec_parser.cpp"
  << "\n";
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 759 "barf_targetspec_parser.cpp"
+#line 762 "barf_targetspec_parser.cpp"
  << "---------- RETURNING --------------\n";
         PrintParserStatus_(*DebugSpewStream());
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 765 "barf_targetspec_parser.cpp"
+#line 768 "barf_targetspec_parser.cpp"
  << '\n';
     )
 
@@ -771,7 +774,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
         *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 775 "barf_targetspec_parser.cpp"
+#line 778 "barf_targetspec_parser.cpp"
  << "Parse() is returning " << ms_parser_return_code_string_table_[parser_return_code_] << '\n';
     )
 
@@ -783,12 +786,12 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 787 "barf_targetspec_parser.cpp"
+#line 790 "barf_targetspec_parser.cpp"
  << "Parse stack tree has trunk; executing trunk actions.\n")
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 792 "barf_targetspec_parser.cpp"
+#line 795 "barf_targetspec_parser.cpp"
  << '\n')
 
     if (m_hypothetical_state_->m_root->HasTrunkChild())
@@ -808,13 +811,24 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 812 "barf_targetspec_parser.cpp"
+#line 815 "barf_targetspec_parser.cpp"
  << "Executing trunk action RETURN.\n")
-                assert(m_realized_state_->TokenStack().size() == 2);
+                // assert(m_realized_state_->TokenStack().size() == 2); // TODO: change to 3 HIPPO
                 parser_return_code_ = PRC_SUCCESS;
                 // This doesn't change the structure of the stack but does take ownership of the top stack token.
                 // This must be done so that the return token isn't destroyed with the parser.
                 m_realized_state_->StealTokenStackTop(return_token);
+                should_return = true;
+                break;
+            }
+            case ParseTreeNode_::ABORT: {
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 829 "barf_targetspec_parser.cpp"
+ << "Executing trunk action ABORT.\n")
+                assert(m_realized_state_->TokenStack().size() == 1);
+                parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
                 should_return = true;
                 break;
             }
@@ -824,7 +838,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 828 "barf_targetspec_parser.cpp"
+#line 842 "barf_targetspec_parser.cpp"
  << "Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
@@ -838,7 +852,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 842 "barf_targetspec_parser.cpp"
+#line 856 "barf_targetspec_parser.cpp"
  << "Executing trunk action SHIFT " << Token(shifted_token_id) << '\n')
                 m_realized_state_->ExecuteActionShift(trunk_child->m_child_branch_vector, m_hypothetical_state_->m_hps_queue);
                 break;
@@ -853,19 +867,19 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 //                                 input to handler code
                 //
                 // Result: <realized-stack-tokens> . <%error> <lookahead>
-                //                                 ^~~~~~~^
-                //                                 output from handler code
+                //                                   ^~~~~~~^
+                //                                   output from handler code
 
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 863 "barf_targetspec_parser.cpp"
+#line 877 "barf_targetspec_parser.cpp"
  << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
                 Token lookahead = Lookahead_(0);
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 869 "barf_targetspec_parser.cpp"
+#line 883 "barf_targetspec_parser.cpp"
  << "HIPPO 2 lookahead retrieved from Lookahead_(0) for INSERT_LOOKAHEAD_ERROR action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                 Token resulting_error_token(Terminal::ERROR_, InsertLookaheadErrorActions_(lookahead));
                 m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
@@ -890,7 +904,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 894 "barf_targetspec_parser.cpp"
+#line 908 "barf_targetspec_parser.cpp"
  << "Executing trunk action DISCARD_LOOKAHEAD.\n")
                 Token stack_top_error_token = m_realized_state_->TokenStack().back();
                 assert(stack_top_error_token.m_id == Terminal::ERROR_);
@@ -912,8 +926,8 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 //                                 inputs to handler code
                 //
                 // Result: <realized-stack-tokens> . <%error> <rest-of-lookaheads>
-                //                                 ^~~~~~~^
-                //                                 output from handler code
+                //                                   ^~~~~~~^
+                //                                   output from handler code
                 //
                 // POP_STACK 2 -- this can only happen when the lookahead is %end; it should
                 // have access to the 2 tokens about to be popped and the lookahead %end token,
@@ -924,9 +938,9 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 //                                 ^~~~~~~~~~~~~~~~~~~~~~~~~^
                 //                                 inputs to handler code
                 //
-                // Result: <realized-stack-tokens> . <%error> <%end>
-                //                                 ^~~~~~~^
-                //                                 output from handler code
+                // Result: <realized-stack-tokens> . <%end>
+                //                                   ^~~~~^
+                //                                   output from handler code
                 //
                 // NOTE: The semantics for POP_STACK 1 and POP_STACK 2 are different; the handler
                 // code is expected to consume (e.g. delete, aggregate, etc) all inputs for
@@ -937,55 +951,118 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 941 "barf_targetspec_parser.cpp"
+#line 955 "barf_targetspec_parser.cpp"
  << "Executing trunk action POP_STACK " << pop_count << ".\n")
                 assert(pop_count == 1 || pop_count == 2);
+                assert(m_realized_state_->TokenStack().size() > pop_count);
 
-                // This one is tricky to implement within RealizedState_ alone, mainly because
-                // of the ThrowAwayToken_ call.
-                if (m_realized_state_->TokenStack().size() > pop_count)
+                if (pop_count == 1)
                 {
-                    std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                    for (std::uint32_t i = 0; i < pop_count; ++i)
-                    {
-                        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
-                        popped_tokens[pop_count-1-i] = m_realized_state_->PopStack();
-                        //ThrowAwayToken_(m_realized_state_->PopStack());
-                    }
+                    std::vector<Token> popped_tokens{m_realized_state_->PopStack()};
                     assert(popped_tokens.size() == pop_count);
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 960 "barf_targetspec_parser.cpp"
+#line 967 "barf_targetspec_parser.cpp"
  << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
                     Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
-                    //Token lookahead(Lookahead_(0));
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 968 "barf_targetspec_parser.cpp"
- << "lookahead for POP_STACK action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+#line 974 "barf_targetspec_parser.cpp"
+ << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                     Token resulting_error_token(Terminal::ERROR_);
-                    if (pop_count == 1)
-                    {
-                        assert(lookahead.m_id == Terminal::ERROR_);
-                        resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
-                        //Token popped_lookahead_token = m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue);
-                        //assert(popped_lookahead_token.m_id == lookahead.m_id);
-                    }
-                    else
-                    {
-                        assert(lookahead.m_id == Terminal::END_);
-                        resulting_error_token.m_data = PopStack2Actions_(popped_tokens, lookahead);
-                    }
+
+                    assert(lookahead.m_id == Terminal::ERROR_);
+                    resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
                     m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
                 }
                 else
                 {
-                    // We're popping more than the whole stack, which is an error
-                    parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
-                    should_return = true;
+                    assert(pop_count == 2);
+
+                    if (true)
+                    {
+                        // plain ol' pop stack 2 times -- this is the old behavior, except that the
+                        // return Token::Data value from PopStack2Actions_ will be used to replace
+                        // the %end token's data.  NOTE: The replacement is commented out currently.
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->PopStack();
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 999 "barf_targetspec_parser.cpp"
+ << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1007 "barf_targetspec_parser.cpp"
+ << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        PopStack2Actions_(popped_tokens, lookahead);
+                        //Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        //m_realized_state_->PushFrontLookahead(resulting_end_token, m_hypothetical_state_->m_hps_queue);
+                    }
+                    else if (false)
+                    {
+                        // pop stack 2 times and push resulting error token onto stack -- this is new behavior
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1024 "barf_targetspec_parser.cpp"
+ << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1032 "barf_targetspec_parser.cpp"
+ << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                    }
+                    else
+                    {
+                        // TEMP: pop 3 times
+
+                        // pop stack 2 times and push resulting error token onto stack -- this is new behavior
+
+                        std::uint32_t pop_count = 3; // shadowing earlier one
+                        assert(m_realized_state_->TokenStack().size() >= pop_count);
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[2] = m_realized_state_->PopStack();
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1054 "barf_targetspec_parser.cpp"
+ << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
+#line 160 "barf_targetspec_parser.trison"
+"TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
+#line 1062 "barf_targetspec_parser.cpp"
+ << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                    }
                 }
 
                 // Because POP_STACK involves popping the stack, the parse tree should be destroyed and
@@ -1007,7 +1084,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1011 "barf_targetspec_parser.cpp"
+#line 1088 "barf_targetspec_parser.cpp"
  << "<stack> . <lookaheads>: ";
             m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
             *DebugSpewStream() << '\n';
@@ -1018,7 +1095,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1022 "barf_targetspec_parser.cpp"
+#line 1099 "barf_targetspec_parser.cpp"
  << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
             m_hypothetical_state_->DestroyParseTree();
             CreateParseTreeFromRealizedState_();
@@ -1035,7 +1112,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1039 "barf_targetspec_parser.cpp"
+#line 1116 "barf_targetspec_parser.cpp"
  << "Parse stack tree does not have trunk; continuing parse.\n")
 
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
@@ -1062,7 +1139,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1066 "barf_targetspec_parser.cpp"
+#line 1143 "barf_targetspec_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
             }
         }
@@ -1078,7 +1155,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1082 "barf_targetspec_parser.cpp"
+#line 1159 "barf_targetspec_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
@@ -1123,7 +1200,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1127 "barf_targetspec_parser.cpp"
+#line 1204 "barf_targetspec_parser.cpp"
  << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
                 // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
                 m_hypothetical_state_->DeleteBranch(reduce);
@@ -1137,7 +1214,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1141 "barf_targetspec_parser.cpp"
+#line 1218 "barf_targetspec_parser.cpp"
  << "        Case 2; REDUCE <= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1146,7 +1223,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1150 "barf_targetspec_parser.cpp"
+#line 1227 "barf_targetspec_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
@@ -1157,7 +1234,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1161 "barf_targetspec_parser.cpp"
+#line 1238 "barf_targetspec_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -1170,7 +1247,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1174 "barf_targetspec_parser.cpp"
+#line 1251 "barf_targetspec_parser.cpp"
  << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity: " <<
  Grammar_::ms_associativity_string_table_[reduction_rule_precedence.m_associativity] << '\n')
                 switch (reduction_rule_precedence.m_associativity)
@@ -1179,7 +1256,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1183 "barf_targetspec_parser.cpp"
+#line 1260 "barf_targetspec_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
@@ -1190,7 +1267,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1194 "barf_targetspec_parser.cpp"
+#line 1271 "barf_targetspec_parser.cpp"
  << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
                         // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
                         // action to initiate error panic.  This works only because the shift and reduce nodes
@@ -1249,7 +1326,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1253 "barf_targetspec_parser.cpp"
+#line 1330 "barf_targetspec_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
@@ -1268,7 +1345,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1272 "barf_targetspec_parser.cpp"
+#line 1349 "barf_targetspec_parser.cpp"
  << "        Case 4; REDUCE >= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1277,7 +1354,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1281 "barf_targetspec_parser.cpp"
+#line 1358 "barf_targetspec_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
@@ -1288,7 +1365,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1292 "barf_targetspec_parser.cpp"
+#line 1369 "barf_targetspec_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -1298,7 +1375,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1302 "barf_targetspec_parser.cpp"
+#line 1379 "barf_targetspec_parser.cpp"
  << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
                 m_hypothetical_state_->DeleteBranch(shift);
                 shift = NULL;
@@ -1309,7 +1386,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1313 "barf_targetspec_parser.cpp"
+#line 1390 "barf_targetspec_parser.cpp"
  << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
                 assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
                 assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
@@ -1344,12 +1421,12 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
 
     // Process transitions in order of their SortedTypeIndex.  Only process HPSes that are at min_realized_lookahead_cursor.
     assert(m_hypothetical_state_->m_new_hps_queue.empty()); // This is the starting condition
-    for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
+    for (std::uint32_t current_sorted_type_index = Npda_::Transition_::Order::MIN_SORTED_TYPE_INDEX; current_sorted_type_index <= Npda_::Transition_::Order::MAX_SORTED_TYPE_INDEX; ++current_sorted_type_index)
     {
         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1353 "barf_targetspec_parser.cpp"
+#line 1430 "barf_targetspec_parser.cpp"
  << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
         if (!m_hypothetical_state_->m_new_hps_queue.empty())
@@ -1357,7 +1434,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1361 "barf_targetspec_parser.cpp"
+#line 1438 "barf_targetspec_parser.cpp"
  << "        Early-out based on sorted type index.\n")
             break;
         }
@@ -1377,7 +1454,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1381 "barf_targetspec_parser.cpp"
+#line 1458 "barf_targetspec_parser.cpp"
  << "        Processing ";
                 hps.Print(*DebugSpewStream(), this, DebugSpewPrefix(), 0, true);
             )
@@ -1388,7 +1465,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1392 "barf_targetspec_parser.cpp"
+#line 1469 "barf_targetspec_parser.cpp"
  << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1402,7 +1479,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1406 "barf_targetspec_parser.cpp"
+#line 1483 "barf_targetspec_parser.cpp"
  << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1422,23 +1499,23 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 Npda_::Transition_ const &transition = *transition_it;
                 assert(transition.m_type >= Npda_::Transition_::RETURN);
                 assert(transition.m_type <= Npda_::Transition_::POP_STACK);
-                assert(Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) == current_sorted_type_index);
+                assert(Npda_::Transition_::Order::SortedTypeIndex(transition) == current_sorted_type_index);
 
-/*
+
                 TRISON_CPP_DEBUG_CODE_(
                     DSF_TRANSITION_PROCESSING,
                     *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1434 "barf_targetspec_parser.cpp"
+#line 1511 "barf_targetspec_parser.cpp"
  << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
                     if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
                     else
                         *DebugSpewStream() << transition.m_data_index;
-                    *DebugSpewStream() << " and sorted type index " << Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) << '\n';
+                    *DebugSpewStream() << " and sorted type index " << Npda_::Transition_::Order::SortedTypeIndex(transition) << '\n';
                 )
-*/
+
 
                 ParseTreeNode_ *resulting_hps = NULL;
                 // If it's a default transition, there's no need to access the lookahead (except in
@@ -1471,7 +1548,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1475 "barf_targetspec_parser.cpp"
+#line 1552 "barf_targetspec_parser.cpp"
  << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
                             take_action = false;
                         }
@@ -1482,7 +1559,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1486 "barf_targetspec_parser.cpp"
+#line 1563 "barf_targetspec_parser.cpp"
  << "            Exercising transition without accessing lookahead... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1497,7 +1574,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1501 "barf_targetspec_parser.cpp"
+#line 1578 "barf_targetspec_parser.cpp"
  << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1514,7 +1591,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1518 "barf_targetspec_parser.cpp"
+#line 1595 "barf_targetspec_parser.cpp"
  << "    Removing defunct HPSes...\n")
     for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
@@ -1555,7 +1632,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             m_add_codespec_list,
             m_add_directive_map);
     
-#line 1559 "barf_targetspec_parser.cpp"
+#line 1636 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1565,7 +1642,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 208 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1569 "barf_targetspec_parser.cpp"
+#line 1646 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1575,7 +1652,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 210 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1579 "barf_targetspec_parser.cpp"
+#line 1656 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1585,7 +1662,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 215 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1589 "barf_targetspec_parser.cpp"
+#line 1666 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1595,7 +1672,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 217 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1599 "barf_targetspec_parser.cpp"
+#line 1676 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1605,7 +1682,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 219 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1609 "barf_targetspec_parser.cpp"
+#line 1686 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1631,7 +1708,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return NULL;
     
-#line 1635 "barf_targetspec_parser.cpp"
+#line 1712 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1652,7 +1729,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete param_type;
         return NULL;
     
-#line 1656 "barf_targetspec_parser.cpp"
+#line 1733 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1686,7 +1763,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway2;
         return NULL;
     
-#line 1690 "barf_targetspec_parser.cpp"
+#line 1767 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1707,7 +1784,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete param_type;
         return NULL;
     
-#line 1711 "barf_targetspec_parser.cpp"
+#line 1788 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1719,7 +1796,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
         return new ParamType(Ast::AST_NONE);
     
-#line 1723 "barf_targetspec_parser.cpp"
+#line 1800 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1733,7 +1810,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new ParamType(Ast::AST_ID);
     
-#line 1737 "barf_targetspec_parser.cpp"
+#line 1814 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1747,7 +1824,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new ParamType(Ast::AST_STRING);
     
-#line 1751 "barf_targetspec_parser.cpp"
+#line 1828 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1761,7 +1838,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new ParamType(Ast::AST_DUMB_CODE_BLOCK);
     
-#line 1765 "barf_targetspec_parser.cpp"
+#line 1842 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1775,7 +1852,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete throwaway;
         return new ParamType(Ast::AST_STRICT_CODE_BLOCK);
     
-#line 1779 "barf_targetspec_parser.cpp"
+#line 1856 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1786,7 +1863,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 322 "barf_targetspec_parser.trison"
  return value; 
-#line 1790 "barf_targetspec_parser.cpp"
+#line 1867 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1797,7 +1874,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 323 "barf_targetspec_parser.trison"
  return value; 
-#line 1801 "barf_targetspec_parser.cpp"
+#line 1878 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1808,7 +1885,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 324 "barf_targetspec_parser.trison"
  return value; 
-#line 1812 "barf_targetspec_parser.cpp"
+#line 1889 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1819,7 +1896,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 325 "barf_targetspec_parser.trison"
  return value; 
-#line 1823 "barf_targetspec_parser.cpp"
+#line 1900 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1829,7 +1906,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 334 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1833 "barf_targetspec_parser.cpp"
+#line 1910 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1839,7 +1916,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 336 "barf_targetspec_parser.trison"
  return NULL; 
-#line 1843 "barf_targetspec_parser.cpp"
+#line 1920 "barf_targetspec_parser.cpp"
             break;
         }
 
@@ -1858,7 +1935,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1862 "barf_targetspec_parser.cpp"
+#line 1939 "barf_targetspec_parser.cpp"
  << "Realized state branch node stacks are (each listed bottom to top):\n";
     for (BranchVector_::const_iterator it = m_realized_state_->BranchVectorStack().back().begin(),
                                        it_end = m_realized_state_->BranchVectorStack().back().end();
@@ -1869,7 +1946,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
         out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1873 "barf_targetspec_parser.cpp"
+#line 1950 "barf_targetspec_parser.cpp"
  << "    (";
         branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
         out << ")\n";
@@ -1878,12 +1955,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1882 "barf_targetspec_parser.cpp"
+#line 1959 "barf_targetspec_parser.cpp"
  << "Max realized lookahead count (so far) is:\n";
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1887 "barf_targetspec_parser.cpp"
+#line 1964 "barf_targetspec_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadCount();
     if (m_max_allowable_lookahead_count >= 0)
         out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
@@ -1892,12 +1969,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1896 "barf_targetspec_parser.cpp"
+#line 1973 "barf_targetspec_parser.cpp"
  << "Max realized lookahead queue size (so far) is:\n";
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1901 "barf_targetspec_parser.cpp"
+#line 1978 "barf_targetspec_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadQueueSize();
     if (m_max_allowable_lookahead_queue_size >= 0)
         out << " (max allowable lookahead queue size is " << m_max_allowable_lookahead_queue_size << ")\n";
@@ -1906,12 +1983,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1910 "barf_targetspec_parser.cpp"
+#line 1987 "barf_targetspec_parser.cpp"
  << "Max realized parse tree depth (so far) is:\n";
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1915 "barf_targetspec_parser.cpp"
+#line 1992 "barf_targetspec_parser.cpp"
  << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
     if (m_max_allowable_parse_tree_depth >= 0)
         out << " (max allowable parse tree depth is " << m_max_allowable_parse_tree_depth << ")\n";
@@ -1920,22 +1997,22 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1924 "barf_targetspec_parser.cpp"
+#line 2001 "barf_targetspec_parser.cpp"
  << "Has-encountered-error-state (so far) is:\n";
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1929 "barf_targetspec_parser.cpp"
+#line 2006 "barf_targetspec_parser.cpp"
  << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1934 "barf_targetspec_parser.cpp"
+#line 2011 "barf_targetspec_parser.cpp"
  << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1939 "barf_targetspec_parser.cpp"
+#line 2016 "barf_targetspec_parser.cpp"
  << "    ";
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
@@ -1958,25 +2035,25 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1962 "barf_targetspec_parser.cpp"
+#line 2039 "barf_targetspec_parser.cpp"
  << '\n';
 
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1968 "barf_targetspec_parser.cpp"
+#line 2045 "barf_targetspec_parser.cpp"
  << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1974 "barf_targetspec_parser.cpp"
+#line 2051 "barf_targetspec_parser.cpp"
  << '\n';
 
     out << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1980 "barf_targetspec_parser.cpp"
+#line 2057 "barf_targetspec_parser.cpp"
  << "HPS queue:\n";
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
@@ -2145,14 +2222,38 @@ void Parser::RealizedState_::Initialize (Npda_::StateIndex_ initial_state)
     assert(m_branch_vector_stack.empty());
     assert(m_token_stack.empty());
 
+    BranchVector_ fallback_branch_vector;
+    // State 0 is the fallback state which always results in action ABORT.
+    BranchStatePtr_ fallback_state_ptr = BranchState_::CreateOrphan(0);
+    // The Nonterminal::none_ is just a dummy Token::Id to go along with fallback_state_ptr.
+    BranchTokenIdPtr_ fallback_token_id_ptr = BranchTokenId_::CreateOrphan(Nonterminal::none_);
+    fallback_branch_vector.emplace_back(Branch_(fallback_state_ptr, fallback_token_id_ptr));
+    // TODO: This probably should be emplace_back
+    m_branch_vector_stack.push_back(fallback_branch_vector);
+
+    // Put a dummy token in to correspond with the fallback state.
+    m_token_stack.push_back(Token(Nonterminal::none_));
+
+    assert(m_branch_vector_stack.size() == m_token_stack.size());
+
     BranchVector_ initial_branch_vector;
     // The Nonterminal::none_ is just a dummy Token::Id to go along with initial_state.
-    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_)));
+    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateWithParent(fallback_state_ptr, initial_state), BranchTokenId_::CreateWithParent(fallback_token_id_ptr, Nonterminal::none_)));
     // TODO: This probably should be emplace_back
     m_branch_vector_stack.push_back(initial_branch_vector);
 
     // Put a dummy token in to correspond with the start state.
     m_token_stack.push_back(Token(Nonterminal::none_));
+
+    assert(m_branch_vector_stack.size() == m_token_stack.size());
+
+    // Ensure the parent/child relationships actually hold within m_branch_vector_stack.
+    assert(m_branch_vector_stack.size() == 2);
+    // Ensure that the stack is actually consistent with regard to the parent/child relationships.
+    for (BranchVector_::const_iterator it = m_branch_vector_stack[1].begin(), it_end = m_branch_vector_stack[1].end(); it != it_end; ++it)
+    {
+        assert(std::any_of(m_branch_vector_stack[0].begin(), m_branch_vector_stack[0].end(), [it](Branch_ const &branch){ return branch == it->Parent(); }));
+    }
 }
 
 void Parser::RealizedState_::PushFrontLookahead (Token const &lookahead, HPSQueue_ &hps_queue)
@@ -2192,12 +2293,12 @@ void Parser::RealizedState_::UpdateMaxRealizedLookaheadCount ()
 // Parser::HypotheticalState_
 // ////////////////////////////////////////////////////////////////////////////
 
-Parser::HypotheticalState_::HypotheticalState_ (std::uint32_t initial_state)
+Parser::HypotheticalState_::HypotheticalState_ (Branch_ const &initial_branch)
 {
     m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
 
     ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
-    hps->m_hypothetical_head        = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
+    hps->m_hypothetical_head        = initial_branch;
 
     m_root->AddChild(hps);
     m_hps_queue.push_back(hps);
@@ -2307,6 +2408,7 @@ char const *Parser::ParseTreeNode_::AsString (Type type)
     {
         "ROOT",
         "RETURN",
+        "ABORT",
         "REDUCE",
         "SHIFT",
         "INSERT_LOOKAHEAD_ERROR",
@@ -2448,6 +2550,7 @@ bool Parser::ParseTreeNode_::IsBlockedHPS () const
     {
         // Nothing can happen after returning, so this has to be blocking.
         case RETURN:
+        case ABORT:
         case POP_STACK: return true;
 
         default:        return false;
@@ -2487,7 +2590,7 @@ Parser::ParseTreeNode_::PrecedenceLevelRange Parser::ParseTreeNode_::ComputePrec
             Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
             return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
         }
-        // Otherwise (e.g. a RETURN state), return default precedence.
+        // Otherwise (e.g. a RETURN or ABORT state), return default precedence.
         else
         {
             Grammar_::Precedence_ const &default_precedence = Grammar_::ms_precedence_table_[0]; // 0 is default precedence.
@@ -2697,7 +2800,7 @@ Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index) throw()
         TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2701 "barf_targetspec_parser.cpp"
+#line 2804 "barf_targetspec_parser.cpp"
  << "Retrieved token " << m_realized_state_->LookaheadQueue().back() << " from scan actions; pushing token onto back of lookahead queue\n")
     }
     return m_realized_state_->LookaheadQueue()[index];
@@ -2718,6 +2821,10 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
             break;
         }
         case ParseTreeNode_::RETURN: {
+            new_hps = hps.CloneLeafNode();
+            break;
+        }
+        case ParseTreeNode_::ABORT: {
             new_hps = hps.CloneLeafNode();
             break;
         }
@@ -2761,7 +2868,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                     TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2765 "barf_targetspec_parser.cpp"
+#line 2872 "barf_targetspec_parser.cpp"
  << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
 
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
@@ -2855,13 +2962,14 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
             // one of them is killed later.
             std::uint32_t const &pop_count = action_data;
             assert(pop_count == 1 || pop_count == 2);
-            // Check if there are actually enough stack elements to pop successfully.
-            // If not, then don't create an HPS, and break early.
-            if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
-            {
-                new_hps = NULL;
-                break;
-            }
+            assert(pop_count < hps.m_hypothetical_head.StatePtr()->BranchLength());
+            // // Check if there are actually enough stack elements to pop successfully.
+            // // If not, then don't create an HPS, and break early.
+            // if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
+            // {
+            //     new_hps = NULL;
+            //     break;
+            // }
 
             new_hps = hps.CloneLeafNode();
             for (std::uint32_t i = 0; i < pop_count; ++i)
@@ -2935,7 +3043,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2939 "barf_targetspec_parser.cpp"
+#line 3047 "barf_targetspec_parser.cpp"
  << "        Reconstructing branches:\n")
     for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
@@ -2943,7 +3051,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
         TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 160 "barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2947 "barf_targetspec_parser.cpp"
+#line 3055 "barf_targetspec_parser.cpp"
  << "            " << reconstruct_branch.StatePtr() << '\n')
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
@@ -3102,7 +3210,7 @@ void Parser::Npda_::ComputeEpsilonClosureOfState_ (StateIndex_ state_index, Stat
 
 Parser::Npda_::TransitionVector_ const &Parser::Npda_::NonEpsilonTransitionsOfState_ (StateIndex_ state_index, std::uint32_t sorted_type_index)
 {
-    assert(0 <= sorted_type_index && sorted_type_index <= 3);
+    assert(Transition_::Order::MIN_SORTED_TYPE_INDEX <= sorted_type_index && sorted_type_index <= Transition_::Order::MAX_SORTED_TYPE_INDEX);
 
     // Memoize this function, because it will be called so many times and is somewhat intensive.
     typedef std::pair<StateIndex_,std::uint32_t> KeyType;
@@ -3122,7 +3230,7 @@ Parser::Npda_::TransitionVector_ const &Parser::Npda_::NonEpsilonTransitionsOfSt
         State_ const &state = ms_state_table_[*it];
         for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count; transition != transition_end; ++transition)
         {
-            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(Transition_::Type(transition->m_type));
+            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(*transition);
             if (transition->m_type != Transition_::EPSILON && transition_sorted_type_index == sorted_type_index)
                 non_epsilon_transition_set.insert(*transition);
         }
@@ -3137,266 +3245,268 @@ Parser::Npda_::TransitionVector_ const &Parser::Npda_::NonEpsilonTransitionsOfSt
 
 Parser::Npda_::State_ const Parser::Npda_::ms_state_table_[] =
 {
-    { 2, ms_transition_table_+0, 21, "START root" },
-    { 1, ms_transition_table_+2, 21, "RETURN root" },
-    { 1, ms_transition_table_+3, 21, "head of: root" },
-    { 4, ms_transition_table_+4, 0, "rule 0: root <- . directives END_" },
-    { 3, ms_transition_table_+8, 0, "rule 0: root <- directives . END_" },
-    { 2, ms_transition_table_+11, 21, "START directives" },
-    { 1, ms_transition_table_+13, 21, "RETURN directives" },
-    { 2, ms_transition_table_+14, 21, "head of: directives" },
-    { 3, ms_transition_table_+16, 1, "rule 1: directives <- . directives directive" },
-    { 4, ms_transition_table_+19, 1, "rule 1: directives <- directives . directive" },
-    { 1, ms_transition_table_+23, 1, "rule 1: directives <- directives directive ." },
-    { 2, ms_transition_table_+24, 21, "START directive" },
-    { 1, ms_transition_table_+26, 21, "RETURN directive" },
-    { 3, ms_transition_table_+27, 21, "head of: directive" },
-    { 4, ms_transition_table_+30, 3, "rule 3: directive <- . add_codespec at_least_one_newline" },
-    { 4, ms_transition_table_+34, 3, "rule 3: directive <- add_codespec . at_least_one_newline" },
-    { 2, ms_transition_table_+38, 21, "START add_codespec" },
-    { 1, ms_transition_table_+40, 21, "RETURN add_codespec" },
-    { 1, ms_transition_table_+41, 21, "head of: add_codespec" },
-    { 3, ms_transition_table_+42, 6, "rule 6: add_codespec <- . DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID" },
-    { 3, ms_transition_table_+45, 6, "rule 6: add_codespec <- DIRECTIVE_ADD_CODESPEC . STRING_LITERAL ID" },
-    { 3, ms_transition_table_+48, 6, "rule 6: add_codespec <- DIRECTIVE_ADD_CODESPEC STRING_LITERAL . ID" },
-    { 1, ms_transition_table_+51, 6, "rule 6: add_codespec <- DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID ." },
-    { 1, ms_transition_table_+52, 3, "rule 3: directive <- add_codespec at_least_one_newline ." },
-    { 2, ms_transition_table_+53, 21, "START at_least_one_newline" },
-    { 1, ms_transition_table_+55, 21, "RETURN at_least_one_newline" },
-    { 2, ms_transition_table_+56, 21, "head of: at_least_one_newline" },
-    { 3, ms_transition_table_+58, 19, "rule 19: at_least_one_newline <- . at_least_one_newline NEWLINE" },
-    { 3, ms_transition_table_+61, 19, "rule 19: at_least_one_newline <- at_least_one_newline . NEWLINE" },
-    { 1, ms_transition_table_+64, 19, "rule 19: at_least_one_newline <- at_least_one_newline NEWLINE ." },
-    { 3, ms_transition_table_+65, 20, "rule 20: at_least_one_newline <- . NEWLINE" },
-    { 1, ms_transition_table_+68, 20, "rule 20: at_least_one_newline <- NEWLINE ." },
-    { 4, ms_transition_table_+69, 4, "rule 4: directive <- . add_directive at_least_one_newline" },
-    { 4, ms_transition_table_+73, 4, "rule 4: directive <- add_directive . at_least_one_newline" },
-    { 2, ms_transition_table_+77, 21, "START add_directive" },
-    { 1, ms_transition_table_+79, 21, "RETURN add_directive" },
-    { 3, ms_transition_table_+80, 21, "head of: add_directive" },
-    { 3, ms_transition_table_+83, 7, "rule 7: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec" },
-    { 3, ms_transition_table_+86, 7, "rule 7: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE . ID param_spec" },
-    { 4, ms_transition_table_+89, 7, "rule 7: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID . param_spec" },
-    { 1, ms_transition_table_+93, 7, "rule 7: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec ." },
-    { 2, ms_transition_table_+94, 21, "START param_spec" },
-    { 1, ms_transition_table_+96, 21, "RETURN param_spec" },
-    { 5, ms_transition_table_+97, 21, "head of: param_spec" },
-    { 1, ms_transition_table_+102, 10, "rule 10: param_spec <- ." },
-    { 3, ms_transition_table_+103, 11, "rule 11: param_spec <- . DIRECTIVE_ID" },
-    { 1, ms_transition_table_+106, 11, "rule 11: param_spec <- DIRECTIVE_ID ." },
-    { 3, ms_transition_table_+107, 12, "rule 12: param_spec <- . DIRECTIVE_STRING" },
-    { 1, ms_transition_table_+110, 12, "rule 12: param_spec <- DIRECTIVE_STRING ." },
-    { 3, ms_transition_table_+111, 13, "rule 13: param_spec <- . DIRECTIVE_DUMB_CODE_BLOCK" },
-    { 1, ms_transition_table_+114, 13, "rule 13: param_spec <- DIRECTIVE_DUMB_CODE_BLOCK ." },
-    { 3, ms_transition_table_+115, 14, "rule 14: param_spec <- . DIRECTIVE_STRICT_CODE_BLOCK" },
-    { 1, ms_transition_table_+118, 14, "rule 14: param_spec <- DIRECTIVE_STRICT_CODE_BLOCK ." },
-    { 3, ms_transition_table_+119, 8, "rule 8: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value" },
-    { 3, ms_transition_table_+122, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE . ID param_spec DIRECTIVE_DEFAULT default_value" },
-    { 4, ms_transition_table_+125, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID . param_spec DIRECTIVE_DEFAULT default_value" },
-    { 3, ms_transition_table_+129, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec . DIRECTIVE_DEFAULT default_value" },
-    { 4, ms_transition_table_+132, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT . default_value" },
-    { 1, ms_transition_table_+136, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value ." },
-    { 2, ms_transition_table_+137, 21, "START default_value" },
-    { 1, ms_transition_table_+139, 21, "RETURN default_value" },
-    { 4, ms_transition_table_+140, 21, "head of: default_value" },
-    { 3, ms_transition_table_+144, 15, "rule 15: default_value <- . ID" },
-    { 1, ms_transition_table_+147, 15, "rule 15: default_value <- ID ." },
-    { 3, ms_transition_table_+148, 16, "rule 16: default_value <- . STRING_LITERAL" },
-    { 1, ms_transition_table_+151, 16, "rule 16: default_value <- STRING_LITERAL ." },
-    { 3, ms_transition_table_+152, 17, "rule 17: default_value <- . DUMB_CODE_BLOCK" },
-    { 1, ms_transition_table_+155, 17, "rule 17: default_value <- DUMB_CODE_BLOCK ." },
-    { 3, ms_transition_table_+156, 18, "rule 18: default_value <- . STRICT_CODE_BLOCK" },
-    { 1, ms_transition_table_+159, 18, "rule 18: default_value <- STRICT_CODE_BLOCK ." },
-    { 3, ms_transition_table_+160, 9, "rule 9: add_directive <- . DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec" },
-    { 3, ms_transition_table_+163, 9, "rule 9: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE . ID param_spec" },
-    { 4, ms_transition_table_+166, 9, "rule 9: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID . param_spec" },
-    { 1, ms_transition_table_+170, 9, "rule 9: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec ." },
-    { 1, ms_transition_table_+171, 4, "rule 4: directive <- add_directive at_least_one_newline ." },
-    { 4, ms_transition_table_+172, 5, "rule 5: directive <- . at_least_one_newline" },
-    { 1, ms_transition_table_+176, 5, "rule 5: directive <- at_least_one_newline ." },
-    { 1, ms_transition_table_+177, 2, "rule 2: directives <- ." },
-    { 1, ms_transition_table_+178, 0, "rule 0: root <- directives END_ ." }
+    { 1, ms_transition_table_+0, 21, "FALLBACK" },
+    { 2, ms_transition_table_+1, 21, "START root" },
+    { 1, ms_transition_table_+3, 21, "RETURN root" },
+    { 1, ms_transition_table_+4, 21, "head of: root" },
+    { 4, ms_transition_table_+5, 0, "rule 0: root <- . directives END_" },
+    { 3, ms_transition_table_+9, 0, "rule 0: root <- directives . END_" },
+    { 2, ms_transition_table_+12, 21, "START directives" },
+    { 1, ms_transition_table_+14, 21, "RETURN directives" },
+    { 2, ms_transition_table_+15, 21, "head of: directives" },
+    { 3, ms_transition_table_+17, 1, "rule 1: directives <- . directives directive" },
+    { 4, ms_transition_table_+20, 1, "rule 1: directives <- directives . directive" },
+    { 1, ms_transition_table_+24, 1, "rule 1: directives <- directives directive ." },
+    { 2, ms_transition_table_+25, 21, "START directive" },
+    { 1, ms_transition_table_+27, 21, "RETURN directive" },
+    { 3, ms_transition_table_+28, 21, "head of: directive" },
+    { 4, ms_transition_table_+31, 3, "rule 3: directive <- . add_codespec at_least_one_newline" },
+    { 4, ms_transition_table_+35, 3, "rule 3: directive <- add_codespec . at_least_one_newline" },
+    { 2, ms_transition_table_+39, 21, "START add_codespec" },
+    { 1, ms_transition_table_+41, 21, "RETURN add_codespec" },
+    { 1, ms_transition_table_+42, 21, "head of: add_codespec" },
+    { 3, ms_transition_table_+43, 6, "rule 6: add_codespec <- . DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID" },
+    { 3, ms_transition_table_+46, 6, "rule 6: add_codespec <- DIRECTIVE_ADD_CODESPEC . STRING_LITERAL ID" },
+    { 3, ms_transition_table_+49, 6, "rule 6: add_codespec <- DIRECTIVE_ADD_CODESPEC STRING_LITERAL . ID" },
+    { 1, ms_transition_table_+52, 6, "rule 6: add_codespec <- DIRECTIVE_ADD_CODESPEC STRING_LITERAL ID ." },
+    { 1, ms_transition_table_+53, 3, "rule 3: directive <- add_codespec at_least_one_newline ." },
+    { 2, ms_transition_table_+54, 21, "START at_least_one_newline" },
+    { 1, ms_transition_table_+56, 21, "RETURN at_least_one_newline" },
+    { 2, ms_transition_table_+57, 21, "head of: at_least_one_newline" },
+    { 3, ms_transition_table_+59, 19, "rule 19: at_least_one_newline <- . at_least_one_newline NEWLINE" },
+    { 3, ms_transition_table_+62, 19, "rule 19: at_least_one_newline <- at_least_one_newline . NEWLINE" },
+    { 1, ms_transition_table_+65, 19, "rule 19: at_least_one_newline <- at_least_one_newline NEWLINE ." },
+    { 3, ms_transition_table_+66, 20, "rule 20: at_least_one_newline <- . NEWLINE" },
+    { 1, ms_transition_table_+69, 20, "rule 20: at_least_one_newline <- NEWLINE ." },
+    { 4, ms_transition_table_+70, 4, "rule 4: directive <- . add_directive at_least_one_newline" },
+    { 4, ms_transition_table_+74, 4, "rule 4: directive <- add_directive . at_least_one_newline" },
+    { 2, ms_transition_table_+78, 21, "START add_directive" },
+    { 1, ms_transition_table_+80, 21, "RETURN add_directive" },
+    { 3, ms_transition_table_+81, 21, "head of: add_directive" },
+    { 3, ms_transition_table_+84, 7, "rule 7: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec" },
+    { 3, ms_transition_table_+87, 7, "rule 7: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE . ID param_spec" },
+    { 4, ms_transition_table_+90, 7, "rule 7: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID . param_spec" },
+    { 1, ms_transition_table_+94, 7, "rule 7: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec ." },
+    { 2, ms_transition_table_+95, 21, "START param_spec" },
+    { 1, ms_transition_table_+97, 21, "RETURN param_spec" },
+    { 5, ms_transition_table_+98, 21, "head of: param_spec" },
+    { 1, ms_transition_table_+103, 10, "rule 10: param_spec <- ." },
+    { 3, ms_transition_table_+104, 11, "rule 11: param_spec <- . DIRECTIVE_ID" },
+    { 1, ms_transition_table_+107, 11, "rule 11: param_spec <- DIRECTIVE_ID ." },
+    { 3, ms_transition_table_+108, 12, "rule 12: param_spec <- . DIRECTIVE_STRING" },
+    { 1, ms_transition_table_+111, 12, "rule 12: param_spec <- DIRECTIVE_STRING ." },
+    { 3, ms_transition_table_+112, 13, "rule 13: param_spec <- . DIRECTIVE_DUMB_CODE_BLOCK" },
+    { 1, ms_transition_table_+115, 13, "rule 13: param_spec <- DIRECTIVE_DUMB_CODE_BLOCK ." },
+    { 3, ms_transition_table_+116, 14, "rule 14: param_spec <- . DIRECTIVE_STRICT_CODE_BLOCK" },
+    { 1, ms_transition_table_+119, 14, "rule 14: param_spec <- DIRECTIVE_STRICT_CODE_BLOCK ." },
+    { 3, ms_transition_table_+120, 8, "rule 8: add_directive <- . DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value" },
+    { 3, ms_transition_table_+123, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE . ID param_spec DIRECTIVE_DEFAULT default_value" },
+    { 4, ms_transition_table_+126, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID . param_spec DIRECTIVE_DEFAULT default_value" },
+    { 3, ms_transition_table_+130, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec . DIRECTIVE_DEFAULT default_value" },
+    { 4, ms_transition_table_+133, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT . default_value" },
+    { 1, ms_transition_table_+137, 8, "rule 8: add_directive <- DIRECTIVE_ADD_OPTIONAL_DIRECTIVE ID param_spec DIRECTIVE_DEFAULT default_value ." },
+    { 2, ms_transition_table_+138, 21, "START default_value" },
+    { 1, ms_transition_table_+140, 21, "RETURN default_value" },
+    { 4, ms_transition_table_+141, 21, "head of: default_value" },
+    { 3, ms_transition_table_+145, 15, "rule 15: default_value <- . ID" },
+    { 1, ms_transition_table_+148, 15, "rule 15: default_value <- ID ." },
+    { 3, ms_transition_table_+149, 16, "rule 16: default_value <- . STRING_LITERAL" },
+    { 1, ms_transition_table_+152, 16, "rule 16: default_value <- STRING_LITERAL ." },
+    { 3, ms_transition_table_+153, 17, "rule 17: default_value <- . DUMB_CODE_BLOCK" },
+    { 1, ms_transition_table_+156, 17, "rule 17: default_value <- DUMB_CODE_BLOCK ." },
+    { 3, ms_transition_table_+157, 18, "rule 18: default_value <- . STRICT_CODE_BLOCK" },
+    { 1, ms_transition_table_+160, 18, "rule 18: default_value <- STRICT_CODE_BLOCK ." },
+    { 3, ms_transition_table_+161, 9, "rule 9: add_directive <- . DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec" },
+    { 3, ms_transition_table_+164, 9, "rule 9: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE . ID param_spec" },
+    { 4, ms_transition_table_+167, 9, "rule 9: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID . param_spec" },
+    { 1, ms_transition_table_+171, 9, "rule 9: add_directive <- DIRECTIVE_ADD_REQUIRED_DIRECTIVE ID param_spec ." },
+    { 1, ms_transition_table_+172, 4, "rule 4: directive <- add_directive at_least_one_newline ." },
+    { 4, ms_transition_table_+173, 5, "rule 5: directive <- . at_least_one_newline" },
+    { 1, ms_transition_table_+177, 5, "rule 5: directive <- at_least_one_newline ." },
+    { 1, ms_transition_table_+178, 2, "rule 2: directives <- ." },
+    { 1, ms_transition_table_+179, 0, "rule 0: root <- directives END_ ." }
 };
 std::size_t const Parser::Npda_::ms_state_count_ = sizeof(Parser::Npda_::ms_state_table_) / sizeof(*Parser::Npda_::ms_state_table_);
 
 Parser::Npda_::Transition_ const Parser::Npda_::ms_transition_table_[] =
 {
-    { Parser::Npda_::Transition_::SHIFT, 273, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::ABORT, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::SHIFT, 273, std::uint32_t(2) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
-    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(4) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(7) },
-    { Parser::Npda_::Transition_::SHIFT, 256, std::uint32_t(78) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(6) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(7) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(4) },
+    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(5) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(8) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(77) },
-    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(9) },
+    { Parser::Npda_::Transition_::SHIFT, 256, std::uint32_t(79) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(10) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(12) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
+    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(8) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(9) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(78) },
+    { Parser::Npda_::Transition_::SHIFT, 274, std::uint32_t(10) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(11) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(14) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(32) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(75) },
-    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(15) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(18) },
-    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(23) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(26) },
-    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(17) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(18) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 275, std::uint32_t(13) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(14) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(15) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(33) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(76) },
+    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(16) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(19) },
-    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(20) },
+    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(24) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(21) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(27) },
+    { Parser::Npda_::Transition_::SHIFT, 276, std::uint32_t(18) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(19) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(20) },
+    { Parser::Npda_::Transition_::SHIFT, 259, std::uint32_t(21) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(22) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(23) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(6) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(3) },
-    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(25) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(26) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(26) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(27) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(30) },
-    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(28) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(31) },
+    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(29) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 270, std::uint32_t(29) },
+    { Parser::Npda_::Transition_::SHIFT, 270, std::uint32_t(30) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(19) },
-    { Parser::Npda_::Transition_::SHIFT, 270, std::uint32_t(31) },
+    { Parser::Npda_::Transition_::SHIFT, 270, std::uint32_t(32) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(20) },
-    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(33) },
+    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(34) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(36) },
-    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(74) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(26) },
-    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(35) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(36) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(37) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(53) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(70) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(38) },
+    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(75) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(39) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(40) },
-    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(43) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(7) },
-    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(42) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(43) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(27) },
+    { Parser::Npda_::Transition_::SHIFT, 277, std::uint32_t(36) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(37) },
     { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(38) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(54) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(71) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(39) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(40) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(41) },
+    { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(44) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(7) },
+    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(43) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(44) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(45) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(47) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(49) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(51) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(46) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(48) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(50) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(52) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(10) },
-    { Parser::Npda_::Transition_::SHIFT, 264, std::uint32_t(46) },
+    { Parser::Npda_::Transition_::SHIFT, 264, std::uint32_t(47) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(11) },
-    { Parser::Npda_::Transition_::SHIFT, 266, std::uint32_t(48) },
+    { Parser::Npda_::Transition_::SHIFT, 266, std::uint32_t(49) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(12) },
-    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(50) },
+    { Parser::Npda_::Transition_::SHIFT, 263, std::uint32_t(51) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(13) },
-    { Parser::Npda_::Transition_::SHIFT, 265, std::uint32_t(52) },
+    { Parser::Npda_::Transition_::SHIFT, 265, std::uint32_t(53) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(14) },
-    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(54) },
+    { Parser::Npda_::Transition_::SHIFT, 260, std::uint32_t(55) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(55) },
+    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(56) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(56) },
+    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(57) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(43) },
-    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(57) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(44) },
+    { Parser::Npda_::Transition_::SHIFT, 262, std::uint32_t(58) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 279, std::uint32_t(58) },
+    { Parser::Npda_::Transition_::SHIFT, 279, std::uint32_t(59) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(61) },
-    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(8) },
-    { Parser::Npda_::Transition_::SHIFT, 279, std::uint32_t(60) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(61) },
-    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(62) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(64) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(66) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(68) },
-    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(63) },
+    { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(8) },
+    { Parser::Npda_::Transition_::SHIFT, 279, std::uint32_t(61) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(62) },
+    { Parser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(63) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(65) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(67) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(69) },
+    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(64) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(15) },
-    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(65) },
+    { Parser::Npda_::Transition_::SHIFT, 272, std::uint32_t(66) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(16) },
-    { Parser::Npda_::Transition_::SHIFT, 268, std::uint32_t(67) },
+    { Parser::Npda_::Transition_::SHIFT, 268, std::uint32_t(68) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(17) },
-    { Parser::Npda_::Transition_::SHIFT, 271, std::uint32_t(69) },
+    { Parser::Npda_::Transition_::SHIFT, 271, std::uint32_t(70) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(18) },
-    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(71) },
+    { Parser::Npda_::Transition_::SHIFT, 261, std::uint32_t(72) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(72) },
+    { Parser::Npda_::Transition_::SHIFT, 269, std::uint32_t(73) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(73) },
+    { Parser::Npda_::Transition_::SHIFT, 278, std::uint32_t(74) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(43) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(44) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(9) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(4) },
-    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(76) },
+    { Parser::Npda_::Transition_::SHIFT, 280, std::uint32_t(77) },
     { Parser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { Parser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(26) },
+    { Parser::Npda_::Transition_::EPSILON, 0, std::uint32_t(27) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(5) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(2) },
     { Parser::Npda_::Transition_::REDUCE, 0, std::uint32_t(0) }
@@ -3429,4 +3539,4 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#line 3433 "barf_targetspec_parser.cpp"
+#line 3543 "barf_targetspec_parser.cpp"

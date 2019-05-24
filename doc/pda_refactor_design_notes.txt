@@ -1847,3 +1847,131 @@ which includes the top element.
             POP_STACK 1 (because there's no way to shift %error)
 
         and at this point, the stack would be exhausted, so it would return "unhandled parse error".
+
+    -   Another case where %lookahead could be used is:
+
+            %nonterminal statement_with_delimiter
+            :
+                statement ';' // valid -- no error
+            |
+                statement %lookahead['}'|%end] // error: missing semicolon.  Use lookahead so this doesn't consume '}' or %end.
+            ;
+
+            %nonterminal statement
+            :
+                expression %lookahead[';'|'}'|%end] // lookaheads are anything that could terminate a statement.
+            |
+                return expression %lookahead[';'|'}'|%end] // same
+            |
+                %error[';'|'}'|%end]
+            ;
+
+    -   This brings up a design criteria for %lookahead feature -- it should be equivalent to
+        replace a %lookahead with a nonterminal which has that as the lookahead.
+
+        Similarly, the nonterminal
+
+            %nonterminal thingy1
+            :
+                %lookahead[A]
+            |
+                %lookahead[B]
+            |
+                %lookahead[C]
+            ;
+
+        should behave exactly the same as
+
+            %nonterminal thingy2
+            :
+                %lookahead[A|B|C]
+            ;
+
+        And by the equivalence principle, all of the following should behave exactly the same
+        when used as a token in a rule.
+
+            thingy1
+            thingy2
+            %lookahead[A|B|C]
+
+    -   How would %lookahead (at the end of a rule) be implemented?
+
+        For `%lookahead[a|b|c]` the state for the rule
+
+            rule 1: nt <- t1 t2 t3 . %lookahead[a|b|c]
+
+        would have transitions
+
+            a: REDUCE 1
+            b: REDUCE 1
+            c: REDUCE 1
+            default: INSERT_LOOKAHEAD_ERROR
+
+        For `%lookahead[^(a|b|c)]` the state for the rule
+
+            rule 2: nt <- t1 t2 t3 . %lookahead[^(a|b|c)]
+
+        would have transitions
+
+            a: INSERT_ERROR_LOOKHEAD
+            b: INSERT_ERROR_LOOKHEAD
+            c: INSERT_ERROR_LOOKHEAD
+            default: REDUCE 2
+
+        Error handling: How about for the rule
+
+            rule 3: nt <- t1 t2 %error[x|y|%end] . %lookahead[a|b|c]
+
+        An error lookahead couldn't be inserted because there's already an error on the stack.
+        Thus the transitions would be
+
+            a: REDUCE 3
+            b: REDUCE 3
+            c: REDUCE 4
+            x: POP_STACK 2
+            y: POP_STACK 2
+            END_: POP_STACK 2
+            default: DISCARD_LOOKAHEAD
+
+        It probably makes sense for the lookahead list in %error to have the same convention as
+        %lookahead; in other words %error[a|b|c] can absorb a or b or c, and nothing else, while
+        %error[^(a|b|c)] absorbs anything but a, b, or c.
+
+        Could %lookahead work not at the end of a rule?  With rules
+
+            rule 4: nt3 <- a
+            rule 5: nt3 <- b
+            rule 6: nt1 <- nt2 nt3
+
+        There would be state
+
+            rule 6,1: nt1 <- nt2 . nt3
+                transitions:
+            a: SHIFT, push some state
+            b: SHIFT, push some state
+            nt3: SHIFT, push some state
+            ERROR_: POP_STACK 1
+            default: INSERT_LOOKAHEAD_ERROR
+
+        But if there were rule
+
+            rule 7: nt1 <- nt2 %lookahead[a] nt3
+
+        There would be state
+
+            rule 7,1: nt1 <- nt2 . %lookahead[a] nt3
+                transitions:
+            a: SHIFT, push some state
+            nt3: SHIFT, push some state
+            ERROR_: POP_STACK 1
+            default: INSERT_LOOKAHEAD_ERROR
+
+        This is probably not worth implementing.  It's not clear what the use case is.
+        Perhaps selecting a subset of that nonterminal.  But that probably complicates
+        things unnecessarily.
+
+        Just go with implementing %lookahead for at the end of rules.
+
+
+
+

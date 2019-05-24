@@ -440,7 +440,7 @@ private:
         struct Transition_
         {
             // TODO: Make this into a strong enum (C++11)
-            enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
+            enum Type { RETURN = 1, ABORT, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
             std::uint8_t    m_type;
             // TODO: Rename this to m_token_id
             std::uint32_t   m_token_index;  // TODO: smallest int
@@ -451,20 +451,35 @@ private:
             // Lexicographic ordering on the tuple (m_type, m_token_index, m_data_index).
             struct Order
             {
-                // TODO: Rename SortedTypeIndex to ActionClassIndex?
-                static std::uint32_t SortedTypeIndex (Type type)
+                static std::uint32_t const MIN_SORTED_TYPE_INDEX = 0;
+                // static std::uint32_t const MAX_SORTED_TYPE_INDEX = 3;
+                static std::uint32_t const MAX_SORTED_TYPE_INDEX = 4;
+
+                // TODO: Rename SortedTypeIndex to OrderedActionIndex?
+                static std::uint32_t SortedTypeIndex (Transition_ const &transition)
                 {
-                    switch (type)
+                    switch (transition.m_type)
                     {
                         case REDUCE:
                         case SHIFT:
                             return 0;
 
-                        case DISCARD_LOOKAHEAD:
                         case POP_STACK:
-                            return 1;
+                            // POP_STACK 2 has higher precedence than DISCARD_LOOKAHEAD
+                            if (transition.m_data_index == 2)
+                                return 1;
+                            // POP_STACK 1 has equal precedence as DISCARD_LOOKAHEAD
+                            else
+                            {
+                                assert(transition.m_data_index == 1);
+                                return 2;
+                            }
+
+                        case DISCARD_LOOKAHEAD:
+                            return 2;
 
                         case RETURN:
+                        case ABORT:
                             return 2;
 
                         case INSERT_LOOKAHEAD_ERROR:
@@ -473,14 +488,38 @@ private:
 
                         default:
                             assert(false && "this should never happen");
-                            return 3; // Arbitrary
+                            return 4; // Arbitrary
                     }
+                    // switch (type)
+                    // {
+                    //     case REDUCE:
+                    //     case SHIFT:
+                    //         return 0;
+                    //
+                    //     case POP_STACK:
+                    //         return 1;
+                    //
+                    //     case DISCARD_LOOKAHEAD:
+                    //         return 2;
+                    //
+                    //     case RETURN:
+                    //     case ABORT:
+                    //         return 3;
+                    //
+                    //     case INSERT_LOOKAHEAD_ERROR:
+                    //     case EPSILON:
+                    //         return 4;
+                    //
+                    //     default:
+                    //         assert(false && "this should never happen");
+                    //         return 5; // Arbitrary
+                    // }
                 }
 
                 bool operator () (Transition_ const &lhs, Transition_ const &rhs) const
                 {
-                    std::uint32_t sorted_type_index_lhs = SortedTypeIndex(Type(lhs.m_type));
-                    std::uint32_t sorted_type_index_rhs = SortedTypeIndex(Type(rhs.m_type));
+                    std::uint32_t sorted_type_index_lhs = SortedTypeIndex(lhs);
+                    std::uint32_t sorted_type_index_rhs = SortedTypeIndex(rhs);
                     if (sorted_type_index_lhs != sorted_type_index_rhs)
                         return sorted_type_index_lhs < sorted_type_index_rhs;
                     else if (lhs.m_type != rhs.m_type)
@@ -747,7 +786,7 @@ private:
 
     struct HypotheticalState_
     {
-        HypotheticalState_      (std::uint32_t initial_state);
+        HypotheticalState_      (Branch_ const &initial_branch);
         ~HypotheticalState_     ();
 
         // The min and max realized lookahead cursors being equal across all HPSes indicates that
@@ -795,7 +834,7 @@ private:
         // Note: HPS stands for "Hypothetical Parser State", which represents one of possibly many
         // ways the non-deterministic parser can parse the input.
         // TODO: probably order this so that the Spec::Order gives an obvious way to do error handling action last
-        enum Type { ROOT = 0, RETURN, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, HPS, COUNT_ };
+        enum Type { ROOT = 0, RETURN, ABORT, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, HPS, COUNT_ };
         static std::uint32_t const UNUSED_DATA = std::uint32_t(-1);
 
         struct Spec
@@ -953,4 +992,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 957 "barf_targetspec_parser.hpp"
+#line 996 "barf_targetspec_parser.hpp"
