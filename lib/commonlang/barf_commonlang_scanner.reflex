@@ -56,6 +56,7 @@ namespace CommonLang {
             DIRECTIVE_END,
             DIRECTIVE_ERROR,
             DIRECTIVE_ID,
+            DIRECTIVE_LOOKAHEAD,
             DIRECTIVE_MACRO,
             DIRECTIVE_NONTERMINAL,
             DIRECTIVE_PREC,
@@ -144,6 +145,7 @@ ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type)
         "DIRECTIVE_END",
         "DIRECTIVE_ERROR",
         "DIRECTIVE_ID",
+        "DIRECTIVE_LOOKAHEAD",
         "DIRECTIVE_MACRO",
         "DIRECTIVE_NONTERMINAL",
         "DIRECTIVE_PREC",
@@ -223,6 +225,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
     if (accepted_string == "%end") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_END; }
     if (accepted_string == "%error") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ERROR; }
     if (accepted_string == "%identifier") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_ID; }
+    if (accepted_string == "%lookahead") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_LOOKAHEAD; }
     if (accepted_string == "%macro") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_MACRO; }
     if (accepted_string == "%nonterminal") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_NONTERMINAL; }
     if (accepted_string == "%prec") { token = new Ast::ThrowAway(GetFiLoc()); return Token::DIRECTIVE_PREC; }
@@ -303,7 +306,7 @@ Scanner::Token::Type Scanner::ParseDirective (string const &accepted_string, Ast
 %macro ID                   ([A-Za-z]([_A-Za-z0-9]*[A-Za-z0-9])?)
 
 // all operators that should be returned by ascii value
-%macro OPERATOR             ([.:;|\[\]])
+%macro OPERATOR             ([.:;|\[\]!])
 // non-newline whitespace
 %macro WHITESPACE           ([ \t])
 // newline

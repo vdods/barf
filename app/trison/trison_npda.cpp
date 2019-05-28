@@ -287,8 +287,9 @@ void GenerateNpda (
         if (previous_token_was_error)
         {
             assert(previous_error_until_lookaheads != NULL);
+            assert(previous_error_until_lookaheads->m_inverted);
             for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-                                               lookahead_it_end = previous_error_until_lookaheads->end();
+                                            lookahead_it_end = previous_error_until_lookaheads->end();
                  lookahead_it != lookahead_it_end;
                  ++lookahead_it)
             {
@@ -312,10 +313,11 @@ void GenerateNpda (
     }
 
     // add the reduce transition at the tail of the rule states
-    if (current_token_is_error)
+    if (previous_token_was_error)
     {
+        assert(previous_error_until_lookaheads->m_inverted);
         for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-                                           lookahead_it_end = previous_error_until_lookaheads->end();
+                                        lookahead_it_end = previous_error_until_lookaheads->end();
              lookahead_it != lookahead_it_end;
              ++lookahead_it)
         {
@@ -323,7 +325,6 @@ void GenerateNpda (
             RuleToken const &lookahead = **lookahead_it;
             graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, rule.m_rule_index));
         }
-//         graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element("END_")->m_token_index, "END_", rule.m_rule_index));
         graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
     }
     else

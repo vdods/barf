@@ -67,10 +67,37 @@ void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
         stream << Tabs(indent_level+1) << "assigned id: " << m_assigned_id << endl;
 }
 
+bool RuleTokenList::Contains (std::string const &token_id) const
+{
+    bool found_in_list = false;
+    for (const_iterator it = begin(), it_end = end(); it != it_end; ++it)
+    {
+        RuleToken const *rule_token = *it;
+        assert(rule_token != NULL);
+        if (rule_token->m_token_id == token_id)
+        {
+            found_in_list = true;
+            break;
+        }
+    }
+
+    if (m_inverted)
+        return !found_in_list;
+    else
+        return found_in_list;
+}
+
+void RuleTokenList::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    Ast::Base::Print(stream, Stringify, indent_level);
+    stream << Tabs(indent_level+1) << "inverted: " << std::boolalpha << m_inverted << endl;
+}
+
 void RuleTokenErrorUntilLookahead::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     RuleToken::Print(stream, Stringify, indent_level);
-    // TODO: print m_lookaheads
+    stream << Tabs(indent_level+1) << "lookheads:\n";
+    m_lookaheads->Print(stream, Stringify, indent_level+2);
 }
 
 string Rule::AsText (Uint32 stage) const

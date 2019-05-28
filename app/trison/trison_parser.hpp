@@ -117,18 +117,19 @@ public:
             DIRECTIVE_EMPTY = 262,
             DIRECTIVE_END = 263,
             DIRECTIVE_ERROR = 264,
-            DIRECTIVE_NONTERMINAL = 265,
-            DIRECTIVE_PREC = 266,
-            DIRECTIVE_TARGET = 267,
-            DIRECTIVE_TARGETS = 268,
-            DIRECTIVE_TERMINAL = 269,
-            DIRECTIVE_TYPE = 270,
-            DUMB_CODE_BLOCK = 271,
-            END_PREAMBLE = 272,
-            ID = 273,
-            NEWLINE = 274,
-            STRICT_CODE_BLOCK = 275,
-            STRING_LITERAL = 276
+            DIRECTIVE_LOOKAHEAD = 265,
+            DIRECTIVE_NONTERMINAL = 266,
+            DIRECTIVE_PREC = 267,
+            DIRECTIVE_TARGET = 268,
+            DIRECTIVE_TARGETS = 269,
+            DIRECTIVE_TERMINAL = 270,
+            DIRECTIVE_TYPE = 271,
+            DUMB_CODE_BLOCK = 272,
+            END_PREAMBLE = 273,
+            ID = 274,
+            NEWLINE = 275,
+            STRICT_CODE_BLOCK = 276,
+            STRING_LITERAL = 277
         }; // end of enum Parser::Terminal::Name
     }; // end of struct Parser::Terminal
 
@@ -142,37 +143,37 @@ public:
         enum Name
         {
             none_ = 0,
-            root = 277,
-            preamble = 278,
-            preamble_directives = 279,
-            preamble_directive = 280,
-            targets_directive = 281,
-            target_ids = 282,
-            target_directive = 283,
-            target_directive_param = 284,
-            terminals = 285,
-            precedence_directive = 286,
-            nonterminals = 287,
-            nonterminal = 288,
-            nonterminal_specification = 289,
-            rules = 290,
-            rule = 291,
-            rule_specification = 292,
-            rule_handlers = 293,
-            rule_handler = 294,
-            rule_token_list = 295,
-            nonempty_rule_token_list = 296,
-            rule_token = 297,
-            bracketed_lookahead_terminal_list = 298,
-            lookahead_terminal_list = 299,
-            lookahead_terminal = 300,
-            rule_precedence_directive = 301,
-            at_least_zero_newlines = 302,
-            at_least_one_newline = 303,
-            token_id = 304,
-            terminal = 305,
-            any_type_of_code_block = 306,
-            type_spec = 307
+            root = 278,
+            preamble = 279,
+            preamble_directives = 280,
+            preamble_directive = 281,
+            targets_directive = 282,
+            target_ids = 283,
+            target_directive = 284,
+            target_directive_param = 285,
+            terminals = 286,
+            precedence_directive = 287,
+            nonterminals = 288,
+            nonterminal = 289,
+            nonterminal_specification = 290,
+            rules = 291,
+            rule = 292,
+            rule_specification = 293,
+            rule_handlers = 294,
+            rule_handler = 295,
+            rule_token_list = 296,
+            nonempty_rule_token_list = 297,
+            rule_token = 298,
+            bracketed_lookaheads = 299,
+            lookahead_terminal_list = 300,
+            lookahead_terminal = 301,
+            rule_precedence_directive = 302,
+            at_least_zero_newlines = 303,
+            at_least_one_newline = 304,
+            token_id = 305,
+            terminal = 306,
+            any_type_of_code_block = 307,
+            type_spec = 308
         }; // end of enum Parser::Nonterminal::Name
     }; // end of struct Parser::Nonterminal
 
@@ -391,7 +392,7 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 395 "trison_parser.hpp"
+#line 396 "trison_parser.hpp"
 
 
 private:
@@ -1041,4 +1042,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 1045 "trison_parser.hpp"
+#line 1046 "trison_parser.hpp"

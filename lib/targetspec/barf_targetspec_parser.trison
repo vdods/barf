@@ -133,6 +133,7 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
         case CommonLang::Scanner::Token::CHAR_LITERAL:
         case CommonLang::Scanner::Token::DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_ERROR:
+        case CommonLang::Scanner::Token::DIRECTIVE_LOOKAHEAD:
         case CommonLang::Scanner::Token::DIRECTIVE_MACRO:
         case CommonLang::Scanner::Token::DIRECTIVE_NONTERMINAL:
         case CommonLang::Scanner::Token::DIRECTIVE_PREC:
@@ -144,7 +145,7 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
         case CommonLang::Scanner::Token::END_PREAMBLE:
         case CommonLang::Scanner::Token::REGEX:
             assert(lookahead_token_data != NULL);
-            EmitError("unrecognized token encountered in targetspec", lookahead_token_data->GetFiLoc());
+            EmitError(FORMAT("unrecognized token " << scanner_token_type), lookahead_token_data->GetFiLoc());
             delete lookahead_token_data;
             lookahead_token_data = NULL;
             return Token(Terminal::BAD_TOKEN);

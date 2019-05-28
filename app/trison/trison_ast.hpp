@@ -129,11 +129,16 @@ struct RuleToken : public Ast::Base
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct RuleToken
 
-// TODO: START HERE -- make a subclass of RuleToken called RuleErrorToken which also accepts a list of terminals
-// which will be what the error directive stops at.  %end is required to be in that list.
 struct RuleTokenList : public Ast::AstList<RuleToken>
 {
+    bool m_inverted;
+
     RuleTokenList () : Ast::AstList<RuleToken>(AST_RULE_TOKEN_LIST) { }
+    RuleTokenList (FiLoc const &filoc) : Ast::AstList<RuleToken>(filoc, AST_RULE_TOKEN_LIST) { }
+
+    bool Contains (std::string const &token_id) const;
+
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 }; // end of struct RuleTokenList
 
 struct RuleTokenErrorUntilLookahead : public RuleToken
