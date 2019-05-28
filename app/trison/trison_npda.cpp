@@ -287,9 +287,9 @@ void GenerateNpda (
         if (previous_token_was_error)
         {
             assert(previous_error_until_lookaheads != NULL);
-            assert(previous_error_until_lookaheads->m_inverted);
+            assert(previous_error_until_lookaheads->m_is_inverted);
             for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-                                            lookahead_it_end = previous_error_until_lookaheads->end();
+                                               lookahead_it_end = previous_error_until_lookaheads->end();
                  lookahead_it != lookahead_it_end;
                  ++lookahead_it)
             {
@@ -313,22 +313,229 @@ void GenerateNpda (
     }
 
     // add the reduce transition at the tail of the rule states
-    if (previous_token_was_error)
+    if (rule.m_lookahead_directive != NULL)
     {
-        assert(previous_error_until_lookaheads->m_inverted);
-        for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-                                        lookahead_it_end = previous_error_until_lookaheads->end();
-             lookahead_it != lookahead_it_end;
-             ++lookahead_it)
+        // If there's a %lookahead directive, add transitions for that.
+
+        std::set<string> used_terminals;
+
+        // TODO: Could potentially simplify this whole section of code; but only after it's tested
+        // and works as a reference.
+
+        // The way the transitions are constructed depends on if the lookahead's list is inverted.
+        if (rule.m_lookahead_directive->m_lookaheads->m_is_inverted)
         {
-            assert(*lookahead_it != NULL);
-            RuleToken const &lookahead = **lookahead_it;
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, rule.m_rule_index));
+            // For the example rule
+            //
+            //     rule 2: nt <- t1 t2 t3 . %lookahead[!(a|b|c)]
+            //
+            // where t3 is not an %error token, there would be transitions
+            //
+            //     a: INSERT_ERROR_LOOKHEAD
+            //     b: INSERT_ERROR_LOOKHEAD
+            //     c: INSERT_ERROR_LOOKHEAD
+            //     default: REDUCE 2
+            //
+            if (!previous_token_was_error)
+            {
+                // Add error-handling transitions for the terminals in the inverted lookahead terminal list.
+                for (RuleTokenList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(),
+                                                   lookahead_it_end = rule.m_lookahead_directive->m_lookaheads->end();
+                     lookahead_it != lookahead_it_end;
+                     ++lookahead_it)
+                {
+                    assert(*lookahead_it != NULL);
+                    RuleToken const &lookahead = **lookahead_it;
+                    // Only add the transition if there is no transition for it yet.
+                    if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
+                    {
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id));
+                        used_terminals.insert(lookahead.m_token_id);
+                    }
+                }
+            }
+            // For the example rule
+            //
+            //     rule 4: nt <- t1 t2 %error[!(c|x|y|%end)] . %lookahead[!(a|b|c)]
+            //
+            // An error lookahead couldn't be inserted because there's already an error on the stack.
+            // Thus the transitions would be
+            //
+            //     // terminals in the negated %error terminal list
+            //     c: POP_STACK 2
+            //     x: POP_STACK 2
+            //     y: POP_STACK 2
+            //     END_: POP_STACK 2
+            //     // then the terminals in the negated %lookahead terminal list, minus the ones above
+            //     a: DISCARD_LOOKAHEAD
+            //     b: DISCARD_LOOKAHEAD
+            //     // then the default transition
+            //     default: REDUCE 4
+            //
+            // Note that the terminal c is in the %error but not the %lookahead directive, which means
+            // that the %error won't absorb it and the %lookahead doesn't accept it, meaning that it
+            // should result in error handling (in this case, POP_STACK 2).  Because the %error token can't
+            // accept x, y, and %end (and those aren't included in the %lookahead), those must cause
+            // error-handling actions (in this case, POP_STACK 2).  The fallthrough is to reduce the
+            // rule.
+            else
+            {
+                // Add the transitions relating to the previous %error token
+                assert(previous_error_until_lookaheads != NULL);
+                assert(previous_error_until_lookaheads->m_is_inverted);
+                for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
+                                                   lookahead_it_end = previous_error_until_lookaheads->end();
+                     lookahead_it != lookahead_it_end;
+                     ++lookahead_it)
+                {
+                    assert(*lookahead_it != NULL);
+                    RuleToken const &lookahead = **lookahead_it;
+                    // Only add the transition if there is no transition for it yet.
+                    if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
+                    {
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, 2));
+                        used_terminals.insert(lookahead.m_token_id);
+                    }
+                }
+
+                // Add the transitions to filter out the (inverted) lookaheads.
+                for (RuleTokenList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(),
+                                                   lookahead_it_end = rule.m_lookahead_directive->m_lookaheads->end();
+                    lookahead_it != lookahead_it_end;
+                    ++lookahead_it)
+                {
+                    assert(*lookahead_it != NULL);
+                    RuleToken const &lookahead = **lookahead_it;
+                    // Only add the transition if there is no transition for it yet.
+                    if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
+                    {
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id));
+                        used_terminals.insert(lookahead.m_token_id);
+                    }
+                }
+            }
+
+            // Add the default transition (in this case, reduce); the above transitions all act as a filter.
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default", rule.m_rule_index));
         }
-        graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+        else // !rule.m_lookahead_directive->m_lookaheads->m_is_inverted
+        {
+            // For the example rule
+            //
+            //     rule 1: nt <- t1 t2 t3 . %lookahead[a|b|c]
+            //
+            // where t3 is not an %error token, there would be transitions
+            //
+            //     a: REDUCE 1
+            //     b: REDUCE 1
+            //     c: REDUCE 1
+            //     default: INSERT_LOOKAHEAD_ERROR
+            if (!previous_token_was_error)
+            {
+                // Add reduce transitions for the terminals in the lookahead terminal list.
+                for (RuleTokenList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(),
+                                                   lookahead_it_end = rule.m_lookahead_directive->m_lookaheads->end();
+                     lookahead_it != lookahead_it_end;
+                     ++lookahead_it)
+                {
+                    assert(*lookahead_it != NULL);
+                    RuleToken const &lookahead = **lookahead_it;
+                    // Only add the transition if there is no transition for it yet.
+                    if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
+                    {
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, rule.m_rule_index));
+                        used_terminals.insert(lookahead.m_token_id);
+                    }
+                }
+                // Add the default transition (in this case, INSERT_LOOKAHEAD_ERROR); the above transitions all act as a filter.
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+            }
+            // For the example rule
+            //
+            //     rule 3: nt <- t1 t2 %error[!(c|x|y|%end)] . %lookahead[a|b|c]
+            //
+            // An error lookahead couldn't be inserted because there's already an error on the stack.
+            // Thus the transitions would be
+            //
+            //     // positive %lookahead terminals first
+            //     a: REDUCE 3
+            //     b: REDUCE 3
+            //     c: REDUCE 3
+            //     // then the terminals in the negated %error terminal list, minus the ones above
+            //     x: POP_STACK 2
+            //     y: POP_STACK 2
+            //     END_: POP_STACK 2
+            //     // then the default transition
+            //     default: DISCARD_LOOKAHEAD
+            //
+            // Note that the terminal c is in both the %error and the %lookahead directive, which means
+            // that the %error won't absorb it, but the %lookahead requires it, meaning that it should
+            // reduce upon c.  Because the %error token can't accept x, y, and %end (and those aren't
+            // included in the %lookahead), those must cause error-handling actions (in this case,
+            // POP_STACK 2).  The fallthrough is the ordinary error handling, which is to discard the
+            // lookahead.
+            else // previous_token_was_error
+            {
+                assert(previous_error_until_lookaheads != NULL);
+                assert(previous_error_until_lookaheads->m_is_inverted);
+
+                // Add reduce transitions for the terminals in the lookahead terminal list.
+                for (RuleTokenList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(),
+                                                   lookahead_it_end = rule.m_lookahead_directive->m_lookaheads->end();
+                     lookahead_it != lookahead_it_end;
+                     ++lookahead_it)
+                {
+                    assert(*lookahead_it != NULL);
+                    RuleToken const &lookahead = **lookahead_it;
+                    // Only add the transition if there is no transition for it yet.
+                    if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
+                    {
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, rule.m_rule_index));
+                        used_terminals.insert(lookahead.m_token_id);
+                    }
+                }
+                // Add the transitions relating to the previous %error token
+                for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
+                                                   lookahead_it_end = previous_error_until_lookaheads->end();
+                     lookahead_it != lookahead_it_end;
+                     ++lookahead_it)
+                {
+                    assert(*lookahead_it != NULL);
+                    RuleToken const &lookahead = **lookahead_it;
+                    // Only add the transition if there is no transition for it yet.
+                    if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
+                    {
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, 2));
+                        used_terminals.insert(lookahead.m_token_id);
+                    }
+                }
+
+                // Add the default transition (in this case, INSERT_LOOKAHEAD_ERROR); the above transitions all act as a filter.
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+            }
+        }
     }
-    else
-        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default", rule.m_rule_index));
+    else // rule.m_lookahead_directive == NULL
+    {
+        assert(rule.m_lookahead_directive == NULL); // pedantic
+        // This is the same as the pre-%lookahead-feature behavior of trison
+        if (previous_token_was_error)
+        {
+            assert(previous_error_until_lookaheads->m_is_inverted);
+            for (RuleTokenList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
+                                               lookahead_it_end = previous_error_until_lookaheads->end();
+                 lookahead_it != lookahead_it_end;
+                 ++lookahead_it)
+            {
+                assert(*lookahead_it != NULL);
+                RuleToken const &lookahead = **lookahead_it;
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, rule.m_rule_index));
+            }
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+        }
+        else
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default", rule.m_rule_index));
+    }
 }
 
 void EnsureGeneratedNpda (

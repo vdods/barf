@@ -164,16 +164,17 @@ public:
             rule_token_list = 296,
             nonempty_rule_token_list = 297,
             rule_token = 298,
-            bracketed_lookaheads = 299,
-            lookahead_terminal_list = 300,
-            lookahead_terminal = 301,
-            rule_precedence_directive = 302,
-            at_least_zero_newlines = 303,
-            at_least_one_newline = 304,
-            token_id = 305,
-            terminal = 306,
-            any_type_of_code_block = 307,
-            type_spec = 308
+            lookahead_directive = 299,
+            bracketed_lookaheads = 300,
+            lookahead_terminal_list = 301,
+            lookahead_terminal = 302,
+            rule_precedence_directive = 303,
+            at_least_zero_newlines = 304,
+            at_least_one_newline = 305,
+            token_id = 306,
+            terminal = 307,
+            any_type_of_code_block = 308,
+            type_spec = 309
         }; // end of enum Parser::Nonterminal::Name
     }; // end of struct Parser::Nonterminal
 
@@ -392,7 +393,7 @@ private:
     NonterminalList *m_nonterminal_list;
     Uint32 m_rule_count;
 
-#line 396 "trison_parser.hpp"
+#line 397 "trison_parser.hpp"
 
 
 private:
@@ -1042,4 +1043,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 1046 "trison_parser.hpp"
+#line 1047 "trison_parser.hpp"

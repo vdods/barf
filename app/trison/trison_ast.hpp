@@ -26,7 +26,8 @@ struct PrimarySource;
 
 enum
 {
-    AST_NONTERMINAL = CommonLang::AST_START_CUSTOM_TYPES_HERE_,
+    AST_LOOKAHEAD_DIRECTIVE = CommonLang::AST_START_CUSTOM_TYPES_HERE_,
+    AST_NONTERMINAL,
     AST_NONTERMINAL_LIST,
     AST_NONTERMINAL_MAP,
     AST_PRECEDENCE,
@@ -131,10 +132,10 @@ struct RuleToken : public Ast::Base
 
 struct RuleTokenList : public Ast::AstList<RuleToken>
 {
-    bool m_inverted;
+    bool m_is_inverted;
 
-    RuleTokenList () : Ast::AstList<RuleToken>(AST_RULE_TOKEN_LIST) { }
-    RuleTokenList (FiLoc const &filoc) : Ast::AstList<RuleToken>(filoc, AST_RULE_TOKEN_LIST) { }
+    RuleTokenList () : Ast::AstList<RuleToken>(AST_RULE_TOKEN_LIST), m_is_inverted(false) { }
+    RuleTokenList (FiLoc const &filoc) : Ast::AstList<RuleToken>(filoc, AST_RULE_TOKEN_LIST), m_is_inverted(false) { }
 
     bool Contains (std::string const &token_id) const;
 
@@ -143,7 +144,8 @@ struct RuleTokenList : public Ast::AstList<RuleToken>
 
 struct RuleTokenErrorUntilLookahead : public RuleToken
 {
-    RuleTokenList const *m_lookaheads;
+    // TODO: This doesn't need to be RuleToken list -- it should really be TerminalList
+    RuleTokenList const *const m_lookaheads;
 
     RuleTokenErrorUntilLookahead (FiLoc const &filoc, RuleTokenList const *lookaheads, string const &assigned_id = g_empty_string)
         :
@@ -156,19 +158,39 @@ struct RuleTokenErrorUntilLookahead : public RuleToken
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
 };
 
+struct LookaheadDirective : public RuleToken
+{
+    // TODO: This doesn't need to be RuleToken list -- it should really be TerminalList
+    RuleTokenList const *const m_lookaheads;
+
+    LookaheadDirective (FiLoc const &filoc, RuleTokenList const *lookaheads, string const &assigned_id = g_empty_string)
+        :
+        RuleToken("%lookahead", filoc, assigned_id, AST_LOOKAHEAD_DIRECTIVE),
+        m_lookaheads(lookaheads)
+    {
+        assert(m_lookaheads != NULL);
+    }
+
+    string AsText () const;
+
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+};
+
 struct Rule : public Ast::Base
 {
     Nonterminal const *m_owner_nonterminal;
     RuleTokenList const *const m_rule_token_list;
+    LookaheadDirective const *const m_lookahead_directive;
     Precedence const *const m_rule_precedence;
     CommonLang::RuleHandlerMap const *m_rule_handler_map;
     Uint32 const m_rule_index;
 
-    Rule (RuleTokenList const *rule_token_list, Precedence const *rule_precedence, Uint32 rule_index)
+    Rule (RuleTokenList const *rule_token_list, LookaheadDirective const *lookahead_directive, Precedence const *rule_precedence, Uint32 rule_index)
         :
         Ast::Base(rule_token_list->GetFiLoc(), AST_RULE),
         m_owner_nonterminal(NULL),
         m_rule_token_list(rule_token_list),
+        m_lookahead_directive(lookahead_directive),
         m_rule_precedence(rule_precedence),
         m_rule_handler_map(NULL),
         m_rule_index(rule_index)

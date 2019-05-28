@@ -768,7 +768,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal rule_specification %type.cpp "Rule *"
 :
-    rule_token_list:rule_token_list rule_precedence_directive:rule_precedence_directive
+    rule_token_list:rule_token_list lookahead_directive:lookahead_directive rule_precedence_directive:rule_precedence_directive
     %target.cpp {
         Precedence *rule_precedence;
         if (rule_precedence_directive == NULL)
@@ -779,7 +779,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
             rule_precedence = m_precedence_map->Element("DEFAULT_");
         }
 
-        Rule *rule = new Rule(rule_token_list, rule_precedence, m_rule_count++);
+        Rule *rule = new Rule(rule_token_list, lookahead_directive, rule_precedence, m_rule_count++);
         delete rule_precedence_directive;
         return rule;
     }
@@ -915,7 +915,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         // from proceeding to parser generation.
         RuleTokenList *lookaheads = new RuleTokenList(throwaway->GetFiLoc());
         lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
-        lookaheads->m_inverted = true;
+        lookaheads->m_is_inverted = true;
 
         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
         delete throwaway;
@@ -929,7 +929,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         // from proceeding to parser generation.
         RuleTokenList *lookaheads = new RuleTokenList(throwaway->GetFiLoc());
         lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
-        lookaheads->m_inverted = true;
+        lookaheads->m_is_inverted = true;
 
         EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
 
@@ -944,12 +944,12 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(lookaheads != NULL);
 
         // TEMP HACK until done transitioning to inverted %error lookaheads
-        lookaheads->m_inverted = true;
+        lookaheads->m_is_inverted = true;
 
         // TODO: Maybe move this to RuleTokenErrorUntilLookahead
         // Verify that the lookaheads include %end.  Also verify that it's a negated RuleTokenList
         // since the way the NPDA is generated depends on it.
-        if (!lookaheads->m_inverted || lookaheads->Contains("END_"))
+        if (!lookaheads->m_is_inverted || lookaheads->Contains("END_"))
             EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end; e.g. %error[.%end] or %error[.[%end|a|b]] etc.", throwaway->GetFiLoc());
 
         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
@@ -963,17 +963,51 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(lookaheads != NULL);
 
         // TEMP HACK until done transitioning to inverted %error lookaheads
-        lookaheads->m_inverted = true;
+        lookaheads->m_is_inverted = true;
 
         // TODO: Maybe move this to RuleTokenErrorUntilLookahead
         // Verify that the lookaheads include %end.  Also verify that it's a negated RuleTokenList
         // since the way the NPDA is generated depends on it.
-        if (!lookaheads->m_inverted || lookaheads->Contains("END_"))
+        if (!lookaheads->m_is_inverted || lookaheads->Contains("END_"))
             EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end; e.g. %error[.%end] or %error[.[%end|a|b]] etc.", throwaway->GetFiLoc());
 
         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
         return rule_token_error_until_lookahead;
+    }
+;
+
+%nonterminal lookahead_directive %type.cpp "LookaheadDirective *"
+:
+    DIRECTIVE_LOOKAHEAD:throwaway bracketed_lookaheads:lookaheads ':' ID:assigned_id
+    %target.cpp {
+        assert(lookaheads != NULL);
+        assert(assigned_id != NULL);
+
+        if (lookaheads->empty())
+            EmitError("%lookahead directive terminal list may not be empty", throwaway->GetFiLoc());
+        LookaheadDirective *lookahead_directive = new LookaheadDirective(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
+
+        delete throwaway;
+        delete assigned_id;
+        return lookahead_directive;
+    }
+|
+    DIRECTIVE_LOOKAHEAD:throwaway bracketed_lookaheads:lookaheads
+    %target.cpp {
+        assert(lookaheads != NULL);
+
+        if (lookaheads->empty())
+            EmitError("%lookahead directive terminal list may not be empty", throwaway->GetFiLoc());
+        LookaheadDirective *lookahead_directive = new LookaheadDirective(throwaway->GetFiLoc(), lookaheads);
+
+        delete throwaway;
+        return lookahead_directive;
+    }
+|
+    %empty
+    %target.cpp {
+        return NULL;
     }
 ;
 
@@ -988,7 +1022,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     '[' '!' '[' lookahead_terminal_list:lookaheads ']' ']'
     %target.cpp {
         assert(lookaheads != NULL);
-        lookaheads->m_inverted = !lookaheads->m_inverted;
+        lookaheads->m_is_inverted = !lookaheads->m_is_inverted;
         return lookaheads;
     }
 |
@@ -998,7 +1032,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(lookahead_terminal != NULL);
         RuleTokenList *lookaheads = new RuleTokenList(lookahead_terminal->GetFiLoc());
         lookaheads->Append(lookahead_terminal);
-        lookaheads->m_inverted = !lookaheads->m_inverted;
+        lookaheads->m_is_inverted = !lookaheads->m_is_inverted;
         return lookaheads;
     }
 ;

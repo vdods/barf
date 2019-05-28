@@ -1727,6 +1727,15 @@ which includes the top element.
 
         This would prevent the lookahead queue from growing unboundedly.
 
+    -   Idea for fixing advanced error handling regarding POP_STACK 2: Have two different
+        error terminals, one which is the existing ERROR_ token, and the other is
+        BLOCKED_ERROR_, which is inserted when a lookahead is encountered that an %error
+        directive doesn't accept.  Then if a rule doesn't accept %error and BLOCKED_ERROR_
+        is the lookahead, the action POP_STACK 1 can be taken (or maybe POP_STACK 2 is
+        still necessary), where the stack token and the lookahead are both consumed,
+        producing a token that will replace the lookahead (but its type will still be
+        BLOCKED_ERROR_).
+
     -   Idea: Have handler code blocks for the following:
         -   INSERT_LOOKAHEAD_ERROR -- this should have access to the lookahead that
             caused the error to be generated, and it should return a token that will
@@ -1907,9 +1916,9 @@ which includes the top element.
             c: REDUCE 1
             default: INSERT_LOOKAHEAD_ERROR
 
-        For `%lookahead[^(a|b|c)]` the state for the rule
+        For `%lookahead[!(a|b|c)]` the state for the rule
 
-            rule 2: nt <- t1 t2 t3 . %lookahead[^(a|b|c)]
+            rule 2: nt <- t1 t2 t3 . %lookahead[!(a|b|c)]
 
         would have transitions
 
@@ -1920,18 +1929,53 @@ which includes the top element.
 
         Error handling: How about for the rule
 
-            rule 3: nt <- t1 t2 %error[x|y|%end] . %lookahead[a|b|c]
+            rule 3: nt <- t1 t2 %error[!(c|x|y|%end)] . %lookahead[a|b|c]
 
         An error lookahead couldn't be inserted because there's already an error on the stack.
         Thus the transitions would be
 
+            // positive %lookahead terminals first
             a: REDUCE 3
             b: REDUCE 3
-            c: REDUCE 4
+            c: REDUCE 3
+            // then the terminals in the negated %error terminal list, minus the ones above
             x: POP_STACK 2
             y: POP_STACK 2
             END_: POP_STACK 2
+            // then the default transition
             default: DISCARD_LOOKAHEAD
+
+        Note that the terminal c is in both the %error and the %lookahead directive, which means
+        that the %error won't absorb it, but the %lookahead requires it, meaning that it should
+        reduce upon c.  Because the %error token can't accept x, y, and %end (and those aren't
+        included in the %lookahead), those must cause error-handling actions (in this case,
+        POP_STACK 2).  The fallthrough is the ordinary error handling, which is to discard the
+        lookahead.
+
+        Error handling 2: How about for the rule
+
+            rule 4: nt <- t1 t2 %error[!(c|x|y|%end)] . %lookahead[!(a|b|c)]
+
+        An error lookahead couldn't be inserted because there's already an error on the stack.
+        Thus the transitions would be
+
+            // terminals in the negated %error terminal list
+            c: POP_STACK 2
+            x: POP_STACK 2
+            y: POP_STACK 2
+            END_: POP_STACK 2
+            // then the terminals in the negated %lookahead terminal list, minus the ones above
+            a: DISCARD_LOOKAHEAD
+            b: DISCARD_LOOKAHEAD
+            // then the default transition
+            default: REDUCE 4
+
+        Note that the terminal c is in the %error but not the %lookahead directive, which means
+        that the %error won't absorb it and the %lookahead doesn't accept it, meaning that it
+        should result in error handling (in this case, POP_STACK 2).  Because the %error token can't
+        accept x, y, and %end (and those aren't included in the %lookahead), those must cause
+        error-handling actions (in this case, POP_STACK 2).  The fallthrough is to reduce the
+        rule.
 
         It probably makes sense for the lookahead list in %error to have the same convention as
         %lookahead; in other words %error[a|b|c] can absorb a or b or c, and nothing else, while

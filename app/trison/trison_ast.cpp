@@ -18,6 +18,7 @@ string const &AstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_COUNT-CommonLang::AST_START_CUSTOM_TYPES_HERE_] =
     {
+        "AST_LOOKAHEAD_DIRECTIVE",
         "AST_NONTERMINAL",
         "AST_NONTERMINAL_LIST",
         "AST_NONTERMINAL_MAP",
@@ -72,16 +73,16 @@ bool RuleTokenList::Contains (std::string const &token_id) const
     bool found_in_list = false;
     for (const_iterator it = begin(), it_end = end(); it != it_end; ++it)
     {
-        RuleToken const *rule_token = *it;
-        assert(rule_token != NULL);
-        if (rule_token->m_token_id == token_id)
+        assert(*it != NULL);
+        RuleToken const &rule_token = **it;
+        if (rule_token.m_token_id == token_id)
         {
             found_in_list = true;
             break;
         }
     }
 
-    if (m_inverted)
+    if (m_is_inverted)
         return !found_in_list;
     else
         return found_in_list;
@@ -90,10 +91,41 @@ bool RuleTokenList::Contains (std::string const &token_id) const
 void RuleTokenList::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
-    stream << Tabs(indent_level+1) << "inverted: " << std::boolalpha << m_inverted << endl;
+    stream << Tabs(indent_level+1) << "inverted: " << std::boolalpha << m_is_inverted << endl;
 }
 
 void RuleTokenErrorUntilLookahead::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+{
+    RuleToken::Print(stream, Stringify, indent_level);
+    stream << Tabs(indent_level+1) << "lookheads:\n";
+    m_lookaheads->Print(stream, Stringify, indent_level+2);
+}
+
+string LookaheadDirective::AsText () const
+{
+    ostringstream out;
+
+    out << "%lookahead[";
+    if (m_lookaheads->m_is_inverted)
+        out << "![";
+    for (RuleTokenList::const_iterator it = m_lookaheads->begin(), it_end = m_lookaheads->end(); it != it_end; ++it)
+    {
+        assert(*it != NULL);
+        RuleToken const &rule_token = **it;
+        out << rule_token.m_token_id;
+        RuleTokenList::const_iterator next_it = it;
+        ++next_it;
+        if (next_it != it_end)
+            out << '|';
+    }
+    if (m_lookaheads->m_is_inverted)
+        out << ']';
+    out << ']';
+
+    return out.str();
+}
+
+void LookaheadDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     RuleToken::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "lookheads:\n";
@@ -115,6 +147,8 @@ string Rule::AsText (Uint32 stage) const
         for (Uint32 s = stage; s < m_rule_token_list->size(); ++s)
             out << ' ' << m_rule_token_list->Element(s)->m_token_id;
     }
+    if (m_lookahead_directive != NULL)
+        out << ' ' << m_lookahead_directive->AsText();
     return out.str();
 }
 
