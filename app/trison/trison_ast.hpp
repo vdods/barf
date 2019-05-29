@@ -352,18 +352,26 @@ struct PrimarySource : public Ast::Base
         {
             Terminal const *terminal = m_terminal_list->Element(i);
             assert(terminal != NULL);
+
             assert(m_token_id_map.find(terminal->m_token_index) == m_token_id_map.end());
 //             std::cerr << "    " << terminal->m_token_index << " |-> " << terminal->GetText() << '\n';
             m_token_id_map[terminal->m_token_index] = terminal->GetText();
+
+            assert(m_token_index_map.find(terminal->GetText()) == m_token_index_map.end());
+            m_token_index_map[terminal->GetText()] = terminal->m_token_index;
         }
 //         std::cerr << "Assigning nonterminals within constructor of PrimarySource\n";
         for (Uint32 i = 0; i < m_nonterminal_list->size(); ++i)
         {
             Nonterminal const *nonterminal = m_nonterminal_list->Element(i);
             assert(nonterminal != NULL);
+
             assert(m_token_id_map.find(nonterminal->m_token_index) == m_token_id_map.end());
 //             std::cerr << "    " << nonterminal->m_token_index << " |-> " << nonterminal->GetText() << '\n';
             m_token_id_map[nonterminal->m_token_index] = nonterminal->GetText();
+
+            assert(m_token_index_map.find(nonterminal->GetText()) == m_token_index_map.end());
+            m_token_index_map[nonterminal->GetText()] = nonterminal->m_token_index;
         }
     }
 
@@ -373,6 +381,7 @@ struct PrimarySource : public Ast::Base
     RuleToken const *GetRuleToken (Uint32 rule_token_index) const;
     string const &AssignedType (string const &token_id, string const &target_id) const;
     string GetTokenId (Uint32 token_index) const;
+    Uint32 GetTokenIndex (string const &token_id) const;
     CommonLang::TargetMap const &GetTargetMap () const
     {
         assert(m_target_map != NULL && "no target map set");
@@ -395,7 +404,10 @@ struct PrimarySource : public Ast::Base
 private:
 
     typedef map<Uint32, string> TokenIdMap;
+    typedef map<string, Uint32> TokenIndexMap;
+
     TokenIdMap m_token_id_map;
+    TokenIndexMap m_token_index_map;
     CommonLang::TargetMap const *m_target_map;
 }; // end of struct PrimarySource
 

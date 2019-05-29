@@ -203,7 +203,7 @@ void GenerateNpda (
 {
     Uint32 transition_input = terminal.m_is_id ? terminal.m_token_index : terminal.m_char;
     graph_context.m_npda_graph.AddTransition(start_index, NpdaShiftTransition(transition_input, terminal.GetText(), end_index));
-    this_is_an_error_terminal = terminal.m_token_index == graph_context.m_primary_source.m_terminal_map->Element("ERROR_")->m_token_index;
+    this_is_an_error_terminal = terminal.m_token_index == graph_context.m_primary_source.GetTokenIndex("ERROR_");
 }
 
 void GenerateNpda (
@@ -220,6 +220,7 @@ void GenerateNpda (
 
     Terminal const *terminal = graph_context.m_primary_source.m_terminal_map->Element(rule_token.m_token_id);
     Nonterminal const *nonterminal = graph_context.m_primary_source.m_nonterminal_map->Element(rule_token.m_token_id);
+    assert(terminal == NULL || nonterminal == NULL);
     if (terminal == NULL && nonterminal == NULL)
     {
         EmitError("undeclared token \"" + rule_token.m_token_id + "\"", rule_token.GetFiLoc());
@@ -272,7 +273,7 @@ void GenerateNpda (
     start_index = end_index;
     ++stage;
 
-    // add all the shift transitions
+    // Add transitions for each rule token.
     for (RuleTokenList::const_iterator it = rule.m_rule_token_list->begin(),
                                        it_end = rule.m_rule_token_list->end();
         it != it_end;
@@ -295,15 +296,15 @@ void GenerateNpda (
             {
                 assert(*lookahead_it != NULL);
                 RuleToken const &lookahead = **lookahead_it;
-                graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, 2));
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.m_token_id), lookahead.m_token_id, 2));
             }
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
         }
         else
         {
             if (!current_token_is_error)
-                graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element("ERROR_")->m_token_index, "ERROR_", 1));
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex("ERROR_"), "ERROR_", 1));
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
         }
 
         start_index = end_index;
@@ -349,7 +350,7 @@ void GenerateNpda (
                     // Only add the transition if there is no transition for it yet.
                     if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
                     {
-                        graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id));
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.m_token_id), lookahead.m_token_id));
                         used_terminals.insert(lookahead.m_token_id);
                     }
                 }
@@ -393,7 +394,7 @@ void GenerateNpda (
                     // Only add the transition if there is no transition for it yet.
                     if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
                     {
-                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, 2));
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.m_token_id), lookahead.m_token_id, 2));
                         used_terminals.insert(lookahead.m_token_id);
                     }
                 }
@@ -409,14 +410,14 @@ void GenerateNpda (
                     // Only add the transition if there is no transition for it yet.
                     if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
                     {
-                        graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id));
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.m_token_id), lookahead.m_token_id));
                         used_terminals.insert(lookahead.m_token_id);
                     }
                 }
             }
 
             // Add the default transition (in this case, reduce); the above transitions all act as a filter.
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default", rule.m_rule_index));
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default", rule.m_rule_index));
         }
         else // !rule.m_lookahead_directive->m_lookaheads->m_is_inverted
         {
@@ -443,12 +444,12 @@ void GenerateNpda (
                     // Only add the transition if there is no transition for it yet.
                     if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
                     {
-                        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, rule.m_rule_index));
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.m_token_id), lookahead.m_token_id, rule.m_rule_index));
                         used_terminals.insert(lookahead.m_token_id);
                     }
                 }
                 // Add the default transition (in this case, INSERT_LOOKAHEAD_ERROR); the above transitions all act as a filter.
-                graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
             }
             // For the example rule
             //
@@ -490,7 +491,7 @@ void GenerateNpda (
                     // Only add the transition if there is no transition for it yet.
                     if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
                     {
-                        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, rule.m_rule_index));
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.m_token_id), lookahead.m_token_id, rule.m_rule_index));
                         used_terminals.insert(lookahead.m_token_id);
                     }
                 }
@@ -505,13 +506,13 @@ void GenerateNpda (
                     // Only add the transition if there is no transition for it yet.
                     if (used_terminals.find(lookahead.m_token_id) == used_terminals.end())
                     {
-                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, 2));
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.m_token_id), lookahead.m_token_id, 2));
                         used_terminals.insert(lookahead.m_token_id);
                     }
                 }
 
                 // Add the default transition (in this case, INSERT_LOOKAHEAD_ERROR); the above transitions all act as a filter.
-                graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
             }
         }
     }
@@ -529,12 +530,12 @@ void GenerateNpda (
             {
                 assert(*lookahead_it != NULL);
                 RuleToken const &lookahead = **lookahead_it;
-                graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_terminal_map->Element(lookahead.m_token_id)->m_token_index, lookahead.m_token_id, rule.m_rule_index));
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.m_token_id), lookahead.m_token_id, rule.m_rule_index));
             }
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
         }
         else
-            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default", rule.m_rule_index));
+            graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default", rule.m_rule_index));
     }
 }
 
@@ -554,7 +555,7 @@ void EnsureGeneratedNpda (
     graph_context.m_npda_graph.AddTransition(graph_start_state, NpdaEpsilonTransition(graph_head_state));
     graph_context.m_npda_graph.AddTransition(graph_start_state, NpdaShiftTransition(nonterminal.m_token_index, nonterminal.GetText(), graph_return_state));
     // create the return transition
-    graph_context.m_npda_graph.AddTransition(graph_return_state, NpdaReturnTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+    graph_context.m_npda_graph.AddTransition(graph_return_state, NpdaReturnTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
     // record the start, head and return states
     nonterminal.SetNpdaGraphStates(graph_start_state, graph_head_state, graph_return_state);
     // the rules are effectively or'ed together
@@ -578,7 +579,7 @@ void GenerateNpda (PrimarySource const &primary_source, Graph &npda_graph)
     // First generate the fallback state which results in the TT_ABORT action.
     Uint32 graph_fallback_state = graph_context.m_npda_graph.AddNode(new GenericNpdaNodeData("FALLBACK", Graph::Color(0xFFA793), false, false));
     assert(graph_fallback_state == 0);
-    graph_context.m_npda_graph.AddTransition(graph_fallback_state, NpdaAbortTransition(graph_context.m_primary_source.m_nonterminal_map->Element("none_")->m_token_index, "default"));
+    graph_context.m_npda_graph.AddTransition(graph_fallback_state, NpdaAbortTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
 
     for (NonterminalList::const_iterator it = primary_source.m_nonterminal_list->begin(), it_end = primary_source.m_nonterminal_list->end();
          it != it_end;

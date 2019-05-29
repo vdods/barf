@@ -16,7 +16,25 @@ Install Directory=/usr/local
 Runtime=Host System
 
 [Launch]
-Launch Configurations=
+Launch Configurations=Launch Configuration 0
+
+[Launch][Launch Configuration 0]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=dev_trison_parser
+Type=Native Application
+
+[Launch][Launch Configuration 0][Data]
+Arguments=-c -I /home/vdods/files/github/vdods/barf/targets /home/vdods/files/github/vdods/barf/app/trison/trison_parser.trison -o /home/vdods/files/github/vdods/barf/build/dev --generate-npda-dot-graph trison_parser.npda.dot --generate-npda-states-file trison_parser.npda.states
+Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x00)
+Dependency Action=Nothing
+EnvironmentGroup=
+Executable=file:///home/vdods/files/github/vdods/barf/build/bin/trison
+External Terminal=konsole --noclose --workdir %workdir -e %exe
+Project Target=barf,bpp
+Use External Terminal=false
+Working Directory=file:///home/vdods/files/github/vdods/barf/build/
+isExecutable=true
 
 [Project]
 VersionControlSupport=kdevgit

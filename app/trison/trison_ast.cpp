@@ -310,6 +310,13 @@ string PrimarySource::GetTokenId (Uint32 token_index) const
     return it->second;
 }
 
+Uint32 PrimarySource::GetTokenIndex (string const &token_id) const
+{
+    TokenIndexMap::const_iterator it = m_token_index_map.find(token_id);
+    assert(it != m_token_index_map.end());
+    return it->second;
+}
+
 void PrimarySource::Print (ostream &stream, Uint32 indent_level) const
 {
     Print(stream, AstTypeString, indent_level);
