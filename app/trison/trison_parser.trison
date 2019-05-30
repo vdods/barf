@@ -998,7 +998,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_ERROR:throwaway ID:assigned_id
     %target.cpp {
-        EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+        EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end and may not include %error", throwaway->GetFiLoc());
         // This is the minimal necessary token, although the EmitError call should prevent trison
         // from proceeding to parser generation.
         RuleTokenList *lookaheads = new RuleTokenList(throwaway->GetFiLoc());
@@ -1019,7 +1019,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
         lookaheads->m_is_inverted = true;
 
-        EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end", throwaway->GetFiLoc());
+        EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end and may not include %error", throwaway->GetFiLoc());
 
         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
@@ -1037,7 +1037,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         // Verify that the lookaheads include %end.  Also verify that it's a negated RuleTokenList
         // since the way the NPDA is generated depends on it.
         if (!lookaheads->m_is_inverted || lookaheads->Contains("END_"))
-            EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end; e.g. %error[.%end] or %error[.[%end|a|b]] etc.", throwaway->GetFiLoc());
+            EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end and may not include %error; e.g. %error[!%end] or %error[![%end|a|b]] etc.", throwaway->GetFiLoc());
+        if (!lookaheads->Contains("ERROR_"))
+            EmitError("%error directive may not exclude %error itself (meaning that %error may not appear in the terminals this error token won't accept); e.g. %error[![%end|%error]] is invalid.", throwaway->GetFiLoc());
 
         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
         delete throwaway;
@@ -1056,7 +1058,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         // Verify that the lookaheads include %end.  Also verify that it's a negated RuleTokenList
         // since the way the NPDA is generated depends on it.
         if (!lookaheads->m_is_inverted || lookaheads->Contains("END_"))
-            EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end; e.g. %error[.%end] or %error[.[%end|a|b]] etc.", throwaway->GetFiLoc());
+            EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end and may not include %error; e.g. %error[!%end] or %error[![%end|a|b]] etc.", throwaway->GetFiLoc());
+        if (!lookaheads->Contains("ERROR_"))
+            EmitError("%error directive may not exclude %error itself (meaning that %error may not appear in the terminals this error token won't accept); e.g. %error[![%end|%error]] is invalid.", throwaway->GetFiLoc());
 
         RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
@@ -1148,6 +1152,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     DIRECTIVE_END:throwaway
     %target.cpp {
         RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
+        delete throwaway;
+        return rule_token;
+    }
+|
+    DIRECTIVE_ERROR:throwaway
+    %target.cpp {
+        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
         delete throwaway;
         return rule_token;
     }
