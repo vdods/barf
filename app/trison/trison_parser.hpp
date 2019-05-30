@@ -46,12 +46,13 @@ struct TargetMap;
 namespace Trison {
 
 struct NonterminalList;
+struct NonterminalMap;
 struct PrecedenceList;
 struct PrecedenceMap;
 struct TerminalList;
 struct TerminalMap;
 
-#line 55 "trison_parser.hpp"
+#line 56 "trison_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -366,7 +367,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 52 "trison_parser.trison"
+#line 53 "trison_parser.trison"
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
@@ -391,9 +392,10 @@ private:
     PrecedenceMap *m_precedence_map;
     Ast::Id *m_default_parse_nonterminal_id;
     NonterminalList *m_nonterminal_list;
+    NonterminalMap *m_nonterminal_map;
     Uint32 m_rule_count;
 
-#line 397 "trison_parser.hpp"
+#line 399 "trison_parser.hpp"
 
 
 private:
@@ -1037,10 +1039,10 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 78 "trison_parser.trison"
+#line 80 "trison_parser.trison"
 
 } // end of namespace Trison
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 1047 "trison_parser.hpp"
+#line 1049 "trison_parser.hpp"

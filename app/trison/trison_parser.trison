@@ -43,6 +43,7 @@ struct TargetMap;
 namespace Trison {
 
 struct NonterminalList;
+struct NonterminalMap;
 struct PrecedenceList;
 struct PrecedenceMap;
 struct TerminalList;
@@ -73,6 +74,7 @@ private:
     PrecedenceMap *m_precedence_map;
     Ast::Id *m_default_parse_nonterminal_id;
     NonterminalList *m_nonterminal_list;
+    NonterminalMap *m_nonterminal_map;
     Uint32 m_rule_count;
 }
 %target.cpp.bottom_of_header_file %{
@@ -100,7 +102,6 @@ namespace Trison {
 }
 %target.cpp.top_of_parse_method_actions %{
     m_default_parse_nonterminal_id = NULL;
-    m_nonterminal_list = NULL;
     m_rule_count = 0;
 
     // initialize m_terminal_map and m_terminal_list and populate the special,
@@ -127,6 +128,19 @@ namespace Trison {
         terminal->SetAssignedTypeMap(new TypeMap()); // default type
         m_terminal_list->Append(terminal);
         m_terminal_map->Add(terminal->GetText(), terminal);
+    }
+
+    // initialize m_nonterminal_map and m_nonterminal_list and populate the special,
+    // pre-defined nonterminal(s).
+    {
+        m_nonterminal_list = new NonterminalList();
+        m_nonterminal_map = new NonterminalMap();
+
+        // add the special "none_" nonterminal with token_index 0 and empty rule list
+        Trison::Nonterminal *nonterminal = new Trison::Nonterminal("none_", 0, FiLoc::ms_invalid);
+        nonterminal->SetRuleList(new RuleList());
+        m_nonterminal_list->Append(nonterminal);
+        m_nonterminal_map->Add(nonterminal->GetText(), nonterminal);
     }
 
     m_precedence_list = new PrecedenceList();
@@ -281,9 +295,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal root %type.cpp "PrimarySource *"
 :
-    preamble:throwaway nonterminals:nonterminal_map %end
+    preamble:throwaway nonterminals %end
     %target.cpp {
-        assert(nonterminal_map != NULL);
+        assert(m_nonterminal_map != NULL);
         assert(m_nonterminal_list != NULL);
         assert(m_default_parse_nonterminal_id != NULL);
 
@@ -292,15 +306,94 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
             // just use a dummy value -- this error condition has already been EmitError-handled
             // in the reduction rule handler for preamble.
             m_default_parse_nonterminal_id = new Ast::Id(m_nonterminal_list->Element(0)->GetText(), throwaway->GetFiLoc());
-            assert(nonterminal_map->Element(m_default_parse_nonterminal_id->GetText()) != NULL);
+            assert(m_nonterminal_map->Element(m_default_parse_nonterminal_id->GetText()) != NULL);
         }
 
         // make sure the %default_parse_nonterminal directive value specifies a real nonterminal
-        if (nonterminal_map->Element(m_default_parse_nonterminal_id->GetText()) == NULL)
+        if (m_nonterminal_map->Element(m_default_parse_nonterminal_id->GetText()) == NULL)
         {
             EmitError(
                 "undeclared nonterminal \"" + m_default_parse_nonterminal_id->GetText() + "\"",
                 m_default_parse_nonterminal_id->GetFiLoc());
+        }
+
+        // Go through all nonterminals and make sure all the token_ids everywhere are valid.
+        assert(m_nonterminal_list->size() == m_nonterminal_map->size());
+        for (NonterminalList::const_iterator nonterminal_it = m_nonterminal_list->begin(), nonterminal_it_end = m_nonterminal_list->end();
+             nonterminal_it != nonterminal_it_end;
+             ++nonterminal_it)
+        {
+            assert(*nonterminal_it != NULL);
+            Trison::Nonterminal const &nonterminal = **nonterminal_it;
+            assert(m_nonterminal_map->find(nonterminal.GetText()) != m_nonterminal_map->end());
+            for (RuleList::const_iterator rule_it = nonterminal.m_rule_list->begin(), rule_it_end = nonterminal.m_rule_list->end();
+                 rule_it != rule_it_end;
+                 ++rule_it)
+            {
+                assert(*rule_it != NULL);
+                Rule const &rule = **rule_it;
+                for (RuleTokenList::const_iterator rule_token_it = rule.m_rule_token_list->begin(), rule_token_it_end = rule.m_rule_token_list->end();
+                    rule_token_it != rule_token_it_end;
+                    ++rule_token_it)
+                {
+                    assert(*rule_token_it != NULL);
+                    RuleToken const &rule_token = **rule_token_it;
+                    if (m_nonterminal_map->find(rule_token.m_token_id) == m_nonterminal_map->end() && m_terminal_map->find(rule_token.m_token_id) == m_terminal_map->end())
+                        EmitError(FORMAT("undeclared token \"" << rule_token.m_token_id << "\""), rule_token.GetFiLoc());
+
+                    // If the rule token is %error, then check its m_lookaheads.  NOTE
+                    // that these each have to be a terminal (not nonterminal).
+                    RuleTokenErrorUntilLookahead const *error_token = dynamic_cast<RuleTokenErrorUntilLookahead const *>(&rule_token);
+                    if (error_token != NULL)
+                    {
+                        for (RuleTokenList::const_iterator error_rule_token_lookahead_it = error_token->m_lookaheads->begin(), error_rule_token_lookahead_it_end = error_token->m_lookaheads->end();
+                             error_rule_token_lookahead_it != error_rule_token_lookahead_it_end;
+                             ++error_rule_token_lookahead_it)
+                        {
+                            assert(*error_rule_token_lookahead_it != NULL);
+                            RuleToken const &error_rule_token_lookahead = **error_rule_token_lookahead_it;
+                            // Currently, the choice to limit to terminals only has been made to avoid
+                            // potentially unknown complicating functionality.
+                            bool const allow_error_to_use_nonterminals = false;
+                            if (allow_error_to_use_nonterminals)
+                            {
+                                if (m_nonterminal_map->find(error_rule_token_lookahead.m_token_id) == m_nonterminal_map->end() && m_terminal_map->find(error_rule_token_lookahead.m_token_id) == m_terminal_map->end())
+                                    EmitError(FORMAT("undeclared token \"" << error_rule_token_lookahead.m_token_id << "\""), error_rule_token_lookahead.GetFiLoc());
+                            }
+                            else
+                            {
+                                if (m_terminal_map->find(error_rule_token_lookahead.m_token_id) == m_terminal_map->end())
+                                    EmitError(FORMAT("undeclared terminal \"" << error_rule_token_lookahead.m_token_id << "\""), error_rule_token_lookahead.GetFiLoc());
+                            }
+                        }
+                    }
+                }
+
+                // If there is a %lookahead directive, then check its lookaheads.
+                if (rule.m_lookahead_directive != NULL)
+                {
+                    for (RuleTokenList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(), lookahead_it_end = rule.m_lookahead_directive->m_lookaheads->end();
+                         lookahead_it != lookahead_it_end;
+                         ++lookahead_it)
+                    {
+                        assert(*lookahead_it != NULL);
+                        RuleToken const &lookahead = **lookahead_it;
+                        bool const allow_lookahead_to_use_nonterminals = false;
+                        // Currently, the choice to limit to terminals only has been made to avoid
+                        // potentially unknown complicating functionality.
+                        if (allow_lookahead_to_use_nonterminals)
+                        {
+                            if (m_nonterminal_map->find(lookahead.m_token_id) == m_nonterminal_map->end() && m_terminal_map->find(lookahead.m_token_id) == m_terminal_map->end())
+                                EmitError(FORMAT("undeclared token \"" << lookahead.m_token_id << "\""), lookahead.GetFiLoc());
+                        }
+                        else
+                        {
+                            if (m_terminal_map->find(lookahead.m_token_id) == m_terminal_map->end())
+                                EmitError(FORMAT("undeclared terminal \"" << lookahead.m_token_id << "\""), lookahead.GetFiLoc());
+                        }
+                    }
+                }
+            }
         }
 
         PrimarySource *primary_source =
@@ -312,7 +405,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 m_default_parse_nonterminal_id->GetText(),
                 throwaway->GetFiLoc(),
                 m_nonterminal_list,
-                nonterminal_map);
+                m_nonterminal_map);
         delete throwaway;
         return primary_source;
     }
@@ -644,33 +737,26 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 // nonterminal rules
 // ///////////////////////////////////////////////////////////////////////////
 
-%nonterminal nonterminals %type.cpp "NonterminalMap *"
+// TODO: If `%type.cpp` isn't followed by a quoted string, there's a general parse error.
+%nonterminal nonterminals // %type.cpp
 :
-    nonterminals:nonterminal_map nonterminal:nonterminal
+    nonterminals nonterminal:nonterminal
     %target.cpp {
-        assert(m_terminal_map != NULL);
         assert(m_nonterminal_list != NULL);
+        assert(m_nonterminal_map != NULL);
         if (nonterminal != NULL)
         {
-            nonterminal_map->Add(nonterminal->GetText(), nonterminal);
+            m_nonterminal_map->Add(nonterminal->GetText(), nonterminal);
             m_nonterminal_list->Append(nonterminal);
         }
-        return nonterminal_map;
+        return NULL;
     }
 |
     %empty
     %target.cpp {
-        assert(m_nonterminal_list == NULL);
-        m_nonterminal_list = new NonterminalList();
-        NonterminalMap *nonterminal_map = new NonterminalMap();
-
-        // add the special "none_" nonterminal with token_index 0 and empty rule list
-        Trison::Nonterminal *nonterminal = new Trison::Nonterminal("none_", 0, FiLoc::ms_invalid);
-        nonterminal->SetRuleList(new RuleList());
-        nonterminal_map->Add(nonterminal->GetText(), nonterminal);
-        m_nonterminal_list->Append(nonterminal);
-
-        return nonterminal_map;
+        assert(m_nonterminal_list != NULL);
+        assert(m_nonterminal_map != NULL);
+        return NULL;
     }
 ;
 
@@ -874,10 +960,11 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 :
     token_id:token_id ':' ID:assigned_id
     %target.cpp {
-        RuleToken *rule_token =
-            token_id != NULL ?
-            new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id->GetText()) :
-            NULL;
+        RuleToken *rule_token = NULL;
+        assert(m_terminal_map != NULL);
+        assert(m_nonterminal_map != NULL);
+        if (token_id != NULL)
+            rule_token = new RuleToken(token_id->GetText(), token_id->GetFiLoc(), assigned_id->GetText());
         delete token_id;
         delete assigned_id;
         return rule_token;
@@ -885,10 +972,11 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     token_id:token_id
     %target.cpp {
-        RuleToken *rule_token =
-            token_id != NULL ?
-            new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
-            NULL;
+        RuleToken *rule_token = NULL;
+        assert(m_terminal_map != NULL);
+        assert(m_nonterminal_map != NULL);
+        if (token_id != NULL)
+            rule_token = new RuleToken(token_id->GetText(), token_id->GetFiLoc());
         delete token_id;
         return rule_token;
     }
@@ -938,7 +1026,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_token_error_until_lookahead;
     }
 |
-
     DIRECTIVE_ERROR:throwaway bracketed_lookaheads:lookaheads ':' ID:assigned_id
     %target.cpp {
         assert(lookaheads != NULL);
@@ -1068,10 +1155,16 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     token_id:token_id
     %target.cpp {
         assert(token_id != NULL && "If this fails, it's ok, I just wasn't sure that the condition was necessary");
-        RuleToken *rule_token =
-            token_id != NULL ?
-            new RuleToken(token_id->GetText(), token_id->GetFiLoc()) :
-            NULL;
+        RuleToken *rule_token = NULL;
+        assert(m_terminal_map != NULL);
+        if (token_id != NULL)
+        {
+            if (m_terminal_map->find(token_id->GetText()) == m_terminal_map->end())
+                // TODO: This probably isn't going to print %end or %error correctly.
+                EmitError(FORMAT("undeclared terminal \"" << token_id->GetText() << "\""), token_id->GetFiLoc());
+            else
+                rule_token = new RuleToken(token_id->GetText(), token_id->GetFiLoc());
+        }
         delete token_id;
         return rule_token;
     }
