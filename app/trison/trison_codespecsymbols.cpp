@@ -53,6 +53,10 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     // rule token ids in rule 1 (where rule 1 has n tokens), etc.  if no identifier
     // was given for a particular token, it will be the empty string.
     //
+    // _rule_lookahead_assigned_id[_rule_count] -- a contiguous array of the (optional)
+    // lookahead identifiers for each rule.  if no %lookahead directive was given for
+    // a particular rule, then it will be the empty string.
+    //
     // _rule_token_table_offset[_rule_count] and
     // _rule_token_table_count[_rule_count] -- elements
     // [_rule_token_table_offset[i], _rule_token_table_offset[i]+_rule_token_table_count[i])
@@ -70,6 +74,8 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             symbol_table.DefineScalarSymbol("_rule_total_token_count", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *rule_token_assigned_id =
             symbol_table.DefineArraySymbol("_rule_token_assigned_id", FiLoc::ms_invalid);
+        Preprocessor::ArraySymbol *rule_lookahead_assigned_id =
+            symbol_table.DefineArraySymbol("_rule_lookahead_assigned_id", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *rule_token_table_offset =
             symbol_table.DefineArraySymbol("_rule_token_table_offset", FiLoc::ms_invalid);
         Preprocessor::ArraySymbol *rule_token_table_count =
@@ -93,6 +99,14 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
             Rule const *rule = primary_source.GetRule(i);
             assert(rule != NULL);
             assert(rule->m_rule_token_list != NULL);
+
+            bool rule_has_lookahead = rule->m_lookahead_directive != NULL;
+            rule_lookahead_assigned_id->AppendArrayElement(
+                new Preprocessor::Body(
+                    rule_has_lookahead ?
+                    rule->m_lookahead_directive->m_assigned_id :
+                    std::string("")));
+
             rule_token_table_offset->AppendArrayElement(
                 new Preprocessor::Body(Sint32(token_table_offset)));
             rule_token_table_count->AppendArrayElement(

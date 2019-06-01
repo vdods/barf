@@ -2019,14 +2019,17 @@ which includes the top element.
 2018.05.29 ----------------------------
 
 -   Notes on %lookahead and related:
-    -   The tokens for %error and %lookahead don't need to be RuleToken, they just need to be a token ID.
-    -   Simplify this code down.
+    x   The tokens for %error and %lookahead don't need to be RuleToken, they just need to be a token ID.
+    x   Simplify this code down.
     -   Probably check if the funky in-parser logic regarding empty rules being reduced can be
         implemented by a requirement on a %lookahead for each %empty rule.
     -   Probably allow nonterminals in %lookahead tokens.  This would really only be used for %empty
-        rules, as far as I can see.
+        rules, as far as I can see.  And probably only allow nonterminals in %lookahead for %empty rules.
+        If nonterminals were allowed in nonempty rules, then it would sort of necessitate having to
+        parse way forward in order to determine if that nonterminal shows up (which is probably either
+        intractible or dumb).
     -   Think about if nonterminals make sense for %error tokens (probably not).
     -   Make lookahead be able to take a C identifier, so that it can be used in the reduction rule code.
-    -   Make sure %nonassoc error handler actions have some tokens available
+    -   Make sure %nonassoc error handler actions have some tokens available to generate the error token from.
 
 

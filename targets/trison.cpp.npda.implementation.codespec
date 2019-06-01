@@ -271,7 +271,13 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
 <|              end_if
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
-                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
+                Token const *lookahead = NULL;
+                if (rule.m_has_lookahead_directive)
+                {
+                    assert(!m_realized_state_->LookaheadQueue().empty());
+                    lookahead = &m_realized_state_->LookaheadQueue().front();
+                }
+                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack(), lookahead);
                 m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
                 // This is done essentially so that m_realized_lookahead_cursor can be reset.
                 destroy_and_recreate_parse_tree = true;
@@ -984,7 +990,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
     assert(m_hypothetical_state_->m_new_hps_queue.empty());
 }
 
-<{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if}
+<{class_name}::Token::Data <{class_name}::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack_, Token const *lookahead_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if}
 {
     assert(rule_index_ < Grammar_::ms_rule_count_);
     switch (rule_index_)
@@ -996,12 +1002,15 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 <|      loop(i, _rule_count)
         case <{i}:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
 <|          loop(j, _rule_token_table_count[i])
 <|          if(_rule_token_assigned_id[_rule_token_table_offset[i]+j] != "")
-            <{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}<{else}<{token_data_type}<{end_if} <{_rule_token_assigned_id[_rule_token_table_offset[i]+j]}(<{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{custom_token_data_type_cast}<<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}>(token_stack[token_stack.size()-<{_rule_token_count[i]-j}].m_data)<{else}token_stack[token_stack.size()-<{_rule_token_count[i]-j}].m_data<{end_if});
+            <{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}<{else}<{token_data_type}<{end_if} <{_rule_token_assigned_id[_rule_token_table_offset[i]+j]}(<{if(_rule_token_assigned_type[_rule_token_table_offset[i]+j] != "")}<{custom_token_data_type_cast}<<{_rule_token_assigned_type[_rule_token_table_offset[i]+j]}>(token_stack_[token_stack_.size()-<{_rule_token_count[i]-j}].m_data)<{else}token_stack_[token_stack_.size()-<{_rule_token_count[i]-j}].m_data<{end_if});
 <|          end_if
 <|          end_loop
+<|          if(_rule_lookahead_assigned_id[i] != "")
+            Token const &<{_rule_lookahead_assigned_id[i]} = *lookahead_;
+<|          end_if
 <|          _rule_code[i]
             break;
         }

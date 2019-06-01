@@ -287,7 +287,7 @@ private:
 
     void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, <{token_data_type} *&return_token);
     void ContinueNPDAParse_ (bool &should_return);
-    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack, Token const *lookahead_)<{if(!is_defined(enable_reduction_rule_exceptions))} throw()<{end_if};
 
     // TODO: This should probably be inside HypotheticalState_
     struct ParseTreeNode_

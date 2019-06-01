@@ -28,7 +28,7 @@ std::size_t const <{class_name}::Grammar_::ms_precedence_count_ = sizeof(<{class
 <{class_name}::Grammar_::Rule_ const <{class_name}::Grammar_::ms_rule_table_[] =
 {
 <|  loop(i, _rule_count)
-    { <{class_name}::Nonterminal::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}, <{_rule_precedence_index[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
+    { <{class_name}::Nonterminal::<{_rule_reduction_nonterminal_name[i]}, <{_rule_token_count[i]}, <{if(_rule_lookahead_assigned_id[i] != "")}true<{else}false<{end_if}, <{_rule_precedence_index[i]}<{if(is_defined(generate_debug_spew_code))}, <{_rule_description[i]}<{end_if} }<{if(i < _rule_count-1)},<{end_if}
 <|  end_loop
 };
 std::size_t const <{class_name}::Grammar_::ms_rule_count_ = sizeof(<{class_name}::Grammar_::ms_rule_table_) / sizeof(*<{class_name}::Grammar_::ms_rule_table_);

@@ -24,6 +24,7 @@
         {
             Token::Id       m_reduction_nonterminal_token_id;
             std::uint32_t   m_token_count;
+            bool            m_has_lookahead_directive;
             std::uint32_t   m_precedence_index;
 <|          if(is_defined(generate_debug_spew_code))
             char const *    m_description;
