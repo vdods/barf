@@ -1218,22 +1218,16 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     NEWLINE %target.cpp { return NULL; }
 ;
 
-%nonterminal token_id %type.cpp "TokenId *"
+%nonterminal token_id %type.cpp "Ast::Id *"
 :
     ID:id
     %target.cpp {
-        // here, the token_index doesn't matter, since this rule isn't used
-        // in the terminal declarations.
-        TokenId *token_id = new TokenId(id->GetText(), 0, id->GetFiLoc());
-        delete id;
-        return token_id;
+        return id;
     }
 |
     CHAR_LITERAL:ch
     %target.cpp {
-        // here, the token_index doesn't matter, since this rule isn't used
-        // in the terminal declarations.
-        TokenId *token_id = new TokenId(CharLiteral(ch->GetChar()), 0, ch->GetFiLoc());
+        Ast::Id *token_id = new Ast::Id(CharLiteral(ch->GetChar()), ch->GetFiLoc());
         delete ch;
         return token_id;
     }
