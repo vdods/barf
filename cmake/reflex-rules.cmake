@@ -69,7 +69,7 @@ function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
             ${SOURCE_DIR}/${SOURCE_BASENAME}.reflex
             ${DEPENDENCIES}
     )
-    set_property(TARGET ${FORCE_TARGET_NAME} EXCLUDE_FROM_ALL TRUE)
+    set_property(TARGET ${FORCE_TARGET_NAME} PROPERTY EXCLUDE_FROM_ALL TRUE)
 
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
         add_custom_command(
@@ -100,7 +100,7 @@ function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
 endfunction()
 
 # SOURCE_FILE is the .reflex file.  TARGET_NAME is the target that can be invoked to build this particular scanner.
-function(reflex_add_source SOURCE_FILE TARGET_NAME)
+function(reflex_add_source SOURCE_FILE OUTPUT_DIR TARGET_NAME)
     if(NOT DEFINED barf_REFLEX_BINARY)
         message(FATAL_ERROR "Must specify barf_REFLEX_BINARY")
     endif()
@@ -119,11 +119,11 @@ function(reflex_add_source SOURCE_FILE TARGET_NAME)
     endif()
     get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
     get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    __reflex_add_source__impl(${barf_REFLEX_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${barf_ENABLE_TARGETS_DIR_OVERRIDE} "${barf_TARGETS_DIR_OVERRIDE}" ${SOURCE_DIR} force_${TARGET_NAME} ${barf_REFLEX_BINARY})
+    __reflex_add_source__impl(${barf_REFLEX_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${barf_ENABLE_TARGETS_DIR_OVERRIDE} "${barf_TARGETS_DIR_OVERRIDE}" ${OUTPUT_DIR} force_${TARGET_NAME} ${barf_REFLEX_BINARY})
 
     set(OUTPUT_FILES ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.dot ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.dot)
     add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})
-    set_property(TARGET ${TARGET_NAME} EXCLUDE_FROM_ALL TRUE)
+    set_property(TARGET ${TARGET_NAME} PROPERTY EXCLUDE_FROM_ALL TRUE)
     add_custom_target(clean_${TARGET_NAME} COMMAND rm -f ${OUTPUT_FILES} ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.png ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.png)
 
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)

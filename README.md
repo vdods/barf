@@ -153,7 +153,7 @@ CMake probably handles the dependencies of these targets correctly, but if you w
 make absolutely sure that fresh sources have been generated and targets built, then run
 the following command before `make metadev_check`.
 
-    make clean clean_all
+    make clean clean_all_dev_and_metadev
 
 ## To-dos
 
