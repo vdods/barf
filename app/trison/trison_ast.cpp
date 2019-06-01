@@ -18,6 +18,7 @@ string const &AstTypeString (AstType ast_type)
 {
     static string const s_ast_type_string[AST_COUNT-CommonLang::AST_START_CUSTOM_TYPES_HERE_] =
     {
+        "AST_ERROR_DIRECTIVE",
         "AST_LOOKAHEAD_DIRECTIVE",
         "AST_NONTERMINAL",
         "AST_NONTERMINAL_LIST",
@@ -30,7 +31,6 @@ string const &AstTypeString (AstType ast_type)
         "AST_RULE_LIST",
         "AST_RULE_TOKEN",
         "AST_RULE_TOKEN_LIST",
-        "AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD",
         "AST_TERMINAL",
         "AST_TERMINAL_LIST",
         "AST_TERMINAL_MAP",
@@ -99,7 +99,7 @@ void ErrorDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 
 {
     RuleToken::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "lookheads:\n";
-    m_lookaheads->Print(stream, Stringify, indent_level+2);
+    m_acceptable_tokens->Print(stream, Stringify, indent_level+2);
 }
 
 string LookaheadDirective::AsText () const

@@ -26,7 +26,8 @@ struct PrimarySource;
 
 enum
 {
-    AST_LOOKAHEAD_DIRECTIVE = CommonLang::AST_START_CUSTOM_TYPES_HERE_,
+    AST_ERROR_DIRECTIVE = CommonLang::AST_START_CUSTOM_TYPES_HERE_,
+    AST_LOOKAHEAD_DIRECTIVE,
     AST_NONTERMINAL,
     AST_NONTERMINAL_LIST,
     AST_NONTERMINAL_MAP,
@@ -38,7 +39,6 @@ enum
     AST_RULE_LIST,
     AST_RULE_TOKEN,
     AST_RULE_TOKEN_LIST,
-    AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD,
     AST_TERMINAL,
     AST_TERMINAL_LIST,
     AST_TERMINAL_MAP,
@@ -151,14 +151,14 @@ struct TokenSpecifierList : public Ast::AstList<Ast::Id>
 
 struct ErrorDirective : public RuleToken
 {
-    TokenSpecifierList const *const m_lookaheads;
+    TokenSpecifierList const *const m_acceptable_tokens;
 
-    ErrorDirective (FiLoc const &filoc, TokenSpecifierList const *lookaheads, string const &assigned_id = g_empty_string)
+    ErrorDirective (FiLoc const &filoc, TokenSpecifierList const *acceptable_tokens, string const &assigned_id = g_empty_string)
         :
-        RuleToken("ERROR_", filoc, assigned_id, AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD),
-        m_lookaheads(lookaheads)
+        RuleToken("ERROR_", filoc, assigned_id, AST_ERROR_DIRECTIVE),
+        m_acceptable_tokens(acceptable_tokens)
     {
-        assert(m_lookaheads != NULL);
+        assert(m_acceptable_tokens != NULL);
     }
 
     virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;

@@ -232,10 +232,10 @@ void GenerateNpda (
         GenerateNpda(*terminal, graph_context, start_index, end_index, this_is_an_error_terminal);
         if (this_is_an_error_terminal)
         {
-            ErrorDirective const *rule_token_error_until_lookahead = dynamic_cast<ErrorDirective const *>(&rule_token);
-            assert(rule_token_error_until_lookahead != NULL);
-            assert(rule_token_error_until_lookahead->m_lookaheads != NULL && "this should be impossible");
-            error_until_lookaheads = rule_token_error_until_lookahead->m_lookaheads;
+            ErrorDirective const *error_directive = dynamic_cast<ErrorDirective const *>(&rule_token);
+            assert(error_directive != NULL);
+            assert(error_directive->m_acceptable_tokens != NULL && "this should be impossible");
+            error_until_lookaheads = error_directive->m_acceptable_tokens;
         }
     }
     else
@@ -267,8 +267,8 @@ void GenerateNpda (
     Uint32 end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
     bool previous_token_was_error = false;
     bool current_token_is_error = false;
-    TokenSpecifierList const *previous_error_until_lookaheads = NULL;
-    TokenSpecifierList const *current_error_until_lookaheads = NULL;
+    TokenSpecifierList const *previous_error_acceptable_tokens = NULL;
+    TokenSpecifierList const *current_error_acceptable_tokens = NULL;
     graph_context.m_npda_graph.AddTransition(start_index, NpdaEpsilonTransition(end_index));
     start_index = end_index;
     ++stage;
@@ -283,20 +283,20 @@ void GenerateNpda (
         assert(rule_token != NULL);
         end_index = graph_context.m_npda_graph.AddNode(new RuleNpdaNodeData(&rule, stage));
 
-        GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL, current_token_is_error, current_error_until_lookaheads);
+        GenerateNpda(*rule_token, graph_context, start_index, end_index, (stage == 1) ? &owner_nonterminal : NULL, current_token_is_error, current_error_acceptable_tokens);
 
         if (previous_token_was_error)
         {
-            assert(previous_error_until_lookaheads != NULL);
-            assert(previous_error_until_lookaheads->m_is_inverted);
-            for (TokenSpecifierList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-                                                    lookahead_it_end = previous_error_until_lookaheads->end();
-                 lookahead_it != lookahead_it_end;
-                 ++lookahead_it)
+            assert(previous_error_acceptable_tokens != NULL);
+            assert(previous_error_acceptable_tokens->m_is_inverted);
+            for (TokenSpecifierList::const_iterator acceptable_token_it = previous_error_acceptable_tokens->begin(),
+                                                    acceptable_token_it_end = previous_error_acceptable_tokens->end();
+                 acceptable_token_it != acceptable_token_it_end;
+                 ++acceptable_token_it)
             {
-                assert(*lookahead_it != NULL);
-                Ast::Id const &lookahead = **lookahead_it;
-                graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.GetText()), lookahead.GetText(), 2));
+                assert(*acceptable_token_it != NULL);
+                Ast::Id const &acceptable_token = **acceptable_token_it;
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(acceptable_token.GetText()), acceptable_token.GetText(), 2));
             }
             graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
         }
@@ -310,7 +310,7 @@ void GenerateNpda (
         start_index = end_index;
         ++stage;
         previous_token_was_error = current_token_is_error;
-        previous_error_until_lookaheads = current_error_until_lookaheads;
+        previous_error_acceptable_tokens = current_error_acceptable_tokens;
     }
 
     // add the reduce transition at the tail of the rule states
@@ -382,20 +382,20 @@ void GenerateNpda (
             else
             {
                 // Add the transitions relating to the previous %error token
-                assert(previous_error_until_lookaheads != NULL);
-                assert(previous_error_until_lookaheads->m_is_inverted);
-                for (TokenSpecifierList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-                                                        lookahead_it_end = previous_error_until_lookaheads->end();
-                     lookahead_it != lookahead_it_end;
-                     ++lookahead_it)
+                assert(previous_error_acceptable_tokens != NULL);
+                assert(previous_error_acceptable_tokens->m_is_inverted);
+                for (TokenSpecifierList::const_iterator acceptable_token_it = previous_error_acceptable_tokens->begin(),
+                                                        acceptable_token_it_end = previous_error_acceptable_tokens->end();
+                     acceptable_token_it != acceptable_token_it_end;
+                     ++acceptable_token_it)
                 {
-                    assert(*lookahead_it != NULL);
-                    Ast::Id const &lookahead = **lookahead_it;
+                    assert(*acceptable_token_it != NULL);
+                    Ast::Id const &acceptable_token = **acceptable_token_it;
                     // Only add the transition if there is no transition for it yet.
-                    if (used_terminals.find(lookahead.GetText()) == used_terminals.end())
+                    if (used_terminals.find(acceptable_token.GetText()) == used_terminals.end())
                     {
-                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.GetText()), lookahead.GetText(), 2));
-                        used_terminals.insert(lookahead.GetText());
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(acceptable_token.GetText()), acceptable_token.GetText(), 2));
+                        used_terminals.insert(acceptable_token.GetText());
                     }
                 }
 
@@ -477,8 +477,8 @@ void GenerateNpda (
             // lookahead.
             else // previous_token_was_error
             {
-                assert(previous_error_until_lookaheads != NULL);
-                assert(previous_error_until_lookaheads->m_is_inverted);
+                assert(previous_error_acceptable_tokens != NULL);
+                assert(previous_error_acceptable_tokens->m_is_inverted);
 
                 // Add reduce transitions for the terminals in the lookahead terminal list.
                 for (TokenSpecifierList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(),
@@ -496,18 +496,18 @@ void GenerateNpda (
                     }
                 }
                 // Add the transitions relating to the previous %error token
-                for (TokenSpecifierList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-                                                        lookahead_it_end = previous_error_until_lookaheads->end();
-                     lookahead_it != lookahead_it_end;
-                     ++lookahead_it)
+                for (TokenSpecifierList::const_iterator acceptable_token_it = previous_error_acceptable_tokens->begin(),
+                                                        acceptable_token_it_end = previous_error_acceptable_tokens->end();
+                     acceptable_token_it != acceptable_token_it_end;
+                     ++acceptable_token_it)
                 {
-                    assert(*lookahead_it != NULL);
-                    Ast::Id const &lookahead = **lookahead_it;
+                    assert(*acceptable_token_it != NULL);
+                    Ast::Id const &acceptable_token = **acceptable_token_it;
                     // Only add the transition if there is no transition for it yet.
-                    if (used_terminals.find(lookahead.GetText()) == used_terminals.end())
+                    if (used_terminals.find(acceptable_token.GetText()) == used_terminals.end())
                     {
-                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.GetText()), lookahead.GetText(), 2));
-                        used_terminals.insert(lookahead.GetText());
+                        graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex(acceptable_token.GetText()), acceptable_token.GetText(), 2));
+                        used_terminals.insert(acceptable_token.GetText());
                     }
                 }
 
@@ -522,15 +522,15 @@ void GenerateNpda (
         // This is the same as the pre-%lookahead-feature behavior of trison
         if (previous_token_was_error)
         {
-            assert(previous_error_until_lookaheads->m_is_inverted);
-            for (TokenSpecifierList::const_iterator lookahead_it = previous_error_until_lookaheads->begin(),
-                                                    lookahead_it_end = previous_error_until_lookaheads->end();
-                 lookahead_it != lookahead_it_end;
-                 ++lookahead_it)
+            assert(previous_error_acceptable_tokens->m_is_inverted);
+            for (TokenSpecifierList::const_iterator acceptable_token_it = previous_error_acceptable_tokens->begin(),
+                                                    acceptable_token_it_end = previous_error_acceptable_tokens->end();
+                 acceptable_token_it != acceptable_token_it_end;
+                 ++acceptable_token_it)
             {
-                assert(*lookahead_it != NULL);
-                Ast::Id const &lookahead = **lookahead_it;
-                graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.GetTokenIndex(lookahead.GetText()), lookahead.GetText(), rule.m_rule_index));
+                assert(*acceptable_token_it != NULL);
+                Ast::Id const &acceptable_token = **acceptable_token_it;
+                graph_context.m_npda_graph.AddTransition(start_index, NpdaReduceTransition(graph_context.m_primary_source.GetTokenIndex(acceptable_token.GetText()), acceptable_token.GetText(), rule.m_rule_index));
             }
             graph_context.m_npda_graph.AddTransition(start_index, NpdaDiscardLookaheadTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
         }

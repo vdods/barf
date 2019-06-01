@@ -166,7 +166,7 @@ public:
             nonempty_rule_token_list = 297,
             rule_token = 298,
             lookahead_directive = 299,
-            bracketed_lookaheads = 300,
+            bracketed_token_specifier_list = 300,
             lookahead_terminal_list = 301,
             lookahead_terminal = 302,
             rule_precedence_directive = 303,

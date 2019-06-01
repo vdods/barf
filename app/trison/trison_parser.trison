@@ -346,24 +346,24 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                     ErrorDirective const *error_token = dynamic_cast<ErrorDirective const *>(&rule_token);
                     if (error_token != NULL)
                     {
-                        for (TokenSpecifierList::const_iterator error_rule_token_lookahead_it = error_token->m_lookaheads->begin(), error_rule_token_lookahead_it_end = error_token->m_lookaheads->end();
-                             error_rule_token_lookahead_it != error_rule_token_lookahead_it_end;
-                             ++error_rule_token_lookahead_it)
+                        for (TokenSpecifierList::const_iterator acceptable_token_it = error_token->m_acceptable_tokens->begin(), acceptable_token_it_end = error_token->m_acceptable_tokens->end();
+                             acceptable_token_it != acceptable_token_it_end;
+                             ++acceptable_token_it)
                         {
-                            assert(*error_rule_token_lookahead_it != NULL);
-                            Ast::Id const &error_rule_token_lookahead = **error_rule_token_lookahead_it;
+                            assert(*acceptable_token_it != NULL);
+                            Ast::Id const &acceptable_token = **acceptable_token_it;
                             // Currently, the choice to limit to terminals only has been made to avoid
                             // potentially unknown complicating functionality.
                             bool const allow_error_to_use_nonterminals = false;
                             if (allow_error_to_use_nonterminals)
                             {
-                                if (m_nonterminal_map->find(error_rule_token_lookahead.GetText()) == m_nonterminal_map->end() && m_terminal_map->find(error_rule_token_lookahead.GetText()) == m_terminal_map->end())
-                                    EmitError(FORMAT("undeclared token \"" << error_rule_token_lookahead.GetText() << "\""), error_rule_token_lookahead.GetFiLoc());
+                                if (m_nonterminal_map->find(acceptable_token.GetText()) == m_nonterminal_map->end() && m_terminal_map->find(acceptable_token.GetText()) == m_terminal_map->end())
+                                    EmitError(FORMAT("undeclared token \"" << acceptable_token.GetText() << "\""), acceptable_token.GetFiLoc());
                             }
                             else
                             {
-                                if (m_terminal_map->find(error_rule_token_lookahead.GetText()) == m_terminal_map->end())
-                                    EmitError(FORMAT("undeclared terminal \"" << error_rule_token_lookahead.GetText() << "\""), error_rule_token_lookahead.GetFiLoc());
+                                if (m_terminal_map->find(acceptable_token.GetText()) == m_terminal_map->end())
+                                    EmitError(FORMAT("undeclared terminal \"" << acceptable_token.GetText() << "\""), acceptable_token.GetFiLoc());
                             }
                         }
                     }
@@ -1003,79 +1003,81 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 |
     DIRECTIVE_ERROR:throwaway ID:assigned_id
     %target.cpp {
-        EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end and may not include %error", throwaway->GetFiLoc());
+        EmitError("%error directive must be followed by token specifier [![a|b|...]], where a, b, ... are the terminals which this error token won't accept, which must include %end and may not include %error", throwaway->GetFiLoc());
         // This is the minimal necessary token, although the EmitError call should prevent trison
         // from proceeding to parser generation.
-        TokenSpecifierList *lookaheads = new TokenSpecifierList(throwaway->GetFiLoc());
-        lookaheads->Append(new Ast::Id("END_", throwaway->GetFiLoc()));
-        lookaheads->m_is_inverted = true;
+        TokenSpecifierList *acceptable_tokens = new TokenSpecifierList(throwaway->GetFiLoc());
+        acceptable_tokens->Append(new Ast::Id("END_", throwaway->GetFiLoc()));
+        acceptable_tokens->m_is_inverted = true;
 
-        ErrorDirective *rule_token_error_until_lookahead = new ErrorDirective(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
+        ErrorDirective *error_directive = new ErrorDirective(throwaway->GetFiLoc(), acceptable_tokens, assigned_id->GetText());
         delete throwaway;
         delete assigned_id;
-        return rule_token_error_until_lookahead;
+        return error_directive;
     }
 |
     DIRECTIVE_ERROR:throwaway
     %target.cpp {
         // This is the minimal necessary token, although the EmitError call should prevent trison
         // from proceeding to parser generation.
-        TokenSpecifierList *lookaheads = new TokenSpecifierList(throwaway->GetFiLoc());
-        lookaheads->Append(new Ast::Id("END_", throwaway->GetFiLoc()));
-        lookaheads->m_is_inverted = true;
+        TokenSpecifierList *acceptable_tokens = new TokenSpecifierList(throwaway->GetFiLoc());
+        acceptable_tokens->Append(new Ast::Id("END_", throwaway->GetFiLoc()));
+        acceptable_tokens->m_is_inverted = true;
 
-        EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end and may not include %error", throwaway->GetFiLoc());
+        EmitError("%error directive must be followed by token specifier [![a|b|...]], where a, b, ... are the terminals which this error token won't accept, which must include %end and may not include %error", throwaway->GetFiLoc());
 
-        ErrorDirective *rule_token_error_until_lookahead = new ErrorDirective(throwaway->GetFiLoc(), lookaheads);
+        ErrorDirective *error_directive = new ErrorDirective(throwaway->GetFiLoc(), acceptable_tokens);
         delete throwaway;
-        return rule_token_error_until_lookahead;
+        return error_directive;
     }
 |
-    DIRECTIVE_ERROR:throwaway bracketed_lookaheads:lookaheads ':' ID:assigned_id
+    DIRECTIVE_ERROR:throwaway bracketed_token_specifier_list:acceptable_tokens ':' ID:assigned_id
     %target.cpp {
-        assert(lookaheads != NULL);
+        assert(acceptable_tokens != NULL);
 
-        // TEMP HACK until done transitioning to inverted %error lookaheads
-        lookaheads->m_is_inverted = true;
+        // TEMP HACK until done transitioning to inverted %error acceptable_tokens
+        acceptable_tokens->m_is_inverted = true;
 
         // TODO: Maybe move this to ErrorDirective
-        // Verify that the lookaheads include %end.  Also verify that it's a negated TokenSpecifierList
+        // Verify that %end is not included.  Also verify that it's a negated TokenSpecifierList
         // since the way the NPDA is generated depends on it.
-        if (!lookaheads->m_is_inverted || lookaheads->Contains("END_"))
+        if (!acceptable_tokens->m_is_inverted || acceptable_tokens->Contains("END_"))
             EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end and may not include %error; e.g. %error[!%end] or %error[![%end|a|b]] etc.", throwaway->GetFiLoc());
-        if (!lookaheads->Contains("ERROR_"))
+        // Verify that %error is included.
+        if (!acceptable_tokens->Contains("ERROR_"))
             EmitError("%error directive may not exclude %error itself (meaning that %error may not appear in the terminals this error token won't accept); e.g. %error[![%end|%error]] is invalid.", throwaway->GetFiLoc());
 
-        ErrorDirective *rule_token_error_until_lookahead = new ErrorDirective(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
+        ErrorDirective *error_directive = new ErrorDirective(throwaway->GetFiLoc(), acceptable_tokens, assigned_id->GetText());
         delete throwaway;
         delete assigned_id;
-        return rule_token_error_until_lookahead;
+        return error_directive;
     }
 |
-    DIRECTIVE_ERROR:throwaway bracketed_lookaheads:lookaheads
+    DIRECTIVE_ERROR:throwaway bracketed_token_specifier_list:acceptable_tokens
     %target.cpp {
-        assert(lookaheads != NULL);
+        assert(acceptable_tokens != NULL);
 
-        // TEMP HACK until done transitioning to inverted %error lookaheads
-        lookaheads->m_is_inverted = true;
+        // TEMP HACK until done transitioning to inverted %error acceptable_tokens
+        acceptable_tokens->m_is_inverted = true;
 
         // TODO: Maybe move this to ErrorDirective
-        // Verify that the lookaheads include %end.  Also verify that it's a negated TokenSpecifierList
+        // Verify that %end is not included.  Also verify that it's a negated TokenSpecifierList
         // since the way the NPDA is generated depends on it.
-        if (!lookaheads->m_is_inverted || lookaheads->Contains("END_"))
+        if (!acceptable_tokens->m_is_inverted || acceptable_tokens->Contains("END_"))
             EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end and may not include %error; e.g. %error[!%end] or %error[![%end|a|b]] etc.", throwaway->GetFiLoc());
-        if (!lookaheads->Contains("ERROR_"))
+        // Verify that %error is included.
+        if (!acceptable_tokens->Contains("ERROR_"))
             EmitError("%error directive may not exclude %error itself (meaning that %error may not appear in the terminals this error token won't accept); e.g. %error[![%end|%error]] is invalid.", throwaway->GetFiLoc());
 
-        ErrorDirective *rule_token_error_until_lookahead = new ErrorDirective(throwaway->GetFiLoc(), lookaheads);
+        ErrorDirective *error_directive = new ErrorDirective(throwaway->GetFiLoc(), acceptable_tokens);
         delete throwaway;
-        return rule_token_error_until_lookahead;
+        return error_directive;
     }
 ;
 
 %nonterminal lookahead_directive %type.cpp "LookaheadDirective *"
 :
-    DIRECTIVE_LOOKAHEAD:throwaway bracketed_lookaheads:lookaheads ':' ID:assigned_id
+    DIRECTIVE_LOOKAHEAD:throwaway bracketed_token_specifier_list:lookaheads ':' ID:assigned_id
     %target.cpp {
         assert(lookaheads != NULL);
         assert(assigned_id != NULL);
@@ -1089,7 +1091,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return lookahead_directive;
     }
 |
-    DIRECTIVE_LOOKAHEAD:throwaway bracketed_lookaheads:lookaheads
+    DIRECTIVE_LOOKAHEAD:throwaway bracketed_token_specifier_list:lookaheads
     %target.cpp {
         assert(lookaheads != NULL);
 
@@ -1107,7 +1109,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-%nonterminal bracketed_lookaheads %type.cpp "TokenSpecifierList *"
+%nonterminal bracketed_token_specifier_list %type.cpp "TokenSpecifierList *"
 :
     '[' lookahead_terminal_list:lookaheads ']'
     %target.cpp {
