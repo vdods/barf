@@ -96,6 +96,9 @@ endif()
 reflex_add_source_dev(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex dev_barf_commonlang_scanner)
 trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison dev_barf_targetspec_parser)
 
+reflex_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex metadev_barf_commonlang_scanner dev_barf_commonlang_scanner)
+trison_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison metadev_barf_targetspec_parser dev_barf_targetspec_parser)
+
 set(barf_commonlang_and_targetspec_SOURCES
     lib/commonlang/barf_commonlang.hpp
     lib/commonlang/barf_commonlang_ast.cpp
@@ -112,10 +115,56 @@ set(barf_commonlang_and_targetspec_SOURCES
 )
 
 add_library(barf_commonlang_and_targetspec ${barf_commonlang_and_targetspec_SOURCES})
-target_compile_definitions(barf_commonlang_and_targetspec PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
-target_include_directories(barf_commonlang_and_targetspec PUBLIC ${PROJECT_SOURCE_DIR}/lib/commonlang)
-target_include_directories(barf_commonlang_and_targetspec PUBLIC ${PROJECT_SOURCE_DIR}/lib/targetspec)
+target_compile_definitions(
+    barf_commonlang_and_targetspec
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+target_include_directories(
+    barf_commonlang_and_targetspec
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/lib/commonlang
+    ${PROJECT_SOURCE_DIR}/lib/targetspec
+)
 target_link_libraries(barf_commonlang_and_targetspec PUBLIC Strict barf_core barf_preprocessor)
+
+# dev version of barf_commonlang_and_targetspec
+
+set(dev_barf_commonlang_and_targetspec_SOURCES
+    lib/commonlang/barf_commonlang.hpp
+    lib/commonlang/barf_commonlang_ast.cpp
+    lib/commonlang/barf_commonlang_ast.hpp
+    ${PROJECT_BINARY_DIR}/dev/barf_commonlang_scanner.cpp
+    ${PROJECT_BINARY_DIR}/dev/barf_commonlang_scanner.hpp
+    lib/commonlang/barf_commonlang_scanner.reflex
+    lib/targetspec/barf_targetspec.hpp
+    lib/targetspec/barf_targetspec_ast.cpp
+    lib/targetspec/barf_targetspec_ast.hpp
+    ${PROJECT_BINARY_DIR}/dev/barf_targetspec_parser.cpp
+    ${PROJECT_BINARY_DIR}/dev/barf_targetspec_parser.hpp
+    lib/targetspec/barf_targetspec_parser.trison
+)
+
+add_library(dev_barf_commonlang_and_targetspec EXCLUDE_FROM_ALL ${dev_barf_commonlang_and_targetspec_SOURCES})
+# CMake isn't apparently smart enough to figure out that ${PROJECT_BINARY_DIR]/dev/* files have dependencies, so this is needed.
+add_dependencies(dev_barf_commonlang_and_targetspec reflex trison)
+target_compile_definitions(
+    dev_barf_commonlang_and_targetspec
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+# It's a little hacky to include ${PROJECT_BINARY_DIR}/dev since it's not separated like
+# the subdirs of ${PROJECT_SOURCE_DIR}/lib, but it doesn't really matter.
+target_include_directories(
+    dev_barf_commonlang_and_targetspec
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/lib/commonlang
+    ${PROJECT_SOURCE_DIR}/lib/targetspec
+    ${PROJECT_BINARY_DIR}/dev
+)
+target_link_libraries(dev_barf_commonlang_and_targetspec PUBLIC Strict dev_barf_core dev_barf_preprocessor)
 
 #
 # barf_core
@@ -153,9 +202,37 @@ set(barf_core_SOURCES
 )
 
 add_library(barf_core ${barf_core_SOURCES})
-target_compile_definitions(barf_core PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
-target_include_directories(barf_core PUBLIC ${PROJECT_SOURCE_DIR}/lib/core)
+target_compile_definitions(
+    barf_core
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+target_include_directories(
+    barf_core
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/lib/core
+)
 target_link_libraries(barf_core PUBLIC Strict)
+
+# dev version of barf_core
+
+add_library(dev_barf_core EXCLUDE_FROM_ALL ${barf_core_SOURCES})
+target_compile_definitions(
+    dev_barf_core
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+# It's a little hacky to include ${PROJECT_BINARY_DIR}/dev since it's not separated like
+# the subdirs of ${PROJECT_SOURCE_DIR}/lib, but it doesn't really matter.
+target_include_directories(
+    dev_barf_core
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/lib/core
+    ${PROJECT_BINARY_DIR}/dev
+)
+target_link_libraries(dev_barf_core PUBLIC Strict)
 
 #
 # barf_preprocessor
@@ -168,6 +245,9 @@ endif()
 
 reflex_add_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex dev_barf_preprocessor_scanner)
 trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison dev_barf_preprocessor_parser)
+
+reflex_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex metadev_barf_preprocessor_scanner dev_barf_preprocessor_scanner)
+trison_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison metadev_barf_preprocessor_parser dev_barf_preprocessor_parser)
 
 set(barf_preprocessor_SOURCES
     lib/preprocessor/barf_preprocessor.hpp
@@ -188,9 +268,52 @@ set(barf_preprocessor_SOURCES
 )
 
 add_library(barf_preprocessor ${barf_preprocessor_SOURCES})
-target_compile_definitions(barf_preprocessor PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+target_compile_definitions(
+    barf_preprocessor
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
 target_include_directories(barf_preprocessor PUBLIC ${PROJECT_SOURCE_DIR}/lib/preprocessor)
 target_link_libraries(barf_preprocessor PUBLIC Strict barf_core)
+
+# dev version of barf_preprocessor
+
+set(dev_barf_preprocessor_SOURCES
+    lib/preprocessor/barf_preprocessor.hpp
+    lib/preprocessor/barf_preprocessor_ast.cpp
+    lib/preprocessor/barf_preprocessor_ast_execute.cpp
+    lib/preprocessor/barf_preprocessor_ast.hpp
+    lib/preprocessor/barf_preprocessor_ast_print.cpp
+    ${PROJECT_BINARY_DIR}/dev/barf_preprocessor_parser.cpp
+    ${PROJECT_BINARY_DIR}/dev/barf_preprocessor_parser.hpp
+    lib/preprocessor/barf_preprocessor_parser.trison
+    ${PROJECT_BINARY_DIR}/dev/barf_preprocessor_scanner.cpp
+    ${PROJECT_BINARY_DIR}/dev/barf_preprocessor_scanner.hpp
+    lib/preprocessor/barf_preprocessor_scanner.reflex
+    lib/preprocessor/barf_preprocessor_symboltable.cpp
+    lib/preprocessor/barf_preprocessor_symboltable.hpp
+    lib/preprocessor/barf_preprocessor_textifier.cpp
+    lib/preprocessor/barf_preprocessor_textifier.hpp
+)
+
+add_library(dev_barf_preprocessor EXCLUDE_FROM_ALL ${dev_barf_preprocessor_SOURCES})
+add_dependencies(dev_barf_preprocessor reflex trison)
+target_compile_definitions(
+    dev_barf_preprocessor
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+# It's a little hacky to include ${PROJECT_BINARY_DIR}/dev since it's not separated like
+# the subdirs of ${PROJECT_SOURCE_DIR}/lib, but it doesn't really matter.
+target_include_directories(
+    dev_barf_preprocessor
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/lib/preprocessor
+    ${PROJECT_BINARY_DIR}/dev
+)
+target_link_libraries(dev_barf_preprocessor PUBLIC Strict dev_barf_core)
 
 #
 # barf_regex
@@ -201,6 +324,8 @@ if(barf_DEVELOPER_MODE)
 endif()
 
 trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison dev_barf_regex_parser)
+
+trison_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison metadev_barf_regex_parser dev_barf_regex_parser)
 
 set(barf_regex_SOURCES
     lib/regex/barf_regex.cpp
@@ -219,9 +344,50 @@ set(barf_regex_SOURCES
 )
 
 add_library(barf_regex ${barf_regex_SOURCES})
-target_compile_definitions(barf_regex PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+target_compile_definitions(
+    barf_regex
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
 target_include_directories(barf_regex PUBLIC ${PROJECT_SOURCE_DIR}/lib/regex)
 target_link_libraries(barf_regex PUBLIC Strict barf_core)
+
+# dev version of barf_regex
+
+set(dev_barf_regex_SOURCES
+    lib/regex/barf_regex.cpp
+    lib/regex/barf_regex.hpp
+    lib/regex/barf_regex_ast.cpp
+    lib/regex/barf_regex_ast.hpp
+    lib/regex/barf_regex_dfa.cpp
+    lib/regex/barf_regex_dfa.hpp
+    lib/regex/barf_regex_graph.cpp
+    lib/regex/barf_regex_graph.hpp
+    lib/regex/barf_regex_nfa.cpp
+    lib/regex/barf_regex_nfa.hpp
+    ${PROJECT_BINARY_DIR}/dev/barf_regex_parser.cpp
+    ${PROJECT_BINARY_DIR}/dev/barf_regex_parser.hpp
+    lib/regex/barf_regex_parser.trison
+)
+
+add_library(dev_barf_regex EXCLUDE_FROM_ALL ${dev_barf_regex_SOURCES})
+add_dependencies(dev_barf_regex trison)
+target_compile_definitions(
+    dev_barf_regex
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+# It's a little hacky to include ${PROJECT_BINARY_DIR}/dev since it's not separated like
+# the subdirs of ${PROJECT_SOURCE_DIR}/lib, but it doesn't really matter.
+target_include_directories(
+    dev_barf_regex
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/lib/regex
+    ${PROJECT_BINARY_DIR}/dev
+)
+target_link_libraries(dev_barf_regex PUBLIC Strict dev_barf_core)
 
 ###############################################################################
 # Executables
@@ -238,9 +404,32 @@ set(BPP_SOURCES
     app/bpp/bpp_options.hpp
 )
 add_executable(bpp ${BPP_SOURCES})
-target_compile_definitions(bpp PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+target_compile_definitions(
+    bpp
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
 target_include_directories(bpp PUBLIC ${PROJECT_SOURCE_DIR}/app/bpp)
 target_link_libraries(bpp PUBLIC Strict barf_core barf_preprocessor)
+
+# dev version of bpp
+
+# Just use the same sources because there are no parsers or scanners in bpp itself.
+add_executable(dev_bpp EXCLUDE_FROM_ALL ${BPP_SOURCES})
+target_compile_definitions(
+    dev_bpp
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+target_include_directories(
+    dev_bpp
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/app/bpp
+    ${PROJECT_BINARY_DIR}/dev
+)
+target_link_libraries(dev_bpp PUBLIC Strict dev_barf_core dev_barf_preprocessor)
 
 #
 # reflex (scanner generator)
@@ -251,6 +440,8 @@ if(barf_DEVELOPER_MODE)
 endif()
 
 trison_add_source_dev(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison dev_reflex_parser)
+
+trison_add_source_metadev(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison metadev_reflex_parser dev_reflex_parser)
 
 set(REFLEX_SOURCES
     app/reflex/reflex.hpp
@@ -268,9 +459,49 @@ set(REFLEX_SOURCES
     app/reflex/reflex_parser.trison
 )
 add_executable(reflex ${REFLEX_SOURCES})
-target_compile_definitions(reflex PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+target_compile_definitions(
+    reflex
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
 target_include_directories(reflex PUBLIC ${PROJECT_SOURCE_DIR}/app/reflex)
 target_link_libraries(reflex PUBLIC Strict barf_commonlang_and_targetspec barf_core barf_preprocessor barf_regex)
+
+# dev version of reflex
+
+set(dev_REFLEX_SOURCES
+    app/reflex/reflex.hpp
+    app/reflex/reflex_ast.cpp
+    app/reflex/reflex_ast.hpp
+    app/reflex/reflex_automaton.cpp
+    app/reflex/reflex_automaton.hpp
+    app/reflex/reflex_codespecsymbols.cpp
+    app/reflex/reflex_codespecsymbols.hpp
+    app/reflex/reflex_main.cpp
+    app/reflex/reflex_options.cpp
+    app/reflex/reflex_options.hpp
+    ${PROJECT_BINARY_DIR}/dev/reflex_parser.cpp
+    ${PROJECT_BINARY_DIR}/dev/reflex_parser.hpp
+    app/reflex/reflex_parser.trison
+)
+add_executable(dev_reflex EXCLUDE_FROM_ALL ${dev_REFLEX_SOURCES})
+add_dependencies(dev_reflex trison)
+target_compile_definitions(
+    dev_reflex
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+# It's a little hacky to include ${PROJECT_BINARY_DIR}/dev since it's not separated like
+# the subdirs of ${PROJECT_SOURCE_DIR}/lib, but it doesn't really matter.
+target_include_directories(
+    dev_reflex
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/app/reflex
+    ${PROJECT_BINARY_DIR}/dev
+)
+target_link_libraries(dev_reflex PUBLIC Strict dev_barf_commonlang_and_targetspec dev_barf_core dev_barf_preprocessor dev_barf_regex)
 
 #
 # trison (parser generator)
@@ -281,6 +512,8 @@ if(barf_DEVELOPER_MODE)
 endif()
 
 trison_add_source_dev(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison dev_trison_parser)
+
+trison_add_source_metadev(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison metadev_trison_parser dev_trison_parser)
 
 set(TRISON_SOURCES
     app/trison/trison.hpp
@@ -304,9 +537,54 @@ set(TRISON_SOURCES
     app/trison/trison_parser.trison
 )
 add_executable(trison ${TRISON_SOURCES})
-target_compile_definitions(trison PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+target_compile_definitions(
+    trison
+    PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
 target_include_directories(trison PUBLIC ${PROJECT_SOURCE_DIR}/app/trison)
 target_link_libraries(trison PUBLIC Strict barf_commonlang_and_targetspec barf_core barf_preprocessor)
+
+# dev version of trison
+
+set(dev_TRISON_SOURCES
+    app/trison/trison.hpp
+    app/trison/trison_ast.cpp
+    app/trison/trison_ast.hpp
+    app/trison/trison_codespecsymbols.cpp
+    app/trison/trison_codespecsymbols.hpp
+    app/trison/trison_dpda.cpp
+    app/trison/trison_dpda.hpp
+    app/trison/trison_enums.cpp
+    app/trison/trison_enums.hpp
+    app/trison/trison_graph.cpp
+    app/trison/trison_graph.hpp
+    app/trison/trison_main.cpp
+    app/trison/trison_npda.cpp
+    app/trison/trison_npda.hpp
+    app/trison/trison_options.cpp
+    app/trison/trison_options.hpp
+    ${PROJECT_BINARY_DIR}/dev/trison_parser.cpp
+    ${PROJECT_BINARY_DIR}/dev/trison_parser.hpp
+    app/trison/trison_parser.trison
+)
+add_executable(dev_trison EXCLUDE_FROM_ALL ${dev_TRISON_SOURCES})
+add_dependencies(dev_trison trison)
+target_compile_definitions(
+    dev_trison
+    PUBLIC
+    PACKAGE_VERSION="${PROJECT_VERSION}"
+    HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
+)
+# It's a little hacky to include ${PROJECT_BINARY_DIR}/dev since it's not separated like
+# the subdirs of ${PROJECT_SOURCE_DIR}/lib, but it doesn't really matter.
+target_include_directories(
+    dev_trison
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/app/trison
+    ${PROJECT_BINARY_DIR}/dev
+)
+target_link_libraries(dev_trison PUBLIC Strict dev_barf_commonlang_and_targetspec dev_barf_core dev_barf_preprocessor)
 
 #
 # playground (miscellaneous tooling around; only if barf_DEVELOPER_MODE is enabled)
@@ -322,6 +600,13 @@ if(barf_DEVELOPER_MODE)
     # or interface parts of the dependent cmake targets
     target_compile_definitions(playground PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
     target_link_libraries(playground PUBLIC Strict barf_regex)
+
+    add_executable(dev_playground EXCLUDE_FROM_ALL ${playground_SOURCES})
+    # This is probably not strictly needed, but might as well include anyway.
+    # Could be solved by having these propagate automatically through the public
+    # or interface parts of the dependent cmake targets
+    target_compile_definitions(dev_playground PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+    target_link_libraries(dev_playground PUBLIC Strict dev_barf_regex)
 endif()
 
 ###############################################################################
@@ -391,6 +676,8 @@ if(barf_DEVELOPER_MODE)
     add_custom_target(clean_all_thingy_dot_pngs DEPENDS clean_all_parser_dot_pngs clean_all_scanner_dot_pngs)
 endif()
 
+# dev related helper targets
+if(TRUE)
 add_custom_target(all_dev_parsers DEPENDS dev_barf_preprocessor_parser dev_barf_regex_parser dev_barf_targetspec_parser dev_reflex_parser dev_trison_parser)
 add_custom_target(all_dev_scanners DEPENDS dev_barf_commonlang_scanner dev_barf_preprocessor_scanner)
 add_custom_target(all_dev_thingies DEPENDS all_dev_parsers all_dev_scanners)
@@ -398,6 +685,10 @@ add_custom_target(all_dev_thingies DEPENDS all_dev_parsers all_dev_scanners)
 add_custom_target(diff_all_dev_parsers DEPENDS diff_dev_barf_preprocessor_parser diff_dev_barf_regex_parser diff_dev_barf_targetspec_parser diff_dev_reflex_parser diff_dev_trison_parser)
 add_custom_target(diff_all_dev_scanners DEPENDS diff_dev_barf_commonlang_scanner diff_dev_barf_preprocessor_scanner)
 add_custom_target(diff_all_dev_thingies DEPENDS diff_all_dev_parsers diff_all_dev_scanners)
+
+add_custom_target(clean_dev_bpp COMMAND rm -f ${PROJECT_BINARY_DIR}/bin/dev_bpp)
+add_custom_target(clean_dev_reflex COMMAND rm -f ${PROJECT_BINARY_DIR}/bin/dev_reflex)
+add_custom_target(clean_dev_trison COMMAND rm -f ${PROJECT_BINARY_DIR}/bin/dev_trison)
 
 add_custom_target(clean_all_dev_parsers DEPENDS clean_dev_barf_preprocessor_parser clean_dev_barf_regex_parser clean_dev_barf_targetspec_parser clean_dev_reflex_parser clean_dev_trison_parser)
 add_custom_target(clean_all_dev_scanners DEPENDS clean_dev_barf_commonlang_scanner clean_dev_barf_preprocessor_scanner)
@@ -416,6 +707,73 @@ add_custom_target(clean_all_dev_scanner_dfa_pngs DEPENDS clean_dev_barf_commonla
 add_custom_target(clean_all_dev_scanner_nfa_pngs DEPENDS clean_dev_barf_commonlang_scanner_nfa_png clean_dev_barf_preprocessor_scanner_nfa_png)
 add_custom_target(clean_all_dev_scanner_dot_pngs DEPENDS clean_dev_barf_commonlang_scanner_dot_png clean_dev_barf_preprocessor_scanner_dot_png)
 add_custom_target(clean_all_dev_thingy_dot_pngs DEPENDS clean_all_dev_parser_dot_pngs clean_all_dev_scanner_dot_pngs)
+
+add_custom_target(clean_all_dev DEPENDS clean_dev_reflex clean_dev_trison clean_dev_bpp clean_all_dev_thingies)
+
+# metadev related helper targets
+
+add_custom_target(all_metadev_parsers DEPENDS metadev_barf_preprocessor_parser metadev_barf_regex_parser metadev_barf_targetspec_parser metadev_reflex_parser metadev_trison_parser)
+add_custom_target(all_metadev_scanners DEPENDS metadev_barf_commonlang_scanner metadev_barf_preprocessor_scanner)
+add_custom_target(all_metadev_thingies DEPENDS all_metadev_parsers all_metadev_scanners)
+
+add_custom_target(diff_all_metadev_parsers DEPENDS diff_metadev_barf_preprocessor_parser diff_metadev_barf_regex_parser diff_metadev_barf_targetspec_parser diff_metadev_reflex_parser diff_metadev_trison_parser)
+add_custom_target(diff_all_metadev_scanners DEPENDS diff_metadev_barf_commonlang_scanner diff_metadev_barf_preprocessor_scanner)
+add_custom_target(diff_all_metadev_thingies DEPENDS diff_all_metadev_parsers diff_all_metadev_scanners)
+
+add_custom_target(clean_all_metadev_parsers DEPENDS clean_metadev_barf_preprocessor_parser clean_metadev_barf_regex_parser clean_metadev_barf_targetspec_parser clean_metadev_reflex_parser clean_metadev_trison_parser)
+add_custom_target(clean_all_metadev_scanners DEPENDS clean_metadev_barf_commonlang_scanner clean_metadev_barf_preprocessor_scanner)
+add_custom_target(clean_all_metadev_thingies DEPENDS clean_all_metadev_parsers clean_all_metadev_scanners)
+
+add_custom_target(all_metadev_parser_dot_pngs DEPENDS metadev_barf_preprocessor_parser_dot_png metadev_barf_regex_parser_dot_png metadev_barf_targetspec_parser_dot_png metadev_reflex_parser_dot_png metadev_trison_parser_dot_png)
+add_custom_target(all_metadev_parser_npda_pngs DEPENDS metadev_barf_preprocessor_parser_npda_png metadev_barf_regex_parser_npda_png metadev_barf_targetspec_parser_npda_png metadev_reflex_parser_npda_png metadev_trison_parser_npda_png)
+add_custom_target(all_metadev_scanner_dfa_pngs DEPENDS metadev_barf_commonlang_scanner_dfa_png metadev_barf_preprocessor_scanner_dfa_png)
+add_custom_target(all_metadev_scanner_nfa_pngs DEPENDS metadev_barf_commonlang_scanner_nfa_png metadev_barf_preprocessor_scanner_nfa_png)
+add_custom_target(all_metadev_scanner_dot_pngs DEPENDS metadev_barf_commonlang_scanner_dot_png metadev_barf_preprocessor_scanner_dot_png)
+add_custom_target(all_metadev_thingy_dot_pngs DEPENDS all_metadev_parser_dot_pngs all_metadev_scanner_dot_pngs)
+
+add_custom_target(clean_all_metadev_parser_dot_pngs DEPENDS clean_metadev_barf_preprocessor_parser_dot_png clean_metadev_barf_regex_parser_dot_png clean_metadev_barf_targetspec_parser_dot_png clean_metadev_reflex_parser_dot_png clean_metadev_trison_parser_dot_png)
+add_custom_target(clean_all_metadev_parser_npda_pngs DEPENDS clean_metadev_barf_preprocessor_parser_npda_png clean_metadev_barf_regex_parser_npda_png clean_metadev_barf_targetspec_parser_npda_png clean_metadev_reflex_parser_npda_png clean_metadev_trison_parser_npda_png)
+add_custom_target(clean_all_metadev_scanner_dfa_pngs DEPENDS clean_metadev_barf_commonlang_scanner_dfa_png clean_metadev_barf_preprocessor_scanner_dfa_png)
+add_custom_target(clean_all_metadev_scanner_nfa_pngs DEPENDS clean_metadev_barf_commonlang_scanner_nfa_png clean_metadev_barf_preprocessor_scanner_nfa_png)
+add_custom_target(clean_all_metadev_scanner_dot_pngs DEPENDS clean_metadev_barf_commonlang_scanner_dot_png clean_metadev_barf_preprocessor_scanner_dot_png)
+add_custom_target(clean_all_metadev_thingy_dot_pngs DEPENDS clean_all_metadev_parser_dot_pngs clean_all_metadev_scanner_dot_pngs)
+
+add_custom_target(clean_all_metadev DEPENDS clean_all_metadev_thingies)
+
+# This is necessary because clean is not a first class target in cmake.
+add_custom_target(clean_all DEPENDS clean_all_dev clean_all_metadev)
+endif()
+###############################################################################
+# Testing targets
+###############################################################################
+
+# Note that this doesn't explicitly depend on the ${PROJECT_BINARY_DIR}/bin/reflex
+# or ${PROJECT_BINARY_DIR}/bin/trison binaries.  This is done so that building
+# of those binaries can be done independently of running of the various dev
+# and metadev targets, including this one.  This ability is crucial to have
+# during certain development in order to keep the ability to bootstrap reflex
+# and trison.
+add_custom_target(
+    metadev_check
+    DEPENDS dev_reflex dev_trison
+    COMMAND +make diff_all_metadev_thingies
+    COMMAND echo ""
+    COMMAND echo ""
+    COMMAND echo "Target metadev_check succeeded -- all dev and metadev files are identical."
+    COMMAND echo ""
+    COMMAND echo ""
+)
+
+###############################################################################
+# Dependency graph visualization
+###############################################################################
+
+add_custom_target(
+    dependency_graph
+    COMMAND mkdir -p dependency_graph
+    COMMAND cmake --graphviz=dependency_graph/dep.dot ${PROJECT_BINARY_DIR}
+    COMMAND dot dependency_graph/dep.dot -Tpng -o dependency_graph/dep.png
+)
 
 ###############################################################################
 # CPack rules for creating distributions

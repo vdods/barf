@@ -128,6 +128,33 @@ using it.  He created a scripting language called
 [Steel](https://github.com/Nightwind0/steel) for his game engine
 [Stone Ring](https://github.com/Nightwind0/stonering).
 
+## Development Notes
+
+### `dev` and `metadev` targets
+
+To test changes to `reflex` and `trison`, a set of build targets have been created
+which run the built `reflex` and `trison` binaries on all the `.reflex` and `.trison`
+sources in BARF's own codebase, producing parser and scanner code (this is the content
+of the build dir subdir `dev`), compiles versions of those binaries using the scanner
+and parser code in `dev` (these are `dev_reflex` and `dev_trison`), and then uses those
+binaries on all the `.reflex` and `.trison` sources, producing parser and scanner code
+(this is the content of the build dir subdir `metadev`), so that the output of the `dev`
+and `metadev` stages can be compared and verified to be identical.
+
+To run these checks, build the `metadev_check` target.  E.g.
+
+    make metadev_check
+
+Success is when the produced `dev` and `metadev` subdirs of the build dir are identical.
+This build target should work even from a fresh build dir, and will build `bpp`, `reflex`,
+`trison`, and `playground` in the process.
+
+CMake probably handles the dependencies of these targets correctly, but if you want to
+make absolutely sure that fresh sources have been generated and targets built, then run
+the following command before `make metadev_check`.
+
+    make clean clean_all
+
 ## To-dos
 
 Some of these are super old and may no longer apply.
@@ -191,6 +218,11 @@ Some of these are super old and may no longer apply.
     error, at least some info can be printed.
 -   Change doxygen comments to all /// style
 -   Ensure all the different types of cleanup are performed, verify with valgrind.
+
+### CMake-related To-dos
+
+-   Change shell commands (e.g. invocations of `make`, `rm`, `diff`) over to use
+    corresponding cmake commands, such as `file(REMOVE ...)`, etc.
 
 ### Documentation To-dos
 

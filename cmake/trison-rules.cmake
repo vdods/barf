@@ -1,10 +1,10 @@
 ###############################################################################
 # CMake functions for compiling trison sources into C++ as well as creating
-# named targets for them and for diff-based tests for them.
+# named targets for them.
 ###############################################################################
 
 # Don't use this function directly.  Use trison_add_source instead.
-function(__trison_add_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME SPECIFY_TARGETS_DIR TARGETS_DIR OUTPUT_DIR FORCE_TARGET_NAME)
+function(__trison_add_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME SPECIFY_TARGETS_DIR TARGETS_DIR OUTPUT_DIR FORCE_TARGET_NAME BINARY_DEPENDENCY)
     if(NOT TARGETS_DIR)
         #message(FATAL_ERROR "TARGETS_DIR not specified")
         execute_process(
@@ -37,6 +37,7 @@ function(__trison_add_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
         ${TARGETS_DIR}/trison.cpp.npda.npda.header.codespec
         ${TARGETS_DIR}/trison.cpp.npda.npda.implementation.codespec
         ${TARGETS_DIR}/trison.cpp.targetspec
+        ${BINARY_DEPENDENCY}
     )
 
     add_custom_command(
@@ -75,6 +76,7 @@ function(__trison_add_source__impl TRISON_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
             ${SOURCE_DIR}/${SOURCE_BASENAME}.trison
             ${DEPENDENCIES}
     )
+    set_property(TARGET ${FORCE_TARGET_NAME} EXCLUDE_FROM_ALL TRUE)
 
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
         add_custom_command(
@@ -113,10 +115,11 @@ function(trison_add_source SOURCE_FILE TARGET_NAME)
     endif()
     get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
     get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    __trison_add_source__impl(${barf_TRISON_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${barf_ENABLE_TARGETS_DIR_OVERRIDE} "${barf_TARGETS_DIR_OVERRIDE}" ${SOURCE_DIR} force_${TARGET_NAME})
+    __trison_add_source__impl(${barf_TRISON_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${barf_ENABLE_TARGETS_DIR_OVERRIDE} "${barf_TARGETS_DIR_OVERRIDE}" ${SOURCE_DIR} force_${TARGET_NAME} ${barf_TRISON_BINARY})
 
     set(OUTPUT_FILES ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.dot ${SOURCE_DIR}/${SOURCE_BASENAME}.npda.states)
     add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+    set_property(TARGET ${TARGET_NAME} EXCLUDE_FROM_ALL TRUE)
     add_custom_target(clean_${TARGET_NAME} COMMAND rm -f ${OUTPUT_FILES})
 
     if(DEFINED DOXYGEN_DOT_EXECUTABLE)
