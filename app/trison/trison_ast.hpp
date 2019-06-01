@@ -43,6 +43,7 @@ enum
     AST_TERMINAL_LIST,
     AST_TERMINAL_MAP,
     AST_TOKEN_ID,
+    AST_TOKEN_SPECIFIER_LIST,
     AST_TYPE_MAP,
 
     AST_COUNT
@@ -132,22 +133,27 @@ struct RuleToken : public Ast::Base
 
 struct RuleTokenList : public Ast::AstList<RuleToken>
 {
-    bool m_is_inverted;
-
-    RuleTokenList () : Ast::AstList<RuleToken>(AST_RULE_TOKEN_LIST), m_is_inverted(false) { }
-    RuleTokenList (FiLoc const &filoc) : Ast::AstList<RuleToken>(filoc, AST_RULE_TOKEN_LIST), m_is_inverted(false) { }
-
-    bool Contains (std::string const &token_id) const;
-
-    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+    RuleTokenList () : Ast::AstList<RuleToken>(AST_RULE_TOKEN_LIST) { }
+    RuleTokenList (FiLoc const &filoc) : Ast::AstList<RuleToken>(filoc, AST_RULE_TOKEN_LIST) { }
 }; // end of struct RuleTokenList
 
-struct RuleTokenErrorUntilLookahead : public RuleToken
+struct TokenSpecifierList : public Ast::AstList<Ast::Id>
 {
-    // TODO: This doesn't need to be RuleToken list -- it should really be TerminalList
-    RuleTokenList const *const m_lookaheads;
+    bool m_is_inverted;
 
-    RuleTokenErrorUntilLookahead (FiLoc const &filoc, RuleTokenList const *lookaheads, string const &assigned_id = g_empty_string)
+    TokenSpecifierList () : Ast::AstList<Ast::Id>(AST_TOKEN_SPECIFIER_LIST), m_is_inverted(false) { }
+    TokenSpecifierList (FiLoc const &filoc) : Ast::AstList<Ast::Id>(filoc, AST_TOKEN_SPECIFIER_LIST), m_is_inverted(false) { }
+
+    bool Contains (std::string const &token_specifier) const;
+
+    virtual void Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level = 0) const;
+}; // end of struct TokenSpecifierList
+
+struct ErrorDirective : public RuleToken
+{
+    TokenSpecifierList const *const m_lookaheads;
+
+    ErrorDirective (FiLoc const &filoc, TokenSpecifierList const *lookaheads, string const &assigned_id = g_empty_string)
         :
         RuleToken("ERROR_", filoc, assigned_id, AST_RULE_TOKEN_ERROR_UNTIL_LOOKAHEAD),
         m_lookaheads(lookaheads)
@@ -160,10 +166,9 @@ struct RuleTokenErrorUntilLookahead : public RuleToken
 
 struct LookaheadDirective : public RuleToken
 {
-    // TODO: This doesn't need to be RuleToken list -- it should really be TerminalList
-    RuleTokenList const *const m_lookaheads;
+    TokenSpecifierList const *const m_lookaheads;
 
-    LookaheadDirective (FiLoc const &filoc, RuleTokenList const *lookaheads, string const &assigned_id = g_empty_string)
+    LookaheadDirective (FiLoc const &filoc, TokenSpecifierList const *lookaheads, string const &assigned_id = g_empty_string)
         :
         RuleToken("%lookahead", filoc, assigned_id, AST_LOOKAHEAD_DIRECTIVE),
         m_lookaheads(lookaheads)

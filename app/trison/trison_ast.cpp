@@ -35,6 +35,7 @@ string const &AstTypeString (AstType ast_type)
         "AST_TERMINAL_LIST",
         "AST_TERMINAL_MAP",
         "AST_TOKEN_ID",
+        "AST_TOKEN_SPECIFIER_LIST",
         "AST_TYPE_MAP"
     };
 
@@ -68,14 +69,14 @@ void RuleToken::Print (ostream &stream, StringifyAstType Stringify, Uint32 inden
         stream << Tabs(indent_level+1) << "assigned id: " << m_assigned_id << endl;
 }
 
-bool RuleTokenList::Contains (std::string const &token_id) const
+bool TokenSpecifierList::Contains (std::string const &token_specifier) const
 {
     bool found_in_list = false;
     for (const_iterator it = begin(), it_end = end(); it != it_end; ++it)
     {
         assert(*it != NULL);
-        RuleToken const &rule_token = **it;
-        if (rule_token.m_token_id == token_id)
+        Ast::Id const &t = **it;
+        if (t.GetText() == token_specifier)
         {
             found_in_list = true;
             break;
@@ -88,13 +89,13 @@ bool RuleTokenList::Contains (std::string const &token_id) const
         return found_in_list;
 }
 
-void RuleTokenList::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void TokenSpecifierList::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     Ast::Base::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "inverted: " << std::boolalpha << m_is_inverted << endl;
 }
 
-void RuleTokenErrorUntilLookahead::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
+void ErrorDirective::Print (ostream &stream, StringifyAstType Stringify, Uint32 indent_level) const
 {
     RuleToken::Print(stream, Stringify, indent_level);
     stream << Tabs(indent_level+1) << "lookheads:\n";
@@ -108,12 +109,12 @@ string LookaheadDirective::AsText () const
     out << "%lookahead[";
     if (m_lookaheads->m_is_inverted)
         out << "![";
-    for (RuleTokenList::const_iterator it = m_lookaheads->begin(), it_end = m_lookaheads->end(); it != it_end; ++it)
+    for (TokenSpecifierList::const_iterator it = m_lookaheads->begin(), it_end = m_lookaheads->end(); it != it_end; ++it)
     {
         assert(*it != NULL);
-        RuleToken const &rule_token = **it;
-        out << rule_token.m_token_id;
-        RuleTokenList::const_iterator next_it = it;
+        Ast::Id const &token_specifier = **it;
+        out << token_specifier.GetText();
+        TokenSpecifierList::const_iterator next_it = it;
         ++next_it;
         if (next_it != it_end)
             out << '|';
@@ -143,7 +144,7 @@ string Rule::AsText (Uint32 stage) const
     if (stage <= m_rule_token_list->size())
     {
         out << " .";
-        // TODO: Need to generalize this to account for RuleTokenErrorUntilLookahead
+        // TODO: Need to generalize this to account for ErrorDirective
         for (Uint32 s = stage; s < m_rule_token_list->size(); ++s)
             out << ' ' << m_rule_token_list->Element(s)->m_token_id;
     }

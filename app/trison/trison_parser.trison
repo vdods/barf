@@ -343,27 +343,27 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
                     // If the rule token is %error, then check its m_lookaheads.  NOTE
                     // that these each have to be a terminal (not nonterminal).
-                    RuleTokenErrorUntilLookahead const *error_token = dynamic_cast<RuleTokenErrorUntilLookahead const *>(&rule_token);
+                    ErrorDirective const *error_token = dynamic_cast<ErrorDirective const *>(&rule_token);
                     if (error_token != NULL)
                     {
-                        for (RuleTokenList::const_iterator error_rule_token_lookahead_it = error_token->m_lookaheads->begin(), error_rule_token_lookahead_it_end = error_token->m_lookaheads->end();
+                        for (TokenSpecifierList::const_iterator error_rule_token_lookahead_it = error_token->m_lookaheads->begin(), error_rule_token_lookahead_it_end = error_token->m_lookaheads->end();
                              error_rule_token_lookahead_it != error_rule_token_lookahead_it_end;
                              ++error_rule_token_lookahead_it)
                         {
                             assert(*error_rule_token_lookahead_it != NULL);
-                            RuleToken const &error_rule_token_lookahead = **error_rule_token_lookahead_it;
+                            Ast::Id const &error_rule_token_lookahead = **error_rule_token_lookahead_it;
                             // Currently, the choice to limit to terminals only has been made to avoid
                             // potentially unknown complicating functionality.
                             bool const allow_error_to_use_nonterminals = false;
                             if (allow_error_to_use_nonterminals)
                             {
-                                if (m_nonterminal_map->find(error_rule_token_lookahead.m_token_id) == m_nonterminal_map->end() && m_terminal_map->find(error_rule_token_lookahead.m_token_id) == m_terminal_map->end())
-                                    EmitError(FORMAT("undeclared token \"" << error_rule_token_lookahead.m_token_id << "\""), error_rule_token_lookahead.GetFiLoc());
+                                if (m_nonterminal_map->find(error_rule_token_lookahead.GetText()) == m_nonterminal_map->end() && m_terminal_map->find(error_rule_token_lookahead.GetText()) == m_terminal_map->end())
+                                    EmitError(FORMAT("undeclared token \"" << error_rule_token_lookahead.GetText() << "\""), error_rule_token_lookahead.GetFiLoc());
                             }
                             else
                             {
-                                if (m_terminal_map->find(error_rule_token_lookahead.m_token_id) == m_terminal_map->end())
-                                    EmitError(FORMAT("undeclared terminal \"" << error_rule_token_lookahead.m_token_id << "\""), error_rule_token_lookahead.GetFiLoc());
+                                if (m_terminal_map->find(error_rule_token_lookahead.GetText()) == m_terminal_map->end())
+                                    EmitError(FORMAT("undeclared terminal \"" << error_rule_token_lookahead.GetText() << "\""), error_rule_token_lookahead.GetFiLoc());
                             }
                         }
                     }
@@ -372,24 +372,24 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 // If there is a %lookahead directive, then check its lookaheads.
                 if (rule.m_lookahead_directive != NULL)
                 {
-                    for (RuleTokenList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(), lookahead_it_end = rule.m_lookahead_directive->m_lookaheads->end();
+                    for (TokenSpecifierList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(), lookahead_it_end = rule.m_lookahead_directive->m_lookaheads->end();
                          lookahead_it != lookahead_it_end;
                          ++lookahead_it)
                     {
                         assert(*lookahead_it != NULL);
-                        RuleToken const &lookahead = **lookahead_it;
+                        Ast::Id const &lookahead = **lookahead_it;
                         bool const allow_lookahead_to_use_nonterminals = false;
                         // Currently, the choice to limit to terminals only has been made to avoid
                         // potentially unknown complicating functionality.
                         if (allow_lookahead_to_use_nonterminals)
                         {
-                            if (m_nonterminal_map->find(lookahead.m_token_id) == m_nonterminal_map->end() && m_terminal_map->find(lookahead.m_token_id) == m_terminal_map->end())
-                                EmitError(FORMAT("undeclared token \"" << lookahead.m_token_id << "\""), lookahead.GetFiLoc());
+                            if (m_nonterminal_map->find(lookahead.GetText()) == m_nonterminal_map->end() && m_terminal_map->find(lookahead.GetText()) == m_terminal_map->end())
+                                EmitError(FORMAT("undeclared token \"" << lookahead.GetText() << "\""), lookahead.GetFiLoc());
                         }
                         else
                         {
-                            if (m_terminal_map->find(lookahead.m_token_id) == m_terminal_map->end())
-                                EmitError(FORMAT("undeclared terminal \"" << lookahead.m_token_id << "\""), lookahead.GetFiLoc());
+                            if (m_terminal_map->find(lookahead.GetText()) == m_terminal_map->end())
+                                EmitError(FORMAT("undeclared terminal \"" << lookahead.GetText() << "\""), lookahead.GetFiLoc());
                         }
                     }
                 }
@@ -525,7 +525,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:throwaway %error[%end|NEWLINE] at_least_one_newline
+    DIRECTIVE_DEFAULT_PARSE_NONTERMINAL:throwaway %error[![%end|NEWLINE]] at_least_one_newline
     %target.cpp {
         if (m_default_parse_nonterminal_id != NULL)
             EmitError(FORMAT("duplicate %default_parse_nonterminal directive; previously specified at " << m_default_parse_nonterminal_id->GetFiLoc()), throwaway->GetFiLoc());
@@ -540,13 +540,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    %error[%end|NEWLINE] at_least_one_newline
+    %error[![%end|NEWLINE]] at_least_one_newline
     %target.cpp {
         EmitError("parse error in preamble directives", m_scanner.GetFiLoc());
         return NULL;
     }
 |
-    %error[%end|END_PREAMBLE]
+    %error[![%end|END_PREAMBLE]]
     %target.cpp {
         EmitError("parse error in preamble directives", m_scanner.GetFiLoc());
         return NULL;
@@ -565,7 +565,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGETS:throwaway %error[%end|NEWLINE]
+    DIRECTIVE_TARGETS:throwaway %error[![%end|NEWLINE]]
     %target.cpp {
         EmitError("parse error in directive %targets", throwaway->GetFiLoc());
         return NULL;
@@ -610,7 +610,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new CommonLang::TargetDirective(target_id, target_directive, param);
     }
 |
-    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error[%end|NEWLINE]
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id '.' ID:target_directive %error[![%end|NEWLINE]]
     %target.cpp {
         EmitError("parse error in parameter for directive %target." + target_id->GetText() + "." + target_directive->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -619,7 +619,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error[%end|NEWLINE]
+    DIRECTIVE_TARGET:throwaway '.' ID:target_id %error[![%end|NEWLINE]]
     %target.cpp {
         EmitError("parse error in directive name for directive %target." + target_id->GetText(), throwaway->GetFiLoc());
         delete throwaway;
@@ -627,7 +627,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway %error[%end|NEWLINE]
+    DIRECTIVE_TARGET:throwaway %error[![%end|NEWLINE]]
     %target.cpp {
         EmitError("parse error in target name for directive %target", throwaway->GetFiLoc());
         delete throwaway;
@@ -771,7 +771,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return nonterminal;
     }
 |
-    %error[%end] ';'
+    // TODO: This should be %error[![%end|';']]
+    %error[![%end]] ';'
     %target.cpp {
         EmitError("parse error in nonterminal definition", GetFiLoc());
         return NULL;
@@ -799,7 +800,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return nonterminal;
     }
 |
-    DIRECTIVE_NONTERMINAL:throwaway %error[%end]
+    // TODO: add a %lookahead directive
+    DIRECTIVE_NONTERMINAL:throwaway %error[![%end]]
     %target.cpp {
         assert(throwaway != NULL);
         EmitError("parse error while parsing nonterminal specification", throwaway->GetFiLoc());
@@ -807,7 +809,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_NONTERMINAL:throwaway ID:id %error[%end]
+    // TODO: add a %lookahead directive
+    DIRECTIVE_NONTERMINAL:throwaway ID:id %error[![%end]]
     %target.cpp {
         assert(id != NULL);
         EmitError("parse error in %nonterminal directive", id->GetFiLoc());
@@ -836,7 +839,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return rule_list;
     }
 |
-    %error[%end|'|'|';']
+    // TODO: add a %lookahead directive
+    %error[![%end|'|'|';']]
     %target.cpp {
         EmitError("parse error in rule (note that an empty reduction rule must be specified by the %empty directive)", GetFiLoc());
         return new RuleList();
@@ -899,7 +903,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return new CommonLang::RuleHandler(target_id, code_block);
     }
 |
-    DIRECTIVE_TARGET:throwaway %error[%end] any_type_of_code_block:code_block
+    DIRECTIVE_TARGET:throwaway %error[![%end]] any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in target id after directive %target", throwaway->GetFiLoc());
@@ -908,7 +912,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    DIRECTIVE_TARGET:throwaway %error[%end]
+    // TODO: add a %lookahead directive
+    DIRECTIVE_TARGET:throwaway %error[![%end]]
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("parse error in directive %target", throwaway->GetFiLoc());
@@ -916,7 +921,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         return NULL;
     }
 |
-    %error[%end] any_type_of_code_block:code_block
+    %error[![%end]] any_type_of_code_block:code_block
     %target.cpp {
         assert(m_target_map != NULL);
         EmitError("missing directive %target before rule handler code block", code_block->GetFiLoc());
@@ -1001,11 +1006,11 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end and may not include %error", throwaway->GetFiLoc());
         // This is the minimal necessary token, although the EmitError call should prevent trison
         // from proceeding to parser generation.
-        RuleTokenList *lookaheads = new RuleTokenList(throwaway->GetFiLoc());
-        lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
+        TokenSpecifierList *lookaheads = new TokenSpecifierList(throwaway->GetFiLoc());
+        lookaheads->Append(new Ast::Id("END_", throwaway->GetFiLoc()));
         lookaheads->m_is_inverted = true;
 
-        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
+        ErrorDirective *rule_token_error_until_lookahead = new ErrorDirective(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
         delete throwaway;
         delete assigned_id;
         return rule_token_error_until_lookahead;
@@ -1015,13 +1020,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         // This is the minimal necessary token, although the EmitError call should prevent trison
         // from proceeding to parser generation.
-        RuleTokenList *lookaheads = new RuleTokenList(throwaway->GetFiLoc());
-        lookaheads->Append(new RuleToken("END_", throwaway->GetFiLoc()));
+        TokenSpecifierList *lookaheads = new TokenSpecifierList(throwaway->GetFiLoc());
+        lookaheads->Append(new Ast::Id("END_", throwaway->GetFiLoc()));
         lookaheads->m_is_inverted = true;
 
         EmitError("%error directive must be followed by lookahead-specifier [a|b|...], where a, b, ... are the terminals which this error token won't accept, which must include %end and may not include %error", throwaway->GetFiLoc());
 
-        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        ErrorDirective *rule_token_error_until_lookahead = new ErrorDirective(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
         return rule_token_error_until_lookahead;
     }
@@ -1033,15 +1038,15 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         // TEMP HACK until done transitioning to inverted %error lookaheads
         lookaheads->m_is_inverted = true;
 
-        // TODO: Maybe move this to RuleTokenErrorUntilLookahead
-        // Verify that the lookaheads include %end.  Also verify that it's a negated RuleTokenList
+        // TODO: Maybe move this to ErrorDirective
+        // Verify that the lookaheads include %end.  Also verify that it's a negated TokenSpecifierList
         // since the way the NPDA is generated depends on it.
         if (!lookaheads->m_is_inverted || lookaheads->Contains("END_"))
             EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end and may not include %error; e.g. %error[!%end] or %error[![%end|a|b]] etc.", throwaway->GetFiLoc());
         if (!lookaheads->Contains("ERROR_"))
             EmitError("%error directive may not exclude %error itself (meaning that %error may not appear in the terminals this error token won't accept); e.g. %error[![%end|%error]] is invalid.", throwaway->GetFiLoc());
 
-        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
+        ErrorDirective *rule_token_error_until_lookahead = new ErrorDirective(throwaway->GetFiLoc(), lookaheads, assigned_id->GetText());
         delete throwaway;
         delete assigned_id;
         return rule_token_error_until_lookahead;
@@ -1054,15 +1059,15 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         // TEMP HACK until done transitioning to inverted %error lookaheads
         lookaheads->m_is_inverted = true;
 
-        // TODO: Maybe move this to RuleTokenErrorUntilLookahead
-        // Verify that the lookaheads include %end.  Also verify that it's a negated RuleTokenList
+        // TODO: Maybe move this to ErrorDirective
+        // Verify that the lookaheads include %end.  Also verify that it's a negated TokenSpecifierList
         // since the way the NPDA is generated depends on it.
         if (!lookaheads->m_is_inverted || lookaheads->Contains("END_"))
             EmitError("%error directive specifier (which defines the terminals which this error token won't accept) must include %end and may not include %error; e.g. %error[!%end] or %error[![%end|a|b]] etc.", throwaway->GetFiLoc());
         if (!lookaheads->Contains("ERROR_"))
             EmitError("%error directive may not exclude %error itself (meaning that %error may not appear in the terminals this error token won't accept); e.g. %error[![%end|%error]] is invalid.", throwaway->GetFiLoc());
 
-        RuleTokenErrorUntilLookahead *rule_token_error_until_lookahead = new RuleTokenErrorUntilLookahead(throwaway->GetFiLoc(), lookaheads);
+        ErrorDirective *rule_token_error_until_lookahead = new ErrorDirective(throwaway->GetFiLoc(), lookaheads);
         delete throwaway;
         return rule_token_error_until_lookahead;
     }
@@ -1102,7 +1107,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 ;
 
-%nonterminal bracketed_lookaheads %type.cpp "RuleTokenList *"
+%nonterminal bracketed_lookaheads %type.cpp "TokenSpecifierList *"
 :
     '[' lookahead_terminal_list:lookaheads ']'
     %target.cpp {
@@ -1121,7 +1126,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     '[' '!' lookahead_terminal:lookahead_terminal ']'
     %target.cpp {
         assert(lookahead_terminal != NULL);
-        RuleTokenList *lookaheads = new RuleTokenList(lookahead_terminal->GetFiLoc());
+        TokenSpecifierList *lookaheads = new TokenSpecifierList(lookahead_terminal->GetFiLoc());
         lookaheads->Append(lookahead_terminal);
         lookaheads->m_is_inverted = !lookaheads->m_is_inverted;
         return lookaheads;
@@ -1129,7 +1134,7 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 ;
 
 // An "or"ed sequence of lookaheads; e.g. a|b|c
-%nonterminal lookahead_terminal_list %type.cpp "RuleTokenList *"
+%nonterminal lookahead_terminal_list %type.cpp "TokenSpecifierList *"
 :
     lookahead_terminal_list:lookaheads '|' lookahead_terminal:lookahead_terminal
     %target.cpp {
@@ -1141,32 +1146,32 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     lookahead_terminal:lookahead_terminal
     %target.cpp {
         assert(lookahead_terminal != NULL);
-        RuleTokenList *lookaheads = new RuleTokenList(lookahead_terminal->GetFiLoc());
+        TokenSpecifierList *lookaheads = new TokenSpecifierList(lookahead_terminal->GetFiLoc());
         lookaheads->Append(lookahead_terminal);
         return lookaheads;
     }
 ;
 
-%nonterminal lookahead_terminal %type.cpp "RuleToken *"
+%nonterminal lookahead_terminal %type.cpp "Ast::Id *"
 :
     DIRECTIVE_END:throwaway
     %target.cpp {
-        RuleToken *rule_token = new RuleToken("END_", throwaway->GetFiLoc());
+        Ast::Id *t = new Ast::Id("END_", throwaway->GetFiLoc());
         delete throwaway;
-        return rule_token;
+        return t;
     }
 |
     DIRECTIVE_ERROR:throwaway
     %target.cpp {
-        RuleToken *rule_token = new RuleToken("ERROR_", throwaway->GetFiLoc());
+        Ast::Id *t = new Ast::Id("ERROR_", throwaway->GetFiLoc());
         delete throwaway;
-        return rule_token;
+        return t;
     }
 |
     token_id:token_id
     %target.cpp {
         assert(token_id != NULL && "If this fails, it's ok, I just wasn't sure that the condition was necessary");
-        RuleToken *rule_token = NULL;
+        Ast::Id *t = NULL;
         assert(m_terminal_map != NULL);
         if (token_id != NULL)
         {
@@ -1174,10 +1179,10 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                 // TODO: This probably isn't going to print %end or %error correctly.
                 EmitError(FORMAT("undeclared terminal \"" << token_id->GetText() << "\""), token_id->GetFiLoc());
             else
-                rule_token = new RuleToken(token_id->GetText(), token_id->GetFiLoc());
+                t = new Ast::Id(token_id->GetText(), token_id->GetFiLoc());
         }
         delete token_id;
-        return rule_token;
+        return t;
     }
 ;
 
