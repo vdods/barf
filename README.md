@@ -161,10 +161,6 @@ Some of these are super old and may no longer apply.
 
 ### Bugs
 
--   trison: `POP_STACK 2` transitions (for when %end is the lookahead and it shouldn't be discarded)
-    are not exercised if the stack would be empty after the pop.  But this should happen, because
-    that's a pretty crucial error state to handle, which if not handled results in an infinite loop
-    in the parser.
 -   disallow empty reflex states
 -   reflex: an unterminated regex causes a hang (while reflex is parsing the *.reflex source file):
 
@@ -339,23 +335,6 @@ Some of these are super old and may no longer apply.
     code generation (preprocessor) stage -- ones that don't appear at all in
     any codespec, not necessarily to indicate they weren't used in one particular
     case.
--   Ensure that commandline-specified values for parser directives override in-source values,
-    so that parser generation can be controlled from the build system if needed, e.g. for unit testing.
--   Run preprocessor on code blocks in reflex and trison, so that e.g. stuff like this can work
-    in a reflex/trison code block.
-
-        Parser::ParserReturnCode parse (std::string const &s, double &parsed_value)
-        {
-            std::istringstream in(s);
-            Parser parser;
-            parser.attach_istream(in);
-        <|if(is_defined(generate_debug_spew_code))
-            parser.DebugSpew(true);
-        <|end_if
-            Parser::ParserReturnCode return_code = parser.Parse(&parsed_value);
-            return return_code;
-        }
-
 -   Ensure that commandline-specified values for scanner/parser directives override in-source values,
     so that scanner/parser generation can be controlled from the build system if needed, e.g. for unit testing.
 -   Run preprocessor on code blocks in reflex and trison, so that e.g. stuff like this can work
@@ -394,10 +373,7 @@ Some of these are super old and may no longer apply.
 
 -   pass reference instead of double pointer to Parse
 -   refactor the DPDA generation to be simpler and faster (difficult)
--   figure out why minimal graphing isn't working (the right lookaheads
-    aren't being generated).
 -   if possible, make the dpda.states file put the states' rules in order.
--   add a max token stack depth in each parser implementation
 -   you shouldn't have to specify %terminal 'X' for ascii chars.  you should
     just be able to use them (or maybe add as a directive)
 -   check for reduction rule variable name collisions
@@ -445,7 +421,6 @@ Some of these are super old and may no longer apply.
 -   Perhaps in NPDA states file, show epsilon closure and transitions from all states in that epsilon
     closure, so that the human reader doesn't have to do as much mental work.
 -   Collapse some options together using arguments (e.g. the pairs of "do" and "don't" options).
--   Add [ ] brackets to "symbol" class in kate syntax highlighting file.
 -   Add symbols and strings/chars to the body section of codespec kate syntax highlighting file, so that
     at least some syntax highlighting is done in the body.
 -   If "indent" and "unindent" directives were present in preprocessor, then Python targets would be
@@ -466,10 +441,7 @@ Some of these are super old and may no longer apply.
         rule 123,2 : blah <- A B . C
         rule 123,3 : blah <- A B C .
 
--   Allow an id to be associated with an %error directive, where the token associated with the
-    %error directive is produced by the error handling actions.  This is so the parser can store
-    a file location (or range) for the error.  This would support the idea of making ERROR_ into
-    a nonterminal, which would then be called error_.
+-   Maybe make %error into a nonterminal (this is somewhat pedantic).
 -   Probably just get rid of ResetForNewInput, favoring destroying and recreating the parser/scanner.
     At least examine if there's any reason to keep that feature.
 -   Make an option in reflex and trison for printing a list of dependent targetspec and codespec files
