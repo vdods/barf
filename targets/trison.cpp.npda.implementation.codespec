@@ -1149,7 +1149,7 @@ void <{class_name}::RealizedState_::ReplaceTokenStackTopWith (Token const &repla
     for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
         ParseTreeNode_ &hps = **hps_it;
-        if (hps.m_realized_lookahead_cursor > 0);
+        if (hps.m_realized_lookahead_cursor > 0)
             --hps.m_realized_lookahead_cursor;
     }
     Token retval(m_lookahead_queue.front());
