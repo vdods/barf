@@ -2084,6 +2084,8 @@ which includes the top element.
         intractible or dumb).  DID NOT DO THIS ONE; This would only be useful in the previous item
         regarding empty rules.
 
-    -   Make sure %nonassoc error handler actions have some tokens available to generate the error token from.
-
-
+    x   Make sure %nonassoc error handler actions have some tokens available to generate the error token from.
+    -   Be able to specify #line path so that it shows up correctly in KDevelop.
+    -   Make a target for copying the dev generated sources to the main codebase, so that that
+        process can be done in a controlled manner without having to set barf_ENABLE_TARGETS_DIR_OVERRIDE.
+        This target should only exist if barf_DEVELOPER_MODE is set.

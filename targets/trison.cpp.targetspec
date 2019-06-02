@@ -194,19 +194,6 @@
 // should be operated upon.  For example, if you use a dynamically allocated
 // AST node class for token_data_type, you would want to "delete token_data;".
 %add_optional_directive throw_away_token_actions            %strict_code_block
-// This specifies code to be executed in the event that a SHIFT/REDUCE conflict
-// invoving a %nonassoc-precedence rule is encountered.  The variable
-// "lookahead" (which has type `Token const &`) is defined for use in this
-// code.  The lookahead var corresponds to the token that would have been
-// shifted had this conflict been resolved in favor of the SHIFT action.
-// E.g. in "x == y != z", where there are the following nonassoc rules having
-// the same precedence:
-//
-//     expr <- expr == expr
-//     expr <- expr != expr
-//
-// the "!=" token would be the lookahead.that is available to this code block.
-%add_optional_directive nonassoc_error_actions              %strict_code_block
 
 // ///////////////////////////////////////////////////////////////////////////
 // Advanced error token handling
@@ -256,6 +243,28 @@
 // If not specified, then a default implementation involving throw_away_token_actions
 // will be generated.
 %add_optional_directive pop_stack_2_actions                 %strict_code_block
+// This specifies code to be executed in the event that a SHIFT/REDUCE conflict
+// invoving a %nonassoc-precedence rule is encountered.  The input is
+//     `Token const &noconsume_lookahead_token`
+// and the code must return a Token::Data that will be used in the resulting error
+// token (which is pushed onto the front of the lookahead queue, similar to
+// insert_lookahead_error_actions).  The lookahead var corresponds to the token that
+// would have been shifted had this conflict been resolved in favor of the SHIFT
+// action. E.g. in "x == y != z", where there are the following nonassoc rules having
+// the same precedence:
+//
+//     expr <- expr == expr
+//     expr <- expr != expr
+//
+// The nonassoc error would happen at
+//
+//     x == y . != z
+//
+// where != is passed in as noconsume_lookahead_token.
+//
+// If this directive is not specified, then a default implementation involving
+// throw_away_token_actions will be generated.
+%add_optional_directive nonassoc_error_actions              %strict_code_block
 
 // ///////////////////////////////////////////////////////////////////////////
 // Input actions

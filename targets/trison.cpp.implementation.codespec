@@ -249,6 +249,18 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 <|  end_if
 }
 
+<{class_name}::Token::Data <{class_name}::RunNonassocErrorActions_ (Token const &noconsume_lookahead_token)
+{
+<|  if(is_defined(nonassoc_error_actions))
+<|  if(is_defined(generate_debug_spew_code))
+    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing nonassoc-error actions on lookahead token " << ms_token_name_table_[noconsume_lookahead_token.m_id] << '\n')
+<|  end_if
+<|  nonassoc_error_actions
+<|  else
+    return <{token_data_default};
+<|  end_if
+}
+
 <{class_name}::Token <{class_name}::Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if}
 {
 <|  if(is_defined(generate_debug_spew_code))
@@ -261,11 +273,6 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
     TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from scan_actions code block\n")
     assert(false && "no value returned from scan_actions code block");
 <|  end_if
-}
-
-void <{class_name}::RunNonassocErrorActions_ (Token const &lookahead)
-{
-<|  nonassoc_error_actions?
 }
 
 <|if(is_defined(use_npda))

@@ -668,17 +668,24 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                         break;
 
                     case Grammar_::ASSOC_NONASSOC:
+                    {
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
 <|                      end_if
-                        // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
-                        // action to initiate error panic.  This works only because the shift and reduce nodes
-                        // are children of the parse tree root.
-                        assert(shift->m_parent_node == m_hypothetical_state_->m_root);
-                        assert(reduce->m_parent_node == m_hypothetical_state_->m_root);
+                        // Neither SHIFT nor REDUCE should survive.  Instead, invoke the nonassoc error actions
+                        // on the lookahead, and insert an %error token using the returned Token::Data value.
+                        //
+                        // Start:  <realized-stack-tokens> . <lookahead>
+                        //                                 ^~~~~~~~~~^
+                        //                                 input to handler code
+                        //
+                        // Result: <realized-stack-tokens> . <%error> <lookahead>
+                        //                                   ^~~~~~~^
+                        //                                   output from handler code
 
-                        // Lookahead_(0) is the token that would be SHIFT'ed.
-                        RunNonassocErrorActions_(Lookahead_(0));
+                        Token resulting_error_token(Terminal::ERROR_, RunNonassocErrorActions_(Lookahead_(0)));
+                        m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                        m_realized_state_->SetHasEncounteredErrorState();
 
                         m_hypothetical_state_->DeleteBranch(shift);
                         m_hypothetical_state_->DeleteBranch(reduce);
@@ -693,36 +700,16 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
                         // Create fresh HPSes at the root from the realized state.
                         CreateParseTreeFromRealizedState_();
-                        // TODO: This operation could be optimized due to the fact that each HPS will
-                        // take exactly one action; INSERT_LOOKAHEAD_ERROR.  But for now, just do the
-                        // easy thing.
-                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
-                        {
-                            ParseTreeNode_ *hps = *hps_it;
-                            assert(hps != NULL);
-                            ParseTreeNode_ *new_hps = TakeHypotheticalActionOnHPS_(*hps, ParseTreeNode_::INSERT_LOOKAHEAD_ERROR, ParseTreeNode_::UNUSED_DATA);
-                            m_hypothetical_state_->m_new_hps_queue.push_back(new_hps);
-                            // Note that DeleteBranch only nullifies elements in m_hps_queue, it doesn't
-                            // alter the container itself.
-                            m_hypothetical_state_->DeleteBranch(hps);
-                        }
-                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
-                        {
-                            assert(*hps_it == NULL);
-                        }
-                        m_hypothetical_state_->m_hps_queue.clear();
 
-                        // Now that all the INSERT_LOOKAHEAD_ERROR HPSes have been created and put into
-                        // m_new_hps_queue, the existing HPSes have been deleted, and the processing later
-                        // in this function (see `if (conflict_resolved)` block) is expecting the HPSes to
-                        // be in m_hps_queue, swap the queues.
-                        assert(m_hypothetical_state_->m_hps_queue.empty());
-                        assert(!m_hypothetical_state_->m_new_hps_queue.empty());
-                        std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+                        // The processing later in this function (see `if (conflict_resolved)` block)
+                        // is expecting the HPSes to be in m_hps_queue, and m_new_hps_queue to be empty.
+                        assert(!m_hypothetical_state_->m_hps_queue.empty());
+                        assert(m_hypothetical_state_->m_new_hps_queue.empty());
 
                         // Mark the conflict as resolved.
                         conflict_resolved = true;
                         break;
+                    }
 
                     case Grammar_::ASSOC_RIGHT:
 <|                      if(is_defined(generate_debug_spew_code))
