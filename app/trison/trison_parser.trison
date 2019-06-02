@@ -323,6 +323,8 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
              nonterminal_it != nonterminal_it_end;
              ++nonterminal_it)
         {
+//             bool nonterminal_is_self_recursive = false;
+
             assert(*nonterminal_it != NULL);
             Trison::Nonterminal const &nonterminal = **nonterminal_it;
             assert(m_nonterminal_map->find(nonterminal.GetText()) != m_nonterminal_map->end());
@@ -332,6 +334,17 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
             {
                 assert(*rule_it != NULL);
                 Rule const &rule = **rule_it;
+
+//                 if (!rule.m_rule_token_list->empty())
+//                 {
+//                     assert(*rule.m_rule_token_list->begin() != NULL);
+//                     RuleToken const &first_rule_token = **rule.m_rule_token_list->begin();
+//                     assert(rule.m_owner_nonterminal != NULL);
+//                     assert(rule.m_owner_nonterminal == &nonterminal);
+//                     if (first_rule_token.m_token_id == nonterminal.GetText())
+//                         nonterminal_is_self_recursive = true;
+//                 }
+
                 for (RuleTokenList::const_iterator rule_token_it = rule.m_rule_token_list->begin(), rule_token_it_end = rule.m_rule_token_list->end();
                     rule_token_it != rule_token_it_end;
                     ++rule_token_it)
@@ -380,7 +393,16 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                         Ast::Id const &lookahead = **lookahead_it;
                         bool const allow_lookahead_to_use_nonterminals = false;
                         // Currently, the choice to limit to terminals only has been made to avoid
-                        // potentially unknown complicating functionality.
+                        // potentially unknown complicating functionality.  Also, an experiment was
+                        // done to more simply implement the "Logic regarding empty reduction rules
+                        // -- if this transition is REDUCE for an empty reduction rule ..." section
+                        // found in trison.cpp.npda.implementation without needing that special
+                        // logic.  The failure is that the default REDUCE action happens over the
+                        // INSERT_LOOKAHEAD_ERROR (that would result from a %lookahead[!nonterm]).
+                        // Thus this really just needs a refactor of the way default transitions
+                        // are processed to be able to specify a filter for exercising default
+                        // transitions (since INSERT_LOOKAHEAD_ERROR doesn't block default REDUCE
+                        // actions).
                         if (allow_lookahead_to_use_nonterminals)
                         {
                             if (m_nonterminal_map->find(lookahead.GetText()) == m_nonterminal_map->end() && m_terminal_map->find(lookahead.GetText()) == m_terminal_map->end())
@@ -393,6 +415,10 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
                         }
                     }
                 }
+
+                // NOTE: This is commented out because it isn't ready to be annoying people yet.
+//                 if (rule.m_rule_token_list->empty() && nonterminal_is_self_recursive && rule.m_lookahead_directive == NULL)
+//                     EmitWarning("it is recommended that an %empty rule within a self-recursive nonterminal include a %lookahead directive to prevent a certain class of infinite loop.", rule.m_rule_token_list->GetFiLoc());
             }
         }
 
@@ -940,8 +966,9 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     // An empty reduction rule must be specified using the %empty directive.
     DIRECTIVE_EMPTY:throwaway
     %target.cpp {
+        RuleTokenList *rule_token_list = new RuleTokenList(throwaway->GetFiLoc());
         delete throwaway;
-        return new RuleTokenList();
+        return rule_token_list;
     }
 ;
 
@@ -1111,13 +1138,13 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
 
 %nonterminal bracketed_token_specifier_list %type.cpp "TokenSpecifierList *"
 :
-    '[' lookahead_terminal_list:lookaheads ']'
+    '[' lookahead_token_list:lookaheads ']'
     %target.cpp {
         assert(lookaheads != NULL);
         return lookaheads;
     }
 |
-    '[' '!' '[' lookahead_terminal_list:lookaheads ']' ']'
+    '[' '!' '[' lookahead_token_list:lookaheads ']' ']'
     %target.cpp {
         assert(lookaheads != NULL);
         lookaheads->m_is_inverted = !lookaheads->m_is_inverted;
@@ -1125,36 +1152,36 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     }
 |
     // This is a negated single lookahead
-    '[' '!' lookahead_terminal:lookahead_terminal ']'
+    '[' '!' lookahead_token:lookahead_token ']'
     %target.cpp {
-        assert(lookahead_terminal != NULL);
-        TokenSpecifierList *lookaheads = new TokenSpecifierList(lookahead_terminal->GetFiLoc());
-        lookaheads->Append(lookahead_terminal);
+        assert(lookahead_token != NULL);
+        TokenSpecifierList *lookaheads = new TokenSpecifierList(lookahead_token->GetFiLoc());
+        lookaheads->Append(lookahead_token);
         lookaheads->m_is_inverted = !lookaheads->m_is_inverted;
         return lookaheads;
     }
 ;
 
 // An "or"ed sequence of lookaheads; e.g. a|b|c
-%nonterminal lookahead_terminal_list %type.cpp "TokenSpecifierList *"
+%nonterminal lookahead_token_list %type.cpp "TokenSpecifierList *"
 :
-    lookahead_terminal_list:lookaheads '|' lookahead_terminal:lookahead_terminal
+    lookahead_token_list:lookaheads '|' lookahead_token:lookahead_token
     %target.cpp {
-        assert(lookahead_terminal != NULL);
-        lookaheads->Append(lookahead_terminal);
+        assert(lookahead_token != NULL);
+        lookaheads->Append(lookahead_token);
         return lookaheads;
     }
 |
-    lookahead_terminal:lookahead_terminal
+    lookahead_token:lookahead_token
     %target.cpp {
-        assert(lookahead_terminal != NULL);
-        TokenSpecifierList *lookaheads = new TokenSpecifierList(lookahead_terminal->GetFiLoc());
-        lookaheads->Append(lookahead_terminal);
+        assert(lookahead_token != NULL);
+        TokenSpecifierList *lookaheads = new TokenSpecifierList(lookahead_token->GetFiLoc());
+        lookaheads->Append(lookahead_token);
         return lookaheads;
     }
 ;
 
-%nonterminal lookahead_terminal %type.cpp "Ast::Id *"
+%nonterminal lookahead_token %type.cpp "Ast::Id *"
 :
     DIRECTIVE_END:throwaway
     %target.cpp {
@@ -1177,11 +1204,12 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
         assert(m_terminal_map != NULL);
         if (token_id != NULL)
         {
-            if (m_terminal_map->find(token_id->GetText()) == m_terminal_map->end())
-                // TODO: This probably isn't going to print %end or %error correctly.
-                EmitError(FORMAT("undeclared terminal \"" << token_id->GetText() << "\""), token_id->GetFiLoc());
-            else
-                t = new Ast::Id(token_id->GetText(), token_id->GetFiLoc());
+//             if (m_nonterminal_map->find(token_id->GetText()) == m_nonterminal_map->end() && m_terminal_map->find(token_id->GetText()) == m_terminal_map->end())
+//                 // TODO: This probably isn't going to print %end or %error correctly.
+//                 EmitError(FORMAT("undeclared terminal \"" << token_id->GetText() << "\""), token_id->GetFiLoc());
+//             else
+//                 t = new Ast::Id(token_id->GetText(), token_id->GetFiLoc());
+            t = new Ast::Id(token_id->GetText(), token_id->GetFiLoc());
         }
         delete token_id;
         return t;

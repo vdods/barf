@@ -2021,15 +2021,69 @@ which includes the top element.
 -   Notes on %lookahead and related:
     x   The tokens for %error and %lookahead don't need to be RuleToken, they just need to be a token ID.
     x   Simplify this code down.
-    -   Probably check if the funky in-parser logic regarding empty rules being reduced can be
+    x   Make lookahead be able to take a C identifier, so that it can be used in the reduction rule code.
+    x   Probably check if the funky in-parser logic regarding empty rules being reduced can be
         implemented by a requirement on a %lookahead for each %empty rule.
-    -   Probably allow nonterminals in %lookahead tokens.  This would really only be used for %empty
+        ANSWER: I ran an experiment e.g.
+
+            %nonterminal id_list
+            :
+                id_list id
+            |
+                %empty %lookahead[!id_list] // optionally also specifying SUPER_LOW precedence
+            ;
+
+        while the "Logic regarding empty reduction rules -- if this transition is REDUCE for an empty
+        reduction rule" logic was commented out -- in particular the following block
+
+            assert(hps.m_parent_node != NULL);
+            if (transition.m_type == Npda_::Transition_::REDUCE)
+            {
+                Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[transition.m_data_index];
+                bool is_empty_reduction_rule = rule.m_token_count == 0;
+                bool just_reduced_this_nonterminal = hps.m_parent_node->m_spec.m_type == ParseTreeNode_::REDUCE && hps.m_parent_node->m_spec.m_single_data == rule.m_reduction_nonterminal_token_id;
+                // The fancy logical construction here is to avoid accessing the lookahead unless necessary
+                // (and technically this is not optimal, since really when executing the trunk actions,
+                // the information of "parent is REDUCE and the reduction rule nonterminal is this one"
+                // is lost in the current implementation.
+                if (is_empty_reduction_rule &&
+                    (just_reduced_this_nonterminal ||
+                    rule.m_reduction_nonterminal_token_id == hps.LookaheadTokenId(*this))) // lookahead is this nonterminal
+                {
+        <|          if(is_defined(generate_debug_spew_code))
+                    TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << <{debug_spew_prefix} << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
+        <|          end_if
+                    take_action = false;
+                }
+            }
+
+        but because the state for the empty rule was
+
+            state 371:
+                rule 86: id_list <- . %lookahead[![id_list]]
+
+                default:REDUCE rule 86
+                id_list:INSERT_LOOKAHEAD_ERROR
+
+        and INSERT_LOOKAHEAD_ERROR isn't even considered if REDUCE happens (which is does), this
+        feature isn't possible until default transitions have a way to specify a negative filter,
+        which in this case would be something like
+
+            state 371hypothetical:
+                rule 86: id_list <- . %lookahead[![id_list]]
+
+                default(!id_list):REDUCE rule 86
+                id_list:INSERT_LOOKAHEAD_ERROR
+
+        so for the time being, the functionality is left as it is.
+
+    x   Probably allow nonterminals in %lookahead tokens.  This would really only be used for %empty
         rules, as far as I can see.  And probably only allow nonterminals in %lookahead for %empty rules.
         If nonterminals were allowed in nonempty rules, then it would sort of necessitate having to
         parse way forward in order to determine if that nonterminal shows up (which is probably either
-        intractible or dumb).
-    -   Think about if nonterminals make sense for %error tokens (probably not).
-    -   Make lookahead be able to take a C identifier, so that it can be used in the reduction rule code.
+        intractible or dumb).  DID NOT DO THIS ONE; This would only be useful in the previous item
+        regarding empty rules.
+
     -   Make sure %nonassoc error handler actions have some tokens available to generate the error token from.
 
 
