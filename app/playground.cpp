@@ -10,13 +10,33 @@
 
 #include <iostream>
 
+#include "barf_optionsbase.hpp"
 #include "barf_regex_parser.hpp"
 
 using namespace Barf;
 using namespace std;
 
+// unnamed namespace to hide g_options from other files
+namespace {
+OptionsBase *g_options = NULL;
+}
+
+// required by barf_optionsbase.hpp
+bool OptionsAreInitialized () { return g_options != NULL; }
+OptionsBase const &GetOptions ()
+{
+    assert(g_options != NULL && "g_options not initialized yet");
+    return *g_options;
+}
+
+// required by barf_message.hpp
+bool g_errors_encountered = false;
+
 int main (int argc, char **argv)
 {
+    // NOTE: It doesn't matter that g_options is left uninitialized, since
+    // Regex::Parser doesn't use it.
+
     Regex::Parser parser;
     Regex::RegularExpression *regex = NULL;
     
