@@ -188,6 +188,8 @@ set(barf_core_SOURCES
     lib/core/barf_message.hpp
     lib/core/barf_optionsbase.cpp
     lib/core/barf_optionsbase.hpp
+    lib/core/barf_path.cpp
+    lib/core/barf_path.hpp
     lib/core/barf_pointer.hpp
     lib/core/barf_searchpath.cpp
     lib/core/barf_searchpath.hpp
