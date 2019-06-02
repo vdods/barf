@@ -61,7 +61,7 @@
                 <DetectChar char="{" attribute="Symbol" context="strict_code_block" beginRegion="Strict Code Block" />
                 <Detect2Chars char="/" char1="/" attribute="Comment" context="line_comment" />
                 <Detect2Chars char="/" char1="*" attribute="Comment" context="block_comment" beginRegion="Comment"/>
-                <AnyChar String=":;|.," attribute="Symbol" context="#stay" />
+                <AnyChar String=":;|.,![]" attribute="Symbol" context="#stay" />
                 <DetectChar char="(" attribute="Symbol" context="regex" />
                 <DetectChar char="'" attribute="Char" context="char" />
             </context>
