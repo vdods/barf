@@ -58,7 +58,7 @@ public:
         return m_line_number;
     }
     string AsString () const;
-    string LineDirectiveString () const;
+    string LineDirectiveString (string const &relative_to_path = g_empty_string) const;
 
     inline void SetFilename (string const &filename)
     {

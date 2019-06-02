@@ -17,6 +17,7 @@
 #include "barf_targetspec_parser.hpp"
 #include "barf_message.hpp"
 #include "barf_optionsbase.hpp"
+#include "barf_path.hpp"
 #include "barf_preprocessor_ast.hpp"
 #include "barf_preprocessor_parser.hpp"
 #include "barf_preprocessor_symboltable.hpp"
@@ -207,8 +208,17 @@ void Target::GenerateCode (Preprocessor::SymbolTable const &symbol_table) const
                 FilenamePortion(codespec.m_source_path));
 
             try {
-                Preprocessor::Textifier textifier(stream, FilenamePortion(filename));
-                // TODO: here's where you indicate line directives shouldn't be used
+                string line_directive_path;
+                if (!GetOptions().LineDirectivesRelativeToPath().empty())
+                    try {
+                        line_directive_path = Path(filename).make_absolute().relative_to(Path(GetOptions().LineDirectivesRelativeToPath())).as_string();
+                    } catch (std::exception const &e) {
+                        EmitWarning(string("caught exception while trying to generate #line directive path \"" + filename + "\" relative to path \"" + GetOptions().LineDirectivesRelativeToPath() + "\"; exception was \"") + e.what() + "\"");
+                        line_directive_path = FilenamePortion(filename);
+                    }
+                else
+                    line_directive_path = FilenamePortion(filename);
+                Preprocessor::Textifier textifier(stream, line_directive_path);
                 textifier.GeneratesLineDirectives(GetOptions().WithLineDirectives());
                 EmitExecutionMessage("generating code for file \"" + filename + "\"");
                 codespec.m_codespec_body->Execute(textifier, codespec_symbol_table);

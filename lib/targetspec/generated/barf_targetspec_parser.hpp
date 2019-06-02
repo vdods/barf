@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 18 "barf_targetspec_parser.trison"
+#line 18 "../lib/targetspec/barf_targetspec_parser.trison"
 
 #if !defined(BARF_TARGETSPEC_PARSER_HPP_)
 #define BARF_TARGETSPEC_PARSER_HPP_
@@ -38,7 +38,7 @@ namespace Targetspec {
 struct AddCodespecList;
 struct AddDirectiveMap;
 
-#line 42 "barf_targetspec_parser.hpp"
+#line 42 "../lib/targetspec/generated/barf_targetspec_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -324,7 +324,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 39 "barf_targetspec_parser.trison"
+#line 39 "../lib/targetspec/barf_targetspec_parser.trison"
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
@@ -341,7 +341,7 @@ private:
     AddCodespecList *m_add_codespec_list;
     AddDirectiveMap *m_add_directive_map;
 
-#line 345 "barf_targetspec_parser.hpp"
+#line 345 "../lib/targetspec/generated/barf_targetspec_parser.hpp"
 
 
 private:
@@ -374,9 +374,9 @@ private:
     Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
     Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
     Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
-    void RunNonassocErrorActions_ (Token const &lookahead);
     // debug spew methods
     void PrintParserStatus_ (std::ostream &out) const;
 
@@ -986,11 +986,11 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 55 "barf_targetspec_parser.trison"
+#line 55 "../lib/targetspec/barf_targetspec_parser.trison"
 
 } // end of namespace Targetspec
 } // end of namespace Barf
 
 #endif // !defined(BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 997 "barf_targetspec_parser.hpp"
+#line 997 "../lib/targetspec/generated/barf_targetspec_parser.hpp"

@@ -15,7 +15,8 @@ function(trison_add_source_dev SOURCE_FILE OUTPUT_DIR TARGET_NAME)
 
     file(MAKE_DIRECTORY ${OUTPUT_DIR})
 
-    __trison_add_source__impl(${PROJECT_BINARY_DIR}/bin/trison ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE ${PROJECT_SOURCE_DIR}/targets ${OUTPUT_DIR} force_${TARGET_NAME} trison)
+    # FALSE for WITH_LINE_DIRECTIVES, so we don't get different paths between dev and metadev
+    __trison_add_source__impl(${PROJECT_BINARY_DIR}/bin/trison ${SOURCE_DIR} ${SOURCE_BASENAME} FALSE ${PROJECT_BINARY_DIR} TRUE ${PROJECT_SOURCE_DIR}/targets ${OUTPUT_DIR} force_${TARGET_NAME} trison)
 
     set(OUTPUT_FILES
         ${OUTPUT_DIR}/${SOURCE_BASENAME}.cpp
@@ -62,7 +63,8 @@ function(trison_add_source_metadev SOURCE_FILE OUTPUT_DIR TARGET_NAME DEPENDENT_
     set(DEV_COMPARISON_DIR ${PROJECT_BINARY_DIR}/dev/${RELATIVE_SOURCE_DIR}/generated)
     file(MAKE_DIRECTORY ${OUTPUT_DIR})
 
-    __trison_add_source__impl(${PROJECT_BINARY_DIR}/bin/dev_trison ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE ${PROJECT_SOURCE_DIR}/targets ${OUTPUT_DIR} force_${TARGET_NAME} dev_trison)
+    # FALSE for WITH_LINE_DIRECTIVES, so we don't get different paths between dev and metadev
+    __trison_add_source__impl(${PROJECT_BINARY_DIR}/bin/dev_trison ${SOURCE_DIR} ${SOURCE_BASENAME} FALSE ${PROJECT_BINARY_DIR} TRUE ${PROJECT_SOURCE_DIR}/targets ${OUTPUT_DIR} force_${TARGET_NAME} dev_trison)
 
     set(OUTPUT_FILES
         ${OUTPUT_DIR}/${SOURCE_BASENAME}.cpp

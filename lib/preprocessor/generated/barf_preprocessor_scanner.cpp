@@ -10,7 +10,7 @@
 #define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
 
 
-#line 68 "barf_preprocessor_scanner.reflex"
+#line 68 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
 #include "barf_preprocessor_ast.hpp"
 
@@ -80,7 +80,7 @@ Parser::Token Scanner::ParseKeyword (string const &accepted_string)
     return Parser::Token(Parser::Terminal::ID, new Ast::Id(accepted_string, GetFiLoc()));
 }
 
-#line 84 "barf_preprocessor_scanner.cpp"
+#line 84 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
 Scanner::Scanner ()
     :
@@ -94,11 +94,11 @@ Scanner::Scanner ()
     SetDebugSpewStream(NULL);
 
 
-#line 137 "barf_preprocessor_scanner.reflex"
+#line 137 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
     m_text = NULL;
 
-#line 102 "barf_preprocessor_scanner.cpp"
+#line 102 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
     ResetForNewInput();
 }
@@ -106,12 +106,12 @@ Scanner::Scanner ()
 Scanner::~Scanner ()
 {
 
-#line 140 "barf_preprocessor_scanner.reflex"
+#line 140 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
     delete m_text;
     m_text = NULL;
 
-#line 115 "barf_preprocessor_scanner.cpp"
+#line 115 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 }
 
 Scanner::StateMachine::Name Scanner::CurrentStateMachine () const
@@ -141,9 +141,9 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
         (false && "invalid StateMachine::Name"));
     REFLEX_CPP_DEBUG_CODE_(
         *DebugSpewStream() << 
-#line 171 "barf_preprocessor_scanner.reflex"
+#line 171 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 147 "barf_preprocessor_scanner.cpp"
+#line 147 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
  << " switching to state machine "
                            << ms_state_machine_name_[state_machine];
         if (ms_state_machine_mode_flags_[state_machine] != 0)
@@ -163,9 +163,9 @@ void Scanner::ResetForNewInput ()
 {
     REFLEX_CPP_DEBUG_CODE_(
         *DebugSpewStream() << 
-#line 171 "barf_preprocessor_scanner.reflex"
+#line 171 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 169 "barf_preprocessor_scanner.cpp"
+#line 169 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
  << " executing reset-for-new-input actions and switching to state machine "
                            << ms_state_machine_name_[StateMachine::START_];
         if (ms_state_machine_mode_flags_[StateMachine::START_] != 0)
@@ -180,12 +180,12 @@ void Scanner::ResetForNewInput ()
     assert(CurrentStateMachine() == StateMachine::START_);
 
 
-#line 161 "barf_preprocessor_scanner.reflex"
+#line 161 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
     delete m_text;
     m_text = NULL;
 
-#line 189 "barf_preprocessor_scanner.cpp"
+#line 189 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 }
 
 Parser::Token Scanner::Scan () throw()
@@ -220,9 +220,9 @@ Parser::Token Scanner::Scan () throw()
 
             REFLEX_CPP_DEBUG_CODE_(
                 *DebugSpewStream() << 
-#line 171 "barf_preprocessor_scanner.reflex"
+#line 171 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 226 "barf_preprocessor_scanner.cpp"
+#line 226 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
  << " rejecting string ";
                 PrintString_(*DebugSpewStream(), rejected_string);
                 *DebugSpewStream() << " (rejected_atom is \'";
@@ -235,11 +235,11 @@ Parser::Token Scanner::Scan () throw()
             do
             {
 
-#line 158 "barf_preprocessor_scanner.reflex"
+#line 158 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
     EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 
-#line 243 "barf_preprocessor_scanner.cpp"
+#line 243 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
             }
             while (false);
@@ -251,9 +251,9 @@ Parser::Token Scanner::Scan () throw()
 
             REFLEX_CPP_DEBUG_CODE_(
                 *DebugSpewStream() << 
-#line 171 "barf_preprocessor_scanner.reflex"
+#line 171 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 257 "barf_preprocessor_scanner.cpp"
+#line 257 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
  << " accepting string ";
                 PrintString_(*DebugSpewStream(), accepted_string);
                 *DebugSpewStream() << " in state machine " << ms_state_machine_name_[CurrentStateMachine()]
@@ -266,12 +266,12 @@ Parser::Token Scanner::Scan () throw()
                 case 0:
                 {
 
-#line 407 "barf_preprocessor_scanner.reflex"
+#line 407 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         assert(false && "this should never happen");
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     
-#line 275 "barf_preprocessor_scanner.cpp"
+#line 275 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -279,11 +279,11 @@ Parser::Token Scanner::Scan () throw()
                 case 1:
                 {
 
-#line 413 "barf_preprocessor_scanner.reflex"
+#line 413 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::END_);
     
-#line 287 "barf_preprocessor_scanner.cpp"
+#line 287 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -291,7 +291,7 @@ Parser::Token Scanner::Scan () throw()
                 case 2:
                 {
 
-#line 222 "barf_preprocessor_scanner.reflex"
+#line 222 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         IncrementLineNumber(NewlineCount(accepted_string));
 
@@ -314,7 +314,7 @@ Parser::Token Scanner::Scan () throw()
         m_text = NULL;
         return Parser::Token(Parser::Terminal::TEXT, token);
     
-#line 318 "barf_preprocessor_scanner.cpp"
+#line 318 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -322,7 +322,7 @@ Parser::Token Scanner::Scan () throw()
                 case 3:
                 {
 
-#line 246 "barf_preprocessor_scanner.reflex"
+#line 246 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         // if there's already a body text in progress, continue it.
         if (m_text != NULL)
@@ -336,7 +336,7 @@ Parser::Token Scanner::Scan () throw()
         m_text = NULL;
         return Parser::Token(Parser::Terminal::TEXT, token);
     
-#line 340 "barf_preprocessor_scanner.cpp"
+#line 340 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -344,11 +344,11 @@ Parser::Token Scanner::Scan () throw()
                 case 4:
                 {
 
-#line 279 "barf_preprocessor_scanner.reflex"
+#line 279 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         // ignore whitespace
     
-#line 352 "barf_preprocessor_scanner.cpp"
+#line 352 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -356,7 +356,7 @@ Parser::Token Scanner::Scan () throw()
                 case 5:
                 {
 
-#line 284 "barf_preprocessor_scanner.reflex"
+#line 284 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         IncrementLineNumber(1);
         // we only return from the scanner on a newline if we're scanning
@@ -367,7 +367,7 @@ Parser::Token Scanner::Scan () throw()
             return Parser::Token(Parser::Terminal::CODE_NEWLINE);
         }
     
-#line 371 "barf_preprocessor_scanner.cpp"
+#line 371 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -375,7 +375,7 @@ Parser::Token Scanner::Scan () throw()
                 case 6:
                 {
 
-#line 296 "barf_preprocessor_scanner.reflex"
+#line 296 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         SwitchToStateMachine(StateMachine::EXPECTING_END_OF_FILE);
         if (m_is_reading_newline_sensitive_code)
@@ -383,7 +383,7 @@ Parser::Token Scanner::Scan () throw()
         else
             EmitError("unexpected end of file encountered within preprocessor code section", GetFiLoc());
     
-#line 387 "barf_preprocessor_scanner.cpp"
+#line 387 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -391,7 +391,7 @@ Parser::Token Scanner::Scan () throw()
                 case 7:
                 {
 
-#line 305 "barf_preprocessor_scanner.reflex"
+#line 305 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         if (!m_is_reading_newline_sensitive_code)
         {
@@ -404,7 +404,7 @@ Parser::Token Scanner::Scan () throw()
             return Parser::Token(Parser::Terminal::BAD_TOKEN);
         }
     
-#line 408 "barf_preprocessor_scanner.cpp"
+#line 408 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -412,11 +412,11 @@ Parser::Token Scanner::Scan () throw()
                 case 8:
                 {
 
-#line 319 "barf_preprocessor_scanner.reflex"
+#line 319 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         return Parser::Token(Parser::Token::Id(accepted_string[0]));
     
-#line 420 "barf_preprocessor_scanner.cpp"
+#line 420 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -424,11 +424,11 @@ Parser::Token Scanner::Scan () throw()
                 case 9:
                 {
 
-#line 324 "barf_preprocessor_scanner.reflex"
+#line 324 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         return ParseKeyword(accepted_string);
     
-#line 432 "barf_preprocessor_scanner.cpp"
+#line 432 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -436,14 +436,14 @@ Parser::Token Scanner::Scan () throw()
                 case 10:
                 {
 
-#line 329 "barf_preprocessor_scanner.reflex"
+#line 329 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         Sint32 value = 0;
         istringstream in(accepted_string);
         in >> value;
         return Parser::Token(Parser::Terminal::INTEGER_LITERAL, new Integer(value, GetFiLoc()));
     
-#line 447 "barf_preprocessor_scanner.cpp"
+#line 447 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -451,13 +451,13 @@ Parser::Token Scanner::Scan () throw()
                 case 11:
                 {
 
-#line 337 "barf_preprocessor_scanner.reflex"
+#line 337 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         assert(m_text == NULL);
         m_text = new Text("", GetFiLoc());
         SwitchToStateMachine(StateMachine::READING_CODE_STRING_LITERAL_GUTS);
     
-#line 461 "barf_preprocessor_scanner.cpp"
+#line 461 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -465,12 +465,12 @@ Parser::Token Scanner::Scan () throw()
                 case 12:
                 {
 
-#line 344 "barf_preprocessor_scanner.reflex"
+#line 344 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         EmitError("unrecognized character encountered within preprocessor code section", GetFiLoc());
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     
-#line 474 "barf_preprocessor_scanner.cpp"
+#line 474 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -478,7 +478,7 @@ Parser::Token Scanner::Scan () throw()
                 case 13:
                 {
 
-#line 353 "barf_preprocessor_scanner.reflex"
+#line 353 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         assert(m_text != NULL);
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -518,7 +518,7 @@ Parser::Token Scanner::Scan () throw()
         m_text = NULL;
         return Parser::Token(Parser::Terminal::STRING_LITERAL, token);
     
-#line 522 "barf_preprocessor_scanner.cpp"
+#line 522 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -526,7 +526,7 @@ Parser::Token Scanner::Scan () throw()
                 case 14:
                 {
 
-#line 394 "barf_preprocessor_scanner.reflex"
+#line 394 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         EmitError("unterminated string literal", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -535,7 +535,7 @@ Parser::Token Scanner::Scan () throw()
         m_text = NULL;
         return Parser::Token(Parser::Terminal::END_);
     
-#line 539 "barf_preprocessor_scanner.cpp"
+#line 539 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -543,7 +543,7 @@ Parser::Token Scanner::Scan () throw()
                 case 15:
                 {
 
-#line 266 "barf_preprocessor_scanner.reflex"
+#line 266 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
         assert(m_text == NULL);
         SwitchToStateMachine(StateMachine::READING_CODE);
@@ -552,7 +552,7 @@ Parser::Token Scanner::Scan () throw()
         else
             return Parser::Token(Parser::Terminal::START_CODE);
     
-#line 556 "barf_preprocessor_scanner.cpp"
+#line 556 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 
                 }
                 break;
@@ -563,20 +563,20 @@ Parser::Token Scanner::Scan () throw()
     }
 
 
-#line 144 "barf_preprocessor_scanner.reflex"
+#line 144 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
     assert(false && "you didn't handle EOF properly");
     return Parser::Token(Parser::Terminal::END_);
 
-#line 572 "barf_preprocessor_scanner.cpp"
+#line 572 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
 }
 
 void Scanner::KeepString ()
 {
     REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
-#line 171 "barf_preprocessor_scanner.reflex"
+#line 171 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 580 "barf_preprocessor_scanner.cpp"
+#line 580 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
  << " keeping string" << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::KeepString();
 }
@@ -584,9 +584,9 @@ void Scanner::KeepString ()
 void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
-#line 171 "barf_preprocessor_scanner.reflex"
+#line 171 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 590 "barf_preprocessor_scanner.cpp"
+#line 590 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
  << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::Unaccept(unaccept_char_count);
 }
@@ -594,9 +594,9 @@ void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 void Scanner::Unreject (std::uint32_t unreject_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
-#line 171 "barf_preprocessor_scanner.reflex"
+#line 171 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 "Preprocessor::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 600 "barf_preprocessor_scanner.cpp"
+#line 600 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"
  << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
     AutomatonApparatus_FastAndBig_Noninteractive_::Unreject(unreject_char_count);
 }
@@ -5580,9 +5580,9 @@ std::uint32_t const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_accep
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 148 "barf_preprocessor_scanner.reflex"
+#line 148 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
-#line 5589 "barf_preprocessor_scanner.cpp"
+#line 5589 "../lib/preprocessor/generated/barf_preprocessor_scanner.cpp"

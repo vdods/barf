@@ -90,6 +90,7 @@ public:
     #endif
         m_print_search_path_request(PSPR_NONE),
         m_with_line_directives(true),
+        m_line_directives_relative_to_path(""), // empty indicates paths are not relative
         m_enabled_verbosity(V_NONE),
         m_is_help_requested(false),
         m_abort_flag(false),
@@ -121,8 +122,9 @@ public:
     SearchPath const &GetSearchPath () const { return m_search_path; }
     PrintSearchPathRequest GetPrintSearchPathRequest () const { return m_print_search_path_request; }
     // output options
-    string OutputDirectory () const { return m_output_directory; }
+    string const &OutputDirectory () const { return m_output_directory; }
     bool WithLineDirectives () const { return m_with_line_directives; }
+    string const &LineDirectivesRelativeToPath () const { return m_line_directives_relative_to_path; }
     string NaDotGraphPath () const { return m_na_dot_graph_filename.empty() ? g_empty_string : OutputDirectory() + m_na_dot_graph_filename; }
     string DaDotGraphPath () const { return m_da_dot_graph_filename.empty() ? g_empty_string : OutputDirectory() + m_da_dot_graph_filename; }
     // target-related options
@@ -155,6 +157,7 @@ public:
     void SetOutputDirectory (string const &output_directory);
     void WithLineDirectives_Enable ();
     void WithLineDirectives_Disable ();
+    void SetLineDirectivesRelativeToPath (string const &path);
     void GenerateNaDotGraph (string const &na_dot_graph_filename);
     void GenerateNaDotGraph_Disable ();
     void GenerateDaDotGraph (string const &da_dot_graph_filename);
@@ -214,6 +217,7 @@ private:
     // output option values
     string m_output_directory;
     bool m_with_line_directives;
+    string m_line_directives_relative_to_path;
     string m_na_dot_graph_filename;
     string m_da_dot_graph_filename;
     // targets search path options

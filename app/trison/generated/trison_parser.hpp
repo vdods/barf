@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 18 "trison_parser.trison"
+#line 18 "../app/trison/trison_parser.trison"
 
 #if !defined(TRISON_PARSER_HPP_)
 #define TRISON_PARSER_HPP_
@@ -52,7 +52,7 @@ struct PrecedenceMap;
 struct TerminalList;
 struct TerminalMap;
 
-#line 56 "trison_parser.hpp"
+#line 56 "../app/trison/generated/trison_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -367,7 +367,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 53 "trison_parser.trison"
+#line 53 "../app/trison/trison_parser.trison"
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
@@ -395,7 +395,7 @@ private:
     NonterminalMap *m_nonterminal_map;
     Uint32 m_rule_count;
 
-#line 399 "trison_parser.hpp"
+#line 399 "../app/trison/generated/trison_parser.hpp"
 
 
 private:
@@ -428,9 +428,9 @@ private:
     Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
     Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
     Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
-    void RunNonassocErrorActions_ (Token const &lookahead);
     // debug spew methods
     void PrintParserStatus_ (std::ostream &out) const;
 
@@ -1040,10 +1040,10 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 80 "trison_parser.trison"
+#line 80 "../app/trison/trison_parser.trison"
 
 } // end of namespace Trison
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 1050 "trison_parser.hpp"
+#line 1050 "../app/trison/generated/trison_parser.hpp"

@@ -43,6 +43,13 @@ if(barf_DEVELOPER_MODE)
     find_package(barf REQUIRED)
 endif()
 
+option(barf_LINE_DIRECTIVES_RELATIVE_TO_BUILD_DIR "If enabled, specifies that the paths in the #line directives in the generated parser/scanner code will be relative to the build dir." ON)
+if(barf_LINE_DIRECTIVES_RELATIVE_TO_BUILD_DIR)
+    set(LINE_DIRECTIVES_RELATIVE_TO_DIR "${PROJECT_BINARY_DIR}")
+else()
+    set(LINE_DIRECTIVES_RELATIVE_TO_DIR "")
+endif()
+
 # This sets the DOXYGEN_EXECUTABLE and DOXYGEN_DOT_EXECUTABLE vars.
 find_package(Doxygen REQUIRED dot)
 # TODO: Hook up doxygen config and generation
@@ -89,8 +96,8 @@ endif()
 #
 
 if(barf_DEVELOPER_MODE)
-    reflex_add_source(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex ${PROJECT_SOURCE_DIR}/lib/commonlang/generated barf_commonlang_scanner)
-    trison_add_source(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison ${PROJECT_SOURCE_DIR}/lib/targetspec/generated barf_targetspec_parser)
+    reflex_add_source(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex ${PROJECT_SOURCE_DIR}/lib/commonlang/generated barf_commonlang_scanner "${LINE_DIRECTIVES_RELATIVE_TO_DIR}")
+    trison_add_source(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison ${PROJECT_SOURCE_DIR}/lib/targetspec/generated barf_targetspec_parser "${LINE_DIRECTIVES_RELATIVE_TO_DIR}")
 endif()
 
 set(barf_commonlang_and_targetspec_SOURCES
@@ -237,8 +244,8 @@ target_link_libraries(dev_barf_core PUBLIC Strict)
 #
 
 if(barf_DEVELOPER_MODE)
-    reflex_add_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex ${PROJECT_SOURCE_DIR}/lib/preprocessor/generated barf_preprocessor_scanner)
-    trison_add_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison ${PROJECT_SOURCE_DIR}/lib/preprocessor/generated barf_preprocessor_parser)
+    reflex_add_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex ${PROJECT_SOURCE_DIR}/lib/preprocessor/generated barf_preprocessor_scanner "${LINE_DIRECTIVES_RELATIVE_TO_DIR}")
+    trison_add_source(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison ${PROJECT_SOURCE_DIR}/lib/preprocessor/generated barf_preprocessor_parser "${LINE_DIRECTIVES_RELATIVE_TO_DIR}")
 endif()
 
 set(barf_preprocessor_SOURCES
@@ -313,7 +320,7 @@ target_link_libraries(dev_barf_preprocessor PUBLIC Strict dev_barf_core)
 #
 
 if(barf_DEVELOPER_MODE)
-    trison_add_source(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison ${PROJECT_SOURCE_DIR}/lib/regex/generated barf_regex_parser)
+    trison_add_source(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison ${PROJECT_SOURCE_DIR}/lib/regex/generated barf_regex_parser "${LINE_DIRECTIVES_RELATIVE_TO_DIR}")
 endif()
 
 set(barf_regex_SOURCES
@@ -431,7 +438,7 @@ target_link_libraries(dev_bpp PUBLIC Strict dev_barf_core dev_barf_preprocessor)
 #
 
 if(barf_DEVELOPER_MODE)
-    trison_add_source(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison ${PROJECT_SOURCE_DIR}/app/reflex/generated reflex_parser)
+    trison_add_source(${PROJECT_SOURCE_DIR}/app/reflex/reflex_parser.trison ${PROJECT_SOURCE_DIR}/app/reflex/generated reflex_parser "${LINE_DIRECTIVES_RELATIVE_TO_DIR}")
 endif()
 
 set(reflex_SOURCES
@@ -498,7 +505,7 @@ target_link_libraries(dev_reflex PUBLIC Strict dev_barf_commonlang_and_targetspe
 #
 
 if(barf_DEVELOPER_MODE)
-    trison_add_source(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison ${PROJECT_SOURCE_DIR}/app/trison/generated trison_parser)
+    trison_add_source(${PROJECT_SOURCE_DIR}/app/trison/trison_parser.trison ${PROJECT_SOURCE_DIR}/app/trison/generated trison_parser "${LINE_DIRECTIVES_RELATIVE_TO_DIR}")
 endif()
 
 set(trison_SOURCES

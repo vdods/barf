@@ -4,7 +4,7 @@
 ###############################################################################
 
 # Don't use this function directly.  Use reflex_add_source instead.
-function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPECIFY_TARGETS_DIR TARGETS_DIR OUTPUT_DIR FORCE_TARGET_NAME BINARY_DEPENDENCY)
+function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME WITH_LINE_DIRECTIVES LINE_DIRECTIVES_RELATIVE_TO_DIR SPECIFY_TARGETS_DIR TARGETS_DIR OUTPUT_DIR FORCE_TARGET_NAME BINARY_DEPENDENCY)
     if(NOT TARGETS_DIR)
         #message(FATAL_ERROR "TARGETS_DIR not specified")
         execute_process(
@@ -24,6 +24,12 @@ function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
         set(TARGETS_DIR_OPTION -c -I ${TARGETS_DIR})
     else()
         set(TARGETS_DIR_OPTION "")
+    endif()
+
+    if(WITH_LINE_DIRECTIVES)
+        set(LINE_DIRECTIVES_OPTION "--with-line-directives")
+    else()
+        set(LINE_DIRECTIVES_OPTION "--without-line-directives")
     endif()
 
     set(DEPENDENCIES
@@ -46,6 +52,8 @@ function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
             -o ${OUTPUT_DIR}
             --generate-nfa-dot-graph ${SOURCE_BASENAME}.nfa.dot
             --generate-dfa-dot-graph ${SOURCE_BASENAME}.dfa.dot
+            ${LINE_DIRECTIVES_OPTION}
+            --line-directives-relative-to-path "\"${LINE_DIRECTIVES_RELATIVE_TO_DIR}\""
         # Ideally the .reflex file would be MAIN_DEPENDENCY, but for some reason this causes targets
         # that depend on that file to be built, even if not called for.
         DEPENDS
@@ -63,6 +71,8 @@ function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
             -o ${OUTPUT_DIR}
             --generate-nfa-dot-graph ${SOURCE_BASENAME}.nfa.dot
             --generate-dfa-dot-graph ${SOURCE_BASENAME}.dfa.dot
+            ${LINE_DIRECTIVES_OPTION}
+            --line-directives-relative-to-path "\"${LINE_DIRECTIVES_RELATIVE_TO_DIR}\""
         # Ideally the .reflex file would be MAIN_DEPENDENCY, but for some reason this causes targets
         # that depend on that file to be built, even if not called for.
         DEPENDS
@@ -100,7 +110,7 @@ function(__reflex_add_source__impl REFLEX_BINARY SOURCE_DIR SOURCE_BASENAME SPEC
 endfunction()
 
 # SOURCE_FILE is the .reflex file.  TARGET_NAME is the target that can be invoked to build this particular scanner.
-function(reflex_add_source SOURCE_FILE OUTPUT_DIR TARGET_NAME)
+function(reflex_add_source SOURCE_FILE OUTPUT_DIR TARGET_NAME LINE_DIRECTIVES_RELATIVE_TO_DIR)
     if(NOT DEFINED barf_REFLEX_BINARY)
         message(FATAL_ERROR "Must specify barf_REFLEX_BINARY")
     endif()
@@ -119,7 +129,7 @@ function(reflex_add_source SOURCE_FILE OUTPUT_DIR TARGET_NAME)
     endif()
     get_filename_component(SOURCE_DIR ${SOURCE_FILE} DIRECTORY)
     get_filename_component(SOURCE_BASENAME ${SOURCE_FILE} NAME_WE)
-    __reflex_add_source__impl(${barf_REFLEX_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} ${barf_ENABLE_TARGETS_DIR_OVERRIDE} "${barf_TARGETS_DIR_OVERRIDE}" ${OUTPUT_DIR} force_${TARGET_NAME} ${barf_REFLEX_BINARY})
+    __reflex_add_source__impl(${barf_REFLEX_BINARY} ${SOURCE_DIR} ${SOURCE_BASENAME} TRUE "${LINE_DIRECTIVES_RELATIVE_TO_DIR}" ${barf_ENABLE_TARGETS_DIR_OVERRIDE} "${barf_TARGETS_DIR_OVERRIDE}" ${OUTPUT_DIR} force_${TARGET_NAME} ${barf_REFLEX_BINARY})
 
     set(OUTPUT_FILES ${SOURCE_DIR}/${SOURCE_BASENAME}.cpp ${SOURCE_DIR}/${SOURCE_BASENAME}.hpp ${SOURCE_DIR}/${SOURCE_BASENAME}.dfa.dot ${SOURCE_DIR}/${SOURCE_BASENAME}.nfa.dot)
     add_custom_target(${TARGET_NAME} DEPENDS ${OUTPUT_FILES})

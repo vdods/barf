@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 19 "reflex_parser.trison"
+#line 19 "../app/reflex/reflex_parser.trison"
 
 #if !defined(REFLEX_PARSER_HPP_)
 #define REFLEX_PARSER_HPP_
@@ -50,7 +50,7 @@ struct RegularExpressionMap;
 
 namespace Reflex {
 
-#line 54 "reflex_parser.hpp"
+#line 54 "../app/reflex/generated/reflex_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -350,7 +350,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 52 "reflex_parser.trison"
+#line 52 "../app/reflex/reflex_parser.trison"
 
     FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
@@ -374,7 +374,7 @@ private:
     // This is a member var because THERE CAN BE ONLY ONE.
     StartWithStateMachineDirective *m_start_with_state_machine_directive;
 
-#line 378 "reflex_parser.hpp"
+#line 378 "../app/reflex/generated/reflex_parser.hpp"
 
 
 private:
@@ -407,9 +407,9 @@ private:
     Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
     Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
     Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
-    void RunNonassocErrorActions_ (Token const &lookahead);
     // debug spew methods
     void PrintParserStatus_ (std::ostream &out) const;
 
@@ -1019,10 +1019,10 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 75 "reflex_parser.trison"
+#line 75 "../app/reflex/reflex_parser.trison"
 
 } // end of namespace Reflex
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 1029 "reflex_parser.hpp"
+#line 1029 "../app/reflex/generated/reflex_parser.hpp"

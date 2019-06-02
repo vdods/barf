@@ -101,6 +101,11 @@ void OptionsBase::WithLineDirectives_Disable ()
     m_with_line_directives = false;
 }
 
+void OptionsBase::SetLineDirectivesRelativeToPath (string const &path)
+{
+    m_line_directives_relative_to_path = path;
+}
+
 void OptionsBase::GenerateNaDotGraph (string const &na_dot_graph_filename)
 {
     m_na_dot_graph_filename = na_dot_graph_filename;

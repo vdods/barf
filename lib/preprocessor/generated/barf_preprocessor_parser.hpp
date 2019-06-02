@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 18 "barf_preprocessor_parser.trison"
+#line 18 "../lib/preprocessor/barf_preprocessor_parser.trison"
 
 #if !defined(BARF_PREPROCESSOR_PARSER_HPP_)
 #define BARF_PREPROCESSOR_PARSER_HPP_
@@ -37,7 +37,7 @@ namespace Preprocessor {
 
 class Scanner;
 
-#line 41 "barf_preprocessor_parser.hpp"
+#line 41 "../lib/preprocessor/generated/barf_preprocessor_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -355,7 +355,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::body);
 
 
-#line 38 "barf_preprocessor_parser.trison"
+#line 38 "../lib/preprocessor/barf_preprocessor_parser.trison"
 
     FiLoc const &GetFiLoc () const;
 
@@ -371,7 +371,7 @@ private:
 
     Scanner *m_scanner;
 
-#line 375 "barf_preprocessor_parser.hpp"
+#line 375 "../lib/preprocessor/generated/barf_preprocessor_parser.hpp"
 
 
 private:
@@ -404,9 +404,9 @@ private:
     Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
     Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
     Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
-    void RunNonassocErrorActions_ (Token const &lookahead);
     // debug spew methods
     void PrintParserStatus_ (std::ostream &out) const;
 
@@ -1016,11 +1016,11 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 53 "barf_preprocessor_parser.trison"
+#line 53 "../lib/preprocessor/barf_preprocessor_parser.trison"
 
 } // end of namespace Preprocessor
 } // end of namespace Barf
 
 #endif // !defined(BARF_PREPROCESSOR_PARSER_HPP_)
 
-#line 1027 "barf_preprocessor_parser.hpp"
+#line 1027 "../lib/preprocessor/generated/barf_preprocessor_parser.hpp"

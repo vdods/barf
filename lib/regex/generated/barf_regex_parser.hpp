@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 18 "barf_regex_parser.trison"
+#line 18 "../lib/regex/barf_regex_parser.trison"
 
 #if !defined(BARF_REGEX_PARSER_HPP_)
 #define BARF_REGEX_PARSER_HPP_
@@ -33,7 +33,7 @@
 namespace Barf {
 namespace Regex {
 
-#line 37 "barf_regex_parser.hpp"
+#line 37 "../lib/regex/generated/barf_regex_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -47,9 +47,9 @@ namespace Regex {
 /// primary source file to generate a parser (e.g. "the client shouldn't return X from Y"
 /// or "the client must provide a way to X and Y").
 class Parser : 
-#line 34 "barf_regex_parser.trison"
+#line 34 "../lib/regex/barf_regex_parser.trison"
  protected InputBase 
-#line 53 "barf_regex_parser.hpp"
+#line 53 "../lib/regex/generated/barf_regex_parser.hpp"
 
 {
 public:
@@ -291,7 +291,7 @@ public:
     void ResetForNewInput ();
 
 
-#line 36 "barf_regex_parser.trison"
+#line 36 "../lib/regex/barf_regex_parser.trison"
 
     using InputBase::IsOpen;
     using InputBase::GetFiLoc;
@@ -326,7 +326,7 @@ private:
     // job; parsing of hex chars, e.g. \xA7)
     bool m_active_backslash;
 
-#line 330 "barf_regex_parser.hpp"
+#line 330 "../lib/regex/generated/barf_regex_parser.hpp"
 
 
 private:
@@ -390,9 +390,9 @@ private:
     Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
     Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
     Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ ();
-    void RunNonassocErrorActions_ (Token const &lookahead);
     // debug spew methods
     void PrintParserStatus_ (std::ostream &out) const;
 
@@ -1002,11 +1002,11 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 70 "barf_regex_parser.trison"
+#line 70 "../lib/regex/barf_regex_parser.trison"
 
 } // end of namespace Regex
 } // end of namespace Barf
 
 #endif // !defined(BARF_REGEX_PARSER_HPP_)
 
-#line 1013 "barf_regex_parser.hpp"
+#line 1013 "../lib/regex/generated/barf_regex_parser.hpp"

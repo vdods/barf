@@ -10,6 +10,7 @@
 
 #include "barf_preprocessor_textifier.hpp"
 
+#include "barf_optionsbase.hpp"
 #include "barf_preprocessor_ast.hpp"
 #include "barf_preprocessor_symboltable.hpp"
 #include "barf_util.hpp"
@@ -22,7 +23,7 @@ void Textifier::TextifyBody (Body const &body, SymbolTable &symbol_table)
     if (m_generates_line_directives && body.GetFiLoc().IsValid())
     {
         m_output_filoc.IncrementLineNumber(2);
-        string line_directive(body.GetFiLoc().LineDirectiveString());
+        string line_directive(body.GetFiLoc().LineDirectiveString(GetOptions().LineDirectivesRelativeToPath()));
         m_output_stream << '\n' << line_directive << '\n';
     }
 
@@ -37,7 +38,7 @@ void Textifier::TextifyBody (Body const &body, SymbolTable &symbol_table)
     if (m_generates_line_directives && body.GetFiLoc().IsValid())
     {
         m_output_filoc.IncrementLineNumber(2);
-        string line_directive(m_output_filoc.LineDirectiveString());
+        string line_directive(m_output_filoc.LineDirectiveString(GetOptions().LineDirectivesRelativeToPath()));
         m_output_stream << '\n' << line_directive << '\n';
     }
 }

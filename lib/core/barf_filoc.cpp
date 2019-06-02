@@ -12,6 +12,8 @@
 
 #include <sstream>
 
+#include "barf_message.hpp"
+#include "barf_path.hpp"
 #include "barf_util.hpp"
 
 namespace Barf {
@@ -30,13 +32,24 @@ string FiLoc::AsString () const
     return out.str();
 }
 
-string FiLoc::LineDirectiveString () const
+string FiLoc::LineDirectiveString (string const &relative_to_path) const
 {
     assert(this != &ms_invalid && "do not use this on a FiLoc without a line number");
     assert(IsValid());
 
+    string line_directive_path;
+    if (!relative_to_path.empty())
+        try {
+            line_directive_path = Path(m_filename).make_absolute().relative_to(relative_to_path).as_string();
+        } catch (std::exception const &e) {
+            EmitWarning(string("caught exception while trying to generate #line directive path \"" + m_filename + "\" relative to path \"" + relative_to_path + "\"; exception was \"") + e.what() + "\"");
+            line_directive_path = FilenamePortion(m_filename);
+        }
+    else
+        line_directive_path = FilenamePortion(m_filename);
+
     ostringstream out;
-    out << "#line " << m_line_number << " \"" << FilenamePortion(m_filename) << "\"";
+    out << "#line " << m_line_number << " \"" << line_directive_path << "\"";
     return out.str();
 }
 

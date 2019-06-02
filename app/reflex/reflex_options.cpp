@@ -110,6 +110,13 @@ CommandLineOption const Options::ms_option[] =
         "    debugging, or if the target language doesn't support #line directives to\n"
         "    begin with.  See also option -L."),
     CommandLineOption(
+        'r',
+        "line-directives-relative-to-path",
+        &Options::SetLineDirectivesRelativeToPath,
+        "    If #line directives are to be used in the generated source, then make the\n"
+        "    paths relative to the given path.  The default is the empty string, meaning\n"
+        "    #line directives will not be made relative."),
+    CommandLineOption(
         "generate-nfa-dot-graph",
         &OptionsBase::GenerateNaDotGraph,
         "    Specifies the filename for a `dot` graph (see http://www.graphviz.org/)\n"
