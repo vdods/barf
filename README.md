@@ -20,6 +20,9 @@ in particular, the major revision number certainly indicates backward-incompatib
 while the minor revision number usually indicates backward-compatible changes, there may be
 minor incompabilities.  The patch revision number indicates bugfixes and minor changes.
 
+-   `2.3.0` : Added ability to assign an id to %error tokens.  Added better mechanism for handling
+    parse errors.  Added %lookahead directive.  Added ability to have #line directives use
+    relative paths.  Fixed a few bugs.
 -   `2.2.0` : Added a method to the `trison.cpp` target related to the
     `default_max_allowable_lookahead_queue_size` directive that should have been there in
     version `2.1.0`.  This constitutes a minor revision because a new API method was added.
