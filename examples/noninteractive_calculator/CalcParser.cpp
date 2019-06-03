@@ -15,7 +15,7 @@
 #include <utility>
 
 
-#line 47 "CalcParser.trison"
+#line 47 "../CalcParser.trison"
 
 #include "ast.hpp"
 #include <cmath>
@@ -30,7 +30,7 @@ std::shared_ptr<BaseOperator> base_operator (Args_&&... args)
     return std::make_shared<BaseOperator>(std::forward<Args_>(args)...);
 }
 
-#line 34 "CalcParser.cpp"
+#line 34 "../CalcParser.cpp"
 
 CalcParser::CalcParser ()
 {
@@ -43,12 +43,12 @@ CalcParser::CalcParser ()
     SetActiveDebugSpewFlags(DSF__ALL);
 
 
-#line 61 "CalcParser.trison"
+#line 61 "../CalcParser.trison"
 
     m_scanner = new Scanner();
     m_scanner->DebugSpew(true);
 
-#line 52 "CalcParser.cpp"
+#line 52 "../CalcParser.cpp"
 }
 
 CalcParser::~CalcParser ()
@@ -58,12 +58,12 @@ CalcParser::~CalcParser ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing destructor actions\n")
 
 
-#line 65 "CalcParser.trison"
+#line 65 "../CalcParser.trison"
 
     delete m_scanner;
     m_scanner = NULL;
 
-#line 67 "CalcParser.cpp"
+#line 67 "../CalcParser.cpp"
 }
 
 bool CalcParser::IsAtEndOfInput ()
@@ -86,11 +86,11 @@ void CalcParser::ResetForNewInput ()
     CleanUpAllInternals_();
 
 
-#line 133 "CalcParser.trison"
+#line 133 "../CalcParser.trison"
 
     // m_recoverable_error_encountered = false;
 
-#line 94 "CalcParser.cpp"
+#line 94 "../CalcParser.cpp"
 }
 
 CalcParser::ParserReturnCode CalcParser::Parse (std::shared_ptr<Ast::Base> *return_token, Nonterminal::Name nonterminal_to_parse)
@@ -422,9 +422,37 @@ void CalcParser::ThrowAwayToken_ (Token const &token_) throw()
 void CalcParser::ThrowAwayTokenData_ (std::shared_ptr<Ast::Base> const &token_data) throw()
 {
 
-#line 106 "CalcParser.trison"
+#line 106 "../CalcParser.trison"
  
-#line 428 "CalcParser.cpp"
+#line 428 "../CalcParser.cpp"
+}
+
+CalcParser::Token::Data CalcParser::InsertLookaheadErrorActions_ (Token const &noconsume_lookahead_token)
+{
+    return std::shared_ptr<Ast::Base>();
+}
+
+CalcParser::Token::Data CalcParser::DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token)
+{
+    ThrowAwayToken_(consume_lookahead_token);
+    return consume_stack_top_error_token.m_data;
+}
+
+CalcParser::Token::Data CalcParser::PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token)
+{
+    ThrowAwayToken_(consume_stack_top_tokens[0]);
+    return consume_lookahead_token.m_data;
+}
+
+CalcParser::Token::Data CalcParser::PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
+{
+    ThrowAwayToken_(consume_stack_top_tokens[1]);
+    return consume_stack_top_tokens[0].m_data;
+}
+
+CalcParser::Token::Data CalcParser::RunNonassocErrorActions_ (Token const &noconsume_lookahead_token)
+{
+    return std::shared_ptr<Ast::Base>();
 }
 
 CalcParser::Token CalcParser::Scan_ () throw()
@@ -432,7 +460,7 @@ CalcParser::Token CalcParser::Scan_ () throw()
     TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing scan actions to retrieve next token...\n")
 
 
-#line 107 "CalcParser.trison"
+#line 107 "../CalcParser.trison"
 
     assert(m_scanner != NULL);
     std::shared_ptr<Ast::Base> token;
@@ -459,14 +487,10 @@ CalcParser::Token CalcParser::Scan_ () throw()
             return Token(Terminal::Name(scanner_token_id), nullptr);
     }
 
-#line 463 "CalcParser.cpp"
+#line 491 "../CalcParser.cpp"
 
     TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from scan_actions code block\n")
     assert(false && "no value returned from scan_actions code block");
-}
-
-void CalcParser::RunNonassocErrorActions_ (Token const &lookahead)
-{
 }
 
 template <typename T>
@@ -493,9 +517,9 @@ std::uint32_t CalcParser::NonterminalStartStateIndex_ (CalcParser::Nonterminal::
 {
     switch (nonterminal)
     {
-        case Nonterminal::expr: return 10;
-        case Nonterminal::stmt: return 5;
-        case Nonterminal::stmt_then_end: return 0;
+        case Nonterminal::expr: return 11;
+        case Nonterminal::stmt: return 6;
+        case Nonterminal::stmt_then_end: return 1;
         default: assert(false && "invalid nonterminal"); return 0;
     }
 }
@@ -575,7 +599,10 @@ CalcParser::ParserReturnCode CalcParser::Parse_ (std::shared_ptr<Ast::Base> *ret
     else // This happens when parsing for the first time.
         m_realized_state_ = new RealizedState_(start_state_index);
 
-    m_hypothetical_state_ = new HypotheticalState_(start_state_index);
+    assert(m_realized_state_->BranchVectorStack().size() == 2);
+    assert(m_realized_state_->BranchVectorStack().back().size() == 1);
+
+    m_hypothetical_state_ = new HypotheticalState_(m_realized_state_->BranchVectorStack().back()[0]);
 
     TRISON_CPP_DEBUG_CODE_(DSF_STACK_AND_LOOKAHEADS,
         *DebugSpewStream() << "CalcParser: " << "<stack> . <lookaheads>: ";
@@ -662,11 +689,18 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
         {
             case ParseTreeNode_::RETURN: {
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing trunk action RETURN.\n")
-                assert(m_realized_state_->TokenStack().size() == 2);
+                assert(m_realized_state_->TokenStack().size() == 3);
                 parser_return_code_ = PRC_SUCCESS;
                 // This doesn't change the structure of the stack but does take ownership of the top stack token.
                 // This must be done so that the return token isn't destroyed with the parser.
                 m_realized_state_->StealTokenStackTop(return_token);
+                should_return = true;
+                break;
+            }
+            case ParseTreeNode_::ABORT: {
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing trunk action ABORT.\n")
+                assert(m_realized_state_->TokenStack().size() == 1);
+                parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
                 should_return = true;
                 break;
             }
@@ -675,7 +709,13 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
                 std::uint32_t const &rule_index = trunk_child->m_spec.m_single_data;
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing trunk action REDUCE rule " << rule_index << "; " << Grammar_::ms_rule_table_[rule_index].m_description << '\n')
                 Grammar_::Rule_ const &rule = Grammar_::ms_rule_table_[rule_index];
-                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack());
+                Token const *lookahead = NULL;
+                if (rule.m_has_lookahead_directive)
+                {
+                    assert(!m_realized_state_->LookaheadQueue().empty());
+                    lookahead = &m_realized_state_->LookaheadQueue().front();
+                }
+                Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack(), lookahead);
                 m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
                 // This is done essentially so that m_realized_lookahead_cursor can be reset.
                 destroy_and_recreate_parse_tree = true;
@@ -688,34 +728,173 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
                 break;
             }
             case ParseTreeNode_::INSERT_LOOKAHEAD_ERROR: {
+                // INSERT_LOOKAHEAD_ERROR -- this should have access to the lookahead that
+                // caused the error to be generated, and it should return a token that will
+                // be used as the %error token.
+                //
+                // Start:  <realized-stack-tokens> . <lookahead>
+                //                                 ^~~~~~~~~~^
+                //                                 input to handler code
+                //
+                // Result: <realized-stack-tokens> . <%error> <lookahead>
+                //                                   ^~~~~~~^
+                //                                   output from handler code
+
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
-                m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
+                Token lookahead = Lookahead_(0);
+                TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO 2 lookahead retrieved from Lookahead_(0) for INSERT_LOOKAHEAD_ERROR action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                Token resulting_error_token(Terminal::ERROR_, InsertLookaheadErrorActions_(lookahead));
+                m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                m_realized_state_->SetHasEncounteredErrorState();
+                //m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::DISCARD_LOOKAHEAD: {
+                // DISCARD_LOOKAHEAD -- this can only happen if the top of the realized stack
+                // is %error; it should have access to the %error token and the lookahead
+                // token, and it should return a token that will be used as the resulting
+                // %error token (e.g. combining the file locations of the two input tokens).
+                //
+                // Start:  <realized-stack-tokens> <%error> . <lookahead0> <rest-of-lookaheads>
+                //                                 ^~~~~~~~~~~~~~~~~~~~~~^
+                //                                 inputs to handler code
+                //
+                // Result: <realized-stack-tokens> <%error> . <rest-of-lookaheads>
+                //                                 ^~~~~~~^
+                //                                 output from handler code (old stack top is replaced)
+
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing trunk action DISCARD_LOOKAHEAD.\n")
-                m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
+                Token stack_top_error_token = m_realized_state_->TokenStack().back();
+                assert(stack_top_error_token.m_id == Terminal::ERROR_);
+                Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+                Token resulting_error_token = Token(Terminal::ERROR_, DiscardLookaheadActions_(stack_top_error_token, lookahead));
+                m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                //m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
             }
             case ParseTreeNode_::POP_STACK: {
+                // POP_STACK 1 -- this can only happen when the lookahead is %error (and in
+                // this case, the top of the realized stack is not %error); it should have
+                // access to the token about to be popped and the lookahead %error token, and
+                // it should return a token that will be used as the resulting %error token
+                // (e.g. combining the file locations of the two input tokens).
+                //
+                // Start:  <realized-stack-tokens> <token0> . <%error> <rest-of-lookaheads>
+                //                                 ^~~~~~~~~~~~~~~~~~^
+                //                                 inputs to handler code
+                //
+                // Result: <realized-stack-tokens> . <%error> <rest-of-lookaheads>
+                //                                   ^~~~~~~^
+                //                                   output from handler code
+                //
+                // POP_STACK 2 -- this can only happen when the lookahead is %end; it should
+                // have access to the 2 tokens about to be popped and the lookahead %end token,
+                // and it should return a token that will be used as the resulting %error token
+                // (e.g. combining the file locations of the three input tokens).
+                //
+                // Start:  <realized-stack-tokens> <token1> <token0> . <%end>
+                //                                 ^~~~~~~~~~~~~~~~~~~~~~~~~^
+                //                                 inputs to handler code
+                //
+                // Result: <realized-stack-tokens> . <%error> <%end>
+                //                                   ^~~~~~~^
+                //                                   output from handler code
+                //
+                // NOTE: The semantics for POP_STACK 1 and POP_STACK 2 are different; the handler
+                // code is expected to consume (e.g. delete, aggregate, etc) all inputs for
+                // POP_STACK 1, and is expected to only consume the popped stack tokens for
+                // POP_STACK 2 (and only read from the lookahead).
+
                 std::uint32_t const &pop_count = trunk_child->m_spec.m_single_data;
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing trunk action POP_STACK " << pop_count << ".\n")
+                assert(pop_count == 1 || pop_count == 2);
+                assert(m_realized_state_->TokenStack().size() > pop_count);
 
-                // This one is tricky to implement within RealizedState_ alone, mainly because
-                // of the ThrowAwayToken_ call.
-                if (m_realized_state_->TokenStack().size() > pop_count)
+                if (pop_count == 1)
                 {
-                    for (std::uint32_t i = 0; i < pop_count; ++i)
-                    {
-                        // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
-                        ThrowAwayToken_(m_realized_state_->PopStack());
-                    }
+                    std::vector<Token> popped_tokens{m_realized_state_->PopStack()};
+                    assert(popped_tokens.size() == pop_count);
+                    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                    Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+                    TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                    Token resulting_error_token(Terminal::ERROR_);
+
+                    assert(lookahead.m_id == Terminal::ERROR_);
+                    resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
+                    m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
                 }
                 else
                 {
-                    // We're popping more than the whole stack, which is an error
-                    parser_return_code_ = PRC_UNHANDLED_PARSE_ERROR;
-                    should_return = true;
+                    assert(pop_count == 2);
+
+                    if (false)
+                    {
+                        // plain ol' pop stack 2 times -- this is the old behavior
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->PopStack();
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        PopStack2Actions_(popped_tokens, lookahead);
+                    }
+                    else if (true)
+                    {
+                        // pop stack 2 times, then push the result onto the front of the lookahead queue.
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->PopStack();
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                    }
+                    else if (false)
+                    {
+                        // pop stack 2 times and push resulting error token onto stack -- this is new behavior
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                    }
+                    else
+                    {
+                        // TEMP: pop 3 times
+
+                        // pop stack 2 times and push resulting error token onto stack -- this is new behavior
+
+                        std::uint32_t pop_count = 3; // shadowing earlier one
+                        assert(m_realized_state_->TokenStack().size() >= pop_count);
+
+                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        popped_tokens[2] = m_realized_state_->PopStack();
+                        popped_tokens[1] = m_realized_state_->PopStack();
+                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        assert(popped_tokens.size() == pop_count);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+
+                        Token lookahead(Lookahead_(0));
+                        //assert(lookahead.m_id == Terminal::END_);
+                        TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                    }
                 }
 
                 // Because POP_STACK involves popping the stack, the parse tree should be destroyed and
@@ -873,15 +1052,22 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                         break;
 
                     case Grammar_::ASSOC_NONASSOC:
+                    {
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
-                        // Neither SHIFT nor REDUCE should survive.  Instead, create an INSERT_LOOKAHEAD_ERROR
-                        // action to initiate error panic.  This works only because the shift and reduce nodes
-                        // are children of the parse tree root.
-                        assert(shift->m_parent_node == m_hypothetical_state_->m_root);
-                        assert(reduce->m_parent_node == m_hypothetical_state_->m_root);
+                        // Neither SHIFT nor REDUCE should survive.  Instead, invoke the nonassoc error actions
+                        // on the lookahead, and insert an %error token using the returned Token::Data value.
+                        //
+                        // Start:  <realized-stack-tokens> . <lookahead>
+                        //                                 ^~~~~~~~~~^
+                        //                                 input to handler code
+                        //
+                        // Result: <realized-stack-tokens> . <%error> <lookahead>
+                        //                                   ^~~~~~~^
+                        //                                   output from handler code
 
-                        // Lookahead_(0) is the token that would be SHIFT'ed.
-                        RunNonassocErrorActions_(Lookahead_(0));
+                        Token resulting_error_token(Terminal::ERROR_, RunNonassocErrorActions_(Lookahead_(0)));
+                        m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                        m_realized_state_->SetHasEncounteredErrorState();
 
                         m_hypothetical_state_->DeleteBranch(shift);
                         m_hypothetical_state_->DeleteBranch(reduce);
@@ -896,36 +1082,16 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
 
                         // Create fresh HPSes at the root from the realized state.
                         CreateParseTreeFromRealizedState_();
-                        // TODO: This operation could be optimized due to the fact that each HPS will
-                        // take exactly one action; INSERT_LOOKAHEAD_ERROR.  But for now, just do the
-                        // easy thing.
-                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
-                        {
-                            ParseTreeNode_ *hps = *hps_it;
-                            assert(hps != NULL);
-                            ParseTreeNode_ *new_hps = TakeHypotheticalActionOnHPS_(*hps, ParseTreeNode_::INSERT_LOOKAHEAD_ERROR, ParseTreeNode_::UNUSED_DATA);
-                            m_hypothetical_state_->m_new_hps_queue.push_back(new_hps);
-                            // Note that DeleteBranch only nullifies elements in m_hps_queue, it doesn't
-                            // alter the container itself.
-                            m_hypothetical_state_->DeleteBranch(hps);
-                        }
-                        for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
-                        {
-                            assert(*hps_it == NULL);
-                        }
-                        m_hypothetical_state_->m_hps_queue.clear();
 
-                        // Now that all the INSERT_LOOKAHEAD_ERROR HPSes have been created and put into
-                        // m_new_hps_queue, the existing HPSes have been deleted, and the processing later
-                        // in this function (see `if (conflict_resolved)` block) is expecting the HPSes to
-                        // be in m_hps_queue, swap the queues.
-                        assert(m_hypothetical_state_->m_hps_queue.empty());
-                        assert(!m_hypothetical_state_->m_new_hps_queue.empty());
-                        std::swap(m_hypothetical_state_->m_hps_queue, m_hypothetical_state_->m_new_hps_queue);
+                        // The processing later in this function (see `if (conflict_resolved)` block)
+                        // is expecting the HPSes to be in m_hps_queue, and m_new_hps_queue to be empty.
+                        assert(!m_hypothetical_state_->m_hps_queue.empty());
+                        assert(m_hypothetical_state_->m_new_hps_queue.empty());
 
                         // Mark the conflict as resolved.
                         conflict_resolved = true;
                         break;
+                    }
 
                     case Grammar_::ASSOC_RIGHT:
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
@@ -1002,7 +1168,7 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
 
     // Process transitions in order of their SortedTypeIndex.  Only process HPSes that are at min_realized_lookahead_cursor.
     assert(m_hypothetical_state_->m_new_hps_queue.empty()); // This is the starting condition
-    for (std::uint32_t current_sorted_type_index = 0; current_sorted_type_index <= 3; ++current_sorted_type_index)
+    for (std::uint32_t current_sorted_type_index = Npda_::Transition_::Order::MIN_SORTED_TYPE_INDEX; current_sorted_type_index <= Npda_::Transition_::Order::MAX_SORTED_TYPE_INDEX; ++current_sorted_type_index)
     {
         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << "CalcParser: " << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
@@ -1060,9 +1226,9 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                 Npda_::Transition_ const &transition = *transition_it;
                 assert(transition.m_type >= Npda_::Transition_::RETURN);
                 assert(transition.m_type <= Npda_::Transition_::POP_STACK);
-                assert(Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) == current_sorted_type_index);
+                assert(Npda_::Transition_::Order::SortedTypeIndex(transition) == current_sorted_type_index);
 
-/*
+
                 TRISON_CPP_DEBUG_CODE_(
                     DSF_TRANSITION_PROCESSING,
                     *DebugSpewStream() << "CalcParser: " << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
@@ -1070,9 +1236,9 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                         *DebugSpewStream() << "<N/A>";
                     else
                         *DebugSpewStream() << transition.m_data_index;
-                    *DebugSpewStream() << " and sorted type index " << Npda_::Transition_::Order::SortedTypeIndex(Npda_::Transition_::Type(transition.m_type)) << '\n';
+                    *DebugSpewStream() << " and sorted type index " << Npda_::Transition_::Order::SortedTypeIndex(transition) << '\n';
                 )
-*/
+
 
                 ParseTreeNode_ *resulting_hps = NULL;
                 // If it's a default transition, there's no need to access the lookahead (except in
@@ -1088,6 +1254,7 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                     // that nonterminal but the HPS has no parent because the trunk action was executed and then popped,
                     // meaning that the parent of this HPS would be the parse tree root.
                     bool take_action = true;
+
                     assert(hps.m_parent_node != NULL);
                     if (transition.m_type == Npda_::Transition_::REDUCE)
                     {
@@ -1151,7 +1318,7 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
     assert(m_hypothetical_state_->m_new_hps_queue.empty());
 }
 
-CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack) throw()
+CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack_, Token const *lookahead_) throw()
 {
     assert(rule_index_ < Grammar_::ms_rule_count_);
     switch (rule_index_)
@@ -1162,228 +1329,228 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 
         case 0:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> st(token_stack[token_stack.size()-2].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> st(token_stack_[token_stack_.size()-2].m_data);
 
-#line 179 "CalcParser.trison"
+#line 179 "../CalcParser.trison"
 
         std::cout << "stmt_then_end <- stmt %end\n";
         return st;
     
-#line 1174 "CalcParser.cpp"
+#line 1341 "../CalcParser.cpp"
             break;
         }
 
         case 1:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
 
-#line 185 "CalcParser.trison"
+#line 185 "../CalcParser.trison"
 
-        std::cout << "stmt_then_end <- %error[%end] %end\n";
-        return Ast::error_dummy("stmt_then_end <- %error[%end] %end");
+        std::cout << "stmt_then_end <- %error[!%end] %end\n";
+        return Ast::error_dummy("stmt_then_end <- %error[!%end] %end");
     
-#line 1187 "CalcParser.cpp"
+#line 1354 "../CalcParser.cpp"
             break;
         }
 
         case 2:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> ex(token_stack[token_stack.size()-2].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> ex(token_stack_[token_stack_.size()-2].m_data);
 
-#line 194 "CalcParser.trison"
+#line 194 "../CalcParser.trison"
 
 //         std::cout << "stmt <- expr ';'\n";
         return ex;
     
-#line 1201 "CalcParser.cpp"
+#line 1368 "../CalcParser.cpp"
             break;
         }
 
         case 3:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
 
-#line 200 "CalcParser.trison"
+#line 200 "../CalcParser.trison"
 
 //         std::cout << "stmt <- %error ';'\n";
         return Ast::error_dummy("stmt <- %error ';'");
     
-#line 1214 "CalcParser.cpp"
+#line 1381 "../CalcParser.cpp"
             break;
         }
 
         case 4:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> e(token_stack[token_stack.size()-2].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> e(token_stack_[token_stack_.size()-2].m_data);
 
-#line 209 "CalcParser.trison"
+#line 209 "../CalcParser.trison"
 
 //         std::cout << "expr <- '(' expr ')'\n";
         return e;
     
-#line 1228 "CalcParser.cpp"
+#line 1395 "../CalcParser.cpp"
             break;
         }
 
         case 5:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
 
-#line 215 "CalcParser.trison"
+#line 215 "../CalcParser.trison"
 
-//         std::cout << "expr <- '(' %error[')'] ')'\n";
-        return Ast::error_dummy("expr <- '(' %error[')'] ')'");
+//         std::cout << "expr <- '(' %error[!%end] ')'\n";
+        return Ast::error_dummy("expr <- '(' %error[!%end] ')'");
     
-#line 1241 "CalcParser.cpp"
+#line 1408 "../CalcParser.cpp"
             break;
         }
 
         case 6:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
 
-#line 225 "CalcParser.trison"
+#line 225 "../CalcParser.trison"
 
-//         std::cout << "expr <- '(' %error[%end | ';']\n";
-        return Ast::error_dummy("expr <- '(' %error[%end | ';']");
+//         std::cout << "expr <- '(' %error[![%end|';']]\n";
+        return Ast::error_dummy("expr <- '(' %error[![%end|';']]");
     
-#line 1254 "CalcParser.cpp"
+#line 1421 "../CalcParser.cpp"
             break;
         }
 
         case 7:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> num(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> num(token_stack_[token_stack_.size()-1].m_data);
 
-#line 231 "CalcParser.trison"
+#line 231 "../CalcParser.trison"
 
 //         std::cout << "expr <- NUM(" << num << ")\n";
         return num;
     
-#line 1268 "CalcParser.cpp"
+#line 1435 "../CalcParser.cpp"
             break;
         }
 
         case 8:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack[token_stack.size()-3].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-3].m_data);
+            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
 
-#line 237 "CalcParser.trison"
+#line 237 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
         return base_operator("+", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1283 "CalcParser.cpp"
+#line 1450 "../CalcParser.cpp"
             break;
         }
 
         case 9:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack[token_stack.size()-6].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-6].m_data);
+            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
 
-#line 243 "CalcParser.trison"
+#line 243 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("++++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1298 "CalcParser.cpp"
+#line 1465 "../CalcParser.cpp"
             break;
         }
 
         case 10:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack[token_stack.size()-5].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-5].m_data);
+            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
 
-#line 249 "CalcParser.trison"
+#line 249 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("+++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1313 "CalcParser.cpp"
+#line 1480 "../CalcParser.cpp"
             break;
         }
 
         case 11:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack[token_stack.size()-4].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-4].m_data);
+            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
 
-#line 255 "CalcParser.trison"
+#line 255 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
         return base_operator("++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1328 "CalcParser.cpp"
+#line 1495 "../CalcParser.cpp"
             break;
         }
 
         case 12:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack[token_stack.size()-3].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-3].m_data);
+            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
 
-#line 261 "CalcParser.trison"
+#line 261 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
         return base_operator("*", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1343 "CalcParser.cpp"
+#line 1510 "../CalcParser.cpp"
             break;
         }
 
         case 13:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack[token_stack.size()-3].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-3].m_data);
+            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
 
-#line 267 "CalcParser.trison"
+#line 267 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
         return base_operator("?", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1358 "CalcParser.cpp"
+#line 1525 "../CalcParser.cpp"
             break;
         }
 
         case 14:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> op(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> op(token_stack_[token_stack_.size()-1].m_data);
 
-#line 273 "CalcParser.trison"
+#line 273 "../CalcParser.trison"
 
 //         std::cout << "expr <- '-' expr(" << op << ")\n";
         return base_operator("-", BaseOperator::ChildNodes{op});
     
-#line 1372 "CalcParser.cpp"
+#line 1539 "../CalcParser.cpp"
             break;
         }
 
         case 15:
         {
-            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack[token_stack.size()-3].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack[token_stack.size()-1].m_data);
+            assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
+            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-3].m_data);
+            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
 
-#line 279 "CalcParser.trison"
+#line 279 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
         return base_operator("^", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1387 "CalcParser.cpp"
+#line 1554 "../CalcParser.cpp"
             break;
         }
 
@@ -1461,8 +1628,9 @@ void CalcParser::PrintParserStatus_ (std::ostream &out) const
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
         ParseTreeNode_ *hps = *it;
-        assert(hps != NULL);
-        hps->Print(out, this, DebugSpewPrefix(), 1);
+        //assert(hps != NULL);
+        if (hps != NULL)
+            hps->Print(out, this, DebugSpewPrefix(), 1);
     }
 }
 
@@ -1504,6 +1672,14 @@ CalcParser::Token CalcParser::RealizedState_::PopStack ()
     return popped_token;
 }
 
+void CalcParser::RealizedState_::ReplaceTokenStackTopWith (Token const &replacement)
+{
+    assert(!m_token_stack.empty());
+//    m_token_stack.back() = replacement;
+    m_token_stack.pop_back();
+    m_token_stack.push_back(replacement);
+}
+
 CalcParser::Token CalcParser::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
 {
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
@@ -1517,9 +1693,10 @@ CalcParser::Token CalcParser::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_
     for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
         ParseTreeNode_ &hps = **hps_it;
-        --hps.m_realized_lookahead_cursor;
+        if (hps.m_realized_lookahead_cursor > 0)
+            --hps.m_realized_lookahead_cursor;
     }
-    Token retval(m_lookahead_queue.back());
+    Token retval(m_lookahead_queue.front());
     m_lookahead_queue.pop_front();
     return retval;
 }
@@ -1615,14 +1792,38 @@ void CalcParser::RealizedState_::Initialize (Npda_::StateIndex_ initial_state)
     assert(m_branch_vector_stack.empty());
     assert(m_token_stack.empty());
 
+    BranchVector_ fallback_branch_vector;
+    // State 0 is the fallback state which always results in action ABORT.
+    BranchStatePtr_ fallback_state_ptr = BranchState_::CreateOrphan(0);
+    // The Nonterminal::none_ is just a dummy Token::Id to go along with fallback_state_ptr.
+    BranchTokenIdPtr_ fallback_token_id_ptr = BranchTokenId_::CreateOrphan(Nonterminal::none_);
+    fallback_branch_vector.emplace_back(Branch_(fallback_state_ptr, fallback_token_id_ptr));
+    // TODO: This probably should be emplace_back
+    m_branch_vector_stack.push_back(fallback_branch_vector);
+
+    // Put a dummy token in to correspond with the fallback state.
+    m_token_stack.push_back(Token(Nonterminal::none_));
+
+    assert(m_branch_vector_stack.size() == m_token_stack.size());
+
     BranchVector_ initial_branch_vector;
     // The Nonterminal::none_ is just a dummy Token::Id to go along with initial_state.
-    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_)));
+    initial_branch_vector.emplace_back(Branch_(BranchState_::CreateWithParent(fallback_state_ptr, initial_state), BranchTokenId_::CreateWithParent(fallback_token_id_ptr, Nonterminal::none_)));
     // TODO: This probably should be emplace_back
     m_branch_vector_stack.push_back(initial_branch_vector);
 
     // Put a dummy token in to correspond with the start state.
     m_token_stack.push_back(Token(Nonterminal::none_));
+
+    assert(m_branch_vector_stack.size() == m_token_stack.size());
+
+    // Ensure the parent/child relationships actually hold within m_branch_vector_stack.
+    assert(m_branch_vector_stack.size() == 2);
+    // Ensure that the stack is actually consistent with regard to the parent/child relationships.
+    for (BranchVector_::const_iterator it = m_branch_vector_stack[1].begin(), it_end = m_branch_vector_stack[1].end(); it != it_end; ++it)
+    {
+        assert(std::any_of(m_branch_vector_stack[0].begin(), m_branch_vector_stack[0].end(), [it](Branch_ const &branch){ return branch == it->Parent(); }));
+    }
 }
 
 void CalcParser::RealizedState_::PushFrontLookahead (Token const &lookahead, HPSQueue_ &hps_queue)
@@ -1662,12 +1863,12 @@ void CalcParser::RealizedState_::UpdateMaxRealizedLookaheadCount ()
 // CalcParser::HypotheticalState_
 // ////////////////////////////////////////////////////////////////////////////
 
-CalcParser::HypotheticalState_::HypotheticalState_ (std::uint32_t initial_state)
+CalcParser::HypotheticalState_::HypotheticalState_ (Branch_ const &initial_branch)
 {
     m_root = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::ROOT));
 
     ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
-    hps->m_hypothetical_head        = Branch_(BranchState_::CreateOrphan(initial_state), BranchTokenId_::CreateOrphan(Nonterminal::none_));
+    hps->m_hypothetical_head        = initial_branch;
 
     m_root->AddChild(hps);
     m_hps_queue.push_back(hps);
@@ -1777,6 +1978,7 @@ char const *CalcParser::ParseTreeNode_::AsString (Type type)
     {
         "ROOT",
         "RETURN",
+        "ABORT",
         "REDUCE",
         "SHIFT",
         "INSERT_LOOKAHEAD_ERROR",
@@ -1918,6 +2120,7 @@ bool CalcParser::ParseTreeNode_::IsBlockedHPS () const
     {
         // Nothing can happen after returning, so this has to be blocking.
         case RETURN:
+        case ABORT:
         case POP_STACK: return true;
 
         default:        return false;
@@ -1957,7 +2160,7 @@ CalcParser::ParseTreeNode_::PrecedenceLevelRange CalcParser::ParseTreeNode_::Com
             Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
             return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
         }
-        // Otherwise (e.g. a RETURN state), return default precedence.
+        // Otherwise (e.g. a RETURN or ABORT state), return default precedence.
         else
         {
             Grammar_::Precedence_ const &default_precedence = Grammar_::ms_precedence_table_[0]; // 0 is default precedence.
@@ -2187,6 +2390,10 @@ CalcParser::ParseTreeNode_ *CalcParser::TakeHypotheticalActionOnHPS_ (ParseTreeN
             new_hps = hps.CloneLeafNode();
             break;
         }
+        case ParseTreeNode_::ABORT: {
+            new_hps = hps.CloneLeafNode();
+            break;
+        }
         case ParseTreeNode_::REDUCE: {
             // Execute the appropriate rule on the top tokens in the stack
             std::uint32_t const &rule_index = action_data;
@@ -2205,6 +2412,14 @@ CalcParser::ParseTreeNode_ *CalcParser::TakeHypotheticalActionOnHPS_ (ParseTreeN
                 existing_reduce_action_node = *reduce_node_set.begin();
                 assert(existing_reduce_action_node != NULL);
                 assert(existing_reduce_action_node->m_spec.m_type == ParseTreeNode_::REDUCE);
+
+                if (false)
+                {
+                    // TEMP
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "\n\nHIPPO existing_reduce_action_node child nodes:\n\n")
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, PrintParserStatus_(*DebugSpewStream()))
+                    TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "\n\n")
+                }
 
                 // If the hypothetical action is identical to the existing one, then there's no problem,
                 // just add it as a child to the existing one.
@@ -2228,7 +2443,7 @@ CalcParser::ParseTreeNode_ *CalcParser::TakeHypotheticalActionOnHPS_ (ParseTreeN
                     assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseTreeNode_::HPS);
                     if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
                     {
-                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.")
 
                         reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
                         assert(reduce_hps != NULL);
@@ -2246,8 +2461,9 @@ CalcParser::ParseTreeNode_ *CalcParser::TakeHypotheticalActionOnHPS_ (ParseTreeN
                     }
                     else
                     {
-                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of existing hps.\n")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of existing hps.")
                     }
+                    assert(existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1);
                 }
             }
             else
@@ -2307,13 +2523,15 @@ CalcParser::ParseTreeNode_ *CalcParser::TakeHypotheticalActionOnHPS_ (ParseTreeN
             // since for example two branches may agree on popping at least once, even if
             // one of them is killed later.
             std::uint32_t const &pop_count = action_data;
-            // Check if there are actually enough stack elements to pop successfully.
-            // If not, then don't create an HPS, and break early.
-            if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
-            {
-                new_hps = NULL;
-                break;
-            }
+            assert(pop_count == 1 || pop_count == 2);
+            assert(pop_count < hps.m_hypothetical_head.StatePtr()->BranchLength());
+            // // Check if there are actually enough stack elements to pop successfully.
+            // // If not, then don't create an HPS, and break early.
+            // if (pop_count >= hps.m_hypothetical_head.StatePtr()->BranchLength())
+            // {
+            //     new_hps = NULL;
+            //     break;
+            // }
 
             new_hps = hps.CloneLeafNode();
             for (std::uint32_t i = 0; i < pop_count; ++i)
@@ -2321,6 +2539,8 @@ CalcParser::ParseTreeNode_ *CalcParser::TakeHypotheticalActionOnHPS_ (ParseTreeN
                 assert(new_hps->m_hypothetical_head.HasParent());
                 new_hps->m_hypothetical_head = new_hps->m_hypothetical_head.Parent();
             }
+            if (pop_count == 2)
+                new_hps->m_hypothetical_lookahead_token_id_queue.push_front(Terminal::ERROR_);
             TRISON_CPP_DEBUG_CODE_(DSF_HPS_NODE_CREATION_DELETION, *DebugSpewStream() << "creating HPS to be child of POP_STACK node... ")
             break;
         }
@@ -2468,22 +2688,22 @@ std::size_t const CalcParser::Grammar_::ms_precedence_count_ = sizeof(CalcParser
 
 CalcParser::Grammar_::Rule_ const CalcParser::Grammar_::ms_rule_table_[] =
 {
-    { CalcParser::Nonterminal::stmt_then_end, 2, 0, "stmt_then_end <- stmt END_" },
-    { CalcParser::Nonterminal::stmt_then_end, 2, 0, "stmt_then_end <- ERROR_ END_" },
-    { CalcParser::Nonterminal::stmt, 2, 0, "stmt <- expr ';'" },
-    { CalcParser::Nonterminal::stmt, 2, 0, "stmt <- ERROR_ ';'" },
-    { CalcParser::Nonterminal::expr, 3, 0, "expr <- '(' expr ')'" },
-    { CalcParser::Nonterminal::expr, 3, 0, "expr <- '(' ERROR_ ')'" },
-    { CalcParser::Nonterminal::expr, 2, 0, "expr <- '(' ERROR_" },
-    { CalcParser::Nonterminal::expr, 1, 0, "expr <- NUM" },
-    { CalcParser::Nonterminal::expr, 3, 3, "expr <- expr '+' expr" },
-    { CalcParser::Nonterminal::expr, 6, 1, "expr <- expr '+' '+' '+' '+' expr" },
-    { CalcParser::Nonterminal::expr, 5, 2, "expr <- expr '+' '+' '+' expr" },
-    { CalcParser::Nonterminal::expr, 4, 8, "expr <- expr '+' '+' expr" },
-    { CalcParser::Nonterminal::expr, 3, 4, "expr <- expr '*' expr" },
-    { CalcParser::Nonterminal::expr, 3, 5, "expr <- expr '?' expr" },
-    { CalcParser::Nonterminal::expr, 2, 6, "expr <- '-' expr" },
-    { CalcParser::Nonterminal::expr, 3, 7, "expr <- expr '^' expr" }
+    { CalcParser::Nonterminal::stmt_then_end, 2, false, 0, "stmt_then_end <- stmt END_" },
+    { CalcParser::Nonterminal::stmt_then_end, 2, false, 0, "stmt_then_end <- ERROR_ END_" },
+    { CalcParser::Nonterminal::stmt, 2, false, 0, "stmt <- expr ';'" },
+    { CalcParser::Nonterminal::stmt, 2, false, 0, "stmt <- ERROR_ ';'" },
+    { CalcParser::Nonterminal::expr, 3, false, 0, "expr <- '(' expr ')'" },
+    { CalcParser::Nonterminal::expr, 3, false, 0, "expr <- '(' ERROR_ ')'" },
+    { CalcParser::Nonterminal::expr, 2, false, 0, "expr <- '(' ERROR_" },
+    { CalcParser::Nonterminal::expr, 1, false, 0, "expr <- NUM" },
+    { CalcParser::Nonterminal::expr, 3, false, 3, "expr <- expr '+' expr" },
+    { CalcParser::Nonterminal::expr, 6, false, 1, "expr <- expr '+' '+' '+' '+' expr" },
+    { CalcParser::Nonterminal::expr, 5, false, 2, "expr <- expr '+' '+' '+' expr" },
+    { CalcParser::Nonterminal::expr, 4, false, 8, "expr <- expr '+' '+' expr" },
+    { CalcParser::Nonterminal::expr, 3, false, 4, "expr <- expr '*' expr" },
+    { CalcParser::Nonterminal::expr, 3, false, 5, "expr <- expr '?' expr" },
+    { CalcParser::Nonterminal::expr, 2, false, 6, "expr <- '-' expr" },
+    { CalcParser::Nonterminal::expr, 3, false, 7, "expr <- expr '^' expr" }
 };
 std::size_t const CalcParser::Grammar_::ms_rule_count_ = sizeof(CalcParser::Grammar_::ms_rule_table_) / sizeof(*CalcParser::Grammar_::ms_rule_table_);
 
@@ -2547,7 +2767,7 @@ void CalcParser::Npda_::ComputeEpsilonClosureOfState_ (StateIndex_ state_index, 
 
 CalcParser::Npda_::TransitionVector_ const &CalcParser::Npda_::NonEpsilonTransitionsOfState_ (StateIndex_ state_index, std::uint32_t sorted_type_index)
 {
-    assert(0 <= sorted_type_index && sorted_type_index <= 3);
+    assert(Transition_::Order::MIN_SORTED_TYPE_INDEX <= sorted_type_index && sorted_type_index <= Transition_::Order::MAX_SORTED_TYPE_INDEX);
 
     // Memoize this function, because it will be called so many times and is somewhat intensive.
     typedef std::pair<StateIndex_,std::uint32_t> KeyType;
@@ -2567,7 +2787,7 @@ CalcParser::Npda_::TransitionVector_ const &CalcParser::Npda_::NonEpsilonTransit
         State_ const &state = ms_state_table_[*it];
         for (Transition_ const *transition = state.m_transition_table, *transition_end = state.m_transition_table+state.m_transition_count; transition != transition_end; ++transition)
         {
-            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(Transition_::Type(transition->m_type));
+            std::uint32_t transition_sorted_type_index = Transition_::Order::SortedTypeIndex(*transition);
             if (transition->m_type != Transition_::EPSILON && transition_sorted_type_index == sorted_type_index)
                 non_epsilon_transition_set.insert(*transition);
         }
@@ -2582,168 +2802,167 @@ CalcParser::Npda_::TransitionVector_ const &CalcParser::Npda_::NonEpsilonTransit
 
 CalcParser::Npda_::State_ const CalcParser::Npda_::ms_state_table_[] =
 {
-    { 2, ms_transition_table_+0, 16, "START stmt_then_end" },
-    { 1, ms_transition_table_+2, 16, "RETURN stmt_then_end" },
-    { 2, ms_transition_table_+3, 16, "head of: stmt_then_end" },
-    { 4, ms_transition_table_+5, 0, "rule 0: stmt_then_end <- . stmt END_" },
-    { 3, ms_transition_table_+9, 0, "rule 0: stmt_then_end <- stmt . END_" },
-    { 2, ms_transition_table_+12, 16, "START stmt" },
-    { 1, ms_transition_table_+14, 16, "RETURN stmt" },
-    { 2, ms_transition_table_+15, 16, "head of: stmt" },
-    { 4, ms_transition_table_+17, 2, "rule 2: stmt <- . expr ';'" },
-    { 3, ms_transition_table_+21, 2, "rule 2: stmt <- expr . ';'" },
-    { 2, ms_transition_table_+24, 16, "START expr" },
-    { 1, ms_transition_table_+26, 16, "RETURN expr" },
-    { 12, ms_transition_table_+27, 16, "head of: expr" },
-    { 3, ms_transition_table_+39, 4, "rule 4: expr <- . '(' expr ')'" },
-    { 4, ms_transition_table_+42, 4, "rule 4: expr <- '(' . expr ')'" },
-    { 3, ms_transition_table_+46, 4, "rule 4: expr <- '(' expr . ')'" },
-    { 1, ms_transition_table_+49, 4, "rule 4: expr <- '(' expr ')' ." },
-    { 3, ms_transition_table_+50, 5, "rule 5: expr <- . '(' ERROR_ ')'" },
-    { 2, ms_transition_table_+53, 5, "rule 5: expr <- '(' . ERROR_ ')'" },
-    { 3, ms_transition_table_+55, 5, "rule 5: expr <- '(' ERROR_ . ')'" },
-    { 1, ms_transition_table_+58, 5, "rule 5: expr <- '(' ERROR_ ')' ." },
-    { 3, ms_transition_table_+59, 6, "rule 6: expr <- . '(' ERROR_" },
-    { 2, ms_transition_table_+62, 6, "rule 6: expr <- '(' . ERROR_" },
-    { 3, ms_transition_table_+64, 6, "rule 6: expr <- '(' ERROR_ ." },
-    { 3, ms_transition_table_+67, 7, "rule 7: expr <- . NUM" },
-    { 1, ms_transition_table_+70, 7, "rule 7: expr <- NUM ." },
-    { 3, ms_transition_table_+71, 8, "rule 8: expr <- . expr '+' expr" },
-    { 3, ms_transition_table_+74, 8, "rule 8: expr <- expr . '+' expr" },
-    { 4, ms_transition_table_+77, 8, "rule 8: expr <- expr '+' . expr" },
-    { 1, ms_transition_table_+81, 8, "rule 8: expr <- expr '+' expr ." },
-    { 3, ms_transition_table_+82, 9, "rule 9: expr <- . expr '+' '+' '+' '+' expr" },
-    { 3, ms_transition_table_+85, 9, "rule 9: expr <- expr . '+' '+' '+' '+' expr" },
-    { 3, ms_transition_table_+88, 9, "rule 9: expr <- expr '+' . '+' '+' '+' expr" },
-    { 3, ms_transition_table_+91, 9, "rule 9: expr <- expr '+' '+' . '+' '+' expr" },
-    { 3, ms_transition_table_+94, 9, "rule 9: expr <- expr '+' '+' '+' . '+' expr" },
-    { 4, ms_transition_table_+97, 9, "rule 9: expr <- expr '+' '+' '+' '+' . expr" },
-    { 1, ms_transition_table_+101, 9, "rule 9: expr <- expr '+' '+' '+' '+' expr ." },
-    { 3, ms_transition_table_+102, 10, "rule 10: expr <- . expr '+' '+' '+' expr" },
-    { 3, ms_transition_table_+105, 10, "rule 10: expr <- expr . '+' '+' '+' expr" },
-    { 3, ms_transition_table_+108, 10, "rule 10: expr <- expr '+' . '+' '+' expr" },
-    { 3, ms_transition_table_+111, 10, "rule 10: expr <- expr '+' '+' . '+' expr" },
-    { 4, ms_transition_table_+114, 10, "rule 10: expr <- expr '+' '+' '+' . expr" },
-    { 1, ms_transition_table_+118, 10, "rule 10: expr <- expr '+' '+' '+' expr ." },
-    { 3, ms_transition_table_+119, 11, "rule 11: expr <- . expr '+' '+' expr" },
-    { 3, ms_transition_table_+122, 11, "rule 11: expr <- expr . '+' '+' expr" },
-    { 3, ms_transition_table_+125, 11, "rule 11: expr <- expr '+' . '+' expr" },
-    { 4, ms_transition_table_+128, 11, "rule 11: expr <- expr '+' '+' . expr" },
-    { 1, ms_transition_table_+132, 11, "rule 11: expr <- expr '+' '+' expr ." },
-    { 3, ms_transition_table_+133, 12, "rule 12: expr <- . expr '*' expr" },
-    { 3, ms_transition_table_+136, 12, "rule 12: expr <- expr . '*' expr" },
-    { 4, ms_transition_table_+139, 12, "rule 12: expr <- expr '*' . expr" },
-    { 1, ms_transition_table_+143, 12, "rule 12: expr <- expr '*' expr ." },
-    { 3, ms_transition_table_+144, 13, "rule 13: expr <- . expr '?' expr" },
-    { 3, ms_transition_table_+147, 13, "rule 13: expr <- expr . '?' expr" },
-    { 4, ms_transition_table_+150, 13, "rule 13: expr <- expr '?' . expr" },
-    { 1, ms_transition_table_+154, 13, "rule 13: expr <- expr '?' expr ." },
-    { 3, ms_transition_table_+155, 14, "rule 14: expr <- . '-' expr" },
-    { 4, ms_transition_table_+158, 14, "rule 14: expr <- '-' . expr" },
-    { 1, ms_transition_table_+162, 14, "rule 14: expr <- '-' expr ." },
-    { 3, ms_transition_table_+163, 15, "rule 15: expr <- . expr '^' expr" },
-    { 3, ms_transition_table_+166, 15, "rule 15: expr <- expr . '^' expr" },
-    { 4, ms_transition_table_+169, 15, "rule 15: expr <- expr '^' . expr" },
-    { 1, ms_transition_table_+173, 15, "rule 15: expr <- expr '^' expr ." },
-    { 1, ms_transition_table_+174, 2, "rule 2: stmt <- expr ';' ." },
-    { 2, ms_transition_table_+175, 3, "rule 3: stmt <- . ERROR_ ';'" },
-    { 3, ms_transition_table_+177, 3, "rule 3: stmt <- ERROR_ . ';'" },
-    { 1, ms_transition_table_+180, 3, "rule 3: stmt <- ERROR_ ';' ." },
-    { 1, ms_transition_table_+181, 0, "rule 0: stmt_then_end <- stmt END_ ." },
-    { 2, ms_transition_table_+182, 1, "rule 1: stmt_then_end <- . ERROR_ END_" },
-    { 3, ms_transition_table_+184, 1, "rule 1: stmt_then_end <- ERROR_ . END_" },
-    { 1, ms_transition_table_+187, 1, "rule 1: stmt_then_end <- ERROR_ END_ ." }
+    { 1, ms_transition_table_+0, 16, "FALLBACK" },
+    { 2, ms_transition_table_+1, 16, "START stmt_then_end" },
+    { 1, ms_transition_table_+3, 16, "RETURN stmt_then_end" },
+    { 2, ms_transition_table_+4, 16, "head of: stmt_then_end" },
+    { 4, ms_transition_table_+6, 0, "rule 0: stmt_then_end <- . stmt END_" },
+    { 3, ms_transition_table_+10, 0, "rule 0: stmt_then_end <- stmt . END_" },
+    { 2, ms_transition_table_+13, 16, "START stmt" },
+    { 1, ms_transition_table_+15, 16, "RETURN stmt" },
+    { 2, ms_transition_table_+16, 16, "head of: stmt" },
+    { 4, ms_transition_table_+18, 2, "rule 2: stmt <- . expr ';'" },
+    { 3, ms_transition_table_+22, 2, "rule 2: stmt <- expr . ';'" },
+    { 2, ms_transition_table_+25, 16, "START expr" },
+    { 1, ms_transition_table_+27, 16, "RETURN expr" },
+    { 12, ms_transition_table_+28, 16, "head of: expr" },
+    { 3, ms_transition_table_+40, 4, "rule 4: expr <- . '(' expr ')'" },
+    { 4, ms_transition_table_+43, 4, "rule 4: expr <- '(' . expr ')'" },
+    { 3, ms_transition_table_+47, 4, "rule 4: expr <- '(' expr . ')'" },
+    { 1, ms_transition_table_+50, 4, "rule 4: expr <- '(' expr ')' ." },
+    { 3, ms_transition_table_+51, 5, "rule 5: expr <- . '(' ERROR_ ')'" },
+    { 2, ms_transition_table_+54, 5, "rule 5: expr <- '(' . ERROR_ ')'" },
+    { 3, ms_transition_table_+56, 5, "rule 5: expr <- '(' ERROR_ . ')'" },
+    { 1, ms_transition_table_+59, 5, "rule 5: expr <- '(' ERROR_ ')' ." },
+    { 3, ms_transition_table_+60, 6, "rule 6: expr <- . '(' ERROR_" },
+    { 2, ms_transition_table_+63, 6, "rule 6: expr <- '(' . ERROR_" },
+    { 3, ms_transition_table_+65, 6, "rule 6: expr <- '(' ERROR_ ." },
+    { 3, ms_transition_table_+68, 7, "rule 7: expr <- . NUM" },
+    { 1, ms_transition_table_+71, 7, "rule 7: expr <- NUM ." },
+    { 3, ms_transition_table_+72, 8, "rule 8: expr <- . expr '+' expr" },
+    { 3, ms_transition_table_+75, 8, "rule 8: expr <- expr . '+' expr" },
+    { 4, ms_transition_table_+78, 8, "rule 8: expr <- expr '+' . expr" },
+    { 1, ms_transition_table_+82, 8, "rule 8: expr <- expr '+' expr ." },
+    { 3, ms_transition_table_+83, 9, "rule 9: expr <- . expr '+' '+' '+' '+' expr" },
+    { 3, ms_transition_table_+86, 9, "rule 9: expr <- expr . '+' '+' '+' '+' expr" },
+    { 3, ms_transition_table_+89, 9, "rule 9: expr <- expr '+' . '+' '+' '+' expr" },
+    { 3, ms_transition_table_+92, 9, "rule 9: expr <- expr '+' '+' . '+' '+' expr" },
+    { 3, ms_transition_table_+95, 9, "rule 9: expr <- expr '+' '+' '+' . '+' expr" },
+    { 4, ms_transition_table_+98, 9, "rule 9: expr <- expr '+' '+' '+' '+' . expr" },
+    { 1, ms_transition_table_+102, 9, "rule 9: expr <- expr '+' '+' '+' '+' expr ." },
+    { 3, ms_transition_table_+103, 10, "rule 10: expr <- . expr '+' '+' '+' expr" },
+    { 3, ms_transition_table_+106, 10, "rule 10: expr <- expr . '+' '+' '+' expr" },
+    { 3, ms_transition_table_+109, 10, "rule 10: expr <- expr '+' . '+' '+' expr" },
+    { 3, ms_transition_table_+112, 10, "rule 10: expr <- expr '+' '+' . '+' expr" },
+    { 4, ms_transition_table_+115, 10, "rule 10: expr <- expr '+' '+' '+' . expr" },
+    { 1, ms_transition_table_+119, 10, "rule 10: expr <- expr '+' '+' '+' expr ." },
+    { 3, ms_transition_table_+120, 11, "rule 11: expr <- . expr '+' '+' expr" },
+    { 3, ms_transition_table_+123, 11, "rule 11: expr <- expr . '+' '+' expr" },
+    { 3, ms_transition_table_+126, 11, "rule 11: expr <- expr '+' . '+' expr" },
+    { 4, ms_transition_table_+129, 11, "rule 11: expr <- expr '+' '+' . expr" },
+    { 1, ms_transition_table_+133, 11, "rule 11: expr <- expr '+' '+' expr ." },
+    { 3, ms_transition_table_+134, 12, "rule 12: expr <- . expr '*' expr" },
+    { 3, ms_transition_table_+137, 12, "rule 12: expr <- expr . '*' expr" },
+    { 4, ms_transition_table_+140, 12, "rule 12: expr <- expr '*' . expr" },
+    { 1, ms_transition_table_+144, 12, "rule 12: expr <- expr '*' expr ." },
+    { 3, ms_transition_table_+145, 13, "rule 13: expr <- . expr '?' expr" },
+    { 3, ms_transition_table_+148, 13, "rule 13: expr <- expr . '?' expr" },
+    { 4, ms_transition_table_+151, 13, "rule 13: expr <- expr '?' . expr" },
+    { 1, ms_transition_table_+155, 13, "rule 13: expr <- expr '?' expr ." },
+    { 3, ms_transition_table_+156, 14, "rule 14: expr <- . '-' expr" },
+    { 4, ms_transition_table_+159, 14, "rule 14: expr <- '-' . expr" },
+    { 1, ms_transition_table_+163, 14, "rule 14: expr <- '-' expr ." },
+    { 3, ms_transition_table_+164, 15, "rule 15: expr <- . expr '^' expr" },
+    { 3, ms_transition_table_+167, 15, "rule 15: expr <- expr . '^' expr" },
+    { 4, ms_transition_table_+170, 15, "rule 15: expr <- expr '^' . expr" },
+    { 1, ms_transition_table_+174, 15, "rule 15: expr <- expr '^' expr ." },
+    { 1, ms_transition_table_+175, 2, "rule 2: stmt <- expr ';' ." },
+    { 2, ms_transition_table_+176, 3, "rule 3: stmt <- . ERROR_ ';'" },
+    { 3, ms_transition_table_+178, 3, "rule 3: stmt <- ERROR_ . ';'" },
+    { 1, ms_transition_table_+181, 3, "rule 3: stmt <- ERROR_ ';' ." },
+    { 1, ms_transition_table_+182, 0, "rule 0: stmt_then_end <- stmt END_ ." },
+    { 2, ms_transition_table_+183, 1, "rule 1: stmt_then_end <- . ERROR_ END_" },
+    { 3, ms_transition_table_+185, 1, "rule 1: stmt_then_end <- ERROR_ . END_" },
+    { 1, ms_transition_table_+188, 1, "rule 1: stmt_then_end <- ERROR_ END_ ." }
 };
 std::size_t const CalcParser::Npda_::ms_state_count_ = sizeof(CalcParser::Npda_::ms_state_table_) / sizeof(*CalcParser::Npda_::ms_state_table_);
 
 CalcParser::Npda_::Transition_ const CalcParser::Npda_::ms_transition_table_[] =
 {
-    { CalcParser::Npda_::Transition_::SHIFT, 260, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(2) },
-    { CalcParser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::ABORT, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::SHIFT, 260, std::uint32_t(2) },
     { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(3) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(68) },
-    { CalcParser::Npda_::Transition_::SHIFT, 261, std::uint32_t(4) },
-    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(7) },
-    { CalcParser::Npda_::Transition_::SHIFT, 256, std::uint32_t(67) },
-    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 261, std::uint32_t(6) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(7) },
     { CalcParser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(4) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(69) },
+    { CalcParser::Npda_::Transition_::SHIFT, 261, std::uint32_t(5) },
+    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(8) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(64) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(9) },
+    { CalcParser::Npda_::Transition_::SHIFT, 256, std::uint32_t(68) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { CalcParser::Npda_::Transition_::SHIFT, 59, std::uint32_t(63) },
-    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(11) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::SHIFT, 261, std::uint32_t(7) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(8) },
     { CalcParser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(9) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(65) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(10) },
+    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(17) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(21) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(24) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(26) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(30) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(37) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(43) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(48) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(52) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(56) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(59) },
-    { CalcParser::Npda_::Transition_::SHIFT, 40, std::uint32_t(14) },
+    { CalcParser::Npda_::Transition_::SHIFT, 59, std::uint32_t(64) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(15) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
+    { CalcParser::Npda_::Transition_::RETURN, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(14) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(18) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(22) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(25) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(27) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(31) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(38) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(44) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(49) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(53) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(57) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(60) },
+    { CalcParser::Npda_::Transition_::SHIFT, 40, std::uint32_t(15) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
-    { CalcParser::Npda_::Transition_::SHIFT, 41, std::uint32_t(16) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(16) },
+    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
+    { CalcParser::Npda_::Transition_::SHIFT, 41, std::uint32_t(17) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(4) },
-    { CalcParser::Npda_::Transition_::SHIFT, 40, std::uint32_t(18) },
+    { CalcParser::Npda_::Transition_::SHIFT, 40, std::uint32_t(19) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 257, std::uint32_t(19) },
+    { CalcParser::Npda_::Transition_::SHIFT, 257, std::uint32_t(20) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 41, std::uint32_t(20) },
+    { CalcParser::Npda_::Transition_::SHIFT, 41, std::uint32_t(21) },
     { CalcParser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 256, std::uint32_t(2) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(5) },
-    { CalcParser::Npda_::Transition_::SHIFT, 40, std::uint32_t(22) },
+    { CalcParser::Npda_::Transition_::SHIFT, 40, std::uint32_t(23) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 257, std::uint32_t(23) },
+    { CalcParser::Npda_::Transition_::SHIFT, 257, std::uint32_t(24) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::REDUCE, 59, std::uint32_t(6) },
     { CalcParser::Npda_::Transition_::REDUCE, 256, std::uint32_t(6) },
     { CalcParser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 258, std::uint32_t(25) },
+    { CalcParser::Npda_::Transition_::SHIFT, 258, std::uint32_t(26) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(7) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(27) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(28) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(28) },
+    { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(29) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(29) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(30) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(8) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(31) },
-    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(32) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(32) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(33) },
@@ -2755,15 +2974,15 @@ CalcParser::Npda_::Transition_ const CalcParser::Npda_::ms_transition_table_[] =
     { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(35) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(36) },
+    { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(36) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(37) },
+    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(9) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(38) },
-    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(39) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(39) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(40) },
@@ -2772,77 +2991,80 @@ CalcParser::Npda_::Transition_ const CalcParser::Npda_::ms_transition_table_[] =
     { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(41) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(42) },
+    { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(42) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(43) },
+    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(10) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(44) },
-    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(45) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(45) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
     { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(46) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(47) },
+    { CalcParser::Npda_::Transition_::SHIFT, 43, std::uint32_t(47) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(48) },
+    { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
+    { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(11) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(49) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(50) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 42, std::uint32_t(50) },
+    { CalcParser::Npda_::Transition_::SHIFT, 42, std::uint32_t(51) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(51) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(52) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(12) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(53) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(54) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 63, std::uint32_t(54) },
+    { CalcParser::Npda_::Transition_::SHIFT, 63, std::uint32_t(55) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(55) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(56) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(13) },
-    { CalcParser::Npda_::Transition_::SHIFT, 45, std::uint32_t(57) },
+    { CalcParser::Npda_::Transition_::SHIFT, 45, std::uint32_t(58) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(58) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(59) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(14) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(60) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(61) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 94, std::uint32_t(61) },
+    { CalcParser::Npda_::Transition_::SHIFT, 94, std::uint32_t(62) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(62) },
+    { CalcParser::Npda_::Transition_::SHIFT, 262, std::uint32_t(63) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 257, std::uint32_t(1) },
-    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(12) },
+    { CalcParser::Npda_::Transition_::EPSILON, 0, std::uint32_t(13) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(15) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(2) },
-    { CalcParser::Npda_::Transition_::SHIFT, 257, std::uint32_t(65) },
+    { CalcParser::Npda_::Transition_::SHIFT, 257, std::uint32_t(66) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 59, std::uint32_t(66) },
+    { CalcParser::Npda_::Transition_::SHIFT, 59, std::uint32_t(67) },
     { CalcParser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 256, std::uint32_t(2) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(3) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(0) },
-    { CalcParser::Npda_::Transition_::SHIFT, 257, std::uint32_t(69) },
+    { CalcParser::Npda_::Transition_::SHIFT, 257, std::uint32_t(70) },
     { CalcParser::Npda_::Transition_::INSERT_LOOKAHEAD_ERROR, 0, std::uint32_t(-1) },
-    { CalcParser::Npda_::Transition_::SHIFT, 256, std::uint32_t(70) },
+    { CalcParser::Npda_::Transition_::SHIFT, 256, std::uint32_t(71) },
     { CalcParser::Npda_::Transition_::DISCARD_LOOKAHEAD, 0, std::uint32_t(-1) },
     { CalcParser::Npda_::Transition_::POP_STACK, 256, std::uint32_t(2) },
     { CalcParser::Npda_::Transition_::REDUCE, 0, std::uint32_t(1) }
@@ -2854,7 +3076,7 @@ std::size_t const CalcParser::Npda_::ms_transition_count_ = sizeof(CalcParser::N
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 76 "CalcParser.trison"
+#line 76 "../CalcParser.trison"
 
 void CalcParser::AttachIstream (std::istream &in)
 {
@@ -2877,4 +3099,4 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     m_scanner->DebugSpew(debug_spew);
 }
 
-#line 2881 "CalcParser.cpp"
+#line 3103 "../CalcParser.cpp"

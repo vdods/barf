@@ -181,10 +181,10 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
         return st;
     }
 |
-    %error[%end] %end
+    %error[!%end] %end
     %target.cpp {
-        std::cout << "stmt_then_end <- %error[%end] %end\n";
-        return Ast::error_dummy("stmt_then_end <- %error[%end] %end");
+        std::cout << "stmt_then_end <- %error[!%end] %end\n";
+        return Ast::error_dummy("stmt_then_end <- %error[!%end] %end");
     }
 ;
 
@@ -196,7 +196,7 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
         return ex;
     }
 |
-    %error[%end] ';'
+    %error[!%end] ';'
     %target.cpp {
 //         std::cout << "stmt <- %error ';'\n";
         return Ast::error_dummy("stmt <- %error ';'");
@@ -211,20 +211,20 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
         return e;
     }
 |
-    '(' %error[%end] ')'
+    '(' %error[!%end] ')'
     %target.cpp {
-//         std::cout << "expr <- '(' %error[')'] ')'\n";
-        return Ast::error_dummy("expr <- '(' %error[')'] ')'");
+//         std::cout << "expr <- '(' %error[!%end] ')'\n";
+        return Ast::error_dummy("expr <- '(' %error[!%end] ')'");
     }
 |
     // NOTE: This will match everything until %end.
     // This rule prevents ';' from being the error-stopper in statements, since
     // the %error token matches everything including ';'.
     // If %error_until(%end, ';') were added, this situation could be handled better.
-    '(' %error[%end | ';']
+    '(' %error[![%end|';']]
     %target.cpp {
-//         std::cout << "expr <- '(' %error[%end | ';']\n";
-        return Ast::error_dummy("expr <- '(' %error[%end | ';']");
+//         std::cout << "expr <- '(' %error[![%end|';']]\n";
+        return Ast::error_dummy("expr <- '(' %error[![%end|';']]");
     }
 |
     NUM:num
@@ -282,6 +282,6 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     }
 // |
 //     // This just screws everything up.  It seems like there should just never be
-//     // a lone %error in a rule.  Though %error[%end | ';'] could solve this.
-//     %error[%end | ';']                                          %target.cpp { std::cout << "expr <- %error[%end | ';']\n"; return 0.0; }
+//     // a lone %error in a rule.  Though %error[![%end|';']] could solve this.
+//     %error[![%end|';']]                                          %target.cpp { std::cout << "expr <- %error[![%end|';']]\n"; return 0.0; }
 ;

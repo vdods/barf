@@ -10,16 +10,16 @@
 #define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
 
 
-#line 47 "calculator_scanner.reflex"
+#line 47 "../calculator_scanner.reflex"
 
 namespace Calculator {
 
-#line 18 "calculator_scanner.cpp"
+#line 18 "../calculator_scanner.cpp"
 
 Scanner::Scanner (
-#line 32 "calculator_scanner.reflex"
+#line 32 "../calculator_scanner.reflex"
  string const &input_string 
-#line 23 "calculator_scanner.cpp"
+#line 23 "../calculator_scanner.cpp"
 )
     :
     ReflexCpp_::AutomatonApparatus_FastAndBig_Interactive_(
@@ -34,11 +34,11 @@ Scanner::Scanner (
     SetDebugSpewStream(NULL);
 
 
-#line 50 "calculator_scanner.reflex"
+#line 50 "../calculator_scanner.reflex"
 
     m_input.str(input_string);
 
-#line 42 "calculator_scanner.cpp"
+#line 42 "../calculator_scanner.cpp"
 
     ResetForNewInput();
 }
@@ -97,10 +97,10 @@ void Scanner::ResetForNewInput ()
     assert(CurrentStateMachine() == StateMachine::START_);
 
 
-#line 77 "calculator_scanner.reflex"
+#line 77 "../calculator_scanner.reflex"
 
 
-#line 104 "calculator_scanner.cpp"
+#line 104 "../calculator_scanner.cpp"
 }
 
 Parser::Token Scanner::Scan () throw()
@@ -146,11 +146,11 @@ Parser::Token Scanner::Scan () throw()
             do
             {
 
-#line 74 "calculator_scanner.reflex"
+#line 74 "../calculator_scanner.reflex"
 
     assert(false && "we should have handled this in the catch-all rule");
 
-#line 154 "calculator_scanner.cpp"
+#line 154 "../calculator_scanner.cpp"
 
             }
             while (false);
@@ -173,11 +173,11 @@ Parser::Token Scanner::Scan () throw()
                 case 0:
                 {
 
-#line 114 "calculator_scanner.reflex"
+#line 114 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, strtod(accepted_string.c_str(), NULL));
     
-#line 181 "calculator_scanner.cpp"
+#line 181 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -185,11 +185,11 @@ Parser::Token Scanner::Scan () throw()
                 case 1:
                 {
 
-#line 119 "calculator_scanner.reflex"
+#line 119 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, strtod(accepted_string.c_str(), NULL));
     
-#line 193 "calculator_scanner.cpp"
+#line 193 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -197,11 +197,11 @@ Parser::Token Scanner::Scan () throw()
                 case 2:
                 {
 
-#line 124 "calculator_scanner.reflex"
+#line 124 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, M_PI);
     
-#line 205 "calculator_scanner.cpp"
+#line 205 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -209,11 +209,11 @@ Parser::Token Scanner::Scan () throw()
                 case 3:
                 {
 
-#line 129 "calculator_scanner.reflex"
+#line 129 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NUMBER, M_E);
     
-#line 217 "calculator_scanner.cpp"
+#line 217 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -221,11 +221,11 @@ Parser::Token Scanner::Scan () throw()
                 case 4:
                 {
 
-#line 134 "calculator_scanner.reflex"
+#line 134 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::RESULT);
     
-#line 229 "calculator_scanner.cpp"
+#line 229 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -233,11 +233,11 @@ Parser::Token Scanner::Scan () throw()
                 case 5:
                 {
 
-#line 139 "calculator_scanner.reflex"
+#line 139 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::LOG);
     
-#line 241 "calculator_scanner.cpp"
+#line 241 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -245,11 +245,11 @@ Parser::Token Scanner::Scan () throw()
                 case 6:
                 {
 
-#line 144 "calculator_scanner.reflex"
+#line 144 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::HELP);
     
-#line 253 "calculator_scanner.cpp"
+#line 253 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -257,11 +257,11 @@ Parser::Token Scanner::Scan () throw()
                 case 7:
                 {
 
-#line 149 "calculator_scanner.reflex"
+#line 149 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::MOD);
     
-#line 265 "calculator_scanner.cpp"
+#line 265 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -269,11 +269,11 @@ Parser::Token Scanner::Scan () throw()
                 case 8:
                 {
 
-#line 154 "calculator_scanner.reflex"
+#line 154 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Token::Id(accepted_string[0]));
     
-#line 277 "calculator_scanner.cpp"
+#line 277 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -281,11 +281,11 @@ Parser::Token Scanner::Scan () throw()
                 case 9:
                 {
 
-#line 159 "calculator_scanner.reflex"
+#line 159 "../calculator_scanner.reflex"
 
         // ignore all non-newline whitespace
     
-#line 289 "calculator_scanner.cpp"
+#line 289 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -293,11 +293,11 @@ Parser::Token Scanner::Scan () throw()
                 case 10:
                 {
 
-#line 164 "calculator_scanner.reflex"
+#line 164 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::NEWLINE);
     
-#line 301 "calculator_scanner.cpp"
+#line 301 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -305,11 +305,11 @@ Parser::Token Scanner::Scan () throw()
                 case 11:
                 {
 
-#line 169 "calculator_scanner.reflex"
+#line 169 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::END_);
     
-#line 313 "calculator_scanner.cpp"
+#line 313 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -317,11 +317,11 @@ Parser::Token Scanner::Scan () throw()
                 case 12:
                 {
 
-#line 174 "calculator_scanner.reflex"
+#line 174 "../calculator_scanner.reflex"
 
         return Parser::Token(Parser::Terminal::BAD_TOKEN);
     
-#line 325 "calculator_scanner.cpp"
+#line 325 "../calculator_scanner.cpp"
 
                 }
                 break;
@@ -332,11 +332,11 @@ Parser::Token Scanner::Scan () throw()
     }
 
 
-#line 53 "calculator_scanner.reflex"
+#line 53 "../calculator_scanner.reflex"
 
     return Parser::Token(Parser::Terminal::BAD_TOKEN);
 
-#line 340 "calculator_scanner.cpp"
+#line 340 "../calculator_scanner.cpp"
 }
 
 void Scanner::KeepString ()
@@ -364,21 +364,21 @@ void Scanner::Unreject (std::uint32_t unreject_char_count)
 bool Scanner::IsInputAtEnd_ () throw()
 {
 
-#line 68 "calculator_scanner.reflex"
+#line 68 "../calculator_scanner.reflex"
 
     return m_input.peek() == char_traits<char>::eof();
 
-#line 372 "calculator_scanner.cpp"
+#line 372 "../calculator_scanner.cpp"
 }
 
 std::uint8_t Scanner::ReadNextAtom_ () throw()
 {
 
-#line 71 "calculator_scanner.reflex"
+#line 71 "../calculator_scanner.reflex"
 
     return m_input.get();
 
-#line 382 "calculator_scanner.cpp"
+#line 382 "../calculator_scanner.cpp"
 }
 
 void Scanner::PrintAtom_ (std::ostream &out, std::uint8_t atom)
@@ -1181,8 +1181,8 @@ std::uint32_t const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_accep
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 56 "calculator_scanner.reflex"
+#line 56 "../calculator_scanner.reflex"
 
 } // end of namespace Calculator
 
-#line 1189 "calculator_scanner.cpp"
+#line 1189 "../calculator_scanner.cpp"

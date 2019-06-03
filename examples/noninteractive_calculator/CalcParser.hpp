@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 20 "CalcParser.trison"
+#line 20 "../CalcParser.trison"
 
 #include <iostream>
 
@@ -29,7 +29,7 @@ struct Base;
 
 } // end of namespace Ast
 
-#line 33 "CalcParser.hpp"
+#line 33 "../CalcParser.hpp"
 
 /// @brief A parser class.
 ///
@@ -297,7 +297,7 @@ public:
     ParserReturnCode Parse (std::shared_ptr<Ast::Base> *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::stmt_then_end);
 
 
-#line 33 "CalcParser.trison"
+#line 33 "../CalcParser.trison"
 
     bool ScannerDebugSpew () const;
     void ScannerDebugSpew (bool debug_spew);
@@ -307,7 +307,7 @@ private:
 
     Scanner *m_scanner;
 
-#line 311 "CalcParser.hpp"
+#line 311 "../CalcParser.hpp"
 
 
 private:
@@ -336,9 +336,13 @@ private:
     ParserReturnCode Parse_ (std::shared_ptr<Ast::Base> *return_token, Nonterminal::Name nonterminal_to_parse);
     void ThrowAwayToken_ (Token const &token) throw();
     void ThrowAwayTokenData_ (std::shared_ptr<Ast::Base> const &token_data) throw();
+    Token::Data InsertLookaheadErrorActions_ (Token const &noconsume_lookahead_token);
+    Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
+    Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
+    Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
-    void RunNonassocErrorActions_ (Token const &lookahead);
     // debug spew methods
     void PrintParserStatus_ (std::ostream &out) const;
 
@@ -368,6 +372,7 @@ private:
         {
             Token::Id       m_reduction_nonterminal_token_id;
             std::uint32_t   m_token_count;
+            bool            m_has_lookahead_directive;
             std::uint32_t   m_precedence_index;
             char const *    m_description;
         }; // end of struct CalcParser::Grammar_::Rule_
@@ -402,7 +407,7 @@ private:
         struct Transition_
         {
             // TODO: Make this into a strong enum (C++11)
-            enum Type { RETURN = 1, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
+            enum Type { RETURN = 1, ABORT, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, EPSILON };
             std::uint8_t    m_type;
             // TODO: Rename this to m_token_id
             std::uint32_t   m_token_index;  // TODO: smallest int
@@ -413,20 +418,35 @@ private:
             // Lexicographic ordering on the tuple (m_type, m_token_index, m_data_index).
             struct Order
             {
-                // TODO: Rename SortedTypeIndex to ActionClassIndex?
-                static std::uint32_t SortedTypeIndex (Type type)
+                static std::uint32_t const MIN_SORTED_TYPE_INDEX = 0;
+                // static std::uint32_t const MAX_SORTED_TYPE_INDEX = 3;
+                static std::uint32_t const MAX_SORTED_TYPE_INDEX = 4;
+
+                // TODO: Rename SortedTypeIndex to OrderedActionIndex?
+                static std::uint32_t SortedTypeIndex (Transition_ const &transition)
                 {
-                    switch (type)
+                    switch (transition.m_type)
                     {
                         case REDUCE:
                         case SHIFT:
                             return 0;
 
-                        case DISCARD_LOOKAHEAD:
                         case POP_STACK:
-                            return 1;
+                            // POP_STACK 2 has higher precedence than DISCARD_LOOKAHEAD
+                            if (transition.m_data_index == 2)
+                                return 1;
+                            // POP_STACK 1 has equal precedence as DISCARD_LOOKAHEAD
+                            else
+                            {
+                                assert(transition.m_data_index == 1);
+                                return 2;
+                            }
+
+                        case DISCARD_LOOKAHEAD:
+                            return 2;
 
                         case RETURN:
+                        case ABORT:
                             return 2;
 
                         case INSERT_LOOKAHEAD_ERROR:
@@ -435,14 +455,38 @@ private:
 
                         default:
                             assert(false && "this should never happen");
-                            return 3; // Arbitrary
+                            return 4; // Arbitrary
                     }
+                    // switch (type)
+                    // {
+                    //     case REDUCE:
+                    //     case SHIFT:
+                    //         return 0;
+                    //
+                    //     case POP_STACK:
+                    //         return 1;
+                    //
+                    //     case DISCARD_LOOKAHEAD:
+                    //         return 2;
+                    //
+                    //     case RETURN:
+                    //     case ABORT:
+                    //         return 3;
+                    //
+                    //     case INSERT_LOOKAHEAD_ERROR:
+                    //     case EPSILON:
+                    //         return 4;
+                    //
+                    //     default:
+                    //         assert(false && "this should never happen");
+                    //         return 5; // Arbitrary
+                    // }
                 }
 
                 bool operator () (Transition_ const &lhs, Transition_ const &rhs) const
                 {
-                    std::uint32_t sorted_type_index_lhs = SortedTypeIndex(Type(lhs.m_type));
-                    std::uint32_t sorted_type_index_rhs = SortedTypeIndex(Type(rhs.m_type));
+                    std::uint32_t sorted_type_index_lhs = SortedTypeIndex(lhs);
+                    std::uint32_t sorted_type_index_rhs = SortedTypeIndex(rhs);
                     if (sorted_type_index_lhs != sorted_type_index_rhs)
                         return sorted_type_index_lhs < sorted_type_index_rhs;
                     else if (lhs.m_type != rhs.m_type)
@@ -653,6 +697,7 @@ private:
         void                PushBackLookahead                   (Token const &lookahead, HPSQueue_ const &hps_queue);
 
         Token               PopStack                            ();
+        void                ReplaceTokenStackTopWith            (Token const &replacement);
         Token               PopFrontLookahead                   (HPSQueue_ &hps_queue);
 
         void                StealTokenStackTop                  (std::shared_ptr<Ast::Base> *&return_token);
@@ -679,9 +724,13 @@ private:
 
         void                Initialize                          (Npda_::StateIndex_ initial_state);
 
+    public:
         void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
+    private:
         void                UpdateMaxRealizedLookaheadCount     ();
+    public:
         void                SetHasEncounteredErrorState         () { m_has_encountered_error_state = true; }
+    private:
 
         static bool         IsScannerGeneratedTokenId           (Token::Id token_id)
         {
@@ -704,7 +753,7 @@ private:
 
     struct HypotheticalState_
     {
-        HypotheticalState_      (std::uint32_t initial_state);
+        HypotheticalState_      (Branch_ const &initial_branch);
         ~HypotheticalState_     ();
 
         // The min and max realized lookahead cursors being equal across all HPSes indicates that
@@ -743,7 +792,7 @@ private:
 
     void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, std::shared_ptr<Ast::Base> *&return_token);
     void ContinueNPDAParse_ (bool &should_return);
-    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack) throw();
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack, Token const *lookahead_) throw();
 
     // TODO: This should probably be inside HypotheticalState_
     struct ParseTreeNode_
@@ -752,7 +801,7 @@ private:
         // Note: HPS stands for "Hypothetical Parser State", which represents one of possibly many
         // ways the non-deterministic parser can parse the input.
         // TODO: probably order this so that the Spec::Order gives an obvious way to do error handling action last
-        enum Type { ROOT = 0, RETURN, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, HPS, COUNT_ };
+        enum Type { ROOT = 0, RETURN, ABORT, REDUCE, SHIFT, INSERT_LOOKAHEAD_ERROR, DISCARD_LOOKAHEAD, POP_STACK, HPS, COUNT_ };
         static std::uint32_t const UNUSED_DATA = std::uint32_t(-1);
 
         struct Spec

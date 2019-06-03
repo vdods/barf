@@ -39,8 +39,8 @@ endif()
 
 # Executables
 
-reflex_add_source(${barftest_SOURCE_DIR}/CalcSanner.reflex CalcScanner)
-trison_add_source(${barftest_SOURCE_DIR}/CalcParser.trison CalcParser)
+reflex_add_source(${barftest_SOURCE_DIR}/CalcSanner.reflex ${barftest_SOURCE_DIR} CalcScanner ${PROJECT_BINARY_DIR})
+trison_add_source(${barftest_SOURCE_DIR}/CalcParser.trison ${barftest_SOURCE_DIR} CalcParser ${PROJECT_BINARY_DIR})
 
 set(barftest_SOURCES
     ast.cpp

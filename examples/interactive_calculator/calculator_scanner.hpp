@@ -522,7 +522,7 @@ private:
 #endif // !defined(ReflexCpp_namespace_)
 
 
-#line 19 "calculator_scanner.reflex"
+#line 19 "../calculator_scanner.reflex"
 
 #if !defined(CALCULATOR_SCANNER_HPP_)
 #define CALCULATOR_SCANNER_HPP_
@@ -536,7 +536,7 @@ private:
 
 namespace Calculator {
 
-#line 540 "calculator_scanner.hpp"
+#line 540 "../calculator_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_FastAndBig_Interactive_
 {
@@ -553,9 +553,9 @@ public:
     }; // end of struct Scanner::StateMachine
 
     Scanner (
-#line 32 "calculator_scanner.reflex"
+#line 32 "../calculator_scanner.reflex"
  string const &input_string 
-#line 559 "calculator_scanner.hpp"
+#line 559 "../calculator_scanner.hpp"
 );
     ~Scanner ();
 
@@ -587,11 +587,11 @@ public:
 public:
 
 
-#line 34 "calculator_scanner.reflex"
+#line 34 "../calculator_scanner.reflex"
 
     istringstream m_input;
 
-#line 595 "calculator_scanner.hpp"
+#line 595 "../calculator_scanner.hpp"
 
 
 private:
@@ -637,10 +637,10 @@ private:
 }; // end of class Scanner
 
 
-#line 37 "calculator_scanner.reflex"
+#line 37 "../calculator_scanner.reflex"
 
 } // end of namespace Calculator
 
 #endif // !defined(CALCULATOR_SCANNER_HPP_)
 
-#line 647 "calculator_scanner.hpp"
+#line 647 "../calculator_scanner.hpp"

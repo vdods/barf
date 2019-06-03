@@ -32,8 +32,8 @@ endif()
 
 # Executables
 
-reflex_add_source(${calculator_SOURCE_DIR}/calculator_scanner.reflex calculator_scanner)
-trison_add_source(${calculator_SOURCE_DIR}/calculator_parser.trison calculator_parser)
+reflex_add_source(${calculator_SOURCE_DIR}/calculator_scanner.reflex ${calculator_SOURCE_DIR} calculator_scanner ${PROJECT_BINARY_DIR})
+trison_add_source(${calculator_SOURCE_DIR}/calculator_parser.trison ${calculator_SOURCE_DIR} calculator_parser ${PROJECT_BINARY_DIR})
 
 set(calculator_SOURCES
     calculator.hpp
