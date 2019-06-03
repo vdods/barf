@@ -1062,9 +1062,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     %target.cpp {
         assert(acceptable_tokens != NULL);
 
-        // TEMP HACK until done transitioning to inverted %error acceptable_tokens
-        acceptable_tokens->m_is_inverted = true;
-
         // TODO: Maybe move this to ErrorDirective
         // Verify that %end is not included.  Also verify that it's a negated TokenSpecifierList
         // since the way the NPDA is generated depends on it.
@@ -1083,9 +1080,6 @@ void Parser::OpenUsingStream (istream *input_stream, string const &input_name, b
     DIRECTIVE_ERROR:throwaway bracketed_token_specifier_list:acceptable_tokens
     %target.cpp {
         assert(acceptable_tokens != NULL);
-
-        // TEMP HACK until done transitioning to inverted %error acceptable_tokens
-        acceptable_tokens->m_is_inverted = true;
 
         // TODO: Maybe move this to ErrorDirective
         // Verify that %end is not included.  Also verify that it's a negated TokenSpecifierList
