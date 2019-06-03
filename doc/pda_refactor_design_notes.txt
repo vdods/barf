@@ -1244,14 +1244,15 @@ which includes the top element.
             being able to prevent exponential memory usage.  Though the problem here is that there could
             be valid parses that take a lot of nodes, and it's not obvious what the limit should be.
     -   Nice to have
-        -   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
+        x   Implement %lookahead directive (this is a huge effort and maybe is still a partial research task)
+            2019.05.31 - implemented partially; %lookahead at end of rule.
         -   Have each tool have commands which determine all source files (i.e. dependencies) and all
             files that will be output.  This will make it easier to determine input/outputs in e.g. cmake.
             This might be more trouble than it's worth, since the codespec files can include arbitrary
             files which can depend on decisions made based on the input.  So essentially the only way
             to implement this is to do a "dry run" and see which files are read/included, and which
             files would be written to.
-        -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
+        x   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
             This should probably have to do with the output directory option of reflex/trison.
             NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
             so defer for later.
@@ -1658,10 +1659,10 @@ which includes the top element.
             x   Get the distribution packaging working (CPack?)
         -   Test exception handling, especially with valgrind leak checking.  Make sure to add `throw()`
             specifiers to everything that should not throw.
-        -   Clean up example apps dir structure (should probably just have a single example)
+        x   Clean up example apps dir structure (should probably just have a single example)
         x   Make an up-to-date README.md with basic installation and usage instructions.
     -   Low priority nice-to-have
-        -   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
+        x   Make the #line directive have overridable path so that gdb/KDevelop parses it correctly.
             This should probably have to do with the output directory option of reflex/trison.
             NOTE: This is difficult to do without a decent implementation of std::filesystem::relative,
             so defer for later.
@@ -1735,6 +1736,10 @@ which includes the top element.
         still necessary), where the stack token and the lookahead are both consumed,
         producing a token that will replace the lookahead (but its type will still be
         BLOCKED_ERROR_).
+
+        This might be unnecessary after a fix to a bug where %error tokens that weren't
+        at the end were accepting any token.  Also the %lookahead feature makes things
+        easier.
 
     -   Idea: Have handler code blocks for the following:
         -   INSERT_LOOKAHEAD_ERROR -- this should have access to the lookahead that
@@ -2086,3 +2091,5 @@ which includes the top element.
 
     x   Make sure %nonassoc error handler actions have some tokens available to generate the error token from.
     x   Be able to specify #line path so that it shows up correctly in KDevelop.
+    -   Make sure that the packaging packs up all the right stuff and that you can build
+        from the package.
