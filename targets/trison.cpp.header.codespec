@@ -397,7 +397,13 @@ private:
 std::ostream &operator << (std::ostream &stream, <{class_name}::ParserReturnCode parser_return_code);
 <|if(is_defined(generate_debug_spew_code))
 
+// This should really be defined for <{class_name}::Token::Id, since that's all it prints,
+// but there's a difficulty because <{class_name}::Token::Id is really just std::uint32_t,
+// so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &token);
+<|if(is_defined(ostream_print_token_data))
+std::ostream &operator << (std::ostream &stream, <{class_name}::Token::Data const &token_data);
+<|end_if
 <|if(0)
 
 // This is for use in debugging ParseStackTreeNode_ object leaks

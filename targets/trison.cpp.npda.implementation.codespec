@@ -1054,25 +1054,41 @@ void <{class_name}::PrintParserStatus_ (std::ostream &out) const
     out << <{debug_spew_prefix} << "Has-encountered-error-state (so far) is:\n";
     out << <{debug_spew_prefix} << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << <{debug_spew_prefix} << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
+<|  if(!is_defined(ostream_print_token_data))
     out << <{debug_spew_prefix} << "    ";
+<|  end_if
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
          it != it_end;
          ++it)
     {
         Token const &token = *it;
+<|      if(is_defined(ostream_print_token_data))
+        out << <{debug_spew_prefix} << "    " << token << " (token data: " << token.m_data << ")\n";
+<|      else
         out << token << ' ';
+<|      end_if
     }
+<|  if(is_defined(ostream_print_token_data))
+    out << <{debug_spew_prefix} << "    .\n";
+<|  else
     out << ". ";
+<|  end_if
     for (TokenQueue_::const_iterator it = m_realized_state_->LookaheadQueue().begin(),
                                      it_end = m_realized_state_->LookaheadQueue().end();
          it != it_end;
          ++it)
     {
         Token const &token = *it;
+<|      if(is_defined(ostream_print_token_data))
+        out << <{debug_spew_prefix} << "    " << token << " (token data: " << token.m_data << ")\n";
+<|      else
         out << token << ' ';
+<|      end_if
     }
+<|  if(!is_defined(ostream_print_token_data))
     out << '\n';
+<|  end_if
     out << <{debug_spew_prefix} << '\n';
 
     out << <{debug_spew_prefix} << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";

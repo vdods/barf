@@ -183,6 +183,15 @@
 // directive.  The custom_token_data_type_cast must have the same semantics as
 // static_cast (e.g. dynamic_cast, or make your own special cast function).
 %add_optional_directive custom_token_data_type_cast         %string             %default "static_cast"
+// Optionally specifies the body for a function overload
+// std::ostream &operator << (std::ostream &stream, <{class_name}::Token::Data const &token_data)
+// which is used to render token data for printing the realized token stack
+// and realized lookahead queue in the debug spew.  An example value for
+// this directive would be to print the token data directly.
+//     return stream << token_data;
+// Note that the stream reference must be returned.  If this directive is omitted,
+// then token data will not be printed in the parser status.
+%add_optional_directive ostream_print_token_data            %strict_code_block
 
 // ///////////////////////////////////////////////////////////////////////////
 // Basic error token handling

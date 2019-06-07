@@ -157,6 +157,12 @@ std::ostream &operator << (std::ostream &stream, <{class_name}::Token const &tok
         stream << "!INVALID!TOKEN!";
     return stream;
 }
+<|if(is_defined(ostream_print_token_data))
+std::ostream &operator << (std::ostream &stream, <{class_name}::Token::Data const &token_data)
+{
+    <{ostream_print_token_data}
+}
+<|end_if
 
 <|end_if
 char const *const <{class_name}::ms_parser_return_code_string_table_[] =

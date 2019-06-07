@@ -372,6 +372,9 @@ Some of these are super old and may no longer apply.
     and then make the include directive use that directory hierarchy.  Probably require full
     paths in include directive, and disallow relative paths.
 
+-   Make error messages such that KDevelop (and other IDEs) correctly parse them and
+    clicking on the error message goes to the correct line in the correct source.
+
 ### Trison To-dos
 
 -   pass reference instead of double pointer to Parse
