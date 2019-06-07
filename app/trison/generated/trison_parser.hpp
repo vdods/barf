@@ -1038,6 +1038,9 @@ private:
 
 std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser_return_code);
 
+// This should really be defined for Parser::Token::Id, since that's all it prints,
+// but there's a difficulty because Parser::Token::Id is really just std::uint32_t,
+// so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #line 80 "../app/trison/trison_parser.trison"
@@ -1046,4 +1049,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 1050 "../app/trison/generated/trison_parser.hpp"
+#line 1053 "../app/trison/generated/trison_parser.hpp"
