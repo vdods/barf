@@ -330,13 +330,17 @@ void GenerateNpda (
             //
             //     rule 2: nt <- t1 t2 t3 . %lookahead[!(a|b|c)]
             //
-            // where t3 is not an %error token, there would be transitions
+            // where t3 is not an %error token and none of a, b, or c are %error tokens,
+            // there would be transitions
             //
-            //     a: INSERT_ERROR_LOOKHEAD
-            //     b: INSERT_ERROR_LOOKHEAD
-            //     c: INSERT_ERROR_LOOKHEAD
+            //     a: INSERT_LOOKAHEAD_ERROR
+            //     b: INSERT_LOOKAHEAD_ERROR
+            //     c: INSERT_LOOKAHEAD_ERROR
+            //     ERROR_: POP_STACK 1
             //     default: REDUCE 2
             //
+            // If any of a, b, or c are %error tokens, then the `ERROR_: POP_STACK 1`
+            // transition would not be added.
             if (!previous_token_was_error)
             {
                 // Add error-handling transitions for the terminals in the inverted lookahead terminal list.
@@ -430,9 +434,13 @@ void GenerateNpda (
             //     a: REDUCE 1
             //     b: REDUCE 1
             //     c: REDUCE 1
+            //     // If neither a, b, nor c are %error, then add a transition to handle ERROR_
+            //     // in order to avoid an infinite loop of INSERT_LOOKAHEAD_ERROR.
+            //     ERROR_: POP_STACK 1
             //     default: INSERT_LOOKAHEAD_ERROR
             if (!previous_token_was_error)
             {
+                bool at_least_one_lookahead_was_error = false;
                 // Add reduce transitions for the terminals in the lookahead terminal list.
                 for (TokenSpecifierList::const_iterator lookahead_it = rule.m_lookahead_directive->m_lookaheads->begin(),
                                                         lookahead_it_end = rule.m_lookahead_directive->m_lookaheads->end();
@@ -441,6 +449,8 @@ void GenerateNpda (
                 {
                     assert(*lookahead_it != NULL);
                     Ast::Id const &lookahead = **lookahead_it;
+                    if (lookahead.GetText() == "ERROR_")
+                        at_least_one_lookahead_was_error = true;
                     // Only add the transition if there is no transition for it yet.
                     if (used_terminals.find(lookahead.GetText()) == used_terminals.end())
                     {
@@ -448,6 +458,11 @@ void GenerateNpda (
                         used_terminals.insert(lookahead.GetText());
                     }
                 }
+                // If none of the lookaheads was %error, then add a rule for ERROR_ to pop the stack,
+                // in order to avoid an infinite loop of INSERT_LOOKAHEAD_ERROR (since the default
+                // transition is INSERT_LOOKAHEAD_ERROR).
+                if (!at_least_one_lookahead_was_error)
+                    graph_context.m_npda_graph.AddTransition(start_index, NpdaPopStackTransition(graph_context.m_primary_source.GetTokenIndex("ERROR_"), "ERROR_", 1));
                 // Add the default transition (in this case, INSERT_LOOKAHEAD_ERROR); the above transitions all act as a filter.
                 graph_context.m_npda_graph.AddTransition(start_index, NpdaInsertLookaheadErrorTransition(graph_context.m_primary_source.GetTokenIndex("none_"), "default"));
             }
