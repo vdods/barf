@@ -20,6 +20,9 @@ in particular, the major revision number certainly indicates backward-incompatib
 while the minor revision number usually indicates backward-compatible changes, there may be
 minor incompabilities.  The patch revision number indicates bugfixes and minor changes.
 
+-   `2.4.0` : Added ability to print token data in trison cpp target.  Fixed a bug having to
+    do with %lookahead in npda generation, and fixed a bug having to do with precedence level
+    vs precedence index that could potentially have caused a crash.
 -   `2.3.0` : Added ability to assign an id to %error tokens.  Added better mechanism for handling
     parse errors.  Added %lookahead directive.  Added ability to have #line directives use
     relative paths.  Fixed a few bugs.

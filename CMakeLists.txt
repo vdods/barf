@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.10)
 project(barf)
 # The VERSION argument of cmake's project function is not semver compliant.
 # See https://gitlab.kitware.com/cmake/cmake/issues/16716
-set(PROJECT_VERSION "2.3.0")
+set(PROJECT_VERSION "2.4.0")
 
 # Set and require the C++11 standard
 set(CMAKE_CXX_STANDARD 11)
