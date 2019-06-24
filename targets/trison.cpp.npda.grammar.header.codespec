@@ -41,6 +41,7 @@
         // TODO: rename to PRECEDENCE_TABLE and RULE_TABLE ?
         static Precedence_ const    ms_precedence_table_[];
         static std::size_t const    ms_precedence_count_;
+        static std::size_t const    ms_default_precedence_index_;
         static Rule_ const          ms_rule_table_[];
         static std::size_t const    ms_rule_count_;
     }; // end of struct <{class_name}::Grammar_

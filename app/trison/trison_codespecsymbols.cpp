@@ -190,7 +190,7 @@ void GenerateGeneralAutomatonSymbols (PrimarySource const &primary_source, Prepr
     // _precedence_count -- gives the number of precedences
     //
     // _precedence_index[precedence name] -- maps precedence name => precedence index
-    // it should be noted that there is always a "DEFAULT_" precedence with index 0
+    // it should be noted that there is always a "DEFAULT_" precedence.
     //
     // _precedence_name[_precedence_count] -- the name of this precedence
     //

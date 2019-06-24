@@ -2093,3 +2093,15 @@ which includes the top element.
     x   Be able to specify #line path so that it shows up correctly in KDevelop.
     -   Make sure that the packaging packs up all the right stuff and that you can build
         from the package.
+
+2019.06.19 ----------------------------
+
+-   There's a bug in printing
+
+        TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << <{debug_spew_prefix} << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
+
+    where it's using the precedence level as an index into the table, instead of the precedence index.
+    This is not crashing only because SUPER_LOW precedence isn't actually used in the parser.
+
+    Should make ComputePrecedenceLevelRange into ComputePrecedenceIndexRange, where they're
+    equivalent only because index |-> level is a strictly increasing function.

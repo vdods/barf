@@ -25,6 +25,8 @@ std::size_t const <{class_name}::Grammar_::ms_associativity_count_ = sizeof(<{cl
 
 std::size_t const <{class_name}::Grammar_::ms_precedence_count_ = sizeof(<{class_name}::Grammar_::ms_precedence_table_) / sizeof(*<{class_name}::Grammar_::ms_precedence_table_);
 
+std::size_t const <{class_name}::Grammar_::ms_default_precedence_index_ = <{_precedence_index["DEFAULT_"]};
+
 <{class_name}::Grammar_::Rule_ const <{class_name}::Grammar_::ms_rule_table_[] =
 {
 <|  loop(i, _rule_count)
