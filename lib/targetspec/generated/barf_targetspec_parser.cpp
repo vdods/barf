@@ -1174,15 +1174,15 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
         {
             assert(shift != NULL);
             assert(reduce != NULL);
-            ParseTreeNode_::PrecedenceLevelRange shift_precedence_level_range = shift->ComputePrecedenceLevelRange(1);
-            ParseTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
-            assert(reduce_precedence_level_range.first == reduce_precedence_level_range.second);
+            ParseTreeNode_::PrecedenceIndexRange shift_precedence_index_range = shift->ComputePrecedenceIndexRange(1);
+            ParseTreeNode_::PrecedenceIndexRange reduce_precedence_index_range = reduce->ComputePrecedenceIndexRange(1);
+            assert(reduce_precedence_index_range.first == reduce_precedence_index_range.second);
 
             TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1185 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
- << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
+ << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_name << "]\n")
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
             // indicates equality).  there is always exactly one reduce hps, and at least
@@ -1221,7 +1221,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             bool conflict_resolved = false;
 
             // Case 1
-            if (reduce_precedence_level_range.second < shift_precedence_level_range.first)
+            if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level)
             {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
@@ -1234,8 +1234,8 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 conflict_resolved = true;
             }
             // Case 2
-            else if (reduce_precedence_level_range.first == shift_precedence_level_range.first &&
-                     shift_precedence_level_range.first < shift_precedence_level_range.second)
+            else if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_level == Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level &&
+                     Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level)
             {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
@@ -1265,8 +1265,8 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 }
             }
             // Case 3
-            else if (reduce_precedence_level_range.second == shift_precedence_level_range.first &&
-                     shift_precedence_level_range.first == shift_precedence_level_range.second)
+            else if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level == Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level &&
+                     Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level == Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level)
             {
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1352,8 +1352,8 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 }
             }
             // Case 4
-            else if (reduce_precedence_level_range.second == shift_precedence_level_range.second &&
-                     shift_precedence_level_range.first < shift_precedence_level_range.second)
+            else if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level == Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level &&
+                     Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level)
             {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
@@ -1383,7 +1383,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 }
             }
             // Case 5
-            else if (reduce_precedence_level_range.first > shift_precedence_level_range.second)
+            else if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_level > Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level)
             {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
@@ -1401,8 +1401,8 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1403 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
  << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
-                assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
-                assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
+                assert(Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_level > Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level);
+                assert(Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level);
             }
 
             if (conflict_resolved)
@@ -2571,7 +2571,7 @@ bool Parser::ParseTreeNode_::IsBlockedHPS () const
     }
 }
 
-Parser::ParseTreeNode_::PrecedenceLevelRange Parser::ParseTreeNode_::ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const
+Parser::ParseTreeNode_::PrecedenceIndexRange Parser::ParseTreeNode_::ComputePrecedenceIndexRange (std::uint32_t current_child_depth) const
 {
     if (m_spec.m_type == HPS)
     {
@@ -2601,27 +2601,22 @@ Parser::ParseTreeNode_::PrecedenceLevelRange Parser::ParseTreeNode_::ComputePrec
         {
             Grammar_::Rule_ const &associated_rule = Grammar_::ms_rule_table_[state.m_associated_rule_index];
             assert(associated_rule.m_precedence_index < Grammar_::ms_precedence_count_);
-            Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
-            return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+            return PrecedenceIndexRange(associated_rule.m_precedence_index, associated_rule.m_precedence_index);
         }
         // Otherwise (e.g. a RETURN or ABORT state), return default precedence.
         else
-        {
-            Grammar_::Precedence_ const &default_precedence = Grammar_::ms_precedence_table_[0]; // 0 is default precedence.
-            return PrecedenceLevelRange(default_precedence.m_level, default_precedence.m_level);
-        }
+            return PrecedenceIndexRange(Grammar_::ms_default_precedence_index_, Grammar_::ms_default_precedence_index_);
     }
     else if (m_spec.m_type == REDUCE)
     {
         std::uint32_t reduction_rule_index = m_spec.m_single_data;
         Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduction_rule_index];
         assert(reduction_rule.m_precedence_index < Grammar_::ms_precedence_count_);
-        Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
-        return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+        return PrecedenceIndexRange(reduction_rule.m_precedence_index, reduction_rule.m_precedence_index);
     }
     else if (m_spec.m_type == SHIFT)
     {
-        PrecedenceLevelRange retval(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::min());
+        PrecedenceIndexRange retval(std::numeric_limits<std::uint32_t>::max(), std::numeric_limits<std::uint32_t>::min());
         assert(!m_child_nodes.empty());
         // The range is the smallest range encompassing the range of each child node.
         for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
@@ -2631,9 +2626,9 @@ Parser::ParseTreeNode_::PrecedenceLevelRange Parser::ParseTreeNode_::ComputePrec
             {
                 assert(*child_it != NULL);
                 ParseTreeNode_ const &child = **child_it;
-                PrecedenceLevelRange child_precedence_level_range(child.ComputePrecedenceLevelRange(current_child_depth+1));
-                retval.first = std::min(retval.first, child_precedence_level_range.first);
-                retval.second = std::max(retval.second, child_precedence_level_range.second);
+                PrecedenceIndexRange child_precedence_index_range(child.ComputePrecedenceIndexRange(current_child_depth+1));
+                retval.first = std::min(retval.first, child_precedence_index_range.first);
+                retval.second = std::max(retval.second, child_precedence_index_range.second);
             }
         }
         assert(retval.first <= retval.second);
@@ -2643,7 +2638,7 @@ Parser::ParseTreeNode_::PrecedenceLevelRange Parser::ParseTreeNode_::ComputePrec
     {
         // TODO: Probably need to do something to determine if this can't happen or prevent it.
         assert(false);
-        return PrecedenceLevelRange(0, 0);
+        return PrecedenceIndexRange(Grammar_::ms_default_precedence_index_, Grammar_::ms_default_precedence_index_);
     }
 }
 
@@ -2814,7 +2809,7 @@ Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index) throw()
         TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2818 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
+#line 2813 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
  << "Retrieved token " << m_realized_state_->LookaheadQueue().back() << " from scan actions; pushing token onto back of lookahead queue\n")
     }
     return m_realized_state_->LookaheadQueue()[index];
@@ -2882,7 +2877,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                     TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2886 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
+#line 2881 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
  << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
 
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
@@ -3057,7 +3052,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3061 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
+#line 3056 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
  << "        Reconstructing branches:\n")
     for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
@@ -3065,7 +3060,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
         TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 161 "../lib/targetspec/barf_targetspec_parser.trison"
 "TargetSpec::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3069 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
+#line 3064 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
  << "            " << reconstruct_branch.StatePtr() << '\n')
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
@@ -3137,6 +3132,8 @@ Parser::Grammar_::Precedence_ const Parser::Grammar_::ms_precedence_table_[] =
 };
 
 std::size_t const Parser::Grammar_::ms_precedence_count_ = sizeof(Parser::Grammar_::ms_precedence_table_) / sizeof(*Parser::Grammar_::ms_precedence_table_);
+
+std::size_t const Parser::Grammar_::ms_default_precedence_index_ = 0;
 
 Parser::Grammar_::Rule_ const Parser::Grammar_::ms_rule_table_[] =
 {
@@ -3553,4 +3550,4 @@ bool Parser::OpenTargetspec (string const &input_filename, string const &target_
 } // end of namespace Targetspec
 } // end of namespace Barf
 
-#line 3557 "../lib/targetspec/generated/barf_targetspec_parser.cpp"
+#line 3554 "../lib/targetspec/generated/barf_targetspec_parser.cpp"

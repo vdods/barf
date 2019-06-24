@@ -451,6 +451,7 @@ private:
         // TODO: rename to PRECEDENCE_TABLE and RULE_TABLE ?
         static Precedence_ const    ms_precedence_table_[];
         static std::size_t const    ms_precedence_count_;
+        static std::size_t const    ms_default_precedence_index_;
         static Rule_ const          ms_rule_table_[];
         static std::size_t const    ms_rule_count_;
     }; // end of struct Parser::Grammar_
@@ -925,7 +926,7 @@ private:
 
         typedef std::set<ParseTreeNode_ *,ParseTreeNodeOrder>           ParseTreeNodeSet;
         typedef std::map<Spec,ParseTreeNodeSet,Spec::Order>             ChildMap;
-        typedef std::pair<std::int32_t,std::int32_t>                    PrecedenceLevelRange;
+        typedef std::pair<std::uint32_t,std::uint32_t>                  PrecedenceIndexRange;
 
         Spec                    m_spec;
         Branch_                 m_hypothetical_head;
@@ -966,7 +967,7 @@ private:
         // Some actions are considered to block the HPS from continuing (because it must be realized before
         // continuing).  RETURN is considered to block, since nothing can happen after.
         bool IsBlockedHPS () const;
-        PrecedenceLevelRange ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const;
+        PrecedenceIndexRange ComputePrecedenceIndexRange (std::uint32_t current_child_depth) const;
         // Returns true if and only if there is exactly one SHIFT child and one REDUCE child.
         bool HasShiftReduceConflict (ParseTreeNode_ *&shift, ParseTreeNode_ *&reduce);
 
@@ -1026,4 +1027,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_PREPROCESSOR_PARSER_HPP_)
 
-#line 1030 "../lib/preprocessor/generated/barf_preprocessor_parser.hpp"
+#line 1031 "../lib/preprocessor/generated/barf_preprocessor_parser.hpp"
