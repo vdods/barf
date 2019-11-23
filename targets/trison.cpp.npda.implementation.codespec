@@ -1940,7 +1940,7 @@ void <{class_name}::ParseTreeNode_::Print (std::ostream &out, <{class_name} cons
                     if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
                     {
 <|                      if(is_defined(generate_debug_spew_code))
-                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps because its REDUCE action has higher precedence.")
 
 <|                      end_if
                         reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
