@@ -183,7 +183,29 @@ Some of these are super old and may no longer apply.
 
         %terminal XXX %type.cpp "Blah"
 
+-   bug (in trison) -- lack of a parse error handler for:
+
+        %nonterminal XXX %type
+
+    where the string following %type is missing.
+
 -   looks like trison doesn't catch EOF before ; in a nonterminal declaration
+-   bug (in trison npda target) -- negated `%lookahead` directive (at end of reduction rule) isn't
+    implemented correctly.  For example,
+
+        state 315:
+            rule 23: expression <- IDENTIFIER . %lookahead[![':'|DEFINE|CT|RT|LOCAL|GLOBAL]]
+
+            default:REDUCE rule 23
+            ':':INSERT_LOOKAHEAD_ERROR
+            CT:INSERT_LOOKAHEAD_ERROR
+            RT:INSERT_LOOKAHEAD_ERROR
+            LOCAL:INSERT_LOOKAHEAD_ERROR
+            GLOBAL:INSERT_LOOKAHEAD_ERROR
+            DEFINE:INSERT_LOOKAHEAD_ERROR
+
+    this will reduce even when the lookahead is `DEFINE`, since the default reduce action logic
+    doesn't check for these other transitions (which should each prevent the default action).
 
 ### BARF General To-dos
 
