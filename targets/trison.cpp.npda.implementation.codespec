@@ -887,8 +887,7 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
 
 <|              end_if
                 ParseTreeNode_ *resulting_hps = NULL;
-                // If it's a default transition, there's no need to access the lookahead (except in
-                // a certain case).
+                // If it's a default transition, there's no need to access the lookahead (except in a couple of particular cases).
                 if (transition.m_token_index == Nonterminal::none_)
                 {
                     // Logic regarding empty reduction rules -- if this transition is REDUCE for an empty reduction rule
@@ -919,6 +918,40 @@ void <{class_name}::ContinueNPDAParse_ (bool &should_return)
                             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << <{debug_spew_prefix} << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
 <|                          end_if
                             take_action = false;
+                        }
+
+                        //
+                        // The following is a hacky way to check for transitions that SHOULD block a default REDUCE action.
+                        // In particular, for a reduction rule ending with %lookahead[![A|B]], there will be transitions
+                        //     default: REDUCE
+                        //     A: INSERT_LOOKAHEAD_ERROR
+                        //     B: INSERT_LOOKAHEAD_ERROR
+                        // and the intent of this was for the A and B transitions to "block" the default transition, but
+                        // this was not implemented correctly.  So this hack is meant to fix that bug without doing the
+                        // larger refactor that would implement this correctly and robustly.
+                        //
+
+                        // Check all higher SortedTypeIndex values (higher than the SortedTypeIndex value of REDUCE) for
+                        // transitions that match the lookahead -- these would block the default REDUCE action.
+                        for (std::uint32_t blocking_sorted_type_index = current_sorted_type_index+1; blocking_sorted_type_index <= Npda_::Transition_::Order::MAX_SORTED_TYPE_INDEX; ++blocking_sorted_type_index)
+                        {
+                            Npda_::TransitionVector_ const &blocking_non_epsilon_transitions = Npda_::NonEpsilonTransitionsOfState_(hps_state_index, blocking_sorted_type_index);
+                            for (Npda_::TransitionVector_::const_iterator blocking_transition_it = blocking_non_epsilon_transitions.begin(), blocking_transition_it_end = blocking_non_epsilon_transitions.end(); blocking_transition_it != blocking_transition_it_end; ++blocking_transition_it)
+                            {
+                                Npda_::Transition_ const &blocking_transition = *blocking_transition_it;
+                                if (blocking_transition.m_token_index == hps.LookaheadTokenId(*this))
+                                {
+                                    // This transition is blocking the default REDUCE action, so do not take action.
+<|                                  if(is_defined(generate_debug_spew_code))
+                                    TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << <{debug_spew_prefix} << "            Skipping default action REDUCE because the negated lookahead directive was matched and therefore prevents it.\n")
+<|                                  end_if
+                                    take_action = false;
+                                }
+                                if (!take_action)
+                                    break; // No reason to keep looping.
+                            }
+                            if (!take_action)
+                                break; // No reason to keep looping.
                         }
                     }
 

@@ -454,8 +454,8 @@ private:
             struct Order
             {
                 static std::uint32_t const MIN_SORTED_TYPE_INDEX = 0;
-                // static std::uint32_t const MAX_SORTED_TYPE_INDEX = 3;
-                static std::uint32_t const MAX_SORTED_TYPE_INDEX = 4;
+                static std::uint32_t const MAX_SORTED_TYPE_INDEX = 3;
+                //static std::uint32_t const MAX_SORTED_TYPE_INDEX = 4;
 
                 // TODO: Rename SortedTypeIndex to OrderedActionIndex?
                 static std::uint32_t SortedTypeIndex (Transition_ const &transition)
@@ -478,8 +478,6 @@ private:
                             }
 
                         case DISCARD_LOOKAHEAD:
-                            return 2;
-
                         case RETURN:
                         case ABORT:
                             return 2;
@@ -997,4 +995,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(BARF_TARGETSPEC_PARSER_HPP_)
 
-#line 1001 "../lib/targetspec/generated/barf_targetspec_parser.hpp"
+#line 999 "../lib/targetspec/generated/barf_targetspec_parser.hpp"

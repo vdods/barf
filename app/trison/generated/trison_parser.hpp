@@ -508,8 +508,8 @@ private:
             struct Order
             {
                 static std::uint32_t const MIN_SORTED_TYPE_INDEX = 0;
-                // static std::uint32_t const MAX_SORTED_TYPE_INDEX = 3;
-                static std::uint32_t const MAX_SORTED_TYPE_INDEX = 4;
+                static std::uint32_t const MAX_SORTED_TYPE_INDEX = 3;
+                //static std::uint32_t const MAX_SORTED_TYPE_INDEX = 4;
 
                 // TODO: Rename SortedTypeIndex to OrderedActionIndex?
                 static std::uint32_t SortedTypeIndex (Transition_ const &transition)
@@ -532,8 +532,6 @@ private:
                             }
 
                         case DISCARD_LOOKAHEAD:
-                            return 2;
-
                         case RETURN:
                         case ABORT:
                             return 2;
@@ -1050,4 +1048,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 1054 "../app/trison/generated/trison_parser.hpp"
+#line 1052 "../app/trison/generated/trison_parser.hpp"
