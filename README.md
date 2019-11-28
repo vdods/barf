@@ -20,6 +20,7 @@ in particular, the major revision number certainly indicates backward-incompatib
 while the minor revision number usually indicates backward-compatible changes, there may be
 minor incompabilities.  The patch revision number indicates bugfixes and minor changes.
 
+-   `2.4.1` : Fixed a bug in trison cpp npda target where %lookahead[![...]] was not being handled correctly.
 -   `2.4.0` : Added ability to print token data in trison cpp target.  Fixed a bug having to
     do with %lookahead in npda generation, and fixed a bug having to do with precedence level
     vs precedence index that could potentially have caused a crash.
@@ -206,6 +207,9 @@ Some of these are super old and may no longer apply.
 
     this will reduce even when the lookahead is `DEFINE`, since the default reduce action logic
     doesn't check for these other transitions (which should each prevent the default action).
+
+-   bug in CMakeLists.txt -- `diff_all_dev_thingies` doesn't work anymore (since moving generated
+    code to `generated` subdirs.
 
 ### BARF General To-dos
 
