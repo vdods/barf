@@ -203,9 +203,12 @@
 
 // During error handling and cleanup, token data is "thrown away", and this
 // directive specifies the code to execute in order to "throw away" said data.
-// The token_data variable, of type specified by token_data_type, is what
-// should be operated upon.  For example, if you use a dynamically allocated
-// AST node class for token_data_type, you would want to "delete token_data;".
+// The parameter is
+//     `Token::Data &&token_data`
+// is what should be operated upon.  For example, if you use a raw-pointer-typed,
+// dynamically allocated AST node class for token_data_type, you would want to
+// "delete token_data;".  Note that these this param is passed as an rvalue
+// reference, so it can/should be std::move'd to be consumed (or just deleted).
 %add_optional_directive throw_away_token_actions            %strict_code_block
 
 // ///////////////////////////////////////////////////////////////////////////
