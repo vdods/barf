@@ -22,14 +22,14 @@ int parse_stream (std::istream &in, bool &recoverable_error_encountered) {
     parser.SetActiveDebugSpewFlags(Parser::DSF__MINIMAL);
 //     parser.SetDebugSpewStream(&std::cerr);
 //     parser.scanner().SetDebugSpewStream(&std::cerr);
-    std::unique_ptr<Base> root;
-    Parser::ParserReturnCode return_code = parser.Parse(&root);
+    std::unique_ptr<Base> parsed_root;
+    Parser::ParserReturnCode return_code = parser.Parse(&parsed_root);
     recoverable_error_encountered = parser.recoverable_error_encountered();
     switch (return_code)
     {
         case Parser::PRC_SUCCESS:
             std::cout << "Parse succeeded:\n\n";
-            root->print(std::cout, 1);
+            parsed_root->print(std::cout, 1);
             std::cout << '\n';
             return 0;
 

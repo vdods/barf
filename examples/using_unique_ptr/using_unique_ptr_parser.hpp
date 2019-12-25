@@ -966,8 +966,9 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 // but there's a difficulty because Parser::Token::Id is really just std::uint32_t,
 // so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
+std::ostream &operator << (std::ostream &stream, Parser::Token::Data const &token_data);
 
 #line 47 "../using_unique_ptr_parser.trison"
 
 
-#line 974 "../using_unique_ptr_parser.hpp"
+#line 975 "../using_unique_ptr_parser.hpp"

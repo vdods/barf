@@ -83,7 +83,7 @@ void Parser::ResetForNewInput ()
     CleanUpAllInternals_();
 
 
-#line 92 "../using_unique_ptr_parser.trison"
+#line 99 "../using_unique_ptr_parser.trison"
 
     m_recoverable_error_encountered = false;
 
@@ -135,6 +135,20 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token)
     else
         stream << "!INVALID!TOKEN!";
     return stream;
+}
+std::ostream &operator << (std::ostream &stream, Parser::Token::Data const &token_data)
+{
+    
+#line 88 "../using_unique_ptr_parser.trison"
+
+    if (token_data == nullptr)
+        stream << "nullptr";
+    else
+        token_data->print(stream);
+    return stream;
+
+#line 151 "../using_unique_ptr_parser.cpp"
+
 }
 
 char const *const Parser::ms_parser_return_code_string_table_[] =
@@ -459,12 +473,12 @@ Parser::Token Parser::Scan_ () throw()
     TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << "Parser: " << "Executing scan actions to retrieve next token...\n")
 
 
-#line 88 "../using_unique_ptr_parser.trison"
+#line 95 "../using_unique_ptr_parser.trison"
 
     assert(m_scanner != nullptr);
     return m_scanner->Scan();
 
-#line 468 "../using_unique_ptr_parser.cpp"
+#line 482 "../using_unique_ptr_parser.cpp"
 
     TRISON_CPP_DEBUG_CODE_(DSF_PROGRAMMER_ERROR, *DebugSpewStream() << "PROGRAMMER ERROR: No value returned from scan_actions code block\n")
     assert(false && "no value returned from scan_actions code block");
@@ -1357,13 +1371,13 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         case 0:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::unique_ptr<Tree> le(static_move_cast<std::unique_ptr<Tree>>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            std::unique_ptr<Tree> el(static_move_cast<std::unique_ptr<Tree>>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
-#line 115 "../using_unique_ptr_parser.trison"
+#line 122 "../using_unique_ptr_parser.trison"
 
-        return le;
+        return el;
     
-#line 1367 "../using_unique_ptr_parser.cpp"
+#line 1381 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1372,11 +1386,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
             std::unique_ptr<Base> leaf(std::move(token_stack_[token_stack_.size()-1].m_data));
 
-#line 123 "../using_unique_ptr_parser.trison"
+#line 130 "../using_unique_ptr_parser.trison"
 
         return leaf;
     
-#line 1380 "../using_unique_ptr_parser.cpp"
+#line 1394 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1385,11 +1399,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
             std::unique_ptr<Tree> el(static_move_cast<std::unique_ptr<Tree>>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
-#line 128 "../using_unique_ptr_parser.trison"
+#line 135 "../using_unique_ptr_parser.trison"
 
         return el;
     
-#line 1393 "../using_unique_ptr_parser.cpp"
+#line 1407 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1398,12 +1412,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
             std::unique_ptr<Tree> el(static_move_cast<std::unique_ptr<Tree>>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
-#line 133 "../using_unique_ptr_parser.trison"
+#line 140 "../using_unique_ptr_parser.trison"
 
         record_recoverable_error("unterminated parenthesized expression list");
         return el;
     
-#line 1407 "../using_unique_ptr_parser.cpp"
+#line 1421 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1412,12 +1426,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
             std::unique_ptr<Base> err(std::move(token_stack_[token_stack_.size()-2].m_data));
 
-#line 139 "../using_unique_ptr_parser.trison"
+#line 146 "../using_unique_ptr_parser.trison"
 
         record_recoverable_error("parse error in parenthesized expression");
         return make_tree();
     
-#line 1421 "../using_unique_ptr_parser.cpp"
+#line 1435 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1426,12 +1440,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
             std::unique_ptr<Base> err(std::move(token_stack_[token_stack_.size()-2].m_data));
 
-#line 145 "../using_unique_ptr_parser.trison"
+#line 152 "../using_unique_ptr_parser.trison"
 
         record_recoverable_error("unterminated parenthesized expression");
         return make_tree();
     
-#line 1435 "../using_unique_ptr_parser.cpp"
+#line 1449 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1440,12 +1454,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
             std::unique_ptr<Base> err(std::move(token_stack_[token_stack_.size()-2].m_data));
 
-#line 151 "../using_unique_ptr_parser.trison"
+#line 158 "../using_unique_ptr_parser.trison"
 
         record_recoverable_error("unexpected ')' in expression");
         return make_tree();
     
-#line 1449 "../using_unique_ptr_parser.cpp"
+#line 1463 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1455,12 +1469,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             std::unique_ptr<Tree> el(static_move_cast<std::unique_ptr<Tree>>(std::move(token_stack_[token_stack_.size()-2].m_data)));
             std::unique_ptr<Base> e(std::move(token_stack_[token_stack_.size()-1].m_data));
 
-#line 160 "../using_unique_ptr_parser.trison"
+#line 167 "../using_unique_ptr_parser.trison"
 
         el->append(std::move(e));
         return el;
     
-#line 1464 "../using_unique_ptr_parser.cpp"
+#line 1478 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1470,12 +1484,12 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             std::unique_ptr<Tree> el(static_move_cast<std::unique_ptr<Tree>>(std::move(token_stack_[token_stack_.size()-2].m_data)));
             std::unique_ptr<Base> err(std::move(token_stack_[token_stack_.size()-1].m_data));
 
-#line 166 "../using_unique_ptr_parser.trison"
+#line 173 "../using_unique_ptr_parser.trison"
 
         record_recoverable_error("parse error in expression_list");
         return el;
     
-#line 1479 "../using_unique_ptr_parser.cpp"
+#line 1493 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1483,11 +1497,11 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
 
-#line 172 "../using_unique_ptr_parser.trison"
+#line 179 "../using_unique_ptr_parser.trison"
 
         return make_tree();
     
-#line 1491 "../using_unique_ptr_parser.cpp"
+#line 1505 "../using_unique_ptr_parser.cpp"
             break;
         }
 
@@ -1536,25 +1550,23 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << "Parser: " << "Has-encountered-error-state (so far) is:\n";
     out << "Parser: " << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << "Parser: " << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
-    out << "Parser: " << "    ";
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
          it != it_end;
          ++it)
     {
         Token const &token = *it;
-        out << token << ' ';
+        out << "Parser: " << "    " << token << " (token data: " << token.m_data << ")\n";
     }
-    out << ". ";
+    out << "Parser: " << "    .\n";
     for (TokenQueue_::const_iterator it = m_realized_state_->LookaheadQueue().begin(),
                                      it_end = m_realized_state_->LookaheadQueue().end();
          it != it_end;
          ++it)
     {
         Token const &token = *it;
-        out << token << ' ';
+        out << "Parser: " << "    " << token << " (token data: " << token.m_data << ")\n";
     }
-    out << '\n';
     out << "Parser: " << '\n';
 
     out << "Parser: " << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
@@ -2884,4 +2896,4 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
     ResetForNewInput();
 }
 
-#line 2888 "../using_unique_ptr_parser.cpp"
+#line 2900 "../using_unique_ptr_parser.cpp"

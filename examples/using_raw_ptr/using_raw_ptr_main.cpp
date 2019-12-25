@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// using_shared_ptr_main.cpp by Victor Dods, created 2019/12/24
+// using_raw_ptr_main.cpp by Victor Dods, created 2019/12/25
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -11,9 +11,9 @@
 #include <fstream>
 #include <ios>
 #include <sstream>
-#include "using_shared_ptr_ast.hpp"
-#include "using_shared_ptr_parser.hpp"
-#include "using_shared_ptr_scanner.hpp"
+#include "using_raw_ptr_ast.hpp"
+#include "using_raw_ptr_parser.hpp"
+#include "using_raw_ptr_scanner.hpp"
 #include <vector>
 
 int parse_stream (std::istream &in, bool &recoverable_error_encountered) {
@@ -22,7 +22,8 @@ int parse_stream (std::istream &in, bool &recoverable_error_encountered) {
     parser.SetActiveDebugSpewFlags(Parser::DSF__MINIMAL);
 //     parser.SetDebugSpewStream(&std::cerr);
 //     parser.scanner().SetDebugSpewStream(&std::cerr);
-    std::shared_ptr<Base> parsed_root;
+    Base *parsed_root = nullptr;
+    // Note that we're responsible for deleting parsed_root.
     Parser::ParserReturnCode return_code = parser.Parse(&parsed_root);
     recoverable_error_encountered = parser.recoverable_error_encountered();
     switch (return_code)
@@ -31,10 +32,12 @@ int parse_stream (std::istream &in, bool &recoverable_error_encountered) {
             std::cout << "Parse succeeded:\n\n";
             parsed_root->print(std::cout, 1);
             std::cout << '\n';
+            delete parsed_root;
             return 0;
 
         default:
             std::cerr << "error: " << return_code << '\n';
+            assert(parsed_root == nullptr);
             return 1;
     }
 }

@@ -1,5 +1,5 @@
 // ///////////////////////////////////////////////////////////////////////////
-// using_shared_ptr_parser.trison by Victor Dods, created 2019/12/24
+// using_raw_ptr_parser.trison by Victor Dods, created 2019/12/25
 // ///////////////////////////////////////////////////////////////////////////
 // Unless a different license was explicitly granted in writing by the
 // copyright holder (Victor Dods), this software is freely distributable under
@@ -11,8 +11,8 @@
 %targets cpp
 
 
-%target.cpp.header_filename "using_shared_ptr_parser.hpp"
-%target.cpp.implementation_filename "using_shared_ptr_parser.cpp"
+%target.cpp.header_filename "using_raw_ptr_parser.hpp"
+%target.cpp.implementation_filename "using_raw_ptr_parser.cpp"
 
 
 %target.cpp.top_of_header_file %{
@@ -49,13 +49,8 @@ private:
 
 
 %target.cpp.top_of_implementation_file %{
-#include "using_shared_ptr_ast.hpp"
-#include "using_shared_ptr_scanner.hpp"
-
-template <typename TargetSharedPtr_, typename Source_>
-TargetSharedPtr_ static_shared_ptr_cast (std::shared_ptr<Source_> const &p) {
-    return std::static_pointer_cast<typename TargetSharedPtr_::element_type>(p);
-}
+#include "using_raw_ptr_ast.hpp"
+#include "using_raw_ptr_scanner.hpp"
 
 void Parser::record_recoverable_error (std::string const &message) {
     m_recoverable_error_encountered = true;
@@ -81,15 +76,19 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
 %}
 
 
-%target.cpp.token_data_type "std::shared_ptr<Base>"
+%target.cpp.token_data_type "Base *"
 %target.cpp.token_data_default "nullptr"
-%target.cpp.custom_token_data_type_cast "static_shared_ptr_cast" // This is a custom static cast for shared_ptr.
+%target.cpp.custom_token_data_type_cast "static_cast"
 %target.cpp.ostream_print_token_data {
     if (token_data == nullptr)
         stream << "nullptr";
     else
         token_data->print(stream);
     return stream;
+}
+%target.cpp.throw_away_token_actions {
+    std::cout << "Executing throw_away_token_actions on " << token_data << '\n';
+    delete token_data;
 }
 %target.cpp.scan_actions {
     assert(m_scanner != nullptr);
@@ -141,26 +140,26 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
         return el;
     }
 |
-    '(' %error[![%end|')']]:err ')'
+    '(' %error[![%end|')']] ')'
     %target.cpp {
         record_recoverable_error("parse error in parenthesized expression");
-        return make_tree();
+        return new Tree();
     }
 |
-    '(' %error[![%end|')']]:err %end
+    '(' %error[![%end|')']] %end
     %target.cpp {
         record_recoverable_error("unterminated parenthesized expression");
-        return make_tree();
+        return new Tree();
     }
 |
-    %error[![%end|')']]:err ')'
+    %error[![%end|')']] ')'
     %target.cpp {
         record_recoverable_error("unexpected ')' in expression");
-        return make_tree();
+        return new Tree();
     }
 ;
 
-%nonterminal expression_list %type.cpp "std::shared_ptr<Tree>"
+%nonterminal expression_list %type.cpp "Tree *"
 :
     expression_list:el expression:e
     %target.cpp {
@@ -168,7 +167,7 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
         return el;
     }
 |
-    expression_list:el %error[![%end|')']]:err %lookahead[%end|')']
+    expression_list:el %error[![%end|')']] %lookahead[%end|')']
     %target.cpp {
         record_recoverable_error("parse error in expression_list");
         return el;
@@ -176,6 +175,6 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
 |
     %empty %lookahead[![%error]]
     %target.cpp {
-        return make_tree();
+        return new Tree();
     }
 ;

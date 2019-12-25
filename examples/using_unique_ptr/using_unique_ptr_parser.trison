@@ -85,6 +85,13 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
 %target.cpp.token_data_type_only_uses_move_semantics
 %target.cpp.token_data_default "nullptr"
 %target.cpp.custom_token_data_type_cast "static_move_cast" // This is a custom static cast for unique_ptr.
+%target.cpp.ostream_print_token_data {
+    if (token_data == nullptr)
+        stream << "nullptr";
+    else
+        token_data->print(stream);
+    return stream;
+}
 %target.cpp.scan_actions {
     assert(m_scanner != nullptr);
     return m_scanner->Scan();
@@ -111,9 +118,9 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
 
 %nonterminal root
 :
-    expression_list:le %end
+    expression_list:el %end
     %target.cpp {
-        return le;
+        return el;
     }
 ;
 
