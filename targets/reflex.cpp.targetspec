@@ -154,8 +154,8 @@
 // rule in the scanner's current state.  The rejected string is in the
 // local variable rejected_string.  This is never called at the end of input;
 // the main scanner loop is broken from and bottom_of_scan_method_actions is
-// executed.  The default value simply prints the rejected string to stdout.
-%add_optional_directive rejection_actions                   %strict_code_block  %default { std::cout << rejected_string; }
+// executed.
+%add_required_directive rejection_actions                   %strict_code_block
 // This specifies code to be executed when the scanner object is being reset
 // to start scanning from a new source.  This code is executed in addition to
 // various internal state-machine-related initialization that is required.
