@@ -319,11 +319,15 @@ public:
         return *m_scanner;
     }
 
+    bool recoverable_error_encountered () const { return m_recoverable_error_encountered; }
+    void record_recoverable_error (std::string const &message);
+
 private:
 
     std::unique_ptr<Scanner> m_scanner;
+    bool m_recoverable_error_encountered;
 
-#line 327 "../using_shared_ptr_parser.hpp"
+#line 331 "../using_shared_ptr_parser.hpp"
 
 
 private:
@@ -971,7 +975,7 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 // so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 43 "../using_shared_ptr_parser.trison"
+#line 47 "../using_shared_ptr_parser.trison"
 
 
-#line 978 "../using_shared_ptr_parser.hpp"
+#line 982 "../using_shared_ptr_parser.hpp"

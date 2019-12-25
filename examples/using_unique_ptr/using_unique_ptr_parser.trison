@@ -35,9 +35,13 @@ class Scanner;
         return *m_scanner;
     }
 
+    bool recoverable_error_encountered () const { return m_recoverable_error_encountered; }
+    void record_recoverable_error (std::string const &message);
+
 private:
 
     std::unique_ptr<Scanner> m_scanner;
+    bool m_recoverable_error_encountered;
 }
 
 %target.cpp.bottom_of_header_file %{
@@ -52,8 +56,14 @@ template <typename TargetUniquePtr_, typename Source_, typename Delete_>
 TargetUniquePtr_ static_move_cast (std::unique_ptr<Source_,Delete_> &&p) {
     return TargetUniquePtr_{static_cast<typename TargetUniquePtr_::element_type*>(p.release())};
 }
+
+void Parser::record_recoverable_error (std::string const &message) {
+    m_recoverable_error_encountered = true;
+    std::cerr << "error: " << message << '\n';
+}
 %}
 %target.cpp.constructor_actions {
+    m_recoverable_error_encountered = false;
 }
 %target.cpp.destructor_actions {
 }
@@ -78,6 +88,9 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
 %target.cpp.scan_actions {
     assert(m_scanner != nullptr);
     return m_scanner->Scan();
+}
+%target.cpp.reset_for_new_input_actions {
+    m_recoverable_error_encountered = false;
 }
 
 
@@ -115,6 +128,30 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
     %target.cpp {
         return el;
     }
+|
+    '(' expression_list:el %end
+    %target.cpp {
+        record_recoverable_error("unterminated parenthesized expression list");
+        return el;
+    }
+|
+    '(' %error[![%end|')']]:err ')'
+    %target.cpp {
+        record_recoverable_error("parse error in parenthesized expression");
+        return make_tree();
+    }
+|
+    '(' %error[![%end|')']]:err %end
+    %target.cpp {
+        record_recoverable_error("unterminated parenthesized expression");
+        return make_tree();
+    }
+|
+    %error[![%end|')']]:err ')'
+    %target.cpp {
+        record_recoverable_error("unexpected ')' in expression");
+        return make_tree();
+    }
 ;
 
 %nonterminal expression_list %type.cpp "std::unique_ptr<Tree>"
@@ -125,7 +162,13 @@ void Parser::set_istream_iterator (std::istream_iterator<char> it)
         return el;
     }
 |
-    %empty
+    expression_list:el %error[![%end|')']]:err %lookahead[%end|')']
+    %target.cpp {
+        record_recoverable_error("parse error in expression_list");
+        return el;
+    }
+|
+    %empty %lookahead[![%error]]
     %target.cpp {
         return make_tree();
     }
