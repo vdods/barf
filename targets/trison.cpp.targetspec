@@ -173,6 +173,10 @@
 // if you were constructing an abstract syntax tree (AST) with the parser, you
 // would specify a pointer type to your AST node class here.
 %add_optional_directive token_data_type                     %string             %default "int"
+// If token_data_type is a type that can't be copied and can only be moved (e.g.
+// std::unique_ptr), then use this directive to prevent a constructor for Token
+// from being generated that requires copying the token data type.
+%add_optional_directive token_data_type_only_uses_move_semantics
 // Specifies the default (neutral) value for token_data_type.  For example,
 // if you were constructing an AST with the parser, and your token_data_type
 // was a pointer type to your AST node class, then you would specify "NULL".

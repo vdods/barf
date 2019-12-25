@@ -1,0 +1,131 @@
+// ///////////////////////////////////////////////////////////////////////////
+// using_shared_ptr_parser.trison by Victor Dods, created 2019/12/24
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%targets cpp
+
+
+%target.cpp.header_filename "using_shared_ptr_parser.hpp"
+%target.cpp.implementation_filename "using_shared_ptr_parser.cpp"
+
+
+%target.cpp.top_of_header_file %{
+#pragma once
+
+#include <iterator>
+#include <stdexcept>
+
+class Base;
+class Scanner;
+%}
+%target.cpp.class_name Parser
+%target.cpp.bottom_of_class {
+    void set_istream_iterator (std::istream_iterator<char> it);
+
+    bool has_scanner () const { return m_scanner != nullptr; }
+    Scanner &scanner () {
+        if (m_scanner == nullptr)
+            throw std::runtime_error("no scanner defined yet; call set_istream_iterator");
+        return *m_scanner;
+    }
+
+private:
+
+    std::unique_ptr<Scanner> m_scanner;
+}
+
+%target.cpp.bottom_of_header_file %{
+%}
+
+
+%target.cpp.top_of_implementation_file %{
+#include "using_shared_ptr_ast.hpp"
+#include "using_shared_ptr_scanner.hpp"
+
+template <typename TargetSharedPtr_, typename Source_>
+TargetSharedPtr_ static_shared_ptr_cast (std::shared_ptr<Source_> const &p) {
+    return std::static_pointer_cast<typename TargetSharedPtr_::element_type>(p);
+}
+%}
+%target.cpp.constructor_actions {
+}
+%target.cpp.destructor_actions {
+}
+%target.cpp.top_of_parse_method_actions %{
+%}
+%target.cpp.bottom_of_implementation_file %{
+void Parser::set_istream_iterator (std::istream_iterator<char> it)
+{
+    // This will delete any existing pointer owned by m_scanner.
+    // Note that in C++14, we would be able to use std::make_unique.
+    m_scanner = std::unique_ptr<Scanner>(new Scanner());
+    m_scanner->IstreamIterator(it);
+    ResetForNewInput();
+}
+%}
+
+
+%target.cpp.token_data_type "std::shared_ptr<Base>"
+%target.cpp.token_data_default "nullptr"
+%target.cpp.custom_token_data_type_cast "static_shared_ptr_cast" // This is a custom static cast for shared_ptr.
+%target.cpp.scan_actions {
+    assert(m_scanner != nullptr);
+    return m_scanner->Scan();
+}
+
+
+%target.cpp.generate_debug_spew_code
+
+
+%terminal BAD_TOKEN
+%terminal LEAF
+%terminal '(' ')'
+
+
+%prec.left %default
+
+
+%default_parse_nonterminal root
+
+%%
+
+%nonterminal root
+:
+    expression_list:le %end
+    %target.cpp {
+        return le;
+    }
+;
+
+%nonterminal expression
+:
+    LEAF:leaf
+    %target.cpp {
+        return leaf;
+    }
+|
+    '(' expression_list:el ')'
+    %target.cpp {
+        return el;
+    }
+;
+
+%nonterminal expression_list %type.cpp "std::shared_ptr<Tree>"
+:
+    expression_list:el expression:e
+    %target.cpp {
+        el->append(e);
+        return el;
+    }
+|
+    %empty
+    %target.cpp {
+        return make_tree();
+    }
+;

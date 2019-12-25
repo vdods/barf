@@ -1,0 +1,112 @@
+// ///////////////////////////////////////////////////////////////////////////
+// using_unique_ptr_scanner.reflex by Victor Dods, created 2019/12/22
+// ///////////////////////////////////////////////////////////////////////////
+// Unless a different license was explicitly granted in writing by the
+// copyright holder (Victor Dods), this software is freely distributable under
+// the terms of the GNU General Public License, version 2.  Any works deriving
+// from this work must also be released under the GNU GPL.  See the included
+// file LICENSE for details.
+// ///////////////////////////////////////////////////////////////////////////
+
+%targets cpp
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner header-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.header_filename "using_unique_ptr_scanner.hpp"
+%target.cpp.implementation_filename "using_unique_ptr_scanner.cpp"
+%target.cpp.top_of_header_file %{
+#pragma once
+
+#include <cassert>
+#include <istream>
+
+#include "using_unique_ptr_parser.hpp"
+%}
+%target.cpp.class_name Scanner
+%target.cpp.bottom_of_class {
+}
+%target.cpp.bottom_of_header_file %{
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner implementation-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.top_of_implementation_file %{
+#include "using_unique_ptr_ast.hpp"
+%}
+%target.cpp.constructor_actions {
+}
+%target.cpp.bottom_of_scan_method_actions %{
+    return Parser::Token(Parser::Terminal::BAD_TOKEN);
+%}
+%target.cpp.bottom_of_implementation_file %{
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner I/O parameters
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.return_type "Parser::Token"
+%target.cpp.rejection_actions {
+    assert(false && "we should have handled this in the catch-all rule");
+}
+%target.cpp.reset_for_new_input_actions {
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner misc directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.generate_debug_spew_code
+
+// ///////////////////////////////////////////////////////////////////////////
+// target-independent scanner directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// use C identifier pattern for Leaf.
+%macro C_IDENTIFIER         ([A-Za-z_][A-Za-z_0-9]*)
+// operators accepted by the parser.
+%macro OPERATOR             ([\(\)])
+// non-newline whitespace
+%macro WHITESPACE           ([ \t\n])
+// end-of-file condition
+%macro END_OF_FILE          (\z)
+
+%start_with_state_machine MAIN
+
+%%
+
+// ///////////////////////////////////////////////////////////////////////////
+// state machines and constituent regex rules
+// ///////////////////////////////////////////////////////////////////////////
+
+%state_machine MAIN
+:
+    ({C_IDENTIFIER})
+    %target.cpp {
+        return Parser::Token(Parser::Terminal::LEAF, make_leaf(accepted_string));
+    }
+|
+    ({OPERATOR})
+    %target.cpp {
+        return Parser::Token(static_cast<Parser::Terminal::Name>(accepted_string[0]));
+    }
+|
+    ({WHITESPACE})
+    %target.cpp {
+        // ignore all non-newline whitespace
+    }
+|
+    ({END_OF_FILE})
+    %target.cpp {
+        return Parser::Token(Parser::Terminal::END_);
+    }
+|
+    (.) // catch-all rule -- any other char is unrecognized
+    %target.cpp {
+        return Parser::Token(Parser::Terminal::BAD_TOKEN);
+    }
+;

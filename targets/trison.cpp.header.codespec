@@ -135,14 +135,29 @@ public:
         Id m_id;
         Data m_data;
 
-        /// @brief Constructor for Token struct.
+        /// @brief Constructor for Token struct, where m_data will take the default value.
+        ///
+        /// @param id Gives the token id, e.g. Terminal::END_ or whatever
+        ///        other terminals were declared in the primary source.
+        Token (Id id) : m_id(id), m_data(<{token_data_default}) { }
+        /// @brief Constructor for Token struct, where data is an rvalue reference.
         ///
         /// @param id Gives the token id, e.g. Terminal::END_ or whatever
         ///        other terminals were declared in the primary source.
         /// @param data Gives the data associated with this token, e.g. if
         ///        you were constructing an AST, data would point to an AST
         ///        node constructed during scanning.
-        Token (Id id, Data const &data = <{token_data_default}) : m_id(id), m_data(data) { }
+        Token (Id id, Data &&data) : m_id(id), m_data(std::move(data)) { }
+<|      if(!is_defined(token_data_type_only_uses_move_semantics))
+        /// @brief Constructor for Token struct, where data is a const reference.
+        ///
+        /// @param id Gives the token id, e.g. Terminal::END_ or whatever
+        ///        other terminals were declared in the primary source.
+        /// @param data Gives the data associated with this token, e.g. if
+        ///        you were constructing an AST, data would point to an AST
+        ///        node constructed during scanning.
+        Token (Id id, Data const &data) : m_id(id), m_data(data) { }
+<|      end_if
     }; // end of struct <{class_name}::Token
 
 <|  if(is_defined(top_of_class))
@@ -363,13 +378,13 @@ private:
     static std::size_t const ms_token_name_count_;
 
     static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
-    ParserReturnCode Parse_ (<{token_data_type} *return_token, Nonterminal::Name nonterminal_to_parse);
-    void ThrowAwayToken_ (Token const &token) throw();
-    void ThrowAwayTokenData_ (<{token_data_type} const &token_data) throw();
+    ParserReturnCode Parse_ (Token::Data *return_token, Nonterminal::Name nonterminal_to_parse);
+    void ThrowAwayToken_ (Token &&token) throw();
+    void ThrowAwayTokenData_ (Token::Data &&token_data) throw();
     Token::Data InsertLookaheadErrorActions_ (Token const &noconsume_lookahead_token);
-    Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
-    Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
-    Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data DiscardLookaheadActions_ (Token &&consume_stack_top_error_token, Token &&consume_lookahead_token);
+    Token::Data PopStack1Actions_ (std::vector<Token> &consume_stack_top_tokens, Token &&consume_lookahead_token);
+    Token::Data PopStack2Actions_ (std::vector<Token> &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
     Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ ()<{if(!is_defined(enable_scan_actions_exceptions))} throw()<{end_if};

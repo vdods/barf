@@ -191,15 +191,15 @@ char const *const <{class_name}::ms_token_name_table_[] =
 };
 std::size_t const <{class_name}::ms_token_name_count_ = sizeof(<{class_name}::ms_token_name_table_) / sizeof(*<{class_name}::ms_token_name_table_);
 
-void <{class_name}::ThrowAwayToken_ (Token const &token_) throw()
+void <{class_name}::ThrowAwayToken_ (Token &&token_) throw()
 {
 <|  if(is_defined(generate_debug_spew_code))
     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "Executing throw-away-token actions on token " << token_ << '\n')
 <|  end_if
-    ThrowAwayTokenData_(token_.m_data);
+    ThrowAwayTokenData_(std::move(token_.m_data));
 }
 
-void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) throw()
+void <{class_name}::ThrowAwayTokenData_ (Token::Data &&token_data) throw()
 {
 <|  throw_away_token_actions?
 }
@@ -216,7 +216,7 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 <|  end_if
 }
 
-<{class_name}::Token::Data <{class_name}::DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token)
+<{class_name}::Token::Data <{class_name}::DiscardLookaheadActions_ (Token &&consume_stack_top_error_token, Token &&consume_lookahead_token)
 {
 <|  if(is_defined(discard_lookahead_actions))
 <|  if(is_defined(generate_debug_spew_code))
@@ -224,12 +224,12 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 <|  end_if
 <|  discard_lookahead_actions
 <|  else
-    ThrowAwayToken_(consume_lookahead_token);
-    return consume_stack_top_error_token.m_data;
+    ThrowAwayToken_(std::move(consume_lookahead_token));
+    return std::move(consume_stack_top_error_token.m_data);
 <|  end_if
 }
 
-<{class_name}::Token::Data <{class_name}::PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token)
+<{class_name}::Token::Data <{class_name}::PopStack1Actions_ (std::vector<Token> &consume_stack_top_tokens, Token &&consume_lookahead_token)
 {
 <|  if(is_defined(pop_stack_1_actions))
 <|  if(is_defined(generate_debug_spew_code))
@@ -237,12 +237,12 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 <|  end_if
 <|  pop_stack_1_actions
 <|  else
-    ThrowAwayToken_(consume_stack_top_tokens[0]);
-    return consume_lookahead_token.m_data;
+    ThrowAwayToken_(std::move(consume_stack_top_tokens[0]));
+    return std::move(consume_lookahead_token.m_data);
 <|  end_if
 }
 
-<{class_name}::Token::Data <{class_name}::PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
+<{class_name}::Token::Data <{class_name}::PopStack2Actions_ (std::vector<Token> &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
 {
 <|  if(is_defined(pop_stack_2_actions))
 <|  if(is_defined(generate_debug_spew_code))
@@ -250,8 +250,8 @@ void <{class_name}::ThrowAwayTokenData_ (<{token_data_type} const &token_data) t
 <|  end_if
 <|  pop_stack_2_actions
 <|  else
-    ThrowAwayToken_(consume_stack_top_tokens[1]);
-    return consume_stack_top_tokens[0].m_data;
+    ThrowAwayToken_(std::move(consume_stack_top_tokens[1]));
+    return std::move(consume_stack_top_tokens[0].m_data);
 <|  end_if
 }
 
