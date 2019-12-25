@@ -358,8 +358,8 @@ private:
     void ThrowAwayTokenData_ (Token::Data &&token_data) throw();
     Token::Data InsertLookaheadErrorActions_ (Token const &noconsume_lookahead_token);
     Token::Data DiscardLookaheadActions_ (Token &&consume_stack_top_error_token, Token &&consume_lookahead_token);
-    Token::Data PopStack1Actions_ (std::vector<Token> &consume_stack_top_tokens, Token &&consume_lookahead_token);
-    Token::Data PopStack2Actions_ (std::vector<Token> &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data PopStack1Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token &&consume_lookahead_token);
+    Token::Data PopStack2Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token const &noconsume_lookahead_token);
     Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();

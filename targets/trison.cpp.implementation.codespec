@@ -229,7 +229,7 @@ void <{class_name}::ThrowAwayTokenData_ (Token::Data &&token_data) throw()
 <|  end_if
 }
 
-<{class_name}::Token::Data <{class_name}::PopStack1Actions_ (std::vector<Token> &consume_stack_top_tokens, Token &&consume_lookahead_token)
+<{class_name}::Token::Data <{class_name}::PopStack1Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token &&consume_lookahead_token)
 {
 <|  if(is_defined(pop_stack_1_actions))
 <|  if(is_defined(generate_debug_spew_code))
@@ -242,7 +242,7 @@ void <{class_name}::ThrowAwayTokenData_ (Token::Data &&token_data) throw()
 <|  end_if
 }
 
-<{class_name}::Token::Data <{class_name}::PopStack2Actions_ (std::vector<Token> &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
+<{class_name}::Token::Data <{class_name}::PopStack2Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token const &noconsume_lookahead_token)
 {
 <|  if(is_defined(pop_stack_2_actions))
 <|  if(is_defined(generate_debug_spew_code))

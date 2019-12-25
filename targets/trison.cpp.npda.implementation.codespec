@@ -398,7 +398,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|                  end_if
                     assert(lookahead.m_id == Terminal::ERROR_);
                     {   // This code block is just to limit the scope of resulting_error_token
-                        Token resulting_error_token(Terminal::ERROR_, PopStack1Actions_(popped_tokens, std::move(lookahead)));
+                        Token resulting_error_token(Terminal::ERROR_, PopStack1Actions_(std::move(popped_tokens), std::move(lookahead)));
                         m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
                     }
                 }
@@ -410,7 +410,6 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                     {
                         // plain ol' pop stack 2 times -- this is the old behavior
 
-                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                         std::vector<Token> popped_tokens;
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
@@ -425,13 +424,12 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
 <|                      end_if
-                        PopStack2Actions_(popped_tokens, lookahead);
+                        PopStack2Actions_(std::move(popped_tokens), lookahead);
                     }
                     else if (true)
                     {
                         // pop stack 2 times, then push the result onto the front of the lookahead queue.
 
-                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                         std::vector<Token> popped_tokens;
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
@@ -447,7 +445,7 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
 <|                      end_if
                         {   // This code block is just to limit the scope of resulting_error_token
-                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
                             m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
                         }
                     }
@@ -455,7 +453,6 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                     {
                         // pop stack 2 times and push resulting error token onto stack -- this is new behavior
 
-                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                         std::vector<Token> popped_tokens;
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
@@ -471,8 +468,10 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
 <|                      end_if
-                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
+                            m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        }
                     }
                     else
                     {
@@ -483,7 +482,6 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
                         std::uint32_t pop_count = 3; // shadowing earlier one
                         assert(m_realized_state_->TokenStack().size() >= pop_count);
 
-                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                         std::vector<Token> popped_tokens;
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
@@ -501,8 +499,10 @@ void <{class_name}::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRe
 <|                      if(is_defined(generate_debug_spew_code))
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << <{debug_spew_prefix} << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
 <|                      end_if
-                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
+                            m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        }
                     }
                 }
 

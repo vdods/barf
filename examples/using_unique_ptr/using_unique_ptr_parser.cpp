@@ -437,13 +437,13 @@ Parser::Token::Data Parser::DiscardLookaheadActions_ (Token &&consume_stack_top_
     return std::move(consume_stack_top_error_token.m_data);
 }
 
-Parser::Token::Data Parser::PopStack1Actions_ (std::vector<Token> &consume_stack_top_tokens, Token &&consume_lookahead_token)
+Parser::Token::Data Parser::PopStack1Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token &&consume_lookahead_token)
 {
     ThrowAwayToken_(std::move(consume_stack_top_tokens[0]));
     return std::move(consume_lookahead_token.m_data);
 }
 
-Parser::Token::Data Parser::PopStack2Actions_ (std::vector<Token> &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
+Parser::Token::Data Parser::PopStack2Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token const &noconsume_lookahead_token)
 {
     ThrowAwayToken_(std::move(consume_stack_top_tokens[1]));
     return std::move(consume_stack_top_tokens[0].m_data);
@@ -799,7 +799,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "Parser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                     assert(lookahead.m_id == Terminal::ERROR_);
                     {   // This code block is just to limit the scope of resulting_error_token
-                        Token resulting_error_token(Terminal::ERROR_, PopStack1Actions_(popped_tokens, std::move(lookahead)));
+                        Token resulting_error_token(Terminal::ERROR_, PopStack1Actions_(std::move(popped_tokens), std::move(lookahead)));
                         m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
                     }
                 }
@@ -811,7 +811,6 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                     {
                         // plain ol' pop stack 2 times -- this is the old behavior
 
-                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                         std::vector<Token> popped_tokens;
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
@@ -822,13 +821,12 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
 
                         Token const &lookahead = Lookahead_(0);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "Parser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                        PopStack2Actions_(popped_tokens, lookahead);
+                        PopStack2Actions_(std::move(popped_tokens), lookahead);
                     }
                     else if (true)
                     {
                         // pop stack 2 times, then push the result onto the front of the lookahead queue.
 
-                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                         std::vector<Token> popped_tokens;
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
@@ -840,7 +838,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                         Token const &lookahead = Lookahead_(0);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "Parser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                         {   // This code block is just to limit the scope of resulting_error_token
-                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
                             m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
                         }
                     }
@@ -848,7 +846,6 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                     {
                         // pop stack 2 times and push resulting error token onto stack -- this is new behavior
 
-                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                         std::vector<Token> popped_tokens;
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
@@ -860,8 +857,10 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                         Token const &lookahead = Lookahead_(0);
                         //assert(lookahead.m_id == Terminal::END_);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "Parser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
+                            m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        }
                     }
                     else
                     {
@@ -872,7 +871,6 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                         std::uint32_t pop_count = 3; // shadowing earlier one
                         assert(m_realized_state_->TokenStack().size() >= pop_count);
 
-                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
                         std::vector<Token> popped_tokens;
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
                         popped_tokens.emplace_back(Token(Nonterminal::none_));
@@ -886,8 +884,10 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                         Token const &lookahead = Lookahead_(0);
                         //assert(lookahead.m_id == Terminal::END_);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "Parser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
+                            m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        }
                     }
                 }
 

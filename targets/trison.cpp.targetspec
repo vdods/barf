@@ -226,10 +226,12 @@
 // no valid actions to take, the lookahead can be discarded (think of it as
 // the %error token consuming the lookahead).  Optionally specify this code
 // block to handle this case.  The input is
-//    `Token const &consume_stack_top_error_token, Token const &consume_lookahead_token`
+//    `Token &&consume_stack_top_error_token, Token &&consume_lookahead_token`
 // and the code must return a Token::Data value that will be used in the resulting
 // error token (which replaces the %error token that was on top of the stack before;
-// i.e. consume_stack_top_error_token).
+// i.e. consume_stack_top_error_token).  Note that these `consume` params are passed
+// as rvalue references, so they can/should be std::move'd to be consumed (or just
+// deleted).
 //
 // If not specified, then a default implementation involving throw_away_token_actions
 // will be generated.
@@ -237,10 +239,12 @@
 // During error handling, if the lookahead is %error but there is no rule that
 // can shift %error, then the stack will be popped once.  Optionally specify this
 // code block to handle this case.  The input is
-//     `std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token`
+//     `std::vector<Token> &&consume_stack_top_tokens, Token &&consume_lookahead_token`
 // where consume_stack_top_tokens has size 1, and the code must return a Token::Data
 // that will be used in the resulting error token (which replaces the %error
-// lookahead token; i.e. consume_lookahead_token).
+// lookahead token; i.e. consume_lookahead_token).  Note that these `consume` params
+// are passed as rvalue references, so they can/should be std::move'd to be consumed
+// (or just deleted).
 //
 // If not specified, then a default implementation involving throw_away_token_actions
 // will be generated.
@@ -248,10 +252,11 @@
 // During error handling, if the lookahead is %end but there is no rule that
 // can shift %end, then the stack will be popped twice.  Optionally specify this
 // code block to handle this case.  The input is
-//     `std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token`
+//     `std::vector<Token> &&consume_stack_top_tokens, Token const &noconsume_lookahead_token`
 // where consume_stack_top_tokens has size 2, and the code must return a Token::Data
 // that will be used in the resulting error token (which is pushed onto the front
-// of the lookahead queue).
+// of the lookahead queue).  Note that this `consume` param is passed as an rvalue
+// reference, so it can/should be std::move'd to be consumed (or just deleted).
 //
 // If not specified, then a default implementation involving throw_away_token_actions
 // will be generated.
