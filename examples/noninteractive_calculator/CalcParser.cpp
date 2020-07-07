@@ -413,13 +413,13 @@ char const *const CalcParser::ms_token_name_table_[] =
 };
 std::size_t const CalcParser::ms_token_name_count_ = sizeof(CalcParser::ms_token_name_table_) / sizeof(*CalcParser::ms_token_name_table_);
 
-void CalcParser::ThrowAwayToken_ (Token const &token_) throw()
+void CalcParser::ThrowAwayToken_ (Token &&token_) throw()
 {
     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing throw-away-token actions on token " << token_ << '\n')
-    ThrowAwayTokenData_(token_.m_data);
+    ThrowAwayTokenData_(std::move(token_.m_data));
 }
 
-void CalcParser::ThrowAwayTokenData_ (std::shared_ptr<Ast::Base> const &token_data) throw()
+void CalcParser::ThrowAwayTokenData_ (std::shared_ptr<Ast::Base> &&token_data) throw()
 {
 
 #line 106 "../CalcParser.trison"
@@ -432,22 +432,22 @@ CalcParser::Token::Data CalcParser::InsertLookaheadErrorActions_ (Token const &n
     return std::shared_ptr<Ast::Base>();
 }
 
-CalcParser::Token::Data CalcParser::DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token)
+CalcParser::Token::Data CalcParser::DiscardLookaheadActions_ (Token &&consume_stack_top_error_token, Token &&consume_lookahead_token)
 {
-    ThrowAwayToken_(consume_lookahead_token);
-    return consume_stack_top_error_token.m_data;
+    ThrowAwayToken_(std::move(consume_lookahead_token));
+    return std::move(consume_stack_top_error_token.m_data);
 }
 
-CalcParser::Token::Data CalcParser::PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token)
+CalcParser::Token::Data CalcParser::PopStack1Actions_ (std::vector<Token> &consume_stack_top_tokens, Token &&consume_lookahead_token)
 {
-    ThrowAwayToken_(consume_stack_top_tokens[0]);
-    return consume_lookahead_token.m_data;
+    ThrowAwayToken_(std::move(consume_stack_top_tokens[0]));
+    return std::move(consume_lookahead_token.m_data);
 }
 
-CalcParser::Token::Data CalcParser::PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
+CalcParser::Token::Data CalcParser::PopStack2Actions_ (std::vector<Token> &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
 {
-    ThrowAwayToken_(consume_stack_top_tokens[1]);
-    return consume_stack_top_tokens[0].m_data;
+    ThrowAwayToken_(std::move(consume_stack_top_tokens[1]));
+    return std::move(consume_stack_top_tokens[0].m_data);
 }
 
 CalcParser::Token::Data CalcParser::RunNonassocErrorActions_ (Token const &noconsume_lookahead_token)
@@ -716,7 +716,7 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
                     lookahead = &m_realized_state_->LookaheadQueue().front();
                 }
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack(), lookahead);
-                m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
+                m_realized_state_->ExecuteActionReduce(rule, std::move(reduced_nonterminal_token_data), m_hypothetical_state_->m_hps_queue);
                 // This is done essentially so that m_realized_lookahead_cursor can be reset.
                 destroy_and_recreate_parse_tree = true;
                 break;
@@ -741,10 +741,12 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
                 //                                   output from handler code
 
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
-                Token lookahead = Lookahead_(0);
+                Token const &lookahead = Lookahead_(0);
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO 2 lookahead retrieved from Lookahead_(0) for INSERT_LOOKAHEAD_ERROR action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                Token resulting_error_token(Terminal::ERROR_, InsertLookaheadErrorActions_(lookahead));
-                m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                {   // This code block is just to limit the scope of resulting_error_token
+                    Token resulting_error_token(Terminal::ERROR_, InsertLookaheadErrorActions_(lookahead));
+                    m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
+                }
                 m_realized_state_->SetHasEncounteredErrorState();
                 //m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
@@ -764,11 +766,10 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
                 //                                 output from handler code (old stack top is replaced)
 
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "Executing trunk action DISCARD_LOOKAHEAD.\n")
-                Token stack_top_error_token = m_realized_state_->TokenStack().back();
-                assert(stack_top_error_token.m_id == Terminal::ERROR_);
+                assert(m_realized_state_->TokenStack().back().m_id == Terminal::ERROR_);
                 Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
-                Token resulting_error_token = Token(Terminal::ERROR_, DiscardLookaheadActions_(stack_top_error_token, lookahead));
-                m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                Token resulting_error_token = Token(Terminal::ERROR_, DiscardLookaheadActions_(std::move(m_realized_state_->TokenStack().back()), std::move(lookahead)));
+                m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
                 //m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
             }
@@ -812,17 +813,18 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
 
                 if (pop_count == 1)
                 {
-                    std::vector<Token> popped_tokens{m_realized_state_->PopStack()};
+                    std::vector<Token> popped_tokens;
+                    popped_tokens.emplace_back(m_realized_state_->PopStack());
                     assert(popped_tokens.size() == pop_count);
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                    Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+                    Token lookahead(std::move(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue)));
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                    Token resulting_error_token(Terminal::ERROR_);
-
                     assert(lookahead.m_id == Terminal::ERROR_);
-                    resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
-                    m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                    {   // This code block is just to limit the scope of resulting_error_token
+                        Token resulting_error_token(Terminal::ERROR_, PopStack1Actions_(popped_tokens, std::move(lookahead)));
+                        m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
+                    }
                 }
                 else
                 {
@@ -832,13 +834,16 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
                     {
                         // plain ol' pop stack 2 times -- this is the old behavior
 
-                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                        popped_tokens[1] = m_realized_state_->PopStack();
-                        popped_tokens[0] = m_realized_state_->PopStack();
+                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        std::vector<Token> popped_tokens;
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens[1] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[0] = std::move(m_realized_state_->PopStack());
                         assert(popped_tokens.size() == pop_count);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                        Token lookahead(Lookahead_(0));
+                        Token const &lookahead = Lookahead_(0);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                         PopStack2Actions_(popped_tokens, lookahead);
                     }
@@ -846,32 +851,40 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
                     {
                         // pop stack 2 times, then push the result onto the front of the lookahead queue.
 
-                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                        popped_tokens[1] = m_realized_state_->PopStack();
-                        popped_tokens[0] = m_realized_state_->PopStack();
+                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        std::vector<Token> popped_tokens;
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens[1] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[0] = std::move(m_realized_state_->PopStack());
                         assert(popped_tokens.size() == pop_count);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                        Token lookahead(Lookahead_(0));
+                        Token const &lookahead = Lookahead_(0);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
+                            m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
+                        }
                     }
                     else if (false)
                     {
                         // pop stack 2 times and push resulting error token onto stack -- this is new behavior
 
-                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                        popped_tokens[1] = m_realized_state_->PopStack();
-                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        std::vector<Token> popped_tokens;
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens[1] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[0] = std::move(m_realized_state_->TokenStack().back()); // Don't pop this one; will replace.
                         assert(popped_tokens.size() == pop_count);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                        Token lookahead(Lookahead_(0));
+                        Token const &lookahead = Lookahead_(0);
                         //assert(lookahead.m_id == Terminal::END_);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                         Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                        m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
                     }
                     else
                     {
@@ -882,18 +895,22 @@ void CalcParser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserRetur
                         std::uint32_t pop_count = 3; // shadowing earlier one
                         assert(m_realized_state_->TokenStack().size() >= pop_count);
 
-                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                        popped_tokens[2] = m_realized_state_->PopStack();
-                        popped_tokens[1] = m_realized_state_->PopStack();
-                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        //std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
+                        std::vector<Token> popped_tokens;
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens[2] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[1] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[0] = std::move(m_realized_state_->TokenStack().back()); // Don't pop this one; will replace.
                         assert(popped_tokens.size() == pop_count);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                        Token lookahead(Lookahead_(0));
+                        Token const &lookahead = Lookahead_(0);
                         //assert(lookahead.m_id == Terminal::END_);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << "CalcParser: " << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
                         Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                        m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
                     }
                 }
 
@@ -964,11 +981,11 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
         {
             assert(shift != NULL);
             assert(reduce != NULL);
-            ParseTreeNode_::PrecedenceLevelRange shift_precedence_level_range = shift->ComputePrecedenceLevelRange(1);
-            ParseTreeNode_::PrecedenceLevelRange reduce_precedence_level_range = reduce->ComputePrecedenceLevelRange(1);
-            assert(reduce_precedence_level_range.first == reduce_precedence_level_range.second);
+            ParseTreeNode_::PrecedenceIndexRange shift_precedence_index_range = shift->ComputePrecedenceIndexRange(1);
+            ParseTreeNode_::PrecedenceIndexRange reduce_precedence_index_range = reduce->ComputePrecedenceIndexRange(1);
+            assert(reduce_precedence_index_range.first == reduce_precedence_index_range.second);
 
-            TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_level_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_level_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_level_range.second].m_name << "]\n")
+            TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_name << "]\n")
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
             // indicates equality).  there is always exactly one reduce hps, and at least
@@ -1007,7 +1024,7 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
             bool conflict_resolved = false;
 
             // Case 1
-            if (reduce_precedence_level_range.second < shift_precedence_level_range.first)
+            if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level)
             {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
                 // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
@@ -1016,8 +1033,8 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                 conflict_resolved = true;
             }
             // Case 2
-            else if (reduce_precedence_level_range.first == shift_precedence_level_range.first &&
-                     shift_precedence_level_range.first < shift_precedence_level_range.second)
+            else if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_level == Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level &&
+                     Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level)
             {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "        Case 2; REDUCE <= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
@@ -1035,8 +1052,8 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                 }
             }
             // Case 3
-            else if (reduce_precedence_level_range.second == shift_precedence_level_range.first &&
-                     shift_precedence_level_range.first == shift_precedence_level_range.second)
+            else if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level == Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level &&
+                     Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level == Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level)
             {
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1065,8 +1082,10 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                         //                                   ^~~~~~~^
                         //                                   output from handler code
 
-                        Token resulting_error_token(Terminal::ERROR_, RunNonassocErrorActions_(Lookahead_(0)));
-                        m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, RunNonassocErrorActions_(Lookahead_(0)));
+                            m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
+                        }
                         m_realized_state_->SetHasEncounteredErrorState();
 
                         m_hypothetical_state_->DeleteBranch(shift);
@@ -1106,8 +1125,8 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                 }
             }
             // Case 4
-            else if (reduce_precedence_level_range.second == shift_precedence_level_range.second &&
-                     shift_precedence_level_range.first < shift_precedence_level_range.second)
+            else if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level == Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level &&
+                     Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level)
             {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "        Case 4; REDUCE >= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
@@ -1125,7 +1144,7 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                 }
             }
             // Case 5
-            else if (reduce_precedence_level_range.first > shift_precedence_level_range.second)
+            else if (Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_level > Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level)
             {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
                 m_hypothetical_state_->DeleteBranch(shift);
@@ -1135,8 +1154,8 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
             // Case 6
             else {
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << "CalcParser: " << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
-                assert(reduce_precedence_level_range.first > shift_precedence_level_range.first);
-                assert(reduce_precedence_level_range.second < shift_precedence_level_range.second);
+                assert(Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_level > Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level);
+                assert(Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level);
             }
 
             if (conflict_resolved)
@@ -1241,8 +1260,7 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
 
 
                 ParseTreeNode_ *resulting_hps = NULL;
-                // If it's a default transition, there's no need to access the lookahead (except in
-                // a certain case).
+                // If it's a default transition, there's no need to access the lookahead (except in a couple of particular cases).
                 if (transition.m_token_index == Nonterminal::none_)
                 {
                     // Logic regarding empty reduction rules -- if this transition is REDUCE for an empty reduction rule
@@ -1271,6 +1289,38 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
                         {
                             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << "CalcParser: " << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
                             take_action = false;
+                        }
+
+                        //
+                        // The following is a hacky way to check for transitions that SHOULD block a default REDUCE action.
+                        // In particular, for a reduction rule ending with %lookahead[![A|B]], there will be transitions
+                        //     default: REDUCE
+                        //     A: INSERT_LOOKAHEAD_ERROR
+                        //     B: INSERT_LOOKAHEAD_ERROR
+                        // and the intent of this was for the A and B transitions to "block" the default transition, but
+                        // this was not implemented correctly.  So this hack is meant to fix that bug without doing the
+                        // larger refactor that would implement this correctly and robustly.
+                        //
+
+                        // Check all higher SortedTypeIndex values (higher than the SortedTypeIndex value of REDUCE) for
+                        // transitions that match the lookahead -- these would block the default REDUCE action.
+                        for (std::uint32_t blocking_sorted_type_index = current_sorted_type_index+1; blocking_sorted_type_index <= Npda_::Transition_::Order::MAX_SORTED_TYPE_INDEX; ++blocking_sorted_type_index)
+                        {
+                            Npda_::TransitionVector_ const &blocking_non_epsilon_transitions = Npda_::NonEpsilonTransitionsOfState_(hps_state_index, blocking_sorted_type_index);
+                            for (Npda_::TransitionVector_::const_iterator blocking_transition_it = blocking_non_epsilon_transitions.begin(), blocking_transition_it_end = blocking_non_epsilon_transitions.end(); blocking_transition_it != blocking_transition_it_end; ++blocking_transition_it)
+                            {
+                                Npda_::Transition_ const &blocking_transition = *blocking_transition_it;
+                                if (blocking_transition.m_token_index == hps.LookaheadTokenId(*this))
+                                {
+                                    // This transition is blocking the default REDUCE action, so do not take action.
+                                    TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << "CalcParser: " << "            Skipping default action REDUCE because the negated lookahead directive was matched and therefore prevents it.\n")
+                                    take_action = false;
+                                }
+                                if (!take_action)
+                                    break; // No reason to keep looping.
+                            }
+                            if (!take_action)
+                                break; // No reason to keep looping.
                         }
                     }
 
@@ -1318,7 +1368,7 @@ void CalcParser::ContinueNPDAParse_ (bool &should_return)
     assert(m_hypothetical_state_->m_new_hps_queue.empty());
 }
 
-CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack_, Token const *lookahead_) throw()
+CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ &token_stack_, Token const *lookahead_) throw()
 {
     assert(rule_index_ < Grammar_::ms_rule_count_);
     switch (rule_index_)
@@ -1330,14 +1380,14 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         case 0:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> st(token_stack_[token_stack_.size()-2].m_data);
+            std::shared_ptr<Ast::Base> st(std::move(token_stack_[token_stack_.size()-2].m_data));
 
 #line 179 "../CalcParser.trison"
 
         std::cout << "stmt_then_end <- stmt %end\n";
         return st;
     
-#line 1341 "../CalcParser.cpp"
+#line 1391 "../CalcParser.cpp"
             break;
         }
 
@@ -1350,21 +1400,21 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
         std::cout << "stmt_then_end <- %error[!%end] %end\n";
         return Ast::error_dummy("stmt_then_end <- %error[!%end] %end");
     
-#line 1354 "../CalcParser.cpp"
+#line 1404 "../CalcParser.cpp"
             break;
         }
 
         case 2:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> ex(token_stack_[token_stack_.size()-2].m_data);
+            std::shared_ptr<Ast::Base> ex(std::move(token_stack_[token_stack_.size()-2].m_data));
 
 #line 194 "../CalcParser.trison"
 
 //         std::cout << "stmt <- expr ';'\n";
         return ex;
     
-#line 1368 "../CalcParser.cpp"
+#line 1418 "../CalcParser.cpp"
             break;
         }
 
@@ -1377,21 +1427,21 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "stmt <- %error ';'\n";
         return Ast::error_dummy("stmt <- %error ';'");
     
-#line 1381 "../CalcParser.cpp"
+#line 1431 "../CalcParser.cpp"
             break;
         }
 
         case 4:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> e(token_stack_[token_stack_.size()-2].m_data);
+            std::shared_ptr<Ast::Base> e(std::move(token_stack_[token_stack_.size()-2].m_data));
 
 #line 209 "../CalcParser.trison"
 
 //         std::cout << "expr <- '(' expr ')'\n";
         return e;
     
-#line 1395 "../CalcParser.cpp"
+#line 1445 "../CalcParser.cpp"
             break;
         }
 
@@ -1404,7 +1454,7 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- '(' %error[!%end] ')'\n";
         return Ast::error_dummy("expr <- '(' %error[!%end] ')'");
     
-#line 1408 "../CalcParser.cpp"
+#line 1458 "../CalcParser.cpp"
             break;
         }
 
@@ -1417,140 +1467,140 @@ CalcParser::Token::Data CalcParser::ExecuteReductionRule_ (std::uint32_t const r
 //         std::cout << "expr <- '(' %error[![%end|';']]\n";
         return Ast::error_dummy("expr <- '(' %error[![%end|';']]");
     
-#line 1421 "../CalcParser.cpp"
+#line 1471 "../CalcParser.cpp"
             break;
         }
 
         case 7:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> num(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> num(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 231 "../CalcParser.trison"
 
 //         std::cout << "expr <- NUM(" << num << ")\n";
         return num;
     
-#line 1435 "../CalcParser.cpp"
+#line 1485 "../CalcParser.cpp"
             break;
         }
 
         case 8:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-3].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> lhs(std::move(token_stack_[token_stack_.size()-3].m_data));
+            std::shared_ptr<Ast::Base> rhs(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 237 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '+' expr(" << rhs << ")\n";
         return base_operator("+", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1450 "../CalcParser.cpp"
+#line 1500 "../CalcParser.cpp"
             break;
         }
 
         case 9:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-6].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> lhs(std::move(token_stack_[token_stack_.size()-6].m_data));
+            std::shared_ptr<Ast::Base> rhs(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 243 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("++++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1465 "../CalcParser.cpp"
+#line 1515 "../CalcParser.cpp"
             break;
         }
 
         case 10:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-5].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> lhs(std::move(token_stack_[token_stack_.size()-5].m_data));
+            std::shared_ptr<Ast::Base> rhs(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 249 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' '+' expr(" << rhs << ")\n";
         return base_operator("+++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1480 "../CalcParser.cpp"
+#line 1530 "../CalcParser.cpp"
             break;
         }
 
         case 11:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-4].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> lhs(std::move(token_stack_[token_stack_.size()-4].m_data));
+            std::shared_ptr<Ast::Base> rhs(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 255 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '+' '+' expr(" << rhs << ")\n";
         return base_operator("++", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1495 "../CalcParser.cpp"
+#line 1545 "../CalcParser.cpp"
             break;
         }
 
         case 12:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-3].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> lhs(std::move(token_stack_[token_stack_.size()-3].m_data));
+            std::shared_ptr<Ast::Base> rhs(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 261 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '*' expr(" << rhs << ")\n";
         return base_operator("*", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1510 "../CalcParser.cpp"
+#line 1560 "../CalcParser.cpp"
             break;
         }
 
         case 13:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-3].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> lhs(std::move(token_stack_[token_stack_.size()-3].m_data));
+            std::shared_ptr<Ast::Base> rhs(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 267 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '?' expr(" << rhs << ")\n";
         return base_operator("?", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1525 "../CalcParser.cpp"
+#line 1575 "../CalcParser.cpp"
             break;
         }
 
         case 14:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> op(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> op(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 273 "../CalcParser.trison"
 
 //         std::cout << "expr <- '-' expr(" << op << ")\n";
         return base_operator("-", BaseOperator::ChildNodes{op});
     
-#line 1539 "../CalcParser.cpp"
+#line 1589 "../CalcParser.cpp"
             break;
         }
 
         case 15:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            std::shared_ptr<Ast::Base> lhs(token_stack_[token_stack_.size()-3].m_data);
-            std::shared_ptr<Ast::Base> rhs(token_stack_[token_stack_.size()-1].m_data);
+            std::shared_ptr<Ast::Base> lhs(std::move(token_stack_[token_stack_.size()-3].m_data));
+            std::shared_ptr<Ast::Base> rhs(std::move(token_stack_[token_stack_.size()-1].m_data));
 
 #line 279 "../CalcParser.trison"
 
 //         std::cout << "expr <- expr(" << lhs << ") '^' expr(" << rhs << ")\n";
         return base_operator("^", BaseOperator::ChildNodes{lhs, rhs});
     
-#line 1554 "../CalcParser.cpp"
+#line 1604 "../CalcParser.cpp"
             break;
         }
 
@@ -1646,14 +1696,14 @@ CalcParser::RealizedState_::RealizedState_ (Npda_::StateIndex_ initial_state)
     Initialize(initial_state);
 }
 
-void CalcParser::RealizedState_::PushBackLookahead (Token const &lookahead, HPSQueue_ const &hps_queue)
+void CalcParser::RealizedState_::PushBackLookahead (Token &&lookahead, HPSQueue_ const &hps_queue)
 {
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
     // be factored out.
 
-    m_lookahead_queue.push_back(lookahead);
+    m_lookahead_queue.emplace_back(std::move(lookahead));
     UpdateMaxRealizedLookaheadCount();
 }
 
@@ -1661,7 +1711,7 @@ CalcParser::Token CalcParser::RealizedState_::PopStack ()
 {
     assert(!m_token_stack.empty());
 
-    Token popped_token(m_token_stack.back());
+    Token popped_token(std::move(m_token_stack.back()));
     m_token_stack.pop_back();
 
     assert(!m_branch_vector_stack.empty());
@@ -1672,12 +1722,12 @@ CalcParser::Token CalcParser::RealizedState_::PopStack ()
     return popped_token;
 }
 
-void CalcParser::RealizedState_::ReplaceTokenStackTopWith (Token const &replacement)
+void CalcParser::RealizedState_::ReplaceTokenStackTopWith (Token &&replacement)
 {
     assert(!m_token_stack.empty());
 //    m_token_stack.back() = replacement;
     m_token_stack.pop_back();
-    m_token_stack.push_back(replacement);
+    m_token_stack.emplace_back(std::move(replacement));
 }
 
 CalcParser::Token CalcParser::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
@@ -1696,7 +1746,7 @@ CalcParser::Token CalcParser::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_
         if (hps.m_realized_lookahead_cursor > 0)
             --hps.m_realized_lookahead_cursor;
     }
-    Token retval(m_lookahead_queue.front());
+    Token retval(std::move(m_lookahead_queue.front()));
     m_lookahead_queue.pop_front();
     return retval;
 }
@@ -1705,7 +1755,7 @@ void CalcParser::RealizedState_::StealTokenStackTop (std::shared_ptr<Ast::Base> 
 {
     assert(return_token != NULL);
     assert(!m_token_stack.empty());
-    *return_token = m_token_stack.back().m_data;
+    *return_token = std::move(m_token_stack.back().m_data);
     // Assign the token default so that the actual return token isn't destroyed when the parser is destroyed.
     m_token_stack.back().m_data = std::shared_ptr<Ast::Base>();
 }
@@ -1714,12 +1764,12 @@ void CalcParser::RealizedState_::StealTokenStackTop (std::shared_ptr<Ast::Base> 
 // {
 // }
 
-void CalcParser::RealizedState_::ExecuteActionReduce (Grammar_::Rule_ const &rule, Token::Data const &reduced_nonterminal_token_data, HPSQueue_ &hps_queue)
+void CalcParser::RealizedState_::ExecuteActionReduce (Grammar_::Rule_ const &rule, Token::Data &&reduced_nonterminal_token_data, HPSQueue_ &hps_queue)
 {
     for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
         PopStack();
     // Push the reduced nonterminal token data onto the front of the lookahead queue
-    PushFrontLookahead(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data), hps_queue);
+    PushFrontLookahead(Token(rule.m_reduction_nonterminal_token_id, std::move(reduced_nonterminal_token_data)), hps_queue);
 }
 
 void CalcParser::RealizedState_::ExecuteActionShift (BranchVector_ const &shifted_branch_vector, HPSQueue_ &hps_queue)
@@ -1738,10 +1788,8 @@ void CalcParser::RealizedState_::ExecuteActionShift (BranchVector_ const &shifte
 
     // Push onto the branch node stack.
     m_branch_vector_stack.push_back(shifted_branch_vector);
-    // Push the token onto the stack.
-    m_token_stack.push_back(m_lookahead_queue.front());
-    // Pop the shifted lookahead from the queue
-    PopFrontLookahead(hps_queue);
+    // Pop the shifted lookahead from the queue and push it onto the stack.
+    m_token_stack.emplace_back(PopFrontLookahead(hps_queue));
 }
 
 void CalcParser::RealizedState_::ExecuteActionInsertLookaheadError (HPSQueue_ &hps_queue)
@@ -1826,14 +1874,14 @@ void CalcParser::RealizedState_::Initialize (Npda_::StateIndex_ initial_state)
     }
 }
 
-void CalcParser::RealizedState_::PushFrontLookahead (Token const &lookahead, HPSQueue_ &hps_queue)
+void CalcParser::RealizedState_::PushFrontLookahead (Token &&lookahead, HPSQueue_ &hps_queue)
 {
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
     // be factored out.
 
-    m_lookahead_queue.push_front(lookahead);
+    m_lookahead_queue.emplace_front(std::move(lookahead));
     // Because the contents of m_lookahead_queue_ are changing, and each hps's
     // m_realized_lookahead_cursor is an index into that queue, each must be updated.
     for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
@@ -2127,7 +2175,7 @@ bool CalcParser::ParseTreeNode_::IsBlockedHPS () const
     }
 }
 
-CalcParser::ParseTreeNode_::PrecedenceLevelRange CalcParser::ParseTreeNode_::ComputePrecedenceLevelRange (std::uint32_t current_child_depth) const
+CalcParser::ParseTreeNode_::PrecedenceIndexRange CalcParser::ParseTreeNode_::ComputePrecedenceIndexRange (std::uint32_t current_child_depth) const
 {
     if (m_spec.m_type == HPS)
     {
@@ -2157,27 +2205,22 @@ CalcParser::ParseTreeNode_::PrecedenceLevelRange CalcParser::ParseTreeNode_::Com
         {
             Grammar_::Rule_ const &associated_rule = Grammar_::ms_rule_table_[state.m_associated_rule_index];
             assert(associated_rule.m_precedence_index < Grammar_::ms_precedence_count_);
-            Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[associated_rule.m_precedence_index];
-            return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+            return PrecedenceIndexRange(associated_rule.m_precedence_index, associated_rule.m_precedence_index);
         }
         // Otherwise (e.g. a RETURN or ABORT state), return default precedence.
         else
-        {
-            Grammar_::Precedence_ const &default_precedence = Grammar_::ms_precedence_table_[0]; // 0 is default precedence.
-            return PrecedenceLevelRange(default_precedence.m_level, default_precedence.m_level);
-        }
+            return PrecedenceIndexRange(Grammar_::ms_default_precedence_index_, Grammar_::ms_default_precedence_index_);
     }
     else if (m_spec.m_type == REDUCE)
     {
         std::uint32_t reduction_rule_index = m_spec.m_single_data;
         Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduction_rule_index];
         assert(reduction_rule.m_precedence_index < Grammar_::ms_precedence_count_);
-        Grammar_::Precedence_ const &rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
-        return PrecedenceLevelRange(rule_precedence.m_level, rule_precedence.m_level);
+        return PrecedenceIndexRange(reduction_rule.m_precedence_index, reduction_rule.m_precedence_index);
     }
     else if (m_spec.m_type == SHIFT)
     {
-        PrecedenceLevelRange retval(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::min());
+        PrecedenceIndexRange retval(std::numeric_limits<std::uint32_t>::max(), std::numeric_limits<std::uint32_t>::min());
         assert(!m_child_nodes.empty());
         // The range is the smallest range encompassing the range of each child node.
         for (ChildMap::const_iterator child_map_it = m_child_nodes.begin(), child_map_it_end = m_child_nodes.end(); child_map_it != child_map_it_end; ++child_map_it)
@@ -2187,9 +2230,9 @@ CalcParser::ParseTreeNode_::PrecedenceLevelRange CalcParser::ParseTreeNode_::Com
             {
                 assert(*child_it != NULL);
                 ParseTreeNode_ const &child = **child_it;
-                PrecedenceLevelRange child_precedence_level_range(child.ComputePrecedenceLevelRange(current_child_depth+1));
-                retval.first = std::min(retval.first, child_precedence_level_range.first);
-                retval.second = std::max(retval.second, child_precedence_level_range.second);
+                PrecedenceIndexRange child_precedence_index_range(child.ComputePrecedenceIndexRange(current_child_depth+1));
+                retval.first = std::min(retval.first, child_precedence_index_range.first);
+                retval.second = std::max(retval.second, child_precedence_index_range.second);
             }
         }
         assert(retval.first <= retval.second);
@@ -2199,7 +2242,7 @@ CalcParser::ParseTreeNode_::PrecedenceLevelRange CalcParser::ParseTreeNode_::Com
     {
         // TODO: Probably need to do something to determine if this can't happen or prevent it.
         assert(false);
-        return PrecedenceLevelRange(0, 0);
+        return PrecedenceIndexRange(Grammar_::ms_default_precedence_index_, Grammar_::ms_default_precedence_index_);
     }
 }
 
@@ -2443,7 +2486,7 @@ CalcParser::ParseTreeNode_ *CalcParser::TakeHypotheticalActionOnHPS_ (ParseTreeN
                     assert((*existing_reduce_action_node->m_child_nodes.begin()->second.begin())->m_spec.m_type == ParseTreeNode_::HPS);
                     if (Grammar_::CompareRuleByPrecedence_(action_data, existing_reduce_action_node->m_spec.m_single_data))
                     {
-                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps.")
+                        TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << "resolving in favor of new hps because its REDUCE action has higher precedence.")
 
                         reduce_hps = *existing_reduce_action_node->m_child_nodes.begin()->second.begin();
                         assert(reduce_hps != NULL);
@@ -2622,7 +2665,7 @@ void CalcParser::ClearStack_ ()
     {
         // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
         while (!m_realized_state_->TokenStack().empty())
-            ThrowAwayToken_(m_realized_state_->PopStack());
+            ThrowAwayToken_(std::move(m_realized_state_->PopStack()));
     }
 
     delete m_hypothetical_state_;
@@ -2635,10 +2678,10 @@ void CalcParser::CleanUpAllInternals_ ()
     {
         // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
         while (!m_realized_state_->TokenStack().empty())
-            ThrowAwayToken_(m_realized_state_->PopStack());
+            ThrowAwayToken_(std::move(m_realized_state_->PopStack()));
 
         while (!m_realized_state_->LookaheadQueue().empty())
-            ThrowAwayToken_(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+            ThrowAwayToken_(std::move(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue)));
 
         // Note that this implicitly resets the error state (since that's tracked by m_realized_state_).
         delete m_realized_state_;
@@ -2685,6 +2728,8 @@ CalcParser::Grammar_::Precedence_ const CalcParser::Grammar_::ms_precedence_tabl
 };
 
 std::size_t const CalcParser::Grammar_::ms_precedence_count_ = sizeof(CalcParser::Grammar_::ms_precedence_table_) / sizeof(*CalcParser::Grammar_::ms_precedence_table_);
+
+std::size_t const CalcParser::Grammar_::ms_default_precedence_index_ = 0;
 
 CalcParser::Grammar_::Rule_ const CalcParser::Grammar_::ms_rule_table_[] =
 {
@@ -3099,4 +3144,4 @@ void CalcParser::ScannerDebugSpew (bool debug_spew)
     m_scanner->DebugSpew(debug_spew);
 }
 
-#line 3103 "../CalcParser.cpp"
+#line 3148 "../CalcParser.cpp"

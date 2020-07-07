@@ -464,17 +464,17 @@ char const *const Parser::ms_token_name_table_[] =
 };
 std::size_t const Parser::ms_token_name_count_ = sizeof(Parser::ms_token_name_table_) / sizeof(*Parser::ms_token_name_table_);
 
-void Parser::ThrowAwayToken_ (Token const &token_) throw()
+void Parser::ThrowAwayToken_ (Token &&token_) throw()
 {
     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 473 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Executing throw-away-token actions on token " << token_ << '\n')
-    ThrowAwayTokenData_(token_.m_data);
+    ThrowAwayTokenData_(std::move(token_.m_data));
 }
 
-void Parser::ThrowAwayTokenData_ (Ast::Base * const &token_data) throw()
+void Parser::ThrowAwayTokenData_ (Token::Data &&token_data) throw()
 {
 
 #line 156 "../lib/regex/barf_regex_parser.trison"
@@ -489,22 +489,22 @@ Parser::Token::Data Parser::InsertLookaheadErrorActions_ (Token const &noconsume
     return NULL;
 }
 
-Parser::Token::Data Parser::DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token)
+Parser::Token::Data Parser::DiscardLookaheadActions_ (Token &&consume_stack_top_error_token, Token &&consume_lookahead_token)
 {
-    ThrowAwayToken_(consume_lookahead_token);
-    return consume_stack_top_error_token.m_data;
+    ThrowAwayToken_(std::move(consume_lookahead_token));
+    return std::move(consume_stack_top_error_token.m_data);
 }
 
-Parser::Token::Data Parser::PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token)
+Parser::Token::Data Parser::PopStack1Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token &&consume_lookahead_token)
 {
-    ThrowAwayToken_(consume_stack_top_tokens[0]);
-    return consume_lookahead_token.m_data;
+    ThrowAwayToken_(std::move(consume_stack_top_tokens[0]));
+    return std::move(consume_lookahead_token.m_data);
 }
 
-Parser::Token::Data Parser::PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token)
+Parser::Token::Data Parser::PopStack2Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token const &noconsume_lookahead_token)
 {
-    ThrowAwayToken_(consume_stack_top_tokens[1]);
-    return consume_stack_top_tokens[0].m_data;
+    ThrowAwayToken_(std::move(consume_stack_top_tokens[1]));
+    return std::move(consume_stack_top_tokens[0].m_data);
 }
 
 Parser::Token::Data Parser::RunNonassocErrorActions_ (Token const &noconsume_lookahead_token)
@@ -751,7 +751,7 @@ void Parser::SetMaxAllowableParseTreeDepth (std::int64_t max_allowable_parse_tre
     m_max_allowable_parse_tree_depth = max_allowable_parse_tree_depth;
 }
 
-Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse)
+Parser::ParserReturnCode Parser::Parse_ (Token::Data *return_token, Nonterminal::Name nonterminal_to_parse)
 {
     assert(return_token != NULL && "the return-token pointer must be non-NULL");
 
@@ -921,7 +921,7 @@ Parser::ParserReturnCode Parser::Parse_ (Ast::Base * *return_token, Nonterminal:
     return parser_return_code_;
 }
 
-void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code_, Ast::Base * *&return_token)
+void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code_, Token::Data *&return_token)
 {
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
@@ -988,7 +988,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                     lookahead = &m_realized_state_->LookaheadQueue().front();
                 }
                 Token::Data reduced_nonterminal_token_data = ExecuteReductionRule_(rule_index, m_realized_state_->TokenStack(), lookahead);
-                m_realized_state_->ExecuteActionReduce(rule, reduced_nonterminal_token_data, m_hypothetical_state_->m_hps_queue);
+                m_realized_state_->ExecuteActionReduce(rule, std::move(reduced_nonterminal_token_data), m_hypothetical_state_->m_hps_queue);
                 // This is done essentially so that m_realized_lookahead_cursor can be reset.
                 destroy_and_recreate_parse_tree = true;
                 break;
@@ -1021,14 +1021,16 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1023 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Executing trunk action INSERT_LOOKAHEAD_ERROR, and setting has-encountered-error-state flag.\n")
-                Token lookahead = Lookahead_(0);
+                Token const &lookahead = Lookahead_(0);
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1029 "../lib/regex/generated/barf_regex_parser.cpp"
- << "HIPPO 2 lookahead retrieved from Lookahead_(0) for INSERT_LOOKAHEAD_ERROR action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                Token resulting_error_token(Terminal::ERROR_, InsertLookaheadErrorActions_(lookahead));
-                m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+ << "Lookahead retrieved from Lookahead_(0) for INSERT_LOOKAHEAD_ERROR action is " << ms_token_name_table_[lookahead.m_id] << '\n')
+                {   // This code block is just to limit the scope of resulting_error_token
+                    Token resulting_error_token(Terminal::ERROR_, InsertLookaheadErrorActions_(lookahead));
+                    m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
+                }
                 m_realized_state_->SetHasEncounteredErrorState();
                 //m_realized_state_->ExecuteActionInsertLookaheadError(m_hypothetical_state_->m_hps_queue);
                 break;
@@ -1050,13 +1052,12 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1054 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1056 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Executing trunk action DISCARD_LOOKAHEAD.\n")
-                Token stack_top_error_token = m_realized_state_->TokenStack().back();
-                assert(stack_top_error_token.m_id == Terminal::ERROR_);
+                assert(m_realized_state_->TokenStack().back().m_id == Terminal::ERROR_);
                 Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
-                Token resulting_error_token = Token(Terminal::ERROR_, DiscardLookaheadActions_(stack_top_error_token, lookahead));
-                m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                Token resulting_error_token = Token(Terminal::ERROR_, DiscardLookaheadActions_(std::move(m_realized_state_->TokenStack().back()), std::move(lookahead)));
+                m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
                 //m_realized_state_->ExecuteActionDiscardLookahead(m_hypothetical_state_->m_hps_queue);
                 break;
             }
@@ -1097,32 +1098,33 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                 TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1101 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1102 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Executing trunk action POP_STACK " << pop_count << ".\n")
                 assert(pop_count == 1 || pop_count == 2);
                 assert(m_realized_state_->TokenStack().size() > pop_count);
 
                 if (pop_count == 1)
                 {
-                    std::vector<Token> popped_tokens{m_realized_state_->PopStack()};
+                    std::vector<Token> popped_tokens;
+                    popped_tokens.emplace_back(m_realized_state_->PopStack());
                     assert(popped_tokens.size() == pop_count);
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1113 "../lib/regex/generated/barf_regex_parser.cpp"
- << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+#line 1115 "../lib/regex/generated/barf_regex_parser.cpp"
+ << "Lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                    Token lookahead(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+                    Token lookahead(std::move(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue)));
                     TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1120 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1122 "../lib/regex/generated/barf_regex_parser.cpp"
  << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                    Token resulting_error_token(Terminal::ERROR_);
-
                     assert(lookahead.m_id == Terminal::ERROR_);
-                    resulting_error_token.m_data = PopStack1Actions_(popped_tokens, lookahead);
-                    m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                    {   // This code block is just to limit the scope of resulting_error_token
+                        Token resulting_error_token(Terminal::ERROR_, PopStack1Actions_(std::move(popped_tokens), std::move(lookahead)));
+                        m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
+                    }
                 }
                 else
                 {
@@ -1132,70 +1134,80 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                     {
                         // plain ol' pop stack 2 times -- this is the old behavior
 
-                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                        popped_tokens[1] = m_realized_state_->PopStack();
-                        popped_tokens[0] = m_realized_state_->PopStack();
+                        std::vector<Token> popped_tokens;
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens[1] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[0] = std::move(m_realized_state_->PopStack());
                         assert(popped_tokens.size() == pop_count);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1143 "../lib/regex/generated/barf_regex_parser.cpp"
- << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+#line 1147 "../lib/regex/generated/barf_regex_parser.cpp"
+ << "Lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                        Token lookahead(Lookahead_(0));
+                        Token const &lookahead = Lookahead_(0);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1150 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1154 "../lib/regex/generated/barf_regex_parser.cpp"
  << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                        PopStack2Actions_(popped_tokens, lookahead);
+                        PopStack2Actions_(std::move(popped_tokens), lookahead);
                     }
                     else if (true)
                     {
                         // pop stack 2 times, then push the result onto the front of the lookahead queue.
 
-                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                        popped_tokens[1] = m_realized_state_->PopStack();
-                        popped_tokens[0] = m_realized_state_->PopStack();
+                        std::vector<Token> popped_tokens;
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens[1] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[0] = std::move(m_realized_state_->PopStack());
                         assert(popped_tokens.size() == pop_count);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1165 "../lib/regex/generated/barf_regex_parser.cpp"
- << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+#line 1171 "../lib/regex/generated/barf_regex_parser.cpp"
+ << "Lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                        Token lookahead(Lookahead_(0));
+                        Token const &lookahead = Lookahead_(0);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1172 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1178 "../lib/regex/generated/barf_regex_parser.cpp"
  << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
+                            m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
+                        }
                     }
                     else if (false)
                     {
                         // pop stack 2 times and push resulting error token onto stack -- this is new behavior
 
-                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                        popped_tokens[1] = m_realized_state_->PopStack();
-                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        std::vector<Token> popped_tokens;
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens[1] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[0] = std::move(m_realized_state_->TokenStack().back()); // Don't pop this one; will replace.
                         assert(popped_tokens.size() == pop_count);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1188 "../lib/regex/generated/barf_regex_parser.cpp"
- << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+#line 1198 "../lib/regex/generated/barf_regex_parser.cpp"
+ << "Lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                        Token lookahead(Lookahead_(0));
+                        Token const &lookahead = Lookahead_(0);
                         //assert(lookahead.m_id == Terminal::END_);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1196 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1206 "../lib/regex/generated/barf_regex_parser.cpp"
  << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
+                            m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        }
                     }
                     else
                     {
@@ -1206,26 +1218,31 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
                         std::uint32_t pop_count = 3; // shadowing earlier one
                         assert(m_realized_state_->TokenStack().size() >= pop_count);
 
-                        std::vector<Token> popped_tokens(pop_count, Token(Nonterminal::none_));
-                        popped_tokens[2] = m_realized_state_->PopStack();
-                        popped_tokens[1] = m_realized_state_->PopStack();
-                        popped_tokens[0] = m_realized_state_->TokenStack().back(); // Don't pop this one; will replace.
+                        std::vector<Token> popped_tokens;
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens.emplace_back(Token(Nonterminal::none_));
+                        popped_tokens[2] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[1] = std::move(m_realized_state_->PopStack());
+                        popped_tokens[0] = std::move(m_realized_state_->TokenStack().back()); // Don't pop this one; will replace.
                         assert(popped_tokens.size() == pop_count);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1218 "../lib/regex/generated/barf_regex_parser.cpp"
- << "HIPPO lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
+#line 1233 "../lib/regex/generated/barf_regex_parser.cpp"
+ << "Lookahead for POP_STACK action is " << ms_token_name_table_[Lookahead_(0).m_id] << '\n')
 
-                        Token lookahead(Lookahead_(0));
+                        Token const &lookahead = Lookahead_(0);
                         //assert(lookahead.m_id == Terminal::END_);
                         TRISON_CPP_DEBUG_CODE_(DSF_PARSER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1226 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1241 "../lib/regex/generated/barf_regex_parser.cpp"
  << "lookahead for POP_STACK " << pop_count << " action is " << ms_token_name_table_[lookahead.m_id] << '\n')
-                        Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(popped_tokens, lookahead));
-                        m_realized_state_->ReplaceTokenStackTopWith(resulting_error_token);
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, PopStack2Actions_(std::move(popped_tokens), lookahead));
+                            m_realized_state_->ReplaceTokenStackTopWith(std::move(resulting_error_token));
+                        }
                     }
                 }
 
@@ -1248,7 +1265,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1252 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1269 "../lib/regex/generated/barf_regex_parser.cpp"
  << "<stack> . <lookaheads>: ";
             m_realized_state_->PrintStackAndLookaheads(*DebugSpewStream());
             *DebugSpewStream() << '\n';
@@ -1259,7 +1276,7 @@ void Parser::ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCod
             TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1263 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1280 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    Destroying and recreating parse tree based on top of branch stack of of realized state.\n")
             m_hypothetical_state_->DestroyParseTree();
             CreateParseTreeFromRealizedState_();
@@ -1276,7 +1293,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1280 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1297 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Parse stack tree does not have trunk; continuing parse.\n")
 
     // If there's a SHIFT/REDUCE conflict, then see if it can be resolved first.
@@ -1303,7 +1320,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1307 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1324 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered, but the min and max realized lookahead cursors for all HPSes are not equal, so it's not ready for the conflict to be resolved.\n")
             }
         }
@@ -1319,7 +1336,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1323 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1340 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    SHIFT/REDUCE conflict encountered. REDUCE precedence level range: [" << Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_name << ", " << Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_name << "], SHIFT precedence level range: [" << Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_name << ", " << Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_name << "]\n")
 
             // 6 possibilities (the higher lines indicate higher precedence level.  same line
@@ -1364,7 +1381,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1368 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1385 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Case 1; REDUCE < SHIFT; pruning REDUCE and continuing.\n")
                 // TODO: Use std::unique_ptr and pass in via move so that the `reduce = NULL` is unnecessary.
                 m_hypothetical_state_->DeleteBranch(reduce);
@@ -1378,7 +1395,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1382 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1399 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Case 2; REDUCE <= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1387,7 +1404,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1391 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1408 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(reduce);
                     reduce = NULL;
@@ -1398,7 +1415,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1402 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1419 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -1411,7 +1428,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1415 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1432 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Case 3; REDUCE == SHIFT; rule " << reduce->m_spec.m_single_data << " associativity: " <<
  Grammar_::ms_associativity_string_table_[reduction_rule_precedence.m_associativity] << '\n')
                 switch (reduction_rule_precedence.m_associativity)
@@ -1420,7 +1437,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1424 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1441 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(shift);
                         shift = NULL;
@@ -1432,7 +1449,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1436 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1453 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Composition of nonassoc rules with the same precedence is an error.  Pruning both SHIFT and REDUCE.  Recreating parse tree under INSERT_LOOKAHEAD_ERROR action.\n")
                         // Neither SHIFT nor REDUCE should survive.  Instead, invoke the nonassoc error actions
                         // on the lookahead, and insert an %error token using the returned Token::Data value.
@@ -1445,8 +1462,10 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         //                                   ^~~~~~~^
                         //                                   output from handler code
 
-                        Token resulting_error_token(Terminal::ERROR_, RunNonassocErrorActions_(Lookahead_(0)));
-                        m_realized_state_->PushFrontLookahead(resulting_error_token, m_hypothetical_state_->m_hps_queue);
+                        {   // This code block is just to limit the scope of resulting_error_token
+                            Token resulting_error_token(Terminal::ERROR_, RunNonassocErrorActions_(Lookahead_(0)));
+                            m_realized_state_->PushFrontLookahead(std::move(resulting_error_token), m_hypothetical_state_->m_hps_queue);
+                        }
                         m_realized_state_->SetHasEncounteredErrorState();
 
                         m_hypothetical_state_->DeleteBranch(shift);
@@ -1477,7 +1496,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1481 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1500 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Pruning REDUCE (because it is right-associative) and continuing.\n")
                         m_hypothetical_state_->DeleteBranch(reduce);
                         reduce = NULL;
@@ -1496,7 +1515,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1500 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1519 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Case 4; REDUCE >= SHIFT;\n")
                 Grammar_::Rule_ const &reduction_rule = Grammar_::ms_rule_table_[reduce->m_spec.m_single_data];
                 Grammar_::Precedence_ const &reduction_rule_precedence = Grammar_::ms_precedence_table_[reduction_rule.m_precedence_index];
@@ -1505,7 +1524,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1509 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1528 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Pruning SHIFT (because REDUCE is left-associative) and continuing.\n")
                     m_hypothetical_state_->DeleteBranch(shift);
                     shift = NULL;
@@ -1516,7 +1535,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1520 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1539 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Can't resolve conflict at this time.\n")
                 }
             }
@@ -1526,7 +1545,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1530 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1549 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Case 5; REDUCE > SHIFT; pruning SHIFT and continuing.\n")
                 m_hypothetical_state_->DeleteBranch(shift);
                 shift = NULL;
@@ -1537,7 +1556,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_SHIFT_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1541 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1560 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Case 6; ambiguous SHIFT/REDUCE precedence comparison; can't resolve conflict at this time.\n")
                 assert(Grammar_::ms_precedence_table_[reduce_precedence_index_range.first].m_level > Grammar_::ms_precedence_table_[shift_precedence_index_range.first].m_level);
                 assert(Grammar_::ms_precedence_table_[reduce_precedence_index_range.second].m_level < Grammar_::ms_precedence_table_[shift_precedence_index_range.second].m_level);
@@ -1577,7 +1596,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1581 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1600 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    Processing transitions having SortedTypeIndex equal to " << current_sorted_type_index << " and m_realized_lookahead_cursor equal to " << min_realized_lookahead_cursor << ".\n")
 
         if (!m_hypothetical_state_->m_new_hps_queue.empty())
@@ -1585,7 +1604,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1589 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1608 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Early-out based on sorted type index.\n")
             break;
         }
@@ -1605,7 +1624,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1609 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1628 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Processing ";
                 hps.Print(*DebugSpewStream(), this, DebugSpewPrefix(), 0, true);
             )
@@ -1616,7 +1635,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1620 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1639 "../lib/regex/generated/barf_regex_parser.cpp"
  << "            Hypothetical Parser State is blocked; preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1630,7 +1649,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                 TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1634 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1653 "../lib/regex/generated/barf_regex_parser.cpp"
  << "            Hypothetical Parser State isn't at min_realized_lookahead_cursor (which is " << min_realized_lookahead_cursor << "); preserving for next iteration.\n")
                 m_hypothetical_state_->m_new_hps_queue.push_back(&hps);
                 *hps_it = NULL;
@@ -1658,7 +1677,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                     *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1662 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1681 "../lib/regex/generated/barf_regex_parser.cpp"
  << "            Processing transition " << ParseTreeNode_::AsString(ParseTreeNode_::Type(transition.m_type)) << " with transition token " << Token(transition.m_token_index) << " and data ";
                     if (transition.m_data_index == ParseTreeNode_::UNUSED_DATA)
                         *DebugSpewStream() << "<N/A>";
@@ -1699,7 +1718,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                             TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1703 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1722 "../lib/regex/generated/barf_regex_parser.cpp"
  << "            Skipping default action REDUCE on empty reduction rule because the lookahead matches the reduction nonterminal.\n")
                             take_action = false;
                         }
@@ -1729,7 +1748,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                                     TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_PROCESSING, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1733 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1752 "../lib/regex/generated/barf_regex_parser.cpp"
  << "            Skipping default action REDUCE because the negated lookahead directive was matched and therefore prevents it.\n")
                                     take_action = false;
                                 }
@@ -1746,7 +1765,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1750 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1769 "../lib/regex/generated/barf_regex_parser.cpp"
  << "            Exercising transition without accessing lookahead... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1761,7 +1780,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1765 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1784 "../lib/regex/generated/barf_regex_parser.cpp"
  << "            Exercising transition using lookahead " << Token(lookahead_token_id) << " ... ")
                         resulting_hps = TakeHypotheticalActionOnHPS_(hps, ParseTreeNode_::Type(transition.m_type), transition.m_data_index);
                         TRISON_CPP_DEBUG_CODE_(DSF_TRANSITION_EXERCISING, *DebugSpewStream() << '\n')
@@ -1778,7 +1797,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     TRISON_CPP_DEBUG_CODE_(DSF_HPS_REMOVE_DEFUNCT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 1782 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1801 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    Removing defunct HPSes...\n")
     for (HPSQueue_::iterator hps_it = m_hypothetical_state_->m_hps_queue.begin(), hps_it_end = m_hypothetical_state_->m_hps_queue.end(); hps_it != hps_it_end; ++hps_it)
     {
@@ -1797,7 +1816,7 @@ void Parser::ContinueNPDAParse_ (bool &should_return)
     assert(m_hypothetical_state_->m_new_hps_queue.empty());
 }
 
-Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack_, Token const *lookahead_)
+Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ &token_stack_, Token const *lookahead_)
 {
     assert(rule_index_ < Grammar_::ms_rule_count_);
     switch (rule_index_)
@@ -1809,8 +1828,8 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         case 0:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            RegularExpression * regex(Dsc<RegularExpression *>(token_stack_[token_stack_.size()-3].m_data));
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
+            RegularExpression * regex(Dsc<RegularExpression *>(std::move(token_stack_[token_stack_.size()-3].m_data)));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 341 "../lib/regex/barf_regex_parser.trison"
 
@@ -1821,14 +1840,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1825 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1844 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 1:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 351 "../lib/regex/barf_regex_parser.trison"
 
@@ -1836,15 +1855,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1840 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1859 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 2:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            RegularExpression * regex(Dsc<RegularExpression *>(token_stack_[token_stack_.size()-3].m_data));
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
+            RegularExpression * regex(Dsc<RegularExpression *>(std::move(token_stack_[token_stack_.size()-3].m_data)));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 361 "../lib/regex/barf_regex_parser.trison"
 
@@ -1855,14 +1874,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1859 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1878 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 3:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 371 "../lib/regex/barf_regex_parser.trison"
 
@@ -1870,15 +1889,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1874 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1893 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 4:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            RegularExpression * regex(Dsc<RegularExpression *>(token_stack_[token_stack_.size()-3].m_data));
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
+            RegularExpression * regex(Dsc<RegularExpression *>(std::move(token_stack_[token_stack_.size()-3].m_data)));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 381 "../lib/regex/barf_regex_parser.trison"
 
@@ -1889,14 +1908,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1893 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1912 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 5:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 391 "../lib/regex/barf_regex_parser.trison"
 
@@ -1904,29 +1923,29 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         regex->Append(branch);
         return regex;
     
-#line 1908 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1927 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 6:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-1].m_data));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 420 "../lib/regex/barf_regex_parser.trison"
  return branch; 
-#line 1919 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1938 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 7:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-1].m_data));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 421 "../lib/regex/barf_regex_parser.trison"
  return branch; 
-#line 1930 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1949 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -1936,59 +1955,59 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 422 "../lib/regex/barf_regex_parser.trison"
  return new Branch(); 
-#line 1940 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1959 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 9:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
-            Bound * bound(Dsc<Bound *>(token_stack_[token_stack_.size()-1].m_data));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            Bound * bound(Dsc<Bound *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 428 "../lib/regex/barf_regex_parser.trison"
 
         branch->AddBound(bound);
         return branch;
     
-#line 1955 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1974 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 10:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
-            Atom * atom(Dsc<Atom *>(token_stack_[token_stack_.size()-1].m_data));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            Atom * atom(Dsc<Atom *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 437 "../lib/regex/barf_regex_parser.trison"
 
         branch->AddAtom(atom);
         return branch;
     
-#line 1970 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 1989 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 11:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Branch * branch(Dsc<Branch *>(token_stack_[token_stack_.size()-2].m_data));
-            Atom * atom(Dsc<Atom *>(token_stack_[token_stack_.size()-1].m_data));
+            Branch * branch(Dsc<Branch *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            Atom * atom(Dsc<Atom *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 443 "../lib/regex/barf_regex_parser.trison"
 
         branch->AddAtom(atom);
         return branch;
     
-#line 1985 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2004 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 12:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Atom * atom(Dsc<Atom *>(token_stack_[token_stack_.size()-1].m_data));
+            Atom * atom(Dsc<Atom *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 449 "../lib/regex/barf_regex_parser.trison"
 
@@ -1996,14 +2015,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         branch->AddAtom(atom);
         return branch;
     
-#line 2000 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2019 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 13:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Ast::Id * macro_name(Dsc<Ast::Id *>(token_stack_[token_stack_.size()-2].m_data));
+            Ast::Id * macro_name(Dsc<Ast::Id *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 463 "../lib/regex/barf_regex_parser.trison"
 
@@ -2015,18 +2034,18 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             THROW_STRING("undefined macro \"" + macro_name->GetText() + "\"");
         return macro_regex;
     
-#line 2019 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2038 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 14:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            RegularExpression * regex(Dsc<RegularExpression *>(token_stack_[token_stack_.size()-1].m_data));
+            RegularExpression * regex(Dsc<RegularExpression *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 472 "../lib/regex/barf_regex_parser.trison"
  return regex; 
-#line 2030 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2049 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2036,7 +2055,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 474 "../lib/regex/barf_regex_parser.trison"
  return new ConditionalChar(CT_BEGINNING_OF_LINE); 
-#line 2040 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2059 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2046,7 +2065,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 475 "../lib/regex/barf_regex_parser.trison"
  return new ConditionalChar(CT_END_OF_LINE); 
-#line 2050 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2069 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2056,25 +2075,25 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 476 "../lib/regex/barf_regex_parser.trison"
  return new BracketCharSet('\n', true); 
-#line 2060 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2079 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 18:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 477 "../lib/regex/barf_regex_parser.trison"
  return ch; 
-#line 2071 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2090 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 19:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 479 "../lib/regex/barf_regex_parser.trison"
 
@@ -2086,40 +2105,40 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             delete ch;
         return escaped;
     
-#line 2090 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2109 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 20:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 488 "../lib/regex/barf_regex_parser.trison"
  return ch; 
-#line 2101 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2120 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 21:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 489 "../lib/regex/barf_regex_parser.trison"
  return ch; 
-#line 2112 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2131 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 22:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Atom * exp(Dsc<Atom *>(token_stack_[token_stack_.size()-1].m_data));
+            Atom * exp(Dsc<Atom *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 490 "../lib/regex/barf_regex_parser.trison"
  return exp; 
-#line 2123 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2142 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2129,7 +2148,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 495 "../lib/regex/barf_regex_parser.trison"
  return new Bound(0, Bound::NO_UPPER_BOUND); 
-#line 2133 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2152 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2139,7 +2158,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 497 "../lib/regex/barf_regex_parser.trison"
  return new Bound(1, Bound::NO_UPPER_BOUND); 
-#line 2143 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2162 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2149,14 +2168,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 499 "../lib/regex/barf_regex_parser.trison"
  return new Bound(0, 1); 
-#line 2153 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2172 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 26:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Ast::SignedInteger * exact_bound(Dsc<Ast::SignedInteger *>(token_stack_[token_stack_.size()-2].m_data));
+            Ast::SignedInteger * exact_bound(Dsc<Ast::SignedInteger *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 502 "../lib/regex/barf_regex_parser.trison"
 
@@ -2165,29 +2184,29 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete exact_bound;
         return bound;
     
-#line 2169 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2188 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 27:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Ast::SignedInteger * lower_bound(Dsc<Ast::SignedInteger *>(token_stack_[token_stack_.size()-3].m_data));
+            Ast::SignedInteger * lower_bound(Dsc<Ast::SignedInteger *>(std::move(token_stack_[token_stack_.size()-3].m_data)));
 
 #line 510 "../lib/regex/barf_regex_parser.trison"
 
         assert(lower_bound->Value() >= 0);
         return new Bound(lower_bound->Value(), Bound::NO_UPPER_BOUND);
     
-#line 2183 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2202 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 28:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Ast::SignedInteger * lower_bound(Dsc<Ast::SignedInteger *>(token_stack_[token_stack_.size()-4].m_data));
-            Ast::SignedInteger * upper_bound(Dsc<Ast::SignedInteger *>(token_stack_[token_stack_.size()-2].m_data));
+            Ast::SignedInteger * lower_bound(Dsc<Ast::SignedInteger *>(std::move(token_stack_[token_stack_.size()-4].m_data)));
+            Ast::SignedInteger * upper_bound(Dsc<Ast::SignedInteger *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 516 "../lib/regex/barf_regex_parser.trison"
 
@@ -2217,14 +2236,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete upper_bound;
         return bound;
     
-#line 2221 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2240 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 29:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(token_stack_[token_stack_.size()-2].m_data));
+            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 552 "../lib/regex/barf_regex_parser.trison"
 
@@ -2232,14 +2251,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
             THROW_STRING("invalid empty bracket expression");
         return bracket_char_set;
     
-#line 2236 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2255 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 30:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(token_stack_[token_stack_.size()-2].m_data));
+            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
 
 #line 559 "../lib/regex/barf_regex_parser.trison"
 
@@ -2248,15 +2267,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         bracket_char_set->Negate();
         return bracket_char_set;
     
-#line 2252 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2271 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 31:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(token_stack_[token_stack_.size()-2].m_data));
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 570 "../lib/regex/barf_regex_parser.trison"
 
@@ -2264,16 +2283,16 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return bracket_char_set;
     
-#line 2268 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2287 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 32:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(token_stack_[token_stack_.size()-4].m_data));
-            Char * begin_range(Dsc<Char *>(token_stack_[token_stack_.size()-3].m_data));
-            Char * end_range(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(std::move(token_stack_[token_stack_.size()-4].m_data)));
+            Char * begin_range(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-3].m_data)));
+            Char * end_range(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 577 "../lib/regex/barf_regex_parser.trison"
 
@@ -2286,15 +2305,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete end_range;
         return bracket_char_set;
     
-#line 2290 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2309 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 33:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(token_stack_[token_stack_.size()-6].m_data));
-            Ast::Id * id(Dsc<Ast::Id *>(token_stack_[token_stack_.size()-3].m_data));
+            BracketCharSet * bracket_char_set(Dsc<BracketCharSet *>(std::move(token_stack_[token_stack_.size()-6].m_data)));
+            Ast::Id * id(Dsc<Ast::Id *>(std::move(token_stack_[token_stack_.size()-3].m_data)));
 
 #line 589 "../lib/regex/barf_regex_parser.trison"
 
@@ -2302,7 +2321,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete id;
         return bracket_char_set;
     
-#line 2306 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2325 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2315,51 +2334,51 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         BracketCharSet *bracket_char_set = new BracketCharSet();
         return bracket_char_set;
     
-#line 2319 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2338 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 35:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * normal_char(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * normal_char(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 604 "../lib/regex/barf_regex_parser.trison"
  return normal_char; 
-#line 2330 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2349 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 36:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * normal_char(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * normal_char(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 606 "../lib/regex/barf_regex_parser.trison"
  normal_char->EscapeInsideBracketExpression(); return normal_char; 
-#line 2341 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2360 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 37:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * control_char(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * control_char(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 608 "../lib/regex/barf_regex_parser.trison"
  return control_char; 
-#line 2352 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2371 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 38:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * hex_char(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * hex_char(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 610 "../lib/regex/barf_regex_parser.trison"
  return hex_char; 
-#line 2363 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2382 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2369,7 +2388,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 626 "../lib/regex/barf_regex_parser.trison"
  return new Char('|'); 
-#line 2373 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2392 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2379,7 +2398,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 628 "../lib/regex/barf_regex_parser.trison"
  return new Char('('); 
-#line 2383 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2402 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2389,7 +2408,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 630 "../lib/regex/barf_regex_parser.trison"
  return new Char(')'); 
-#line 2393 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2412 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2399,7 +2418,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 632 "../lib/regex/barf_regex_parser.trison"
  return new Char('{'); 
-#line 2403 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2422 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2409,7 +2428,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 634 "../lib/regex/barf_regex_parser.trison"
  return new Char('}'); 
-#line 2413 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2432 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2419,7 +2438,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 636 "../lib/regex/barf_regex_parser.trison"
  return new Char('['); 
-#line 2423 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2442 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2429,7 +2448,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 638 "../lib/regex/barf_regex_parser.trison"
  return new Char(']'); 
-#line 2433 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2452 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2439,7 +2458,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 640 "../lib/regex/barf_regex_parser.trison"
  return new Char('?'); 
-#line 2443 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2462 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2449,7 +2468,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 642 "../lib/regex/barf_regex_parser.trison"
  return new Char('*'); 
-#line 2453 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2472 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2459,7 +2478,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 644 "../lib/regex/barf_regex_parser.trison"
  return new Char('+'); 
-#line 2463 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2482 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2469,7 +2488,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 646 "../lib/regex/barf_regex_parser.trison"
  return new Char('.'); 
-#line 2473 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2492 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2479,7 +2498,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 648 "../lib/regex/barf_regex_parser.trison"
  return new Char('^'); 
-#line 2483 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2502 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2489,7 +2508,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 650 "../lib/regex/barf_regex_parser.trison"
  return new Char('$'); 
-#line 2493 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2512 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2499,40 +2518,40 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 652 "../lib/regex/barf_regex_parser.trison"
  return new Char('\\'); 
-#line 2503 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2522 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 53:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * alpha(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * alpha(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 663 "../lib/regex/barf_regex_parser.trison"
  return alpha; 
-#line 2514 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2533 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 54:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * digit(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * digit(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 664 "../lib/regex/barf_regex_parser.trison"
  return digit; 
-#line 2525 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2544 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 55:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 665 "../lib/regex/barf_regex_parser.trison"
  return ch; 
-#line 2536 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2555 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2542,7 +2561,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 666 "../lib/regex/barf_regex_parser.trison"
  return new Char(','); 
-#line 2546 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2565 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2552,7 +2571,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 667 "../lib/regex/barf_regex_parser.trison"
  return new Char('-'); 
-#line 2556 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2575 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2562,7 +2581,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 668 "../lib/regex/barf_regex_parser.trison"
  return new Char(':'); 
-#line 2566 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2585 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2572,7 +2591,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 680 "../lib/regex/barf_regex_parser.trison"
  return new Char('-'); 
-#line 2576 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2595 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2582,7 +2601,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 682 "../lib/regex/barf_regex_parser.trison"
  return new Char('^'); 
-#line 2586 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2605 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2592,7 +2611,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 684 "../lib/regex/barf_regex_parser.trison"
  return new Char('['); 
-#line 2596 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2615 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2602,7 +2621,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 686 "../lib/regex/barf_regex_parser.trison"
  return new Char(']'); 
-#line 2606 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2625 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2612,40 +2631,40 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 688 "../lib/regex/barf_regex_parser.trison"
  return new Char('\\'); 
-#line 2616 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2635 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 64:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * alpha(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * alpha(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 699 "../lib/regex/barf_regex_parser.trison"
  return alpha; 
-#line 2627 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2646 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 65:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * digit(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * digit(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 700 "../lib/regex/barf_regex_parser.trison"
  return digit; 
-#line 2638 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2657 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 66:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 701 "../lib/regex/barf_regex_parser.trison"
  return ch; 
-#line 2649 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2668 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2655,7 +2674,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 702 "../lib/regex/barf_regex_parser.trison"
  return new Char('|'); 
-#line 2659 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2678 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2665,7 +2684,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 703 "../lib/regex/barf_regex_parser.trison"
  return new Char(':'); 
-#line 2669 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2688 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2675,7 +2694,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 704 "../lib/regex/barf_regex_parser.trison"
  return new Char('?'); 
-#line 2679 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2698 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2685,7 +2704,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 705 "../lib/regex/barf_regex_parser.trison"
  return new Char('*'); 
-#line 2689 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2708 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2695,7 +2714,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 706 "../lib/regex/barf_regex_parser.trison"
  return new Char('+'); 
-#line 2699 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2718 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2705,7 +2724,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 707 "../lib/regex/barf_regex_parser.trison"
  return new Char('.'); 
-#line 2709 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2728 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2715,7 +2734,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 708 "../lib/regex/barf_regex_parser.trison"
  return new Char('$'); 
-#line 2719 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2738 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2725,7 +2744,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 709 "../lib/regex/barf_regex_parser.trison"
  return new Char(','); 
-#line 2729 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2748 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2735,7 +2754,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 710 "../lib/regex/barf_regex_parser.trison"
  return new Char('('); 
-#line 2739 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2758 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2745,7 +2764,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 711 "../lib/regex/barf_regex_parser.trison"
  return new Char(')'); 
-#line 2749 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2768 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2755,7 +2774,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 712 "../lib/regex/barf_regex_parser.trison"
  return new Char('{'); 
-#line 2759 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2778 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2765,15 +2784,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
 
 #line 713 "../lib/regex/barf_regex_parser.trison"
  return new Char('}'); 
-#line 2769 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2788 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 79:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(token_stack_[token_stack_.size()-2].m_data));
-            Char * alpha(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            Char * alpha(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 719 "../lib/regex/barf_regex_parser.trison"
 
@@ -2782,15 +2801,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete alpha;
         return id;
     
-#line 2786 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2805 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 80:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(token_stack_[token_stack_.size()-2].m_data));
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 727 "../lib/regex/barf_regex_parser.trison"
 
@@ -2799,15 +2818,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return id;
     
-#line 2803 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2822 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 81:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Ast::Id * id(Dsc<Ast::Id *>(token_stack_[token_stack_.size()-2].m_data));
-            Char * digit(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Ast::Id * id(Dsc<Ast::Id *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            Char * digit(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 735 "../lib/regex/barf_regex_parser.trison"
 
@@ -2816,14 +2835,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return id;
     
-#line 2820 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2839 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 82:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * alpha(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * alpha(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 743 "../lib/regex/barf_regex_parser.trison"
 
@@ -2833,14 +2852,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete alpha;
         return id;
     
-#line 2837 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2856 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 83:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * ch(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * ch(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 752 "../lib/regex/barf_regex_parser.trison"
 
@@ -2850,15 +2869,15 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete ch;
         return id;
     
-#line 2854 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2873 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 84:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Ast::SignedInteger * integer(Dsc<Ast::SignedInteger *>(token_stack_[token_stack_.size()-2].m_data));
-            Char * digit(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Ast::SignedInteger * integer(Dsc<Ast::SignedInteger *>(std::move(token_stack_[token_stack_.size()-2].m_data)));
+            Char * digit(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 764 "../lib/regex/barf_regex_parser.trison"
 
@@ -2868,14 +2887,14 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return integer;
     
-#line 2872 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2891 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
         case 85:
         {
             assert(Grammar_::ms_rule_table_[rule_index_].m_token_count < token_stack_.size());
-            Char * digit(Dsc<Char *>(token_stack_[token_stack_.size()-1].m_data));
+            Char * digit(Dsc<Char *>(std::move(token_stack_[token_stack_.size()-1].m_data)));
 
 #line 773 "../lib/regex/barf_regex_parser.trison"
 
@@ -2883,7 +2902,7 @@ Parser::Token::Data Parser::ExecuteReductionRule_ (std::uint32_t const rule_inde
         delete digit;
         return integer;
     
-#line 2887 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2906 "../lib/regex/generated/barf_regex_parser.cpp"
             break;
         }
 
@@ -2902,7 +2921,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2906 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2925 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Realized state branch node stacks are (each listed bottom to top):\n";
     for (BranchVector_::const_iterator it = m_realized_state_->BranchVectorStack().back().begin(),
                                        it_end = m_realized_state_->BranchVectorStack().back().end();
@@ -2913,7 +2932,7 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
         out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2917 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2936 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    (";
         branch.StatePtr()->PrintRootToLeaf(out, IdentityTransform_<Npda_::StateIndex_>);
         out << ")\n";
@@ -2922,12 +2941,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2926 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2945 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Max realized lookahead count (so far) is:\n";
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2931 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2950 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadCount();
     if (m_max_allowable_lookahead_count >= 0)
         out << " (max allowable lookahead count is " << m_max_allowable_lookahead_count << ")\n";
@@ -2936,12 +2955,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2940 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2959 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Max realized lookahead queue size (so far) is:\n";
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2945 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2964 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    " << m_realized_state_->MaxRealizedLookaheadQueueSize();
     if (m_max_allowable_lookahead_queue_size >= 0)
         out << " (max allowable lookahead queue size is " << m_max_allowable_lookahead_queue_size << ")\n";
@@ -2950,12 +2969,12 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2954 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2973 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Max realized parse tree depth (so far) is:\n";
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2959 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2978 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    " << m_hypothetical_state_->MaxRealizedParseTreeDepth();
     if (m_max_allowable_parse_tree_depth >= 0)
         out << " (max allowable parse tree depth is " << m_max_allowable_parse_tree_depth << ")\n";
@@ -2964,22 +2983,22 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2968 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2987 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Has-encountered-error-state (so far) is:\n";
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2973 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2992 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    " << (m_realized_state_->HasEncounteredErrorState() ? "true" : "false") << '\n';
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2978 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 2997 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Realized stack tokens then . delimiter then realized lookahead queue is:\n";
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 2983 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 3002 "../lib/regex/generated/barf_regex_parser.cpp"
  << "    ";
     for (TokenStack_::const_iterator it = m_realized_state_->TokenStack().begin(),
                                      it_end = m_realized_state_->TokenStack().end();
@@ -3002,25 +3021,25 @@ void Parser::PrintParserStatus_ (std::ostream &out) const
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3006 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 3025 "../lib/regex/generated/barf_regex_parser.cpp"
  << '\n';
 
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3012 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 3031 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Parse tree (hypothetical parser states); Notation legend: <real-stack> <hyp-stack> . <hyp-lookaheads> , <real-lookaheads>\n";
     m_hypothetical_state_->m_root->Print(out, this, DebugSpewPrefix());
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3018 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 3037 "../lib/regex/generated/barf_regex_parser.cpp"
  << '\n';
 
     out << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3024 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 3043 "../lib/regex/generated/barf_regex_parser.cpp"
  << "HPS queue:\n";
     for (HPSQueue_::const_iterator it = m_hypothetical_state_->m_hps_queue.begin(), it_end = m_hypothetical_state_->m_hps_queue.end(); it != it_end; ++it)
     {
@@ -3043,14 +3062,14 @@ Parser::RealizedState_::RealizedState_ (Npda_::StateIndex_ initial_state)
     Initialize(initial_state);
 }
 
-void Parser::RealizedState_::PushBackLookahead (Token const &lookahead, HPSQueue_ const &hps_queue)
+void Parser::RealizedState_::PushBackLookahead (Token &&lookahead, HPSQueue_ const &hps_queue)
 {
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
     // be factored out.
 
-    m_lookahead_queue.push_back(lookahead);
+    m_lookahead_queue.emplace_back(std::move(lookahead));
     UpdateMaxRealizedLookaheadCount();
 }
 
@@ -3058,7 +3077,7 @@ Parser::Token Parser::RealizedState_::PopStack ()
 {
     assert(!m_token_stack.empty());
 
-    Token popped_token(m_token_stack.back());
+    Token popped_token(std::move(m_token_stack.back()));
     m_token_stack.pop_back();
 
     assert(!m_branch_vector_stack.empty());
@@ -3069,12 +3088,12 @@ Parser::Token Parser::RealizedState_::PopStack ()
     return popped_token;
 }
 
-void Parser::RealizedState_::ReplaceTokenStackTopWith (Token const &replacement)
+void Parser::RealizedState_::ReplaceTokenStackTopWith (Token &&replacement)
 {
     assert(!m_token_stack.empty());
 //    m_token_stack.back() = replacement;
     m_token_stack.pop_back();
-    m_token_stack.push_back(replacement);
+    m_token_stack.emplace_back(std::move(replacement));
 }
 
 Parser::Token Parser::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
@@ -3093,16 +3112,16 @@ Parser::Token Parser::RealizedState_::PopFrontLookahead (HPSQueue_ &hps_queue)
         if (hps.m_realized_lookahead_cursor > 0)
             --hps.m_realized_lookahead_cursor;
     }
-    Token retval(m_lookahead_queue.front());
+    Token retval(std::move(m_lookahead_queue.front()));
     m_lookahead_queue.pop_front();
     return retval;
 }
 
-void Parser::RealizedState_::StealTokenStackTop (Ast::Base * *&return_token)
+void Parser::RealizedState_::StealTokenStackTop (Token::Data *&return_token)
 {
     assert(return_token != NULL);
     assert(!m_token_stack.empty());
-    *return_token = m_token_stack.back().m_data;
+    *return_token = std::move(m_token_stack.back().m_data);
     // Assign the token default so that the actual return token isn't destroyed when the parser is destroyed.
     m_token_stack.back().m_data = NULL;
 }
@@ -3111,12 +3130,12 @@ void Parser::RealizedState_::StealTokenStackTop (Ast::Base * *&return_token)
 // {
 // }
 
-void Parser::RealizedState_::ExecuteActionReduce (Grammar_::Rule_ const &rule, Token::Data const &reduced_nonterminal_token_data, HPSQueue_ &hps_queue)
+void Parser::RealizedState_::ExecuteActionReduce (Grammar_::Rule_ const &rule, Token::Data &&reduced_nonterminal_token_data, HPSQueue_ &hps_queue)
 {
     for (std::uint32_t i = 0; i < rule.m_token_count; ++i)
         PopStack();
     // Push the reduced nonterminal token data onto the front of the lookahead queue
-    PushFrontLookahead(Token(rule.m_reduction_nonterminal_token_id, reduced_nonterminal_token_data), hps_queue);
+    PushFrontLookahead(Token(rule.m_reduction_nonterminal_token_id, std::move(reduced_nonterminal_token_data)), hps_queue);
 }
 
 void Parser::RealizedState_::ExecuteActionShift (BranchVector_ const &shifted_branch_vector, HPSQueue_ &hps_queue)
@@ -3135,10 +3154,8 @@ void Parser::RealizedState_::ExecuteActionShift (BranchVector_ const &shifted_br
 
     // Push onto the branch node stack.
     m_branch_vector_stack.push_back(shifted_branch_vector);
-    // Push the token onto the stack.
-    m_token_stack.push_back(m_lookahead_queue.front());
-    // Pop the shifted lookahead from the queue
-    PopFrontLookahead(hps_queue);
+    // Pop the shifted lookahead from the queue and push it onto the stack.
+    m_token_stack.emplace_back(PopFrontLookahead(hps_queue));
 }
 
 void Parser::RealizedState_::ExecuteActionInsertLookaheadError (HPSQueue_ &hps_queue)
@@ -3223,14 +3240,14 @@ void Parser::RealizedState_::Initialize (Npda_::StateIndex_ initial_state)
     }
 }
 
-void Parser::RealizedState_::PushFrontLookahead (Token const &lookahead, HPSQueue_ &hps_queue)
+void Parser::RealizedState_::PushFrontLookahead (Token &&lookahead, HPSQueue_ &hps_queue)
 {
     // NOTE: For now, during this RealizedState_ and HypotheticalState_ refactor,
     // this RealizedState_ method will be responsible for handling some HypotheticalState_
     // logic (regarding the lookahead cursors of the HPS queue).  But perhaps this should
     // be factored out.
 
-    m_lookahead_queue.push_front(lookahead);
+    m_lookahead_queue.emplace_front(std::move(lookahead));
     // Because the contents of m_lookahead_queue_ are changing, and each hps's
     // m_realized_lookahead_cursor is an index into that queue, each must be updated.
     for (HPSQueue_::iterator hps_it = hps_queue.begin(), hps_it_end = hps_queue.end(); hps_it != hps_it_end; ++hps_it)
@@ -3762,7 +3779,7 @@ Parser::Token const &Parser::Lookahead_ (TokenQueue_::size_type index)
         TRISON_CPP_DEBUG_CODE_(DSF_SCANNER_ACTION, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3766 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 3783 "../lib/regex/generated/barf_regex_parser.cpp"
  << "Retrieved token " << m_realized_state_->LookaheadQueue().back() << " from scan actions; pushing token onto back of lookahead queue\n")
     }
     return m_realized_state_->LookaheadQueue()[index];
@@ -3830,7 +3847,7 @@ Parser::ParseTreeNode_ *Parser::TakeHypotheticalActionOnHPS_ (ParseTreeNode_ con
                     TRISON_CPP_DEBUG_CODE_(DSF_REDUCE_REDUCE_CONFLICT, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 3834 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 3851 "../lib/regex/generated/barf_regex_parser.cpp"
  << "TakeHypotheticalActionOnHPS_ - REDUCE/REDUCE conflict encountered ... ")
 
                     // If the new REDUCE action beats the existing one in a conflict, just replace the existing one
@@ -4005,7 +4022,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
     TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 4009 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 4026 "../lib/regex/generated/barf_regex_parser.cpp"
  << "        Reconstructing branches:\n")
     for (BranchVector_::const_iterator it = reconstruct_branch_vector.begin(), it_end = reconstruct_branch_vector.end(); it != it_end; ++it)
     {
@@ -4013,7 +4030,7 @@ void Parser::CreateParseTreeFromRealizedState_ ()
         TRISON_CPP_DEBUG_CODE_(DSF_PARSE_TREE_MESSAGE, *DebugSpewStream() << 
 #line 294 "../lib/regex/barf_regex_parser.trison"
 "Regex::Parser" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
-#line 4017 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 4034 "../lib/regex/generated/barf_regex_parser.cpp"
  << "            " << reconstruct_branch.StatePtr() << '\n')
 
         ParseTreeNode_ *hps             = new ParseTreeNode_(ParseTreeNode_::Spec(ParseTreeNode_::HPS));
@@ -4030,7 +4047,7 @@ void Parser::ClearStack_ ()
     {
         // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
         while (!m_realized_state_->TokenStack().empty())
-            ThrowAwayToken_(m_realized_state_->PopStack());
+            ThrowAwayToken_(std::move(m_realized_state_->PopStack()));
     }
 
     delete m_hypothetical_state_;
@@ -4043,10 +4060,10 @@ void Parser::CleanUpAllInternals_ ()
     {
         // TODO: Could print the m_realized_state_ m_branch_vector_stack element being popped.
         while (!m_realized_state_->TokenStack().empty())
-            ThrowAwayToken_(m_realized_state_->PopStack());
+            ThrowAwayToken_(std::move(m_realized_state_->PopStack()));
 
         while (!m_realized_state_->LookaheadQueue().empty())
-            ThrowAwayToken_(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue));
+            ThrowAwayToken_(std::move(m_realized_state_->PopFrontLookahead(m_hypothetical_state_->m_hps_queue)));
 
         // Note that this implicitly resets the error state (since that's tracked by m_realized_state_).
         delete m_realized_state_;
@@ -5249,4 +5266,4 @@ Parser::ParserReturnCode Parser::Parse (RegularExpression **parsed_regex, Regula
 } // end of namespace Regex
 } // end of namespace Barf
 
-#line 5253 "../lib/regex/generated/barf_regex_parser.cpp"
+#line 5270 "../lib/regex/generated/barf_regex_parser.cpp"

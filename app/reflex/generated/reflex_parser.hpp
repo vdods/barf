@@ -177,14 +177,27 @@ public:
         Id m_id;
         Data m_data;
 
-        /// @brief Constructor for Token struct.
+        /// @brief Constructor for Token struct, where m_data will take the default value.
+        ///
+        /// @param id Gives the token id, e.g. Terminal::END_ or whatever
+        ///        other terminals were declared in the primary source.
+        Token (Id id) : m_id(id), m_data(NULL) { }
+        /// @brief Constructor for Token struct, where data is an rvalue reference.
         ///
         /// @param id Gives the token id, e.g. Terminal::END_ or whatever
         ///        other terminals were declared in the primary source.
         /// @param data Gives the data associated with this token, e.g. if
         ///        you were constructing an AST, data would point to an AST
         ///        node constructed during scanning.
-        Token (Id id, Data const &data = NULL) : m_id(id), m_data(data) { }
+        Token (Id id, Data &&data) : m_id(id), m_data(std::move(data)) { }
+        /// @brief Constructor for Token struct, where data is a const reference.
+        ///
+        /// @param id Gives the token id, e.g. Terminal::END_ or whatever
+        ///        other terminals were declared in the primary source.
+        /// @param data Gives the data associated with this token, e.g. if
+        ///        you were constructing an AST, data would point to an AST
+        ///        node constructed during scanning.
+        Token (Id id, Data const &data) : m_id(id), m_data(data) { }
     }; // end of struct Parser::Token
 
 public:
@@ -374,7 +387,7 @@ private:
     // This is a member var because THERE CAN BE ONLY ONE.
     StartWithStateMachineDirective *m_start_with_state_machine_directive;
 
-#line 378 "../app/reflex/generated/reflex_parser.hpp"
+#line 391 "../app/reflex/generated/reflex_parser.hpp"
 
 
 private:
@@ -400,13 +413,13 @@ private:
     static std::size_t const ms_token_name_count_;
 
     static std::uint32_t NonterminalStartStateIndex_ (Nonterminal::Name nonterminal);
-    ParserReturnCode Parse_ (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse);
-    void ThrowAwayToken_ (Token const &token) throw();
-    void ThrowAwayTokenData_ (Ast::Base * const &token_data) throw();
+    ParserReturnCode Parse_ (Token::Data *return_token, Nonterminal::Name nonterminal_to_parse);
+    void ThrowAwayToken_ (Token &&token) throw();
+    void ThrowAwayTokenData_ (Token::Data &&token_data) throw();
     Token::Data InsertLookaheadErrorActions_ (Token const &noconsume_lookahead_token);
-    Token::Data DiscardLookaheadActions_ (Token const &consume_stack_top_error_token, Token const &consume_lookahead_token);
-    Token::Data PopStack1Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &consume_lookahead_token);
-    Token::Data PopStack2Actions_ (std::vector<Token> const &consume_stack_top_tokens, Token const &noconsume_lookahead_token);
+    Token::Data DiscardLookaheadActions_ (Token &&consume_stack_top_error_token, Token &&consume_lookahead_token);
+    Token::Data PopStack1Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token &&consume_lookahead_token);
+    Token::Data PopStack2Actions_ (std::vector<Token> &&consume_stack_top_tokens, Token const &noconsume_lookahead_token);
     Token::Data RunNonassocErrorActions_ (Token const &lookahead);
     void ResetForNewInput_ () throw();
     Token Scan_ () throw();
@@ -751,6 +764,7 @@ private:
 
         BranchVectorStack_ const &BranchVectorStack             () const { return m_branch_vector_stack; }
         TokenStack_ const & TokenStack                          () const { return m_token_stack; }
+        TokenStack_ &       TokenStack                          ()       { return m_token_stack; }
         TokenQueue_ const & LookaheadQueue                      () const { return m_lookahead_queue; }
 
         std::size_t         MaxRealizedLookaheadCount           () const { return m_max_realized_lookahead_count; }
@@ -760,13 +774,13 @@ private:
         bool                HasEncounteredErrorState            () const { return m_has_encountered_error_state; }
 
         // This is used during the hypothetical branch processing for when more lookaheads are needed in the queue.
-        void                PushBackLookahead                   (Token const &lookahead, HPSQueue_ const &hps_queue);
+        void                PushBackLookahead                   (Token &&lookahead, HPSQueue_ const &hps_queue);
 
         Token               PopStack                            ();
-        void                ReplaceTokenStackTopWith            (Token const &replacement);
+        void                ReplaceTokenStackTopWith            (Token &&replacement);
         Token               PopFrontLookahead                   (HPSQueue_ &hps_queue);
 
-        void                StealTokenStackTop                  (Ast::Base * *&return_token);
+        void                StealTokenStackTop                  (Token::Data *&return_token);
 
         // void                ExecuteAction                       (Npda_::Transition_::Type action, ActionData_ action_data);
 
@@ -774,7 +788,7 @@ private:
         // responsibility of ExecuteAction).  Maybe ExecuteAction should accept Token* which it will populate
         // with the popped token in the case of POP_STACK, so that the parser can call the throw-away-token actions.
 
-        void                ExecuteActionReduce                 (Grammar_::Rule_ const &rule, Token::Data const &reduced_nonterminal_token_data, HPSQueue_ &hps_queue);
+        void                ExecuteActionReduce                 (Grammar_::Rule_ const &rule, Token::Data &&reduced_nonterminal_token_data, HPSQueue_ &hps_queue);
         void                ExecuteActionShift                  (BranchVector_ const &shifted_branch_vector, HPSQueue_ &hps_queue);
         void                ExecuteActionInsertLookaheadError   (HPSQueue_ &hps_queue);
         void                ExecuteActionDiscardLookahead       (HPSQueue_ &hps_queue);
@@ -791,7 +805,7 @@ private:
         void                Initialize                          (Npda_::StateIndex_ initial_state);
 
     public:
-        void                PushFrontLookahead                  (Token const &lookahead, HPSQueue_ &hps_queue);
+        void                PushFrontLookahead                  (Token &&lookahead, HPSQueue_ &hps_queue);
     private:
         void                UpdateMaxRealizedLookaheadCount     ();
     public:
@@ -856,9 +870,9 @@ private:
         mutable std::uint32_t   m_max_realized_parse_tree_depth;
     }; // end of struct Parser::HypotheticalState_
 
-    void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, Ast::Base * *&return_token);
+    void ExecuteAndRemoveTrunkActions_ (bool &should_return, ParserReturnCode &parser_return_code, Token::Data *&return_token);
     void ContinueNPDAParse_ (bool &should_return);
-    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ const &token_stack, Token const *lookahead_) throw();
+    Token::Data ExecuteReductionRule_ (std::uint32_t const rule_index_, TokenStack_ &token_stack, Token const *lookahead_) throw();
 
     // TODO: This should probably be inside HypotheticalState_
     struct ParseTreeNode_
@@ -1027,4 +1041,4 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 1031 "../app/reflex/generated/reflex_parser.hpp"
+#line 1045 "../app/reflex/generated/reflex_parser.hpp"
