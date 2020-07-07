@@ -20,6 +20,9 @@ in particular, the major revision number certainly indicates backward-incompatib
 while the minor revision number usually indicates backward-compatible changes, there may be
 minor incompabilities.  The patch revision number indicates bugfixes and minor changes.
 
+-   `2.5.0` : Added move semantics to the cpp trison target, allowing more efficient parser rule handling.
+    Made a few other improvements, including requiring that the `rejection_action` directive is explicitly
+    specified in reflex's cpp target, technically making this a backward incompatible change.
 -   `2.4.1` : Fixed a bug in trison cpp npda target where %lookahead[![...]] was not being handled correctly.
 -   `2.4.0` : Added ability to print token data in trison cpp target.  Fixed a bug having to
     do with %lookahead in npda generation, and fixed a bug having to do with precedence level
@@ -349,6 +352,10 @@ Some of these are super old and may no longer apply.
     that there is as little overhead as possible when running the scanner.
     Could do this with std::span (newer C++ standard)
 -   maybe consistencize the codespec symbol names
+-   `bottom_of_scan_method_actions` targetspec directive should indicate which
+    std::string (analogous to `accepted_string` or `rejected_string`) is available
+    for that code, in case something needs to be done with the string itself,
+    instead of just knowing that no handler ran.
 
 ### Reflex/Trison Common To-dos
 
