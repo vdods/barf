@@ -51,6 +51,27 @@ improved drastically over time.
 -   `0.9.20101002` : http://thedods.com/victor/barf-0.9.20101002.tar.bz2
 -   `0.9.20100116` : http://thedods.com/victor/barf-0.9.20100116.tar.bz2
 
+## Dependencies
+
+The only dependencies are:
+-   Required : `Doxygen` : to generate documentation, and to generate `dot` graphs.  This is a standard piece
+    of software than can be installed using your system's package manager.
+-   Optional (if `BUILD_barftest` is enabled) : [`lvd`](https://github.com/vdods/lvd) : Library of Victor
+    Dods - Miscellaneously useful C++ code.  This can be installed as follows:
+
+        git clone https://github.com/vdods/lvd
+        cd lvd
+        mkdir build
+        cd build
+        cmake ..
+        make package
+
+    This produces a package (e.g. `.deb`) having a particular version number, which can be installed as:
+
+        sudo dpkg -i lvd-X.Y.Z.deb
+
+    where `X.Y.Z` is the appropriate version number.  Later, this will be installable via PPA.
+
 ## Building and Installing
 
 From the project root, create a build directory (e.g. `build`), run `cmake` from

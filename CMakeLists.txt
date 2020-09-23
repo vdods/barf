@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.18)
 project(barf)
 # NOTE: After cutting a release, you should increment the patch number and append `-DEV` so that
 # the deb packages produced while developing are distinguished from the actual tagged release.
-set(barf_VERSION 2.6.0)
+set(barf_VERSION 2.6.1-DEV)
 
 string(REPLACE "." ";" VERSION_LIST ${barf_VERSION})
 list(GET VERSION_LIST 0 barf_VERSION_MAJOR)
@@ -400,7 +400,7 @@ target_link_libraries(dev_barf_regex PUBLIC Strict dev_barf_core)
 #
 
 if(BUILD_barftest)
-    find_package(lvd REQUIRED 0.7.0)
+    find_package(lvd REQUIRED 0.8.0)
 
     if(barf_DEVELOPER_MODE)
         reflex_add_source(${barf_SOURCE_DIR}/bin/barftest/text/Scanner.reflex ${barf_SOURCE_DIR}/bin/barftest/text barftest_text_Scanner "${PROJECT_BINARY_DIR}")
