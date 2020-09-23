@@ -2,11 +2,11 @@
 # BARF (Bison Awesomely Replaced, Flex) -- a suite of sweet compiler tools.
 ###############################################################################
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 project(barf)
-# The VERSION argument of cmake's project function is not semver compliant.
-# See https://gitlab.kitware.com/cmake/cmake/issues/16716
-set(PROJECT_VERSION "2.5.0")
+# NOTE: After cutting a release, you should increment the patch number and append `-DEV` so that
+# the deb packages produced while developing are distinguished from the actual tagged release.
+set(barf_VERSION 2.5.1-DEV)
 
 # Set and require the C++11 standard
 set(CMAKE_CXX_STANDARD 11)
