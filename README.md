@@ -60,6 +60,10 @@ within in, then build and install.  Example commands:
     cd build
     cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr ..
 
+Then the project can be built via
+
+    make
+
 The above invocation of cmake specifies `Release` mode, which will generate Makefiles
 to build the tools with compiler optimizations enabled.  The choice of `/usr` for
 `CMAKE_INSTALL_PREFIX` is so that the correct path is hardcoded into the `reflex`
@@ -78,7 +82,6 @@ track the installed version, upgrade, or remove the package.
 
 As an old-fashioned installation:
 
-    make
     make install
 
 On Linux (and probably Mac OS X) this will install the resources to `${CMAKE_INSTALL_PREFIX}/lib/barf`
@@ -92,6 +95,35 @@ To run cmake in interactive mode:
     ccmake ..
 
 The `ccmake` tool is a curses interface for cmake which is easy to use.
+
+### Running Unit Tests
+
+If the BUILD_barftest option is enabled in cmake (done interactively in `ccmake` or specified
+via `-D BUILD_barftest=ON` option to `cmake`) then the `bin/barftest` binary will be built,
+and when run will execute a suite of unit tests, exercising a real scanner and parser that
+was taken from another of the author's projects.
+
+    bin/barftest
+
+Will silently succeed if no tests fail, otherwise will indicate failed tests.  A help message
+can be seen by supplying the `--help` option.  More detailed test output can be had by using
+the `--log-level=X` option, e.g.
+
+    bin/barftest --log-level=TRC
+
+will give very very verbose output.
+
+    bin/barftest --log-level=INF
+
+will give verbose output, essentially only showing which tests are being run, the results,
+and the summary of the overall run.
+
+A filter can be specified to run only a subset of tests, e.g.
+
+    bin/barftest /00/parser/09/func
+
+will run all tests whose path starts with `/00/parser/09/func`.  Note that the end of the
+filter string doesn't have to coincide with a `/` char.
 
 ## Using BARF in Another Project
 
