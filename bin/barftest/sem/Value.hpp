@@ -18,9 +18,6 @@ struct ValueBase : public Base
 
     virtual bool is_value () const override { return true; }
     virtual ValueBase *cloned () const override = 0;
-
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::VALUE; }
-    virtual Determinability generate_determinability (cgen::Context &context) const override { return Determinability::COMPILETIME; }
 };
 
 // TODO: Rename this to ValueLiteral
@@ -45,10 +42,6 @@ struct Value : public ValueBase
         return new Value(firange(), m_value);
     }
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override { } // Nothing needed.
-
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 
     T_ value () const { return m_value; }
 
@@ -172,10 +165,6 @@ struct VoidValue : public ValueBase
         return new VoidValue(firange());
     }
     virtual void print (Log &out) const override { out << "void"; }
-    virtual void resolve_symbols (cgen::Context &context) override { } // Nothing needed.
-
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 };
 
 template <typename... Args_>
@@ -201,10 +190,6 @@ struct NullValue : public ValueBase
         return new NullValue(firange());
     }
     virtual void print (Log &out) const override { out << "null"; }
-    virtual void resolve_symbols (cgen::Context &context) override { } // Nothing needed.
-
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 };
 
 template <typename... Args_>

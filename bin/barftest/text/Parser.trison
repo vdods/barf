@@ -74,7 +74,7 @@ private:
 // ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.top_of_implementation_file %{
-#include "cbz/literal.hpp"
+#include "literal.hpp"
 #include "sem/Assignment.hpp"
 #include "sem/BinaryOperation.hpp"
 #include "sem/Break.hpp"
@@ -102,7 +102,7 @@ private:
 #include "sem/TypeIdentifier.hpp"
 #include "sem/UnaryOperation.hpp"
 #include "sem/Vector.hpp"
-#include "cbz/text/Scanner.hpp"
+#include "text/Scanner.hpp"
 
 namespace cbz {
 namespace text {

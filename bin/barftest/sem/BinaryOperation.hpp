@@ -47,21 +47,12 @@ struct BinaryOperation : public Base
     virtual bool equals (Base const &other) const override;
     virtual BinaryOperation *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    // For now, BinaryOperation is only defined on built-in types.
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override;
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 
     BinaryOperationType const &bin_op_type () const { return m_bin_op_type; }
     Base const &lhs () const { return *m_lhs; }
     Base const &rhs () const { return *m_rhs; }
 
 private:
-
-    void validate_operand_types (cgen::Context &context, llvm::Type *lhs_type_concrete, llvm::Type *rhs_type_concrete) const;
 
     BinaryOperationType m_bin_op_type;
     nnup<Base> m_lhs;

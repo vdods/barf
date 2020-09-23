@@ -17,7 +17,7 @@
 
 #line 76 "../bin/barftest/text/Parser.trison"
 
-#include "cbz/literal.hpp"
+#include "literal.hpp"
 #include "sem/Assignment.hpp"
 #include "sem/BinaryOperation.hpp"
 #include "sem/Break.hpp"
@@ -45,7 +45,7 @@
 #include "sem/TypeIdentifier.hpp"
 #include "sem/UnaryOperation.hpp"
 #include "sem/Vector.hpp"
-#include "cbz/text/Scanner.hpp"
+#include "text/Scanner.hpp"
 
 namespace cbz {
 namespace text {

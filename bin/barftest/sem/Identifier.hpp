@@ -21,18 +21,6 @@ struct Identifier : public Base
     virtual bool equals (Base const &other) const override;
     virtual Identifier *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-    virtual TypeEnum type_enum__resolved (cgen::Context &context) const override;
-
-    // NOTE: Even though TypeIdentifier uses Identifier in its implementation, this method is not used by it.
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override;
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    virtual llvm::Type *generate_lvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_lvalue (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
-    virtual nnup<SymbolSpecifier> generate_svalue (cgen::Context &context) const override;
-    virtual void generate_code (cgen::Context &context) const override;
 
     std::string const &text () const { return m_text; }
 

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "core.hpp"
-#include "llvm/IR/GlobalValue.h"
 
 namespace cbz {
 namespace sem {
@@ -60,8 +59,6 @@ GlobalValueLinkage global_value_linkage_determined (GlobalValueLinkageContextual
     else
         return GlobalValueLinkage(gslc);
 }
-
-llvm::GlobalValue::LinkageTypes as_llvm_linkage_type (GlobalValueLinkage global_value_linkage);
 
 } // end namespace sem
 } // end namespace cbz

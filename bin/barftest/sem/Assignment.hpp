@@ -22,8 +22,6 @@ struct Assignment : public Base
     virtual bool equals (Base const &other) const override;
     virtual void print (Log &out) const override;
     virtual Assignment *cloned () const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-    virtual void generate_code (cgen::Context &context) const override;
 
     Base const &target () const { return *m_target; }
     Base const &content () const { return *m_content; }

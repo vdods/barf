@@ -21,12 +21,6 @@ class Value;
 } // end namespace llvm
 
 namespace cbz {
-namespace cgen {
-
-struct Context;
-
-} // end namespace cgen
-
 namespace sem {
 
 struct SymbolSpecifier;
@@ -62,62 +56,6 @@ struct Base
     // function `clone_of` (see below).
     virtual Base *cloned () const = 0;
     virtual void print (Log &out) const = 0;
-
-    // This should recursively resolve all symbol lookups (i.e. Identifiers) into absolute
-    // fully qualified symbol lookups -- it should modify this object in-place.
-    // TODO: Maybe make context be a constant ref, which would mean that it doesn't generate any code.
-    virtual void resolve_symbols (cgen::Context &context) { LVD_ABORT_WITH_FIRANGE("resolve_symbols for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // If this is a type AST (or symbolically refers to one), then return the TypeEnum for it.
-    // TODO: Maybe make context be a constant ref, which would mean that it doesn't generate any code.
-    virtual TypeEnum type_enum__resolved (cgen::Context &context) const { return type_enum__raw(); }
-
-    //
-    // LLVM code generation methods
-    //
-
-    // Determine the kind of expression this is.  In particular, this is ExpressionKind::METATYPE (which
-    // currently only corresponds to the `Type` keyword), ExpressionKind::TYPE, and ExpressionKind::VALUE.
-    // TODO: Maybe make context be a constant ref, which would mean that it doesn't generate any code.
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const { LVD_ABORT_WITH_FIRANGE("generate_expression_kind for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // Determine the mutability of this value if this->generate_expression_kind(context) returns
-    // ExpressionKind::VALUE (otherwise should be left undefined).  In particular, this is
-    // Determinability::CONSTANT and Determinability::VARIABLE.
-    // TODO: Maybe make context be a constant ref, which would mean that it doesn't generate any code.
-    virtual Determinability generate_determinability (cgen::Context &context) const { LVD_ABORT_WITH_FIRANGE("generate_determinability for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // See generate_lvalue for more details on L-values.
-    virtual llvm::Type *generate_lvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const { LVD_ABORT_WITH_FIRANGE("generate_lvalue_type for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // Generate the L-value for this AST.  An L-value is defined to be any of the following:
-    // -   The left-hand side of an assignment
-    // -   The right-hand side of an initialization of a ReferenceType'd symbol (this is different
-    //     than the right-hand side of an assignment to a ReferenceType'd symbol; that is an R-value).
-    // -   An expression passed as a parameter to a function evaluation, when that parameter (as declared
-    //     in the function type) is a ReferenceType -- this is a sub-case of initialization; the function's
-    //     parameters are being initialized.
-    // The returned value must be the value that can be stored to (via LLVM's IRBuilder::CreateStore method),
-    // TODO: Change the return type to nn<llvm::Value*> (though this prevents covariant return typing).
-    virtual llvm::Value *generate_lvalue (cgen::Context &context) const { LVD_ABORT_WITH_FIRANGE("generate_lvalue for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // If this is a value AST (or symbolically refers to one), then generate the LLVM
-    // type for it (including indirection via symbol table).  Call this the "concrete"
-    // type.  E.g. the type of `1.0 + 2.0` (BinaryOperation add) would be LLVM's double
-    // type (whatever that is).  If abstract_type is not null, then the "abstract" type
-    // (i.e. AST type) of this AST node will be assigned to it.
-    // TODO: Change the return type to nn<llvm::Type*> (or nn<llvm::Type const *> ?)
-    //       or maybe even to cgen::TypePair (which consists of a concrete and an abstract type)
-    //       and get rid of the optional abstract_type out-param
-    // TODO: Maybe make context be a constant ref, which would mean that it doesn't generate any code.
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const { LVD_ABORT_WITH_FIRANGE("generate_rvalue_type for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // Generate the R-value for this AST (this is the kind of value that can only appear on the right hand side of an assignment).
-    // The default implementation is to attempt to generate an L-value
-    // TODO: Change the return type to nn<llvm::Value*> (though this prevents covariant return typing).
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const { LVD_ABORT_WITH_FIRANGE("generate_rvalue for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // Generate the SymbolSpecifier for this AST (this is the kind of expression that can appear on the left hand side
-    // of a Declaration or Definition).
-    virtual nnup<SymbolSpecifier> generate_svalue (cgen::Context &context) const { LVD_ABORT_WITH_FIRANGE("generate_svalue for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // Generate a function prototype (only applies if this is a function type AST)
-    // TODO: Change the return type to nn<llvm::Function*> (though this prevents covariant return typing).
-    virtual llvm::Function *generate_function_prototype (cgen::Context &context) const { LVD_ABORT_WITH_FIRANGE("generate_function_prototype for " + as_string(type_enum__raw()) + " not implemented", firange()); }
-    // Generate code for statement ASTs and function bodies.
-    virtual void generate_code (cgen::Context &context) const { LVD_ABORT_WITH_FIRANGE("generate_code for " + as_string(type_enum__raw()) + " not implemented", firange()); }
 
 private:
 

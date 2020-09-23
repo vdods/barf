@@ -16,7 +16,6 @@ struct Conditional : public Base
 
     virtual bool equals (Base const &other) const override;
     virtual Conditional *cloned () const override = 0;
-    virtual void resolve_symbols (cgen::Context &context) override;
 
     Base const &condition () const { return *m_condition; }
     Base const &positive_element () const { return *m_positive_element; }
@@ -49,17 +48,6 @@ struct ConditionalExpression : public Conditional
     virtual TypeEnum type_enum__raw () const override { return TypeEnum::CONDITIONAL_EXPRESSION; }
     virtual ConditionalExpression *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override;
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    virtual llvm::Type *generate_lvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_lvalue (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
-
-private:
-
-    void validate_element_types (cgen::Context &context, llvm::Type const &positive_element_type, llvm::Type const &negative_element_type) const;
-    void validate_element_types (cgen::Context &context, TypeBase const &positive_element_type, TypeBase const &negative_element_type) const;
 };
 
 struct ConditionalStatement : public Conditional
@@ -75,7 +63,6 @@ struct ConditionalStatement : public Conditional
     virtual TypeEnum type_enum__raw () const override { return TypeEnum::CONDITIONAL_STATEMENT; }
     virtual ConditionalStatement *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void generate_code (cgen::Context &context) const override;
 };
 
 template <typename... Args_>

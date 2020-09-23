@@ -2,14 +2,11 @@
 
 #include "sem/Definition.hpp"
 
-#include "cbz/cgen/Context.hpp"
-#include "cbz/cgen/Generation.hpp"
 #include "Exception.hpp"
 #include "sem/Identifier.hpp"
 #include "sem/SymbolSpecifier.hpp"
 #include "sem/Type.hpp"
 #include "sem/Value.hpp"
-#include "llvm/IR/Instructions.h"
 
 namespace cbz {
 namespace sem {
@@ -44,20 +41,6 @@ void Definition::print (Log &out) const
     out << IndentGuard()
         << m_symbol_specifier << " ::= " << m_content << '\n';
     out << ')';
-}
-
-void Definition::resolve_symbols (cgen::Context &context)
-{
-    m_symbol_specifier->resolve_symbols(context);
-    // TODO: Maybe somehow combine SymbolCarrierDecl and SymbolCarrierInit, so that this
-    // SymbolCarrier knows that it's a definition, not just a declaration.
-    auto scope_guard = context.push_symbol_carrier(make_nnup<cgen::SymbolCarrierDecl>(clone_of(m_symbol_specifier)));
-    m_content->resolve_symbols(context);
-}
-
-void Definition::generate_code (cgen::Context &context) const
-{
-    cgen::generate_definition(context, *m_symbol_specifier, *m_content, firange());
 }
 
 } // end namespace sem

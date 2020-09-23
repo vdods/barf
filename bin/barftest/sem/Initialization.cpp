@@ -2,12 +2,9 @@
 
 #include "sem/Initialization.hpp"
 
-#include "cbz/cgen/Context.hpp"
-#include "cbz/cgen/Generation.hpp"
 #include "Exception.hpp"
 #include "sem/Identifier.hpp"
 #include "sem/Type.hpp"
-#include "llvm/IR/Instructions.h"
 
 namespace cbz {
 namespace sem {
@@ -35,18 +32,6 @@ void Initialization::print (Log &out) const
     out << IndentGuard()
         << m_id << " := " << m_content << '\n';
     out << ')';
-}
-
-void Initialization::resolve_symbols (cgen::Context &context)
-{
-    m_id->resolve_symbols(context);
-    auto scope_guard = context.push_symbol_carrier(make_nnup<cgen::SymbolCarrierInit>(clone_of(m_id)));
-    m_content->resolve_symbols(context);
-}
-
-void Initialization::generate_code (cgen::Context &context) const
-{
-    cgen::generate_initialization(context, *m_id, *m_content, firange());
 }
 
 } // end namespace sem

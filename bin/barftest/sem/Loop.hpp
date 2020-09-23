@@ -40,9 +40,6 @@ struct Loop : public Base
     virtual bool equals (Base const &other) const override;
     virtual Loop *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    virtual void generate_code (cgen::Context &context) const override;
 
     void set_body (nnup<StatementList> &&body)
     {

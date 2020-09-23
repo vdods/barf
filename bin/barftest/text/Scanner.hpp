@@ -539,10 +539,10 @@ private:
 
 #include "core.hpp"
 #include "FiRange.hpp"
-#include "cbz/InputBase.hpp"
+#include "InputBase.hpp"
 #include "sem/StringLiteral.hpp"
 #include "sem/Value.hpp"
-#include "cbz/text/Parser.hpp"
+#include "text/Parser.hpp"
 #include <functional>
 #include <fstream>
 #include <sstream>

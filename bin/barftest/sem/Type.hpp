@@ -32,12 +32,8 @@ struct TypeKeyword : public TypeBaseOrTypeKeyword
     virtual bool equals (Base const &other) const override { return true; } // Because each template instance of TypeKeyword is a singleton.
     virtual TypeKeyword *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override { } // Nothing needed.
 
     // Note that is_type is the default `return false` -- the `type` keyword is a metatype.
-
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::METATYPE; }
-    virtual Determinability generate_determinability (cgen::Context &context) const override { return Determinability::COMPILETIME; }
 };
 
 template <typename... Args_>
@@ -54,10 +50,6 @@ struct TypeBase : public TypeBaseOrTypeKeyword
 
     virtual bool is_type () const override { return true; }
     virtual TypeBase *cloned () const override = 0; // TESTING -- does this work?
-
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::TYPE; }
-    virtual Determinability generate_determinability (cgen::Context &context) const override { return Determinability::COMPILETIME; }
-//     virtual llvm::Type *generate_rvalue_type (cgen::Context &context) const = 0;
 };
 
 template <TypeEnum TYPE_ENUM_>
@@ -73,9 +65,6 @@ struct Type : public TypeBase
     virtual bool equals (Base const &other) const override { return true; } // Because each template instance of Type is a singleton.
     virtual Type *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override { } // Nothing needed.
-
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
 };
 
 typedef Type<TypeEnum::VOID_TYPE> VoidType;

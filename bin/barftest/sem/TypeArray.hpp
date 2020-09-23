@@ -19,9 +19,6 @@ struct TypeArray : public TypeAggregate
     virtual bool equals (Base const &other) const override;
     virtual TypeArray *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
 
     virtual uint64_t length () const override { return m_element_count; }
     virtual TypeBase const &element (uint64_t i) const override { return *m_element_type; }

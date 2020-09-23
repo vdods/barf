@@ -23,12 +23,6 @@ struct TypeIdentifier : public TypeBase
     virtual bool equals (Base const &other) const override;
     virtual TypeIdentifier *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    virtual TypeEnum type_enum__resolved (cgen::Context &context) const override;
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::TYPE; }
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
 
     Identifier const &id () const { return *m_id; }
 

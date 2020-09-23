@@ -12,7 +12,7 @@
 
 #line 65 "../bin/barftest/text/Scanner.reflex"
 
-#include "cbz/literal.hpp"
+#include "literal.hpp"
 #include "sem/Break.hpp"
 #include "sem/Dummy.hpp"
 #include "sem/ErrorDummy.hpp"

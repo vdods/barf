@@ -78,27 +78,6 @@ struct Vector : public BaseClass_
         }
         out << ")";
     }
-    virtual void resolve_symbols (cgen::Context &context) override
-    {
-        for (auto &element : m_elements)
-            element->resolve_symbols(context);
-    }
-    virtual Determinability generate_determinability (cgen::Context &context) const override
-    {
-        // An empty tuple is a singleton, and therefore is entirely determined at compiletime.
-        if (elements().empty())
-            return Determinability::COMPILETIME;
-
-        for (auto const &e : elements())
-            if (e->generate_determinability(context) == Determinability::RUNTIME)
-                return Determinability::RUNTIME;
-
-        return Determinability::COMPILETIME;
-    }
-    virtual void generate_code (cgen::Context &context) const override
-    {
-        LVD_ABORT("Not implemented");
-    }
 
     std::vector<ElementTypePtr> const &elements () const { return m_elements; }
 
@@ -141,16 +120,6 @@ typedef Vector<TypeEnum::STATEMENT_LIST,Base,Base,';'> StatementList;
 typedef Vector<TypeEnum::DECLARATION_TUPLE,Declaration,Base,','> DeclarationTuple;
 typedef Vector<TypeEnum::IDENTIFIER_TUPLE,Identifier,Base,','> IdentifierTuple;
 
-// This used to be defined in Vector.cpp, but when building shared libs, the definition
-// was apparently not found by the dynamic linker, and instead the "Not implemented"
-// default definition was called.  Putting it here in the header fixed that problem.
-template <>
-inline void StatementList::generate_code (cgen::Context &context) const
-{
-    for (auto const &statement : elements())
-        statement->generate_code(context);
-}
-
 struct Tuple : public Vector<TypeEnum::TUPLE,Base,Base,','>
 {
     template <typename... Args_>
@@ -159,10 +128,6 @@ struct Tuple : public Vector<TypeEnum::TUPLE,Base,Base,','>
 
     virtual Tuple *cloned () const override;
     // TODO: override print ?
-
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 };
 
 // Base class for type arrays, type tuples, and structs.
@@ -205,9 +170,6 @@ struct TypeTuple : public Vector<TypeEnum::TYPE_TUPLE,TypeBase,TypeAggregate,','
 
     virtual TypeTuple *cloned () const override;
     // TODO: override print?
-
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::TYPE; }
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
 
     virtual uint64_t length () const override;
     virtual TypeBase const &element (uint64_t i) const override;

@@ -62,8 +62,6 @@ struct SymbolSpecifier : public Base
     virtual bool equals (Base const &other) const override;
     virtual SymbolSpecifier *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-//     virtual llvm::Value *generate_lvalue (cgen::Context &context) const override;
 
     Identifier const &id () const { return *m_id; }
     ValueKindSpecifier const &value_kind_specifier () const { return *m_value_kind_specifier; }

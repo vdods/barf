@@ -2,9 +2,6 @@
 
 #include "sem/Type.hpp"
 
-#include "cbz/cgen/Context.hpp"
-#include "llvm/IR/Type.h"
-
 namespace cbz {
 namespace sem {
 
@@ -41,105 +38,6 @@ template <> void Uint64::print (Log &out) const { out << "Uint64(" << firange() 
 template <> void Float32::print (Log &out) const { out << "Float32(" << firange() << ')'; }
 template <> void Float64::print (Log &out) const { out << "Float64(" << firange() << ')'; }
 template <> void TypeDummy::print (Log &out) const { out << "TypeDummy(" << firange() << ')'; }
-
-template <> llvm::Type *VoidType::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getVoidTy();
-}
-
-template <> llvm::Type *NullType::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    // Empty struct type.  Perhaps distinguish this somehow?
-    return llvm::StructType::get(context.llvm_context(), llvm::ArrayRef<llvm::Type*>{});
-}
-
-template <> llvm::Type *Boolean::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt1Ty();
-}
-
-template <> llvm::Type *Sint8::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt8Ty();
-}
-
-template <> llvm::Type *Sint16::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt16Ty();
-}
-
-template <> llvm::Type *Sint32::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt32Ty();
-}
-
-template <> llvm::Type *Sint64::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt64Ty();
-}
-
-template <> llvm::Type *Uint8::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt8Ty();
-}
-
-template <> llvm::Type *Uint16::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt16Ty();
-}
-
-template <> llvm::Type *Uint32::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt32Ty();
-}
-
-template <> llvm::Type *Uint64::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getInt64Ty();
-}
-
-template <> llvm::Type *Float32::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getFloatTy();
-}
-
-template <> llvm::Type *Float64::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    return context.ir_builder().getDoubleTy();
-}
-
-template <> llvm::Type *TypeDummy::generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type) const
-{
-    if (abstract_type != nullptr)
-        *abstract_type = clone_of(this);
-    throw WellFormednessError("can't generate type for TypeDummy");
-}
 
 } // end namespace sem
 } // end namespace cbz

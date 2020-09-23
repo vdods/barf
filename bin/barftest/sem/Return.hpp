@@ -20,8 +20,6 @@ struct Return : public Base
     virtual bool equals (Base const &other) const override;
     virtual Return *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-    virtual void generate_code (cgen::Context &context) const override;
 
     bool has_return_expression () const { return m_return_expression != nullptr; }
     Base const &return_expression () const { return *m_return_expression; }

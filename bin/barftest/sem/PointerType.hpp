@@ -5,7 +5,6 @@
 #include "core.hpp"
 #include "sem/Base.hpp"
 #include "sem/Type.hpp"
-#include "llvm/IR/DerivedTypes.h"
 
 namespace cbz {
 namespace sem {
@@ -19,11 +18,6 @@ struct PointerType : public TypeBase
     virtual bool equals (Base const &other) const override;
     virtual PointerType *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::TYPE; }
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    virtual llvm::PointerType *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
 
     TypeBase const &referent () const { return *m_referent; }
 

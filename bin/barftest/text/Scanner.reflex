@@ -12,10 +12,10 @@
 %target.cpp.top_of_header_file %{
 #include "core.hpp"
 #include "FiRange.hpp"
-#include "cbz/InputBase.hpp"
+#include "InputBase.hpp"
 #include "sem/StringLiteral.hpp"
 #include "sem/Value.hpp"
-#include "cbz/text/Parser.hpp"
+#include "text/Parser.hpp"
 #include <functional>
 #include <fstream>
 #include <sstream>
@@ -63,7 +63,7 @@ private:
 // ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.top_of_implementation_file %{
-#include "cbz/literal.hpp"
+#include "literal.hpp"
 #include "sem/Break.hpp"
 #include "sem/Dummy.hpp"
 #include "sem/ErrorDummy.hpp"

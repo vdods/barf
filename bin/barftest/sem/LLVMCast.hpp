@@ -60,15 +60,6 @@ struct LLVMCastKeyword : public Base
     virtual bool equals (Base const &other) const override;
     virtual LLVMCastKeyword *cloned () const override;
     virtual void print (Log &out) const override;
-//     virtual void resolve_symbols (cgen::Context &context) override;
-
-//     virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::VALUE; }
-//     virtual Determinability generate_determinability (cgen::Context &context) const override;
-//     // TODO: implement these
-// //     virtual llvm::Type *generate_lvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-// //     virtual llvm::Value *generate_lvalue (cgen::Context &context) const override;
-//     virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-//     virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 
     LLVMCastInstruction instruction () const { return m_instruction; }
 //     Base const &source_value () const { return *m_source_value; }
@@ -90,15 +81,6 @@ struct LLVMCast : public Base
     virtual bool equals (Base const &other) const override;
     virtual LLVMCast *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::VALUE; }
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    // TODO: implement these
-//     virtual llvm::Type *generate_lvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-//     virtual llvm::Value *generate_lvalue (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 
     LLVMCastInstruction instruction () const { return m_instruction; }
     Base const &source_value () const { return *m_source_value; }

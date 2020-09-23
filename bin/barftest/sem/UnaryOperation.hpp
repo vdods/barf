@@ -51,23 +51,11 @@ struct UnaryOperation : public Base
     virtual bool equals (Base const &other) const override;
     virtual UnaryOperation *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    // For now, UnaryOperation is only defined on built-in types.
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override;
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    virtual llvm::Type *generate_lvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_lvalue (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
-    virtual nnup<SymbolSpecifier> generate_svalue (cgen::Context &context) const override;
 
     UnaryOperationType un_op_type () const { return m_un_op_type; }
     Base const &operand () const { return *m_operand; }
 
 private:
-
-    void validate_operand_type (cgen::Context &context, llvm::Type *operand_type, TypeBase const &operand_abstract_type) const;
 
     UnaryOperationType m_un_op_type;
     nnup<Base> m_operand;

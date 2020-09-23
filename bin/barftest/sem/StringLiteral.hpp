@@ -21,13 +21,6 @@ struct StringLiteral : public Base
     virtual bool equals (Base const &other) const override;
     virtual StringLiteral *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override { } // Nothing needed.
-    virtual TypeEnum type_enum__resolved (cgen::Context &context) const override { return TypeEnum::STRING_LITERAL; }
-    // NOTE: Even though TypeIdentifier uses StringLiteral in its implementation, this method is not used by it.
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::VALUE; }
-    virtual Determinability generate_determinability (cgen::Context &context) const override { return Determinability::COMPILETIME; }
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 
     std::string const &text () const { return m_text; }
 

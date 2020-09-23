@@ -2,14 +2,11 @@
 
 #include "sem/Declaration.hpp"
 
-#include "cbz/cgen/Context.hpp"
-#include "cbz/cgen/Generation.hpp"
 #include "Exception.hpp"
 #include "sem/FunctionPrototype.hpp"
 #include "sem/Identifier.hpp"
 #include "sem/SymbolSpecifier.hpp"
 #include "sem/Type.hpp"
-#include "llvm/IR/Instructions.h"
 
 namespace cbz {
 namespace sem {
@@ -47,18 +44,6 @@ void Declaration::print (Log &out) const
     out << IndentGuard()
         << m_symbol_specifier << " : " << m_content << '\n';
     out << ')';
-}
-
-void Declaration::resolve_symbols (cgen::Context &context)
-{
-    m_symbol_specifier->resolve_symbols(context);
-    auto scope_guard = context.push_symbol_carrier(make_nnup<cgen::SymbolCarrierDecl>(clone_of(m_symbol_specifier)));
-    m_content->resolve_symbols(context);
-}
-
-void Declaration::generate_code (cgen::Context &context) const
-{
-    cgen::generate_declaration(context, *m_symbol_specifier, *m_content, firange());
 }
 
 } // end namespace sem

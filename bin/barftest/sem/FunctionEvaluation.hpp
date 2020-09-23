@@ -23,15 +23,6 @@ struct FunctionEvaluation : public Base
     virtual bool equals (Base const &other) const override;
     virtual FunctionEvaluation *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return ExpressionKind::VALUE; }
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    virtual llvm::Type *generate_lvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_lvalue (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
-    virtual void generate_code (cgen::Context &context) const override;
 
     Base const &function_expression () const { return *m_function_expression; }
     ParameterList const &parameter_list () const { return *m_parameter_list; }

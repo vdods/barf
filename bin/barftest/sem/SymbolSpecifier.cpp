@@ -2,12 +2,8 @@
 
 #include "sem/SymbolSpecifier.hpp"
 
-#include "cbz/cgen/Context.hpp"
-#include "cbz/cgen/TypeSymbol.hpp"
-#include "cbz/cgen/VariableSymbol.hpp"
-#include "cbz/literal.hpp"
 #include "Exception.hpp"
-#include "llvm/IR/Instructions.h"
+#include "literal.hpp"
 
 namespace cbz {
 namespace sem {
@@ -41,19 +37,6 @@ void SymbolSpecifier::print (Log &out) const
     }
     out << ')';
 }
-
-void SymbolSpecifier::resolve_symbols (cgen::Context &context)
-{
-    m_id->resolve_symbols(context);
-    m_value_kind_specifier->resolve_symbols(context);
-    m_value_lifetime_specifier->resolve_symbols(context);
-}
-
-// llvm::Value *SymbolSpecifier::generate_lvalue (cgen::Context &context) const
-// {
-//     // Just forward to m_id.
-//     return m_id->generate_lvalue(context);
-// }
 
 nnup<SymbolSpecifier> SymbolSpecifier::with_specified_value_kind (ValueKind value_kind, FiRange const &specifier_firange) const
 {

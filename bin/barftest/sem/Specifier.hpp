@@ -39,7 +39,6 @@ struct Specifier : public SpecifierBase
     {
         out << "Specifier<" << TYPE_ENUM_ << ">(" << m_value << ')';
     }
-    virtual void resolve_symbols (cgen::Context &context) override { } // Nothing needed.
 
     T_ value () const { return m_value; }
 

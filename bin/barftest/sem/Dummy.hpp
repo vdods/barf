@@ -17,7 +17,6 @@ struct Dummy : public Base
     virtual bool equals (Base const &other) const override { return true; } // This is a singleton type.
     virtual Dummy *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override { } // Nothing needed.
 };
 
 template <typename... Args_>

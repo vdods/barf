@@ -23,15 +23,6 @@ struct ElementAccess : public Base
     virtual bool equals (Base const &other) const override;
     virtual ElementAccess *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    // NOTE: This assumes you can't have mixed tuples where there are variables and types within the same tuple.
-    virtual ExpressionKind generate_expression_kind (cgen::Context &context) const override { return m_referent->generate_expression_kind(context); }
-    virtual Determinability generate_determinability (cgen::Context &context) const override;
-    virtual llvm::Type *generate_lvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_lvalue (cgen::Context &context) const override;
-    virtual llvm::Type *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Value *generate_rvalue (cgen::Context &context) const override;
 
     Base const &referent () const { return *m_referent; }
     Base const &element_key () const { return *m_element_key; }

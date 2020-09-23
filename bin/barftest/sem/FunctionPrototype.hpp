@@ -5,8 +5,6 @@
 #include "core.hpp"
 #include "sem/Type.hpp"
 #include "sem/Vector.hpp"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
 
 namespace cbz {
 namespace sem {
@@ -24,18 +22,12 @@ struct FunctionPrototype : public TypeBase
     virtual bool equals (Base const &other) const override;
     virtual FunctionPrototype *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-
-    virtual llvm::PointerType *generate_rvalue_type (cgen::Context &context, up<TypeBase> *abstract_type = nullptr) const override;
-    virtual llvm::Function *generate_function_prototype (cgen::Context &context) const override;
 
     DeclarationTuple const &domain_variable_declaration_tuple () const { return *m_domain_variable_declaration_tuple; }
     FunctionType const &function_type () const { return *m_function_type; }
 
     // This will throw if the size of the parameter list doesn't match the number of elements in the domain.
     void validate_parameter_count (ParameterList const &parameter_list, FiRange const &function_call_firange) const;
-    // This will throw if the types of the parameter list elements don't match the corresponding domain elements.
-    void validate_parameter_count_and_types (cgen::Context &context, ParameterList const &parameter_list, FiRange const &function_call_firange) const;
 
 private:
 

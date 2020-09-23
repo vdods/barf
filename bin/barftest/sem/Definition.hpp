@@ -20,8 +20,6 @@ struct Definition : public Base
     virtual bool equals (Base const &other) const override;
     virtual Definition *cloned () const override;
     virtual void print (Log &out) const override;
-    virtual void resolve_symbols (cgen::Context &context) override;
-    virtual void generate_code (cgen::Context &context) const override;
 
     SymbolSpecifier const &symbol_specifier () const { return *m_symbol_specifier; }
     Base const &content () const { return *m_content; }

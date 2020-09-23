@@ -39,14 +39,5 @@ std::string const &as_string_lowercase (GlobalValueLinkageContextual global_valu
     return s_string_table[n];
 }
 
-llvm::GlobalValue::LinkageTypes as_llvm_linkage_type (GlobalValueLinkage global_value_linkage) {
-    switch (global_value_linkage) {
-        case GlobalValueLinkage::EXTERNAL: return llvm::GlobalValue::ExternalLinkage;
-        case GlobalValueLinkage::INTERNAL: return llvm::GlobalValue::InternalLinkage;
-        case GlobalValueLinkage::PRIVATE: return llvm::GlobalValue::PrivateLinkage;
-        default: LVD_ABORT("invalid GlobalValueLinkage");
-    }
-}
-
 } // end namespace sem
 } // end namespace cbz
