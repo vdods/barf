@@ -1,12 +1,4 @@
-// ///////////////////////////////////////////////////////////////////////////
-// barf_path.hpp by Victor Dods, created 2019/06/01
-// ///////////////////////////////////////////////////////////////////////////
-// Unless a different license was explicitly granted in writing by the
-// copyright holder (Victor Dods), this software is freely distributable under
-// the terms of the GNU General Public License, version 2.  Any works deriving
-// from this work must also be released under the GNU GPL.  See the included
-// file LICENSE for details.
-// ///////////////////////////////////////////////////////////////////////////
+// 2019.06.01 - Copyright Victor Dods - Licensed under Apache 2.0
 
 #if !defined(BARF_PATH_HPP_)
 #define BARF_PATH_HPP_

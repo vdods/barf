@@ -760,7 +760,7 @@ install(
 )
 install(
     FILES                                       # Important files
-        LICENSE
+        LICENSE.txt
         README.md
         barf-config.cmake                       # barf-config.cmake is how find_package(barf) works.
     DESTINATION lib/barf                        # This is relative to CMAKE_INSTALL_PREFIX
@@ -936,7 +936,7 @@ set(CPACK_PACKAGE_VERSION_MINOR "${barf_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${barf_VERSION_PATCH}")
 
 # set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.html")
-set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE.txt")
 set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
 # set(CPACK_RESOURCE_FILE_WELCOME "${PROJECT_SOURCE_DIR}/README.html")
 
